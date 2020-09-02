@@ -46,8 +46,8 @@ paths:
                   creator_id: 3
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:38.899+01:00'
-                  updated_at: '2020-08-31T07:02:39.365+01:00'
+                  created_at: '2020-09-02T03:31:10.212+01:00'
+                  updated_at: '2020-09-02T03:31:10.720+01:00'
                   site_ids:
                   - 1
                   owner_ids:
@@ -125,8 +125,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:39.414+01:00'
-                  updated_at: '2020-08-31T07:02:39.414+01:00'
+                  created_at: '2020-09-02T03:31:10.766+01:00'
+                  updated_at: '2020-09-02T03:31:10.766+01:00'
                   site_ids:
                   - 2
                   owner_ids:
@@ -224,8 +224,8 @@ paths:
                   creator_id: 16
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:39.865+01:00'
-                  updated_at: '2020-08-31T07:02:39.999+01:00'
+                  created_at: '2020-09-02T03:31:11.114+01:00'
+                  updated_at: '2020-09-02T03:31:11.235+01:00'
                   site_ids:
                   - 4
                   owner_ids:
@@ -309,8 +309,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:40.048+01:00'
-                  updated_at: '2020-08-31T07:02:40.048+01:00'
+                  created_at: '2020-09-02T03:31:11.273+01:00'
+                  updated_at: '2020-09-02T03:31:11.273+01:00'
                   site_ids:
                   - 5
                   owner_ids:
@@ -391,8 +391,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:40.219+01:00'
-                  updated_at: '2020-08-31T07:02:40.219+01:00'
+                  created_at: '2020-09-02T03:31:11.451+01:00'
+                  updated_at: '2020-09-02T03:31:11.451+01:00'
                   site_ids:
                   - 6
                   owner_ids:
@@ -461,8 +461,8 @@ paths:
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:40.550+01:00'
-                  updated_at: '2020-08-31T07:02:40.550+01:00'
+                  created_at: '2020-09-02T03:31:11.726+01:00'
+                  updated_at: '2020-09-02T03:31:11.726+01:00'
                   site_ids: []
                   owner_ids:
                   - 1
@@ -578,7 +578,7 @@ paths:
                   version: 0.09
                   group_id: 9
                   creator_id: 1
-                  created_at: '2020-08-31T07:02:40.772+01:00'
+                  created_at: '2020-09-02T03:31:11.958+01:00'
                   executable_settings: executable settings 9
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -637,7 +637,7 @@ paths:
                   version: 0.1
                   group_id: 10
                   creator_id: 1
-                  created_at: '2020-08-31T07:02:40.934+01:00'
+                  created_at: '2020-09-02T03:31:12.116+01:00'
                   executable_settings: executable settings 10
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -699,7 +699,7 @@ paths:
                   version: 0.11
                   group_id: 11
                   creator_id: 1
-                  created_at: '2020-08-31T07:02:41.116+01:00'
+                  created_at: '2020-09-02T03:31:12.295+01:00'
                   executable_settings: executable settings 11
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -769,8 +769,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:41.275+01:00'
-                  updated_at: '2020-08-31T07:02:41.275+01:00'
+                  created_at: '2020-09-02T03:31:12.446+01:00'
+                  updated_at: '2020-09-02T03:31:12.450+01:00'
                   description: site description 12
                   region_id: 12
                   project_ids:
@@ -905,8 +905,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:41.622+01:00'
-                  updated_at: '2020-08-31T07:02:41.622+01:00'
+                  created_at: '2020-09-02T03:31:12.764+01:00'
+                  updated_at: '2020-09-02T03:31:12.768+01:00'
                   description: site description 14
                   region_id: 14
                   project_ids:
@@ -983,8 +983,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:41.930+01:00'
-                  updated_at: '2020-08-31T07:02:41.930+01:00'
+                  created_at: '2020-09-02T03:31:13.028+01:00'
+                  updated_at: '2020-09-02T03:31:13.028+01:00'
                   description: site description 16
                   region_id: 
                   project_ids:
@@ -1102,8 +1102,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:42.186+01:00'
-                  updated_at: '2020-08-31T07:02:42.186+01:00'
+                  created_at: '2020-09-02T03:31:13.240+01:00'
+                  updated_at: '2020-09-02T03:31:13.244+01:00'
                   description: site description 18
                   region_id: 17
                   project_ids:
@@ -1186,8 +1186,8 @@ paths:
                   creator_id: 75
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:42.367+01:00'
-                  updated_at: '2020-08-31T07:02:42.474+01:00'
+                  created_at: '2020-09-02T03:31:13.411+01:00'
+                  updated_at: '2020-09-02T03:31:13.505+01:00'
                   project_ids:
                   - 19
                   location_obfuscated: false
@@ -1273,8 +1273,8 @@ paths:
                   creator_id: 80
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:42.547+01:00'
-                  updated_at: '2020-08-31T07:02:42.655+01:00'
+                  created_at: '2020-09-02T03:31:13.571+01:00'
+                  updated_at: '2020-09-02T03:31:13.667+01:00'
                   project_ids:
                   - 20
                   location_obfuscated: false
@@ -1357,51 +1357,9 @@ paths:
                   created_at: 
                   updated_at: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:42.853+01:00'
-                  updated_at: '2020-08-31T07:02:42.853+01:00'
-                  description: site description 24
-                  project_ids: []
-                  location_obfuscated: true
-                  custom_latitude: 
-                  custom_longitude: 
-                  timezone_information: 
-                  image_urls:
-                  - size: extralarge
-                    url: "/images/site/site_span4.png"
-                    width: 300
-                    height: 300
-                  - size: large
-                    url: "/images/site/site_span3.png"
-                    width: 220
-                    height: 220
-                  - size: medium
-                    url: "/images/site/site_span2.png"
-                    width: 140
-                    height: 140
-                  - size: small
-                    url: "/images/site/site_span1.png"
-                    width: 60
-                    height: 60
-                  - size: tiny
-                    url: "/images/site/site_spanhalf.png"
-                    width: 30
-                    height: 30
-                  description_html: "<p>site description 24</p>\n"
-                  description_html_tagline: site description 24
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      "$ref": "#/components/schemas/site"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/site"
-    get:
-      summary: list sites
+  "/projects/{project_id}/regions":
+    post:
+      summary: create region
       security:
       - basic_auth_with_token: []
       parameters:
@@ -1438,41 +1396,12 @@ paths:
                   creator_id: 1
                   updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:34.339+01:00'
-                  updated_at: '2020-09-02T02:58:34.339+01:00'
+                  created_at: '2020-09-02T03:31:14.005+01:00'
+                  updated_at: '2020-09-02T03:31:14.005+01:00'
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:42.933+01:00'
-                  updated_at: '2020-08-31T07:02:42.933+01:00'
-                  description: site description 25
-                  project_ids:
-                  - 22
-                  location_obfuscated: false
-                  custom_latitude: -8.422107
-                  custom_longitude: 116.878993
-                  timezone_information: 
-                  image_urls:
-                  - size: extralarge
-                    url: "/images/site/site_span4.png"
-                    width: 300
-                    height: 300
-                  - size: large
-                    url: "/images/site/site_span3.png"
-                    width: 220
-                    height: 220
-                  - size: medium
-                    url: "/images/site/site_span2.png"
-                    width: 140
-                    height: 140
-                  - size: small
-                    url: "/images/site/site_span1.png"
-                    width: 60
-                    height: 60
-                  - size: tiny
-                    url: "/images/site/site_spanhalf.png"
-                    width: 30
-                    height: 30
-                  description_html: "<p>site description 25</p>\n"
-                  description_html_tagline: site description 25
+                  site_ids: []
+                  description_html: "<p>site <strong>description</strong> 22</p>\n"
+                  description_html_tagline: site <strong>description</strong> 22
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1534,13 +1463,10 @@ paths:
                   creator_id: 95
                   updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:34.414+01:00'
-                  updated_at: '2020-09-02T02:58:34.414+01:00'
+                  created_at: '2020-09-02T03:31:14.099+01:00'
+                  updated_at: '2020-09-02T03:31:14.099+01:00'
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:43.129+01:00'
-                  updated_at: '2020-08-31T07:02:43.129+01:00'
-                  description: site description 26
-                  project_ids:
+                  site_ids:
                   - 23
                   description_html: "<p>site <strong>description</strong> 23</p>\n"
                   description_html_tagline: site <strong>description</strong> 23
@@ -1629,9 +1555,10 @@ paths:
                   creator_id: 103
                   updater_id: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:43.516+01:00'
-                  updated_at: '2020-08-31T07:02:43.630+01:00'
-                  project_ids:
+                  created_at: '2020-09-02T03:31:14.404+01:00'
+                  updated_at: '2020-09-02T03:31:14.404+01:00'
+                  deleted_at: 
+                  site_ids:
                   - 25
                   description_html: "<p>site <strong>description</strong> 25</p>\n"
                   description_html_tagline: site <strong>description</strong> 25
@@ -1686,10 +1613,10 @@ paths:
                   updater_id: 1
                   creator_id: 107
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:43.703+01:00'
-                  updated_at: '2020-08-31T07:02:43.703+01:00'
-                  description: site description 30
-                  project_ids:
+                  deleter_id: 
+                  created_at: '2020-09-02T03:31:14.573+01:00'
+                  updated_at: '2020-09-02T03:31:14.681+01:00'
+                  site_ids:
                   - 26
                   description_html: "<p>site <strong>description</strong> 27</p>\n"
                   description_html_tagline: site <strong>description</strong> 27
@@ -1750,9 +1677,9 @@ paths:
                   creator_id: 113
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-31T07:02:43.859+01:00'
-                  updated_at: '2020-08-31T07:02:43.961+01:00'
-                  project_ids:
+                  created_at: '2020-09-02T03:31:14.740+01:00'
+                  updated_at: '2020-09-02T03:31:14.867+01:00'
+                  site_ids:
                   - 27
                   description_html: "<p>site <strong>description</strong> 29</p>\n"
                   description_html_tagline: site <strong>description</strong> 29
@@ -1818,8 +1745,8 @@ paths:
                   creator_id: 119
                   updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:35.394+01:00'
-                  updated_at: '2020-09-02T02:58:35.394+01:00'
+                  created_at: '2020-09-02T03:31:14.928+01:00'
+                  updated_at: '2020-09-02T03:31:14.928+01:00'
                   deleted_at: 
                   site_ids:
                   - 28
@@ -1863,12 +1790,40 @@ paths:
                   notes: note number 32
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-08-31T07:02:44.359+01:00'
-                  updated_at: '2020-08-31T07:02:44.359+01:00'
-                  description: description 29
-                  category: category 29
-                  description_html: "<p>description 29</p>\n"
-                  description_html_tagline: description 29
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-09-02T03:31:15.213+01:00'
+                  updated_at: '2020-09-02T03:31:15.213+01:00'
+                  description: site description 32
+                  region_id: 
+                  project_ids: []
+                  location_obfuscated: true
+                  custom_latitude: 
+                  custom_longitude: 
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 32</p>\n"
+                  description_html_tagline: site description 32
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1920,12 +1875,41 @@ paths:
                   notes: note number 33
                   creator_id: 128
                   updater_id: 
-                  created_at: '2020-08-31T07:02:44.445+01:00'
-                  updated_at: '2020-08-31T07:02:44.445+01:00'
-                  description: description 30
-                  category: category 30
-                  description_html: "<p>description 30</p>\n"
-                  description_html_tagline: description 30
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-09-02T03:31:15.283+01:00'
+                  updated_at: '2020-09-02T03:31:15.286+01:00'
+                  description: site description 33
+                  region_id: 30
+                  project_ids:
+                  - 33
+                  location_obfuscated: false
+                  custom_latitude: -2.07065
+                  custom_longitude: -24.947142
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 33</p>\n"
+                  description_html_tagline: site description 33
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1975,12 +1959,41 @@ paths:
                   notes: note number 34
                   creator_id: 132
                   updater_id: 
-                  created_at: '2020-08-31T07:02:44.785+01:00'
-                  updated_at: '2020-08-31T07:02:44.785+01:00'
-                  description: description 32
-                  category: category 32
-                  description_html: "<p>description 32</p>\n"
-                  description_html_tagline: description 32
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-09-02T03:31:15.434+01:00'
+                  updated_at: '2020-09-02T03:31:15.438+01:00'
+                  description: site description 34
+                  region_id: 31
+                  project_ids:
+                  - 34
+                  location_obfuscated: false
+                  custom_latitude: -12.172027
+                  custom_longitude: 107.647494
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 34</p>\n"
+                  description_html_tagline: site description 34
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1989,10 +2002,10 @@ paths:
                     data:
                       type: array
                       items:
-                        "$ref": "#/components/schemas/bookmark"
-  "/bookmarks/{id}":
-    put:
-      summary: update bookmark
+                        "$ref": "#/components/schemas/site"
+  "/sites/{id}":
+    delete:
+      summary: delete site
       security:
       - basic_auth_with_token: []
       parameters:
@@ -2015,37 +2028,9 @@ paths:
           description: successful
           content:
             application/json:
-              example:
-                meta:
-                  status: 200
-                  message: OK
-                data:
-                  id: 33
-                  audio_recording_id: 34
-                  name: name 34
-                  description: description 34
-                  offset_seconds: 4.0
-                  category: category 34
-                  updater_id: 1
-                  creator_id: 1
-                  created_at: '2020-08-31T07:02:44.938+01:00'
-                  updated_at: '2020-08-31T07:02:45.067+01:00'
-                  description_html: "<p>description 34</p>\n"
-                  description_html_tagline: description 34
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      "$ref": "#/components/schemas/bookmark"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/bookmark"
-    patch:
-      summary: update bookmark
+              example: 
+    put:
+      summary: update site
       security:
       - basic_auth_with_token: []
       parameters:
@@ -2079,11 +2064,40 @@ paths:
                   notes: note number 37
                   region_id: 
                   updater_id: 1
-                  creator_id: 1
-                  created_at: '2020-08-31T07:02:45.160+01:00'
-                  updated_at: '2020-08-31T07:02:45.301+01:00'
-                  description_html: "<p>description 36</p>\n"
-                  description_html_tagline: description 36
+                  creator_id: 140
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-09-02T03:31:15.745+01:00'
+                  updated_at: '2020-09-02T03:31:15.841+01:00'
+                  project_ids:
+                  - 36
+                  location_obfuscated: false
+                  custom_latitude: 89.154996
+                  custom_longitude: 146.941347
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 37</p>\n"
+                  description_html_tagline: site description 37
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2132,8 +2146,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-09-02T02:58:36.535+01:00'
-                  updated_at: '2020-09-02T02:58:36.540+01:00'
+                  created_at: '2020-09-02T03:31:15.932+01:00'
+                  updated_at: '2020-09-02T03:31:15.936+01:00'
                   description: site description 38
                   region_id: 34
                   project_ids:
@@ -2202,17 +2216,45 @@ paths:
                   message: OK
                 data:
                   id: 36
-                  audio_recording_id: 38
-                  offset_seconds: 4.0
-                  name: name 38
-                  creator_id: 1
-                  updater_id: 
-                  created_at: '2020-08-31T07:02:45.534+01:00'
-                  updated_at: '2020-08-31T07:02:45.534+01:00'
-                  description: description 38
-                  category: category 38
-                  description_html: "<p>description 38</p>\n"
-                  description_html_tagline: description 38
+                  name: site name 40
+                  description: site description 40
+                  notes: note number 40
+                  region_id: 
+                  updater_id: 1
+                  creator_id: 149
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-09-02T03:31:16.083+01:00'
+                  updated_at: '2020-09-02T03:31:16.174+01:00'
+                  project_ids:
+                  - 38
+                  location_obfuscated: false
+                  custom_latitude: -67.523369
+                  custom_longitude: -26.341821
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 40</p>\n"
+                  description_html_tagline: site description 40
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2295,8 +2337,8 @@ paths:
                   name: name 37
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-09-02T02:58:37.252+01:00'
-                  updated_at: '2020-09-02T02:58:37.252+01:00'
+                  created_at: '2020-09-02T03:31:16.524+01:00'
+                  updated_at: '2020-09-02T03:31:16.524+01:00'
                   description: description 37
                   category: category 37
                   description_html: "<p>description 37</p>\n"
@@ -2353,8 +2395,8 @@ paths:
                   name: name 38
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-09-02T02:58:37.368+01:00'
-                  updated_at: '2020-09-02T02:58:37.368+01:00'
+                  created_at: '2020-09-02T03:31:16.622+01:00'
+                  updated_at: '2020-09-02T03:31:16.622+01:00'
                   description: description 38
                   category: category 38
                   description_html: "<p>description 38</p>\n"
@@ -2443,8 +2485,8 @@ paths:
                   name: name 40
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-09-02T02:58:37.723+01:00'
-                  updated_at: '2020-09-02T02:58:37.723+01:00'
+                  created_at: '2020-09-02T03:31:16.968+01:00'
+                  updated_at: '2020-09-02T03:31:16.968+01:00'
                   description: description 40
                   category: category 40
                   description_html: "<p>description 40</p>\n"
@@ -2496,8 +2538,8 @@ paths:
                   category: category 42
                   updater_id: 1
                   creator_id: 1
-                  created_at: '2020-09-02T02:58:37.894+01:00'
-                  updated_at: '2020-09-02T02:58:38.026+01:00'
+                  created_at: '2020-09-02T03:31:17.126+01:00'
+                  updated_at: '2020-09-02T03:31:17.257+01:00'
                   description_html: "<p>description 42</p>\n"
                   description_html_tagline: description 42
               schema:
@@ -2549,8 +2591,8 @@ paths:
                   category: category 44
                   updater_id: 1
                   creator_id: 1
-                  created_at: '2020-09-02T02:58:38.145+01:00'
-                  updated_at: '2020-09-02T02:58:38.280+01:00'
+                  created_at: '2020-09-02T03:31:17.357+01:00'
+                  updated_at: '2020-09-02T03:31:17.477+01:00'
                   description_html: "<p>description 44</p>\n"
                   description_html_tagline: description 44
               schema:
@@ -2625,8 +2667,8 @@ paths:
                   name: name 46
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-09-02T02:58:38.566+01:00'
-                  updated_at: '2020-09-02T02:58:38.566+01:00'
+                  created_at: '2020-09-02T03:31:17.735+01:00'
+                  updated_at: '2020-09-02T03:31:17.735+01:00'
                   description: description 46
                   category: category 46
                   description_html: "<p>description 46</p>\n"
@@ -2712,7 +2754,7 @@ paths:
                     uuid:
                       eq: blah blah
                   creator_id: 207
-                  created_at: '2020-09-02T02:58:38.949+01:00'
+                  created_at: '2020-09-02T03:31:18.068+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
@@ -2870,7 +2912,7 @@ paths:
                     uuid:
                       eq: blah blah
                   creator_id: 225
-                  created_at: '2020-09-02T02:58:39.687+01:00'
+                  created_at: '2020-09-02T03:31:18.755+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
@@ -2927,8 +2969,8 @@ paths:
                   stored_query:
                     uuid:
                       eq: blah blah
-                  creator_id: 169
-                  created_at: '2020-08-31T07:02:45.884+01:00'
+                  creator_id: 229
+                  created_at: '2020-09-02T03:31:18.916+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
@@ -2976,7 +3018,7 @@ paths:
                     uuid:
                       eq: blah blah
                   creator_id: 1
-                  created_at: '2020-09-02T02:58:40.239+01:00'
+                  created_at: '2020-09-02T03:31:19.231+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids: []
@@ -3037,8 +3079,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-09-02T02:58:40.415+01:00'
-                  updated_at: '2020-09-02T02:58:40.415+01:00'
+                  created_at: '2020-09-02T03:31:19.427+01:00'
+                  updated_at: '2020-09-02T03:31:19.427+01:00'
                   description: site description 62
                   region_id: 
                   project_ids: []
@@ -3120,8 +3162,8 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-09-02T02:58:40.646+01:00'
-                  updated_at: '2020-09-02T02:58:40.646+01:00'
+                  created_at: '2020-09-02T03:31:19.590+01:00'
+                  updated_at: '2020-09-02T03:31:19.590+01:00'
                   description: site description 64
                   region_id: 
                   project_ids: []
@@ -3194,8 +3236,8 @@ paths:
                   creator_id: 1
                   updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:41.011+01:00'
-                  updated_at: '2020-09-02T02:58:41.011+01:00'
+                  created_at: '2020-09-02T03:31:19.798+01:00'
+                  updated_at: '2020-09-02T03:31:19.798+01:00'
                   deleted_at: 
                   site_ids: []
                   description_html: "<p>site <strong>description</strong> 58</p>\n"
@@ -3246,17 +3288,17 @@ paths:
                     previous: 
                     next: 
                 data:
-                  id: 41
-                  name: saved search name 43
-                  description: saved search description 43
-                  stored_query:
-                    uuid:
-                      eq: blah blah
-                  creator_id: 187
-                  created_at: '2020-08-31T07:02:46.547+01:00'
+                - id: 57
+                  name: region name 59
+                  description: site **description** 59
+                  notes:
+                    region_note_59: 59
+                  project_id: 60
+                  creator_id: 253
+                  updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:41.084+01:00'
-                  updated_at: '2020-09-02T02:58:41.084+01:00'
+                  created_at: '2020-09-02T03:31:19.869+01:00'
+                  updated_at: '2020-09-02T03:31:19.869+01:00'
                   deleted_at: 
                   site_ids:
                   - 62
@@ -3306,17 +3348,17 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 42
-                  name: saved search name 44
-                  description: saved search description 44
-                  stored_query:
-                    uuid:
-                      eq: blah blah
-                  creator_id: 191
-                  created_at: '2020-08-31T07:02:46.712+01:00'
+                - id: 58
+                  name: region name 60
+                  description: site **description** 60
+                  notes:
+                    region_note_60: 60
+                  project_id: 61
+                  creator_id: 257
+                  updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:41.262+01:00'
-                  updated_at: '2020-09-02T02:58:41.262+01:00'
+                  created_at: '2020-09-02T03:31:20.070+01:00'
+                  updated_at: '2020-09-02T03:31:20.070+01:00'
                   deleted_at: 
                   site_ids:
                   - 63
@@ -3371,8 +3413,8 @@ paths:
                   creator_id: 261
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:41.474+01:00'
-                  updated_at: '2020-09-02T02:58:41.605+01:00'
+                  created_at: '2020-09-02T03:31:20.244+01:00'
+                  updated_at: '2020-09-02T03:31:20.406+01:00'
                   site_ids:
                   - 64
                   description_html: "<p>site <strong>description</strong> 62</p>\n"
@@ -3418,17 +3460,17 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 44
-                  name: saved search name 46
-                  description: saved search description 46
-                  stored_query:
-                    uuid:
-                      eq: blah blah
-                  creator_id: 1
-                  created_at: '2020-08-31T07:02:47.043+01:00'
+                  id: 60
+                  name: region name 63
+                  description: site **description** 63
+                  notes:
+                    region_note_63: 63
+                  project_id: 64
+                  creator_id: 267
+                  updater_id: 
                   deleter_id: 
-                  created_at: '2020-09-02T02:58:41.680+01:00'
-                  updated_at: '2020-09-02T02:58:41.680+01:00'
+                  created_at: '2020-09-02T03:31:20.526+01:00'
+                  updated_at: '2020-09-02T03:31:20.526+01:00'
                   deleted_at: 
                   site_ids:
                   - 65
@@ -3479,37 +3521,13 @@ paths:
                   updater_id: 1
                   creator_id: 271
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:47.212+01:00'
-                  updated_at: '2020-08-31T07:02:47.212+01:00'
-                  description: site description 54
-                  project_ids: []
-                  location_obfuscated: true
-                  custom_latitude: 
-                  custom_longitude: 
-                  timezone_information: 
-                  image_urls:
-                  - size: extralarge
-                    url: "/images/site/site_span4.png"
-                    width: 300
-                    height: 300
-                  - size: large
-                    url: "/images/site/site_span3.png"
-                    width: 220
-                    height: 220
-                  - size: medium
-                    url: "/images/site/site_span2.png"
-                    width: 140
-                    height: 140
-                  - size: small
-                    url: "/images/site/site_span1.png"
-                    width: 60
-                    height: 60
-                  - size: tiny
-                    url: "/images/site/site_spanhalf.png"
-                    width: 30
-                    height: 30
-                  description_html: "<p>site description 54</p>\n"
-                  description_html_tagline: site description 54
+                  deleter_id: 
+                  created_at: '2020-09-02T03:31:20.746+01:00'
+                  updated_at: '2020-09-02T03:31:20.869+01:00'
+                  site_ids:
+                  - 66
+                  description_html: "<p>site <strong>description</strong> 65</p>\n"
+                  description_html_tagline: site <strong>description</strong> 65
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3582,46 +3600,6 @@ paths:
                   created_at: 
                   updated_at: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:47.383+01:00'
-                  updated_at: '2020-08-31T07:02:47.383+01:00'
-                  description: site description 56
-                  project_ids: []
-                  location_obfuscated: true
-                  custom_latitude: 
-                  custom_longitude: 
-                  timezone_information: 
-                  image_urls:
-                  - size: extralarge
-                    url: "/images/site/site_span4.png"
-                    width: 300
-                    height: 300
-                  - size: large
-                    url: "/images/site/site_span3.png"
-                    width: 220
-                    height: 220
-                  - size: medium
-                    url: "/images/site/site_span2.png"
-                    width: 140
-                    height: 140
-                  - size: small
-                    url: "/images/site/site_span1.png"
-                    width: 60
-                    height: 60
-                  - size: tiny
-                    url: "/images/site/site_spanhalf.png"
-                    width: 30
-                    height: 30
-                  description_html: "<p>site description 56</p>\n"
-                  description_html_tagline: site description 56
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        "$ref": "#/components/schemas/site"
   "/analysis_jobs":
     get:
       summary: list analysis_jobs
@@ -3666,13 +3644,13 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:47.533+01:00'
-                  updated_at: '2020-08-31T07:02:47.533+01:00'
-                  description: job description 46
-                  saved_search_id: 47
-                  started_at: '2020-08-31T07:02:47.529+01:00'
+                  created_at: '2020-09-02T03:31:21.312+01:00'
+                  updated_at: '2020-09-02T03:31:21.312+01:00'
+                  description: job description 62
+                  saved_search_id: 63
+                  started_at: '2020-09-02T03:31:21.303+01:00'
                   overall_status: new
-                  overall_status_modified_at: '2020-08-31T07:02:47.529+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:21.303+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -3683,7 +3661,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:47.530+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:21.304+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -3730,13 +3708,13 @@ paths:
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:47.780+01:00'
-                  updated_at: '2020-08-31T07:02:47.812+01:00'
-                  description: job description 48
-                  saved_search_id: 49
-                  started_at: '2020-08-31T07:02:47.794+01:00'
+                  created_at: '2020-09-02T03:31:21.578+01:00'
+                  updated_at: '2020-09-02T03:31:21.611+01:00'
+                  description: job description 64
+                  saved_search_id: 65
+                  started_at: '2020-09-02T03:31:21.592+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-31T07:02:47.808+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:21.607+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -3747,7 +3725,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:47.809+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:21.608+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -3829,13 +3807,13 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:48.123+01:00'
-                  updated_at: '2020-08-31T07:02:48.123+01:00'
-                  description: job description 50
-                  saved_search_id: 51
-                  started_at: '2020-08-31T07:02:48.118+01:00'
+                  created_at: '2020-09-02T03:31:21.892+01:00'
+                  updated_at: '2020-09-02T03:31:21.892+01:00'
+                  description: job description 66
+                  saved_search_id: 67
+                  started_at: '2020-09-02T03:31:21.888+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-31T07:02:48.118+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:21.888+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -3846,7 +3824,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:48.119+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:21.889+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -3897,13 +3875,13 @@ paths:
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:48.290+01:00'
-                  updated_at: '2020-08-31T07:02:48.377+01:00'
-                  description: job description 52
-                  saved_search_id: 52
-                  started_at: '2020-08-31T07:02:48.285+01:00'
+                  created_at: '2020-09-02T03:31:22.042+01:00'
+                  updated_at: '2020-09-02T03:31:22.120+01:00'
+                  description: job description 68
+                  saved_search_id: 68
+                  started_at: '2020-09-02T03:31:22.037+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-31T07:02:48.286+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:22.037+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -3914,7 +3892,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:48.287+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:22.039+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -3970,13 +3948,13 @@ paths:
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:48.511+01:00'
-                  updated_at: '2020-08-31T07:02:48.600+01:00'
-                  description: job description 54
-                  saved_search_id: 54
-                  started_at: '2020-08-31T07:02:48.507+01:00'
+                  created_at: '2020-09-02T03:31:22.247+01:00'
+                  updated_at: '2020-09-02T03:31:22.333+01:00'
+                  description: job description 70
+                  saved_search_id: 70
+                  started_at: '2020-09-02T03:31:22.243+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-31T07:02:48.507+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:22.243+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -3987,7 +3965,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:48.508+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:22.244+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -4094,13 +4072,13 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-31T07:02:48.869+01:00'
-                  updated_at: '2020-08-31T07:02:48.869+01:00'
-                  description: job description 56
-                  saved_search_id: 57
-                  started_at: '2020-08-31T07:02:48.864+01:00'
+                  created_at: '2020-09-02T03:31:22.594+01:00'
+                  updated_at: '2020-09-02T03:31:22.594+01:00'
+                  description: job description 72
+                  saved_search_id: 73
+                  started_at: '2020-09-02T03:31:22.590+01:00'
                   overall_status: new
-                  overall_status_modified_at: '2020-08-31T07:02:48.865+01:00'
+                  overall_status_modified_at: '2020-09-02T03:31:22.590+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -4111,7 +4089,7 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-31T07:02:48.866+01:00'
+                  overall_progress_modified_at: '2020-09-02T03:31:22.591+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
@@ -4166,19 +4144,19 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-08-31T07:02:38.855+01:00'
-                  updated_at: '2020-08-31T07:02:38.855+01:00'
+                  created_at: '2020-09-02T03:31:10.172+01:00'
+                  updated_at: '2020-09-02T03:31:10.172+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
                 - id: 71
                   creator_id: 326
                   updater_id: 
-                  name: gen_dataset_name54
-                  description: dataset description 54
-                  created_at: '2020-08-31T07:02:49.071+01:00'
-                  updated_at: '2020-08-31T07:02:49.071+01:00'
-                  description_html: "<p>dataset description 54</p>\n"
-                  description_html_tagline: dataset description 54
+                  name: gen_dataset_name70
+                  description: dataset description 70
+                  created_at: '2020-09-02T03:31:22.754+01:00'
+                  updated_at: '2020-09-02T03:31:22.754+01:00'
+                  description_html: "<p>dataset description 70</p>\n"
+                  description_html_tagline: dataset description 70
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4214,12 +4192,12 @@ paths:
                   id: 73
                   creator_id: 1
                   updater_id: 
-                  name: gen_dataset_name56
-                  description: dataset description 56
-                  created_at: '2020-08-31T07:02:49.294+01:00'
-                  updated_at: '2020-08-31T07:02:49.294+01:00'
-                  description_html: "<p>dataset description 56</p>\n"
-                  description_html_tagline: dataset description 56
+                  name: gen_dataset_name72
+                  description: dataset description 72
+                  created_at: '2020-09-02T03:31:22.969+01:00'
+                  updated_at: '2020-09-02T03:31:22.969+01:00'
+                  description_html: "<p>dataset description 72</p>\n"
+                  description_html_tagline: dataset description 72
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4265,12 +4243,12 @@ paths:
                   id: 74
                   creator_id: 335
                   updater_id: 
-                  name: gen_dataset_name57
-                  description: dataset description 57
-                  created_at: '2020-08-31T07:02:49.415+01:00'
-                  updated_at: '2020-08-31T07:02:49.415+01:00'
-                  description_html: "<p>dataset description 57</p>\n"
-                  description_html_tagline: dataset description 57
+                  name: gen_dataset_name73
+                  description: dataset description 73
+                  created_at: '2020-09-02T03:31:23.100+01:00'
+                  updated_at: '2020-09-02T03:31:23.100+01:00'
+                  description_html: "<p>dataset description 73</p>\n"
+                  description_html_tagline: dataset description 73
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4311,11 +4289,11 @@ paths:
                   description: dataset description 75
                   name: gen_dataset_name75
                   updater_id: 1
-                  creator_id: 263
-                  created_at: '2020-08-31T07:02:49.589+01:00'
-                  updated_at: '2020-08-31T07:02:49.631+01:00'
-                  description_html: "<p>dataset description 59</p>\n"
-                  description_html_tagline: dataset description 59
+                  creator_id: 339
+                  created_at: '2020-09-02T03:31:23.242+01:00'
+                  updated_at: '2020-09-02T03:31:23.305+01:00'
+                  description_html: "<p>dataset description 75</p>\n"
+                  description_html_tagline: dataset description 75
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4361,11 +4339,11 @@ paths:
                   description: dataset description 77
                   name: gen_dataset_name77
                   updater_id: 1
-                  creator_id: 268
-                  created_at: '2020-08-31T07:02:49.765+01:00'
-                  updated_at: '2020-08-31T07:02:49.813+01:00'
-                  description_html: "<p>dataset description 61</p>\n"
-                  description_html_tagline: dataset description 61
+                  creator_id: 344
+                  created_at: '2020-09-02T03:31:23.425+01:00'
+                  updated_at: '2020-09-02T03:31:23.465+01:00'
+                  description_html: "<p>dataset description 77</p>\n"
+                  description_html_tagline: dataset description 77
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4483,19 +4461,19 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-08-31T07:02:38.855+01:00'
-                  updated_at: '2020-08-31T07:02:38.855+01:00'
+                  created_at: '2020-09-02T03:31:10.172+01:00'
+                  updated_at: '2020-09-02T03:31:10.172+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
                 - id: 79
                   creator_id: 357
                   updater_id: 
-                  name: gen_dataset_name64
-                  description: dataset description 64
-                  created_at: '2020-08-31T07:02:50.274+01:00'
-                  updated_at: '2020-08-31T07:02:50.274+01:00'
-                  description_html: "<p>dataset description 64</p>\n"
-                  description_html_tagline: dataset description 64
+                  name: gen_dataset_name80
+                  description: dataset description 80
+                  created_at: '2020-09-02T03:31:23.874+01:00'
+                  updated_at: '2020-09-02T03:31:23.874+01:00'
+                  description_html: "<p>dataset description 80</p>\n"
+                  description_html_tagline: dataset description 80
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
