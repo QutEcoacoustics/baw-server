@@ -13,6 +13,9 @@ module RendersMarkdown
         define_method("#{attr}_html".to_sym) do
           render_markdown_for(attr, inline: false)
         end
+        define_method("#{attr}_html_tagline".to_sym) do
+          render_markdown_tagline_for(attr)
+        end
       end
     end
   end
@@ -22,12 +25,12 @@ module RendersMarkdown
     CustomRender.render_markdown(read_attribute(attr), inline: inline)
   end
 
-  def render_markdown_tagline_for(attr, words: 20)
+  def render_markdown_tagline_for(attr, words: 35)
     CustomRender.render_markdown(read_attribute(attr), inline: true, words: words)
   end
 
   # @returns Hash of values to be merged into the custom fields property of filter_settings
-  def render_markdown_for_api_for(attr, words: 20)
+  def render_markdown_for_api_for(attr, words: 35)
     {
       "#{attr}_html".to_sym => render_markdown_for(attr),
       "#{attr}_html_tagline".to_sym => render_markdown_tagline_for(attr, words: words)

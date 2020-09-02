@@ -42,7 +42,7 @@ describe RendersMarkdown do
     end
 
     example 'rendering markdown tagline' do
-      # 'seeds' is the 20th word - the default truncation point
+      # 'remains' is the 35th word - the default truncation point
       # text also tests whether html tags are split during truncation
       subject.some_long_text = <<~MARKDOWN
         # **Hello darkness**, my old friend
@@ -50,12 +50,17 @@ describe RendersMarkdown do
         Because a vision softly creeping
         _Left its seeds while I was sleeping_
         And the vision that was planted in my brain
-        Still remains
-        Within the sound of silence
+        _Still remains
+        Within the sound of silence_
       MARKDOWN
+
+      expected = '<strong>Hello darkness</strong>, my old friend I’ve come to talk with you again '\
+        'Because a vision softly creeping <em>Left its seeds while I was sleeping</em> ' \
+        'And the vision that was planted in my brain <em>Still remains...</em>'
+
       expect(
         subject.render_markdown_tagline_for(:some_long_text)
-      ).to eq('<strong>Hello darkness</strong>, my old friend I’ve come to talk with you again Because a vision softly creeping <em>Left its seeds...</em>')
+      ).to eq expected
     end
 
     example 'rendering markdown tagline (different word length)' do
