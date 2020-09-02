@@ -8,11 +8,11 @@ module Baw
     # The schema parameter must be a hash of a json-schema-style structure.
     # @param factory - the name of a factory to use instead of model_name
     # @param subset - an array of properties to keep, further filtering on the schema's writeable properties
-    def body_attributes_for(model_name, factory: nil, subset: nil)
+    def body_attributes_for(model_name, factory: nil, subset: nil, factory_args: {})
       schema = model_name.to_s.classify.constantize.schema if schema.nil?
       # was using attributes_for here but it doesn't include associations!
       # full = attributes_for(model_name)
-      full = build(factory || model_name).attributes.symbolize_keys
+      full = build(factory || model_name, **factory_args).attributes.symbolize_keys
       writeable = schema[:properties]
                   .reject { |_key, value| value[:readOnly] }
                   .keys

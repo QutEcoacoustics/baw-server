@@ -62,8 +62,9 @@ Rails.application.configure do
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
-
   config.after_initialize do
   end
   # config.action_view.raise_on_missing_translations = true
+
+  config.active_storage.service = :local
 end

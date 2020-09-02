@@ -139,11 +139,9 @@ Rails.application.routes.draw do
   # audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
   # audio_recording_update_status: /audio_recordings/:id/update_status
 
-  # endpoints used by client:
-  # see:  https://github.com/QutBioacoustics/baw-client/blob/master/src/baw.paths.nobuild.js#L3
-
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'projects/:project_id/regions/filter' => 'regions#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'projects/:project_id/sites/filter' => 'sites#filter', via: [:get, :post], defaults: { format: 'json' }
 
   # routes for projects and nested resources
@@ -175,6 +173,9 @@ Rails.application.routes.draw do
     end
     # API project sites list
     resources :sites, only: [:index], defaults: { format: 'json' }
+
+    # API only: regions
+    resources :regions, except: [:edit], defaults: { format: 'json' }
   end
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
@@ -259,11 +260,14 @@ Rails.application.routes.draw do
 
   # path for orphaned sites
   get 'sites/orphans' => 'sites#orphans'
-  post 'sites/orphans/filter' => 'sites#orphans'
+  match 'sites/orphans/filter' => 'sites#orphans', via: [:get, :post], defaults: { format: 'json' }
 
   # shallow path to sites
 
   resources :sites, except: [:edit], defaults: { format: 'json' }, as: 'shallow_site'
+
+  match 'regions/filter' => 'regions#filter', via: [:get, :post], defaults: { format: 'json' }
+  resources :regions, except: [:edit], defaults: { format: 'json' }, as: 'shallow_region'
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' =>
     'progress_events#create_by_dataset_item_params',

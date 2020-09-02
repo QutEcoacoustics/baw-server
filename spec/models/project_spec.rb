@@ -8,6 +8,7 @@ describe Project, type: :model do
   end
 
   it { is_expected.to have_many :permissions }
+  it { is_expected.to have_many :regions }
   it { is_expected.to have_and_belong_to_many :sites }
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }

@@ -13,6 +13,8 @@ class Site < ApplicationRecord
   has_and_belongs_to_many :projects, -> { distinct }
   has_many :audio_recordings, inverse_of: :site
 
+  belongs_to :region, foreign_key: :region_id, inverse_of: :sites, optional: true
+
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites, optional: true
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites, optional: true
@@ -181,9 +183,9 @@ class Site < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :name, :description, :notes, :creator_id,
-                     :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at],
+                     :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id],
       render_fields: [:id, :name, :description, :notes, :creator_id,
-                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at],
+                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id],
       text_fields: [:description, :name],
       custom_fields: lambda { |item, user|
                        # item can be nil or a new record
@@ -237,6 +239,11 @@ class Site < ApplicationRecord
 
         },
         {
+          join: Region,
+          on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
+          available: true
+        },
+        {
           join: AudioRecording,
           on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
           available: true
@@ -256,32 +263,19 @@ class Site < ApplicationRecord
         **Api::Schema.all_user_stamps,
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
-        project_ids: { type: 'array', items: { type: 'integer' } },
+        project_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
         location_obfuscated: { type: 'boolean' },
         custom_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90 },
         custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180 },
         timezone_information: Api::Schema.timezone_information,
-        image_urls: Api::Schema.image_urls
+        image_urls: Api::Schema.image_urls,
+        region_id: { '$ref' => '#/components/schemas/nullableId' }
       },
       required: [
-        :id,
-        :name,
-        :description,
-        :description_html,
-        :description_html_tagline,
-        :creator_id,
-        :created_at,
-        :updater_id,
-        :updated_at,
-        :deleter_id,
-        :deleted_at,
-        :notes,
-        :project_ids,
-        :location_obfuscated,
-        :custom_latitude,
-        :custom_longitude,
-        :timezone_information,
-        :image_urls
+        :id, :name, :description, :description_html, :description_html_tagline,
+        :creator_id, :created_at, :updater_id, :updated_at, :deleter_id,
+        :deleted_at, :notes, :project_ids, :location_obfuscated, :custom_latitude,
+        :custom_longitude, :timezone_information, :image_urls, :region_id
       ]
     }.freeze
   end

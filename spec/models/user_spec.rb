@@ -34,6 +34,10 @@ describe User, type: :model do
     expect(User.new).to be_a_kind_of(TimeZoneAttribute)
   end
 
+  it { is_expected.to have_many(:created_regions) }
+  it { is_expected.to have_many(:updated_regions) }
+  it { is_expected.to have_many(:deleted_regions) }
+
   #pending "add some examples to (or delete) #{__FILE__}"
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

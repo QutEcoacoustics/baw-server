@@ -1,0 +1,3 @@
+local:
+  service: Disk
+  root: <%= Rails.root / 'public' / 'system' / 'active_storage' %>

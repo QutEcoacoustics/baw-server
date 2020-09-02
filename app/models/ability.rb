@@ -87,6 +87,7 @@ class Ability
 
       to_project(user, is_guest)
       to_permission(user)
+      to_region(user, is_guest)
       to_site(user, is_guest)
       to_audio_recording(user, is_guest)
       to_audio_event(user, is_guest)
@@ -223,6 +224,32 @@ class Ability
       check_model(permission)
       Access::Core.can?(user, :owner, permission.project)
     end
+  end
+
+  def to_region(user, _is_guest)
+    # POST      /projects/:project_id/regions                         regions#create
+    # GET       /projects/:project_id/regions/new                     regions#new
+    # GET       /projects/:project_id/regions/:id                     regions#show
+    # PATCH|PUT /projects/:project_id/regions/:id                     regions#update
+    # DELETE    /projects/:project_id/regions/:id                     regions#destroy
+    # GET       /projects/:project_id/regions                         regions#index {:format=>"json"}
+    # GET|POST  /regions/filter                                       regions#filter {:format=>"json"}
+    # and all of the above again with the shallow route
+
+    # any user, including guest, with reader permissions on project can #show a region and access #new
+    can [:show], Region do |region|
+      check_model(region)
+      Access::Core.can_any?(user, :reader, region.project)
+    end
+
+    # only owner can access these actions.
+    can [:create, :update, :destroy], Region do |region|
+      check_model(region)
+      Access::Core.can_any?(user, :owner, region.project)
+    end
+
+    # available to any user, including guest
+    can [:index, :filter, :new], Region
   end
 
   def to_site(user, _is_guest)

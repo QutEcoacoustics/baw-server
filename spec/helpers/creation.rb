@@ -15,6 +15,7 @@ module Creation
       prepare_tag
       prepare_script
 
+      prepare_region
       prepare_site
 
       prepare_audio_recording
@@ -94,6 +95,7 @@ module Creation
       prepare_permission_writer
       prepare_permission_reader
 
+      prepare_region
       prepare_site
 
       prepare_audio_recording
@@ -205,8 +207,12 @@ module Creation
       }
     end
 
+    def prepare_region
+      let!(:region) { Common.create_region(owner_user, project) }
+    end
+
     def prepare_site
-      let!(:site) { Common.create_site(owner_user, project) }
+      let!(:site) { Common.create_site(owner_user, project, region: region) }
     end
 
     def prepare_permission_owner
@@ -334,9 +340,14 @@ module Creation
         FactoryBot.create(:project, creator: creator)
       end
 
-      def create_site(creator, project)
+      def create_region(creator, project)
+        FactoryBot.create(:region, creator: creator, project: project)
+      end
+
+      def create_site(creator, project, region: nil)
         site = FactoryBot.create(:site, :with_lat_long, creator: creator)
         site.projects << project
+        site.region = region unless region.nil?
         site.save!
         site
       end
