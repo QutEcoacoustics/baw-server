@@ -95,6 +95,7 @@ module Creation
       prepare_permission_writer
       prepare_permission_reader
 
+      prepare_region
       prepare_site
 
       prepare_audio_recording

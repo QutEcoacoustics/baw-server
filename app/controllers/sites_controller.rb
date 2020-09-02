@@ -239,7 +239,9 @@ class SitesController < ApplicationController
   end
 
   def site_params
-    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, project_ids: [])
+    params.require(:site).permit(
+      :name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, :region_id, project_ids: []
+    )
   end
 
   def site_show_params
