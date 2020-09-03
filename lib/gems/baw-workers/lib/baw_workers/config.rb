@@ -248,7 +248,7 @@ module BawWorkers
           ActionMailer::Base.smtp_settings = nil
         else
           ActionMailer::Base.delivery_method = :smtp
-          ActionMailer::Base.smtp_settings = settings.mailer.smtp
+          ActionMailer::Base.smtp_settings = settings.mailer.smtp.to_h
         end
       end
 
