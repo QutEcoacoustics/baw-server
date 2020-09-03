@@ -200,6 +200,7 @@ group :test do
   gem 'rspec'
   gem 'rspec-collection_matchers'
   gem 'rspec-mocks'
+  gem 'timecop'
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false
   gem 'shoulda-matchers', '~> 4', require: false

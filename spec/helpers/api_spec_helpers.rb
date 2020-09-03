@@ -24,6 +24,16 @@ end
 Rswag::Specs::SwaggerFormatter.prepend Rswag::Specs::PatchedSwaggerFormatter
 
 RSpec.shared_context :api_spec_shared_context do
+  before do
+    # need to freeze time so that docs generation does not produce different
+    # output every time it's run. This affects timestamps in particular.
+    Timecop.freeze(Time.local(2020, 1, 2, 3, 4, 5.678))
+  end
+
+  after do
+    Timecop.return
+  end
+
   # after every api test
   after(:each) do |example|
     #puts 'i happened'
