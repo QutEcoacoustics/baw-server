@@ -12,4 +12,4 @@
             - empty_message('left') do
               No description available
           - else
-            %p= truncate(project.description_html_tagline, separator: ' ', length: 100, escape: false)
+            %p= raw truncate(project.description_html_tagline, separator: ' ', length: 100, escape: false)

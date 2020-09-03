@@ -38,7 +38,7 @@
       .thumbnail
         = image_tag @project.image.url(:span3), alt: @project.name
     .col-sm-8
-      %p= @project.description_html
+      = raw @project.description_html
   .row
     .col-sm-12
       %h2
