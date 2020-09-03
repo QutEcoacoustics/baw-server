@@ -49,7 +49,7 @@ describe 'Sites' do
         expect(response).to have_http_status(:success)
         expect(api_result).to include({
           data: hash_including({
-            project_ids: [project.id, second_project.id]
+            project_ids: match_array([project.id, second_project.id])
           })
         })
       end
@@ -69,7 +69,7 @@ describe 'Sites' do
         expect(response).to have_http_status(:success)
         expect(api_result).to include({
           data: hash_including({
-            project_ids: [project.id, second_project.id]
+            project_ids: match_array([project.id, second_project.id])
           })
         })
       end
