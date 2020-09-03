@@ -24,7 +24,7 @@ module ApplicationHelper
     return '' if value.nil?
 
     options.reverse_merge!({ ago: true })
-    time_distance = distance_of_time_in_words(Time.zone.now, value, { vague: true })
+    time_distance = distance_of_time_in_words(Time.zone.now, value, { highest_measures: 2 })
     time_distance += ' ago' if options[:ago]
     time_distance
   end
