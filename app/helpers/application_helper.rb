@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
+  require 'dotiw'
+
+  include ActionView::Helpers::DateHelper
+  include ActionView::Helpers::TextHelper
+  include ActionView::Helpers::NumberHelper
+
   def partial_exists?(path_to_partial)
     lookup_context.find_all(path_to_partial, [], true).any?
   end
