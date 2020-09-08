@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Baw
   module FactoryBotHelpers
     # A custom factory bot helper method that generates attributes in
@@ -9,7 +11,7 @@ module Baw
     # @param factory - the name of a factory to use instead of model_name
     # @param subset - an array of properties to keep, further filtering on the schema's writeable properties
     def body_attributes_for(model_name, factory: nil, subset: nil, factory_args: {})
-      schema = model_name.to_s.classify.constantize.schema if schema.nil?
+      schema = model_name.to_s.classify.constantize.schema
       # was using attributes_for here but it doesn't include associations!
       # full = attributes_for(model_name)
       full = build(factory || model_name, **factory_args).attributes.symbolize_keys

@@ -61,16 +61,9 @@ RSpec.configure do |config|
             readOnly: true
           },
           nullableId: {
-            anyOf: [
-              {
-                type: 'integer',
-                minimum: 0,
-                readOnly: true
-              },
-              {
-                type: 'null'
-              }
-            ]
+            type: ['integer', 'null'],
+            minimum: 0,
+            readOnly: true
           },
           timezone_information: {
             anyOf: [
@@ -146,6 +139,55 @@ RSpec.configure do |config|
               }
             },
             required: ['meta', 'data']
+          },
+          cms_blob: {
+            type: 'object',
+            required: [
+              'id',
+              'site_id',
+              'layout_id',
+              'parent_id',
+              'target_page_id',
+              'label',
+              'slug',
+              'full_path',
+              'content_cache',
+              'position',
+              'children_count',
+              'is_published',
+              'created_at',
+              'updated_at',
+              'children'
+            ],
+            properties: {
+              id: { '$ref' => '#/components/schemas/id' },
+              site_id: { '$ref' => '#/components/schemas/id' },
+              layout_id: { '$ref' => '#/components/schemas/id' },
+              parent_id: { '$ref' => '#/components/schemas/nullableId' },
+              target_page_id: { '$ref' => '#/components/schemas/nullableId' },
+              label: { type: 'string' },
+              slug: { type: 'string' },
+              full_path: { type: 'string', format: 'uri-reference' },
+              content_cache: { type: 'string', format: 'html' },
+              position: { type: 'integer' },
+              children_count: { type: 'integer' },
+              is_published: { type: 'boolean' },
+              created_at: { type: 'string', format: 'date-time', readOnly: true },
+              updated_at: { type: ['null', 'string'], format: 'date-time', readOnly: true },
+              children: {
+                type: 'array',
+                additionalItems: true,
+                items: {
+                  type: 'object',
+                  properties: {
+                    label: { type: 'string' },
+                    full_path: { type: 'string', format: 'uri-reference' }
+                  },
+                  additionalProperties: false
+                }
+              }
+            },
+            additionalProperties: false
           },
           project: Project.schema,
           analysis_job: AnalysisJob.schema,

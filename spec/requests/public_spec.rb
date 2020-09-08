@@ -2,156 +2,184 @@
 
 require 'rails_helper'
 
-describe 'CORS requests' do
-  expose_headers = (MediaPoll::HEADERS_EXPOSED + ['X-Archived-At', 'X-Error-Type']).join(', ')
-  allow_methods = ['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'DELETE', 'OPTIONS'].join(', ')
+def update_page(slug, text)
+  page = Comfy::Cms::Page.where(slug: slug).first
+  fragment = page.fragments.where(identifier: 'content').first
+  fragment.content = text
+  fragment.save
+end
 
-  # have to specify content type header, otherwise it gets set to application/x-www-form-urlencoded
+describe '/credits', type: :request do
+  create_standard_cms_pages
 
-  context 'CORS browser example' do
-    headers = {
-      'Host' => 'localhost:8080',
-      'Connection' => 'keep-alive',
-      'Cache-Control' => 'max-age=0',
-      'Origin' => 'http://localhost:8080',
-      'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
-      'Access-Control-Request-Headers' => 'accept, content-type',
-      'Accept' => '*/*',
-      'Referer' => 'http://localhost:8080/listen/234234?start=30&end=60',
-      'Accept-Encoding' => 'gzip, deflate, sdch',
-      'Accept-Language' => 'en-US,en;q=0.8',
-      'Content-Type' => 'text/plain'
-    }
-
-    it '1, has the expected CORS response' do
-      request_headers = headers.merge({ 'Access-Control-Request-Method' => 'PUT' })
-      options '/my_account/prefs', headers: request_headers
-
-      expect_empty_body
-      expect(response).to have_http_status(:ok)
-      expected_response = {
-        'Access-Control-Allow-Origin' => 'http://localhost:8080',
-        'Access-Control-Expose-Headers' => expose_headers,
-        'Access-Control-Allow-Credentials' => 'true',
-        'Access-Control-Allow-Methods' => allow_methods,
-        'Access-Control-Allow-Headers' => 'accept, content-type',
-        'Access-Control-Max-Age' => '7200'
-      }
-      expect_headers_to_include(expected_response)
-    end
-
-    it '2, has the expected CORS response' do
-      request_headers = headers.merge({ 'Access-Control-Request-Method' => 'POST' })
-      options '/my_account/prefs', headers: request_headers
-
-      expect_empty_body
-      expect(response).to have_http_status(:ok)
-      expected_response = {
-        'Access-Control-Allow-Origin' => 'http://localhost:8080',
-        'Access-Control-Expose-Headers' => expose_headers,
-        'Access-Control-Allow-Credentials' => 'true',
-        'Access-Control-Allow-Methods' => allow_methods,
-        'Access-Control-Allow-Headers' => 'accept, content-type',
-        'Access-Control-Max-Age' => '7200'
-      }
-      expect_headers_to_include(expected_response)
-    end
+  before do
+    update_page('credits', t = <<~MARKDOWN
+      ## If you like piña coladas
+      **And getting caught in the **rain
+      If you're not into yoga
+      If you have half a brain
+      If you like making love at midnight
+      In the dunes on the cape
+      Then I'm the love that you've looked for
+      Write to me, and escape
+    MARKDOWN
+    )
   end
 
-  context 'CORS request' do
-    default_headers = {
-      'Accept' => 'application/json',
-      'Host' => 'localhost:8080',
-      'Content-Type' => 'text/plain'
-    }
+  it 'should render the CMS page' do
+    get '/credits'
 
-    context 'valid' do
-      it 'and works with all headers' do
-        headers = default_headers.merge({
-          'Origin' => 'http://localhost:3000',
-          'Access-Control-Request-Method' => 'GET',
-          'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token'
-        })
+    expect(response_body).to include(
+      <<~HTML
+        <h2 id="if-you-like-pia-coladas">If you like piña coladas</h2>
+        <p>**And getting caught in the **rain
+        If you’re not into yoga
+        If you have half a brain
+        If you like making love at midnight
+        In the dunes on the cape
+        Then I’m the love that you’ve looked for
+        Write to me, and escape</p>
+      HTML
+    )
+  end
+end
 
-        options '/projects', headers: headers
-        expect_empty_body
-        expect(response).to have_http_status(:ok)
-        expected_response = {
-          'Access-Control-Allow-Origin' => 'http://localhost:3000',
-          'Access-Control-Expose-Headers' => expose_headers,
-          'Access-Control-Allow-Credentials' => 'true',
-          'Access-Control-Allow-Methods' => allow_methods,
-          'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
-          'Access-Control-Max-Age' => '7200'
-        }
-        expect_headers_to_include(expected_response)
-      end
+describe '/data_upload', type: :request do
+  create_standard_cms_pages
 
-      it 'and works without Access-Control-Request-Headers' do
-        # this seems to be accepted by the rails-cors gem
-        headers = default_headers.merge({
-          'Origin' => 'http://192.168.0.10:8080',
-          'Access-Control-Request-Method' => 'GET'
-        })
+  before do
+    update_page('data_upload', <<~MARKDOWN
+      ## I was tired of my lady
+      We'd been together too long
+      Like a worn out recording
+      Of a favorite song
+      So while she lay there sleeping
+      I read the paper in bed
+      And in the personal columns
+      **There was this letter I read**
+    MARKDOWN
+    )
+  end
 
-        options '/projects', headers: headers
-        expect_empty_body
-        expect(response).to have_http_status(:ok)
-        expected_response = {
-          'Access-Control-Allow-Origin' => 'http://192.168.0.10:8080',
-          'Access-Control-Expose-Headers' => expose_headers,
-          'Access-Control-Allow-Credentials' => 'true',
-          'Access-Control-Allow-Methods' => allow_methods,
-          'Access-Control-Max-Age' => '7200'
-        }
-        expect_headers_to_include(expected_response)
-      end
-    end
+  it 'should render the CMS page' do
+    get '/data_upload'
 
-    context 'is invalid' do
-      example 'without Origin' do
-        headers = {
-          'Access-Control-Request-Method' => 'Origin, Content-Type, Accept, Authorization, Token',
-          'Access-Control-Request-Headers' => 'PUT',
-          'Accept' => 'application/json'
-        }
-        options '/projects', headers: headers
+    expect(response_body).to include(
+      <<~HTML
+        <h2 id="i-was-tired-of-my-lady">I was tired of my lady</h2>
+        <p>We’d been together too long
+        Like a worn out recording
+        Of a favorite song
+        So while she lay there sleeping
+        I read the paper in bed
+        And in the personal columns
+        <strong>There was this letter I read</strong></p>
+      HTML
+    )
+  end
+end
 
-        expect(response).to have_http_status(:bad_request)
-        expect_error(400, "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
-      end
+describe '/ethics', type: :request do
+  create_standard_cms_pages
 
-      example 'without Access-Control-Request-Method' do
-        headers = {
-          'Origin' => 'http://localhost:3000',
-          'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
-          'Accept' => 'application/json'
-        }
-        options '/projects', headers: headers
+  before do
+    update_page('ethics', <<~MARKDOWN
+      ## I didn't think about my lady
+      I know that sounds kind of mean
+      But me and my old lady
+      Had fallen into the same old dull routine
+      _So I wrote to the paper_
+      Took out a personal ad
+      And though I'm nobody's poet
+      I thought it wasn't half bad
+    MARKDOWN
+    )
+  end
 
-        expect(response).to have_http_status(:bad_request)
-        expect_error(400, "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
-      end
+  it 'should render the CMS page' do
+    get '/ethics_statement'
 
-      example 'with Origin that is not allowed' do
-        headers = {
-          'Origin' => 'http://localhost-not-allowed:3000',
-          'Access-Control-Request-Method' => 'GET',
-          'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token'
-        }
+    expect(response_body).to include(
+      <<~HTML
+        <h2 id="i-didnt-think-about-my-lady">I didn’t think about my lady</h2>
+        <p>I know that sounds kind of mean
+        But me and my old lady
+        Had fallen into the same old dull routine
+        <em>So I wrote to the paper</em>
+        Took out a personal ad
+        And though I’m nobody’s poet
+        I thought it wasn’t half bad</p>
+      HTML
+    )
+  end
+end
 
-        options '/projects', headers: headers
-        expect_empty_body
-        expect(response).to have_http_status(:ok)
-        expected_response = {
-          'Access-Control-Allow-Origin' => 'http://localhost-not-allowed:3000',
-          'Access-Control-Expose-Headers' => expose_headers,
-          'Access-Control-Allow-Credentials' => 'true',
-          'Access-Control-Allow-Methods' => allow_methods,
-          'Access-Control-Max-Age' => '7200'
-        }
-        expect(response.headers).not_to match(hash_including(expected_response))
-      end
-    end
+describe '/privacy', type: :request do
+  create_standard_cms_pages
+
+  before do
+    update_page('privacy', <<~MARKDOWN
+      "Yes, I like piña coladas
+      And getting caught in the rain
+      I'm not much into health food
+      I am into champagne
+      I've got to meet you by tomorrow noon
+      And cut through all this red tape
+      At a bar called O'Malley's
+      Where we'll plan our escape"
+    MARKDOWN
+    )
+  end
+
+  it 'should render the CMS page' do
+    get '/disclaimers'
+
+    expect(response_body).to include(
+      <<~HTML
+        <p>“Yes, I like piña coladas
+        And getting caught in the rain
+        I’m not much into health food
+        I am into champagne
+        I’ve got to meet you by tomorrow noon
+        And cut through all this red tape
+        At a bar called O’Malley’s
+        Where we’ll plan our escape”</p>
+      HTML
+    )
+  end
+end
+
+describe '/', type: :request do
+  create_standard_cms_pages
+
+  before do
+    update_page('index', <<~MARKDOWN
+      "Yes, I like piña coladas
+      And getting caught in the rain
+      I'm not much into health food
+      I am into champagne
+      I've got to meet you by tomorrow noon
+      And cut through all this red tape
+      At a bar called O'Malley's
+      Where we'll plan our escape"
+    MARKDOWN
+    )
+  end
+
+  it 'should render the CMS page' do
+    get '/'
+
+    expect(response_body).to include(
+      <<~HTML
+        <p>“Yes, I like piña coladas
+        And getting caught in the rain
+        I’m not much into health food
+        I am into champagne
+        I’ve got to meet you by tomorrow noon
+        And cut through all this red tape
+        At a bar called O’Malley’s
+        Where we’ll plan our escape”</p>
+      HTML
+    )
   end
 end

@@ -209,6 +209,9 @@ organisation_names:
   github_issues_url: "url to github issues page"
   parent_site_name: "<<Brand name here>>"
   parent_site_link: "http://example.com"
+  address: |
+    10 example way
+    exemplar 4067
   custom_menu:
     header_title: Custom Menu
     items:

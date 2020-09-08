@@ -20,6 +20,8 @@ def ensure_user(user_name:, email:, password:, roles:)
   user
 end
 
+puts 'Loading application seeds...'
+
 # Main admin user must always exist, and must always have these values
 admin_user = ensure_user(
   user_name: 'Admin',
@@ -44,3 +46,5 @@ if default_dataset.blank?
   default_dataset.creator_id = admin_user.id
   default_dataset.save!(validate: false)
 end
+
+puts 'Finished loading application seeds!'

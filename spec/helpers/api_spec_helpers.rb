@@ -34,16 +34,40 @@ RSpec.shared_context :api_spec_shared_context do
     Timecop.return
   end
 
-  # after every api test
-  after(:each) do |example|
-    #puts 'i happened'
-    # include the response as an example
-    example.metadata[:response][:content] = {
+  def json_example
+    {
       'application/json' => {
         example: api_result
       }
     }
+  end
 
+  def raw_example
+    {
+      response.content_type => {
+        example: response_body
+      }
+    }
+  end
+
+  def add_example(spec_example)
+    spec_example.metadata[:response][:content] =
+      case response&.content_type
+      when %r{.*application/json.*}
+        json_example
+      when String
+        raw_example
+      else
+        {}
+      end
+  end
+
+  # after every api test
+  after(:each) do |example|
+    # include the response as an example
+    add_example(example)
+
+    next if defined?(skip_automatic_description) && skip_automatic_description
     raise 'API specs must have a model set in a `let`' if model.nil?
 
     # if a test failed, don't proceed with the following
@@ -257,9 +281,11 @@ module ApiSpecDescribeHelpers
 
     # remove accept header if we are not sending a body
     verb = metadata[:operation][:verb]
-    metadata[:operation][:consumes] = get_parent_param :baw_consumes unless [:get, :head, :options].include?(verb)
+    if metadata[:operation][:consumes].blank?
+      metadata[:operation][:consumes] = get_parent_param :baw_consumes unless [:get, :head, :options].include?(verb)
+    end
 
-    metadata[:operation][:produces] = get_parent_param :baw_produces
+    metadata[:operation][:produces] = get_parent_param :baw_produces if metadata[:operation][:produces].blank?
     metadata[:operation][:security] = get_parent_param :baw_security
     #baw_model_name = get_parent_param :baw_model_name
     #baw_body_name = get_parent_param :baw_body_name

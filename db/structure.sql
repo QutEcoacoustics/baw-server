@@ -399,6 +399,357 @@ ALTER SEQUENCE public.bookmarks_id_seq OWNED BY public.bookmarks.id;
 
 
 --
+-- Name: comfy_cms_categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_categories (
+    id bigint NOT NULL,
+    site_id integer NOT NULL,
+    label character varying NOT NULL,
+    categorized_type character varying NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_categories_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_categories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_categories_id_seq OWNED BY public.comfy_cms_categories.id;
+
+
+--
+-- Name: comfy_cms_categorizations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_categorizations (
+    id bigint NOT NULL,
+    category_id integer NOT NULL,
+    categorized_type character varying NOT NULL,
+    categorized_id integer NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_categorizations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_categorizations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_categorizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_categorizations_id_seq OWNED BY public.comfy_cms_categorizations.id;
+
+
+--
+-- Name: comfy_cms_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_files (
+    id bigint NOT NULL,
+    site_id integer NOT NULL,
+    label character varying DEFAULT ''::character varying NOT NULL,
+    description text,
+    "position" integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_files_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_files_id_seq OWNED BY public.comfy_cms_files.id;
+
+
+--
+-- Name: comfy_cms_fragments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_fragments (
+    id bigint NOT NULL,
+    record_type character varying,
+    record_id bigint,
+    identifier character varying NOT NULL,
+    tag character varying DEFAULT 'text'::character varying NOT NULL,
+    content text,
+    "boolean" boolean DEFAULT false NOT NULL,
+    datetime timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_fragments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_fragments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_fragments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_fragments_id_seq OWNED BY public.comfy_cms_fragments.id;
+
+
+--
+-- Name: comfy_cms_layouts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_layouts (
+    id bigint NOT NULL,
+    site_id integer NOT NULL,
+    parent_id integer,
+    app_layout character varying,
+    label character varying NOT NULL,
+    identifier character varying NOT NULL,
+    content text,
+    css text,
+    js text,
+    "position" integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_layouts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_layouts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_layouts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_layouts_id_seq OWNED BY public.comfy_cms_layouts.id;
+
+
+--
+-- Name: comfy_cms_pages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_pages (
+    id bigint NOT NULL,
+    site_id integer NOT NULL,
+    layout_id integer,
+    parent_id integer,
+    target_page_id integer,
+    label character varying NOT NULL,
+    slug character varying,
+    full_path character varying NOT NULL,
+    content_cache text,
+    "position" integer DEFAULT 0 NOT NULL,
+    children_count integer DEFAULT 0 NOT NULL,
+    is_published boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_pages_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_pages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_pages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_pages_id_seq OWNED BY public.comfy_cms_pages.id;
+
+
+--
+-- Name: comfy_cms_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_revisions (
+    id bigint NOT NULL,
+    record_type character varying NOT NULL,
+    record_id integer NOT NULL,
+    data text,
+    created_at timestamp without time zone
+);
+
+
+--
+-- Name: comfy_cms_revisions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_revisions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_revisions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_revisions_id_seq OWNED BY public.comfy_cms_revisions.id;
+
+
+--
+-- Name: comfy_cms_sites; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_sites (
+    id bigint NOT NULL,
+    label character varying NOT NULL,
+    identifier character varying NOT NULL,
+    hostname character varying NOT NULL,
+    path character varying,
+    locale character varying DEFAULT 'en'::character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_sites_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_sites_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_sites_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_sites_id_seq OWNED BY public.comfy_cms_sites.id;
+
+
+--
+-- Name: comfy_cms_snippets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_snippets (
+    id bigint NOT NULL,
+    site_id integer NOT NULL,
+    label character varying NOT NULL,
+    identifier character varying NOT NULL,
+    content text,
+    "position" integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_snippets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_snippets_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_snippets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_snippets_id_seq OWNED BY public.comfy_cms_snippets.id;
+
+
+--
+-- Name: comfy_cms_translations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.comfy_cms_translations (
+    id bigint NOT NULL,
+    locale character varying NOT NULL,
+    page_id integer NOT NULL,
+    layout_id integer,
+    label character varying NOT NULL,
+    content_cache text,
+    is_published boolean DEFAULT true NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: comfy_cms_translations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.comfy_cms_translations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: comfy_cms_translations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.comfy_cms_translations_id_seq OWNED BY public.comfy_cms_translations.id;
+
+
+--
 -- Name: dataset_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1071,6 +1422,76 @@ ALTER TABLE ONLY public.bookmarks ALTER COLUMN id SET DEFAULT nextval('public.bo
 
 
 --
+-- Name: comfy_cms_categories id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_categories ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_categories_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_categorizations id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_categorizations ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_categorizations_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_files id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_files ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_files_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_fragments id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_fragments ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_fragments_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_layouts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_layouts ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_layouts_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_pages id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_pages ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_pages_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_revisions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_revisions ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_revisions_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_sites id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_sites ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_sites_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_snippets id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_snippets ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_snippets_id_seq'::regclass);
+
+
+--
+-- Name: comfy_cms_translations id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_translations ALTER COLUMN id SET DEFAULT nextval('public.comfy_cms_translations_id_seq'::regclass);
+
+
+--
 -- Name: dataset_items id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1253,6 +1674,86 @@ ALTER TABLE ONLY public.audio_recordings
 
 ALTER TABLE ONLY public.bookmarks
     ADD CONSTRAINT bookmarks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_categories comfy_cms_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_categories
+    ADD CONSTRAINT comfy_cms_categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_categorizations comfy_cms_categorizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_categorizations
+    ADD CONSTRAINT comfy_cms_categorizations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_files comfy_cms_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_files
+    ADD CONSTRAINT comfy_cms_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_fragments comfy_cms_fragments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_fragments
+    ADD CONSTRAINT comfy_cms_fragments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_layouts comfy_cms_layouts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_layouts
+    ADD CONSTRAINT comfy_cms_layouts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_pages comfy_cms_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_pages
+    ADD CONSTRAINT comfy_cms_pages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_revisions comfy_cms_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_revisions
+    ADD CONSTRAINT comfy_cms_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_sites comfy_cms_sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_sites
+    ADD CONSTRAINT comfy_cms_sites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_snippets comfy_cms_snippets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_snippets
+    ADD CONSTRAINT comfy_cms_snippets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comfy_cms_translations comfy_cms_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.comfy_cms_translations
+    ADD CONSTRAINT comfy_cms_translations_pkey PRIMARY KEY (id);
 
 
 --
@@ -1646,6 +2147,139 @@ CREATE INDEX index_bookmarks_on_creator_id ON public.bookmarks USING btree (crea
 --
 
 CREATE INDEX index_bookmarks_on_updater_id ON public.bookmarks USING btree (updater_id);
+
+
+--
+-- Name: index_cms_categories_on_site_id_and_cat_type_and_label; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cms_categories_on_site_id_and_cat_type_and_label ON public.comfy_cms_categories USING btree (site_id, categorized_type, label);
+
+
+--
+-- Name: index_cms_categorizations_on_cat_id_and_catd_type_and_catd_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_cms_categorizations_on_cat_id_and_catd_type_and_catd_id ON public.comfy_cms_categorizations USING btree (category_id, categorized_type, categorized_id);
+
+
+--
+-- Name: index_cms_revisions_on_rtype_and_rid_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_cms_revisions_on_rtype_and_rid_and_created_at ON public.comfy_cms_revisions USING btree (record_type, record_id, created_at);
+
+
+--
+-- Name: index_comfy_cms_files_on_site_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_files_on_site_id_and_position ON public.comfy_cms_files USING btree (site_id, "position");
+
+
+--
+-- Name: index_comfy_cms_fragments_on_boolean; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_fragments_on_boolean ON public.comfy_cms_fragments USING btree ("boolean");
+
+
+--
+-- Name: index_comfy_cms_fragments_on_datetime; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_fragments_on_datetime ON public.comfy_cms_fragments USING btree (datetime);
+
+
+--
+-- Name: index_comfy_cms_fragments_on_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_fragments_on_identifier ON public.comfy_cms_fragments USING btree (identifier);
+
+
+--
+-- Name: index_comfy_cms_fragments_on_record_type_and_record_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_fragments_on_record_type_and_record_id ON public.comfy_cms_fragments USING btree (record_type, record_id);
+
+
+--
+-- Name: index_comfy_cms_layouts_on_parent_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_layouts_on_parent_id_and_position ON public.comfy_cms_layouts USING btree (parent_id, "position");
+
+
+--
+-- Name: index_comfy_cms_layouts_on_site_id_and_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comfy_cms_layouts_on_site_id_and_identifier ON public.comfy_cms_layouts USING btree (site_id, identifier);
+
+
+--
+-- Name: index_comfy_cms_pages_on_is_published; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_pages_on_is_published ON public.comfy_cms_pages USING btree (is_published);
+
+
+--
+-- Name: index_comfy_cms_pages_on_parent_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_pages_on_parent_id_and_position ON public.comfy_cms_pages USING btree (parent_id, "position");
+
+
+--
+-- Name: index_comfy_cms_pages_on_site_id_and_full_path; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_pages_on_site_id_and_full_path ON public.comfy_cms_pages USING btree (site_id, full_path);
+
+
+--
+-- Name: index_comfy_cms_sites_on_hostname; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_sites_on_hostname ON public.comfy_cms_sites USING btree (hostname);
+
+
+--
+-- Name: index_comfy_cms_snippets_on_site_id_and_identifier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_comfy_cms_snippets_on_site_id_and_identifier ON public.comfy_cms_snippets USING btree (site_id, identifier);
+
+
+--
+-- Name: index_comfy_cms_snippets_on_site_id_and_position; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_snippets_on_site_id_and_position ON public.comfy_cms_snippets USING btree (site_id, "position");
+
+
+--
+-- Name: index_comfy_cms_translations_on_is_published; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_translations_on_is_published ON public.comfy_cms_translations USING btree (is_published);
+
+
+--
+-- Name: index_comfy_cms_translations_on_locale; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_translations_on_locale ON public.comfy_cms_translations USING btree (locale);
+
+
+--
+-- Name: index_comfy_cms_translations_on_page_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_translations USING btree (page_id);
 
 
 --
@@ -2547,6 +3181,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20200625040615'),
 ('20200714005247'),
 ('20200831130746'),
-('20200901011916');
+('20200901011916'),
+('20200904064318');
 
 
