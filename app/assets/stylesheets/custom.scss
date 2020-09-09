@@ -179,7 +179,7 @@ h3 {
 }
 
 button.list-group-item[disabled] {
-  @extend .btn[disabled];
+  @extend .btn, [disabled];
 }
 
 .loginWidgetImage {

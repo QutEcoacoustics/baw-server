@@ -7,7 +7,20 @@ module PermissionsGroupHelpers
   STANDARD_ACTIONS = Set[:index, :show, :create, :update, :destroy, :filter, :new].freeze
   STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
-  mattr_accessor :registered_users, :route, :route_params, :request_body_options, :expected_list_items_callback, :update_attrs_subset
+  def self.extended(base)
+    base.class_attribute :registered_users, :route, :route_params, :request_body_options, :expected_list_items_callback, :update_attrs_subset
+
+    base.registered_users = Set.new
+    base.after(:all) do
+      users_not_tested = STANDARD_USERS - base.registered_users
+
+      next if users_not_tested.empty?
+
+      route = base.instance_variable_get(:'@route')
+      untested = users_not_tested.to_a.join(', ')
+      raise "Some users were not tested by the permissions spec for #{route}. Add tests for the following users: #{untested}"
+    end
+  end
 
   def given_the_route(route, &route_params)
     self.route = route
@@ -140,19 +153,6 @@ module PermissionsGroupHelpers
 
   def not_listing
     @not_listing ||= (everything - listing).freeze
-  end
-
-  def self.extended(base)
-    base.registered_users = Set.new
-    base.after(:all) do
-      users_not_tested = STANDARD_USERS - base.registered_users
-
-      next if users_not_tested.empty?
-
-      route = base.instance_variable_get(:'@route')
-      untested = users_not_tested.to_a.join(', ')
-      raise "Some users were not tested by the permissions spec for #{route}. Add tests for the following users: #{untested}"
-    end
   end
 
   private

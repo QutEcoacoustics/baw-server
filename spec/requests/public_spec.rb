@@ -15,7 +15,7 @@ describe '/credits', type: :request do
   before do
     update_page('credits', t = <<~MARKDOWN
       ## If you like piña coladas
-      **And getting caught in the **rain
+      **And getting caught in the** rain
       If you're not into yoga
       If you have half a brain
       If you like making love at midnight
@@ -32,7 +32,7 @@ describe '/credits', type: :request do
     expect(response_body).to include(
       <<~HTML
         <h2 id="if-you-like-pia-coladas">If you like piña coladas</h2>
-        <p>**And getting caught in the **rain
+        <p><strong>And getting caught in the</strong> rain
         If you’re not into yoga
         If you have half a brain
         If you like making love at midnight

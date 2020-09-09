@@ -81,7 +81,7 @@ describe 'CMS backend permissions' do
   ensures :owner, :writer, :reader, :no_access, :harvester, :anonymous,
           can: [],
           cannot: [custom_index],
-          fails_with: :found
+          fails_with: :unauthorized
 
   # invalid however triggers a middleware response the occurs before even the CMS module
   ensures :invalid,

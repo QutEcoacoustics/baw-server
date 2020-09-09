@@ -22,12 +22,12 @@ ComfortableMexicanSofa.configure do |config|
   # Module responsible for public authentication. Similar to the above. You also
   # will have access to @cms_site, @cms_layout, @cms_page so you can use them in
   # your logic. Default module doesn't do anything.
-  #   config.public_auth = 'ComfyPublicAuthentication'
+  config.public_auth = 'ComfyPublicAuthentication'
 
   # Module responsible for public authorization. It should have #authorize
   # method that returns true or false based on params and loaded instance
   # variables available for a given controller.
-  #   config.public_authorization = 'ComfyPublicAuthorization'
+  config.public_authorization = 'ComfyPublicAuthorization'
 
   # When arriving at /cms-admin you may chose to redirect to arbirtary path,
   # for example '/cms-admin/users'
@@ -94,6 +94,8 @@ ComfortableMexicanSofa.configure do |config|
   }
 end
 
+# We are not using Comfy's auth mechanism. See the Auth modules below.
+#
 # Default credentials for ComfortableMexicanSofa::AccessControl::AdminAuthentication
 # YOU REALLY WANT TO CHANGE THIS BEFORE PUTTING YOUR SITE LIVE
 #ComfortableMexicanSofa::AccessControl::AdminAuthentication.username = 'username'
@@ -102,27 +104,34 @@ end
 # Uncomment this module and `config.admin_auth` above to use custom admin authentication
 module ComfyAdminAuthentication
   def authenticate
-    redirect_to new_user_session_path unless current_user&.admin?
+    unless current_user&.admin?
+      render_error(
+        :unauthorized,
+        'Only admin users can access this route',
+        nil,
+        'ComfyAdminAuthentication::authenticate'
+      )
+    end
   end
 end
 
 # Uncomment this module and `config.admin_authorization` above to use custom admin authorization
 module ComfyAdminAuthorization
   def authorize
-    true
+    authorize! :manage, 'Cms::Site'
   end
 end
 
 # Uncomment this module and `config.public_auth` above to use custom public authentication
-# module ComfyPublicAuthentication
-#   def authenticate
-#     return true
-#   end
-# end
+module ComfyPublicAuthentication
+  def authenticate
+    true
+  end
+end
 
 # Uncomment this module and `config.public_authorization` above to use custom public authorization
-# module ComfyPublicAuthorization
-#   def authorize
-#     return true
-#   end
-# end
+module ComfyPublicAuthorization
+  def authorize
+    authorize! :read, 'Cms::Site'
+  end
+end

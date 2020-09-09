@@ -658,6 +658,8 @@ class ApplicationController < ActionController::Base
   def should_check_authorization?
     return false if devise_controller?
     return false if respond_to?(:admin_controller?) && admin_controller?
+
+    true
   end
 
   def validate_headers

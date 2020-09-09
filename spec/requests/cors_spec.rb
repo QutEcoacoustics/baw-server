@@ -8,7 +8,7 @@ describe 'CORS requests' do
 
   # have to specify content type header, otherwise it gets set to application/x-www-form-urlencoded
 
-  context 'CORS browser example' do
+  context 'CORS browser' do
     headers = {
       'Host' => 'localhost:8080',
       'Connection' => 'keep-alive',
@@ -23,7 +23,7 @@ describe 'CORS requests' do
       'Content-Type' => 'text/plain'
     }
 
-    it '1, has the expected CORS response' do
+    it 'example options request asking about the PUT method, has the expected CORS response' do
       request_headers = headers.merge({ 'Access-Control-Request-Method' => 'PUT' })
       options '/my_account/prefs', headers: request_headers
 
@@ -40,7 +40,7 @@ describe 'CORS requests' do
       expect_headers_to_include(expected_response)
     end
 
-    it '2, has the expected CORS response' do
+    it 'example options request asking about the POST method, has the expected CORS response' do
       request_headers = headers.merge({ 'Access-Control-Request-Method' => 'POST' })
       options '/my_account/prefs', headers: request_headers
 
