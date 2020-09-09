@@ -3,17 +3,18 @@
 # Adapted from https://thoughtbot.com/blog/test-rake-tasks-like-a-boss
 require 'rake'
 
-shared_context 'rake' do
-  let(:rake)      { Rake::Application.new }
+shared_context 'rake_spec_context' do
   let(:task_name) { self.class.top_level_description }
 
-  subject         { rake[task_name] }
+  subject { @rake[task_name] }
 
-  before do
-    Rake.application = rake
-    Rake.application.init
-    Rake.application.load_rakefile
-
-    Rake::Task.define_task(:environment)
+  around(:each) do |example|
+    Dir.chdir Rails.root do
+      _ = Rake.with_application { |rake|
+        rake.load_rakefile
+        @rake = rake
+        example.run
+      }
+    end
   end
 end

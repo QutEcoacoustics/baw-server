@@ -4,13 +4,13 @@ require 'rails_helper'
 require(Rails.root / 'spec' / 'helpers' / 'rake_context')
 
 describe 'baw:import_cms' do
-  include_context 'rake'
+  include_context 'rake_spec_context'
 
   its(:prerequisites) { should include('db:seed') }
 end
 
 describe 'db:seed' do
-  include_context 'rake'
+  include_context 'rake_spec_context'
 
   its(:actions) { should have_at_least(2).items }
 
