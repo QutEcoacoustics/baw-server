@@ -51,15 +51,14 @@ RSpec.shared_context :api_spec_shared_context do
   end
 
   def add_example(spec_example)
-    spec_example.metadata[:response][:content] =
-      case response&.content_type
-      when %r{.*application/json.*}
-        json_example
-      when String
-        raw_example
-      else
-        {}
-      end
+    case response&.content_type
+    when %r{.*application/json.*}
+      spec_example.metadata[:response][:content] = json_example
+    when String
+      spec_example.metadata[:response][:content] = raw_example
+    else
+      # add no example
+    end
   end
 
   # after every api test

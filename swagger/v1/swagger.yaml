@@ -8,6 +8,171 @@ produces:
 consumes:
 - application/json
 paths:
+  "/cms/{child_path}":
+    get:
+      summary: Retrieves the a child blob (rendered HTML)
+      tags:
+      - CMS
+      parameters:
+      - name: child_path
+        in: path
+        required: true
+        schema:
+          type: string
+      security: 
+      responses:
+        '200':
+          description: blob retrieved
+          content:
+            application/json:
+              example:
+                id: 2
+                site_id: 1
+                layout_id: 1
+                parent_id: 1
+                target_page_id: 
+                label: Credits
+                slug: credits
+                full_path: "/credits"
+                content_cache: |-
+                  <link href='/cms/cms-css/1/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
+
+                  <h1><%= cms_page_label() %></h1>
+                  <p>The development of this web application was an initiative of the
+                  <a href="https://www.qut.edu.au/">Queensland University of Technology’s</a>
+                  <a href="http://research.ecosounds.org/">Ecoacoustics Research Group</a>.
+                  This website makes use of a range of other technologies and libraries.</p>
+
+                  <p>More information can be found on the
+                  <a href="https://github.com/QutEcoacoustics">QutEcoacoustics</a> Github project page.</p>
+
+                  <h2 id="programs-and-libraries">Programs and libraries</h2>
+
+                  <ul>
+                    <li><a href="http://rubyonrails.org/">Ruby on Rails</a> (with a number of additional gems)</li>
+                    <li><a href="https://github.com/resque/resque">Resque</a></li>
+                    <li><a href="http://redis.io">Redis</a></li>
+                    <li>Command line audio tools:</li>
+                    <li><a href="http://www.ffmpeg.org/">ffmpeg</a> (for audio conversion and gathering audio file information)</li>
+                    <li><a href="http://sox.sourceforge.net/">SoX</a> (to create spectrograms and resample audio)</li>
+                    <li><a href="http://www.wavpack.com/">WavPack</a> (to expand compressed .wv files)</li>
+                    <li><a href="http://mp3splt.sourceforge.net/mp3splt_page/home.php">mp3split</a> (for quickly segmenting large .mp3 files)</li>
+                    <li><a href="https://angularjs.org/">AngularJS</a></li>
+                    <li><a href="https://d3js.org/">D3.js</a></li>
+                  </ul>
+
+                  <h2 id="platforms-and-services">Platforms and services</h2>
+
+                  <ul>
+                    <li><a href="https://github.com">Github</a></li>
+                    <li><a href="https://www.qriscloud.org.au/">QRISCloud</a></li>
+                    <li><a href="https://https://nectar.org.au/">nectar</a></li>
+                  </ul>
+
+
+                  <script src='/cms/cms-js/1/default/1577934245.js' type='text/javascript'></script>
+                position: 0
+                children_count: 0
+                is_published: true
+                created_at: '2020-01-02T03:04:05.677+00:00'
+                updated_at: '2020-01-02T03:04:05.677+00:00'
+                children: []
+              schema:
+                "$ref": "#/components/schemas/cms_blob"
+            text/html; charset=utf-8:
+              example: |-
+                <link href='/cms/cms-css/2/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
+
+                <h1>Credits</h1>
+                <p>The development of this web application was an initiative of the
+                <a href="https://www.qut.edu.au/">Queensland University of Technology’s</a>
+                <a href="http://research.ecosounds.org/">Ecoacoustics Research Group</a>.
+                This website makes use of a range of other technologies and libraries.</p>
+
+                <p>More information can be found on the
+                <a href="https://github.com/QutEcoacoustics">QutEcoacoustics</a> Github project page.</p>
+
+                <h2 id="programs-and-libraries">Programs and libraries</h2>
+
+                <ul>
+                  <li><a href="http://rubyonrails.org/">Ruby on Rails</a> (with a number of additional gems)</li>
+                  <li><a href="https://github.com/resque/resque">Resque</a></li>
+                  <li><a href="http://redis.io">Redis</a></li>
+                  <li>Command line audio tools:</li>
+                  <li><a href="http://www.ffmpeg.org/">ffmpeg</a> (for audio conversion and gathering audio file information)</li>
+                  <li><a href="http://sox.sourceforge.net/">SoX</a> (to create spectrograms and resample audio)</li>
+                  <li><a href="http://www.wavpack.com/">WavPack</a> (to expand compressed .wv files)</li>
+                  <li><a href="http://mp3splt.sourceforge.net/mp3splt_page/home.php">mp3split</a> (for quickly segmenting large .mp3 files)</li>
+                  <li><a href="https://angularjs.org/">AngularJS</a></li>
+                  <li><a href="https://d3js.org/">D3.js</a></li>
+                </ul>
+
+                <h2 id="platforms-and-services">Platforms and services</h2>
+
+                <ul>
+                  <li><a href="https://github.com">Github</a></li>
+                  <li><a href="https://www.qriscloud.org.au/">QRISCloud</a></li>
+                  <li><a href="https://https://nectar.org.au/">nectar</a></li>
+                </ul>
+
+
+                <script src='/cms/cms-js/2/default/1577934245.js' type='text/javascript'></script>
+  "/cms":
+    get:
+      summary: Retrieves the index blob (rendered HTML)
+      tags:
+      - CMS
+      security: 
+      parameters: []
+      responses:
+        '200':
+          description: blob retrieved
+          content:
+            application/json:
+              example:
+                id: 11
+                site_id: 3
+                layout_id: 3
+                parent_id: 
+                target_page_id: 
+                label: Home
+                slug: index
+                full_path: "/"
+                content_cache: |-
+                  <link href='/cms/cms-css/3/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
+
+                  <h1></h1>
+                  <p>Welcome! This is an Acoustic Workbench website. It is a repository of
+                  environmental audio recordings.</p>
+
+
+                  <script src='/cms/cms-js/3/default/1577934245.js' type='text/javascript'></script>
+                position: 0
+                children_count: 4
+                is_published: true
+                created_at: '2020-01-02T03:04:05.677+00:00'
+                updated_at: '2020-01-02T03:04:05.677+00:00'
+                children:
+                - label: Credits
+                  full_path: "/credits"
+                - label: Data Upload
+                  full_path: "/data_upload"
+                - label: Ethics
+                  full_path: "/ethics"
+                - label: Privacy
+                  full_path: "/privacy"
+              schema:
+                "$ref": "#/components/schemas/cms_blob"
+            text/html; charset=utf-8:
+              example: |-
+                <link href='/cms/cms-css/4/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
+
+                <h1></h1>
+                <p>Welcome! This is an Acoustic Workbench website. It is a repository of
+                environmental audio recordings.</p>
+
+
+                <script src='/cms/cms-js/4/default/1577934245.js' type='text/javascript'></script>
   "/projects/{id}":
     patch:
       summary: update project
@@ -184,9 +349,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     put:
       summary: update project
       security:
@@ -1057,9 +1220,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     get:
       summary: show site
       security:
@@ -1508,9 +1669,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     get:
       summary: show region
       security:
@@ -2026,9 +2185,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     put:
       summary: update site
       security:
@@ -2629,9 +2786,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     get:
       summary: show bookmark
       security:
@@ -2834,9 +2989,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     patch:
       summary: can't update saved_search
       security:
@@ -3562,9 +3715,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
   "/regions/new":
     get:
       summary: new region
@@ -3766,9 +3917,7 @@ paths:
       responses:
         '204':
           description: successful
-          content:
-            application/json:
-              example: 
+          content: {}
     get:
       summary: show analysis_job
       security:
@@ -4144,8 +4293,8 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-09-03T10:38:24.118+01:00'
-                  updated_at: '2020-09-03T10:38:24.118+01:00'
+                  created_at: '2020-09-09T14:53:19.332+01:00'
+                  updated_at: '2020-09-09T14:53:19.332+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
                 - id: 71
@@ -4461,8 +4610,8 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-09-03T10:38:24.118+01:00'
-                  updated_at: '2020-09-03T10:38:24.118+01:00'
+                  created_at: '2020-09-09T14:53:19.332+01:00'
+                  updated_at: '2020-09-09T14:53:19.332+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
                 - id: 79
@@ -4503,11 +4652,11 @@ components:
       minimum: 0
       readOnly: true
     nullableId:
-      anyOf:
-      - type: integer
-        minimum: 0
-        readOnly: true
-      - type: 'null'
+      type:
+      - integer
+      - 'null'
+      minimum: 0
+      readOnly: true
     timezone_information:
       anyOf:
       - type: object
@@ -4581,6 +4730,74 @@ components:
       required:
       - meta
       - data
+    cms_blob:
+      type: object
+      required:
+      - id
+      - site_id
+      - layout_id
+      - parent_id
+      - target_page_id
+      - label
+      - slug
+      - full_path
+      - content_cache
+      - position
+      - children_count
+      - is_published
+      - created_at
+      - updated_at
+      - children
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+        site_id:
+          "$ref": "#/components/schemas/id"
+        layout_id:
+          "$ref": "#/components/schemas/id"
+        parent_id:
+          "$ref": "#/components/schemas/nullableId"
+        target_page_id:
+          "$ref": "#/components/schemas/nullableId"
+        label:
+          type: string
+        slug:
+          type: string
+        full_path:
+          type: string
+          format: uri-reference
+        content_cache:
+          type: string
+          format: html
+        position:
+          type: integer
+        children_count:
+          type: integer
+        is_published:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - string
+          format: date-time
+          readOnly: true
+        children:
+          type: array
+          additionalItems: true
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              full_path:
+                type: string
+                format: uri-reference
+            additionalProperties: false
+      additionalProperties: false
     project:
       type: object
       additionalProperties: false
@@ -4610,7 +4827,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4618,7 +4836,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         deleter_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4626,7 +4845,8 @@ components:
         deleted_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         site_ids:
           type: array
@@ -4731,7 +4951,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4739,7 +4960,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         deleter_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4747,7 +4969,8 @@ components:
         deleted_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
       required:
       - id
@@ -4799,7 +5022,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4807,7 +5031,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
       required:
       - id
@@ -4849,7 +5074,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4857,7 +5083,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
       required:
       - id
@@ -4904,7 +5131,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         deleter_id:
           "$ref": "#/components/schemas/nullableId"
@@ -4912,7 +5140,8 @@ components:
         deleted_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
       required:
       - id
@@ -4963,7 +5192,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         is_last_version:
           type: boolean
@@ -5013,7 +5243,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -5021,7 +5252,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         deleter_id:
           "$ref": "#/components/schemas/nullableId"
@@ -5029,7 +5261,8 @@ components:
         deleted_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         notes:
           type: string
@@ -5104,7 +5337,8 @@ components:
           "$ref": "#/components/schemas/id"
           readOnly: true
         created_at:
-          type: date
+          type: string
+          format: date-time
           readOnly: true
         updater_id:
           "$ref": "#/components/schemas/nullableId"
@@ -5112,7 +5346,8 @@ components:
         updated_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         deleter_id:
           "$ref": "#/components/schemas/nullableId"
@@ -5120,7 +5355,8 @@ components:
         deleted_at:
           type:
           - 'null'
-          - date
+          - string
+          format: date-time
           readOnly: true
         notes:
           type: object
