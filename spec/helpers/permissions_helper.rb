@@ -222,7 +222,7 @@ module PermissionsGroupHelpers
               action.key?(:verb) &&
               action.key?(:action)
 
-    raise "item `#{item}` is not valid. It must be a standard action symbol or a hash with they keys :path and :verb and :action and :expect"
+    raise "item `#{item}` is not valid. It must be a standard action symbol or a hash with the keys :path and :verb and :action and :expect"
   end
 end
 
