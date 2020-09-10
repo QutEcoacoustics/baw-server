@@ -12,6 +12,7 @@
       "KRAMDOWN",
       "Kramdown",
       "Railtie",
+      "Timecop",
       "autoload",
       "autoloaded",
       "autoloaders",

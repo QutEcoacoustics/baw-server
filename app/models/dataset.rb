@@ -7,7 +7,7 @@ class Dataset < ApplicationRecord
   #relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets, optional: true
-  has_many :dataset_items
+  has_many :dataset_items, dependent: :destroy
   has_many :study
 
   # We have not enabled soft deletes yet since we do not support deleting datasets

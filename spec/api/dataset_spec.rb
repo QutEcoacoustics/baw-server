@@ -3,6 +3,14 @@ require 'swagger_helper'
 describe 'datasets', type: :request do
   create_entire_hierarchy
 
+  before(:each) do
+    # purely for aesthetic reasons - the date created for the seeded dataset varies
+    # and escapes the Timecop freeze. This occludes the result for the test to keep
+    # the documentation stable.
+    Dataset.default_dataset.destroy
+    allow(Dataset).to receive(:default_dataset_id).and_return(1)
+  end
+
   sends_json_and_expects_json
   with_authorization
   for_model Dataset
