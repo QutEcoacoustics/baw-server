@@ -4287,7 +4287,7 @@ paths:
                     current: http://localhost:3000/datasets?direction=asc&items=25&order_by=name&page=1
                     previous:
                     next:
-                data:
+                data: 
                 - id: 71
                   creator_id: 326
                   updater_id:
