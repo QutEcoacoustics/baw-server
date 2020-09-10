@@ -113,6 +113,10 @@ module RequestSpecExampleHelpers
     }))
   end
 
+  def expect_success
+    expect(response).to have_http_status(:success)
+  end
+
   def expect_error(status, details)
     aggregate_failures 'error response' do
       expect_json_response

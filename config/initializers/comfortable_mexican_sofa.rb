@@ -85,13 +85,13 @@ ComfortableMexicanSofa.configure do |config|
   #
   # Customize the returned content json data
   # include fragments in content json
-  config.page_to_json_options = {
+  config.page_to_json_options.merge!({
     include: {
       children: {
         only: [:full_path, :label]
       }
     }
-  }
+  })
 end
 
 # We are not using Comfy's auth mechanism. See the Auth modules below.
