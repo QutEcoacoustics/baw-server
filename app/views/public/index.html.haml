@@ -1,12 +1,8 @@
 - content_for :meta_title, t('baw.shared.links.home.title')
 - content_for :page_title, Settings.organisation_names.site_long_name
 
-- if partial_exists?('public/home')
-  = render partial: 'public/home'
-- else
-  %p
-    Welcome! This is an Acoustic Workbench website. It is a repository of environmental audio recordings.
 
+= raw (controller.render cms_page: '/').gsub(/<h1>.*<\/h1>/, '')
 
 - unless @selected_images.blank?
   .row

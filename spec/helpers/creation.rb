@@ -3,6 +3,12 @@
 module Creation
   # accessible in describe/context blocks
   module ExampleGroup # rubocop:disable Metrics/ModuleLength
+    def create_standard_cms_pages
+      before do
+        load Rails.root / 'db' / 'cms_seeds' / 'cms_seeds.rb'
+      end
+    end
+
     def create_entire_hierarchy
       prepare_users
 

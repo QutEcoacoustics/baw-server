@@ -42,13 +42,16 @@ group :server do
   gem 'rails', RAILS_VERSION
   gem 'responders', '~> 3.0.1'
 
+  # cms
+  gem 'comfortable_mexican_sofa', '~> 2.0.0'
+
   # UI HELPERS
   # -------------------------------------
   # Use SCSS for stylesheets
   gem 'sass-rails'
 
   # Use jquery as the JavaScript library
-  gem 'jquery-rails', '~> 4.2.0'
+  gem 'jquery-rails', '~> 4.3'
   # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
   #gem 'turbolinks'
   # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
@@ -199,6 +202,7 @@ group :test do
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
   gem 'rspec-collection_matchers'
+  gem 'rspec-its'
   gem 'rspec-mocks'
   gem 'timecop'
   # for profiling

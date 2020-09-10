@@ -1,10 +1,26 @@
+# frozen_string_literal: true
+
 require 'helpers/creation'
 
+# rubocop:disable Metrics/ModuleLength
 module PermissionsGroupHelpers
   STANDARD_ACTIONS = Set[:index, :show, :create, :update, :destroy, :filter, :new].freeze
   STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
-  mattr_accessor :registered_users, :route, :route_params, :factory, :factory_args, :model_name, :expected_list_items_callback, :update_attrs_subset
+  def self.extended(base)
+    base.class_attribute :registered_users, :route, :route_params, :request_body_options, :expected_list_items_callback, :update_attrs_subset
+
+    base.registered_users = Set.new
+    base.after(:all) do
+      users_not_tested = STANDARD_USERS - base.registered_users
+
+      next if users_not_tested.empty?
+
+      route = base.instance_variable_get(:'@route')
+      untested = users_not_tested.to_a.join(', ')
+      raise "Some users were not tested by the permissions spec for #{route}. Add tests for the following users: #{untested}"
+    end
+  end
 
   def given_the_route(route, &route_params)
     self.route = route
@@ -12,9 +28,37 @@ module PermissionsGroupHelpers
   end
 
   def using_the_factory(factory, model_name: factory, factory_args: nil)
-    self.factory = factory
-    self.factory_args = factory_args
-    self.model_name = model_name
+    (self.request_body_options ||= {}).merge!({
+      create: proc {
+        [
+          body_attributes_for(
+            model_name,
+            factory: factory,
+            factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
+          ),
+          :json
+        ]
+      },
+      update: proc {
+        [
+          body_attributes_for(
+            model_name,
+            factory: factory,
+            subset: update_attrs_subset,
+            factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
+          ),
+          :json
+        ]
+      }
+    })
+  end
+
+  def send_create_body(&block)
+    (self.request_body_options ||= {})[:create] = block
+  end
+
+  def send_update_body(&block)
+    (self.request_body_options ||= {})[:update] = block
   end
 
   def for_lists_expects(&expected_list_items_callback)
@@ -35,20 +79,13 @@ module PermissionsGroupHelpers
   # Designed to be used to to test all users and actions;
   # it will error if any of the standard users or actions
   # are missed.
-  def the_user(
-    user,
-    can_do:,
-    and_cannot_do: Set[],
-    fails_with: :forbidden
-  )
+  def the_user(user, can_do:, and_cannot_do: Set[], fails_with: :forbidden)
     can_do = Set.new(can_do)
     and_cannot_do = Set.new(and_cannot_do)
 
     validate_tests_all(user, can_do: can_do, and_cannot_do: and_cannot_do)
 
     ensures(user, can: can_do, cannot: and_cannot_do, fails_with: fails_with)
-
-    registered_users << user
   end
 
   # Run permissions tests for users and actions.
@@ -72,12 +109,12 @@ module PermissionsGroupHelpers
         route_params: route_params,
         user: user,
         actions: actions,
-        factory: factory,
-        factory_args: factory_args,
-        model_name: model_name,
+        request_body_options: request_body_options,
         expected_list_items_callback: expected_list_items_callback,
         update_attrs_subset: update_attrs_subset
       }
+
+      registered_users << user
     end
   end
 
@@ -118,19 +155,6 @@ module PermissionsGroupHelpers
     @not_listing ||= (everything - listing).freeze
   end
 
-  def self.extended(base)
-    base.registered_users = Set.new
-    base.after(:all) do
-      users_not_tested = STANDARD_USERS - base.registered_users
-
-      next if users_not_tested.empty?
-
-      route = base.instance_variable_get(:'@route')
-      untested = users_not_tested.to_a.join(', ')
-      raise "Some users were not tested by the permissions spec for #{route}. Add tests for the following users: #{untested}"
-    end
-  end
-
   private
 
   VERB_LOOKUP = {
@@ -146,8 +170,9 @@ module PermissionsGroupHelpers
   def validate_dsl_state
     raise 'route must be set' if route.nil?
     raise 'route parameters must be set' if route_params.nil?
-    raise 'a factory must be set' if factory.nil?
-    raise 'validate callback must be set' if expected_list_items_callback.nil?
+    if request_body_options.nil?
+      raise 'a request_body_options must be set via `using_the_factory` or `send_create_body` and `send_update_body`'
+    end
   end
 
   def validate_sets(user, can_do:, and_cannot_do:)
@@ -167,7 +192,14 @@ module PermissionsGroupHelpers
   end
 
   def normalize(item, route, expected_status, can)
-    result = VERB_LOOKUP[item] if item.is_a?(Symbol) && VERB_LOOKUP.key?(item)
+    result =
+      if item.is_a?(Symbol) && VERB_LOOKUP.key?(item)
+        VERB_LOOKUP[item]
+      elsif item.is_a?(Hash)
+        item
+      else
+        raise "Unexpected action item: #{item}"
+      end
 
     result = result.dup
     result[:action] = item if item.is_a?(Symbol)
@@ -182,7 +214,7 @@ module PermissionsGroupHelpers
 
   def validate_action_hash(action, item)
     unless [:list, :single, :nothing, :template, :created].include?(action[:expect])
-      raise "expect value #{action[:expect]} is not recognized"
+      raise "expect value #{action[:expect]} is not recognized" unless action[:expect].is_a?(Proc)
     end
 
     return if action.is_a?(Hash) &&
@@ -190,32 +222,20 @@ module PermissionsGroupHelpers
               action.key?(:verb) &&
               action.key?(:action)
 
-    raise "item `#{item}` is not valid. It must be a standard action symbol or a hash wit they keys :path and :verb and :action and :expect"
+    raise "item `#{item}` is not valid. It must be a standard action symbol or a hash with the keys :path and :verb and :action and :expect"
   end
 end
 
 RSpec.shared_examples :permissions_for do |options|
   @user = options[:user]
-  let(:factory) {
-    options[:factory]
-  }
-
-  let(:factory_args) {
-    if options[:factory_args].nil?
-      {}
-    else
-      instance_exec(&options[:factory_args])
-    end
-  }
-
-  let(:model_name) {
-    options[:model_name]
+  let(:request_body_options) {
+    options[:request_body_options]
   }
 
   let(:headers) {
     token = "#{options[:user]}_token".to_sym
     {
-      'ACCEPT' => 'application/json',
+      'ACCEPT' => defined?(request_accept) ? request_accept : 'application/json',
       'HTTP_AUTHORIZATION' => send(token)
     }
   }
@@ -233,7 +253,18 @@ RSpec.shared_examples :permissions_for do |options|
     options[:expected_list_items_callback]
   }
 
-  def send_request(action, headers, route_params, factory, model_name)
+  def get_body(action, request_body_options)
+    case action
+    when :create
+      instance_exec(&request_body_options[:create])
+    when :update
+      instance_exec(&request_body_options[:update])
+    else
+      [nil, nil]
+    end
+  end
+
+  def send_request(action, headers, route_params, request_body_options)
     verb = action[:verb]
     path = action[:path]
     action = action[:action]
@@ -241,32 +272,22 @@ RSpec.shared_examples :permissions_for do |options|
     url = path.expand(route_params)
 
     # some endpoints require a valid body is included
-    case action
-    when :create
-      body = body_attributes_for(model_name, factory: factory, factory_args: factory_args)
-      as = :json
-    when :update
-      body = body_attributes_for(model_name, factory: factory, subset: update_attrs_subset, factory_args: factory_args)
-      as = :json
-    else
-      body = nil
-    end
+    body, as = get_body(action, request_body_options)
 
     # process is the generic base method for the get, post, put, etc.. methods
     process(verb, url, headers: headers, params: body, as: as)
   end
 
   def get_expected_list_items(user, action)
-    [*instance_exec(user, action, &expected_list_items_callback)]
+    raise 'validate callback must be set' if expected_list_items_callback.nil?
+
+    Array(instance_exec(user, action, &expected_list_items_callback))
   end
 
   def validate_result(user, action, expect)
-    # parse the result and assert our subject exist
-    result = api_result
-
     case expect
     when :nothing
-      expect(result).to be_nil
+      expect(api_result).to be_nil
     when :template
       expect_data_is_hash
     when :created
@@ -275,6 +296,8 @@ RSpec.shared_examples :permissions_for do |options|
       expect_id_matches(route_params[:id])
     when :list
       expect_has_ids(get_expected_list_items(user, action))
+    when is_a?(Proc)
+      instance_exec(user, action, &expect)
     end
   end
 
@@ -285,7 +308,7 @@ RSpec.shared_examples :permissions_for do |options|
       # again add metadata to allow filtering by action
       example example_name, { action[:action] => true } do
         # first build and issue request
-        send_request(action, headers, route_params, factory, model_name)
+        send_request(action, headers, route_params, request_body_options)
 
         aggregate_failures 'Failures:' do
           expected = action[:expected_status]

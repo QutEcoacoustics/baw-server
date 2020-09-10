@@ -1,7 +1,4 @@
 - content_for :title, t('baw.shared.links.upload_audio.title')
 - @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
-- if partial_exists?('public/data_upload')
-  ~ render partial: 'public/data_upload'
-- else
-  %p No instructions are available.
+= raw (controller.render cms_page: '/data_upload').gsub(/<h1>.*<\/h1>/, '')

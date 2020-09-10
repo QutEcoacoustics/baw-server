@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # config.extend allows these methods to be used in describe/context groups
 module RequestSpecExampleGroupHelpers
 end
@@ -13,10 +15,14 @@ module RequestSpecExampleHelpers
     headers
   end
 
-  def api_result
+  def response_body
     # the != false is not redundant here... safe access could result in nil
     # which would evaluate to false and execute wrong half of conditional
-    @api_result ||= response&.body&.empty? != false ? nil : JSON.parse(response.body, symbolize_names: true)
+    @response_body ||= response&.body&.empty? != false ? nil : response.body
+  end
+
+  def api_result
+    @api_result ||= response_body.nil? ? nil : JSON.parse(response_body, symbolize_names: true)
   end
 
   def expect_json_response

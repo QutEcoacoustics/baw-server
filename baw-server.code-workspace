@@ -7,10 +7,12 @@
   "settings": {
     "cSpell.words": [
       "Bootsnap",
+      "Ecoacoustics",
       "Gemfile",
       "KRAMDOWN",
       "Kramdown",
       "Railtie",
+      "Timecop",
       "autoload",
       "autoloaded",
       "autoloaders",
@@ -26,6 +28,7 @@
       "postgresql",
       "prepend",
       "rakefile",
+      "rubocop",
       "upcase"
     ],
     "files.associations": {

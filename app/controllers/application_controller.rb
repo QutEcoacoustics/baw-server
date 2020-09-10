@@ -656,10 +656,10 @@ class ApplicationController < ActionController::Base
   end
 
   def should_check_authorization?
-    is_devise_controller = devise_controller?
-    is_admin_controller = respond_to?(:admin_controller?) && admin_controller?
+    return false if devise_controller?
+    return false if respond_to?(:admin_controller?) && admin_controller?
 
-    !is_devise_controller && !is_admin_controller
+    true
   end
 
   def validate_headers

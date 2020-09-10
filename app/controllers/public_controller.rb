@@ -19,6 +19,12 @@ class PublicController < ApplicationController
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
 
+  # Allows rendering CMS blobs
+  # TODO: remove when rails views removed
+  include ComfortableMexicanSofa::RenderMethods
+  helper Comfy::CmsHelper
+  helper CmsHelpers
+
   def index
     base_path = "#{Rails.root}/public"
     image_base = '/system/home/'
@@ -314,13 +320,13 @@ class PublicController < ApplicationController
                                .limit(7)
                            elsif Access::Core.is_admin?(current_user)
                              AudioEvent
-                               .includes([:creator, audio_recording: { site: :projects }])
+                               .includes([:creator, { audio_recording: { site: :projects } }])
                                .order(order_by_coalesce)
                                .limit(10)
                            else
                              Access::ByPermission
                                .audio_events(current_user)
-                               .includes([:updater, audio_recording: :site])
+                               .includes([:updater, { audio_recording: :site }])
                                .order(order_by_coalesce).limit(10)
                            end
   end

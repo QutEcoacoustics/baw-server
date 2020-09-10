@@ -8,21 +8,21 @@ module Api
     def self.creator_user_stamp
       {
         creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
-        created_at: { type: 'date', readOnly: true }
+        created_at: { type: 'string', format: 'date-time', readOnly: true }
       }
     end
 
     def self.updater_user_stamp
       {
         updater_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        updated_at: { type: ['null', 'date'], readOnly: true }
+        updated_at: { type: ['null', 'string'], format: 'date-time', readOnly: true }
       }
     end
 
     def self.deleter_user_stamp
       {
         deleter_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        deleted_at: { type: ['null', 'date'], readOnly: true }
+        deleted_at: { type: ['null', 'string'], format: 'date-time', readOnly: true }
       }
     end
 

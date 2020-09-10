@@ -30,7 +30,7 @@ describe 'Resque::Plugins::Status' do
       BawWorkers::Config.run_web(
         BawWorkers::Config.logger_worker,
         BawWorkers::Config.logger_mailer,
-        Resque.logger,
+        BawWorkers::Config.logger_worker,
         BawWorkers::Config.logger_audio_tools,
         Settings
       )
@@ -40,10 +40,10 @@ describe 'Resque::Plugins::Status' do
 
     it 'ensures our monkey patch exists' do
       expect(Resque::Plugins::Status::EXPIRE_STATUSES).to eq([
-                                                               'completed',
-                                                               'failed',
-                                                               'killed'
-                                                             ])
+        'completed',
+        'failed',
+        'killed'
+      ])
     end
 
     # Our monkey patch override the default TTL behaviour.

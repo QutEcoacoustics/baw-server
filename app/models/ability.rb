@@ -72,6 +72,8 @@ class Ability
     # api security endpoints for logged in users
     can [:show, :destroy], :api_security unless is_guest
 
+    to_cms(user, is_guest)
+
     if Access::Core.is_admin?(user)
       for_admin
 
@@ -124,6 +126,16 @@ class Ability
   def check_model(model)
     raise ArgumentError, 'Must have an instance of the model.' if model.nil?
     #fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
+  end
+
+  def to_cms(user, _is_guest)
+    alias_action :index, :show, to: :read
+    alias_action :create, :update, to: :manage
+
+    can [:read, :manage], 'Cms::Site' if Access::Core.is_admin?(user)
+
+    # anyone anytime can read cms blobs
+    can [:read], 'Cms::Site'
   end
 
   def for_admin
