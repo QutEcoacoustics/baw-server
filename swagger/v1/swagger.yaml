@@ -34,10 +34,15 @@ paths:
                 label: Credits
                 slug: credits
                 full_path: "/credits"
-                content_cache: |-
+                position: 0
+                children_count: 0
+                is_published: true
+                created_at: '2020-01-02T03:04:05.677+00:00'
+                updated_at: '2020-01-02T03:04:05.677+00:00'
+                content: |-
                   <link href='/cms/cms-css/1/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
 
-                  <h1><%= cms_page_label() %></h1>
+                  <h1>Credits</h1>
                   <p>The development of this web application was an initiative of the
                   <a href="https://www.qut.edu.au/">Queensland University of Technology’s</a>
                   <a href="http://research.ecosounds.org/">Ecoacoustics Research Group</a>.
@@ -71,11 +76,6 @@ paths:
 
 
                   <script src='/cms/cms-js/1/default/1577934245.js' type='text/javascript'></script>
-                position: 0
-                children_count: 0
-                is_published: true
-                created_at: '2020-01-02T03:04:05.677+00:00'
-                updated_at: '2020-01-02T03:04:05.677+00:00'
                 children: []
               schema:
                 "$ref": "#/components/schemas/cms_blob"
@@ -138,7 +138,12 @@ paths:
                 label: Home
                 slug: index
                 full_path: "/"
-                content_cache: |-
+                position: 0
+                children_count: 4
+                is_published: true
+                created_at: '2020-01-02T03:04:05.677+00:00'
+                updated_at: '2020-01-02T03:04:05.677+00:00'
+                content: |-
                   <link href='/cms/cms-css/3/default/1577934245.css' media='screen' rel='stylesheet' type='text/css' />
 
                   <h1></h1>
@@ -147,11 +152,6 @@ paths:
 
 
                   <script src='/cms/cms-js/3/default/1577934245.js' type='text/javascript'></script>
-                position: 0
-                children_count: 4
-                is_published: true
-                created_at: '2020-01-02T03:04:05.677+00:00'
-                updated_at: '2020-01-02T03:04:05.677+00:00'
                 children:
                 - label: Credits
                   full_path: "/credits"
@@ -4723,7 +4723,7 @@ components:
       - label
       - slug
       - full_path
-      - content_cache
+      - content
       - position
       - children_count
       - is_published
@@ -4748,7 +4748,7 @@ components:
         full_path:
           type: string
           format: uri-reference
-        content_cache:
+        content:
           type: string
           format: html
         position:
