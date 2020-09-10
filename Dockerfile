@@ -47,7 +47,7 @@ RUN apt-get update \
 ENV RAILS_ENV=production \
   APP_USER=${app_user} \
   APP_NAME=${app_name} \
-  BAW_SERVER_VERSION=${version}
+  BAW_SERVER_VERSION=${version} \
   # enable binstubs to take priority
   PATH=./bin:$PATH \
   BUNDLE_PATH__SYSTEM="true"
