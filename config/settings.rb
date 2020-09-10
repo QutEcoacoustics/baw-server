@@ -5,6 +5,7 @@ module BawWeb
   module Settings
     MEDIA_PROCESSOR_LOCAL = 'local'.freeze
     MEDIA_PROCESSOR_RESQUE = 'resque'.freeze
+    BAW_SERVER_VERSION_KEY = 'BAW_SERVER_VERSION'.freeze
 
     def sources
       @config_sources.map { |s| s.instance_of?(Config::Sources::YAMLSource) ? s.path : s }
@@ -25,24 +26,26 @@ module BawWeb
     def version_info
       return @version_info unless @version_info.nil?
 
-      version = File.read(Rails.root / 'VERSION').strip
-      segments = Gem::Version.create(version).send(:_segments)
+      version = ENV.fetch(BAW_SERVER_VERSION_KEY, nil)
+      version = File.read(Rails.root / 'VERSION').strip if version.blank?
+      segments = /v?(\d+)\.(\d+)\.(\d+)(?:-(\d+)-g([a-f0-9]+))?/.match(version)
       @version_info = {
-        major: segments[0],
-        minor: segments[1],
-        patch: segments[2],
-        pre: segments[3],
-        build: segments[4]
+        major: segments&.[](1).to_s,
+        minor: segments&.[](2).to_s,
+        patch: segments&.[](3).to_s,
+        pre: segments&.[](4).to_s,
+        build: segments&.[](5).to_s
       }
       @version_info
     end
 
     def version_string
-      version = "#{version_info[:major]}.#{version_info[:minor]}.#{version_info[:patch]}"
+      info = version_info
+      version = "#{info[:major]}.#{info[:minor]}.#{info[:patch]}"
 
-      version += "-#{version_info[:pre]}" unless version_info[:pre].blank?
+      version += "-#{info[:pre]}" unless info[:pre].blank?
 
-      version += "+#{version_info[:build]}" unless version_info[:build].blank?
+      version += "+#{info[:build]}" unless info[:build].blank?
 
       version
     end

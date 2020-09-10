@@ -4,6 +4,7 @@ FROM ruby:2.6-slim-buster AS baw-server-core
 
 ARG app_name=baw-server
 ARG app_user=baw_web
+ARG version=
 
 # install audio tools and other binaries
 COPY ./provision/install_audio_tools.sh ./provision/install_postgresql_client.sh  /tmp/
@@ -46,6 +47,7 @@ RUN apt-get update \
 ENV RAILS_ENV=production \
   APP_USER=${app_user} \
   APP_NAME=${app_name} \
+  BAW_SERVER_VERSION=${version}
   # enable binstubs to take priority
   PATH=./bin:$PATH \
   BUNDLE_PATH__SYSTEM="true"

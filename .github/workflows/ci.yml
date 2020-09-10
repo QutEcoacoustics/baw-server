@@ -73,7 +73,7 @@ jobs:
       # Undo permissions change
       - name: Undo Set permissions for checked out files
         run: sudo chown -R $(id -u) .
-        
+
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
@@ -110,11 +110,11 @@ jobs:
           # Docker repository to tag the image with
           repository: qutecoacoustics/workbench-server
           # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
-          #tags: # optional
+          tags: '${{steps.tagger.outputs.tag}}'
           # Automatically tags the built image with the git reference as per the readme
           tag_with_ref: true
           # Automatically tags the built image with the git short SHA as per the readme
-          tag_with_sha: true
+          #tag_with_sha: true
           # Path to the build context
           path: .
           # Path to the Dockerfile (Default is '{path}/Dockerfile')
@@ -124,11 +124,11 @@ jobs:
           # Always attempt to pull a newer version of the image
           always_pull: true
           # Comma-delimited list of build-time variables
-          #build_args: # optional
+          build_args: 'version=${{steps.tagger.outputs.tag}}'
           # Comma-delimited list of images to consider as cache sources
           #cache_froms: # optional
           # Comma-delimited list of labels to add to the built image
-          labels: '${{steps.tagger.outputs.tag}}'
+          labels: 'version=${{steps.tagger.outputs.tag}}'
           # Adds labels with git repository information to the built image
           add_git_labels: true
           # Whether to push the image
