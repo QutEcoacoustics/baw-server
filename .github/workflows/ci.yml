@@ -95,9 +95,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Find Tag
+        with:
+           fetch-depth: 200
+      - name: Calculate git describe
         id: tagger
-        uses: jimschubert/query-tag-action@v1
+        shell: pwsh
+        # the `@()` forces array output (even for single line) and the `[-1]` selects the last line
+        run: |
+          $result = @( git fetch --prune && git describe 'HEAD~' )
+          $last_line = $result[-1]
+          if ([string]::IsNullOrWhiteSpace($last_line)) {
+            Write-Output "failed to get git describe, result was: $result"
+            exit 1
+          }
+          echo "::set-output name=tag::$last_line"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v1.1.0
         with:
