@@ -1,3 +1,5 @@
+See: https://hub.docker.com/repository/docker/qutecoacoustics/sftpgo/general
+
 Taken from: https://github.com/drakkan/sftpgo/tree/master/docker/sftpgo/alpine
 
 # SFTPGo with Docker and Alpine

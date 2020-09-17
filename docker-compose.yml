@@ -20,9 +20,7 @@ services:
       POSTGRES_PASSWORD: password
   upload:
     command: serve
-    build:
-      context: ./provision/upload
-    image: workbench-upload
+    image: qutecoacoustics/sftpgo:latest
     depends_on:
       - db
     environment:
