@@ -48,7 +48,7 @@ actions:
   harvest:
     queue: harvest_<%= BawApp.env %>
     dry_run: false
-    to_do_path: ./tmp/_<%= BawApp.env %>_harvester_to_do_path
+    to_do_path: ./tmp/_harvester_to_do_path
     config_file_name: harvest.yml
     progressive_upload_directory: ./tmp/_progressive-upload/
     # top level directory for mirroring harvested files, used by dequeue workers only
@@ -132,6 +132,11 @@ api:
   host: web
   port: 3000
   user: address@example.com
+  password: password
+upload_service:
+  host: upload
+  port: 8080
+  username: upload_admin
   password: password
 harvester:
   email: address+harvester@example.com

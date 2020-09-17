@@ -1,0 +1,78 @@
+# https://github.com/drakkan/sftpgo/blob/master/docs/full-configuration.md
+common:
+  #idle_timeout:
+  # integer. 0 means standard: the files are uploaded directly to the requested
+  # path. 1 means atomic: files are uploaded to a temporary path and renamed to
+  # the requested path when the client ends the upload
+  upload_mode: 0
+  # integer. 0 means "normal mode": requests for changing permissions,
+  # owner/group and access/modification times are executed. 1 means
+  # "ignore mode": requests for changing permissions, owner/group and
+  # access/modification times are silently ignored.
+  setstat_mode: 1
+  #proxy_protocol:
+  #proxy_allowed:
+  #post_connect_hook:
+sftpd:
+  bind_port: 2022
+  bind_address: ""
+  max_auth_tries: 0
+  # everyone can read/write uploads, but execute permissions are removed
+  umask: "0111"
+  banner: ""
+  #host_keys: []
+  #kex_algorithms: []
+  #ciphers: []
+  #macs: []
+  #trusted_user_ca_keys: []
+  #login_banner_file: ''
+  enabled_ssh_commands:
+    - md5sum
+    - sha1sum
+    - cd
+    - pwd
+    - scp
+  #keyboard_interactive_auth_hook:
+  #password_authentication:
+#ftpd:
+#webdavd
+data_provider:
+  driver: postgresql
+  # from config/settings.default.yml
+  name: baw_local_development
+  # docker-compose service name
+  host: db
+  port: 5432
+  # DEV ONLY!
+  username: postgres
+  password: password
+  #sslmode: 2 # verify-ca
+  sql_tables_prefix: sftpgo_
+  manage_users: 1
+  track_quota: 0
+  #pool_size:
+  users_base_dir: /data
+  #actions:
+  #external_auth_hook:
+  #external_auth_scope:
+  #credentials_path:
+  #pre_login_program:
+  #pre_login_hook:
+  #post_login_hook:
+  #post_login_scope:
+  #check_password_hook:
+  #check_password_scope:
+  #password_hashing:
+httpd:
+  # all paths in this section are relative to config dir
+  bind_port: 8080
+  # string. Leave blank to listen on all available network interfaces. Default: "127.0.0.1"
+  bind_address: ''
+  # Use the themplates built by sftpgo
+  templates_path: /srv/sftpgo/web/templates
+  static_files_path: /srv/sftpgo/web/static
+  #backups_path: backups
+  auth_user_file: "httpd_auth"
+  # no ssl for testing
+  certificate_file: ""
+  certificate_key_file: ""

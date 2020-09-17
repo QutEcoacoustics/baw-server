@@ -110,11 +110,14 @@ shared_context 'shared_test_helpers' do
     clear_directories(paths)
   end
 
-  def clear_directories(directories)
+  def clear_directories(directories, sanity_check = '_test_')
     directories.each do |path|
-      raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
+      raise "Will not delete #{path} because it does not contain '#{sanity_check}'" unless path =~ /#{sanity_check}/
 
-      FileUtils.remove_dir path if Dir.exist? path
+      # some of these dirs are referenced on shared file systems (e.g. Docker)
+      # thus, don't remove dir, clear contents
+      path = Pathname(path)
+      path.children.each(&:rmtree) if path.exist?
     end
   end
 
@@ -130,12 +133,7 @@ shared_context 'shared_test_helpers' do
 
   def clear_harvester_to_do
     paths = [harvest_to_do_path]
-
-    paths.each do |path|
-      raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
-
-      FileUtils.remove_dir path if Dir.exist? path
-    end
+    clear_directories(paths, '/tmp/_harvester_to_do_path')
   end
 
   def get_cached_audio_paths(options)

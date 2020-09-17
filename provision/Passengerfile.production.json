@@ -1,17 +1,17 @@
 // Production configuration
 {
-    // Run the app in a production environment. The default value is "development".
-    "environment": "production",
-    // Run Passenger on port 80, the standard HTTP port.
-    "port": 80,
-    // Tell Passenger to daemonize into the background.
-    "daemonize": false,
-    // Tell Passenger to run the app as the given user. Only has effect
-    // if Passenger was started with root privileges.
-    "user": "baw_web",
-    // Passenger can display friendly error pages whenever an application fails 
-    // to start. This friendly error page presents the startup error message, 
-    // some suggestions for solving the problem, a backtrace and a dump of the
-    // environment variables.
-    "friendly_error_pages": false
-  }
+  // Run the app in a production environment. The default value is "development".
+  "environment": "production",
+  // Run Passenger on port 8888, use docker to map 80 to 8888 if needed
+  "port": 8888,
+  // Tell Passenger to daemonize into the background.
+  "daemonize": false,
+  // Tell Passenger to run the app as the given user. Only has effect
+  // if Passenger was started with root privileges.
+  "user": "baw_web",
+  // Passenger can display friendly error pages whenever an application fails
+  // to start. This friendly error page presents the startup error message,
+  // some suggestions for solving the problem, a backtrace and a dump of the
+  // environment variables.
+  "friendly_error_pages": false
+}

@@ -11,3 +11,10 @@ The next level directory is the `lib` folder. The contents of these directories 
 like root namespaces.
 
 After that, zeitwerk rules for module naming should apply.
+
+# SFTPGO Bindings
+
+We use sftpgo to set up temporary upload accounts per harvest.
+
+The code in `./sftpgo_generated_client` is generated and should NOT be modified by hand.
+The script that does this generation is in `provision/sftpgo_schema_generation.sh`.

@@ -92,7 +92,10 @@ require 'database_cleaner'
 require 'helpers/misc_helper'
 require 'fixtures/fixtures'
 
-WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
+WebMock.disable_net_connect!(allow_localhost: true, allow: [
+  'codeclimate.com',
+  Settings.upload_service.host
+])
 
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
@@ -259,5 +262,41 @@ Shoulda::Matchers.configure do |config|
   config.integrate do |with|
     with.test_framework :rspec
     with.library :rails
+  end
+end
+
+# load so-called "global" spec steps
+Dir.glob(File.expand_path('helpers/steps/**/*steps.rb', __dir__)).sort.each { |f| require f }
+# load any step file that is next to a feature file of the same name.
+# based on: https://github.com/jnicklas/turnip/pull/96#issuecomment-39579471
+RSpec.configure do |config|
+  require 'helpers/shared_test_helpers'
+  config.include_context 'shared_test_helpers', turnip: true
+  config.on_example_group_definition do |group|
+    next unless group.metadata.key?(:turnip)
+
+    feature_file = group.file_path
+
+    feature_path = Pathname.new(feature_file)
+    feature_directory = feature_path.dirname
+    conventional_step_file = feature_directory / "#{feature_path.basename('.*')}_steps.rb"
+
+    if File.exist?(conventional_step_file)
+      require conventional_step_file
+
+      conventional_module = conventional_step_file.basename('.*').to_s.split('_').each(&:capitalize!).join
+      unless Module.const_defined?(conventional_module)
+        raise NameError, "Expected module named `#{conventional_module}` to be defined in #{conventional_step_file}," \
+          ' but it has not been loaded. Is it defined?'
+      end
+
+      group.include Module.const_get(conventional_module)
+    else
+      message = ::RSpec::Core::Formatters::ConsoleCodes.wrap(
+        "Warning: Did not find conventional step file #{conventional_step_file.basename} for #{feature_path}",
+        :yellow
+      )
+      config.reporter.message(message)
+    end
   end
 end

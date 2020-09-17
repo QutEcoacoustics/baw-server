@@ -1,4 +1,4 @@
-version: "3.4"
+version: "3.8"
 services:
   redis:
     image: redis
@@ -18,12 +18,42 @@ services:
       # never, ever, ever use this is a production setup!
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
+  upload:
+    command: serve
+    build:
+      context: ./provision/upload
+    image: workbench-upload
+    depends_on:
+      - db
+    environment:
+      PUID: 1000
+      GUID: 1000
+    networks:
+      - baw_upload_network
+      - baw_db_network
+    ports:
+      - "8080:8080"
+      - "2022:2022"
+      - "8090:8090"
+    volumes:
+      - type: bind
+        source: ./provision/upload/config
+        target: /srv/sftpgo/config
+      # mount the harvester to do directory - this is where we want to allow uploads
+      - type: bind
+        # the rails app knows about this directory from config (actions/harvest/to_do_path)
+        source: ./tmp/_harvester_to_do_path
+        target: /data
+
   workers: &worker
     build:
       context: .
       target: baw-server-dev
     command: >-
       baw-workers baw:worker:run
+    depends_on:
+      - db
+      - redis
     networks:
       - baw_workers_network
     #ports:
@@ -36,27 +66,16 @@ services:
         source: ./
         target: /home/baw_web/baw-server
       # see comment on volume declaration below
-      - type: volume
-        source: baw_docker_shared_storage
-        target: /home/baw_web/baw-server/tmp
+      # - type: volume
+      #   source: baw_docker_shared_storage
+      #   target: /home/baw_web/baw-server/tmp
 
     working_dir: /home/baw_web/baw-server
-    depends_on:
-      - db
-      - redis
+
   workers_test:
     <<: *worker
     environment:
       RAILS_ENV: test
-  # upload:
-  #   image: caddy:2-alpine
-  #   volumes:
-  #     - type: volume
-  #       source: caddy_data
-  #       target: /data
-      # - type: bind
-      #   source: caddy_data
-      #   target: /data
 
   web:
     #image: qutecoacoustics/baw-server:dev
@@ -64,6 +83,11 @@ services:
       context: .
       target: baw-server-dev
     command: bundle exec rails server
+    depends_on:
+      - db
+      - redis
+      - upload
+      - workers
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
       MIGRATE_DB: "true"
@@ -76,9 +100,9 @@ services:
         source: ./
         target: /home/baw_web/baw-server
       # see comment on volume declaration below
-      - type: volume
-        source: baw_docker_shared_storage
-        target: /home/baw_web/baw-server/tmp
+      # - type: volume
+      #   source: baw_docker_shared_storage
+      #   target: /home/baw_web/baw-server/tmp
     ports:
       - "3000:3000"
       # rdebug-ide port
@@ -87,16 +111,14 @@ services:
     networks:
       - baw_db_network
       - baw_workers_network
-    depends_on:
-      - db
-      - redis
-      - workers
+      - baw_upload_network
 networks:
   # access to database should be allowed from web-host only
   # we don't really need to do this but it lets us emulate prod a little better
   # and helps ensure our workers aren't accidentally connecting.
   baw_db_network:
   baw_workers_network:
+  baw_upload_network:
 
 volumes:
   # We're using a volume mount for tmp because it offers better performance
@@ -104,7 +126,10 @@ volumes:
   # problems that bind mounts (see caching in cifs/nfs).
   # The downside to this is that we can no longer access files in /tmp on
   # out hosts for dev work.
-  baw_docker_shared_storage:
+  # 2020-09 update: we're now running in WSL2/linux hosts only. The disadvantages
+  #  of bind mounts may be negated. Additionally we want to mount sub-directories in
+  #  tmp (the default bind location for this volume) in different images which is tricky.
+  #  Thus trialing running without volume
+  #baw_docker_shared_storage:
   postgres-data:
-  caddy_data:
 

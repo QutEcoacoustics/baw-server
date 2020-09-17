@@ -46,3 +46,7 @@ vendor/bundle/*
 passenger.3000.pid
 passenger.3000.pid.lock
 rspec_results.html
+provision/upload/config/id_ecdsa
+provision/upload/config/id_ecdsa.pub
+provision/upload/config/id_rsa
+provision/upload/config/id_rsa.pub

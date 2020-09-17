@@ -23,6 +23,9 @@ module BawWorkers
                     :api_communicator,
                     :redis_communicator
 
+      # @return [BawWorkers::UploadService::Communicator]
+      attr_accessor :upload_communicator
+
       # Set up configuration from settings file.
       # @param [Hash] opts
       # @option opts [String] :settings_file (nil) path to settings file
@@ -50,6 +53,8 @@ module BawWorkers
 
         # configure logging
         configure_worker_logger(settings, is_resque_worker, is_resque_worker_fg)
+
+        configure_upload_service(settings)
 
         # configure Resque
         configure_redis(is_redis, is_test, settings)
@@ -91,6 +96,8 @@ module BawWorkers
 
         # configure logging
         configure_web_logger(core_logger, mailer_logger, audio_tools_logger, resque_logger)
+
+        configure_upload_service(settings)
 
         # configure Resque
         configure_redis(true, is_test, settings)
@@ -170,6 +177,13 @@ module BawWorkers
         )
         BawWorkers::Config.analysis_cache_helper = BawWorkers::Storage::AnalysisCache.new(
           settings.paths.cached_analysis_jobs
+        )
+      end
+
+      def configure_upload_service(settings)
+        BawWorkers::Config.upload_communicator = BawWorkers::UploadService::Communicator.new(
+          upload_service: settings.upload_service,
+          logger: BawWorkers::Config.logger_worker
         )
       end
 

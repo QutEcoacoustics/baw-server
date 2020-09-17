@@ -23,7 +23,12 @@ gem 'memoist'
 gem 'bootsnap', require: false
 
 # standardised way to validate objects
+gem 'dry-monads'
 gem 'dry-validation'
+
+# Async/promises/futures
+gem 'concurrent-ruby', '~> 1', require: 'concurrent'
+gem 'concurrent-ruby-edge', require: 'concurrent-edge'
 
 # api docs
 gem 'rswag-api'
@@ -135,10 +140,6 @@ group :server do
   # -------------------------------------
   gem 'rack-rewrite', '~> 1.5.1'
 
-  # Other Gems
-  # This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
-  gem 'concurrent-ruby', '~> 1', require: 'concurrent'
-
   # Application/webserver
   # We used to use thin for development
   gem 'thin', group: [:development, :test]
@@ -168,6 +169,10 @@ group :workers, :server do
   # source copied into repo, see lib/gems/resque-status
   # gem 'resque-status'
   gem 'resque_solo'
+
+  # Upload service API
+  # gem "sftpgo_generated_client" - required manually, see lib/gems/sftpgo_generated_client
+  gem 'typhoeus'
 end
 
 # gems that are only required on development machines or for testings
@@ -205,6 +210,8 @@ group :test do
   gem 'rspec-its'
   gem 'rspec-mocks'
   gem 'timecop'
+  # for multi-step specs
+  gem 'turnip'
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false
   gem 'shoulda-matchers', '~> 4', require: false
