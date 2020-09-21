@@ -3,10 +3,10 @@ name: Run tests, publish docker image
 on:
   push:
     paths-ignore:
-      - 'swagger/**'
+      - "swagger/**"
   pull_request:
     paths-ignore:
-      - 'swagger/**'
+      - "swagger/**"
 
 env:
   # TODO: Change variable to your image's name.
@@ -45,10 +45,6 @@ jobs:
         run: docker-compose run web echo 'database created'
         env:
           RAILS_ENV: test
-      - name: Run tests for generated sftpgo lib
-        run: |
-          cd lib/gems/sftpgo_generated_client/
-          ../../../bin/rspec
       - name: Run tests
         run: docker-compose run web rspec --format documentation --format html --out rspec_results.html
         env:
@@ -87,7 +83,6 @@ jobs:
             [skip_ci]
           file_pattern: swagger/**
 
-
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
@@ -100,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-           fetch-depth: 200
+          fetch-depth: 200
       - name: Calculate git describe
         id: tagger
         shell: pwsh
@@ -120,13 +115,13 @@ jobs:
           # Username used to log in to a Docker registry. If not set then no login will occur
           username: atruskie
           # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
-          password:  ${{ secrets.DOCKER_HUB_TOKEN }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
           # Server address of Docker registry. If not set then will default to Docker Hub
           #registry: # optional
           # Docker repository to tag the image with
           repository: qutecoacoustics/workbench-server
           # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
-          tags: '${{steps.tagger.outputs.tag}}'
+          tags: "${{steps.tagger.outputs.tag}}"
           # Automatically tags the built image with the git reference as per the readme
           tag_with_ref: true
           # Automatically tags the built image with the git short SHA as per the readme
@@ -140,11 +135,11 @@ jobs:
           # Always attempt to pull a newer version of the image
           always_pull: true
           # Comma-delimited list of build-time variables
-          build_args: 'version=${{steps.tagger.outputs.tag}}'
+          build_args: "version=${{steps.tagger.outputs.tag}}"
           # Comma-delimited list of images to consider as cache sources
           #cache_froms: # optional
           # Comma-delimited list of labels to add to the built image
-          labels: 'version=${{steps.tagger.outputs.tag}}'
+          labels: "version=${{steps.tagger.outputs.tag}}"
           # Adds labels with git repository information to the built image
           add_git_labels: true
           # Whether to push the image
