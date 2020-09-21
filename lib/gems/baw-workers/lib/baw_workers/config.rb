@@ -182,7 +182,7 @@ module BawWorkers
 
       def configure_upload_service(settings)
         BawWorkers::Config.upload_communicator = BawWorkers::UploadService::Communicator.new(
-          upload_service: settings.upload_service,
+          config: settings.upload_service,
           logger: BawWorkers::Config.logger_worker
         )
       end

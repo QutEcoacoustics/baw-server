@@ -41,8 +41,10 @@ There are two container flavours:
 
 ### Production
 
-Everything is different.
+Some things are different.
 
-- Entrypoint is `bundle exec`
+- Entrypoint is the same.
+- A single pre-deploy instance of the container is run to call `rake baw:db_prepare`
+  (so not every application booting tries to migrate at once)
 - Default command is `passenger start`
-- Out of band processes call `rake baw:db_prepare` when needed
+

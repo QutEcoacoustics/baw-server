@@ -1,4 +1,5 @@
 # https://github.com/drakkan/sftpgo/blob/master/docs/full-configuration.md
+# example config: https://github.com/drakkan/sftpgo/blob/master/sftpgo.json
 common:
   #idle_timeout:
   # integer. 0 means standard: the files are uploaded directly to the requested

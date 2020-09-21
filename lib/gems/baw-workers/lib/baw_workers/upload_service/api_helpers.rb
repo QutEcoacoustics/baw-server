@@ -22,10 +22,10 @@ module BawWorkers
       # further, the docker container is isolated to the upload directory.
       STANDARD_PERMISSIONS =
         {
-          '/': [SftpgoGeneratedClient::Permission::ALL]
+          '/' => [SftpgoClient::Permission::ALL]
         }.freeze
 
-      STANDARD_FILESYSTEM = SftpgoGeneratedClient::FilesystemConfig.new({
+      STANDARD_FILESYSTEM = SftpgoClient::FilesystemConfig.new({
         provider: FILESYSTEM_LOCAL
       }).freeze
 
@@ -35,10 +35,13 @@ module BawWorkers
         time.to_i * 1000
       end
 
-      def check_valid(model)
-        return if model.valid?
+      # Return value or raise unless valid
+      # @param [Dry::Monads::Result] result
+      # @return [Object] the unwrapped value
+      def ensure_successful_response(result)
+        return result.value! if result.success?
 
-        raise ArgumentError, "Model #{model.class} is invalid. Errors: #{model.list_invalid_properties}"
+        raise result.failure
       end
 
       def get_id(subject, target_class)
@@ -50,21 +53,6 @@ module BawWorkers
         else
           raise ArgumentError("Not a #{target_class.name} or id: #{subject}")
         end
-      end
-
-      # Squish ApiErrors and return [success, result]
-      # @return [Result]
-      def handle_error(&block)
-        result = Try[SftpgoGeneratedClient::ApiError] {
-          yield block
-        }
-
-        if result.error?
-          message = result.exception.to_s
-          @service_logger.error("Caught SftpgoGeneratedClient::ApiError: #{message}")
-        end
-
-        result.to_result
       end
     end
   end

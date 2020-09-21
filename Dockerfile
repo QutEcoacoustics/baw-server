@@ -79,7 +79,7 @@ ARG app_user=baw_web
 ENV RAILS_ENV=development
 EXPOSE 3000
 
-# install deps
+# install deps (including dev deps)
 RUN \
   # install baw-server
   bundle install \

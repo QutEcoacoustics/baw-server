@@ -24,11 +24,16 @@ gem 'bootsnap', require: false
 
 # standardised way to validate objects
 gem 'dry-monads'
+gem 'dry-struct'
 gem 'dry-validation'
 
 # Async/promises/futures
 gem 'concurrent-ruby', '~> 1', require: 'concurrent'
 gem 'concurrent-ruby-edge', require: 'concurrent-edge'
+
+# next gen http client used by sftpgo-client
+gem 'faraday'
+gem 'faraday_middleware'
 
 # api docs
 gem 'rswag-api'

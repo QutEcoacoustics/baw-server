@@ -170,6 +170,11 @@ GEM
       dry-initializer (~> 3.0)
       dry-logic (~> 1.0)
       dry-types (~> 1.4)
+    dry-struct (1.3.0)
+      dry-core (~> 0.4, >= 0.4.4)
+      dry-equalizer (~> 0.3)
+      dry-types (~> 1.3)
+      ice_nine (~> 0.11)
     dry-types (1.4.0)
       concurrent-ruby (~> 1.0)
       dry-container (~> 0.3)
@@ -207,6 +212,8 @@ GEM
       multipart-post (>= 1.2, < 3)
     faraday-http-cache (2.2.0)
       faraday (>= 0.8)
+    faraday_middleware (1.0.0)
+      faraday (~> 1.0)
     ffi (1.13.1)
     font-awesome-sass (4.6.2)
       sass (>= 3.2)
@@ -254,6 +261,7 @@ GEM
       rails-i18n
       rainbow (>= 2.2.2, < 4.0)
       terminal-table (>= 1.5.1)
+    ice_nine (0.11.2)
     jaro_winkler (1.5.4)
     jc-validates_timeliness (3.1.1)
       timeliness (~> 0.3.7)
@@ -599,11 +607,14 @@ DEPENDENCIES
   devise-i18n
   dotiw
   dry-monads
+  dry-struct
   dry-validation
   enumerize
   exception_notification
   factory_bot_rails
   faker
+  faraday
+  faraday_middleware
   font-awesome-sass (~> 4.6.2)
   github_changelog_generator
   haml (~> 5.1.2)
