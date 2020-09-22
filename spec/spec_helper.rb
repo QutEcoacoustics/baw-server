@@ -53,6 +53,10 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]
+
+    # Configures the maximum character length that RSpec will print while
+    # formatting an object
+    c.max_formatted_output_length = 1000
   end
 
   # Many RSpec users commonly either run the entire suite or an individual

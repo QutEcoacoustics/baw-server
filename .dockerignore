@@ -8,3 +8,9 @@ log/*
 # they'll available for running tests when we run the docker container with
 # a mount overlay
 spec/
+.devcontainer
+.github
+.vscode
+
+*.bak
+rspec_results.html

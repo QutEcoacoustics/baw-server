@@ -21,7 +21,7 @@ RSpec.configure do |config|
     'v1/swagger.yaml' => {
       openapi: '3.0.1',
       info: {
-        title: 'BAW API',
+        title: 'Acoustic Workbench API',
         version: 'v2'
       },
       produces: [
@@ -36,7 +36,7 @@ RSpec.configure do |config|
           url: 'https://{defaultHost}',
           variables: {
             defaultHost: {
-              default: Settings.host.name
+              default: 'localhost'
             }
           }
         }

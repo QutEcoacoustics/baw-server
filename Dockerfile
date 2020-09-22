@@ -28,13 +28,14 @@ RUN apt-get update \
   # install audio tools and other binaries
   && /tmp/install_audio_tools.sh \
   && rm -rf /tmp/*.sh \
-  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /var/lib/apt/lists/*
+RUN \
   # create a user for the app
   # -D is for defaults, which includes NO PASSWORD
   # adduser myappuser
   # we use useradd instead of adduser, since it can be done without any interactivity
   # might need to do some other stuff achieve the full effect of adduser.
-  && groupadd -g 1000 ${app_user} \
+  groupadd -g 1000 ${app_user} \
   && useradd -u 1000 -g ${app_user} ${app_user} \
   && mkdir -p /home/${app_user}/${app_name} \
   && chown -R ${app_user}:${app_user} /home/${app_user} \
@@ -78,7 +79,7 @@ ARG app_user=baw_web
 ENV RAILS_ENV=development
 EXPOSE 3000
 
-# install deps
+# install deps (including dev deps)
 RUN \
   # install baw-server
   bundle install \
@@ -101,7 +102,7 @@ FROM baw-server-core AS baw-server
 
 ARG app_name=baw-server
 ARG app_user=baw_web
-EXPOSE 80
+EXPOSE 8888
 
 # install deps
 # skip installing gem documentation
@@ -116,6 +117,13 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 # copy the passenger production config
 # use a mount/volume to override this file for other environments
 COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
+
+# asign permissions to special things
+RUN chmod a+x ./provision/*.sh && \
+  chmod a+x ./bin/*  && \
+  # generate assets
+  # TODO: remove asset generation when done removing rails views
+  rake assets:precompile
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only

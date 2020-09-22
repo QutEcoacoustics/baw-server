@@ -91,4 +91,29 @@ describe 'Settings' do
       expect(Settings.version_string).to eq('99.88.77-66+0123459')
     end
   end
+
+  describe 'the upload service settings' do
+    example 'validation is done for the upload_service key' do
+      config = ::Config::Options.new
+      without_upload = Settings.to_hash.except(:upload_service)
+      config.add_source!(without_upload)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /upload_service: is missing/)
+    end
+
+    [:host, :port, :username, :password].each do |key|
+      example "validation is done for sub-key #{key} for upload_service" do
+        config = ::Config::Options.new
+        copy = Settings.to_hash
+        copy[:upload_service].delete(key)
+        config.add_source!(copy)
+
+        expect {
+          config.reload!
+        }.to raise_error(Config::Validation::Error, /#{key}: is missing/)
+      end
+    end
+  end
 end

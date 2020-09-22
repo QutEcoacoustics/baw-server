@@ -17,6 +17,9 @@ module BawApp
 
   module_function
 
+  # Returns the root path of the app. Similar to Rails.root but does not depend
+  # on Rails being defined.
+  # @returns [Pathname] - for the root of the application
   def root
     @root ||= Pathname.new("#{__dir__}/../../../..").cleanpath
   end
@@ -49,6 +52,11 @@ module BawApp
 
   def test?
     ENV['RUNNING_RSPEC'] == 'yes' || env == 'test'
+  end
+
+  # Returns true if environment is development? or test?
+  def dev_or_test?
+    development? || test?
   end
 
   # currently a no-op, thinking about collapsing the concept of initializers and patches

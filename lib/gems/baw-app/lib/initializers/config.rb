@@ -5,6 +5,13 @@ class BawConfigContract < Dry::Validation::Contract
   schema do
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
+
+    required(:upload_service).hash do
+      required(:host).filled(:string)
+      required(:port).value(:integer, gt?: 0)
+      required(:username).filled(:string)
+      required(:password).filled(:string)
+    end
   end
 
   rule(:audio_recording_max_overlap_sec, :audio_recording_min_duration_sec) do
