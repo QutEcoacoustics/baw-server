@@ -120,10 +120,7 @@ COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Pas
 
 # asign permissions to special things
 RUN chmod a+x ./provision/*.sh && \
-  chmod a+x ./bin/*  && \
-  # generate assets
-  # TODO: remove asset generation when done removing rails views
-  rake assets:precompile
+  chmod a+x ./bin/*
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only
