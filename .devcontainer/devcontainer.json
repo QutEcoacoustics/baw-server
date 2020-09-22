@@ -39,6 +39,7 @@
     "connorshea.vscode-ruby-test-adapter",
     "knisterpeter.vscode-github",
     "castwide.ruby-debug",
-    "pavlitsky.yard"
+    "pavlitsky.yard",
+    "stevejpurves.cucumber"
   ]
 }

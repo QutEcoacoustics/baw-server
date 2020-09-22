@@ -12,7 +12,7 @@ describe BawWorkers::Harvest::Action do
   before(:each) do
     BawWorkers::ResqueApi.clear_queue(queue_name)
 
-    FileUtils.rm_rf(harvest_to_do_path) if Dir.exist?(harvest_to_do_path)
+    clear_harvester_to_do
   end
 
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }

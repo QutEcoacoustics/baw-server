@@ -33,6 +33,7 @@ services:
       - "8080:8080"
       - "2022:2022"
       - "8090:8090"
+    restart: on-failure
     volumes:
       - type: bind
         source: ./provision/upload/config

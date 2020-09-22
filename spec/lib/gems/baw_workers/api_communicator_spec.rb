@@ -66,10 +66,17 @@ describe BawWorkers::ApiCommunicator do
     end
 
     it 'should fail on bad request' do
-      endpoint_access = default_uri + '/does_not_exist'
-      expect {
-        api.send_request('will fail', :get, host, port, endpoint_access)
-      }.to raise_error
+      endpoint_access = default_uri
+      not_found_request = stub_request(:get, endpoint_access)
+                          .to_timeout
+
+      aggregate_failures do
+        expect {
+          api.send_request('will fail', :get, host, port, endpoint_access)
+        }.to raise_error(Timeout::Error)
+
+        expect(not_found_request).to have_been_made.once
+      end
     end
   end
 
@@ -170,7 +177,7 @@ describe BawWorkers::ApiCommunicator do
                  auth_token: auth_token
                )).to include({
 
-                             })
+               })
         expect(access_request).to have_been_made.once
       end
 
@@ -224,7 +231,7 @@ describe BawWorkers::ApiCommunicator do
                  auth_token: auth_token
                )).to include({
 
-                             })
+               })
         expect(access_request).to have_been_made.once
       end
 

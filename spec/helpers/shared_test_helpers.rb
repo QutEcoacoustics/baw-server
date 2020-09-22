@@ -110,6 +110,11 @@ shared_context 'shared_test_helpers' do
     clear_directories(paths)
   end
 
+  def clear_harvester_to_do
+    paths = [harvest_to_do_path]
+    clear_directories(paths, '/tmp/_harvester_to_do_path')
+  end
+
   def clear_directories(directories, sanity_check = '_test_')
     directories.each do |path|
       raise "Will not delete #{path} because it does not contain '#{sanity_check}'" unless path =~ /#{sanity_check}/
@@ -125,6 +130,21 @@ shared_context 'shared_test_helpers' do
     end
   end
 
+  def expect_empty_directories(directories)
+    aggregate_failures do
+      directories.each do |path|
+        path = Pathname(path)
+        next unless path.exist?
+
+        expect(path.empty?).to be(true), lambda {
+          children = path.children.each(&:to_s).join("\n")
+
+          "Expected #{path} to be empty but it contained:\n#{children}"
+        }
+      end
+    end
+  end
+
   def make_original_audio
     paths = Settings.paths.original_audios
 
@@ -133,11 +153,6 @@ shared_context 'shared_test_helpers' do
 
       FileUtils.mkdir path unless Dir.exist? path
     end
-  end
-
-  def clear_harvester_to_do
-    paths = [harvest_to_do_path]
-    clear_directories(paths, '/tmp/_harvester_to_do_path')
   end
 
   def get_cached_audio_paths(options)

@@ -77,24 +77,35 @@ module UploadServiceSteps
   end
 
   step 'I :on_off the user' do |enabled|
-    BawWorkers::Config.upload_communicator.set_user_status(@user, enabled: enabled)
+    result = BawWorkers::Config.upload_communicator.set_user_status(@user, enabled: enabled)
+
+    expect(result).to eq(SftpgoClient::ApiResponse.new(message: 'User updated'))
   end
 
   step 'the user should expire in 7 days' do
     expect(@user.expiration_date).to be_within(60_000).of((Time.now + 7.days).to_i * 1000)
   end
 
-  step 'I :should upload the :file file' do |should, file|
-    @upload_path = Fixtures.send(file.to_sym)
+  def run_curl(command, should_work:)
     # upload with curl since container doesn't have scp/sftp installed and it is
     # not worth adding the tools for one test
-    `curl --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://upload:2022"`
+    output = `#{command} -v 2>&1`
 
-    if should
-      expect($CHILD_STATUS.exitstatus).to be_zero
+    message = -> { "Expected exit code 0, got #{$CHILD_STATUS.exitstatus}.\nCommand: #{command}\nOutput & errpr:\n#{output}" }
+    if should_work
+      expect($CHILD_STATUS.exitstatus).to be_zero, message
     else
-      expect($CHILD_STATUS.exitstatus).to_not be_zero
+      expect($CHILD_STATUS.exitstatus).to_not be_zero, message
     end
+  end
+
+  step 'I :should upload the :file file' do |should, file|
+    @upload_path = Fixtures.send(file.to_sym)
+
+    run_curl(
+      %(curl --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://upload:2022"),
+      should_work: should
+    )
   end
 
   step 'it should exist in the harvester directory, in the user directory' do
@@ -106,9 +117,10 @@ module UploadServiceSteps
   step 'I upload:' do |table|
     @users = table.rows.map { |(file, to, expected)|
       send_path = Fixtures.send(file.to_sym)
-      `curl --user "#{@username}:#{@password}" -T #{send_path} -k "sftp://upload:2022#{to}" --ftp-create-dirs`
-
-      expect($CHILD_STATUS.exitstatus).to be_zero
+      run_curl(
+        %(curl --user "#{@username}:#{@password}" -T #{send_path} -k "sftp://upload:2022#{to}" --ftp-create-dirs),
+        should_work: true
+      )
 
       expected_path = Pathname(harvest_to_do_path) / @username / expected / send_path.basename
       expect(File).to exist(expected_path)
@@ -120,18 +132,15 @@ module UploadServiceSteps
     user_dir.glob('**/*.*') do |file_path|
       remote_path = file_path.relative_path_from(user_dir)
       command = %(curl --user "#{@username}:#{@password}" -Q '-RM "#{remote_path}"' "sftp://upload:2022" --insecure)
-      `#{command}`
-
-      expect($CHILD_STATUS.exitstatus).to be_zero
+      run_curl(command, should_work: true)
       expect(file_path).to_not exist
     end
 
     user_dir.glob('**/*/').sort_by { |x| -x.to_s.count('/') }.each do |dir_path|
       remote_path = dir_path.relative_path_from(user_dir)
       command = %(curl --user "#{@username}:#{@password}" -Q '-RMDIR "#{remote_path}"' "sftp://upload:2022" --insecure)
-      `#{command}`
+      run_curl(command, should_work: true)
 
-      expect($CHILD_STATUS.exitstatus).to be_zero
       expect(dir_path).to_not exist
     end
   end

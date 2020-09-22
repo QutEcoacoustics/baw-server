@@ -52,7 +52,7 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'no storage directories exist' do
-    expect(analysis_cache.existing_dirs).to be_empty
+    expect_empty_directories(analysis_cache.existing_dirs)
   end
 
   it 'paths match settings' do

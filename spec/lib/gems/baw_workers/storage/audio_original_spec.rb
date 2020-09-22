@@ -30,7 +30,7 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'no storage directories exist' do
-    expect(audio_original.existing_dirs).to be_empty
+    expect_empty_directories(audio_original.existing_dirs)
   end
 
   it 'possible dirs match settings' do

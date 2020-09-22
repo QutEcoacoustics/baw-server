@@ -44,7 +44,7 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   it 'no storage directories exist' do
-    expect(spectrogram_cache.existing_dirs).to be_empty
+    expect_empty_directories(spectrogram_cache.existing_dirs)
   end
 
   it 'paths match settings' do

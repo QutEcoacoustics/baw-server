@@ -36,7 +36,7 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   it 'no storage directories exist' do
-    expect(audio_cache.existing_dirs).to be_empty
+    expect_empty_directories(audio_cache.existing_dirs)
   end
 
   it 'paths match settings' do

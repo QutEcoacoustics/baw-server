@@ -67,7 +67,7 @@ module BawWorkers
     def exists(key, opts = {})
       key = add_namespace(key) unless opts[:no_namespace]
 
-      @redis.exists(key)
+      @redis.exists?(key)
     end
 
     # @param [String] key
