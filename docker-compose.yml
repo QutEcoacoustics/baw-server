@@ -47,12 +47,13 @@ services:
   workers: &worker
     build:
       context: .
-      target: baw-server-dev
     command: >-
       baw-workers baw:worker:run
     depends_on:
       - db
       - redis
+    environment:
+      RAILS_ENV: ${RAILS_ENV:-development}
     networks:
       - baw_workers_network
     #ports:
@@ -77,10 +78,8 @@ services:
       RAILS_ENV: test
 
   web:
-    #image: qutecoacoustics/baw-server:dev
     build:
       context: .
-      target: baw-server-dev
     command: bundle exec rails server
     depends_on:
       - db
@@ -131,4 +130,3 @@ volumes:
   #  Thus trialing running without volume
   #baw_docker_shared_storage:
   postgres-data:
-

@@ -1,7 +1,6 @@
 # Debian releases:
 #
-FROM ruby:2.6-slim-buster AS baw-server-core
-
+FROM ruby:2.6-slim-buster
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -64,50 +63,23 @@ RUN \
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}
 
+ENTRYPOINT [ "./provision/entrypoint.sh" ]
+CMD [ "passenger", "start" ]
+# used for prod
+EXPOSE 8888
+# used for dev
+EXPOSE 3000
+VOLUME [ "/data" ]
+
 # add base dependency files for bundle install (so we don't invalidate docker cache)
 COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
-VOLUME [ "/data" ]
-
-#
-# For development
-#
-FROM baw-server-core AS baw-server-dev
-
-ARG app_name=baw-server
-ARG app_user=baw_web
-ENV RAILS_ENV=development
-EXPOSE 3000
-
-# install deps (including dev deps)
-RUN \
-  # install baw-server
-  bundle install \
-  # install docs for dev work
-  && solargraph download-core \
-  && solargraph bundle
-
-# Add the Rails app
-COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
-
-# precompile passenger standalone
-#RUN bundle exec passenger start --runtime-check-only
-ENTRYPOINT [ "./provision/entrypoint.sh" ]
-CMD []
-
-#
-# For production/staging
-#
-FROM baw-server-core AS baw-server
-
-ARG app_name=baw-server
-ARG app_user=baw_web
-EXPOSE 8888
-
 # install deps
 # skip installing gem documentation
-RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
-  && bundle config set without development test \
+RUN \
+  # We're trialing a simpler container setup
+  #echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
+  bundle config set without development test \
   # install baw-server
   && bundle install
 
@@ -116,14 +88,14 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 
 # copy the passenger production config
 # use a mount/volume to override this file for other environments
+#
+# For development we bind mount over the root of the app with development version
+# Thus there is no conflict here
 COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 # asign permissions to special things
-RUN chmod a+x ./provision/*.sh && \
-  chmod a+x ./bin/*
+RUN  chmod a+x ./provision/*.sh \
+  && chmod a+x ./bin/*
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only
-
-ENTRYPOINT [ "./provision/entrypoint.sh" ]
-CMD [ "passenger", "start" ]
