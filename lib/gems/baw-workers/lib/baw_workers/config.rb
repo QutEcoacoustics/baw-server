@@ -337,7 +337,9 @@ module BawWorkers
         # Now instead of patching, just don't even start - fail fast!
         return if BawWorkers::Config.logger_worker.formatter.is_a?(BawWorkers::MultiLogger::CustomFormatter)
 
-        raise 'Resque overwrote the default formatter!'
+        warn 'WARNING: Resque overwrote the default formatter!'
+
+        BawWorkers::Config.logger_worker.formatter = BawWorkers::MultiLogger::CustomFormatter.new
       end
 
       def format_result(settings, is_test, context, settings_files)
