@@ -104,14 +104,14 @@ end
 # Uncomment this module and `config.admin_auth` above to use custom admin authentication
 module ComfyAdminAuthentication
   def authenticate
-    unless current_user&.admin?
-      render_error(
-        :unauthorized,
-        'Only admin users can access this route',
-        nil,
-        'ComfyAdminAuthentication::authenticate'
-      )
-    end
+    return if current_user&.admin?
+
+    render_error(
+      :unauthorized,
+      'Only admin users can access this route',
+      nil,
+      'ComfyAdminAuthentication::authenticate'
+    )
   end
 end
 

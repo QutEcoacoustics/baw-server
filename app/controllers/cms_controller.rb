@@ -12,6 +12,12 @@ class CmsController < ApplicationController
 
     return false if self.class.name == 'Comfy::Cms::AssetsController'
 
+    # and bypass checking the jump action
+    # - we're already authenticated as admin
+    # - jump is just a redirect
+    # - normal authorization cook is not called for this controller (only its children)
+    return false if self.class.name == 'Comfy::Admin::Cms::BaseController' && params[:action].to_sym == :jump
+
     super
   end
 end
