@@ -17,7 +17,7 @@ jobs:
       matrix:
         buildkit: [1, 0]
         # our normal CI runs on ubuntu-latest so we won't double up on the work here
-        os: [windows-latest, macOS-latest]
+        os: [C, macOS-latest]
 
 
     steps:
@@ -28,7 +28,7 @@ jobs:
       if: ${{ matrix.os == 'macOS-latest' }}
       run: |
         brew install docker-machine docker
-        sudo docker –version
+        sudo docker --version
       
     # by default the user on GH seems to have the UID 1001
     # however our docker container expects a uid of 1000.
@@ -37,6 +37,7 @@ jobs:
     # the permissions of the files reflect those that are on the host, in the
     # GH action case uid 1001 and gid 116.
     - name: Set permissions for checked out files
+      if: ${{ matrix.os !=  'windows-latest' }}
       run: sudo chmod -R o=u .
       
     - name: Build the Docker image
@@ -45,7 +46,7 @@ jobs:
         DOCKER_BUILDKIT:  ${{ matrix.buildkit }} 
       
     - name: Check compose file can be booted
-      run: docker-compose -d && sleep 15
+      run: docker-compose -d
       env:
         DOCKER_BUILDKIT:  ${{ matrix.buildkit }} 
 
