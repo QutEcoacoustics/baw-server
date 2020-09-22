@@ -1,0 +1,47 @@
+# The main purpose of this job is to check that developers on 
+# Windows or Mac can build the dockerfile and lauch docker-compose.
+# As much as we'd like docker to be the universal abstraction, reality
+# is more complex!
+name: Docker Image Development test
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+
+  build-docker:
+    name: "Test dockerfile build and docker-compose on ${{ matrix.os }}, with buildkit: ${{ matrix.buildkit }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        buildkit: [1, 0]
+        # our normal CI runs on ubuntu-latest so we won't double up on the work here
+        os: [windows-latest, macOS-latest]
+
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    # by default the user on GH seems to have the UID 1001
+    # however our docker container expects a uid of 1000.
+    # This is not an issue in Docker since we chown files when they are added.
+    # However when docker-compose bind mounts the volumes for development
+    # the permissions of the files reflect those that are on the host, in the
+    # GH action case uid 1001 and gid 116.
+    - name: Set permissions for checked out files
+      run: sudo chmod -R o=u .
+      
+    - name: Build the Docker image
+      run: docker build .
+      env:
+        DOCKER_BUILDKIT:  ${{ matrix.buildkit }} 
+      
+    - name: Check compose file can be booted
+      run: docker-compose -d && sleep 15
+      env:
+        DOCKER_BUILDKIT:  ${{ matrix.buildkit }} 
+
+    - name: Stop docker-compose
+      if: ${{ always() }}
+      run: docker-compose stop
