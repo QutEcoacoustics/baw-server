@@ -17,7 +17,7 @@ jobs:
       matrix:
         buildkit: [1, 0]
         # our normal CI runs on ubuntu-latest so we won't double up on the work here
-        os: [C, macOS-latest]
+        os: [windows-latest, macos-latest]
 
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       
     # https://github.community/t/is-it-possible-to-install-and-configure-docker-on-macos-runner/16981
     - name: Install docker
-      if: ${{ matrix.os == 'macOS-latest' }}
+      if: ${{ matrix.os == 'macos-latest' }}
       run: |
         brew install docker-machine docker
         sudo docker --version
