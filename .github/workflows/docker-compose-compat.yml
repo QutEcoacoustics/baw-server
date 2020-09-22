@@ -23,6 +23,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       
+    # https://github.community/t/is-it-possible-to-install-and-configure-docker-on-macos-runner/16981
+    - name: Install docker
+      if: ${{ matrix.os == 'macOS-latest' }}
+      run: |
+        brew install docker-machine docker
+        sudo docker –version
+      
     # by default the user on GH seems to have the UID 1001
     # however our docker container expects a uid of 1000.
     # This is not an issue in Docker since we chown files when they are added.
