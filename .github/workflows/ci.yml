@@ -132,11 +132,10 @@ jobs:
           #dockerfile: # optional
           # Sets the target stage to build
           #target:
-          build_args: trimmed=true
           # Always attempt to pull a newer version of the image
           always_pull: true
           # Comma-delimited list of build-time variables
-          build_args: "version=${{steps.tagger.outputs.tag}}"
+          build_args: "version=${{steps.tagger.outputs.tag}},trimmed=true"
           # Comma-delimited list of images to consider as cache sources
           #cache_froms: # optional
           # Comma-delimited list of labels to add to the built image
