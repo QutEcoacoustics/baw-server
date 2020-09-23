@@ -52,6 +52,9 @@ group :server do
   gem 'rails', RAILS_VERSION
   gem 'responders', '~> 3.0.1'
 
+  # bumping to latest RC because it has pre-compiled native binaries
+  gem "nokogiri", "~> 1.11.0.rc3"
+
   # cms
   gem 'comfortable_mexican_sofa', '~> 2.0.0'
 

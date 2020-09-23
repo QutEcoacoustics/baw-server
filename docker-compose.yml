@@ -54,6 +54,7 @@ services:
       - redis
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
+      MIGRATE_DB: "false"
     networks:
       - baw_workers_network
     #ports:
@@ -76,6 +77,7 @@ services:
     <<: *worker
     environment:
       RAILS_ENV: test
+      MIGRATE_DB: "false"
 
   web:
     build:

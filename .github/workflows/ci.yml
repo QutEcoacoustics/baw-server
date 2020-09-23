@@ -132,6 +132,7 @@ jobs:
           #dockerfile: # optional
           # Sets the target stage to build
           #target:
+          buildArgs: trimmed=true
           # Always attempt to pull a newer version of the image
           always_pull: true
           # Comma-delimited list of build-time variables
