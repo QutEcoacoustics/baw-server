@@ -50,7 +50,9 @@ ENV RAILS_ENV=production \
   BAW_SERVER_VERSION=${version} \
   # enable binstubs to take priority
   PATH=./bin:$PATH \
-  BUNDLE_PATH__SYSTEM="true"
+  BUNDLE_PATH__SYSTEM="true" \
+  # migrate the database before booting the app. Recommended to run once per-deploy across cluster and then disable.
+  MIGRATE_DB=true
 
 
 USER ${app_user}
@@ -76,10 +78,10 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-RUN \
+RUN true \
   # We're trialing a simpler container setup
   #echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
-  bundle config set without development test \
+  #&& bundle config set without development test \
   # install baw-server
   && bundle install
 
@@ -89,9 +91,9 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 # copy the passenger production config
 # use a mount/volume to override this file for other environments
 #
-# For development we bind mount over the root of the app with development version
+# For development we use entrypoint to copy a development version into place
 # Thus there is no conflict here
-COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
+COPY --chown=${app_user} ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 # asign permissions to special things
 RUN  chmod a+x ./provision/*.sh \
