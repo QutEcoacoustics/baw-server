@@ -57,13 +57,50 @@ class PublicController < ApplicationController
     end
   end
 
+  # only returns json
   def status
-    # only returns json
-    # for now only indicates if audio recording storage is available
-    storage_msg = AudioRecording.check_storage
-    status = storage_msg[:success] ? 'good' : 'bad'
+    statuses = Concurrent::Promises::FactoryMethods.zip(
+      Concurrent::Promises::FactoryMethods.future {
+        # indicates if audio recording storage is available
+        AudioRecording.check_storage
+      },
+      Concurrent::Promises::FactoryMethods.future {
+        # can we ping redis?
+        BawWorkers::Config.redis_communicator.ping
+      },
+      Concurrent::Promises::FactoryMethods.future {
+        # can we ping upload service?
+        BawWorkers::Config.upload_communicator.service_status
+      },
+      Concurrent::Promises::FactoryMethods.future {
+        ActiveRecord::Base.connection.active?
+      }
+    )
+
+    timed_out = statuses.wait(10) == false
+
+    storage, redis, upload, database = statuses.value(0)
+    # check promise values contain healthy values for each check.
+    # is any promise was rejected then #value returns nil
+    status = [
+      !timed_out, statuses.fulfilled?,
+      storage&.fetch(:success, false), redis == 'PONG', upload&.success?, database
+    ].all?
+
+    result = {
+      status: status ? 'good' : 'bad',
+      timed_out: timed_out,
+      database: safe_result(statuses, index: 3),
+      redis: safe_result(statuses, index: 1),
+      storage: safe_result(statuses, index: 0) { |v| v[:message] },
+      upload: safe_result(statuses, index: 2) { |v|
+        response = v.value_or(v.failure&.response&.fetch(:body))
+        [response.message, response.error].compact.join('. ')
+      }
+    }
+
     respond_to do |format|
-      format.json { render json: { status: status, storage: storage_msg }, status: :ok }
+      format.json { render json: result, status: :ok }
     end
   end
 
@@ -300,6 +337,29 @@ class PublicController < ApplicationController
   end
 
   private
+
+  # Transform a promise into a safe string
+  # @param [Concurrent::Promises::Future] promise
+  def safe_result(promise, index:)
+    return 'unknown' if promise.pending?
+
+    # result returns a tuple (an array) of
+    # [fulfilled?, value, reason]
+    # In our case, the value and reasons are arrays of values because we're
+    # dealing with a series of zipped promises
+    fulfilled, values, reasons = promise.result(0)
+    return 'timed out' if fulfilled.nil?
+
+    value = values[index]
+    return 'error: ' + reasons[index].to_s  if value.nil?
+
+    begin
+      return (block_given? ? yield(value) : value)
+    rescue StandardError => e
+      Rails.logger.error(e)
+      return 'error getting value'
+    end
+  end
 
   def recent_audio_recordings
     order_by_coalesce = 'COALESCE(audio_recordings.updated_at, audio_recordings.created_at) DESC'

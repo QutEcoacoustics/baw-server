@@ -12,6 +12,12 @@ describe BawWorkers::RedisCommunicator do
   let(:fake_redis) { Redis.new(ActiveSupport::HashWithIndifferentAccess.new(Settings.redis.connection)) }
 
   context 'wraps a basic redis API' do
+    it 'can ping' do
+      result = redis.ping
+
+      expect(result).to eq('PONG')
+    end
+
     it 'should wrap keys in a namespace' do
       redis.set('abc', 123)
 

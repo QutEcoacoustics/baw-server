@@ -96,6 +96,12 @@ module BawWorkers
       boolify(result)
     end
 
+    # Checks to see if we can contact redis
+    # @return [String] `PONG` - if successful
+    def ping
+      @redis.ping
+    end
+
     # Given a Ruby object, returns a string suitable for storage in a
     # queue.
     # Blatantly lifted from: https://github.com/resque/resque/blob/d0e187881e02d852f8e4755aef3c14319636527b/lib/resque.rb#L30
