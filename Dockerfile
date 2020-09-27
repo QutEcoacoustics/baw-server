@@ -54,6 +54,7 @@ ENV RAILS_ENV=production \
   PATH=./bin:$PATH \
   BUNDLE_PATH__SYSTEM="true" \
   # migrate the database before booting the app. Recommended to run once per-deploy across cluster and then disable.
+  # Also, must be false for worker instances.
   MIGRATE_DB=false
 
 
