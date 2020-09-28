@@ -73,7 +73,9 @@ class PublicController < ApplicationController
         BawWorkers::Config.upload_communicator.service_status
       },
       Concurrent::Promises::FactoryMethods.future {
-        ActiveRecord::Base.connection.active?
+        ActiveRecord::Base.connection_pool.with_connection do
+          ActiveRecord::Base.connection.active?
+        end
       }
     )
 
