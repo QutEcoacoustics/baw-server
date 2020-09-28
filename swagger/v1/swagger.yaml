@@ -215,6 +215,8 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids:
                   - 1
+                  region_ids:
+                  - 1
                   owner_ids:
                   - 3
                   image_urls:
@@ -293,6 +295,8 @@ paths:
                   created_at: '2020-01-02T03:04:05.677+00:00'
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids:
+                  - 2
+                  region_ids:
                   - 2
                   owner_ids:
                   - 8
@@ -391,6 +395,8 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids:
                   - 4
+                  region_ids:
+                  - 4
                   owner_ids:
                   - 16
                   image_urls:
@@ -476,6 +482,8 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids:
                   - 5
+                  region_ids:
+                  - 5
                   owner_ids:
                   - 21
                   image_urls:
@@ -558,6 +566,8 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids:
                   - 6
+                  region_ids:
+                  - 6
                   owner_ids:
                   - 25
                   image_urls:
@@ -627,6 +637,7 @@ paths:
                   created_at: '2020-01-02T03:04:05.677+00:00'
                   updated_at: '2020-01-02T03:04:05.677+00:00'
                   site_ids: []
+                  region_ids: []
                   owner_ids:
                   - 1
                   image_urls:
@@ -4834,6 +4845,11 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/id"
+        region_ids:
+          type: array
+          items:
+            "$ref": "#/components/schemas/id"
+          readOnly: true
         owner_ids:
           type: array
           items:
@@ -4858,6 +4874,7 @@ components:
       - deleted_at
       - owner_ids
       - site_ids
+      - region_ids
       - image_urls
     analysis_job:
       type: object
