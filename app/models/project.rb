@@ -67,6 +67,7 @@ class Project < ApplicationRecord
 
                        project_hash = {}
                        project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
+                       project_hash[:region_ids] = fresh_project.nil? ? nil : fresh_project.regions.pluck(:id).flatten
                        project_hash[:owner_ids] = fresh_project.nil? ? nil : fresh_project.owners.pluck(:id).flatten
                        project_hash[:image_urls] = Api::Image.image_urls(fresh_project.image)
                        project_hash.merge!(item.render_markdown_for_api_for(:description))
@@ -129,6 +130,7 @@ class Project < ApplicationRecord
         notes: { type: 'string' },
         **Api::Schema.all_user_stamps,
         site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        region_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
         owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels
@@ -148,6 +150,7 @@ class Project < ApplicationRecord
         :deleted_at,
         :owner_ids,
         :site_ids,
+        :region_ids,
         :image_urls
       ]
     }.freeze

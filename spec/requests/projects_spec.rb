@@ -21,6 +21,8 @@ form_content_type_string = 'multipart/form-data; boundary=' + form_boundary
 describe 'Projects' do
   prepare_users
   prepare_project
+  prepare_permission_reader
+  prepare_region
 
   let(:project_attributes) {
     FactoryBot.attributes_for(:project)
@@ -146,6 +148,29 @@ describe 'Projects' do
       expect(response).to have_http_status(:success)
       expect_number_of_items(2)
       expect_has_paging(page: 1, items: 2, total: Project.all.count)
+    end
+  end
+
+  describe 'regions' do
+    example 'api response can return region_ids' do
+      expect(project.region_ids).to have_at_least(1).item
+
+      get "/projects/#{project.id}", headers: api_request_headers(reader_token), as: :json
+
+      expect_success
+      expect(api_data).to match(hash_including({
+        region_ids: project.region_ids
+      }))
+    end
+
+    example 'api response can return empty array when no regions exist' do
+      Region.all.delete_all
+      get "/projects/#{project.id}", headers: api_request_headers(reader_token), as: :json
+
+      expect_success
+      expect(api_data).to match(hash_including({
+        region_ids: []
+      }))
     end
   end
 end

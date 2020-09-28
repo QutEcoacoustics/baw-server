@@ -25,6 +25,18 @@ module RequestSpecExampleHelpers
     @api_result ||= response_body.nil? ? nil : JSON.parse(response_body, symbolize_names: true)
   end
 
+  # Asserts there is a meta/data structure and then extracts data
+  def api_data
+    expect(api_result).to match(
+      {
+        meta: an_instance_of(Hash),
+        data: (an_instance_of(Hash).or(an_instance_of(Array))).and(have_at_least(1).items)
+      }
+    )
+
+    api_result[:data]
+  end
+
   def expect_json_response
     expect(response.content_type).to eq('application/json; charset=utf-8')
   end
