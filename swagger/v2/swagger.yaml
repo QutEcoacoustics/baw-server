@@ -4626,10 +4626,15 @@ paths:
                       items:
                         "$ref": "#/components/schemas/dataset"
 servers:
-- url: https://{defaultHost}
+- url: "{protocol}://{authority}"
   variables:
-    defaultHost:
-      default: localhost
+    authority:
+      default: localhost:3000
+    protocol:
+      enum:
+      - http
+      - https
+      default: http
 components:
   securitySchemes:
     basic_auth_with_token:

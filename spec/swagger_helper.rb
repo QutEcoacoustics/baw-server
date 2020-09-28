@@ -18,7 +18,7 @@ RSpec.configure do |config|
   # document below. You can override this behavior by adding a swagger_doc tag to the
   # the root example_group in your specs, e.g. describe '...', swagger_doc: 'v2/swagger.json'
   config.swagger_docs = {
-    'v1/swagger.yaml' => {
+    'v2/swagger.yaml' => {
       openapi: '3.0.1',
       info: {
         title: 'Acoustic Workbench API',
@@ -33,10 +33,17 @@ RSpec.configure do |config|
       paths: {},
       servers: [
         {
-          url: 'https://{defaultHost}',
+          url: '{protocol}://{authority}',
           variables: {
-            defaultHost: {
-              default: 'localhost'
+            authority: {
+              default: 'localhost:3000'
+            },
+            protocol: {
+              enum: [
+                'http',
+                'https'
+              ],
+              default: 'http'
             }
           }
         }
