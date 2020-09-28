@@ -26,7 +26,7 @@ fi
 echo -e "\n== Checking database ==\n"
 /home/baw_web/baw-server/bin/rake baw:db_prepare
 
-if [[ "$RAILS_ENV" != "development" ]]
+if [[ "$GENERATE_ASSETS" = "true" ]]
 then
     if find /home/baw_web/baw-server/public/assets/ -name '*manifest*json' -printf 1 -quit -type f| grep -q 1
     then
@@ -36,6 +36,8 @@ then
 
         /home/baw_web/baw-server/bin/rails assets:precompile
     fi
+else
+    echo -e "\n== GENERATE_ASSETS is '$GENERATE_ASSETS' (not 'true'), skipping generation ==\n"
 fi
 
 echo -e "\n== Executing original command '$@' ==\n"

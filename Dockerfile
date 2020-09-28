@@ -55,7 +55,11 @@ ENV RAILS_ENV=production \
   BUNDLE_PATH__SYSTEM="true" \
   # migrate the database before booting the app. Recommended to run once per-deploy across cluster and then disable.
   # Also, must be false for worker instances.
-  MIGRATE_DB=false
+  MIGRATE_DB=false \
+  # generate assets for rails app
+  # must be done in context (i.e. in production for production, not in dev for production)
+  # should not be done for workers and in dev/test environments
+  GENERATE_ASSETS=false
 
 
 USER ${app_user}
