@@ -91,11 +91,13 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 #
 # For development we use entrypoint to copy a development version into place
 # Thus there is no conflict here
-COPY --chown=${app_user} ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
+COPY --chown=${app_user}:${app_user} ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 # asign permissions to special things
 RUN  chmod a+x ./provision/*.sh \
-  && chmod a+x ./bin/*
+  && chmod a+x ./bin/* \
+  # https://github.com/moby/moby/issues/20437
+  && chmod 1777 ./tmp
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only
