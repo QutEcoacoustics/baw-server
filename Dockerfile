@@ -43,7 +43,11 @@ RUN \
   # allow bundle install to work as app_user
   # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
   && mkdir -p "$GEM_HOME/bin" \
-  && chmod 777 "$GEM_HOME/bin"
+  && chmod 777 "$GEM_HOME/bin" \
+  # https://github.com/moby/moby/issues/20437
+  && mkdir /home/${app_user}/${app_name}/tmp \
+  && chown ${app_user}:${app_user} /home/${app_user}/${app_name}/tmp
+
 
 
 ENV RAILS_ENV=production \
@@ -98,6 +102,7 @@ RUN  chmod a+x ./provision/*.sh \
   && chmod a+x ./bin/* \
   # https://github.com/moby/moby/issues/20437
   && chmod 1777 ./tmp
+
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only
