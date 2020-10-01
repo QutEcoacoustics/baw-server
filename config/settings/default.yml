@@ -215,8 +215,10 @@ organisation_names:
   parent_site_name: "<<Brand name here>>"
   parent_site_link: "http://example.com"
   address: |
-    10 example way
-    exemplar 4067
+    P. Sherman
+    42 Wallaby Way
+    Sydney
+    Australia
   custom_menu:
     header_title: Custom Menu
     items:

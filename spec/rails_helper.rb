@@ -153,6 +153,7 @@ RSpec.configure do |config|
 
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::ControllerHelpers, type: :view
+  config.include Devise::Test::ControllerHelpers, type: :helper
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryBot::Syntax::Methods
   require_relative 'helpers/factory_bot_helpers'

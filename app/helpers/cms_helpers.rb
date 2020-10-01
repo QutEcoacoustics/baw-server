@@ -13,8 +13,12 @@ module CmsHelpers
     Settings.organisation_names.parent_site_name
   end
 
-  def address
-    '' unless current_user
+  def organisation_name
+    Settings.organisation_names.organisation_name
+  end
+
+  def address(not_logged_in_message = '')
+    return not_logged_in_message unless current_user
 
     Settings&.organisation_names&.address || '<address not configured>'
   end
