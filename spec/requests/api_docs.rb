@@ -3,9 +3,16 @@
 require 'rails_helper'
 
 describe 'api-docs' do
-  it 'the OpenAPI app is mounted at api_docs' do
+  it 'the OpenAPI UI is mounted at api_docs' do
     request = get '/api-docs'
     expect(request).to redirect_to('/api-docs/index.html')
+  end
+
+  it 'the OpenAPI UI contains the endpoint to the spec' do
+    get '/api-docs/index.html'
+
+    expect_success
+    expect(response_body).to include('{"urls":[{"url":"/api-docs/v2/swagger.yaml","name":"API V2 Docs"}]}')
   end
 
   def expect_openapi_doc
