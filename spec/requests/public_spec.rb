@@ -258,6 +258,24 @@ describe '/status.json' do
     })
   end
 
+  example 'upload service, somewhere in the middle error' do
+    # error generated due to bad config in prod, but we didn't handle it well, hence the test
+    stub_request(:get, 'upload:8080/api/v1/providerstatus')
+      .to_return(body: "Client sent an HTTP request to an HTTPS server.\n", status: 400)
+
+    get '/status.json'
+
+    expect_success
+    expect(api_result).to match({
+      status: 'bad',
+      timed_out: false,
+      database: true,
+      redis: 'PONG',
+      storage: '1 audio recording storage directory available.',
+      upload: 'Client sent an HTTP request to an HTTPS server.'
+    })
+  end
+
   example 'upload service, time out' do
     stub_request(:get, 'upload:8080/api/v1/providerstatus')
       .to_timeout

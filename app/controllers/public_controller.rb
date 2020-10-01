@@ -96,8 +96,13 @@ class PublicController < ApplicationController
       redis: safe_result(statuses, index: 1),
       storage: safe_result(statuses, index: 0) { |v| v[:message] },
       upload: safe_result(statuses, index: 2) { |v|
-        response = v.value_or(v.failure&.response&.fetch(:body))
-        [response.message, response.error].compact.join('. ')
+        status = v.value_or(v.failure&.response&.fetch(:body))
+        case status
+        when SftpgoClient::ApiResponse
+          [status.message, status.error].compact.join('. ')
+        else
+          status.to_s.strip
+        end
       }
     }
 
