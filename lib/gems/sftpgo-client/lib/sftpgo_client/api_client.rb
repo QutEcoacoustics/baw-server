@@ -40,12 +40,13 @@ module SftpgoClient
     attr_reader :connection
 
     def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v1/', logger: nil)
-      @base_uri = URI::HTTP.build({
-        scheme: scheme,
-        host: host,
-        port: port,
-        path: base_path
-      })
+      @base_uri =
+        case scheme
+        when 'http' then URI::HTTP.build({host: host, port: port, path: base_path })
+        when 'https' then URI::HTTPS.build({host: host, port: port, path: base_path })
+        else
+          raise ArgumentError, "Unsupported scheme `#{scheme}`"
+        end
 
       log_options = { headers: false, bodies: false }
 
