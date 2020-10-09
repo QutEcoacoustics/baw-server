@@ -44,7 +44,12 @@ module BawAudioTools
       cmd_channel = arg_channel(channel)
       codec_info = codec_calc(target)
 
-      audio_cmd = "#{@ffmpeg_executable} -i \"#{source}\" #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\""
+      # AT 2020: added -nostdin and -y to force ffmpeg to complete in race conditions, and to never look for console input.
+      #   Both are speculative fixes. Races shouldn't happen but we think there's a bug with the unique job system.
+      # AT 2020: moved command offsets so that they occur before -i. This apparently changes performance profile for cut+seek
+      #   from O(n) to O(1), which makes a big difference on longer files!
+      #   For a 2 hour file cut speed drop to < 3 seconds, from 8.25 seconds.
+      audio_cmd = "#{@ffmpeg_executable} #{cmd_offsets} -i \"#{source}\" #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\" -nostdin -y"
       cmd = ''
 
       if codec_info[:target] == codec_info[:old_target]

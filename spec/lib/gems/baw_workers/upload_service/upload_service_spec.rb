@@ -46,7 +46,7 @@ describe BawWorkers::UploadService::Communicator do
     }.to raise_error(ArgumentError, 'Unsupported scheme `malarkey`')
   end
 
-  it 'is defined on Baw::Workers::Config be default' do
+  it 'is defined on BawWorkers::Config be default' do
     expect(BawWorkers::Config).to have_attributes(upload_communicator: be_a(BawWorkers::UploadService::Communicator))
   end
 

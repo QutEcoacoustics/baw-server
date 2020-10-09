@@ -27,6 +27,18 @@ shared_context 'shared_test_helpers' do
   let(:audio_file_mono_29_data_length_bytes) { 296_756 }
   let(:audio_file_mono_29_bit_rate_bps) { 239_920 }
 
+  let(:audio_file_bar_lt_metadata) {
+    return {
+      media_type: Mime::Type.lookup('audio/flac'),
+      format: 'flac',
+      sample_rate: 22_050,
+      channels: 1,
+      duration_seconds: 7194.749388,
+      data_length_bytes: 181_671_228,
+      bit_rate_bps: 202_004
+    }
+  }
+
   let(:audio_file_wac) { Fixtures.audio_file_wac_1 }
 
   let(:duration_range) { 0.11 }
@@ -84,6 +96,27 @@ shared_context 'shared_test_helpers' do
     FileUtils.cp example_file_name, file_to_make
 
     file_to_make
+  end
+
+  # Adds a file to our original audio directory for testing.
+  # For performance reasons it actually symlinks to the file.
+  # @return [Pathname]
+  def link_original_audio(target:, uuid: , datetime_with_offset:, original_format:)
+    raise ArgumentError, "datetime_with_offset must be a ActiveSupport::TimeWithZone" unless datetime_with_offset.is_a?(ActiveSupport::TimeWithZone)
+
+    original_possible_paths = audio_original.possible_paths({
+      uuid: uuid,
+      datetime_with_offset: datetime_with_offset,
+      original_format: original_format
+    })
+
+    path = Pathname(original_possible_paths.last)
+
+    path.delete if path.exist?
+    path.parent.mkpath
+
+    path.make_symlink(target)
+    path
   end
 
   def clear_original_audio
@@ -199,13 +232,6 @@ shared_context 'shared_test_helpers' do
     job.perform
   end
 
-  # http://robots.thoughtbot.com/test-rake-tasks-like-a-boss
-  # http://pivotallabs.com/how-i-test-rake-tasks/
-
-  # let(:rake_application) {
-  #   Rake.application
-  # }
-
   def run_rake_task(task_name, args)
     the_task = Rake::Task[task_name]
 
@@ -219,29 +245,6 @@ shared_context 'shared_test_helpers' do
     the_task.invoke(*args)
   end
 
-  #let(:rake_task_path)          { File.join('tasks', "#{rake_task_name.split(':').second}") }
-  #subject { Rake::Task[rake_task_name] }
-
-  # let :top_level_path do
-  #   File.join(File.dirname(__FILE__), '..', '..', '..')
-  # end
-  #
-  # let :run_rake_task do
-  #   subject.reenable
-  #   Rake.application.invoke_task rake_task_name
-  # end
-
-  # def loaded_files_excluding_current_rake_file
-  #   $".reject {|file| file == File.join(top_level_path, ("#{task_path}.rake")) }
-  # end
-
-  # before do
-  #   #Rake.application = rake
-  #   #Rake.application.rake_require(rake_task_path, [top_level_path.to_s], loaded_files_excluding_current_rake_file)
-  #   Rake.application.rake_require(rake_task_path)
-  #
-  #   #Rake::Task.define_task(:environment)
-  # end
 
   def get_api_security_response(user_name, auth_token)
     {

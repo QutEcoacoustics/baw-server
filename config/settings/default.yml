@@ -39,8 +39,8 @@ resque:
   background_pid_file: ~
   # output and error log files are only used when a Resque worker is running
   # in the background
-  output_log_file: <%= BawApp.root %>/log/worker_stdout.log
-  error_log_file: <%= BawApp.root %>/log/worker_stderr.log
+  output_log_file: <%= BawApp.root %>/log/worker_stdout.<%= BawApp.env %>.log
+  error_log_file: <%= BawApp.root %>/log/worker_stderr.<%= BawApp.env %>.log
 # these are the available background jobs that can be enqueued
 actions:
   analysis:

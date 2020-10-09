@@ -25,8 +25,13 @@ module BawWorkers
     # Create an instance.
     #
     def initialize(*loggers)
+      # We don't really inherit from Logger
+      #super(nil)
+
       @loggers = []
       loggers.each do |logger|
+        next if logger.nil?
+
         attach(logger)
       end
     end
@@ -169,6 +174,8 @@ module BawWorkers
 
     # Set formatter on all contained loggers.
     def formatter=(value)
+      raise "formatter should never be set" if BawApp.dev_or_test?
+
       @loggers.each do |logger|
         logger.formatter = value if logger.respond_to?(:formatter=)
       end

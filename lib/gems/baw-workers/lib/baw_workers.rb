@@ -28,7 +28,7 @@ Zeitwerk::Loader.new.tap do |loader|
   base_dir = __dir__
   loader.push_dir(base_dir)
   loader.ignore("#{base_dir}/patches")
-  loader.enable_reloading if BawApp.development?
+  loader.enable_reloading if BawApp.dev_or_test?
   #loader.log! # debug only!
   loader.setup # ready!
 end

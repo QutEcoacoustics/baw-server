@@ -136,10 +136,10 @@ module BawWorkers
 
       def check_original_paths(possible, existing, modify_parameters)
         # if the original audio file(s) cannot be found, raise an exception
-        if existing.blank?
-          msg = "Could not find original audio in '#{possible}' using #{modify_parameters}."
-          raise BawAudioTools::Exceptions::AudioFileNotFoundError, msg
-        end
+        return unless existing.blank?
+
+        msg = "Could not find original audio in '#{possible}' using #{modify_parameters}."
+        raise BawAudioTools::Exceptions::AudioFileNotFoundError, msg
       end
 
       def check_cached_audio_paths(file_name, source_existing, target_possible, modify_parameters)

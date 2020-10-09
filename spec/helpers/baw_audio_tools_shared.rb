@@ -9,22 +9,24 @@ shared_context 'common' do
   let(:sleep_range) { 0.5 }
 
   let(:temp_dir) { Settings.paths.temp_dir }
+end
+
+shared_context 'audio base' do
   let(:audio_dir) { Fixtures::FILES_PATH }
+
   let(:logger) {
     logger = Logger.new(BawApp.root / 'log' / 'audio_tools.test.log')
     logger.level = Logger::INFO
     logger
   }
-end
 
-shared_context 'audio base' do
   let(:audio_base) {
     audio_tools = Settings.audio_tools
 
     BawAudioTools::AudioBase.from_executables(
       Settings.cached_audio_defaults,
       logger,
-      temp_dir,
+      Settings.paths.temp_dir,
       Settings.audio_tools_timeout_sec,
       ffmpeg: audio_tools.ffmpeg_executable,
       ffprobe: audio_tools.ffprobe_executable,
@@ -71,10 +73,10 @@ shared_context 'test audio files' do
 end
 
 shared_context 'temp media files' do
-  let(:temp_media_file_1) { File.join(temp_dir, 'temp-media-1') }
-  let(:temp_media_file_2) { File.join(temp_dir, 'temp-media-2') }
-  let(:temp_media_file_3) { File.join(temp_dir, 'temp-media-3') }
-  let(:temp_media_file_4) { File.join(temp_dir, 'temp-media-4') }
+  let(:temp_media_file_1) { File.join(Settings.paths.temp_dir, 'temp-media-1') }
+  let(:temp_media_file_2) { File.join(Settings.paths.temp_dir, 'temp-media-2') }
+  let(:temp_media_file_3) { File.join(Settings.paths.temp_dir, 'temp-media-3') }
+  let(:temp_media_file_4) { File.join(Settings.paths.temp_dir, 'temp-media-4') }
 
   before(:each) do
     Dir.glob(temp_media_file_1 + '*').each do |f| File.delete(f) end

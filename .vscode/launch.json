@@ -187,9 +187,20 @@
       "type": "Ruby",
       "request": "attach",
       "remoteHost": "workers",
-      "remotePort": "1234",
+      "remotePort": "1235",
       "remoteWorkspaceRoot": "${workspaceRoot}",
-      "cwd": "${workspaceRoot}/baw-workers"
+      "cwd": "${workspaceRoot",
+      "showDebuggerOutput": true
+    },
+    {
+      "name": "Listen for rdebug-ide (workers_test)",
+      "type": "Ruby",
+      "request": "attach",
+      "remoteHost": "workers_test",
+      "remotePort": "1236",
+      "remoteWorkspaceRoot": "${workspaceRoot}",
+      "cwd": "${workspaceRoot}",
+      "showDebuggerOutput": true
     },
   ],
   "inputs": [

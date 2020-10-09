@@ -3,10 +3,6 @@
 # The first file actually loaded is config.rb through a special Raitie integration.
 # See config.rb
 
-# resque setup
-Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(Settings.resque.connection)
-Resque.redis.namespace = Settings.resque.namespace
-
 # logging
 # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
@@ -34,20 +30,17 @@ audio_tools_logger.level = Logger.const_get(Settings.audio_tools.log_level)
 
 # core rails logging
 Rails.application.config.logger = rails_logger
+Rails.logger = rails_logger
 
 # action mailer logging
 Rails.application.config.action_mailer.logger = mailer_logger
-BawWorkers::Config.logger_mailer = mailer_logger
 
 # activerecord logging
 ActiveRecord::Base.logger = active_record_logger
 
 # resque logging
-Resque.logger = resque_logger
-BawWorkers::Config.logger_worker = resque_logger
 
 # audio tools logging
-BawWorkers::Config.logger_audio_tools = audio_tools_logger
 
 # BawWorkers setup
 BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings)

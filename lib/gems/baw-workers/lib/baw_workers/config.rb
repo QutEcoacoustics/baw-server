@@ -6,10 +6,16 @@ raise 'modified resque status hash class not loaded' unless defined?(Resque::Plu
 module BawWorkers
   class Config
     class << self
-      attr_accessor :logger_worker,
-                    :logger_mailer,
-                    :logger_audio_tools,
-                    :mailer,
+      # @return [BawWorkers::MultiLogger]
+      attr_reader :logger_worker
+
+      # @return [BawWorkers::MultiLogger]
+      attr_reader :logger_mailer
+
+      # @return [BawWorkers::MultiLogger]
+      attr_reader :logger_audio_tools
+
+      attr_accessor :mailer,
                     :temp_dir,
                     :worker_top_dir,
                     :programs_dir,
@@ -24,7 +30,7 @@ module BawWorkers
                     :redis_communicator
 
       # @return [BawWorkers::UploadService::Communicator]
-      attr_accessor :upload_communicator
+      attr_reader :upload_communicator
 
       # Set up configuration from settings file.
       # @param [Hash] opts
@@ -58,7 +64,7 @@ module BawWorkers
 
         # configure Resque
         configure_redis(is_redis, is_test, settings)
-        configure_resque(settings)
+        configure_resque(settings, BawWorkers::Config.logger_worker)
 
         # resque job status expiry for job status entries
         Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
@@ -95,13 +101,13 @@ module BawWorkers
         configure_storage(settings)
 
         # configure logging
-        configure_web_logger(core_logger, mailer_logger, audio_tools_logger, resque_logger)
+        configure_web_logger(core_logger, mailer_logger, audio_tools_logger)
 
         configure_upload_service(settings)
 
         # configure Resque
         configure_redis(true, is_test, settings)
-        configure_resque(settings)
+        configure_resque(settings, resque_logger)
 
         # configure mailer
         configure_mailer(settings)
@@ -148,16 +154,16 @@ module BawWorkers
       def configure_redis(needs_redis, _is_test, settings)
         return unless needs_redis
 
-        Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         communicator_redis = Redis.new(ActiveSupport::HashWithIndifferentAccess.new(settings.redis.connection))
-
-        Resque.redis.namespace = Settings.resque.namespace
 
         # Set up standard redis wrapper.
         BawWorkers::Config.redis_communicator = BawWorkers::RedisCommunicator.new(
           BawWorkers::Config.logger_worker,
-          communicator_redis
+          communicator_redis,
           # options go here if defined
+          {
+            namespace: settings.redis.namespace
+          }
         )
       end
 
@@ -181,66 +187,49 @@ module BawWorkers
       end
 
       def configure_upload_service(settings)
-        BawWorkers::Config.upload_communicator = BawWorkers::UploadService::Communicator.new(
+        @upload_communicator = BawWorkers::UploadService::Communicator.new(
           config: settings.upload_service,
           logger: BawWorkers::Config.logger_worker
         )
       end
 
-      def configure_web_logger(core_logger, mailer_logger, audio_tools_logger, resque_logger)
-        BawWorkers::Config.logger_worker = core_logger
-        BawWorkers::Config.logger_mailer = mailer_logger
-        BawWorkers::Config.logger_audio_tools = audio_tools_logger
-
-        # then configure attributes that depend on other attributes
-        Resque.logger = resque_logger
+      def configure_web_logger(core_logger, mailer_logger, audio_tools_logger)
+        @logger_worker = core_logger
+        @logger_mailer = mailer_logger
+        @logger_audio_tools = audio_tools_logger
       end
 
       def configure_worker_logger(settings, is_resque_worker, is_resque_worker_fg)
-        BawWorkers::Config.logger_worker = MultiLogger.new
-        BawWorkers::Config.logger_mailer = MultiLogger.new
-        BawWorkers::Config.logger_audio_tools = MultiLogger.new
+        running_in_bg = is_resque_worker && !is_resque_worker_fg
 
-        # always log to dedicated log files
-        worker_open = File.open(settings.paths.worker_log_file, 'a+')
-        worker_open.sync = true
-        BawWorkers::Config.logger_worker.attach(Logger.new(worker_open))
+        prepare_logger = lambda { |path, log_to_console|
+          # always log to dedicated log files
+          logger_io = File.open(path, 'a+')
+          logger_io.sync = true
+          file_logger = Logger.new(logger_io)
 
-        mailer_open = File.open(settings.paths.mailer_log_file, 'a+')
-        mailer_open.sync = true
-        BawWorkers::Config.logger_mailer.attach(Logger.new(mailer_open))
+          # send log messages to stdout
+          console_logger = log_to_console ? Logger.new($stdout) : nil
+          MultiLogger.new(file_logger, console_logger)
+        }
 
-        audio_tools_open = File.open(settings.paths.audio_tools_log_file, 'a+')
-        audio_tools_open.sync = true
-        BawWorkers::Config.logger_audio_tools.attach(Logger.new(audio_tools_open))
+        @logger_worker = prepare_logger.call(settings.paths.worker_log_file, !running_in_bg)
+        @logger_mailer = prepare_logger.call(settings.paths.mailer_log_file, !running_in_bg)
+        @logger_audio_tools = prepare_logger.call(settings.paths.audio_tools_log_file, !running_in_bg)
 
-        if (is_resque_worker && !is_resque_worker_fg) || BawApp.test?
-          # when running a Resque worker in bg, or running in a test, redirect stdout and stderr to files
-          stdout_log_file = File.expand_path(settings.resque.output_log_file)
-          $stdout = File.open(stdout_log_file, 'a+')
-          $stdout.sync = true
-
-          stderr_log_file = File.expand_path(settings.resque.error_log_file)
-          $stderr = File.open(stderr_log_file, 'a+')
-          $stderr.sync = true
-
-        else
-          # all other times, log to console as well
-          $stdout.sync = true
-          BawWorkers::Config.logger_worker.attach(Logger.new($stdout))
-          BawWorkers::Config.logger_mailer.attach(Logger.new($stdout))
-          BawWorkers::Config.logger_audio_tools.attach(Logger.new($stdout))
-
+        # when running in background we can't see stdout/stderr, so log them to files
+        if running_in_bg
+          $stdout = File.open(File.expand_path(settings.resque.output_log_file), 'a+')
+          $stderr = File.open(File.expand_path(settings.resque.error_log_file), 'a+')
         end
+
+        $stdout.sync = true
+        $stderr.sync = true
 
         # set log levels from settings file
         BawWorkers::Config.logger_worker.level = settings.resque.log_level.constantize
         BawWorkers::Config.logger_mailer.level = settings.mailer.log_level.constantize
         BawWorkers::Config.logger_audio_tools.level = settings.audio_tools.log_level.constantize
-
-        # then configure attributes that depend on other attributes
-
-        Resque.logger = BawWorkers::Config.logger_worker
       end
 
       def configure_mailer(settings)
@@ -299,9 +288,14 @@ module BawWorkers
         )
       end
 
-      def configure_resque(_settings)
+      def configure_resque(settings, resque_logger)
         # resque job status expiry for job status entries
         Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
+
+        Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
+        Resque.redis.namespace = Settings.resque.namespace
+
+        Resque.logger = resque_logger
       end
 
       def configure_resque_worker
@@ -338,6 +332,8 @@ module BawWorkers
         return if BawWorkers::Config.logger_worker.formatter.is_a?(BawWorkers::MultiLogger::CustomFormatter)
 
         warn 'WARNING: Resque overwrote the default formatter!'
+
+        # when this is no longer an issue remove exception in lib/gems/baw-workers/lib/baw_workers/multi_logger.rb#formatter=
 
         BawWorkers::Config.logger_worker.formatter = BawWorkers::MultiLogger::CustomFormatter.new
       end

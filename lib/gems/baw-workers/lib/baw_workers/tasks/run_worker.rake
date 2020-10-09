@@ -169,7 +169,7 @@ namespace :baw do
   end
 end
 
-# if no rguments, list available tasks
+# if no arguments, list available tasks
 task :default do
   Rake.application.options.show_tasks = :tasks
   Rake.application.options.show_task_pattern = //
