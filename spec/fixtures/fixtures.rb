@@ -8,71 +8,82 @@ module Fixtures
 
   # @return [Pathname]
   def self.sqlite_fixture
-    FILES_PATH / 'example__Tiles.sqlite3'
+    ensure_exists FILES_PATH / 'example__Tiles.sqlite3'
   end
 
   # @return [Pathname]
   def self.audio_check_csv
-    FILES_PATH / 'audio_check.csv'
+    ensure_exists FILES_PATH / 'audio_check.csv'
   end
 
   # @return [Pathname]
   def self.audio_file_empty
-    FILES_PATH / 'test-audio-empty.ogg'
+    ensure_exists FILES_PATH / 'test-audio-empty.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_mono
-    FILES_PATH / 'test-audio-mono.ogg'
+    ensure_exists FILES_PATH / 'test-audio-mono.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_mono29
-    FILES_PATH / 'test-audio-mono-29.ogg'
+    ensure_exists FILES_PATH / 'test-audio-mono-29.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_stereo
-    FILES_PATH / 'test-audio-stereo.ogg'
+    ensure_exists FILES_PATH / 'test-audio-stereo.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_wac_1
-    FILES_PATH / 'test-wac-1.wac'
+    ensure_exists FILES_PATH / 'test-wac-1.wac'
   end
 
   # @return [Pathname]
   def self.audio_file_wac_2
-    FILES_PATH / 'test-wac-2.wac'
+    ensure_exists FILES_PATH / 'test-wac-2.wac'
   end
 
   # @return [Pathname]
   def self.audio_file_corrupt
-    FILES_PATH / 'test-audio-corrupt.ogg'
+    ensure_exists FILES_PATH / 'test-audio-corrupt.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_mono_long
-    FILES_PATH / 'test-audio-mono-long.ogg'
+    ensure_exists FILES_PATH / 'test-audio-mono-long.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_stereo_7777hz
-    FILES_PATH / 'test-audio-stereo-7777hz.ogg'
+    ensure_exists FILES_PATH / 'test-audio-stereo-7777hz.ogg'
   end
 
   # @return [Pathname]
   def self.audio_file_amp_channels_1
-    FILES_PATH / 'amp-channels-1.flac'
+    ensure_exists FILES_PATH / 'amp-channels-1.flac'
   end
 
   # @return [Pathname]
   def self.audio_file_amp_channels_2
-    FILES_PATH / 'amp-channels-2.flac'
+    ensure_exists FILES_PATH / 'amp-channels-2.flac'
   end
 
   # @return [Pathname]
   def self.audio_file_amp_channels_3
-    FILES_PATH / 'amp-channels-3.flac'
+    ensure_exists FILES_PATH / 'amp-channels-3.flac'
+  end
+
+  # @return [Pathname]
+  def self.bar_lt_file
+    ensure_exists FILES_PATH / '70' / '0515' / '20190913T000000+1000_REC.flac'
+  end
+
+  def self.ensure_exists(pathname)
+    raise FileNotFound, "Given fixture refers to a file that does not exist: #{pathname}" unless pathname.exist?
+
+    pathname
   end
 end

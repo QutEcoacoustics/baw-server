@@ -4,7 +4,7 @@ describe TimeZoneHelper do
   it 'can map zones to offsets' do
     map = TimeZoneHelper.mapping_zone_to_offset
 
-    expect(map).to include('Australia - Sydney' => 'AEST (+10:00)')
+    expect(map).to include('Australia - Brisbane' => 'AEST (+10:00)')
   end
 
   it 'can find a timezone given an identifier' do

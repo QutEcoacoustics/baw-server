@@ -13,7 +13,7 @@ describe BawAudioTools::AudioBase do
   context 'verifying integrity' do
     context 'succeeds' do
       it 'processing valid .wv file' do
-        temp_media_file_a = temp_media_file_1 + '.wv'
+        temp_media_file_a = temp_file(extension: '.wv')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -22,7 +22,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .mp3 file' do
-        temp_media_file_a = temp_media_file_1 + '.mp3'
+        temp_media_file_a = temp_file(extension: '.mp3')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -31,7 +31,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .asf file' do
-        temp_media_file_a = temp_media_file_1 + '.asf'
+        temp_media_file_a = temp_file(extension: '.asf')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -39,7 +39,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .wav file' do
-        temp_media_file_a = temp_media_file_1 + '.wav'
+        temp_media_file_a = temp_file(extension: '.wav')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -47,7 +47,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .flac file' do
-        temp_media_file_a = temp_media_file_1 + '.flac'
+        temp_media_file_a = temp_file(extension: '.flac')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -55,7 +55,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .ogg file' do
-        temp_media_file_a = temp_media_file_1 + '.ogg'
+        temp_media_file_a = temp_file(extension: '.ogg')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -63,7 +63,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .wma file' do
-        temp_media_file_a = temp_media_file_1 + '.wma'
+        temp_media_file_a = temp_file(extension: '.wma')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -71,7 +71,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .webm file' do
-        temp_media_file_a = temp_media_file_1 + '.webm'
+        temp_media_file_a = temp_file(extension: '.webm')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -79,7 +79,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .webm file' do
-        temp_media_file_a = temp_media_file_1 + '.webm'
+        temp_media_file_a = temp_file(extension: '.webm')
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
@@ -107,7 +107,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing empty .mp3 file' do
-        temp_media_file_a = temp_media_file_1 + '.mp3'
+        temp_media_file_a = temp_file(extension: '.mp3')
         FileUtils.touch(temp_media_file_a)
 
         result = audio_base.integrity_check(temp_media_file_a)

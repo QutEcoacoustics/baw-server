@@ -43,8 +43,10 @@ module BawAudioTools
     end
 
     def modify_command(source, target)
-      raise ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      source = Pathname(source)
+      target = Pathname(target)
+      raise ArgumentError, "Source is not a png file: #{source}" unless source.extname == '.png'
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.extname == '.png'
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
 
       # target will probably already exist, coz we're overwriting the image

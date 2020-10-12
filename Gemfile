@@ -42,6 +42,8 @@ gem 'rswag-ui'
 # uri parsing and generation
 gem 'addressable'
 
+gem 'descriptive-statistics'
+
 RAILS_VERSION = '~> 6.0.3'
 
 group :server do
@@ -214,6 +216,7 @@ group :test do
   gem 'faker'
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
+  gem 'rspec-benchmark'
   gem 'rspec-collection_matchers'
   gem 'rspec-its'
   gem 'rspec-mocks'

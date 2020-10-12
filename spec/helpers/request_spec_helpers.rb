@@ -15,6 +15,15 @@ module RequestSpecExampleHelpers
     headers
   end
 
+  def media_request_headers(token,  format: 'wav')
+    headers = {
+      'ACCEPT' => MIME::Types.type_for(format).first.content_type,
+      'HTTP_AUTHORIZATION' => token
+    }
+
+    headers
+  end
+
   def response_body
     # the != false is not redundant here... safe access could result in nil
     # which would evaluate to false and execute wrong half of conditional
@@ -160,7 +169,34 @@ module RequestSpecExampleHelpers
     expect(response.headers).to match(hash_including(expected))
   end
 
-  def self.included(base); end
+  def self.included(example_group)
+    example_group.after do |example|
+      unless example.exception.nil?
+        # I don't know of a good way to augment the original error with more
+        # information. Raising a new error with more information seems to work OK.
+        request&.body&.rewind
+        request_vars = request.env.select {|k,v|
+          k.match("^HTTP.*|^CONTENT.*|^REMOTE.*|^REQUEST.*|^AUTHORIZATION.*|^SCRIPT.*|^SERVER.*")
+        }
+        message = <<~API_RESULT
+          Response: #{response.code}
+          #{response.headers}
+          Body:
+          ```
+          #{response_body.nil? ? '<empty result>' : response_body.truncate(10_000)}
+          ```
+
+          Request: #{request.url}
+          #{request_vars}
+          Body:
+          ```
+          #{request&.body&.nil? != false ? '<empty request body>' : request.body.read.truncate(10_000)}
+          ```
+        API_RESULT
+        raise StandardError, message
+      end
+    end
+  end
 
   private
 

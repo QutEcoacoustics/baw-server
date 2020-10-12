@@ -1,0 +1,8 @@
+Five Rivers
+25/02/2020 (retrieved from sensor)
+16/03/2020 (brought to QUT)
+
+Dry A - 0513
+Wet A - 0517
+Dry B - 0515
+Wet B - 0519

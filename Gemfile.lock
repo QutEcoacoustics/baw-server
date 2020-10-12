@@ -74,6 +74,9 @@ GEM
     backport (1.1.2)
     bcrypt (3.1.16)
     benchmark (0.1.0)
+    benchmark-malloc (0.2.0)
+    benchmark-perf (0.6.0)
+    benchmark-trend (0.4.0)
     bootsnap (1.4.8)
       msgpack (~> 1.0)
     bootstrap-sass (3.4.1)
@@ -128,6 +131,7 @@ GEM
       debase-ruby_core_source (>= 0.10.2)
     debase-ruby_core_source (0.10.10)
     deep_merge (1.2.1)
+    descriptive-statistics (2.2.0)
     devise (4.7.3)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -334,7 +338,7 @@ GEM
       mimemagic (~> 0.3.0)
       terrapin (~> 0.6.0)
     parallel (1.19.2)
-    parser (2.7.1.4)
+    parser (2.7.2.0)
       ast (~> 2.4.1)
     passenger (6.0.6)
       rack
@@ -398,7 +402,7 @@ GEM
     redis (4.2.2)
     redis-namespace (1.8.0)
       redis (>= 3.0.4)
-    regexp_parser (1.8.0)
+    regexp_parser (1.8.1)
     responders (3.0.1)
       actionpack (>= 5.0)
       railties (>= 5.0)
@@ -421,6 +425,11 @@ GEM
       rspec-core (~> 3.9.0)
       rspec-expectations (~> 3.9.0)
       rspec-mocks (~> 3.9.0)
+    rspec-benchmark (0.6.0)
+      benchmark-malloc (~> 0.2)
+      benchmark-perf (~> 0.6)
+      benchmark-trend (~> 0.4)
+      rspec (>= 3.0)
     rspec-collection_matchers (1.2.0)
       rspec-expectations (>= 2.99.0.beta1)
     rspec-core (3.9.2)
@@ -456,17 +465,17 @@ GEM
     rswag-ui (2.3.1)
       actionpack (>= 3.1, < 7.0)
       railties (>= 3.1, < 7.0)
-    rubocop (0.91.0)
+    rubocop (0.92.0)
       parallel (~> 1.10)
-      parser (>= 2.7.1.1)
+      parser (>= 2.7.1.5)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 1.7)
       rexml
-      rubocop-ast (>= 0.4.0, < 1.0)
+      rubocop-ast (>= 0.5.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 1.4.0, < 2.0)
-    rubocop-ast (0.4.2)
-      parser (>= 2.7.1.4)
+    rubocop-ast (0.7.1)
+      parser (>= 2.7.1.5)
     ruby-debug-ide (0.7.2)
       rake (>= 0.8.1)
     ruby-prof (1.4.1)
@@ -509,7 +518,7 @@ GEM
       rack (~> 2.2)
       rack-protection (= 2.1.0)
       tilt (~> 2.0)
-    solargraph (0.39.15)
+    solargraph (0.39.17)
       backport (~> 1.1)
       benchmark
       bundler (>= 1.17.2)
@@ -601,6 +610,7 @@ DEPENDENCIES
   database_cleaner-active_record
   database_cleaner-redis
   debase (>= 0.2.5.beta1)
+  descriptive-statistics
   devise (~> 4.7.0)
   devise-i18n
   dotiw
@@ -644,6 +654,7 @@ DEPENDENCIES
   resque_solo
   role_model (~> 0.8.1)
   rspec
+  rspec-benchmark
   rspec-collection_matchers
   rspec-its
   rspec-mocks

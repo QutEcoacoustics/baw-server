@@ -20,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          lfs: true
       # by default the user on GH seems to have the UID 1001
       # however our docker container expects a uid of 1000.
       # This is not an issue in Docker since we chown files when they are added.

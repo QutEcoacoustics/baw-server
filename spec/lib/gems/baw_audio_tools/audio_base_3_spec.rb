@@ -67,7 +67,7 @@ describe BawAudioTools::AudioBase do
 
   context 'getting info succeeds when' do
     it 'processes a valid .wv file' do
-      temp_media_file_a = temp_media_file_1 + '.wv'
+      temp_media_file_a = temp_file(extension: '.wv')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/wavpack')
@@ -77,7 +77,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .mp3 file' do
-      temp_media_file_a = temp_media_file_1 + '.mp3'
+      temp_media_file_a = temp_file(extension: '.mp3')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/mp3')
@@ -87,7 +87,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .asf file' do
-      temp_media_file_a = temp_media_file_1 + '.asf'
+      temp_media_file_a = temp_file(extension: '.asf')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/asf')
@@ -97,7 +97,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .wav file' do
-      temp_media_file_a = temp_media_file_1 + '.wav'
+      temp_media_file_a = temp_file(extension: '.wav')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/wav')
@@ -107,7 +107,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .flac file' do
-      temp_media_file_a = temp_media_file_1 + '.flac'
+      temp_media_file_a = temp_file(extension: '.flac')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/x-flac')
@@ -117,7 +117,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .ogg file' do
-      temp_media_file_a = temp_media_file_1 + '.ogg'
+      temp_media_file_a = temp_file(extension: '.ogg')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(audio_file_stereo)
       expect(result[:media_type]).to eq('audio/ogg')
@@ -127,7 +127,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .wma file' do
-      temp_media_file_a = temp_media_file_1 + '.wma'
+      temp_media_file_a = temp_file(extension: '.wma')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/asf')
@@ -137,7 +137,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'processes a valid .webm file' do
-      temp_media_file_a = temp_media_file_1 + '.webm'
+      temp_media_file_a = temp_file(extension: '.webm')
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/webm')
@@ -148,7 +148,7 @@ describe BawAudioTools::AudioBase do
 
     it 'raises error trying to convert to .wac' do
       expect {
-        audio_base.modify(audio_file_stereo, temp_media_file_1 + '.wac')
+        audio_base.modify(audio_file_stereo, temp_file(extension: '.wac'))
       }.to raise_error(BawAudioTools::Exceptions::InvalidTargetMediaTypeError)
     end
 

@@ -42,7 +42,7 @@ module BawAudioTools
           exceptions = exceptions_inner
           pid = pid_inner
         end
-      rescue Exception => e
+      rescue StandardError => e
         @logger.fatal(@class_name) do e end
         raise e
       end

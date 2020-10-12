@@ -11,7 +11,7 @@ describe BawAudioTools::AudioBase do
 
   context 'segmenting audio file' do
     it 'gets the correct segment of the file when only start_offset is specified' do
-      temp_audio_file = temp_media_file_1 + '.wav'
+      temp_audio_file = temp_file(extension: '.wav')
       result = audio_base.modify(audio_file_stereo, temp_audio_file, start_offset: 10)
       info = audio_base.info(temp_audio_file)
       expect(File.size(temp_audio_file)).to be > 0
@@ -22,7 +22,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'gets the correct segment of the file when only end_offset is specified' do
-      temp_audio_file = temp_media_file_1 + '.wav'
+      temp_audio_file = temp_file(extension: '.wav')
       result = audio_base.modify(audio_file_stereo, temp_audio_file, end_offset: 20)
       info = audio_base.info(temp_audio_file)
       expect(File.size(temp_audio_file)).to be > 0
@@ -33,7 +33,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'correctly converts from .ogg to .wv, then to from .wv to .wav' do
-      temp_media_file_a = temp_media_file_1 + '.wv'
+      temp_media_file_a = temp_file(extension: '.wv')
       result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a, start_offset: 10, end_offset: 20)
       info_1 = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
@@ -42,7 +42,7 @@ describe BawAudioTools::AudioBase do
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
       expect(info_1[:duration_seconds]).to be_within(duration_range).of(10)
 
-      temp_media_file_b = temp_media_file_2 + '.wav'
+      temp_media_file_b = temp_file(extension: '.wav')
       result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b)
       info_2 = audio_base.info(temp_media_file_b)
       expect(File.size(temp_media_file_b)).to be > 0
@@ -53,7 +53,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'correctly converts from .ogg to .webm, then to from .webm to .ogg' do
-      temp_media_file_a = temp_media_file_1 + '.webm'
+      temp_media_file_a = temp_file(extension: '.webm')
       result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a, start_offset: 10, end_offset: 20)
       info_1 = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
@@ -62,7 +62,7 @@ describe BawAudioTools::AudioBase do
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
       expect(info_1[:duration_seconds]).to be_within(duration_range).of(10)
 
-      temp_media_file_b = temp_media_file_2 + '.ogg'
+      temp_media_file_b = temp_file(extension: '.ogg')
       result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b)
       info_2 = audio_base.info(temp_media_file_b)
       expect(File.size(temp_media_file_b)).to be > 0
@@ -74,7 +74,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'correctly converts from .ogg to .mp3, then to from .mp3 to .wav' do
-      temp_media_file_a = temp_media_file_1 + '.mp3'
+      temp_media_file_a = temp_file(extension: '.mp3')
       result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a, start_offset: 10, end_offset: 40, sample_rate: 22_050)
       info_1 = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
@@ -84,7 +84,7 @@ describe BawAudioTools::AudioBase do
       expect(info_1[:duration_seconds]).to be_within(duration_range).of(30)
       # ogg doesn't have a set bit rate
 
-      temp_media_file_b = temp_media_file_2 + '.wav'
+      temp_media_file_b = temp_file(extension: '.wav')
       result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b)
       info_2 = audio_base.info(temp_media_file_b)
       expect(File.size(temp_media_file_b)).to be > 0
@@ -95,7 +95,7 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'correctly converts from .ogg to .flac' do
-      temp_media_file_a = temp_media_file_1 + '.flac'
+      temp_media_file_a = temp_file(extension: '.flac')
       result = audio_base.modify(audio_file_stereo, temp_media_file_a, start_offset: 10, end_offset: 40, sample_rate: 22_050)
       info = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
@@ -113,14 +113,14 @@ describe BawAudioTools::AudioBase do
       #   the format supports it
 
       it 'fails validation if the requested sample rate is non-standard and not the original sample rate (original_sample_rate is not given)' do
-        temp_audio_file = temp_media_file_1 + '.wav'
+        temp_audio_file = temp_file(extension: '.wav')
         expect {
           audio_base.modify(audio_file_stereo, temp_audio_file, start_offset: 10, end_offset: 40, sample_rate: 6666)
         }.to raise_error(BawAudioTools::Exceptions::InvalidSampleRateError)
       end
 
       it 'fails validation if the requested sample rate is non-standard and not the original sample rate (original_sample_rate is given)' do
-        temp_audio_file = temp_media_file_1 + '.wav'
+        temp_audio_file = temp_file(extension: '.wav')
         expect {
           audio_base.modify(audio_file_7777hz, temp_audio_file, start_offset: 10, end_offset: 40, sample_rate: 6666, original_sample_rate: 7777)
         }.to raise_error(BawAudioTools::Exceptions::InvalidSampleRateError)
@@ -129,21 +129,21 @@ describe BawAudioTools::AudioBase do
       # for sample rate validation, original sample rate can be supplied based on a previous database lookup, or by checking the file
       # depending on the calling methods (and what they need to do anyway). If both are supplied, it checks that they are the same
       it 'errors if the specified original sample rate is not actually the sample rate of the source file (standard original_sample_rate)' do
-        temp_audio_file = temp_media_file_1 + '.wav'
+        temp_audio_file = temp_file(extension: '.wav')
         expect {
           audio_base.modify(audio_file_7777hz, temp_audio_file, start_offset: 10, end_offset: 40, sample_rate: 11_025, original_sample_rate: 11_025)
         }.to raise_error(ArgumentError)
       end
 
       it 'errors if the specified original sample rate is not actually the sample rate of the source file (non-standard original_sample_rate)' do
-        temp_audio_file = temp_media_file_1 + '.wav'
+        temp_audio_file = temp_file(extension: '.wav')
         expect {
           audio_base.modify(audio_file_7777hz, temp_audio_file, start_offset: 10, end_offset: 40, sample_rate: 11_025, original_sample_rate: 14_554)
         }.to raise_error(ArgumentError)
       end
 
       it 'converts from .ogg to .flac with non-standard sample rate if it is the original sample rate' do
-        temp_media_file_a = temp_media_file_1 + '.flac'
+        temp_media_file_a = temp_file(extension: '.flac')
         result = audio_base.modify(audio_file_7777hz, temp_media_file_a, start_offset: 10, end_offset: 40, sample_rate: 7777)
         info = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -152,14 +152,14 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'it errors if the requested requested sample rate is the original sample rate but is not supported by the target format (mp3)' do
-        temp_audio_file = temp_media_file_1 + '.mp3'
+        temp_audio_file = temp_file(extension: '.mp3')
         expect {
           audio_base.modify(audio_file_stereo, temp_audio_file, start_offset: 10, sample_rate: 7777)
         }.to raise_error(BawAudioTools::Exceptions::InvalidSampleRateError)
       end
 
       it 'correctly converts from .ogg to .webm with non-standard sample rate which it is the original sample rate' do
-        temp_media_file_a = temp_media_file_1 + '.webm'
+        temp_media_file_a = temp_file(extension: '.webm')
         result = audio_base.modify(audio_file_7777hz, temp_media_file_a, start_offset: 10, end_offset: 40, sample_rate: 7777)
         info = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -168,7 +168,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'correctly converts from .ogg to .wav with non-standard sample rate which it is the original sample rate' do
-        temp_media_file_a = temp_media_file_1 + '.wav'
+        temp_media_file_a = temp_file(extension: '.wav')
         result = audio_base.modify(audio_file_7777hz, temp_media_file_a, start_offset: 10, end_offset: 40, sample_rate: 7777)
         info = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -209,7 +209,7 @@ describe BawAudioTools::AudioBase do
 
     context 'special case for wavpack files' do
       it 'gets the correct segment of the file when only start_offset is specified' do
-        temp_media_file_a = temp_media_file_1 + '.wv'
+        temp_media_file_a = temp_file(extension: '.wv')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -218,7 +218,7 @@ describe BawAudioTools::AudioBase do
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-        temp_media_file_b = temp_media_file_2 + '.wav'
+        temp_media_file_b = temp_file(extension: '.wav')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, start_offset: 10)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0
@@ -229,7 +229,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'gets the correct segment of the file when only end_offset is specified' do
-        temp_media_file_a = temp_media_file_1 + '.wv'
+        temp_media_file_a = temp_file(extension: '.wv')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -238,7 +238,7 @@ describe BawAudioTools::AudioBase do
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-        temp_media_file_b = temp_media_file_2 + '.wav'
+        temp_media_file_b = temp_file(extension: '.wav')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, end_offset: 20)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0
@@ -249,7 +249,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'gets the correct segment of the file when only offsets are specified' do
-        temp_media_file_a = temp_media_file_1 + '.wv'
+        temp_media_file_a = temp_file(extension: '.wv')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -258,7 +258,7 @@ describe BawAudioTools::AudioBase do
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-        temp_media_file_b = temp_media_file_2 + '.wav'
+        temp_media_file_b = temp_file(extension: '.wav')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, start_offset: 10, end_offset: 20)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0
@@ -271,7 +271,7 @@ describe BawAudioTools::AudioBase do
 
     context 'special case for mp3 files' do
       it 'gets the correct segment of the file when only start_offset is specified' do
-        temp_media_file_a = temp_media_file_1 + '.mp3'
+        temp_media_file_a = temp_file(extension: '.mp3')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -281,7 +281,7 @@ describe BawAudioTools::AudioBase do
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
         #expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
 
-        temp_media_file_b = temp_media_file_2 + '.mp3'
+        temp_media_file_b = temp_file(extension: '.mp3')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, start_offset: 10)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0
@@ -293,7 +293,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'gets the correct segment of the file when only end_offset is specified' do
-        temp_media_file_a = temp_media_file_1 + '.mp3'
+        temp_media_file_a = temp_file(extension: '.mp3')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -303,7 +303,7 @@ describe BawAudioTools::AudioBase do
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
         #expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
 
-        temp_media_file_b = temp_media_file_2 + '.mp3'
+        temp_media_file_b = temp_file(extension: '.mp3')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, end_offset: 20)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0
@@ -315,7 +315,7 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'gets the correct segment of the file when only offsets are specified' do
-        temp_media_file_a = temp_media_file_1 + '.mp3'
+        temp_media_file_a = temp_file(extension: '.mp3')
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         info_1 = audio_base.info(temp_media_file_a)
         expect(File.size(temp_media_file_a)).to be > 0
@@ -327,7 +327,7 @@ describe BawAudioTools::AudioBase do
         #expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
         #expect(info_1[:bit_rate_bps_calc]).to be_within(bit_rate_range).of(bit_rate_min)
 
-        temp_media_file_b = temp_media_file_2 + '.mp3'
+        temp_media_file_b = temp_file(extension: '.mp3')
         result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b, start_offset: 10, end_offset: 20)
         info_2 = audio_base.info(temp_media_file_b)
         expect(File.size(temp_media_file_b)).to be > 0

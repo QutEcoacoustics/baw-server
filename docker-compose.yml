@@ -47,8 +47,9 @@ services:
   workers: &worker
     build:
       context: .
+    #bundle exec rdebug-ide --host 0.0.0.0 --port 1235 --skip_wait_for_start -- bin/baw-workers baw:worker:run
     command: >-
-      baw-workers baw:worker:run
+      bin/baw-workers baw:worker:run
     depends_on:
       - db
       - redis
@@ -57,10 +58,10 @@ services:
       MIGRATE_DB: "false"
     networks:
       - baw_workers_network
-    #ports:
-    # rdebug-ide port (mapped for workers)
-    # - "1235:1234"
-    # - "26162:26162"
+    ports:
+      # rdebug-ide port (mapped for workers)
+      - "1235:1235"
+      #- "26162:26162"
     restart: on-failure
     volumes:
       - type: bind
@@ -75,9 +76,14 @@ services:
 
   workers_test:
     <<: *worker
+    #bundle exec rdebug-ide --host 0.0.0.0 --port 1236 --skip_wait_for_start  -- bin/baw-workers baw:worker:run
     environment:
       RAILS_ENV: test
       MIGRATE_DB: "false"
+    ports:
+      # rdebug-ide port (mapped for workers)
+      - "1236:1236"
+      #- "26162:26162"
 
   web:
     build:

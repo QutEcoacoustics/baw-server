@@ -84,7 +84,7 @@ abort('The Rails environment is NOT running in test mode!') unless Rails.env.tes
 require 'rspec/collection_matchers'
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
-
+require 'rspec-benchmark'
 require 'webmock/rspec'
 require 'paperclip/matchers'
 require 'database_cleaner'
@@ -158,6 +158,8 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   require_relative 'helpers/factory_bot_helpers'
   config.include Baw::FactoryBotHelpers
+
+  config.include RSpec::Benchmark::Matchers
 
   require_relative 'helpers/migrations_helper'
   config.include MigrationsHelpers, :migration

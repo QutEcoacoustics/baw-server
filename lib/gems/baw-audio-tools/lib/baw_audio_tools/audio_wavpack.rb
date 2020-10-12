@@ -86,8 +86,10 @@ module BawAudioTools
     end
 
     def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil)
-      raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
-      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
+      source = Pathname(source)
+      target = Pathname(target)
+      raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.extname == '.wv'
+      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.extname == '.wav'
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target

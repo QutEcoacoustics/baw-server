@@ -22,10 +22,10 @@ describe BawAudioTools::Spectrogram do
 
   context 'getting info about image' do
     it 'returns all required information' do
-      source = temp_media_file_1 + '.wav'
+      source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1 + '.png'
+      target = temp_file(extension: '.png')
       spectrogram.modify(source, target)
       info = spectrogram.info(target)
       expect(info).to include(:media_type)
@@ -38,20 +38,20 @@ describe BawAudioTools::Spectrogram do
 
   context 'generating spectrogram' do
     it 'runs to completion when given an existing audio file' do
-      source = temp_media_file_1 + '.wav'
+      source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1 + '.png'
+      target = temp_file(extension: '.png')
       spectrogram.modify(source, target)
     end
   end
 
   context 'generating waveform' do
     it 'runs to completion when given an existing audio file' do
-      source = temp_media_file_1 + '.wav'
+      source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1 + '.png'
+      target = temp_file(extension: '.png')
       expect {
         spectrogram.modify(source, target, colour: 'w', sample_rate: 22_050)
       }.to raise_error(NotImplementedError, 'Drawing waveforms has been deprecated and is no longer supported')
