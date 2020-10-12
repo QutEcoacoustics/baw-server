@@ -49,6 +49,7 @@ module BawAudioTools
       # AT 2020: moved command offsets so that they occur before -i. This apparently changes performance profile for cut+seek
       #   from O(n) to O(1), which makes a big difference on longer files!
       #   For a 2 hour file cut speed drop to < 3 seconds, from 8.25 seconds.
+      # See: https://github.com/QutEcoacoustics/baw-server/pull/498
       audio_cmd = "#{@ffmpeg_executable} #{cmd_offsets} -i \"#{source}\" #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\" -nostdin -y"
       cmd = ''
 

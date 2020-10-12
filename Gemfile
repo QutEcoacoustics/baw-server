@@ -42,7 +42,7 @@ gem 'rswag-ui'
 # uri parsing and generation
 gem 'addressable'
 
-gem 'descriptive_statistics', :require => 'descriptive_statistics/safe'
+gem 'descriptive-statistics'
 
 RAILS_VERSION = '~> 6.0.3'
 

@@ -6,12 +6,13 @@ shared_context 'common' do
   let(:amplitude_range) { 0.02 }
   let(:bit_rate_range) { 400 }
   let(:bit_rate_min) { 192_000 }
-  let(:sleep_range) { 0.5 }
 
-  let(:temp_dir) { Settings.paths.temp_dir }
+
 end
 
 shared_context 'audio base' do
+  let(:temp_dir) { Settings.paths.temp_dir }
+
   let(:audio_dir) { Fixtures::FILES_PATH }
 
   let(:logger) {
@@ -73,22 +74,36 @@ shared_context 'test audio files' do
 end
 
 shared_context 'temp media files' do
-  let(:temp_media_file_1) { File.join(Settings.paths.temp_dir, 'temp-media-1') }
-  let(:temp_media_file_2) { File.join(Settings.paths.temp_dir, 'temp-media-2') }
-  let(:temp_media_file_3) { File.join(Settings.paths.temp_dir, 'temp-media-3') }
-  let(:temp_media_file_4) { File.join(Settings.paths.temp_dir, 'temp-media-4') }
+  let(:temp_media_file_1) { temp_file(stem: 'temp-media-1', extension: '') }
+  let(:temp_media_file_2) { temp_file(stem: 'temp-media-2', extension: '') }
+  let(:temp_media_file_3) { temp_file(stem: 'temp-media-3', extension: '') }
+  let(:temp_media_file_4) { temp_file(stem: 'temp-media-4', extension: '') }
+
+  let(:temp_dir) { Pathname(Settings.paths.temp_dir) }
+
+  before(:all) do
+    @temp_files = []
+  end
+
+  def temp_file(stem: nil, extension: '.tmp')
+    stem = ::SecureRandom.hex(7) if stem.blank?
+    extension =
+      case
+      when extension.blank? then ''
+      when extension.start_with?('.') then extension
+      else ".#{extension}"
+      end
+    path = temp_dir / "#{stem}#{extension}"
+    @temp_files << path
+
+    path
+  end
 
   before(:each) do
-    Dir.glob(temp_media_file_1 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_2 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_3 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_4 + '*').each { |f| File.delete(f) }
+    @temp_files.filter(&:exist?).each(&:delete)
   end
 
   after(:each) do
-    Dir.glob(temp_media_file_1 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_2 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_3 + '*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_4 + '*').each { |f| File.delete(f) }
+    @temp_files.filter(&:exist?).each(&:delete)
   end
 end

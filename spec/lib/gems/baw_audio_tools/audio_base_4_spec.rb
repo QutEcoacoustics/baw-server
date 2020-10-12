@@ -26,7 +26,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'segments and converts successfully for 2 channels' do
-    temp_audio_file = temp_media_file_1 + '.wav'
+    temp_audio_file = temp_file(extension: '.wav')
     audio_base.modify(audio_file_amp_2_channels, temp_audio_file,
                       start_offset: 3,
                       end_offset: 9,
@@ -41,7 +41,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'segments and converts successfully for 1 channel' do
-    temp_audio_file = temp_media_file_1 + '.wav'
+    temp_audio_file = temp_file(extension: '.wav')
     audio_base.modify(audio_file_amp_1_channels, temp_audio_file,
                       start_offset: 2.5,
                       end_offset: 7.5,
@@ -56,7 +56,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'mixes 2 channels down to mono' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 0)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -67,7 +67,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'mixes 3 channels down to mono' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 0)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -78,7 +78,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'selects the first of two channels' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 1)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -89,7 +89,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'selects the second of two channels' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 2)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -100,7 +100,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'selects the first of three channels' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 1)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -111,7 +111,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'selects the second of three channels' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 2)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -122,7 +122,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'selects the third of three channels' do
-    temp_audio_file = temp_media_file_1 + '.ogg'
+    temp_audio_file = temp_file(extension: '.ogg')
     result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 3)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')

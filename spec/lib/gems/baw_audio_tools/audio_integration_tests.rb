@@ -23,7 +23,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'can modify files that are symlinks pointing to real files' do
-    modified_file = temp_media_file_1 + '.wav'
+    modified_file = temp_file(extension: '.wav')
     result = audio_base.modify(
       @test_file,
       modified_file,

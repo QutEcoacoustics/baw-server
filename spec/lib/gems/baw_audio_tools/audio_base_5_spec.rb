@@ -10,7 +10,7 @@ describe BawAudioTools::AudioBase do
   include_context 'test audio files'
 
   it 'correctly converts from .ogg to .wav' do
-    temp_audio_file = temp_media_file_1 + '.wav'
+    temp_audio_file = temp_file(extension: '.wav')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wav')
@@ -20,7 +20,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .oga' do
-    temp_audio_file = temp_media_file_1 + '.oga'
+    temp_audio_file = temp_file(extension: '.oga')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
@@ -30,7 +30,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .mp3' do
-    temp_audio_file = temp_media_file_1 + '.mp3'
+    temp_audio_file = temp_file(extension: '.mp3')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/mp3')
@@ -40,7 +40,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .asf' do
-    temp_audio_file = temp_media_file_1 + '.asf'
+    temp_audio_file = temp_file(extension: '.asf')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/asf')
@@ -50,7 +50,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .mp4' do
-    temp_audio_file = temp_media_file_1 + '.mp4'
+    temp_audio_file = temp_file(extension: '.mp4')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/mp4')
@@ -60,7 +60,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .flac' do
-    temp_audio_file = temp_media_file_1 + '.flac'
+    temp_audio_file = temp_file(extension: '.flac')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/x-flac')
@@ -70,7 +70,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .webm' do
-    temp_audio_file = temp_media_file_1 + '.webm'
+    temp_audio_file = temp_file(extension: '.webm')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/webm')
@@ -80,7 +80,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .webma' do
-    temp_audio_file = temp_media_file_1 + '.webma'
+    temp_audio_file = temp_file(extension: '.webma')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/webm')
@@ -90,7 +90,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .wv' do
-    temp_audio_file = temp_media_file_1 + '.wv'
+    temp_audio_file = temp_file(extension: '.wv')
     _ = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wavpack')
@@ -100,7 +100,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .wav, then from .wav to .mp3' do
-    temp_media_file_a = temp_media_file_1 + '.wav'
+    temp_media_file_a = temp_file(extension: '.wav')
     _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
     info1 = audio_base.info(temp_media_file_a)
     expect(info1[:media_type]).to eq('audio/wav')
@@ -108,7 +108,7 @@ describe BawAudioTools::AudioBase do
     expect(info1[:channels]).to eq(audio_file_stereo_channels)
     expect(info1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-    temp_media_file_b = temp_media_file_2 + '.mp3'
+    temp_media_file_b = temp_file(extension: '.mp3')
     _ = audio_base.modify(temp_media_file_a, temp_media_file_b)
     info2 = audio_base.info(temp_media_file_b)
     expect(info2[:media_type]).to eq('audio/mp3')
@@ -118,7 +118,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .wav, then from .wav to .ogg' do
-    temp_media_file_a = temp_media_file_1 + '.wav'
+    temp_media_file_a = temp_file(extension: '.wav')
     _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
     info1 = audio_base.info(temp_media_file_a)
     expect(info1[:media_type]).to eq('audio/wav')
@@ -126,7 +126,7 @@ describe BawAudioTools::AudioBase do
     expect(info1[:channels]).to eq(audio_file_stereo_channels)
     expect(info1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-    temp_media_file_b = temp_media_file_2 + '.ogg'
+    temp_media_file_b = temp_file(extension: '.ogg')
     _ = audio_base.modify(temp_media_file_a, temp_media_file_b)
     info2 = audio_base.info(temp_media_file_b)
     expect(info2[:media_type]).to eq('audio/ogg')
@@ -136,7 +136,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .ogg to .mp3, then from .mp3 to .wav' do
-    temp_media_file_a = temp_media_file_1 + '.mp3'
+    temp_media_file_a = temp_file(extension: '.mp3')
     _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
     info1 = audio_base.info(temp_media_file_a)
     expect(info1[:media_type]).to eq('audio/mp3')
@@ -144,7 +144,7 @@ describe BawAudioTools::AudioBase do
     expect(info1[:channels]).to eq(audio_file_stereo_channels)
     expect(info1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
-    temp_media_file_b = temp_media_file_2 + '.wav'
+    temp_media_file_b = temp_file(extension: '.wav')
     _ = audio_base.modify(temp_media_file_a, temp_media_file_b)
     info2 = audio_base.info(temp_media_file_b)
     expect(info2[:media_type]).to eq('audio/wav')
@@ -154,7 +154,7 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'correctly converts from .wac to .wav, then from .wav to .flac' do
-    temp_media_file_a = temp_media_file_1 + '.wav'
+    temp_media_file_a = temp_file(extension: '.wav')
     _ = audio_base.modify(audio_file_wac_2, temp_media_file_a)
     info1 = audio_base.info(temp_media_file_a)
     expect(info1[:media_type]).to eq('audio/wav')
@@ -162,7 +162,7 @@ describe BawAudioTools::AudioBase do
     expect(info1[:channels]).to eq(2)
     expect(info1[:duration_seconds]).to be_within(0.3).of(60)
 
-    temp_media_file_b = temp_media_file_2 + '.flac'
+    temp_media_file_b = temp_file(extension: '.flac')
     _ = audio_base.modify(temp_media_file_a, temp_media_file_b)
     info2 = audio_base.info(temp_media_file_b)
     expect(info2[:media_type]).to eq('audio/x-flac')

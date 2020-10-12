@@ -20,20 +20,20 @@ describe BawAudioTools::AudioWaveform, :skip do
 
   context 'waveform' do
     it 'creates correct command line' do
-      source = temp_media_file_1 + '.wav'
+      source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1 + '.png'
+      target = temp_file(extension: '.png')
       cmd = waveform.command(source, nil, target)
 
       expect(cmd).to include('wav2png  --background-color efefefff --foreground-color 00000000 --width 1800 --height 280 --db-max 0 --db-min -48 --output "')
     end
 
     it 'respects custom options in command line' do
-      source = temp_media_file_1 + '.wav'
+      source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1 + '.png'
+      target = temp_file(extension: '.png')
       cmd = waveform.command(source, nil, target,
                              width = 2000, height = 500,
                              colour_bg = '000000ff', colour_fg = '00000000',

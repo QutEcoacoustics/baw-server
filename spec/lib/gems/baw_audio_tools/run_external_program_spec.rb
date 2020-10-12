@@ -3,7 +3,7 @@
 require 'workers_helper'
 
 describe BawAudioTools::RunExternalProgram do
-  include_context 'common'
+  include_context 'audio base'
 
   def test_is_not_running(message)
     # get pid and check if that pid is still running
@@ -37,6 +37,8 @@ describe BawAudioTools::RunExternalProgram do
 
     test_is_not_running(error.message)
   end
+
+  let(:sleep_range) { 0.5 }
 
   it 'check timeout does not impact successful execution' do
     run_program = BawAudioTools::RunExternalProgram.new(

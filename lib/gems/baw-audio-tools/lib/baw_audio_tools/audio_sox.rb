@@ -60,12 +60,16 @@ module BawAudioTools
       "#{@sox_executable} -q -V4 \"#{source}\" \"#{target}\" #{cmd_offsets} #{sample_rate} #{cmd_channel}"
     end
 
-    def spectrogram_command(source, _source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
-                            window = nil, window_function = nil, colour = nil)
-      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+    def spectrogram_command(
+        source, _source_info, target,
+        start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
+        window = nil, window_function = nil, colour = nil)
+      source = Pathname(source)
+      target = Pathname(target)
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.extname == '.wav'
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.extname == '.png'
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless source.exist?
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if target.exist?
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
@@ -150,13 +154,13 @@ module BawAudioTools
       # to the output until the first position is reached. The effect then alternates between
       # copying and discarding audio at each position.
 
-      #If a position is preceded by an equals (=) or minus (-) sign, it is interpreted relative to the
+      # If a position is preceded by an equals (=) or minus (-) sign, it is interpreted relative to the
       # beginning or the end of the audio, respectively. (The audio length must be known for
       # end-relative locations to work.) Otherwise, it is considered an offset from the last
       # position, or from the start of audio for the first parameter. Using a value of 0 for
       # the first position parameter allows copying from the beginning of the audio.
 
-      #All parameters can be specified using either an amount of time or an exact count of samples.
+      # All parameters can be specified using either an amount of time or an exact count of samples.
       # The format for specifying lengths in time is hh:mm:ss.frac. A value of 1:30.5 for the first
       # parameter will not start until 1 minute, thirty and ½ seconds into the audio. The format for
       # specifying sample counts is the number of samples with the letter ‘s’ appended to it.

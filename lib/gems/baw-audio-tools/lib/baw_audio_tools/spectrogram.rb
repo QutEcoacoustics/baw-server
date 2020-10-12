@@ -19,8 +19,9 @@ module BawAudioTools
     end
 
     def info(source)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
-      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
+      source = Pathname(source)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless source.exist?
+      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if source.zero?
 
       im_info_cmd = @image_image_magick.info_command(source)
       im_info_output = @audio_base.execute(im_info_cmd)
@@ -38,10 +39,12 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :window :colour :format
     def modify(source, target, modify_parameters = {})
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      raise ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      source = Pathname(source)
+      target = Pathname(target)
+      raise ArgumentError, "Source is not a wav file: : #{source}" unless source.extname == '.wav'
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.extname == '.png'
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless source.exist?
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if target.exist?
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       source_info = audio_base.info(source)

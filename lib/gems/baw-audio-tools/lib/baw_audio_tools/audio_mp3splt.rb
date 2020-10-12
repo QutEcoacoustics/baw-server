@@ -8,15 +8,17 @@ module BawAudioTools
     end
 
     def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil)
-      raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
-      raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      source = Pathname(source)
+      target = Pathname(target)
+      raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.extname == '.mp3'
+      raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.extname == '.mp3'
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless source.exist?
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if target.exist?
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       # mp3splt needs the file extension removed
-      target_dirname = File.dirname target
-      target_no_ext = File.basename(target, File.extname(target))
+      target_dirname = target.dirname
+      target_no_ext = target.basename('.*')
       cmd_offsets = arg_offsets(start_offset, end_offset)
 
       mp3splt_command = "#{@mp3splt_executable} -q -d \"#{target_dirname}\" -o \"#{target_no_ext}\" \"#{source}\" #{cmd_offsets}"

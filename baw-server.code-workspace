@@ -37,6 +37,8 @@
       "downcase",
       "entrypoint",
       "executables",
+      "exitstatus",
+      "extname",
       "ffmpeg",
       "ffprobe",
       "fileutils",

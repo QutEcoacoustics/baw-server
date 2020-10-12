@@ -7,6 +7,9 @@ module BawAudioTools
                 :audio_wavpack, :audio_shntool, :audio_wav2png,
                 :audio_wac2wav
 
+    # @return [BawAudioTools::RunExternalProgram]
+    attr_reader :run_program
+
     # Create a new BawAudioTools::AudioBase.
     # @param [Hash] audio_defaults
     # @param [Logger] logger
@@ -259,6 +262,8 @@ module BawAudioTools
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
       raise Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac' if File.extname(target) == '.wac'
 
+      target = target.to_s if target.is_a?(Pathname)
+
       source_info = info(source)
 
       check_offsets(source_info, @audio_defaults.min_duration_seconds, @audio_defaults.max_duration_seconds, modify_parameters)
@@ -388,13 +393,15 @@ module BawAudioTools
     private
 
     # Check if a source exists, and is a file.
-    # @return [String] the real path of the given path.
+    # @return [Pathname] the real path of the given path.
     def check_source(path)
-      raise Exceptions::FileNotFoundError, 'Source path was empty or nil' if path.nil? || path.empty?
+      raise Exceptions::FileNotFoundError, 'Source path was empty or nil' if path.nil? || (path.is_a?(String) && path.empty?)
+      path = Pathname(path)
+
       # Maybe worth resolving symlinks to a realpath, but currently does not cause any failures without
       #path = File.realpath(File.readlink(path)) if File.symlink?(path)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{path}" unless File.exist? path
-      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{path}" if File.size(path) < 1
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{path}" unless path.exist?
+      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{path}" if path.zero?
 
       path
     end

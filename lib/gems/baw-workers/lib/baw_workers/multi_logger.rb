@@ -174,7 +174,7 @@ module BawWorkers
 
     # Set formatter on all contained loggers.
     def formatter=(value)
-      raise "formatter should never be set" if BawApp.dev_or_test?
+      raise 'formatter should never be set to a QuietFormatter' if BawApp.dev_or_test? && value.is_a?(Resque::QuietFormatter)
 
       @loggers.each do |logger|
         logger.formatter = value if logger.respond_to?(:formatter=)
