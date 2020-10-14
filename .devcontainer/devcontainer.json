@@ -40,6 +40,7 @@
     "knisterpeter.vscode-github",
     "castwide.ruby-debug",
     "pavlitsky.yard",
-    "stevejpurves.cucumber"
-  ]
+    "stevejpurves.cucumber",
+    "ms-azuretools.vscode-docker"
+  ],
 }

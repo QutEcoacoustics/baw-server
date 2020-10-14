@@ -8,10 +8,13 @@ ARG version=
 ARG trimmed=false
 
 # install audio tools and other binaries
-COPY ./provision/install_audio_tools.sh ./provision/install_postgresql_client.sh  /tmp/
+COPY ./provision/install_audio_tools.sh \
+  ./provision/install_postgresql_client.sh \
+  ./provision/dev_setup.sh \
+  /tmp/
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   # - git: we'd like to remove git dependency but we have multiple git based dependencies
   # in our gem files
   # - curl is needed for passenger
@@ -27,6 +30,7 @@ RUN apt-get update \
   && /tmp/install_postgresql_client.sh \
   # install audio tools and other binaries
   && /tmp/install_audio_tools.sh \
+  && (if [ "x${trimmed}" != "xtrue" ]; then /tmp/dev_setup.sh ; fi) \
   && apt-get clean \
   && rm -rf /tmp/*.sh \
   && rm -rf /var/lib/apt/lists/*

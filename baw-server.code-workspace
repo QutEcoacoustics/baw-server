@@ -100,33 +100,39 @@
       "statusBar.foreground": "#15202b"
     },
     "peacock.remoteColor": "#72cb80",
-    "testExplorer.addToEditorContextMenu": true,
-    "testExplorer.codeLens": true,
-    "testExplorer.gutterDecoration": true,
-    "testExplorer.errorDecorationHover": true,
-    "testExplorer.hideEmptyLog": false,
+    // "testExplorer.addToEditorContextMenu": true,
+    // "testExplorer.codeLens": true,
+    // "testExplorer.gutterDecoration": true,
+    // "testExplorer.errorDecorationHover": true,
+    // "testExplorer.hideEmptyLog": false,
+    "solargraph.useBundler": true,
     "solargraph.diagnostics": true,
     "solargraph.completion": true,
     "solargraph.hover": true,
+    "solargraph.autoformat": true,
+    "solargraph.formatting": true,
     "solargraph.symbols": true,
     "solargraph.definitions": true,
     "solargraph.rename": true,
     "solargraph.references": true,
     "solargraph.folding": true,
     "solargraph.logLevel": "debug",
-    "solargraph.useBundler": true,
     "solargraph.bundlerPath": "bundle",
-    //"ruby.intellisense": "rubyLocate",
     "editor.formatOnSave": true,
     //"ruby.rubocop.onSave": true,
-    "ruby.format": "rubocop",
+    "ruby.intellisense": false,
+    "ruby.format": false,
     "ruby.useBundler": true,
-    "ruby.useLanguageServer": true,
-    "ruby.lint": {
-      "rubocop": {
-        "useBundler": true,
-        "lint": true,
-      }
+    "ruby.useLanguageServer": false,
+    "ruby.lint": {},
+    //  {
+    //   "rubocop": {
+    //     "useBundler": true,
+    //     "lint": true,
+    //   }
+    // },
+    "[ruby]": {
+      "editor.defaultFormatter": "castwide.solargraph"
     },
     "cSpell.enableFiletypes": [
       "ruby"
@@ -136,13 +142,13 @@
   "extensions": {
     "recommendations": [
       "rebornix.ruby",
-      "misogi.ruby-rubocop",
+      //"misogi.ruby-rubocop",
       "castwide.solargraph",
       // "bung87.vscode-gemfile",
       "streetsidesoftware.code-spell-checker",
       "EditorConfig.EditorConfig",
       "ms-vscode-remote.vscode-remote-extensionpack",
-      "connorshea.vscode-ruby-test-adapter",
+      //"connorshea.vscode-ruby-test-adapter",
       "knisterpeter.vscode-github",
       "castwide.ruby-debug",
       "pavlitsky.yard"
