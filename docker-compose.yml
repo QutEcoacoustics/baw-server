@@ -6,6 +6,7 @@ services:
       - "6379:6379"
     networks:
       - baw_workers_network
+
   db:
     image: postgres
     volumes:
@@ -18,14 +19,13 @@ services:
       # never, ever, ever use this is a production setup!
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
+
   upload:
-    command: serve
-    image: qutecoacoustics/sftpgo:latest
+    # Default command is `sftpgo serve`
+    #command: sftpgo serve
+    image: drakkan/sftpgo:edge-alpine
     depends_on:
       - db
-    environment:
-      PUID: 1000
-      GUID: 1000
     networks:
       - baw_upload_network
       - baw_db_network
@@ -37,12 +37,12 @@ services:
     volumes:
       - type: bind
         source: ./provision/upload/config
-        target: /srv/sftpgo/config
+        target: /var/lib/sftpgo
       # mount the harvester to do directory - this is where we want to allow uploads
       - type: bind
         # the rails app knows about this directory from config (actions/harvest/to_do_path)
         source: ./tmp/_harvester_to_do_path
-        target: /data
+        target: /srv/sftpgo/data
 
   workers: &worker
     build:
@@ -71,7 +71,6 @@ services:
       # - type: volume
       #   source: baw_docker_shared_storage
       #   target: /home/baw_web/baw-server/tmp
-
     working_dir: /home/baw_web/baw-server
 
   workers_test:
