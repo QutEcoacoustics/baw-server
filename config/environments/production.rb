@@ -86,6 +86,15 @@ Rails.application.configure do
   # Send deprecation notices to registered listeners.
   config.active_support.deprecation = :notify
 
+  # By default parameter keys that are not explicitly permitted will be logged in the development
+  # and test environment. In other environments these parameters will simply be filtered out
+  # and ignored. Additionally, this behaviour can be changed by changing the
+  # config.action_controller.action_on_unpermitted_parameters property in your environment files.
+  # If set to :log the unpermitted attributes will be logged, if set to :raise an exception will
+  # be raised.
+  # TODO: AT2020: Set this to `:raise` when old-client has been deprecated
+  #config.action_controller.action_on_unpermitted_parameters = :raise
+
   # Use default logging formatter so that PID and timestamp are not suppressed.
   config.log_formatter = ::Logger::Formatter.new
 
