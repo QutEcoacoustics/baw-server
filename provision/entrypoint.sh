@@ -10,10 +10,11 @@ set -e
 # echo -e "\n== Debug container permissions  ==\n"
 #ls -la
 
+echo "==> Booting baw-server container. "
 echo "==> $(id)"
 echo "==> RAILS_ENV=$RAILS_ENV"
 
-echo -e "\n== Checking bundler install ==\n"
+echo -e "== Checking bundler install ==\n"
 
 bundle check || bundle install
 
@@ -30,14 +31,14 @@ if [[ "$GENERATE_ASSETS" = "true" ]]
 then
     if find /home/baw_web/baw-server/public/assets/ -name '*manifest*json' -printf 1 -quit -type f| grep -q 1
     then
-        echo -e "\n== Assets already generated, skipping generation ==\n"
+        echo -e "\n== Assets already generated, skipping generation =="
     else
         echo -e "\n== Generating assets ==\n"
 
         /home/baw_web/baw-server/bin/rails assets:precompile
     fi
 else
-    echo -e "\n== GENERATE_ASSETS is '$GENERATE_ASSETS' (not 'true'), skipping generation ==\n"
+    echo -e "\n== GENERATE_ASSETS is '$GENERATE_ASSETS' (not 'true'), skipping generation =="
 fi
 
 echo -e "\n== Executing original command '$@' ==\n"

@@ -436,7 +436,7 @@ describe BawWorkers::Harvest::SingleFile do
       expect(Resque.enqueued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
 
       # process enqueued job
-      emulate_resque_worker(BawWorkers::Mirror::Action.queue)
+      ResqueHelpers::Emulate.resque_worker(BawWorkers::Mirror::Action.queue)
 
       # ensure harvested file was copied
       expect(File.exist?(mirror_destination)).to be_truthy

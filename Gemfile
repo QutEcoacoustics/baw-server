@@ -55,7 +55,7 @@ group :server do
   gem 'responders', '~> 3.0.1'
 
   # bumping to latest RC because it has pre-compiled native binaries
-  gem "nokogiri", "~> 1.11.0.rc3"
+  gem 'nokogiri', '~> 1.11.0.rc3'
 
   # cms
   gem 'comfortable_mexican_sofa', '~> 2.0.0'
@@ -139,6 +139,9 @@ group :server do
   # (search for ':deleted_at' to find the relevant places)
   gem 'acts_as_paranoid'
 
+  # validations for active_storage files
+  gem 'active_storage_validations'
+
   # for state machines
   gem 'aasm', '> 5'
 
@@ -161,11 +164,18 @@ end
 group :workers do
   gem 'actionmailer', RAILS_VERSION
   gem 'activesupport', RAILS_VERSION
+  gem 'activejob', RAILS_VERSION
+  gem 'activestorage', RAILS_VERSION
+  gem 'activerecord', RAILS_VERSION
 end
 
 group :workers, :server do
   # For autoloading Gems. Zeitwerk is the default in Rails 6.
   gem 'zeitwerk', '>= 2.3', require: false
+
+  # logging
+  gem 'amazing_print'
+  gem 'rails_semantic_logger'
 
   # SETTINGS
   # -------------------------------------
@@ -179,6 +189,10 @@ group :workers, :server do
   # source copied into repo, see lib/gems/resque-status
   # gem 'resque-status'
   gem 'resque_solo'
+
+  # Active storage analyzers
+  gem 'image_processing'
+  gem 'mini_magick', '>= 4.9.5'
 
   # Upload service API
   # gem "sftpgo_generated_client" - required manually, see lib/gems/sftpgo_generated_client
@@ -238,4 +252,9 @@ group :test do
 
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
+end
+
+group :development, :test do
+  # restart workers when their code changes
+  gem 'rerun'
 end

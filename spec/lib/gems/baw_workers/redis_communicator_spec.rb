@@ -9,7 +9,7 @@ describe BawWorkers::RedisCommunicator do
 
   let(:redis) { BawWorkers::Config.redis_communicator }
 
-  let(:fake_redis) { Redis.new(ActiveSupport::HashWithIndifferentAccess.new(Settings.redis.connection)) }
+  let(:fake_redis) { Redis.new(Settings.redis.connection.to_h) }
 
   context 'wraps a basic redis API' do
     it 'can ping' do

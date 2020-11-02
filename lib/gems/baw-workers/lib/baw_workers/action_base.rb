@@ -23,7 +23,7 @@ module BawWorkers
     # resque-status achieves this by giving job instances UUID's
     # and allowing the job instances to report their
     # status from within their iterations.
-    # WARNING: our own monkey patch is included in `resque_status_custom_expire.rb`.
+    # WARNING: we're using a custom copy of this plugin
     include Resque::Plugins::Status
 
     # Class methods
@@ -41,7 +41,7 @@ module BawWorkers
       # rejected by a before_enqueue hook.
       def enqueue_to(queue, klass, options = {})
         uuid = BawWorkers::ResqueJobId.create_id_props(klass, options)
-        Resque::Plugins::Status::Hash.create uuid, options: options
+        Resque::Plugins::Status::Hash.create uuid, klass: klass, options: options,
 
         if Resque.enqueue_to(queue, klass, uuid, options)
           uuid

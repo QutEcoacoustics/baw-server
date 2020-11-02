@@ -4,34 +4,12 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-    // {
-    //   "name": "(ruby-debug) RSpec - active spec file only",
-    //   "type": "ruby-debug",
-    //   "request": "launch",
-    //   "program": "${workspaceFolder}/bin/rspec",
-    //   "programArgs": [
-    //     "-I",
-    //     "${workspaceRoot}",
-    //     "${file}"
-    //   ],
-    //   "useBundler": false
-    // },
-    // {
-    //   "name": "(ruby-debug) RSpec - all tests",
-    //   "type": "ruby-debug",
-    //   "request": "launch",
-    //   "program": "${workspaceFolder}/bin/rspec",
-    //   "programArgs": [
-    //     "${workspaceFolder}"
-    //   ],
-    //   "useBundler": false
-    // },
     {
-      "name": "(Ruby) RSpec - all",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - all",
+      "type": "ruby-debug",
       "request": "launch",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}"
       ],
@@ -40,15 +18,13 @@
       }
     },
     {
-      "name": "(Ruby) RSpec - current file",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - current file",
+      "type": "ruby-debug",
       "request": "launch",
       "internalConsoleOptions": "openOnSessionStart",
-      "showDebuggerOutput": true,
       "useBundler": true,
-      "pathToBundler": "${workspaceRoot}/bin/bundle",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "${file}",
@@ -56,18 +32,16 @@
       "env": {
         "RAILS_ENV": "test",
         "DEBUGGER_HOST": "0.0.0.0"
-      }
+      },
     },
     {
-      "name": "(Ruby) RSpec - current file, line number",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - current file, line number",
+      "type": "ruby-debug",
       "request": "launch",
       "internalConsoleOptions": "openOnSessionStart",
-      "showDebuggerOutput": true,
       "useBundler": true,
-      "pathToBundler": "${workspaceRoot}/bin/bundle",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "${file}:${input:rspecLineNumber}",
@@ -78,15 +52,13 @@
       }
     },
     {
-      "name": "(Ruby) RSpec - current file, name filter",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - current file, name filter",
+      "type": "ruby-debug",
       "request": "launch",
       "internalConsoleOptions": "openOnSessionStart",
-      "showDebuggerOutput": true,
       "useBundler": true,
-      "pathToBundler": "${workspaceRoot}/bin/bundle",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "-e",
@@ -99,15 +71,13 @@
       }
     },
     {
-      "name": "(Ruby) RSpec - current file, tag filter",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - current file, tag filter",
+      "type": "ruby-debug",
       "request": "launch",
       "internalConsoleOptions": "openOnSessionStart",
-      "showDebuggerOutput": true,
       "useBundler": true,
-      "pathToBundler": "${workspaceRoot}/bin/bundle",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "-t",
@@ -120,11 +90,11 @@
       }
     },
     {
-      "name": "(Ruby) RSpec - specific spec in active file only",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - specific spec in active file only",
+      "type": "ruby-debug",
       "request": "launch",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "${file}[${input:rspecSpecId}]"
@@ -134,11 +104,11 @@
       },
     },
     {
-      "name": "(Ruby) RSpec - docs generation",
-      "type": "Ruby",
+      "name": "(ruby-debug) RSpec - docs generation",
+      "type": "ruby-debug",
       "request": "launch",
       "program": "${workspaceRoot}/bin/rspec",
-      "args": [
+      "programArgs": [
         "-I",
         "${workspaceRoot}",
         "--pattern",
@@ -153,11 +123,11 @@
       },
     },
     {
-      "name": "Rails server",
-      "type": "Ruby",
+      "name": "Rruby-debug server",
+      "type": "ruby-debug",
       "request": "launch",
       "program": "${workspaceRoot}/bin/rails",
-      "args": [
+      "programArgs": [
         "server",
         "--binding=0.0.0.0",
         // had issues using passenger and setting breakpoints. Trialling thin for debugging
@@ -171,11 +141,10 @@
       //   "task": "Stop Passenger",
       //   "type": "shell"
       // },
-      "showDebuggerOutput": true
     },
     {
-      "name": "Listen for rdebug-ide",
-      "type": "Ruby",
+      "name": "Lruby-debugn for rdebug-ide",
+      "type": "ruby-debug",
       "request": "attach",
       "remoteHost": "127.0.0.1",
       "remotePort": "1234",
@@ -183,29 +152,27 @@
       "cwd": "${workspaceRoot}"
     },
     {
-      "name": "Listen for rdebug-ide (workers)",
-      "type": "Ruby",
+      "name": "Lruby-debugn for rdebug-ide (workers)",
+      "type": "ruby-debug",
       "request": "attach",
       "remoteHost": "workers",
       "remotePort": "1235",
       "remoteWorkspaceRoot": "${workspaceRoot}",
       "cwd": "${workspaceRoot",
-      "showDebuggerOutput": true
     },
     {
-      "name": "Listen for rdebug-ide (workers_test)",
-      "type": "Ruby",
+      "name": "Lruby-debugn for rdebug-ide (workers_test)",
+      "type": "ruby-debug",
       "request": "attach",
       "remoteHost": "workers_test",
       "remotePort": "1236",
       "remoteWorkspaceRoot": "${workspaceRoot}",
       "cwd": "${workspaceRoot}",
-      "showDebuggerOutput": true
     },
   ],
   "inputs": [
     {
-      "id": "rspecSpecArgs",
+      "id": "rspecSpecprogramArgs",
       "type": "promptString",
       "description": "Enter the rspec command line arguments",
       "default": "spec"

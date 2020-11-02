@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require File.expand_path('boot', __dir__)
 
 require 'English'
@@ -5,17 +7,55 @@ require 'rails/all'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.setup(*Rails.groups, :default, :server)
-Bundler.require(*Rails.groups, :server)
+Bundler.setup(*Rails.groups, :default, :server, :workers)
+Bundler.require(*Rails.groups, :server, :workers)
 
 # require things that aren't gems but are gem-like
 # Why do this and not rely on autoload magic? Because magic. I find it is simpler
 # to debug things that have less magic and a clear, transparent invocation
+# NOTE: the global Settings const is not yet available. We have to wait for the preload hook.
+#   See initializers/config.rb
 require "#{__dir__}/../lib/gems/baw-app/lib/baw_app"
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 
-module AWB
+module Baw
+  def self.configure_logging(config)
+    log_name = BawWorkers::Config.baw_workers_entry? ? 'workers' : 'rails'
+    tag = Settings.logs.tag.blank? ? '' : ".#{Settings.logs.tag}"
+    config.paths['log'] = [
+      Pathname(Settings.logs.directory).expand_path / "#{log_name}#{tag}.#{Rails.env}.log"
+    ]
+
+    config.semantic_logger.backtrace_level = :error
+    time_format = '%Y-%m-%dT%H:%M:%S.%#3N'
+    config.rails_semantic_logger.format = \
+      if BawApp.dev_or_test?
+        SemanticLogger::Formatters::Color.new(
+          ap: { multiline: false, ruby19_syntax: true },
+          color_map: { warn: SemanticLogger::AnsiColors::YELLOW },
+          time_format: time_format
+        )
+      else
+        SemanticLogger::Formatters::Default.new(time_format: time_format)
+      end
+
+    config.log_level = BawApp.log_level
+
+    if BawApp.log_to_stdout?
+      STDOUT.sync = true
+      config.semantic_logger.add_appender(io: STDOUT, formatter: config.rails_semantic_logger.format)
+    end
+
+    # the rails_semantic_logger gem automatically replaces all rails standard loggers
+    # with tagged loggers
+    # https://github.com/rocketjob/rails_semantic_logger/blob/be2d80c88ad81a39b67b003bc3758c41deaf05ff/lib/rails_semantic_logger/engine.rb
+    # this includes:
+    # - [active_record action_controller action_mailer action_view]
+    # - ActiveJob
+    # - Resque
+  end
+
   class Application < Rails::Application
     # This statement was auto-added by the CMS's generator
     # Ensuring that ActiveStorage routes are loaded before Comfy's globbing
@@ -34,11 +74,21 @@ module AWB
     #Rails.autoloaders.log! # debug only!
 
     # add patches
-    # zeitwerk specifically does not deal with the concept if overrides,
+    # zeitwerk specifically does not deal with the concept of overrides,
     # so patches need to be required manually
     Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).sort.each do |override|
       #puts "loading #{override}"
       require override
+    end
+
+    # This ensures our custom logging settings are defined before semantic loggers
+    # railtie hook is invoked... but also after ruby-config loads and defines the
+    # Settings global object.
+    Rails::Application::Bootstrap.initializer(
+      :baw_initialize_logger,
+      { before: :initialize_logger, after: :preload_frameworks }
+    ) do
+      Baw.configure_logging(Rails.application.config)
     end
 
     # Only load the plugins named here, in the order given (default is alphabetical).
@@ -70,6 +120,7 @@ module AWB
     config.i18n.available_locales = [:en]
 
     # specify the class to handle exceptions
+    # For web requests only I think? It is a middleware...?
     config.exceptions_app = lambda { |env|
       ErrorsController.action(:uncaught_error).call(env)
     }

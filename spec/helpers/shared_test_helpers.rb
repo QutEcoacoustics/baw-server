@@ -101,8 +101,10 @@ shared_context 'shared_test_helpers' do
   # Adds a file to our original audio directory for testing.
   # For performance reasons it actually symlinks to the file.
   # @return [Pathname]
-  def link_original_audio(target:, uuid: , datetime_with_offset:, original_format:)
-    raise ArgumentError, "datetime_with_offset must be a ActiveSupport::TimeWithZone" unless datetime_with_offset.is_a?(ActiveSupport::TimeWithZone)
+  def link_original_audio(target:, uuid:, datetime_with_offset:, original_format:)
+    unless datetime_with_offset.is_a?(ActiveSupport::TimeWithZone)
+      raise ArgumentError, 'datetime_with_offset must be a ActiveSupport::TimeWithZone'
+    end
 
     original_possible_paths = audio_original.possible_paths({
       uuid: uuid,
@@ -225,13 +227,6 @@ shared_context 'shared_test_helpers' do
     settings_file_dest
   end
 
-  def emulate_resque_worker(queue)
-    job = Resque.reserve(queue)
-
-    # returns true if job was performed
-    job.perform
-  end
-
   def run_rake_task(task_name, args)
     the_task = Rake::Task[task_name]
 
@@ -244,7 +239,6 @@ shared_context 'shared_test_helpers' do
     the_task.reenable
     the_task.invoke(*args)
   end
-
 
   def get_api_security_response(user_name, auth_token)
     {

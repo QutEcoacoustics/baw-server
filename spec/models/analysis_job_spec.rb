@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'helpers/resque_helper'
+require 'helpers/resque_helpers'
 require 'aasm/rspec'
 
 describe AnalysisJob, type: :model do

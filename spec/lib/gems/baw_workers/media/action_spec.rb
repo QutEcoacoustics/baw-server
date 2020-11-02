@@ -72,7 +72,7 @@ describe BawWorkers::Media::Action do
         }
 
       unique_key = BawWorkers::Media::Action.action_enqueue(:audio, params)
-      was_run = emulate_resque_worker(BawWorkers::Media::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Media::Action.queue)
       status = BawWorkers::ResqueApi.status_by_key(unique_key)
 
       expected = 'Media request: audio, [5-10), format=wav'
@@ -308,7 +308,7 @@ describe BawWorkers::Media::Action do
         BawWorkers::Media::Action.action_enqueue(:audio, media_request_params)
 
         # act
-        emulate_resque_worker(BawWorkers::Media::Action.queue)
+        ResqueHelpers::Emulate.resque_worker(BawWorkers::Media::Action.queue)
 
         # assert
         expected_paths = get_cached_audio_paths(media_request_params)

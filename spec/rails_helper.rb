@@ -157,35 +157,53 @@ RSpec.configure do |config|
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryBot::Syntax::Methods
   require_relative 'helpers/factory_bot_helpers'
-  config.include Baw::FactoryBotHelpers
+  config.include FactoryBotHelpers::Example
 
   config.include RSpec::Benchmark::Matchers
+
+  require_relative 'helpers/logger_helper'
+  config.include LoggerHelpers::Example
 
   require_relative 'helpers/migrations_helper'
   config.include MigrationsHelpers, :migration
 
-  require_relative 'helpers/creation'
-  config.include Creation::Example
+  require_relative 'helpers/creation_helper'
   config.extend Creation::ExampleGroup
+  config.include Creation::Example
 
-  require_relative 'helpers/citizen_science_creation'
-  config.extend CitizenScienceCreation
+  require_relative 'helpers/citizen_science_creation_helper'
+  config.extend CitizenScienceCreation::ExampleGroup
 
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
   require_relative 'helpers/request_spec_helpers'
-  config.extend RequestSpecExampleGroupHelpers, { type: :request }
-  config.include RequestSpecExampleHelpers, { type: :request }
+  config.extend RequestSpecHelpers::ExampleGroup, { type: :request }
+  config.include RequestSpecHelpers::Example, { type: :request }
+
+  require_relative 'helpers/resque_helpers'
+  config.extend ResqueHelpers::ExampleGroup
+  config.include ResqueHelpers::Example
 
   require_relative 'helpers/api_spec_helpers'
-  config.extend ApiSpecDescribeHelpers, { file_path: Regexp.new('/spec/api/') }
+  config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
+  require_relative 'helpers/shared_context/api_spec_shared_context'
   config.include_context :api_spec_shared_context, { file_path: Regexp.new('/spec/api/') }
 
   require_relative 'helpers/permissions_helper'
-  config.extend PermissionsGroupHelpers, {
+  config.extend PermissionsHelpers::ExampleGroup, {
     file_path: Regexp.new('/spec/requests/permissions')
   }
+
+  require_relative 'helpers/shared_examples/a_route_that_stores_images'
+  require_relative 'helpers/shared_examples/permissions_for'
+
+  # Ensure we actually perform jobs with resque.
+  # We don't want to run jobs inline, it produces unrealistic tests.
+  # https://github.com/rails/rails/issues/37270#issuecomment-558278392
+  (ActiveJob::Base.descendants << ActiveJob::Base).each(&:disable_test_adapter)
+  Rails.application.config.active_job.queue_adapter = :resque
+  ActiveJob::Base.queue_adapter = :resque
 
   # change the default creation strategy
   # Previous versions of factory but would ensure associations used the :create
@@ -210,7 +228,7 @@ RSpec.configure do |config|
     # https://github.com/DatabaseCleaner/database_cleaner
     DatabaseCleaner[:active_record].strategy = :transaction
 
-    DatabaseCleaner[:redis].db = Redis.new(ActiveSupport::HashWithIndifferentAccess.new(Settings.redis.connection))
+    DatabaseCleaner[:redis].db = Redis.new(Settings.redis.connection.to_h)
     DatabaseCleaner[:redis].strategy = :truncation
 
     DatabaseCleaner.clean_with(:truncation)

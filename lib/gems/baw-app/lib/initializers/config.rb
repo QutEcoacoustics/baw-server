@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
+require_relative '../custom_types'
+
 class BawConfigContract < Dry::Validation::Contract
   # TODO: add more validation
+  # Note: ruby config does not make use of values that may have been coerced during validation
   schema do
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
@@ -11,6 +14,34 @@ class BawConfigContract < Dry::Validation::Contract
       required(:port).value(:integer, gt?: 0)
       required(:username).filled(:string)
       required(:password).filled(:string)
+    end
+
+    required(:actions).hash do
+      required(:active_storage).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:active_job_default).hash do
+        required(:queue).filled(:string)
+      end
+    end
+
+    required(:logs).hash do
+      required(:stdout).filled(:bool)
+      required(:tag).maybe(:string)
+      required(:directory).filled(:string)
+    end
+
+    required(:paths).hash do
+      required(:temp_dir).filled(:string)
+      required(:programs_dir).filled(:string)
+    end
+
+    required(:resque).hash do
+      required(:connection).hash
+      required(:namespace).filled(:string)
+      required(:log_level).filled(Baw::CustomTypes::LogLevel)
+      required(:polling_interval_seconds).filled(:float)
     end
   end
 
@@ -31,9 +62,8 @@ module ConfigExtensions
   end
 
   def load_files(*files)
-    config = super(*files)
-    puts "Settings loaded from #{files}"
-    config
+    super(*files)
+    #puts "Settings loaded from #{files}"
   end
 end
 Config.singleton_class.prepend ConfigExtensions

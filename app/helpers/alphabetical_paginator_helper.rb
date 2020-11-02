@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module AlphabeticalPaginatorHelper
+  require_relative '../modules/api/custom_url_helpers'
+
   # make our custom url generation methods available to views
   include Api::CustomUrlHelpers
 

@@ -29,6 +29,8 @@ resque:
     - harvest_<%= BawApp.env %>
     - media_<%= BawApp.env %>
     - mirror_<%= BawApp.env %>
+    - active_storage_<%= BawApp.env %>
+    - default_<%= BawApp.env %>
   connection: *redis_config
   namespace: resque
   log_level: "Logger::INFO"
@@ -37,10 +39,7 @@ resque:
   # otherwise it will run in the foreground
   # We always want a worker to run in the foreground in a container
   background_pid_file: ~
-  # output and error log files are only used when a Resque worker is running
-  # in the background
-  output_log_file: <%= BawApp.root %>/log/worker_stdout.<%= BawApp.env %>.log
-  error_log_file: <%= BawApp.root %>/log/worker_stderr.<%= BawApp.env %>.log
+
 # these are the available background jobs that can be enqueued
 actions:
   analysis:
@@ -60,6 +59,10 @@ actions:
     queue: mirror_<%= BawApp.env %>
   audio_check:
     queue: maintenance_<%= BawApp.env %>
+  active_storage:
+    queue: active_storage_<%= BawApp.env %>
+  active_job_default:
+    queue: default_<%= BawApp.env %>
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
 dbs:
   ######################################################
@@ -119,6 +122,11 @@ paths:
   audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
   temp_dir: <%= BawApp.root %>/tmp
   programs_dir: <%= BawApp.root %>/programs
+logs:
+  # used to disambiguate log file refs in a multi instance scenario
+  stdout: <%= BawApp.log_to_stdout? %>
+  tag: 'local'
+  directory: <%= BawApp.root %>/log
 # used by workers to contact a web-server
 endpoints:
   login: /security

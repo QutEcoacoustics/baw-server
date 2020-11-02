@@ -97,7 +97,7 @@ describe BawWorkers::Analysis::Action do
 
       expect(unique_key).to_not eq(''), 'enqueuing not successful'
 
-      was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
 
       expect(was_run).to be true
 

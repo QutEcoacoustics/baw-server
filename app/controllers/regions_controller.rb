@@ -128,6 +128,6 @@ class RegionsController < ApplicationController
   def region_params
     sanitize_associative_array(:tag, :notes)
 
-    params.require(:region).permit(:name, :description, :notes, :project_id, notes: {})
+    params.require(:region).permit(:name, :description, :notes, :project_id, :image, notes: {})
   end
 end

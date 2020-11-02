@@ -42,6 +42,8 @@ GEM
     active_link_to (1.0.5)
       actionpack
       addressable
+    active_storage_validations (0.9.0)
+      rails (>= 5.2.0)
     activejob (6.0.3.3)
       activesupport (= 6.0.3.3)
       globalid (>= 0.3.6)
@@ -66,6 +68,7 @@ GEM
       activesupport (>= 5.2, < 7.0)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
+    amazing_print (1.2.2)
     arel_extensions (2.0.12)
       activerecord (>= 6.0)
     ast (2.4.1)
@@ -265,6 +268,9 @@ GEM
       rainbow (>= 2.2.2, < 4.0)
       terminal-table (>= 1.5.1)
     ice_nine (0.11.2)
+    image_processing (1.12.0)
+      mini_magick (>= 4.9.5, < 5)
+      ruby-vips (>= 2.0.17, < 3)
     jaro_winkler (1.5.4)
     jc-validates_timeliness (3.1.1)
       timeliness (~> 0.3.7)
@@ -294,6 +300,9 @@ GEM
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
+    listen (3.2.1)
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
     loofah (2.7.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -383,6 +392,10 @@ GEM
     rails-i18n (6.0.0)
       i18n (>= 0.7, < 2)
       railties (>= 6.0.0, < 7)
+    rails_semantic_logger (4.4.4)
+      rack
+      railties (>= 3.2)
+      semantic_logger (~> 4.4)
     railties (6.0.3.3)
       actionpack (= 6.0.3.3)
       activesupport (= 6.0.3.3)
@@ -403,6 +416,8 @@ GEM
     redis-namespace (1.8.0)
       redis (>= 3.0.4)
     regexp_parser (1.8.2)
+    rerun (0.13.0)
+      listen (~> 3.0)
     responders (3.0.1)
       actionpack (>= 5.0)
       railties (>= 5.0)
@@ -480,6 +495,8 @@ GEM
       rake (>= 0.8.1)
     ruby-prof (1.4.1)
     ruby-progressbar (1.10.1)
+    ruby-vips (2.0.17)
+      ffi (~> 1.9)
     ruby2_keywords (0.0.2)
     ruby_parser (3.15.0)
       sexp_processor (~> 4.9)
@@ -501,6 +518,8 @@ GEM
     sawyer (0.8.2)
       addressable (>= 2.3.5)
       faraday (> 0.8, < 2.0)
+    semantic_logger (4.7.3)
+      concurrent-ruby (~> 1.0)
     sexp_processor (4.15.1)
     shellany (0.0.1)
     shoulda-matchers (4.4.1)
@@ -583,6 +602,7 @@ GEM
     websocket-driver (0.7.3)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    xprint (0.9.5)
     yard (0.9.25)
     zeitwerk (2.4.0)
     zonebie (0.6.1)
@@ -593,9 +613,14 @@ PLATFORMS
 DEPENDENCIES
   aasm (> 5)
   actionmailer (~> 6.0.3)
+  active_storage_validations
+  activejob (~> 6.0.3)
+  activerecord (~> 6.0.3)
+  activestorage (~> 6.0.3)
   activesupport (~> 6.0.3)
   acts_as_paranoid
   addressable
+  amazing_print
   arel_extensions
   bcrypt (~> 3.1.9)
   bootsnap
@@ -629,6 +654,7 @@ DEPENDENCIES
   haml-rails (~> 2.0.1)
   i18n-inflector-rails (~> 1.0)
   i18n-tasks (~> 0.9.0)
+  image_processing
   jc-validates_timeliness (~> 3.1.1)
   jquery-rails (~> 4.3)
   json_spec (~> 1.1.4)
@@ -636,6 +662,7 @@ DEPENDENCIES
   kramdown (~> 2.3.0)
   kramdown-parser-gfm
   memoist
+  mini_magick (>= 4.9.5)
   nokogiri (~> 1.11.0.rc3)
   notiffany (~> 0.1.0)
   paperclip (> 6.0.0)
@@ -645,9 +672,11 @@ DEPENDENCIES
   rack-mini-profiler (>= 2.0.2)
   rack-rewrite (~> 1.5.1)
   rails (~> 6.0.3)
+  rails_semantic_logger
   readapt
   recaptcha
   redis (~> 4.1)
+  rerun
   responders (~> 3.0.1)
   resque
   resque-job-stats
@@ -681,6 +710,7 @@ DEPENDENCIES
   tzinfo-data
   uuidtools (~> 2.1.5)
   webmock
+  xprint
   zeitwerk (>= 2.3)
   zonebie
 

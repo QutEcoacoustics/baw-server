@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'workers_helper'
-require_relative '../../../helpers/baw_audio_tools_shared'
+require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
 
 # tests modifying audio and argument restrictions
 describe BawAudioTools::AudioBase do

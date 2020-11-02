@@ -57,15 +57,15 @@ module Resque
       end
 
       module ClassMethods
-        # The default queue is :statused, this can be ovveridden in the specific job
+        # The default queue is :statused, this can be overridden in the specific job
         # class to put the jobs on a specific worker queue
         def queue
           :statused
         end
 
-        # used when displaying the Job in the resque-web UI and identifiyng the job
+        # used when displaying the Job in the resque-web UI and identifying the job
         # type by status. By default this is the name of the job class, but can be
-        # ovveridden in the specific job class to present a more user friendly job
+        # overridden in the specific job class to present a more user friendly job
         # name
         def name
           to_s
@@ -107,8 +107,8 @@ module Resque
         # rejected by a before_enqueue hook.
         def enqueue_to(queue, klass, options = {})
           uuid = Resque::Plugins::Status::Hash.generate_uuid
-          Resque::Plugins::Status::Hash.create uuid, options: options
-
+          Resque::Plugins::Status::Hash.create uuid, klass: klass, options: options
+          Resque.logger.debug { "Resque status enqueuing job with uuid; #{uuid}" }
           if Resque.enqueue_to(queue, klass, uuid, options)
             uuid
           else
@@ -130,8 +130,9 @@ module Resque
         # creates a new instance of the job class and populates it with the uuid and
         # options.
         #
-        # You should not override this method, rahter the <tt>perform</tt> instance method.
+        # You should not override this method, rather the <tt>perform</tt> instance method.
         def perform(uuid = nil, options = {})
+          Resque.logger.debug { "Resque status performing job with uuid; #{uuid}" }
           uuid ||= Resque::Plugins::Status::Hash.generate_uuid
           instance = new(uuid, options)
           instance.safe_perform!
@@ -199,7 +200,7 @@ module Resque
         Resque::Plugins::Status::Hash.should_kill?(uuid)
       end
 
-      # set the status of the job for the current itteration. <tt>num</tt> and
+      # set the status of the job for the current iteration. <tt>num</tt> and
       # <tt>total</tt> are passed to the status as well as any messages.
       # This will kill the job if it has been added to the kill list with
       # <tt>Resque::Plugins::Status::Hash.kill()</tt>
@@ -212,7 +213,7 @@ module Resque
         }, *messages)
       end
 
-      # sets the status of the job for the current itteration. You should use
+      # sets the status of the job for the current iteration. You should use
       # the <tt>at</tt> method if you have actual numbers to track the iteration count.
       # This will kill the job if it has been added to the kill list with
       # <tt>Resque::Plugins::Status::Hash.kill()</tt>

@@ -5,7 +5,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - baw_workers_network
+      - baw_network
 
   db:
     image: postgres
@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - baw_db_network
+      - baw_network
     environment:
       # never, ever, ever use this is a production setup!
       # Only use this in a dev environment
@@ -28,7 +28,7 @@ services:
       - db
     networks:
       - baw_upload_network
-      - baw_db_network
+      - baw_network
     ports:
       - "8080:8080"
       - "2022:2022"
@@ -49,7 +49,7 @@ services:
       context: .
     #bundle exec rdebug-ide --host 0.0.0.0 --port 1235 --skip_wait_for_start -- bin/baw-workers baw:worker:run
     command: >-
-      bin/baw-workers baw:worker:run
+      rerun -- bin/baw-workers baw:worker:run
     depends_on:
       - db
       - redis
@@ -57,7 +57,7 @@ services:
       RAILS_ENV: ${RAILS_ENV:-development}
       MIGRATE_DB: "false"
     networks:
-      - baw_workers_network
+      - baw_network
     ports:
       # rdebug-ide port (mapped for workers)
       - "1235:1235"
@@ -67,10 +67,6 @@ services:
       - type: bind
         source: ./
         target: /home/baw_web/baw-server
-      # see comment on volume declaration below
-      # - type: volume
-      #   source: baw_docker_shared_storage
-      #   target: /home/baw_web/baw-server/tmp
     working_dir: /home/baw_web/baw-server
 
   workers_test:
@@ -93,6 +89,7 @@ services:
       - redis
       - upload
       - workers
+      - workers_test
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
       MIGRATE_DB: "true"
@@ -104,25 +101,16 @@ services:
       - type: bind
         source: ./
         target: /home/baw_web/baw-server
-      # see comment on volume declaration below
-      # - type: volume
-      #   source: baw_docker_shared_storage
-      #   target: /home/baw_web/baw-server/tmp
     ports:
       - "3000:3000"
       # rdebug-ide port
       - "1234:1234"
       - "26162:26162"
     networks:
-      - baw_db_network
-      - baw_workers_network
+      - baw_network
       - baw_upload_network
 networks:
-  # access to database should be allowed from web-host only
-  # we don't really need to do this but it lets us emulate prod a little better
-  # and helps ensure our workers aren't accidentally connecting.
-  baw_db_network:
-  baw_workers_network:
+  baw_network:
   baw_upload_network:
 
 volumes:

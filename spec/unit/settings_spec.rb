@@ -116,4 +116,50 @@ describe 'Settings' do
       end
     end
   end
+
+  describe 'new active_* queues' do
+    example 'validation is done for active_storage queues' do
+      config = ::Config::Options.new
+      copy = Settings.to_hash
+      copy[:actions].delete(:active_storage)
+      config.add_source!(copy)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /active_storage: is missing/)
+    end
+
+    example 'validation is done for active_job default queues' do
+      config = ::Config::Options.new
+      copy = Settings.to_hash
+      copy[:actions].delete(:active_job_default)
+      config.add_source!(copy)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /active_job_default: is missing/)
+    end
+
+    example 'validation is done for active_storage queue name' do
+      config = ::Config::Options.new
+      copy = Settings.to_hash
+      copy[:actions][:active_storage][:queue] = ''
+      config.add_source!(copy)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /active_storage.queue: must be filled/)
+    end
+
+    example 'validation is done for active_job_default queue name' do
+      config = ::Config::Options.new
+      copy = Settings.to_hash
+      copy[:actions][:active_job_default][:queue] = ''
+      config.add_source!(copy)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /active_job_default.queue: must be filled/)
+    end
+  end
 end

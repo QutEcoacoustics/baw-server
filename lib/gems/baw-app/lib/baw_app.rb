@@ -24,10 +24,14 @@ module BawApp
     @root ||= Pathname.new("#{__dir__}/../../../..").cleanpath
   end
 
+  # Get the config folder path.
+  # @return [Pathname]
   def config_root
     @config_root ||= root / 'config'
   end
 
+  # Get the current application environment as defined by RAILS_ENV or RACK_ENV.
+  # @return [ActiveSupport::StringInquirer]
   def env
     return Rails.env if defined?(Rails) && defined?(Rails.env)
 
@@ -40,23 +44,62 @@ module BawApp
   # Get the path to the default config files that will be loaded by the app
   def config_files(config_root = self.config_root, env = self.env)
     [
-      File.join(config_root, 'settings.yml').to_s,
-      File.join(config_root, 'settings', 'default.yml').to_s,
-      File.join(config_root, 'settings', "#{env}.yml").to_s
-    ].freeze
+      config_root / 'settings.yml',
+      config_root / 'settings' / 'default.yml',
+      config_root / 'settings' / "#{env}.yml",
+      *@custom_configs
+    ].map(&:to_s).freeze
   end
 
+  def custom_configs=(value)
+    raise ArgumentError, 'Not an array' unless value.is_a?(Array)
+
+    @custom_configs = value.map { |file|
+      next file if File.exist?(file)
+
+      raise FileNotFound, "The settings must exist and yet the file could not be found: #{file}"
+    }
+  end
+
+  # are we in the development environment?
+  # @return [Boolean]
   def development?
     env == 'development'
   end
 
+  def rspec?
+    ENV.key?('RUNNING_RSPEC')
+  end
+
+  # are we in the test environment?
+  # @return [Boolean]
   def test?
-    ENV['RUNNING_RSPEC'] == 'yes' || env == 'test'
+    rspec? || env == 'test'
   end
 
   # Returns true if environment is development? or test?
+  # @return [Boolean]
   def dev_or_test?
     development? || test?
+  end
+
+  def log_to_stdout?
+    return false if rspec?
+    return true if development?
+    return true if test?
+
+    return true unless ENV['RAILS_LOG_TO_STDOUT'].nil?
+
+    false
+  end
+
+  def log_level
+    # The default Rails log level is warn in production env and info in any other env.
+    return ENV['RAILS_LOG_LEVEL'] if ENV.key?('RAILS_LOG_LEVEL')
+    return Logger::INFO if Rails.env.staging?
+    return Logger::WARN if Rails.env.production?
+
+    Logger::DEBUG
   end
 
   # currently a no-op, thinking about collapsing the concept of initializers and patches

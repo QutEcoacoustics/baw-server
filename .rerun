@@ -1,0 +1,4 @@
+--dir 'lib'
+--pattern '**/*.{rb,rake}'
+--name "baw-workers"
+--background

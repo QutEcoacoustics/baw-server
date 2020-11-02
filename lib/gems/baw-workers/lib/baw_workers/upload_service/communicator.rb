@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift(BawApp.root / 'lib' / 'gems' / 'sftpgo-client' / 'lib')
+$LOAD_PATH.unshift((BawApp.root / 'lib' / 'gems' / 'sftpgo-client' / 'lib').to_s)
 require 'sftpgo_client'
 
 module BawWorkers

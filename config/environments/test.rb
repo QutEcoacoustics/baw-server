@@ -65,6 +65,4 @@ Rails.application.configure do
   config.after_initialize do
   end
   # config.action_view.raise_on_missing_translations = true
-
-  config.active_storage.service = :local
 end

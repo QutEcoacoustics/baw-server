@@ -1,41 +1,15 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'resque-status'
+#
+# AT2020: Heavily modified from original code to suit our test framework.
+#
 
-require 'minitest/autorun'
-require 'mocha/setup'
+require 'rails_helper'
+require "#{Rails.root}/lib/gems/resque-status/lib/resque-status"
 
 #
 # make sure we can run redis
 #
-
-unless system('which redis-server')
-  puts '', "** can't find `redis-server` in your path"
-  puts '** try running `sudo rake install`'
-  abort ''
-end
-
-#
-# start our own redis when the tests start,
-# kill it when they end
-#
-
-class << Minitest
-  def exit(*args)
-    pid = `ps -e -o pid,command | grep [r]edis.*9736`.split(' ')[0]
-    puts 'Killing test redis server...'
-    Process.kill('KILL', pid.to_i)
-    super
-  end
-end
-
-dir = File.expand_path(__dir__)
-puts 'Starting redis for testing at localhost:9736...'
-result = `rm -f #{dir}/dump.rdb && redis-server #{dir}/redis-test.conf`
-raise "Redis failed to start: #{result}" unless $CHILD_STATUS.success?
-
-Resque.redis = 'localhost:9736/1'
 
 #### Fixtures
 

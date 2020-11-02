@@ -19,6 +19,8 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+ENV['RUNNING_RSPEC'] = true.to_s
+
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
@@ -90,7 +92,7 @@ RSpec.configure do |config|
   #config.include FactoryBot::Syntax::Methods
 
   # redirect puts into a text file
-  if defined?(Debugger)
+  if defined?(Debugger) || defined?(Readapt)
     puts '$stdout and $stderr will NOT be redirected'
   else
     original_stderr = $stderr

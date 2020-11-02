@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative 'test_helper'
 
 class TestResquePluginsStatusHash < Minitest::Test
   describe 'Resque::Plugins::Status::Hash' do
     before do
-      Resque.redis.flushall
+      Resque.redis.redis.flushall
       Resque::Plugins::Status::Hash.expire_in = nil
       @uuid = Resque::Plugins::Status::Hash.create(Resque::Plugins::Status::Hash.generate_uuid)
       Resque::Plugins::Status::Hash.set(@uuid, 'my status')
@@ -186,9 +186,23 @@ class TestResquePluginsStatusHash < Minitest::Test
       end
 
       it 'return an empty array when no statuses are available' do
-        Resque.redis.flushall
+        Resque.redis.redis.flushall
         statuses = Resque::Plugins::Status::Hash.statuses
         assert_equal [], statuses
+      end
+    end
+
+    describe 'recording job class' do
+      it 'stores and retrieves a job\'s class by default' do
+        uuid = Resque::Plugins::Status::Hash.create(
+          Resque::Plugins::Status::Hash.generate_uuid,
+          klass: BasicJob,
+          options: { an_option: 'value' }
+        )
+
+        status = Resque::Plugins::Status::Hash.get(uuid)
+
+        assert_equal BasicJob.to_s, status.klass
       end
     end
 

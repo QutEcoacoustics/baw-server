@@ -102,9 +102,7 @@ describe BawWorkers::Analysis::Status do
               body: { status: new_status }.to_json)
 
     s = s.to_timeout.times(failCount) if failCount > 0
-    s = s.then.to_return(status: 200, body: body)
-
-    s
+    s.then.to_return(status: 200, body: body)
   end
 
   def stub_login
@@ -133,7 +131,7 @@ describe BawWorkers::Analysis::Status do
 
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
-      was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
 
       expect(was_run).to eq(true)
     end
@@ -166,7 +164,7 @@ describe BawWorkers::Analysis::Status do
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
       expect {
-        _ = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+        _ = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
       }.to raise_error(BawAudioTools::Exceptions::AudioToolTimedOutError)
     end
   end
@@ -195,7 +193,7 @@ describe BawWorkers::Analysis::Status do
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
       expect {
-        was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
       }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
     end
   end
@@ -220,7 +218,7 @@ describe BawWorkers::Analysis::Status do
 
     expect_requests_made_in_order(l, s1, s2) do
       # dequeue and run a job
-      was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
       expect(was_run).to eq(true)
     end
   end
@@ -248,7 +246,7 @@ describe BawWorkers::Analysis::Status do
       # dequeue and run a job
       was_run = false
       time = Benchmark.realtime {
-        was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
       }
 
       expect(was_run).to eq(true)

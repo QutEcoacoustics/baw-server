@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
-require 'helpers/resque_helper'
+require 'helpers/resque_helpers'
 require 'fixtures/fixtures'
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -62,16 +62,16 @@ resource 'Media/original' do
     def full_file_result(context, opts)
       filename = context.audio_recording.canonical_filename
       opts.merge!({
-                    expected_response_content_type: context.audio_recording.media_type,
-                    expected_response_has_content: true,
-                    expected_response_header_values_match: false,
-                    expected_response_header_values: {
-                      'Content-Length' => context.audio_file_mono_size_bytes.to_s,
-                      'Content-Disposition' => "attachment; filename=\"#{filename}\"; filename*=UTF-8''#{filename}",
-                      'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
-                    },
-                    is_range_request: false
-                  })
+        expected_response_content_type: context.audio_recording.media_type,
+        expected_response_has_content: true,
+        expected_response_header_values_match: false,
+        expected_response_header_values: {
+          'Content-Length' => context.audio_file_mono_size_bytes.to_s,
+          'Content-Disposition' => "attachment; filename=\"#{filename}\"; filename*=UTF-8''#{filename}",
+          'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
+        },
+        is_range_request: false
+      })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do

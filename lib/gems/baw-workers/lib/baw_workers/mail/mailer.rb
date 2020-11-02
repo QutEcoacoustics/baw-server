@@ -9,6 +9,10 @@ module BawWorkers
     class Mailer < ActionMailer::Base
       prepend_view_path BawWorkers::MODULE_ROOT
 
+      def self.logger
+        BawWorkers::Config.logger_mailer
+      end
+
       def self.send_worker_error_email(klass, args, queue_name, error)
         to = Settings.mailer.emails.required_recipients
         from = Settings.mailer.emails.sender_address

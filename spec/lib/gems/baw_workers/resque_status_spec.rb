@@ -95,7 +95,7 @@ describe 'Resque::Plugins::Status' do
       expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq(-1)
 
       # dequeue and run the job
-      was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Template::Action.queue)
       expect(was_run).to eq(true)
 
       # should also be able to retrieve status by uuid
@@ -126,7 +126,7 @@ describe 'Resque::Plugins::Status' do
       payload = { im_an_option: :options! }
 
       unique_key = BawWorkers::Template::Action.action_enqueue(payload)
-      was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Template::Action.queue)
       status = BawWorkers::ResqueApi.status_by_key(unique_key)
 
       expect(status.name).to eq(nil)
@@ -140,7 +140,7 @@ describe 'Resque::Plugins::Status' do
         payload = { im_an_option: index }
 
         unique_key = BawWorkers::Template::Action.action_enqueue(payload)
-        was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
+        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Template::Action.queue)
         status = BawWorkers::ResqueApi.status_by_key(unique_key)
 
         expect(status.name).to eq('same_name')
@@ -151,7 +151,7 @@ describe 'Resque::Plugins::Status' do
       payload = { im_an_option: :options! }
 
       unique_key = BawWorkers::Template::Action.action_enqueue(payload)
-      was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Template::Action.queue)
       status = BawWorkers::ResqueApi.status_by_key(unique_key)
 
       expect(status.name).to eq('template:' + unique_key)

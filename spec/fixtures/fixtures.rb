@@ -81,6 +81,11 @@ module Fixtures
     ensure_exists FILES_PATH / '70' / '0515' / '20190913T000000+1000_REC.flac'
   end
 
+  # @return [Pathname]
+  def self.bowra_image_jpeg
+    ensure_exists FILES_PATH / 'IMG_1318.JPG'
+  end
+
   def self.ensure_exists(pathname)
     raise FileNotFound, "Given fixture refers to a file that does not exist: #{pathname}" unless pathname.exist?
 

@@ -16,6 +16,9 @@ class Region < ApplicationRecord
   acts_as_paranoid
   validates_as_paranoid
 
+  # add model image
+  has_one_attached :image
+
   # attribute validations
   validates :name, presence: true, length: { minimum: 2 }
 

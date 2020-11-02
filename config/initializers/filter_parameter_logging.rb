@@ -8,6 +8,10 @@ Rails.application.config.filter_parameters << lambda { |k, v|
     # Bail immediately if we can
     next unless k == 'image'
 
+    if v.is_a?(ActionDispatch::Http::UploadedFile)
+      return "#{ActionDispatch::Http::UploadedFile}: #{v.content_type}, #{v.original_filename}"
+    end
+
     # Truncate the image data so we don't blast the logs
     v.replace(v[0, 100] + "[TRUNCATED-Length:#{v.length}]")
   rescue StandardError => e

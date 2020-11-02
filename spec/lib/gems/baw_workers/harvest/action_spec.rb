@@ -49,7 +49,7 @@ describe BawWorkers::Harvest::Action do
       'class' => 'BawWorkers::Harvest::Action',
       'args' => [
         'c32a6e87d0563574c11971714f2c6f06',
-        'harvest_params' => test_harvest_request_params.stringify_keys
+        { 'harvest_params' => test_harvest_request_params.stringify_keys }
       ]
     }
   }
@@ -71,7 +71,7 @@ describe BawWorkers::Harvest::Action do
 
     unique_key = BawWorkers::Harvest::Action.action_enqueue(test_harvest_request_params)
 
-    was_run = emulate_resque_worker(BawWorkers::Harvest::Action.queue)
+    was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Harvest::Action.queue)
     status = BawWorkers::ResqueApi.status_by_key(unique_key)
 
     expected = 'Harvest for: TEST_20140731_100956.wav, data_length_bytes=498220, site_id=1109'

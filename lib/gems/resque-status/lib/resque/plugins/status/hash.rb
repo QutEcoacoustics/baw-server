@@ -210,6 +210,14 @@ module Resque
           end
         end
 
+        def klass
+          self['class']
+        end
+
+        def klass=(value)
+          self['class'] = value
+        end
+
         hash_accessor :uuid
         hash_accessor :name
         hash_accessor :status
@@ -222,7 +230,7 @@ module Resque
 
         # Create a new Resque::Plugins::Status::Hash object. If multiple arguments are passed
         # it is assumed the first argument is the UUID and the rest are status objects.
-        # All arguments are subsequentily merged in order. Strings are assumed to
+        # All arguments are subsequently merged in order. Strings are assumed to
         # be messages.
         def initialize(*args)
           super nil
@@ -233,6 +241,13 @@ module Resque
           base_status['uuid'] = args.shift if args.length > 1
           status_hash = args.inject(base_status) { |final, m|
             m = { 'message' => m } if m.is_a?(String)
+            if m.is_a?(::Hash)
+              # Yes this was the easiest way to do it without ActiveSupport
+              m['class'] = m.delete(:klass).to_s if m.key?(:klass)
+              m['class'] = m.delete(:class).to_s if m.key?(:class)
+              m['class'] = m.delete('klass').to_s if m.key?('klass')
+              m['class'] = m.delete('class').to_s if m.key?('class')
+            end
             final.merge(m || {})
           }
           replace(status_hash)

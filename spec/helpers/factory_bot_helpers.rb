@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Baw
-  module FactoryBotHelpers
+module FactoryBotHelpers
+  module Example
     # A custom factory bot helper method that generates attributes in
     # format suitable for sending as a JSON payload in a request spec.
     # Relies on the given model having a factory of the same name

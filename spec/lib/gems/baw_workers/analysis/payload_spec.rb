@@ -166,7 +166,7 @@ describe BawWorkers::Analysis::Payload do
     FileUtils.cp(audio_file_mono, target_file)
 
     # dequeue and run a job
-    was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+    was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
 
     expect(was_run).to eq(true)
   end

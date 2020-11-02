@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require_relative 'test_helper'
 
 class TestResquePluginsStatus < Minitest::Test
   describe 'Resque::Plugins::Status' do
@@ -35,7 +35,7 @@ class TestResquePluginsStatus < Minitest::Test
 
       describe 'inline' do
         before do
-          Resque.stubs(:inline?).returns(true)
+          allow(Resque).to receive(:inline?).and_return(true)
         end
 
         it 'not queue a job' do
@@ -44,7 +44,7 @@ class TestResquePluginsStatus < Minitest::Test
         end
 
         it 'call perform' do
-          WorkingJob.any_instance.expects(:perform).once
+          allow_any_instance_of(WorkingJob).to receive(:perform).once
           @uuid = WorkingJob.create('num' => 100)
         end
       end
@@ -154,7 +154,9 @@ class TestResquePluginsStatus < Minitest::Test
       end
 
       describe 'before' do
-        let(:expectation) { WorkingJob.any_instance.expects(:perform).once }
+        let(:expectation) {
+          allow_any_instance_of(WorkingJob).to receive(:perform).once
+        }
         it('call perform on the inherited class') {}
       end
     end
