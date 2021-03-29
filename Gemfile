@@ -75,7 +75,7 @@ group :server do
   gem 'haml', '~> 5.1.2'
   gem 'haml-rails', '~> 2.0.1'
 
-  gem 'kramdown', '~> 2.3.0'
+  gem 'kramdown', '~> 2.3.1'
   gem 'kramdown-parser-gfm'
   gem 'paperclip', '> 6.0.0'
   gem 'simple_form'
