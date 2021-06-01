@@ -1,3 +1,4 @@
 # frozen_string_literal: true
-
-BawWorkers::Config.run_web(Rails.logger, Settings)
+Rails.application.reloader.to_prepare do
+  BawWorkers::Config.run_web(Rails.logger, Settings)
+end

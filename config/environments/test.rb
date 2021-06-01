@@ -57,12 +57,12 @@ Rails.application.configure do
   config.action_controller.action_on_unpermitted_parameters = :raise
 
   # Raises error for missing translations
-  config.action_view.raise_on_missing_translations = true
+  config.i18n.raise_on_missing_translations = true
 
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
   config.after_initialize do
   end
-  # config.action_view.raise_on_missing_translations = true
+  # config.i18n.raise_on_missing_translations = true
 end

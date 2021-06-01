@@ -1,6 +1,6 @@
 # Debian releases:
 #
-FROM ruby:2.6-slim-buster
+FROM ruby:3.0.1-slim-buster
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -80,16 +80,16 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-RUN true \
+#RUN true \
   # temporarily upgrade bundler until we can jump to ruby 2.7
-  && gem update --system \
-  && gem install bundler \
-  && ([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true \
-  && ([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true \
+  # && gem update --system \
+  # && gem install bundler \
+RUN (([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true) \
+  && (([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true)
   # install baw-server
-  && bundle install \
+RUN bundle install \
   # install docs for dev work
-  && ([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true
+  && (([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true)
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}

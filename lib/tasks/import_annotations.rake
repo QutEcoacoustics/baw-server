@@ -53,7 +53,10 @@ namespace :baw do
         audio_events_tags_params = {}
 
         # provide the parameters to yield
-        yield audio_event_params, audio_events_tags_params if block_given?
+        raise "broken"
+        # apparently the yield below is bad syntax in ruby 3
+        # we don't use this file and will delete it soon so won't fix
+        #yield(audio_event_params, audio_events_tags_params) if block_given?
       end
 
     end

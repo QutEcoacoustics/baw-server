@@ -31,9 +31,10 @@ module Baw
     time_format = '%Y-%m-%dT%H:%M:%S.%#3N'
     config.rails_semantic_logger.format = \
       if BawApp.dev_or_test?
+        color_map = SemanticLogger::Formatters::Color::ColorMap.new(warn: SemanticLogger::AnsiColors::YELLOW)
         SemanticLogger::Formatters::Color.new(
           ap: { multiline: false, ruby19_syntax: true },
-          color_map: { warn: SemanticLogger::AnsiColors::YELLOW },
+          color_map: color_map,
           time_format: time_format
         )
       else

@@ -367,7 +367,7 @@ Rails.application.routes.draw do
     match '/test_exceptions', to: 'errors#test_exceptions', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
-  comfy_route :cms_admin, path: '/admin/cms'
+  comfy_route_cms_admin(path: '/admin/cms')
   # Ensure that this route is defined last
   comfy_route :cms, path: '/cms'
 

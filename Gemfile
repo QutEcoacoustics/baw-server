@@ -44,7 +44,7 @@ gem 'addressable'
 
 gem 'descriptive-statistics'
 
-RAILS_VERSION = '~> 6.0.3'
+RAILS_VERSION = '~> 6.1.3.2'
 
 group :server do
   # RAILS
@@ -91,9 +91,6 @@ group :server do
   # Easy paging, adds scopes to ActiveRecord objects  like .page()
   gem 'kaminari'
   gem 'recaptcha', require: 'recaptcha/rails'
-
-  # for tying inflections into I18n
-  gem 'i18n-inflector-rails', '~>1.0', require: false
 
   # USERS & PERMISSIONS
   # -------------------------------------
@@ -202,7 +199,7 @@ end
 # gems that are only required on development machines or for testings
 group :development do
   # allow debugging
-  gem 'debase', '>= 0.2.5.beta1'
+  gem 'debase', '>= 0.2.5.beta2'
   gem 'readapt'
   gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'
@@ -211,7 +208,7 @@ group :development do
   gem 'solargraph'
 
   gem 'bullet'
-  gem 'i18n-tasks', '~> 0.9.0'
+  gem 'i18n-tasks', '~> 0.9.31'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
 
