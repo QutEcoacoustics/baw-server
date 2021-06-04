@@ -44,6 +44,9 @@ gem 'addressable'
 
 gem 'descriptive-statistics'
 
+# for sorting hashes by keys
+gem 'deepsort'
+
 RAILS_VERSION = '~> 6.1.3.2'
 
 group :server do
@@ -131,7 +134,7 @@ group :server do
   gem 'enumerize'
   gem 'uuidtools', '~> 2.1.5'
 
-  # Note: if other modifications are made to the default_scope
+  # NOTE: if other modifications are made to the default_scope
   # there are manually constructed queries that need to be updated to match
   # (search for ':deleted_at' to find the relevant places)
   gem 'acts_as_paranoid'
@@ -160,10 +163,10 @@ end
 
 group :workers do
   gem 'actionmailer', RAILS_VERSION
-  gem 'activesupport', RAILS_VERSION
   gem 'activejob', RAILS_VERSION
-  gem 'activestorage', RAILS_VERSION
   gem 'activerecord', RAILS_VERSION
+  gem 'activestorage', RAILS_VERSION
+  gem 'activesupport', RAILS_VERSION
 end
 
 group :workers, :server do
@@ -206,6 +209,8 @@ group :development do
 
   # a ruby language server
   gem 'solargraph'
+  # needed by bundler/soalrgraph for language server?
+  gem 'actionview', RAILS_VERSION
 
   gem 'bullet'
   gem 'i18n-tasks', '~> 0.9.31'

@@ -1,4 +1,4 @@
-
+---
 AllCops:
   DisplayCopNames: true
   DisplayStyleGuide: true
@@ -6,7 +6,7 @@ AllCops:
     - '**/Rakefile'
     - '**/config.ru'
     - '**/*.rb'
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.1
   NewCops: enable
 
 # Customized options
@@ -36,7 +36,7 @@ Metrics/ClassLength:
 Layout/SpaceAroundMethodCallOperator:
   Enabled: true
 Metrics/BlockLength:
-  ExcludedMethods:
+  IgnoredMethods:
     - resource
     - describe
     - shared_examples_for
@@ -55,7 +55,7 @@ Metrics/BlockLength:
     - path
 Metrics/MethodLength:
   Max: 30
-  ExcludedMethods:
+  IgnoredMethods:
     - filter_settings
 Metrics/ModuleLength:
   Max: 150

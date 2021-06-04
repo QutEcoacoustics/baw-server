@@ -102,8 +102,7 @@ module BawWorkers
           a[0] <=> b[0]
         }
 
-        id = Digest::MD5.hexdigest Resque.encode(class: klass, args: modified_args)
-        id
+        Digest::MD5.hexdigest Resque.encode(class: klass, args: modified_args)
       end
     end
   end

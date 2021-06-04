@@ -13,12 +13,14 @@
       "Gemfile",
       "KRAMDOWN",
       "Kramdown",
+      "PIDFILE",
       "Passengerfile",
       "RSPEC",
       "Railtie",
       "Resque",
       "Sftpgo",
       "Timecop",
+      "Truskinger",
       "Zeitwerk",
       "appender",
       "arel",
@@ -29,6 +31,7 @@
       "backtrace",
       "behaviour",
       "binstub",
+      "boolify",
       "bootsnap",
       "bowra",
       "chown",
@@ -36,6 +39,8 @@
       "constantize",
       "cors",
       "datetime",
+      "decr",
+      "deepsort",
       "deleter",
       "deserialization",
       "devcontainer",
@@ -51,10 +56,13 @@
       "fmap",
       "gitkeep",
       "gsub",
+      "hexdigest",
       "imagemagick",
       "jsonb",
+      "killable",
       "klass",
       "ltrim",
+      "mget",
       "middlewares",
       "mkdir",
       "mkpath",
@@ -73,14 +81,19 @@
       "recaptcha",
       "rmtree",
       "rubocop",
+      "sadd",
       "sendfile",
       "serializable",
       "sftpgo",
       "shntool",
+      "sismember",
+      "smembers",
       "smtp",
       "solargraph",
+      "srem",
       "symlink",
       "symlinks",
+      "typecheck",
       "unpermitted",
       "unregister",
       "unshift",
@@ -90,7 +103,12 @@
       "wavpack",
       "webdav",
       "webm",
-      "wvunpack"
+      "wvunpack",
+      "zadd",
+      "zcard",
+      "zrangebyscore",
+      "zrem",
+      "zrevrange"
     ],
     "files.associations": {
       "**/provision/*.json": "jsonc",
@@ -131,28 +149,36 @@
     "solargraph.rename": true,
     "solargraph.references": true,
     "solargraph.folding": true,
+    "solargraph.checkGemVersion": true,
     "solargraph.logLevel": "debug",
-    "solargraph.bundlerPath": "bundle",
     "editor.formatOnSave": true,
-    //"ruby.rubocop.onSave": true,
-    "ruby.intellisense": false,
-    "ruby.format": false,
-    "ruby.useBundler": true,
-    "ruby.useLanguageServer": false,
-    "ruby.lint": {},
-    //  {
-    //   "rubocop": {
-    //     "useBundler": true,
-    //     "lint": true,
-    //   }
-    // },
+    "ruby.useBundler": true, //run non-lint commands with bundle exec
+    "ruby.useLanguageServer": true, // use the internal language server (see below)
+    "ruby.intellisense": "rubyLocate",
+    "ruby.lint": {
+      "rubocop": {
+        "useBundler": true, // enable rubocop via bundler,
+        "lint": true,
+        "rails": true
+      },
+      // "reek": {
+      //   "useBundler": true // enable reek via bundler
+      // }
+    },
+    "ruby.format": "rubocop", // use rubocop for formatting
     "[ruby]": {
-      "editor.defaultFormatter": "castwide.solargraph"
+      "editor.defaultFormatter": "castwide.solargraph",
+      //"editor.defaultFormatter": "rebornix.ruby"
     },
     "cSpell.enableFiletypes": [
       "ruby"
     ],
-    "editor.minimap.size": "fit"
+    "editor.minimap.size": "fit",
+    // "solargraph.transport": "external",
+    // "solargraph.externalServer": {
+    //   "host": "localhost",
+    //   "port": 7658
+    // }
   },
   "extensions": {
     "recommendations": [

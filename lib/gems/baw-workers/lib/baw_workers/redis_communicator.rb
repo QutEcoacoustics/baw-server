@@ -27,9 +27,10 @@ module BawWorkers
     end
 
     def add_namespace(key)
-      namespace + ':' + key
+      "#{namespace}:#{key}"
     end
 
+    # @return [Redis]
     attr_reader :redis
 
     # Delete a single key.
@@ -54,7 +55,7 @@ module BawWorkers
       raise ArgumentError if key.blank?
 
       count = 0
-      @redis.keys(key + '*').each do |k|
+      @redis.keys("#{key}*").each do |k|
         count += @redis.del k
       end
 
@@ -132,11 +133,7 @@ module BawWorkers
     private
 
     def boolify(value)
-      if value&.is_a?(String) && value == 'OK'
-        true
-      else
-        false
-      end
+      value.is_a?(String) && value == 'OK'
     end
   end
 end

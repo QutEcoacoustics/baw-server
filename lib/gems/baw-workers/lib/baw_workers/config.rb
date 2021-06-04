@@ -142,6 +142,8 @@ module BawWorkers
             namespace: settings.redis.namespace
           }
         )
+
+        ActiveJob::Plugins::Status::Persistance.singleton.configure(communicator_redis)
       end
 
       def configure_paths(settings, default_used)
@@ -245,9 +247,6 @@ module BawWorkers
       end
 
       def configure_resque(settings)
-        # resque job status expiry for job status entries
-        Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
-
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         Resque.redis.namespace = Settings.resque.namespace
 
