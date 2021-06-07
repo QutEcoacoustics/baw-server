@@ -45,7 +45,7 @@ gem 'addressable'
 gem 'descriptive-statistics'
 
 # for sorting hashes by keys
-gem 'deepsort'
+gem 'deep_sort'
 
 RAILS_VERSION = '~> 6.1.3.2'
 

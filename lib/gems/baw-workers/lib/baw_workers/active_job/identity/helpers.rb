@@ -2,7 +2,7 @@
 
 require 'securerandom'
 # not actually needed, but useful to explicit about a rarely used dependency
-require 'deepsort'
+require 'deep_sort'
 
 module BawWorkers
   module ActiveJob
@@ -25,11 +25,11 @@ module BawWorkers
         # @return [String] unique id
         def self.generate_hash_id(job)
           class_name = job.class.name
-          args = job.serialize.arguments
+          args = job.serialize['arguments']
           raise ArgumentError, 'args must be a hash or an array' unless args.is_a?(Hash) || args.is_a?(Array)
 
-          args = args.deep_sort
-          json = ActiveJob.arguments.serialize(args)
+          args = DeepSort.deep_sort(args, sort_enum: true)
+          json = JSON.generate(args)
           hash = Digest::MD5.hexdigest json
           "#{class_name}:#{hash}"
         end
@@ -42,13 +42,13 @@ module BawWorkers
           class_name = job.class.name
           raise ArgumentError, 'opts must be a non-empty hash' unless opts.is_a?(Hash) && opts.length.positive?
 
-          key = hash
-                .sort
-                .map { |k, v| "#{k}=#{v}" }
+          key = DeepSort
+                .deep_sort(opts, sort_enum: true)
+                .map { |k, v| "#{k}=#{v.to_s.gsub(/[^-a-zA-z0-9_]+/, '-')}" }
                 .join(':')
           key = "#{class_name}:#{key}"
 
-          raise ArgumentError, "Generated key '#{key}'is too long" if key > 1024
+          raise ArgumentError, "Generated key '#{key}'is too long" if key.length > 1024
 
           key
         end

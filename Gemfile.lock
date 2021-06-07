@@ -159,7 +159,7 @@ GEM
       debase-ruby_core_source (>= 0.10.12)
     debase-ruby_core_source (0.10.12)
     deep_merge (1.2.1)
-    deepsort (0.4.5)
+    deep_sort (0.1.6)
     descriptive-statistics (2.2.0)
     devise (4.7.3)
       bcrypt (~> 3.0)
@@ -675,7 +675,7 @@ DEPENDENCIES
   database_cleaner-active_record
   database_cleaner-redis
   debase (>= 0.2.5.beta2)
-  deepsort
+  deep_sort
   descriptive-statistics
   devise (~> 4.7.0)
   devise-i18n
