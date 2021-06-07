@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'action_mailer'
-raise 'modified resque status hash class not loaded' unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
 
 module BawWorkers
   class Config
@@ -142,8 +140,6 @@ module BawWorkers
             namespace: settings.redis.namespace
           }
         )
-
-        ActiveJob::Plugins::Status::Persistance.singleton.configure(communicator_redis)
       end
 
       def configure_paths(settings, default_used)
@@ -249,6 +245,7 @@ module BawWorkers
       def configure_resque(settings)
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         Resque.redis.namespace = Settings.resque.namespace
+        BawWorkers::ActiveJob::Status::Persistance.instance.configure(Resque.redis.redis)
 
         # Logger set automatically by SemanticLogger RailTie
         raise 'Resque logger not configured' unless Resque.logger.is_a?(SemanticLogger::Logger)
@@ -312,9 +309,9 @@ module BawWorkers
             connection: Resque.redis.connection,
             info: Resque.info
           },
-          resque: {
+          active_job: {
             status: {
-              expire_in: Resque::Plugins::Status::Hash.expire_in
+              expire_in: BawWorkers::ActiveJob::Status::Persistance.instance.expire_values
             }
           },
           logging: {

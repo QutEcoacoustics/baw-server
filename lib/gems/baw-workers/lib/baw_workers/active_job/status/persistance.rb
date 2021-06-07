@@ -20,8 +20,15 @@ module BawWorkers
         end
 
         def configure(redis)
-          raise ArgumentError "redis was not of type Redis" unless redis.is_a(Redis)
+          raise ArgumentError, "redis was not of type Redis, ancestors: #{redis.class.ancestors}" unless redis.class.ancestors.include?(Redis)
           @redis = redis
+        end
+
+        def expire_values
+          {
+            pending: PENDING_EXPIRE_IN,
+            completed: COMPLETED_EXPIRE_IN
+          }
         end
 
 

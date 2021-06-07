@@ -6,10 +6,10 @@
 <div class="status-holder" rel="<%= @status.status %>" id="status_<%= @status.uuid %>">
   <h2>Overview</h2>
   <div class="status-progress">
-    <div class="status-progress-bar status-<%= @status.status %>" style="width: <%= @status.pct_complete %>%;"></div>
-    <p><%= @status.pct_complete %>%</p>
+    <div class="status-progress-bar status-<%= @status.status %>" style="width: <%= @status.percent_complete %>%;"></div>
+    <p><%= @status.percent_complete %>%</p>
   </div>
-  <div class="status-message"><%= @status.message %></div>
+  <div class="status-message"><%= @status.messages %></div>
   <div class="status-time"><%= @status.time? ? @status.time : 'Not started' %></div>
 
   <h2>Details</h2>
@@ -69,7 +69,7 @@
           }
         };
         var status = $status.attr('rel');
-        if (status == '<%= Resque::Plugins::Status::STATUS_WORKING %>' || status == '<%= Resque::Plugins::Status::STATUS_QUEUED %>' || status == "") {
+        if (status == '<%= BawWorkers::ActiveJob::Status::STATUS_WORKING %>' || status == '<%= BawWorkers::ActiveJob::Status::STATUS_QUEUED %>' || status == "") {
           setTimeout(function() {
             checkStatus($status)
           }, 1500);

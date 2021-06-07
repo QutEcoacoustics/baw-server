@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Use a real queuing backend for Active Job (and separate queues per environment)
 Rails.application.config.active_job.queue_adapter = :resque
 
@@ -9,10 +11,11 @@ Rails.application.config.active_job.queue_name_prefix = ''
 ActiveSupport.on_load(:active_job) do
   # this extension point affects all jobs, including framework and library jobs!
   # See also ApplicationJob for an extension point for only our jobs
+  const_set(:ACTIVE_JOB_BASE_BACKUP, ActiveJob::Base.clone)
   ActiveJob::Base.class_eval do
-    include BawWorkers::ActiveJob::AutoIdentity
-    include BawWorkers::ActiveJob::Status
-    include BawWorkers::ActiveJob::Unique
+    prepend BawWorkers::ActiveJob::Identity
+    prepend BawWorkers::ActiveJob::Status
+    prepend BawWorkers::ActiveJob::Unique
   end
 
   ActiveJob::QueueAdapters::ResqueAdapter::JobWrapper.class_eval do

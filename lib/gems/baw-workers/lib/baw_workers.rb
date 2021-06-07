@@ -7,18 +7,14 @@ require 'pathname'
 require 'yaml'
 require 'fileutils'
 require 'resque'
-require 'resque_solo'
+require 'resque/server'
 require 'resque-job-stats'
-require "#{__dir__}/../../resque-status/lib/resque-status"
-unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
-  raise 'sanity check failed: modified resque status hash class not loaded'
-end
 
 require 'active_job'
-# Note: this defines the Rails constant which causes issues. See tasks/run_worker.rake
-
 require 'active_storage'
 require 'active_storage/engine'
+
+require 'action_mailer'
 
 require_relative '../../baw-app/lib/baw_app'
 require_relative '../../baw-audio-tools/lib/baw_audio_tools'
@@ -69,6 +65,8 @@ module BawWorkers
   module UploadService
   end
 end
+
+
 
 # simply mentioning this namespace should allow test-worker to patch jobs
 if BawApp.test?

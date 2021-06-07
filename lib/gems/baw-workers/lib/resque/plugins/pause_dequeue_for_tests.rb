@@ -2,6 +2,7 @@
 
 require "#{__dir__}/../../../../baw-app/lib/baw_app"
 
+
 raise 'Resque::Plugins::PauseDequeueForTests must not be loaded in a non-test environment!!!' unless BawApp.test?
 
 module Resque
@@ -82,5 +83,5 @@ module Resque
 end
 
 # Patch all resque jobs (global so we can catch jobs defined by third parties like ActiveJob)
-Resque::Job.include(Resque::Plugins::PauseDequeueForTests)
+::Resque::Job.include(Resque::Plugins::PauseDequeueForTests)
 puts 'Monkey patched Resque::Job with Resque::Plugins::PauseDequeueForTests'

@@ -8,10 +8,7 @@ module BawWorkers
     #
     # For example
     #
-    #       class ApplicationJob < ActiveJob::Base
-    #
-
-    #       class ExampleJob
+    #       class ExampleJob < ApplicationJob
     #         include BawWorkers::ActiveJob::Status
     #
     #         def perform(arguments)
@@ -40,9 +37,13 @@ module BawWorkers
     # we update the status telling anyone listening to this job that its complete.
     module Status
       extend ActiveSupport::Concern
-      include Identity
+      prepend Identity
 
       class Killed < RuntimeError; end
+
+      module Types
+        include ::Dry.Types()
+      end
 
       STATUS_QUEUED = 'queued'
       STATUS_WORKING = 'working'
@@ -63,41 +64,58 @@ module BawWorkers
       ].freeze
 
       class_methods do
+        def setup
+          around_enqueue :check_and_create_status
+          around_perform :perform_with_status
+
+          discard_on BawWorkers::ActiveJob::Status::Killed
+
+          return if ancestors.include?(BawWorkers::ActiveJob::Identity)
+
+          raise TypeError,
+                'BawWorkers::ActiveJob::Unique depends on BawWorkers::ActiveJob::Identity but it was not in the ancestors list'
+        end
       end
 
-      included do
-        around_enqueue :check_and_create_status
-        around_perform :perform_with_status
-      end
+      prepended(&:setup)
 
-      attr_reader :job_id
+      included(&:setup)
+
       attr_reader :status
 
       # hook called by ActiveJob
       # @param job [ActiveJob::Base]
-      def check_and_create_status(job, &block)
+      def check_and_create_status(job)
         # get the job id from the job data
-        @job_id ||= self.job_id(job)
-        raise TypeError, "Invalid job_id #{@job_id}" unless @job_id.is_a(String)
+        id = job.job_id
+        raise TypeError, "Invalid job_id #{id}" unless id.is_a(String)
+
+        # if this job is being tried again, add old messages to the log
+        messages = []
+        if job.executions.positive?
+          messages.push("Attempt #{job.executions - 1}")
+          messages.push(*persistance.get(id)&.messages)
+        end
 
         @status = StatusData.new(
-          job_id: @job_id,
-          name: name(job),
+          job_id: id,
+          name: job.name,
           status: STATUS_QUEUED,
-          messages: [],
+          messages: messages,
           options: job.serialize,
           progress: 0,
           total: 1
         )
+
         delay_ttl = [0, (job.scheduled_at - Time.now).to_i].max
         persistance.create(@status, delay_ttl: delay_ttl)
-        logger.debug { "BawWorkers::ActiveJob::Status created status with id #{@job_id}" }
+        logger.debug { "BawWorkers::ActiveJob::Status created status with id #{id}" }
 
-        result = yield &block
+        result = yield
 
-        if !result
-          logger.debug { "BawWorkers::ActiveJob::Status removed status with id #{@job_id} after failed creation" }
-          persistance.remove(@job_id)
+        unless result
+          logger.debug { "BawWorkers::ActiveJob::Status removed status with id #{id} after failed creation" }
+          persistance.remove(job_id)
         end
 
         result
@@ -106,42 +124,41 @@ module BawWorkers
       # hook called by ActiveJob
       # @param job [ActiveJob::Base]
       def perform_with_status(job, &block)
-        @job_id ||= job_id(job)
-        logger.debug { "BawWorkers::ActiveJob::Status fetching status with id #{@job_id}" }
-        @status = persistance.get(@job_id)
-        logger.debug { "BawWorkers::ActiveJob::Status fetched status with id #{@job_id} = #{@status.status}" }
-
+        id = job.job_id
+        logger.debug { "BawWorkers::ActiveJob::Status fetching status with id #{id}" }
+        @status = persistance.get(id)
+        logger.debug { "BawWorkers::ActiveJob::Status fetched status with id #{id} = #{@status.status}" }
 
         safe_perform!(job, &block)
       end
 
-      def safe_perform!(job, &block)
+      def safe_perform!(job)
         update_status(STATUS_WORKING)
 
-        result = yield &block
+        result = yield
 
         completed("Completed at #{Time.now}")
         on_success if respond_to?(:on_success)
 
-        return result
+        result
+      rescue Killed
+        logger.warn { "BawWorkers::ActiveJob::Status job killed with id #{job.job_id}" }
+        persistance.killed(job.job_id)
+        on_killed if respond_to?(:on_killed)
+      rescue StandardError => e
+        logger.warn { "BawWorkers::ActiveJob::Status job failed with id #{job.job_id} and error #{e}" }
+        update_status(STATUS_FAILED, "The task failed because of an error: #{e}")
 
-        rescue Killed
-          persistance.killed(@job_id)
-          on_killed if respond_to?(:on_killed)
-        rescue StandardError => e
-          update_status(STATUS_FAILED, "The task failed because of an error: #{e}")
-          if respond_to?(:on_failure)
-            on_failure(e)
-          else
-            raise e
-          end
+        raise e unless respond_to?(:on_failure)
+
+        on_failure(e)
       end
 
       # report progress and check if we should be killed
       # will kill if `should_kill?` is true
       def report_progress(progress, total, *messages)
-        raise ArgumentError, "report_progress total was #{total} which is not a number") if total.to_d <= 0.0
-        raise ArgumentError, "report_progress progress was #{progress} which is not a number") if progress.to_d <= 0.0
+        raise ArgumentError, "report_progress total was #{total} which is not a number" if total.to_d <= 0.0
+        raise ArgumentError, "report_progress progress was #{progress} which is not a number" if progress.to_d <= 0.0
 
         @status.progress = progress
         @status.total = total
@@ -156,7 +173,7 @@ module BawWorkers
       end
 
       def should_kill?
-        persistance.should_kill?(@job_id)
+        persistance.should_kill?(job_id)
       end
 
       # kills the current job by raising BawWorkers::ActiveJob::Status::Killed
@@ -173,9 +190,10 @@ module BawWorkers
       # @param *messages [Array] one or messages to add to the status
       def update_status(status, *messages)
         raise ArgumentError unless EXPIRE_STATUSES.include?(status) || status == STATUS_WORKING
+
         @status.status = status
         @status.messages.push(messages)
-        logger.debug { "BawWorkers::ActiveJob::Status updating status with id #{@job_id} to #{status}" }
+        logger.debug { "BawWorkers::ActiveJob::Status updating status with id #{job_id} to #{status}" }
         persistance.set(@status)
       end
 
@@ -184,10 +202,6 @@ module BawWorkers
       # @return [BawWorkers::ActiveJob::Status::Persistance]
       def persistance
         @persistance ||= Persistance.instance
-      end
-
-      module Types
-        include Dry.Types()
       end
     end
   end

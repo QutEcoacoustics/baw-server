@@ -3,8 +3,8 @@ module BawWorkers
     # Convenience methods for working with the sftpgo service
     # Reference: https://github.com/drakkan/sftpgo/blob/master/httpd/schema/openapi.yaml
     module ApiHelpers
-      include Dry::Monads[:try]
-      include Dry::Monads[:task]
+      include ::Dry::Monads[:try]
+      include ::Dry::Monads[:task]
 
       # http://ruby-concurrency.github.io/concurrent-ruby/master/file.promises.out.html
       include Concurrent::Promises::FactoryMethods
@@ -36,7 +36,7 @@ module BawWorkers
       end
 
       # Return value or raise unless valid
-      # @param [Dry::Monads::Result] result
+      # @param [::Dry::Monads::Result] result
       # @return [Object] the unwrapped value
       def ensure_successful_response(result)
         return result.value! if result.success?

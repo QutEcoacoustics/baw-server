@@ -186,9 +186,6 @@ group :workers, :server do
   gem 'redis', '~> 4.1'
   gem 'resque'
   gem 'resque-job-stats'
-  # source copied into repo, see lib/gems/resque-status
-  # gem 'resque-status'
-  gem 'resque_solo'
 
   # Active storage analyzers
   gem 'image_processing'

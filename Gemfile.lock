@@ -467,8 +467,6 @@ GEM
       vegas (~> 0.1.2)
     resque-job-stats (0.5.0)
       resque (>= 1.17, < 3)
-    resque_solo (0.5.0)
-      resque (>= 1.25.0)
     retriable (3.1.2)
     reverse_markdown (2.0.0)
       nokogiri
@@ -722,7 +720,6 @@ DEPENDENCIES
   responders (~> 3.0.1)
   resque
   resque-job-stats
-  resque_solo
   role_model (~> 0.8.1)
   rspec
   rspec-benchmark
