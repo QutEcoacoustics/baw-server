@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawAudioTools::Spectrogram do
   include_context 'common'

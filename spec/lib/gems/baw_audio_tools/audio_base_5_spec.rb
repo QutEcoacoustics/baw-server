@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 # tests converting between audio formats
 describe BawAudioTools::AudioBase do

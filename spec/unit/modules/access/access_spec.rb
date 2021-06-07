@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe Access do
   # https://github.com/QutEcoacoustics/baw-server/issues/333

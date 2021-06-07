@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 require 'rspec/mocks'
 
 def question_url(question_id = nil, study_id = nil)

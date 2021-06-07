@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe AudioEvent, type: :model do
   subject { FactoryBot.build(:audio_event) }
@@ -176,12 +176,12 @@ describe AudioEvent, type: :model do
       FROM "projects"
       INNER
       JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id" 
+      ON "projects"."id" = "projects_sites"."project_id"
       WHERE "projects"."deleted_at"
       IS
       NULL
       AND "sites"."id" = "projects_sites"."site_id")
-           
+
       ORDER
       BY "audio_events"."id"
       DESC
@@ -323,7 +323,7 @@ describe AudioEvent, type: :model do
       FROM "projects"
       INNER
       JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id" 
+      ON "projects"."id" = "projects_sites"."project_id"
       WHERE "projects"."deleted_at"
       IS
       NULL

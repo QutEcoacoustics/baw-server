@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 # test payload splitting with partial payload method
 describe BawWorkers::Analysis::Payload do

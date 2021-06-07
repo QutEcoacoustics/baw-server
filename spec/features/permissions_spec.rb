@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'Permissions', type: :feature do
   create_entire_hierarchy

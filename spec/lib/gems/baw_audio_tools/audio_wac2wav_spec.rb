@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawAudioTools::AudioWac2wav do
   include_context 'common'

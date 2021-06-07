@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 # waveform generation disabled because we cant install wav2png
 describe BawAudioTools::AudioWaveform, :skip do

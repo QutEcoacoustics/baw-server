@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawAudioTools::RunExternalProgram do
   include_context 'audio base'

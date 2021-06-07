@@ -529,6 +529,9 @@ GEM
       unicode-display_width (>= 1.4.0, < 3.0)
     rubocop-ast (1.7.0)
       parser (>= 3.0.1.1)
+    rubocop-rspec (2.3.0)
+      rubocop (~> 1.0)
+      rubocop-ast (>= 1.1.0)
     ruby-debug-ide (0.7.2)
       rake (>= 0.8.1)
     ruby-prof (1.4.3)
@@ -732,6 +735,7 @@ DEPENDENCIES
   rswag-specs
   rswag-ui
   rubocop
+  rubocop-rspec
   ruby-debug-ide (>= 0.7.2)
   ruby-prof (>= 0.17.0)
   sass-rails

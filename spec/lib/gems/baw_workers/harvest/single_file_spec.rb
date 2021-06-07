@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawWorkers::Harvest::SingleFile do
   require 'helpers/shared_test_helpers'

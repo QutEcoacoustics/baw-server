@@ -4,7 +4,7 @@
 # AT2020: Heavily modified from original code to suit our test framework.
 #
 
-require 'rails_helper'
+
 require "#{Rails.root}/lib/gems/resque-status/lib/resque-status"
 
 #

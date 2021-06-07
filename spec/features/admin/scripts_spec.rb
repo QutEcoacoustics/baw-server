@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'MANAGE Scripts as admin user', type: :feature do
   before(:each) do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 def select_by_value(id, value)
   option_xpath = "//*[@id='#{id}']/option[@value='#{value}']"

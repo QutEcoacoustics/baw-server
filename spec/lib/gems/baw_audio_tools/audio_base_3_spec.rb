@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 # tests getting audio info
 describe BawAudioTools::AudioBase do

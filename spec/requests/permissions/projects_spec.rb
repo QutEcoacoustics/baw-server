@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe 'Project permissions' do
   create_entire_hierarchy

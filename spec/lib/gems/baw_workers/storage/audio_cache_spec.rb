@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioCache do

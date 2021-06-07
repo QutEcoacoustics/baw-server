@@ -259,4 +259,7 @@ end
 group :development, :test do
   # restart workers when their code changes
   gem 'rerun'
+
+  # linting
+  gem 'rubocop-rspec', require: false
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 require 'rspec/mocks'
 
 # create the url for create_by_dataset_item_params

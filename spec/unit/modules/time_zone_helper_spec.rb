@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe TimeZoneHelper do
   it 'can map zones to offsets' do

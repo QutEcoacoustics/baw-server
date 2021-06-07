@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 require(Rails.root / 'spec' / 'helpers' / 'shared-context' / 'rake_context')
 
 describe 'baw:import_cms' do

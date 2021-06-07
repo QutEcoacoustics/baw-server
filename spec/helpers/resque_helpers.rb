@@ -131,15 +131,15 @@ module ResqueHelpers
     include BawWorkers::ResqueApi
 
     PERFORMED_KEYS = [
-      Resque::Plugins::Status::STATUS_COMPLETED,
-      Resque::Plugins::Status::STATUS_FAILED,
-      Resque::Plugins::Status::STATUS_KILLED
+      BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
+      BawWorkers::ActiveJob::Status::STATUS_FAILED,
+      BawWorkers::ActiveJob::Status::STATUS_KILLED
     ].freeze
 
     # Expects the completed job statuses to be of a certain size. Includes completed, failed, and killed jobs.
     # @param [Integer] count - the count of job statuses we expect
     # @param [Class] klass - of which class we expected the job statuses jobs to be. Defaults to `nil` which matches any class.
-    # @return [Array<Resque::Plugins::Status::Hash>]
+    # @return [Array<BawWorkers::ActiveJob::Status::StatusData>]
     def expect_performed_jobs(count, klass: nil)
       statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS, klass: klass)
 
@@ -185,7 +185,7 @@ module ResqueHelpers
     # @param [Integer] enqueued - the count of enqueued jobs we expect, defaults to 0
     # @param [Class] klass - of which class we expected completed jobs to be. Defaults to `nil` which matches any class.
     def expect_jobs_to_be(completed:, failed: 0, enqueued: 0, klass: nil)
-      actual_completed = BawWorkers::ResqueApi.statuses(statuses: Resque::Plugins::Status::STATUS_COMPLETED, klass: klass)
+      actual_completed = BawWorkers::ResqueApi.statuses(statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED, klass: klass)
       actual_failed = BawWorkers::ResqueApi.failed
       actual_enqueued = BawWorkers::ResqueApi.jobs_queued
       aggregate_failures do
@@ -221,7 +221,7 @@ module ResqueHelpers
     # Set a flag in redis that the Test worker listens for.
     # That worker will then complete the given number of jobs.
     # @param [Integer|nil] count the number of jobs to perform. Use `nil` to indicate that all enqueued jobs should be performed.
-    # @return [Array<Resque::Plugins::Status::Hash>] an array of job statuses that were performed.
+    # @return [Array<BawWorkers::ActiveJob::Status::Hash>] an array of job statuses that were performed.
     def perform_jobs(count: nil)
       enqueued = BawWorkers::ResqueApi.queued_count
       count = enqueued if count.nil?

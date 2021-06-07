@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 # tests segmenting audio files
 describe BawAudioTools::AudioBase do

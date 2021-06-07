@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe Permission, type: :model do
   subject { FactoryBot.build(:read_permission, project: FactoryBot.create(:project)) }

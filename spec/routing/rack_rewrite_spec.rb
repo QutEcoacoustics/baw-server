@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 # need request spec here so that actual body content is returned
 describe 'Rack rewrite', type: :request do
   describe :routing do

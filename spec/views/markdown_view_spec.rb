@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'rendering markdown partials', type: :view do
   let(:markdown_fixture) {
@@ -8,16 +8,16 @@ describe 'rendering markdown partials', type: :view do
       # Test!
 
       This is a test that tests tests!
-      
+
       - a list
       - really
       - so many items
-      
+
       ~~~
-      <%= 1 + 1 %> 
+      <%= 1 + 1 %>
       <%= current_user&.user_name %>
       ~~~
-      
+
       an image ![user](/images/user/user_spanhalf.png)
     MARKDOWN
   }

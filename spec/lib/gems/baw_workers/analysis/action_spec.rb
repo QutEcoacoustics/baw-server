@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 require 'webmock/rspec'
 
 describe BawWorkers::Analysis::Action do

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawWorkers::Media::Action do
   require 'helpers/shared_test_helpers'

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe Project, type: :model do
   it 'has a valid factory' do

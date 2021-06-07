@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :request, aggregate_failures: true do
   include_context 'shared_test_helpers'

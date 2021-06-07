@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe TimeZoneAttribute do
   # extracted from prod so we can test possible cases

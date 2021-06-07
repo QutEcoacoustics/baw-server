@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe AnalysisJobsItemsController, type: :routing do
   def make_expected(action, audio_recording_id = nil, analysis_job_id = '123')

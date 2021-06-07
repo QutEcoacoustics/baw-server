@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe 'Resque::Plugins::Status' do
   require 'helpers/shared_test_helpers'

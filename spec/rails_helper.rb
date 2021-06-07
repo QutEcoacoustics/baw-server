@@ -87,7 +87,8 @@ require 'rspec/rails'
 require 'rspec-benchmark'
 require 'webmock/rspec'
 require 'paperclip/matchers'
-require 'database_cleaner'
+require 'database_cleaner/active_record'
+require 'database_cleaner/redis'
 
 require 'helpers/misc_helper'
 require 'fixtures/fixtures'
@@ -229,10 +230,11 @@ RSpec.configure do |config|
     DatabaseCleaner[:active_record].strategy = :transaction
 
     DatabaseCleaner[:redis].db = Redis.new(Settings.redis.connection.to_h)
-    DatabaseCleaner[:redis].strategy = :truncation
+    DatabaseCleaner[:redis].strategy = :deletion
 
-    DatabaseCleaner.clean_with(:truncation)
-
+    DatabaseCleaner[:active_record].clean_with(:truncation)
+    DatabaseCleaner[:redis].clean
+    
     begin
       DatabaseCleaner.start
       puts '===> Database cleaner: start.'

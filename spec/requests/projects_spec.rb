@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 require 'rspec/mocks'
 
 # Creates a simplified multipart/form-data message string

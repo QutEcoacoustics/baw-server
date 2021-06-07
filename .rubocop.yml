@@ -1,4 +1,6 @@
 ---
+require:
+  - rubocop-rspec
 AllCops:
   DisplayCopNames: true
   DisplayStyleGuide: true
@@ -61,6 +63,11 @@ Metrics/ModuleLength:
   Max: 150
 Metrics/AbcSize:
   Max: 60
+# https://github.com/rubocop/rubocop-rspec/issues/795
+RSpec/DescribedClass:
+  EnforcedStyle: explicit
+RSpec/ExampleLength:
+  Max: 200
 Style/BlockDelimiters:
   EnforcedStyle: semantic
   AllowBracesOnProceduralOneLiners: true

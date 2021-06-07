@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'Active Job' do
   include ActiveJob::TestHelper

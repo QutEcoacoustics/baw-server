@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 RSpec.describe ProgressEvent, type: :model do
   subject { FactoryBot.build(:progress_event) }

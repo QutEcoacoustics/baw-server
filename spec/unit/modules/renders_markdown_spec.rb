@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe RendersMarkdown do
   before(:all) do

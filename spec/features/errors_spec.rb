@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'checking reactions to errors', type: :feature do
   context 'production with exceptions_app' do

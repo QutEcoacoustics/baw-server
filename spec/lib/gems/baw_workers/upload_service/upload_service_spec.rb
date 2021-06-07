@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawWorkers::UploadService::Communicator do
   it 'can be instantiated' do

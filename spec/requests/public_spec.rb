@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 def update_page(slug, text)
   page = Comfy::Cms::Page.where(slug: slug).first
