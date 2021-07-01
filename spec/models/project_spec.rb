@@ -1,7 +1,38 @@
 # frozen_string_literal: true
 
-
-
+# == Schema Information
+#
+# Table name: projects
+#
+#  id                 :integer          not null, primary key
+#  deleted_at         :datetime
+#  description        :text
+#  image_content_type :string
+#  image_file_name    :string
+#  image_file_size    :integer
+#  image_updated_at   :datetime
+#  name               :string           not null
+#  notes              :text
+#  urn                :string
+#  created_at         :datetime
+#  updated_at         :datetime
+#  creator_id         :integer          not null
+#  deleter_id         :integer
+#  updater_id         :integer
+#
+# Indexes
+#
+#  index_projects_on_creator_id  (creator_id)
+#  index_projects_on_deleter_id  (deleter_id)
+#  index_projects_on_updater_id  (updater_id)
+#  projects_name_uidx            (name) UNIQUE
+#
+# Foreign Keys
+#
+#  projects_creator_id_fk  (creator_id => users.id)
+#  projects_deleter_id_fk  (deleter_id => users.id)
+#  projects_updater_id_fk  (updater_id => users.id)
+#
 describe Project, type: :model do
   it 'has a valid factory' do
     expect(FactoryBot.create(:project)).to be_valid

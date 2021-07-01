@@ -206,6 +206,7 @@ group :development do
 
   # a ruby language server
   gem 'solargraph'
+  gem 'solargraph-rails', '>= 0.2.2.pre.2'
   # needed by bundler/soalrgraph for language server?
   gem 'actionview', RAILS_VERSION
 
@@ -219,6 +220,9 @@ group :development do
 
   # generating changelogs
   gem 'github_changelog_generator'
+
+  # documents models
+  gem 'annotate'
 end
 
 group :test do

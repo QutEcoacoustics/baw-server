@@ -35,6 +35,8 @@ Layout/LeadingCommentSpace:
   Enabled: false
 Metrics/ClassLength:
   Max: 300
+Metrics/CyclomaticComplexity:
+  Max: 10
 Layout/SpaceAroundMethodCallOperator:
   Enabled: true
 Metrics/BlockLength:
@@ -68,6 +70,13 @@ RSpec/DescribedClass:
   EnforcedStyle: explicit
 RSpec/ExampleLength:
   Max: 200
+RSpec/ExpectInHook:
+  # https://github.com/rubocop/rubocop-rspec/pull/445
+  Enabled: false
+RSpec/MultipleExpectations:
+  Max: 6
+RSpec/NestedGroups:
+  Max: 4
 Style/BlockDelimiters:
   EnforcedStyle: semantic
   AllowBracesOnProceduralOneLiners: true

@@ -11,7 +11,7 @@ domains: []
 reporters:
   - rubocop
   - require_not_found
-  - typecheck:strict
+  - typecheck:typed
   - update_errors
 require_paths:
   - spec/lib
@@ -22,3 +22,5 @@ formatter:
   rubocop:
     cops: all
 max_files: 5000
+plugins:
+  - solargraph-rails

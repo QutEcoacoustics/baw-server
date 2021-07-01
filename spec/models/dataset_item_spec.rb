@@ -1,7 +1,28 @@
 # frozen_string_literal: true
 
-
-
+# == Schema Information
+#
+# Table name: dataset_items
+#
+#  id                 :integer          not null, primary key
+#  end_time_seconds   :decimal(, )      not null
+#  order              :decimal(, )
+#  start_time_seconds :decimal(, )      not null
+#  created_at         :datetime
+#  audio_recording_id :integer
+#  creator_id         :integer
+#  dataset_id         :integer
+#
+# Indexes
+#
+#  dataset_items_idx  (start_time_seconds,end_time_seconds)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (creator_id => users.id)
+#  fk_rails_...  (dataset_id => datasets.id)
+#
 RSpec.describe DatasetItem, type: :model do
   subject { FactoryBot.build(:dataset_item) }
 

@@ -1,5 +1,54 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: audio_recordings
+#
+#  id                  :integer          not null, primary key
+#  bit_rate_bps        :integer
+#  channels            :integer
+#  data_length_bytes   :bigint           not null
+#  deleted_at          :datetime
+#  duration_seconds    :decimal(10, 4)   not null
+#  file_hash           :string(524)      not null
+#  media_type          :string           not null
+#  notes               :text
+#  original_file_name  :string
+#  recorded_date       :datetime         not null
+#  recorded_utc_offset :string(20)
+#  sample_rate_hertz   :integer
+#  status              :string           default("new")
+#  uuid                :string(36)       not null
+#  created_at          :datetime
+#  updated_at          :datetime
+#  creator_id          :integer          not null
+#  deleter_id          :integer
+#  site_id             :integer          not null
+#  updater_id          :integer
+#  uploader_id         :integer          not null
+#
+# Indexes
+#
+#  audio_recordings_created_updated_at      (created_at,updated_at)
+#  audio_recordings_icase_file_hash_id_idx  (lower((file_hash)::text), id)
+#  audio_recordings_icase_file_hash_idx     (lower((file_hash)::text))
+#  audio_recordings_icase_uuid_id_idx       (lower((uuid)::text), id)
+#  audio_recordings_icase_uuid_idx          (lower((uuid)::text))
+#  audio_recordings_uuid_uidx               (uuid) UNIQUE
+#  index_audio_recordings_on_creator_id     (creator_id)
+#  index_audio_recordings_on_deleter_id     (deleter_id)
+#  index_audio_recordings_on_site_id        (site_id)
+#  index_audio_recordings_on_updater_id     (updater_id)
+#  index_audio_recordings_on_uploader_id    (uploader_id)
+#
+# Foreign Keys
+#
+#  audio_recordings_creator_id_fk   (creator_id => users.id)
+#  audio_recordings_deleter_id_fk   (deleter_id => users.id)
+#  audio_recordings_site_id_fk      (site_id => sites.id)
+#  audio_recordings_updater_id_fk   (updater_id => users.id)
+#  audio_recordings_uploader_id_fk  (uploader_id => users.id)
+#
 require "#{__dir__}/../helpers/misc_helper"
 
 FactoryBot.define do

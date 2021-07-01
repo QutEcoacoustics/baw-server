@@ -9,7 +9,8 @@ namespace :baw do
       sep_char = '-'
       ApplicationRecord.descendants.each do |model|
         model_name = model.name
-        title = "#{sep_char * 3}#{model_name}#{sep_char * 3}"
+        title =
+          "#{sep_char * 3}#{model_name}#{sep_char * 3}"
         puts title
         puts model.attribute_names.join(', ')
         puts
