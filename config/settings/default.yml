@@ -39,7 +39,9 @@ resque:
   # otherwise it will run in the foreground
   # We always want a worker to run in the foreground in a container
   background_pid_file: ~
-
+resque_scheduler:
+  log_level: "Logger::DEBUG"
+  polling_interval_seconds: 5.0
 # these are the available background jobs that can be enqueued
 actions:
   analysis:

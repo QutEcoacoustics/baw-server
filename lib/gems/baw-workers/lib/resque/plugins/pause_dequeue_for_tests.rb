@@ -2,7 +2,6 @@
 
 require "#{__dir__}/../../../../baw-app/lib/baw_app"
 
-
 raise 'Resque::Plugins::PauseDequeueForTests must not be loaded in a non-test environment!!!' unless BawApp.test?
 
 module Resque
@@ -58,13 +57,14 @@ module Resque
           # Act like this plugin is not activated. Do nothing.
           Resque.logger.info('Resque::Plugins::PauseDequeueForTests ran a job immediately because work is NOT paused')
           true
-        when ->(x) { Integer(x, 10, exception: false) != nil }
+        when ->(x) { !Integer(x, 10, exception: false).nil? }
           # We encountered a integer, indicating a number of jobs to complete
 
           # in this case, the integer will be above 0 or else we are in an invalid state
           to_do = should_dequeue.to_i
           if to_do <= 0
-            raise ArgumentError, "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
+            raise ArgumentError,
+                  "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
           end
 
           # decrement the counter by 1, to process one job for this pass
@@ -75,7 +75,8 @@ module Resque
           # finally allow the job to run
           true
         else
-          raise ArgumentError, "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
+          raise ArgumentError,
+                "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
         end
       end
     end

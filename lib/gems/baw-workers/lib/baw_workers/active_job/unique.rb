@@ -32,62 +32,74 @@ module BawWorkers
     #       end
     module Unique
       extend ActiveSupport::Concern
-      prepend Identity
       include Status
 
-      prepended(&:setup)
+      # @!parse
+      #   extend ClassMethods
+      #   extend ActiveSupport::Concern
+      #   include ActiveJob::Base
+      #   include ActiveJob::Core
+      #   include ActiveJob::Logger
 
-      included(&:setup)
+      # ::nodoc::
+      module ClassMethods
+        private
+
+        def unique_setup
+          # active job hook:
+          before_enqueue :enqueue_check_uniqueness, prepend: true
+        end
+      end
+
+      prepended { unique_setup }
+
+      included { unique_setup }
 
       def unique?
         @unique
       end
 
+      private
+
       # param job [ActiveJob::Base]
-      def enqueue_check_uniqueness(job)
-        abort unless should_run?(job.job_id)
+      def enqueue_check_uniqueness
+        check_job_id(job_id)
+        abort unless id_unique?(job_id)
         @unique = true
       end
 
-      private
-
       attr_writer :unique
 
-      def setup
-        # active job hook:
-        before_enqueue :enqueue_check_uniqueness, prepend: true
-
-        return if ancestors.include?(BawWorkers::ActiveJob::Identity)
-
-        raise TypeError,
-              'BawWorkers::ActiveJob::Unique depends on BawWorkers::ActiveJob::Identity but it was not in the ancestors list'
-      end
-
+      #
+      # Aborts the current enqueue chain
+      #
+      # @return [void]
+      #
       def abort
-        logger.debug { "BawWorkers::ActiveJob::Unique job with id #{job_id} already exists, aborting" }
+        logger.debug { { message: 'BawWorkers::ActiveJob::Unique job already exists, aborting', job_id: job_id } }
         @unique = false
-        raise :abort
+        throw :abort
       end
 
-      def should_run?(id_to_test)
+      def id_unique?(id_to_test)
         return true unless persistance.exists?(id_to_test)
 
         @status = persistance.get(id_to_test)
 
         if @status.terminal?
           logger.debug do
-            "BawWorkers::ActiveJob::Unique job with id #{id_to_test} is terminal, removing in favour of new job"
+            { message: 'BawWorkers::ActiveJob::Unique existing job is terminal, ignoring presence and continuing with new job',
+              job_id: id_to_test }
           end
-          persistance.remove(id_to_test)
           return true
         end
 
         false
       end
 
-      # @return [BawWorkers::ActiveJob::Status::Persistance]
+      # @return [Module<BawWorkers::ActiveJob::Status::Persistance>]
       def persistance
-        @persistance ||= BawWorkers::ActiveJob::Status::Persistance.instance
+        @persistance ||= BawWorkers::ActiveJob::Status::Persistance
       end
     end
   end

@@ -2,7 +2,7 @@
 
 module ResqueHelpers
   module Emulate
-    extend self
+    module_function
 
     def resque_worker_with_job(job_class, job_args, opts = {})
       # see http://stackoverflow.com/questions/5141378/how-to-bridge-the-testing-using-resque-with-rspec-examples
@@ -74,7 +74,7 @@ module ResqueHelpers
   module ExampleGroup
     # Whether or not to pause test jobs
     # @return [Boolean]
-    @pause_test_jobs
+    attr_reader :pause_test_jobs
 
     # Pause resque jobs in the test environment until they are manually triggered
     # by ResqueHelper::Example.perform_jobs.
@@ -97,9 +97,9 @@ module ResqueHelpers
     end
 
     # Temporarily change the resque logger level for the duration of the test
-    # @param [Symbol|Logger::Severity|Integer] level the log level to use
+    # @param [Symbol,Logger::Severity,Integer] level the log level to use
     def resque_log_level(level)
-      around(:each) do |example|
+      around do |example|
         original = Resque.logger.level
         Resque.logger.level = level
         example.run
@@ -107,19 +107,34 @@ module ResqueHelpers
       end
     end
 
+    # do not throw an error if there are outstanding jobs left in the queue
+    def ignore_pending_jobs
+      let(:ignore_leftovers_jobs) { true }
+      logger.info 'will ignore leftovers', class: name
+    end
+
     # RSpec hooks are only available once this module has been extended into RSpec::Core::ExampleGroup
     def self.extended(example_group)
-      example_group.before(:each) do
+      example_group.let(:ignore_leftovers_jobs) { false }
+
+      example_group.before do
         # Disable the inbuilt test adapter for every test!
         # https://github.com/rails/rails/issues/37270
-        (ActiveJob::Base.descendants << ActiveJob::Base).each(&:disable_test_adapter)
+        (ActiveJob::Base.descendants << ActiveJob::Base).each do |klass|
+          klass.disable_test_adapter if defined?(klass.disable_test_adapter)
+        end
         ActiveJob::Base.queue_adapter = :resque
 
         Resque::Plugins::PauseDequeueForTests.set_paused(example_group.pause_test_jobs?)
       end
 
-      example_group.after(:each) do
-        raise 'There are uncompleted jobs for this spec' if BawWorkers::ResqueApi.queued_count > 0
+      example_group.after do
+        remaining = BawWorkers::ResqueApi.queued_count
+        next if remaining.zero?
+
+        raise "There are #{remaining} uncompleted jobs for this spec" unless ignore_leftovers_jobs
+
+        logger.warn "#{remaining} jobs are still in the queue, ignored intentionally by ignore_pending_jobs"
       end
     end
   end
@@ -130,11 +145,11 @@ module ResqueHelpers
   module Example
     include BawWorkers::ResqueApi
 
-    PERFORMED_KEYS = [
-      BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
-      BawWorkers::ActiveJob::Status::STATUS_FAILED,
-      BawWorkers::ActiveJob::Status::STATUS_KILLED
-    ].freeze
+    PERFORMED_KEYS = BawWorkers::ActiveJob::Status::TERMINAL_STATUSES
+
+    def clear_pending_jobs
+      clear_queues
+    end
 
     # Expects the completed job statuses to be of a certain size. Includes completed, failed, and killed jobs.
     # @param [Integer] count - the count of job statuses we expect
@@ -173,10 +188,15 @@ module ResqueHelpers
                BawWorkers::ResqueApi.jobs_queued_of(klass)
              end
 
-      expect(statuses).to be_a(Array)
-      expect(jobs).to have(count).items
-
+      aggregate_failures do
+        expect(statuses).to be_a(Array)
+        expect(jobs).to have(count).items
+      end
       jobs
+    end
+
+    def expect_delayed_jobs(count)
+      expect(count).to eq BawWorkers::ResqueApi.delayed_count
     end
 
     # Expects the completed, failed, and enqueued counts of jobs to be of a certain size.
@@ -185,7 +205,8 @@ module ResqueHelpers
     # @param [Integer] enqueued - the count of enqueued jobs we expect, defaults to 0
     # @param [Class] klass - of which class we expected completed jobs to be. Defaults to `nil` which matches any class.
     def expect_jobs_to_be(completed:, failed: 0, enqueued: 0, klass: nil)
-      actual_completed = BawWorkers::ResqueApi.statuses(statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED, klass: klass)
+      actual_completed = BawWorkers::ResqueApi.statuses(statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
+                                                        klass: klass)
       actual_failed = BawWorkers::ResqueApi.failed
       actual_enqueued = BawWorkers::ResqueApi.jobs_queued
       aggregate_failures do
@@ -217,17 +238,51 @@ module ResqueHelpers
       Resque::Plugins::PauseDequeueForTests.set_paused(original_pause_value)
     end
 
+    #
+    # Uses the Redis MONITOR command to monitor commands sent to redis while running
+    # a user supplied block
+    # @param [#<<] io - any object that supports the `<<` operator to append messages to.
+    # @return [Array<String>] The commands that were recorded
+    #
+    def monitor_redis(io: nil, &block)
+      connection_settings = Settings.redis.connection.to_h.freeze
+      lock = Concurrent::Semaphore.new(1)
+      lock.acquire
+      r = Concurrent::Promises.future(connection_settings) { |cs|
+        redis = Redis.new(cs)
+        messages = []
+        catch(:stop) do
+          redis.monitor do |msg|
+            messages << msg
+            io << msg << "\n" unless io.nil?
+            throw :stop if lock.try_acquire
+          end
+        end
+
+        messages
+      }
+      begin
+        block.call
+      ensure
+        lock.release
+      end
+
+      r.value!
+    end
+
     # Perform a number of jobs and **BLOCK** execution until the jobs are completed.
     # Set a flag in redis that the Test worker listens for.
     # That worker will then complete the given number of jobs.
-    # @param [Integer|nil] count the number of jobs to perform. Use `nil` to indicate that all enqueued jobs should be performed.
-    # @return [Array<BawWorkers::ActiveJob::Status::Hash>] an array of job statuses that were performed.
-    def perform_jobs(count: nil)
-      enqueued = BawWorkers::ResqueApi.queued_count
-      count = enqueued if count.nil?
+    # @param [Integer,nil] count the number of jobs to perform. Use `nil` to indicate that all enqueued jobs should be performed.
+    # @param [Float] timeout the amount of time to wait for a job to finish
+    # @return [Array<BawWorkers::ActiveJob::Status::StatusData>] an array of job statuses that were performed.
+    def perform_jobs(count: nil, timeout: 30)
+      stats = job_stats
+      existing = stats[:statuses].count
+      count = stats[:total_pending] if count.nil?
 
-      if enqueued < count
-        raise ArgumentError, "Can't perform #{count} jobs because there are only #{enqueued} jobs in the queue"
+      if stats[:total_pending] < count
+        logger.warn("Can't perform #{count} jobs because there are only #{stats[:total_pending]} jobs in the queue")
       end
 
       logger.info "Performing #{count} jobs..."
@@ -235,28 +290,41 @@ module ResqueHelpers
 
       expect(Resque::Plugins::PauseDequeueForTests.set_perform_count(count)).to eq 'OK'
 
-      performed = []
+      statuses = []
       elapsed = 0
       error = loop {
         now = Time.now
         elapsed = now - started
-        break 'Timed out waiting for jobs to finish' if elapsed > 30.0
+        break 'Timed out waiting for jobs to finish' if elapsed > timeout
 
-        performed = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS, range_start: started, range_end: now)
+        job_stats => { statuses:, **stats }
 
-        logger.info("Waiting for test jobs to be performed, #{performed.count} jobs of #{count} have been performed...")
-        break if performed.size >= count
+        logger.info('Waiting for test jobs to be performed', { existing_statuses: existing, **stats })
+        break if (stats[:status_execution_count] - existing) >= count
 
         sleep(0.5)
       }
 
       unless error.blank?
-        details = BawWorkers::ResqueApi.failed.reduce('') { |message, failed| message + "\n" + failed.to_s }
-        raise "#{error}\nFailures that occurred while waiting: #{details}"
+        details = BawWorkers::ResqueApi.failed.reduce('') { |message, failed| "#{message}\n#{failed}" }
+        raise "#{error}\nFailures that occurred while waiting: #{details}\nStatuses received #{statuses}"
       end
 
-      logger.info("Waiting completed, performed #{performed.count} jobs in #{elapsed} seconds")
-      performed
+      logger.info("Waiting completed,in #{elapsed} seconds", stats)
+      statuses
+    end
+
+    def job_stats
+      enqueued = BawWorkers::ResqueApi.queued_count
+      delayed = BawWorkers::ResqueApi.delayed_count
+      statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS)
+      {
+        enqueued: enqueued,
+        delayed: delayed,
+        total_pending: enqueued + delayed,
+        statuses: statuses,
+        status_execution_count: statuses.sum { |s| (s&.options&.fetch(:executions, nil) || 0) + 1 }
+      }
     end
   end
 end

@@ -116,7 +116,7 @@ describe BawWorkers::Media::Action do
 
     it 'can retrieve the job' do
       queued_query = { media_type: :audio, media_request_params: test_media_request_params }
-      queued_query_normalised = BawWorkers::ResqueJobId.normalise(media_type: :audio, media_request_params: test_media_request_params)
+      queued_query_normalised = BawWorkers::ResqueJobIdBROKEN!!!.normalise(media_type: :audio, media_request_params: test_media_request_params)
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(false)
@@ -131,7 +131,7 @@ describe BawWorkers::Media::Action do
 
       found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Media::Action, queued_query)
 
-      job_id = BawWorkers::ResqueJobId.create_id_props(BawWorkers::Media::Action, queued_query)
+      job_id = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Media::Action, queued_query)
       # status = Resque::Plugins::Status::Hash.get(job_id)
 
       status = BawWorkers::Media::Action.get_job_status(:audio, test_media_request_params)

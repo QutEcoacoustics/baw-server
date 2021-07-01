@@ -5,6 +5,12 @@ module BawWorkers
     # A module that ensures an ActiveJob implements a name and job_id
     module Identity
       extend ActiveSupport::Concern
+      # @!parse
+      #   extend ClassMethods
+      #   extend ActiveSupport::Concern
+      #   include ::ActiveJob::Base
+      #   include ::ActiveJob::Core
+      #   include ::ActiveJob::Logger
 
       included do
         raise TypeError, 'BawWorkers::ActiveJob::Identity must not be included. Try prepending.'
@@ -15,7 +21,8 @@ module BawWorkers
         job_base_has_method!
       end
 
-      class_methods do
+      # ::nodoc::
+      module ClassMethods
         private
 
         def job_base_has_method!
@@ -48,6 +55,13 @@ module BawWorkers
       # @return [String]
       attr_reader :job_id
 
+      #
+      # Job ID for this job.
+      #
+      # @param [String] value the new job_id
+      #
+      # @return [String] the set job id
+      #
       def job_id=(value)
         @job_id = value.to_s
       end
@@ -75,9 +89,17 @@ module BawWorkers
 
         # otherwise we assume we were called by `perform`
         # finally, the magic!
-        self.job_id = create_job_id
+        new_id = create_job_id
+
+        # spaces in particular mess with redis
+        self.job_id = new_id.gsub(' ', '')
       end
 
+      #
+      # Test if this job has a module named `/ApplicationJob/` in it's ancestors.
+      #
+      # @return [Module,nil] the matched class if found, or else nil
+      #
       def application_job_class
         @application_job_class ||= self.class.ancestors.find { |ancestor|
           ancestor.name =~ /ApplicationJob/

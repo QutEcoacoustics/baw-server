@@ -28,21 +28,38 @@ module BawWorkers
     #           # called if job completed
     #         end
     #
-    #         def on_failed
+    #         def on_errored
     #           # called if job raises
+    #         end
+    #
+    #         def on_failed
+    #           # called if job fails intentionally
     #         end
     #       end
     #
     # This job would iterate num times updating the status as it goes. At the end
     # we update the status telling anyone listening to this job that its complete.
     module Status
+      # @!parse
+      #   extend ClassMethods
+      #   extend ActiveSupport::Concern
+      #   include ::ActiveJob::Base
+      #   include ::ActiveJob::Core
+      #   include ::ActiveJob::Logger
+      #   include BawWorkers::ActiveJob::Identity
+      #   extend BawWorkers::ActiveJob::Status::Enqueuing
+
       extend ActiveSupport::Concern
-      prepend Identity
+      include BawWorkers::ActiveJob::Status::Enqueuing
 
-      class Killed < RuntimeError; end
+      # Represents a kill event for a job that's just been killed
+      class Killed < RuntimeError
+        attr_accessor :kill_location
 
-      module Types
-        include ::Dry.Types()
+        def initialize(message, location)
+          @kill_location = location
+          super(message)
+        end
       end
 
       STATUS_QUEUED = 'queued'
@@ -50,158 +67,259 @@ module BawWorkers
       STATUS_COMPLETED = 'completed'
       STATUS_FAILED = 'failed'
       STATUS_KILLED = 'killed'
-      STATUSES = Types::String.enum(
-        STATUS_QUEUED,
-        STATUS_WORKING,
+      STATUS_ERRORED = 'errored'
+
+      # Dry::Types definitions for the status module
+      module StatusTypes
+        # @!parse
+        #   include Dry::Types
+        include ::Dry.Types
+
+        Statuses = String.enum(
+          STATUS_QUEUED,
+          STATUS_WORKING,
+          STATUS_COMPLETED,
+          STATUS_FAILED,
+          STATUS_ERRORED,
+          STATUS_KILLED
+        )
+      end
+
+      STATUSES = StatusTypes::Statuses.values.to_a.freeze
+      TERMINAL_STATUSES = [
         STATUS_COMPLETED,
         STATUS_FAILED,
-        STATUS_KILLED
-      )
-      EXPIRE_STATUSES = [
-        STATUS_COMPLETED,
-        STATUS_FAILED,
+        STATUS_ERRORED,
         STATUS_KILLED
       ].freeze
 
-      class_methods do
-        def setup
-          around_enqueue :check_and_create_status
-          around_perform :perform_with_status
+      # ::nodoc::
+      module ClassMethods
+        private
+
+        def status_setup
+          around_enqueue :around_enqueue_check_and_create_status
+          around_perform :around_perform_with_status
 
           discard_on BawWorkers::ActiveJob::Status::Killed
-
-          return if ancestors.include?(BawWorkers::ActiveJob::Identity)
-
-          raise TypeError,
-                'BawWorkers::ActiveJob::Unique depends on BawWorkers::ActiveJob::Identity but it was not in the ancestors list'
         end
       end
 
-      prepended(&:setup)
+      prepended do
+        status_setup
+      end
 
-      included(&:setup)
+      included do
+        status_setup
+      end
 
       attr_reader :status
 
-      # hook called by ActiveJob
-      # @param job [ActiveJob::Base]
-      def check_and_create_status(job)
-        # get the job id from the job data
-        id = job.job_id
-        raise TypeError, "Invalid job_id #{id}" unless id.is_a(String)
-
-        # if this job is being tried again, add old messages to the log
-        messages = []
-        if job.executions.positive?
-          messages.push("Attempt #{job.executions - 1}")
-          messages.push(*persistance.get(id)&.messages)
-        end
-
-        @status = StatusData.new(
-          job_id: id,
-          name: job.name,
-          status: STATUS_QUEUED,
-          messages: messages,
-          options: job.serialize,
-          progress: 0,
-          total: 1
-        )
-
-        delay_ttl = [0, (job.scheduled_at - Time.now).to_i].max
-        persistance.create(@status, delay_ttl: delay_ttl)
-        logger.debug { "BawWorkers::ActiveJob::Status created status with id #{id}" }
-
-        result = yield
-
-        unless result
-          logger.debug { "BawWorkers::ActiveJob::Status removed status with id #{id} after failed creation" }
-          persistance.remove(job_id)
-        end
-
-        result
+      # Update the #status attribute with a fresh status check from Redis.
+      # @return [StatusData]
+      def refresh_status!
+        @status = persistance.get(job_id)
       end
 
-      # hook called by ActiveJob
-      # @param job [ActiveJob::Base]
-      def perform_with_status(job, &block)
-        id = job.job_id
-        logger.debug { "BawWorkers::ActiveJob::Status fetching status with id #{id}" }
-        @status = persistance.get(id)
-        logger.debug { "BawWorkers::ActiveJob::Status fetched status with id #{id} = #{@status.status}" }
-
-        safe_perform!(job, &block)
+      # Marks a job for death (to be killed).
+      # The next `tick` or `report_progress` done by the remote job will check
+      # for this job's ID in the kill list and will #kill! if necessary.
+      def mark_for_kill!
+        persistance.mark_for_kill(job_id)
       end
 
-      def safe_perform!(job)
-        update_status(STATUS_WORKING)
+      protected
 
-        result = yield
-
-        completed("Completed at #{Time.now}")
-        on_success if respond_to?(:on_success)
-
-        result
-      rescue Killed
-        logger.warn { "BawWorkers::ActiveJob::Status job killed with id #{job.job_id}" }
-        persistance.killed(job.job_id)
-        on_killed if respond_to?(:on_killed)
-      rescue StandardError => e
-        logger.warn { "BawWorkers::ActiveJob::Status job failed with id #{job.job_id} and error #{e}" }
-        update_status(STATUS_FAILED, "The task failed because of an error: #{e}")
-
-        raise e unless respond_to?(:on_failure)
-
-        on_failure(e)
-      end
-
-      # report progress and check if we should be killed
-      # will kill if `should_kill?` is true
+      # Report progress and check if we should be killed.
+      # Will kill if `should_kill?` is true.
+      # Should only be called by a worker.
       def report_progress(progress, total, *messages)
-        raise ArgumentError, "report_progress total was #{total} which is not a number" if total.to_d <= 0.0
-        raise ArgumentError, "report_progress progress was #{progress} which is not a number" if progress.to_d <= 0.0
+        total = parse_decimal(total, 'total')
+        progress = parse_decimal(progress, 'progress')
 
-        @status.progress = progress
-        @status.total = total
-        tick(*messages)
-      end
+        update_status(*messages, progress: progress, total: total)
 
-      # report a message and check if we should be killed
-      # will kill if `should_kill?` is true
-      def tick(*messages)
         kill! if should_kill?
-        update_status(STATUS_WORKING, *messages)
       end
 
+      # Report a message and check if we should be killed.
+      # Will kill if `should_kill?` is true.
+      # Should only be called by a worker.
+      def tick(*messages)
+        update_status(*messages, status: STATUS_WORKING)
+
+        kill! if should_kill?
+      end
+
+      # Add a message to the job status.
+      # Does not trigger kill!
+      # Should only be called by a worker.
+      def push_message(message)
+        update_status(message)
+      end
+
+      # Should only be called by a worker.
       def should_kill?
         persistance.should_kill?(job_id)
       end
 
-      # kills the current job by raising BawWorkers::ActiveJob::Status::Killed
+      # Kills the current job by raising BawWorkers::ActiveJob::Status::Killed
+      # Should only be called by a worker.
+      # @raise [Killed] will raise Killed to kill the job.
+      # @return [void]
       def kill!
-        update_status(STATUS_KILLED, "Killed at #{Time.now}")
-        raise Killed
+        raise Killed.new("Killed at #{Time.now}", caller_locations(1, 1))
       end
 
-      def completed(*messages)
-        update_status(STATUS_COMPLETED, messages)
+      # Marks the current job as failed but does not throw
+      # Halts the job.
+      # Should only be called by a worker.
+      # @return [void]
+      def failed!(*messages)
+        update_status(*messages, status: STATUS_FAILED)
+        throw :halt
       end
 
-      # @param status [String] a valid status
-      # @param *messages [Array] one or messages to add to the status
-      def update_status(status, *messages)
-        raise ArgumentError unless EXPIRE_STATUSES.include?(status) || status == STATUS_WORKING
+      # Marks the current job as completed.
+      # Halts the job.
+      # A job's status is updated automatically to complete if no other terminal event occurs - you do not have to call this
+      # unless you want to quit early and successfully.
+      # Should only be called by a worker.
+      # @return [void]
+      def completed!(*messages)
+        update_status(*messages, status: STATUS_COMPLETED)
+        throw :halt
+      end
 
-        @status.status = status
-        @status.messages.push(messages)
-        logger.debug { "BawWorkers::ActiveJob::Status updating status with id #{job_id} to #{status}" }
-        persistance.set(@status)
+      # Callback invoke when a job is completed. Implement in your job class.
+      # By default does nothing.
+      def on_completed
+        # noop
+      end
+
+      # Callback invoke when a job raises an error. Implement in your job class.
+      # By default does nothing.
+      # @param error [StandardError]
+      # @return [Boolean] return true to suppress raising the exception
+      def on_errored(_error)
+        false
+      end
+
+      # Callback invoke when a job marks itself as failed. Implement in your job class.
+      # By default does nothing.
+      def on_failure
+        # noop
+      end
+
+      # Callback invoke when a job is killed. Implement in your job class.
+      # By default does nothing.
+      def on_killed
+        # noop
       end
 
       private
 
-      # @return [BawWorkers::ActiveJob::Status::Persistance]
+      STATUS_MODULE_NAME = name.freeze
+
+      # hook called by ActiveJob
+      def around_perform_with_status(&block)
+        logger.debug { { message: "#{STATUS_MODULE_NAME} fetching status", job_id: job_id } }
+        refresh_status!
+        logger.debug { { message: "#{STATUS_MODULE_NAME} fetched status", job_id: job_id, status: @status } }
+
+        safe_perform!(&block)
+      end
+
+      def safe_perform!(&block)
+        update_status(status: STATUS_WORKING)
+
+        kill! if should_kill?
+
+        result = catch(:halt) {
+          block.call
+               .tap { update_status("Completed at #{Time.now}", status: STATUS_COMPLETED) }
+        }
+
+        on_failure if @status.failed?
+        on_completed if @status.completed?
+
+        result
+      rescue Killed => e
+        handle_kill(e)
+      rescue StandardError => e
+        raise e unless handle_error(e)
+      end
+
+      # @param [Killed] kill_error
+      def handle_kill(kill_error)
+        logger.warn("#{STATUS_MODULE_NAME} job killed", location: kill_error.kill_location)
+        persistance.killed(job_id)
+        on_killed
+      ensure
+        update_status(kill_error.message, status: STATUS_KILLED)
+      end
+
+      def handle_error(error)
+        logger.warn("#{STATUS_MODULE_NAME} job failed", error: error.to_s)
+        update_status("The task failed because of an error: #{error}", status: STATUS_ERRORED)
+
+        handle = on_errored(error)
+
+        !!handle
+      end
+
+      def check_job_id(job_id)
+        raise TypeError, "Invalid job_id #{job_id}" unless job_id.is_a?(String)
+        raise ArgumentError, 'job_id cannot contain a space' if job_id.include?(' ')
+
+        job_id
+      end
+
+      #
+      # Update this jobs status by sending the status to Redis. Also updates the instance variable @status.
+      # All parameters are optional and default to their current respective state if omitted.
+      #
+      # @param [Array<String>] *messages One or messages to add to the status
+      # @param [String] status The new status
+      # @param [BigDecimal] progress The new progress
+      # @param [BigDecimal] total The new total for progress
+      # @return [Boolean] True if status was updated successfully
+      def update_status(*messages, status: nil, progress: nil, total: nil)
+        status ||= @status.status
+        unless TERMINAL_STATUSES.include?(status) || status == STATUS_WORKING
+          raise ArgumentError,
+                "status #{status} is not valid at this stage"
+        end
+
+        # copy attributes to a new @status object (structs are readonly)
+        old_status = @status.status
+        @status = @status.new(
+          status: status,
+          messages: @status.messages + (messages || []),
+          progress: progress || @status.progress,
+          total: total || @status.total
+        )
+        logger.debug do
+          {
+            message: "#{STATUS_MODULE_NAME} updating status",
+            old_status: old_status,
+            status: status,
+            percent_complete: @status.percent_complete,
+            messages: messages
+          }
+        end
+        persistance.set(@status)
+      end
+
+      def parse_decimal(input, name)
+        BigDecimal(input)
+      rescue ArgumentError => e
+        raise ArgumentError, "#{name} was `#{input}` which is not a valid number: #{e.message}"
+      end
+
+      # @return [Module<BawWorkers::ActiveJob::Status::Persistance>]
       def persistance
-        @persistance ||= Persistance.instance
+        @persistance ||= BawWorkers::ActiveJob::Status::Persistance
       end
     end
   end

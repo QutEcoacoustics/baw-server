@@ -7,6 +7,7 @@
   "settings": {
     "cSpell.words": [
       "Bootsnap",
+      "Cyclomatic",
       "Ecoacoustics",
       "FILESYSTEMS",
       "FLAC",
@@ -16,8 +17,11 @@
       "PIDFILE",
       "Passengerfile",
       "RSPEC",
+      "Ractor",
       "Railtie",
       "Resque",
+      "Retryable",
+      "Rswag",
       "Sftpgo",
       "Timecop",
       "Truskinger",
@@ -28,6 +32,7 @@
       "autoload",
       "autoloaded",
       "autoloaders",
+      "autoloads",
       "backtrace",
       "behaviour",
       "binstub",
@@ -36,6 +41,7 @@
       "bowra",
       "chown",
       "cleanpath",
+      "completionist",
       "constantize",
       "cors",
       "datetime",
@@ -43,9 +49,12 @@
       "deepsort",
       "deleter",
       "deserialization",
+      "deserializes",
       "devcontainer",
       "downcase",
+      "enqueues",
       "entrypoint",
+      "errored",
       "evented",
       "executables",
       "exitstatus",
@@ -61,11 +70,13 @@
       "jsonb",
       "killable",
       "klass",
+      "lindex",
       "ltrim",
       "mget",
       "middlewares",
       "mkdir",
       "mkpath",
+      "nodoc",
       "organisation",
       "paginator",
       "pids",
@@ -84,6 +95,7 @@
       "rmtree",
       "rubocop",
       "sadd",
+      "scard",
       "securerandom",
       "sendfile",
       "serializable",
@@ -93,7 +105,10 @@
       "smembers",
       "smtp",
       "solargraph",
+      "sqlite",
       "srem",
+      "strftime",
+      "structs",
       "symlink",
       "symlinks",
       "typecheck",
@@ -109,6 +124,7 @@
       "wvunpack",
       "zadd",
       "zcard",
+      "zrange",
       "zrangebyscore",
       "zrem",
       "zrevrange"
@@ -182,6 +198,20 @@
     //   "host": "localhost",
     //   "port": 7658
     // }
+    "terminal.integrated.profiles.linux": {
+      "bash": {
+        "path": "bash"
+      },
+      "pwsh": {
+        "path": "pwsh"
+      }
+    },
+    "terminal.integrated.cwd": "",
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "remote.extensionKind": {
+      "ms-azuretools.vscode-docker": "ui"
+    },
+    "python.pythonPath": "/usr/bin/python3"
   },
   "extensions": {
     "recommendations": [
@@ -195,7 +225,8 @@
       //"connorshea.vscode-ruby-test-adapter",
       "knisterpeter.vscode-github",
       "castwide.ruby-debug",
-      "pavlitsky.yard"
+      "pavlitsky.yard",
+      "ms-azuretools.vscode-docker"
     ]
   }
 }

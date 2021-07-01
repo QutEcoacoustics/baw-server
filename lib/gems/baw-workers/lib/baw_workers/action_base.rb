@@ -30,7 +30,7 @@ module BawWorkers
     class << self
       # Override: Get the key for resque_solo to use in redis.
       def redis_key(payload)
-        BawWorkers::ResqueJobId.create_id_payload(payload)
+        BawWorkers::ResqueJobIdBROKEN!!!.create_id_payload(payload)
       end
 
       # Overrides method used by resque-status.
@@ -40,7 +40,7 @@ module BawWorkers
       # Returns the UUID of the job if the job was queued, or nil if the job was
       # rejected by a before_enqueue hook.
       def enqueue_to(queue, klass, options = {})
-        uuid = BawWorkers::ResqueJobId.create_id_props(klass, options)
+        uuid = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(klass, options)
         Resque::Plugins::Status::Hash.create uuid, klass: klass, options: options,
 
         if Resque.enqueue_to(queue, klass, uuid, options)

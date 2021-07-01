@@ -53,6 +53,19 @@ namespace :baw do
       Rake::Task['resque:work'].invoke
     end
 
+    desc 'Run the resque scheduler with the specified settings file.'
+    task :run_scheduler, [:settings_file] => [:setup] do |_t, _args|
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:run_scheduler') do
+        'Resque scheduler starting...'
+      end
+
+      require 'resque/scheduler/tasks'
+      require 'resque-scheduler'
+
+      # invoke the resque rake task
+      Rake::Task['resque:scheduler'].invoke
+    end
+
     desc 'List running workers'
     task :current, [:settings_file] do |_t, args|
       init(settings_file: args.settings_file)

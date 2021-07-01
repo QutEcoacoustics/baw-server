@@ -10,7 +10,7 @@ Bundler.setup(:default, :server, :workers, env.to_sym)
 require 'bootsnap'
 Bootsnap.setup(
   cache_dir: File.expand_path('../tmp/cache', __dir__), # Path to your cache
-  development_mode: env == 'development' || env == 'test', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
+  development_mode: ['development', 'test'].include?(env), # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache: true, # Optimize the LOAD_PATH with a cache
   # this option has been deprecated
   #autoload_paths_cache: true, # Optimize ActiveSupport autoloads with cache
@@ -23,6 +23,7 @@ require 'rake'
 #Rake.application.run ["-f '#{__dir__}/../lib/tasks/run_worker.rake'", *ARGV]
 
 Rake.application
+# https://docs.ruby-lang.org/en/2.2.0/Rake/Application.html
 Rake.application.init('baw-workers', ARGV)
 # this allows us to print a list of tasks
 Rake::TaskManager.record_task_metadata = true

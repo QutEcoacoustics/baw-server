@@ -186,6 +186,7 @@ group :workers, :server do
   gem 'redis', '~> 4.1'
   gem 'resque'
   gem 'resque-job-stats'
+  gem 'resque-scheduler'
 
   # Active storage analyzers
   gem 'image_processing'
@@ -238,6 +239,8 @@ group :test do
   gem 'rspec-its'
   gem 'rspec-mocks'
   gem 'timecop'
+  # better diffs
+  gem 'super_diff'
   # for multi-step specs
   gem 'turnip'
   # for profiling

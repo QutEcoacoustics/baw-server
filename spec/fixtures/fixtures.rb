@@ -86,8 +86,18 @@ module Fixtures
     ensure_exists FILES_PATH / 'IMG_1318.JPG'
   end
 
+  #
+  # Check a fixture exists
+  #
+  # @param [Pathname] pathname The path to check
+  #
+  # @return [Pathname] The path checked
+  #
   def self.ensure_exists(pathname)
-    raise FileNotFound, "Given fixture refers to a file that does not exist: #{pathname}" unless pathname.exist?
+    unless pathname.exist?
+      raise IOError,
+            "Given fixture refers to a file that does not exist: #{pathname}"
+    end
 
     pathname
   end

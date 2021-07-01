@@ -19,7 +19,7 @@ require 'action_mailer'
 require_relative '../../baw-app/lib/baw_app'
 require_relative '../../baw-audio-tools/lib/baw_audio_tools'
 
-Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
+Dir.glob("#{__dir__}/patches/**/*.rb").each do |override|
   #puts "loading #{override}"
   require override
 end
@@ -36,39 +36,20 @@ Zeitwerk::Loader.new.tap do |loader|
 end
 
 module BawWorkers
-  MODULE_ROOT = __dir__.to_s
-
-  module Analysis
-  end
-
-  module AudioCheck
-  end
-
-  module Harvest
-  end
-
-  module Mail
-  end
-
-  module Media
-  end
-
-  module Mirror
-  end
-
-  module Storage
-  end
-
-  module Template
-  end
-
-  module UploadService
-  end
+  ROOT = __dir__.to_s
 end
-
-
 
 # simply mentioning this namespace should allow test-worker to patch jobs
 if BawApp.test?
+
+  # Disable the inbuilt test adapter for every test!
+  # https://github.com/rails/rails/issues/37270
+  (::ActiveJob::Base.descendants << ActiveJob::Base).each do |klass|
+    klass.disable_test_adapter if defined?(klass.disable_test_adapter)
+  end
+  ::ActiveJob::Base.queue_adapter = :resque
+
+  require "#{BawApp.root}/spec/fixtures/jobs"
+
   raise 'Resque::Job has not been patched for tests' unless Resque::Job.include?(Resque::Plugins::PauseDequeueForTests)
 end

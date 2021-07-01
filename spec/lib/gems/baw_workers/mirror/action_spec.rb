@@ -37,7 +37,7 @@ describe BawWorkers::Mirror::Action do
     }
   }
 
-  let(:mirror_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Mirror::Action, mirror_params) }
+  let(:mirror_params_id) { BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Mirror::Action, mirror_params) }
 
   let(:expected_payload) {
     {
@@ -110,7 +110,7 @@ describe BawWorkers::Mirror::Action do
 
     it 'can retrieve the job' do
       queued_query = { source: mirror_source, destinations: mirror_dest }
-      queued_query_normalised = BawWorkers::ResqueJobId.normalise(queued_query)
+      queued_query_normalised = BawWorkers::ResqueJobIdBROKEN!!!.normalise(queued_query)
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Mirror::Action, queued_query)).to eq(false)
@@ -125,7 +125,7 @@ describe BawWorkers::Mirror::Action do
 
       found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Mirror::Action, queued_query)
 
-      job_id = BawWorkers::ResqueJobId.create_id_props(BawWorkers::Mirror::Action, queued_query)
+      job_id = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Mirror::Action, queued_query)
       # status = Resque::Plugins::Status::Hash.get(job_id)
 
       status = BawWorkers::Mirror::Action.get_job_status(mirror_source, mirror_dest)

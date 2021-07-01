@@ -59,7 +59,7 @@ describe 'Resque::Plugins::Status' do
 
       payload = { test_payload: 'a value' }
       payload_wrapped = { template_params: { test_payload: 'a value' } }
-      payload_normalised = BawWorkers::ResqueJobId.normalise(payload_wrapped)
+      payload_normalised = BawWorkers::ResqueJobIdBROKEN!!!.normalise(payload_wrapped)
 
       # check before
       expect(Resque.size(queue_name)).to eq(0)
@@ -75,7 +75,7 @@ describe 'Resque::Plugins::Status' do
       expect(Resque.enqueued?(BawWorkers::Template::Action, payload_wrapped)).to eq(true)
 
       found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Template::Action, payload_wrapped)
-      job_id = BawWorkers::ResqueJobId.create_id_props(BawWorkers::Template::Action, payload_wrapped)
+      job_id = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Template::Action, payload_wrapped)
 
       # check the contents of the resque payload
       expect(found.size).to eq(1)

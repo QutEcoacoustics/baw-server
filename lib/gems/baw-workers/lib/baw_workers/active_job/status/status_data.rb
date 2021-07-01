@@ -4,31 +4,32 @@ module BawWorkers
   module ActiveJob
     module Status
       # A struct containing the status object
-      class StatusData < BawWorkers::Dry::StrictStruct
-        # @!attribute job_id
+      class StatusData < ::BawWorkers::Dry::StrictStruct
+        # @!attribute [r] job_id
         #   @return [String]
-        attribute :job_id, Types::String
-        # @!attribute name
+        attribute :job_id, StatusTypes::String
+        # @!attribute [r] name
         #   @return [String]
-        attribute :name, Types::String
-        # @!attribute status
+        attribute :name, StatusTypes::String.optional
+        # @!attribute [r] status
         #   @return [String]
-        attribute :status, STATUSES
-        # @!attribute messages
+        attribute :status, StatusTypes::Statuses
+        # @!attribute [r] messages
         #   @return [Array<String>]
-        attribute :messages,  Types::Array.of(Types::Coercible::String)
-        # @!attribute time
+        attribute :messages, StatusTypes::Array.of(StatusTypes::String).default([].freeze)
+        # @!attribute [r] time
         #   @return [DateTime]
-        attribute :time, (Types::DateTime.default { Time.now.to_i })
-        # @!attribute options
+        attribute :time, (StatusTypes::JSON::Time.default { Time.now })
+        # @!attribute [r] options
         #   @return [String]
-        attribute :options, Types::Hash
-        # @!attribute progress
+        attribute :options, StatusTypes::Hash
+
+        # @!attribute [r] progress
         #   @return [BigDecimal]
-        attribute :progress, Types::Coercible::Decimal
-        # @!attribute total
+        attribute :progress, StatusTypes::JSON::Decimal
+        # @!attribute [r] total
         #   @return [BigDecimal]
-        attribute :total, Types::Coercible::Decimal
+        attribute :total, StatusTypes::JSON::Decimal
 
         def queued?
           status == STATUS_QUEUED
@@ -46,16 +47,20 @@ module BawWorkers
           status == STATUS_FAILED
         end
 
+        def errored?
+          status == STATUS_ERRORED
+        end
+
         def killed?
           status == STATUS_KILLED
         end
 
         def terminal?
-          completed? || killed? || failed?
+          TERMINAL_STATUSES.include?(status)
         end
 
         def killable?
-          !failed? && !completed? && !killed?
+          !terminal?
         end
 
         def percent_complete

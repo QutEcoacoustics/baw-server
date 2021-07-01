@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # included in rails_helpers.rb
 require 'swagger_helper'
 
@@ -28,7 +30,8 @@ module ApiSpecHelpers
   module ExampleGroup
     def self.extended(base); end
 
-    attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model, :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
+    attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model,
+                  :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
 
     def with_authorization
       # these tests document an API - they're not really for testing user access
@@ -65,7 +68,7 @@ module ApiSpecHelpers
       # All this wouldn't be so bad except that let statements are dynamically scoped
       # and any redefinition is applied to all uses (it doesn't just hide the parent for
       # the current lexical scope!)
-      self.baw_body_name = baw_body_name = (baw_model_name + '_attributes').to_sym
+      self.baw_body_name = baw_body_name = "#{baw_model_name}_attributes".to_sym
 
       self.baw_model = given_model
 
@@ -90,7 +93,7 @@ module ApiSpecHelpers
     # or a string ref to the components/schemas section of
     # the root open api document (swagger_docs in code)
     def which_has_schema(schema)
-      if schema.has_key? '$ref'
+      if schema.key? '$ref'
         ref =  schema
         schema = resolve_ref(schema['$ref'])
       end
@@ -201,8 +204,8 @@ module ApiSpecHelpers
 
       # remove accept header if we are not sending a body
       verb = metadata[:operation][:verb]
-      if metadata[:operation][:consumes].blank?
-        metadata[:operation][:consumes] = get_parent_param :baw_consumes unless [:get, :head, :options].include?(verb)
+      if metadata[:operation][:consumes].blank? && ![:get, :head, :options].include?(verb)
+        metadata[:operation][:consumes] = get_parent_param :baw_consumes
       end
 
       metadata[:operation][:produces] = get_parent_param :baw_produces if metadata[:operation][:produces].blank?
@@ -237,7 +240,7 @@ module ApiSpecHelpers
       after do |example|
         unless example.exception.nil?
           # I don't know of a good way to augment the original error with more
-          # information. Raising a new error with more information seem to work OK.
+          # information. Raising a new error with more information seems to work OK.
           request&.body&.rewind
           message = <<~API_RESULT
             The API result that generated this failure is:
@@ -246,7 +249,7 @@ module ApiSpecHelpers
             ```
             The request body was:
             ```
-            #{request&.body&.nil? != false ? '<empty request body>' : request.body.read}
+            #{request&.body&.nil? == false ? request.body.read : '<empty request body>'}
             ```
           API_RESULT
           raise StandardError, message

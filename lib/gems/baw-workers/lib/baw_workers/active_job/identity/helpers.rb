@@ -11,7 +11,7 @@ module BawWorkers
       module Helpers
         # Helper method for generating a random job_id
         # Ensures that every job is unique.
-        # @param job [ActiveJob::Base] (unused)
+        # @param job [::ActiveJob::Base] (unused)
         # @return [String]
         def self.generate_uuid(job)
           key = SecureRandom.uuid
@@ -21,7 +21,7 @@ module BawWorkers
 
         # Helper method for generating a deterministic hash based job_id
         # Ensures a job with the same arguments from the same job class is unique.
-        # @param job [ActiveJob::Base]
+        # @param job [::ActiveJob::Base]
         # @return [String] unique id
         def self.generate_hash_id(job)
           class_name = job.class.name
@@ -36,7 +36,7 @@ module BawWorkers
 
         # Helper method for generating a query string style job_id.
         # Be conscious of key length, shorter keys are ideal.
-        # @param job [ActiveJob::Base]
+        # @param job [::ActiveJob::Base]
         # @param opts [Hash] - key value pairs to encode in the key hash
         def self.generate_keyed_id(job, opts)
           class_name = job.class.name

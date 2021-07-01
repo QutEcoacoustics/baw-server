@@ -53,7 +53,7 @@ module BawWorkers
       def create_or_validate(base_payload, key)
         existing_base = get(key)
         if existing_base
-          normalized_base = BawWorkers::ResqueJobId.normalise(base_payload)
+          normalized_base = BawWorkers::ResqueJobIdBROKEN!!!.normalise(base_payload)
           if existing_base != normalized_base
             message = "Existing base `#{existing_base}` did not match #{normalized_base}"
             raise InconsistentBasePayloadError, message

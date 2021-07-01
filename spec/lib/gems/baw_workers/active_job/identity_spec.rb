@@ -87,12 +87,68 @@ describe BawWorkers::ActiveJob::Identity do
       stub_const('FakeJob', impl)
     end
 
-    it 'generates a uuid name' do
-      expect(job.name).to eq('FakeJob: fake job name for abc123:job arg is passed into job arguments')
+    it 'generates a name' do
+      expect(job.name).to eq('FakeJob: fake job name for abc123:jobargispassedintojobarguments')
     end
 
-    it 'generates a uuid job_id' do
-      expect(job.job_id).to eq('abc123:job arg is passed into job arguments')
+    it 'generates a job_id' do
+      expect(job.job_id).to eq('abc123:jobargispassedintojobarguments')
+    end
+  end
+
+  context 'with a valid implementation, with no arguments' do
+    subject(:job) {
+      FakeJob.new
+    }
+
+    before do
+      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      impl = Class.new(ApplicationJob) do
+        def name
+          "#{self.class.name}: fake job name for #{job_id}"
+        end
+
+        def create_job_id
+          "abc123:#{arguments[0]}"
+        end
+      end
+      stub_const('FakeJob', impl)
+    end
+
+    it 'generates a name' do
+      expect(job.name).to eq('FakeJob: fake job name for abc123:')
+    end
+
+    it 'generates a job_id' do
+      expect(job.job_id).to eq('abc123:')
+    end
+  end
+
+  context 'with a implementation that produces keys with spaces' do
+    subject(:job) {
+      FakeJob.new('job arg is passed into job arguments')
+    }
+
+    before do
+      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      impl = Class.new(ApplicationJob) do
+        def name
+          "#{self.class.name}: fake job name for #{job_id}"
+        end
+
+        def create_job_id
+          "abc123:#{arguments[0]}"
+        end
+      end
+      stub_const('FakeJob', impl)
+    end
+
+    it 'generates a name' do
+      expect(job.name).to eq('FakeJob: fake job name for abc123:jobargispassedintojobarguments')
+    end
+
+    it 'generates a job_id without spaces' do
+      expect(job.job_id).to eq('abc123:jobargispassedintojobarguments')
     end
   end
 end

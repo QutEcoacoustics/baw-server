@@ -9,16 +9,22 @@ Rails.application.config.active_job.queue_name_prefix = ''
 # Include the resque plugins we want in standard ActiveJobs classes.
 # This works well for jobs defined by third parties (like Rails!).
 ActiveSupport.on_load(:active_job) do
+  # https://github.com/rails/rails/issues/37270
+  Rails.application.config.active_job.queue_adapter = :resque
+  ::ActiveJob::Base.queue_adapter = :resque
+
   # this extension point affects all jobs, including framework and library jobs!
   # See also ApplicationJob for an extension point for only our jobs
-  const_set(:ACTIVE_JOB_BASE_BACKUP, ActiveJob::Base.clone)
-  ActiveJob::Base.class_eval do
+  Kernel.const_set(:ACTIVE_JOB_BASE_BACKUP, ::ActiveJob::Base.clone)
+  ::ActiveJob::Base.class_eval do
     prepend BawWorkers::ActiveJob::Identity
     prepend BawWorkers::ActiveJob::Status
-    prepend BawWorkers::ActiveJob::Unique
   end
 
-  ActiveJob::QueueAdapters::ResqueAdapter::JobWrapper.class_eval do
+  BawWorkers::ApplicationJob.include(BawWorkers::ActiveJob::Unique)
+  BawWorkers::ApplicationJob.include(BawWorkers::ActiveJob::Extensions)
+
+  ::ActiveJob::QueueAdapters::ResqueAdapter::JobWrapper.class_eval do
     extend Resque::Plugins::JobStats
   end
 end

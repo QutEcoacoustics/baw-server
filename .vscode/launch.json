@@ -5,6 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "(Ruby) RSpec - active spec file only",
+      "type": "Ruby",
+      "request": "launch",
+      "program": "${workspaceRoot}/bin/rspec",
+      "args": [
+        "-I",
+        "${workspaceRoot}",
+        "${file}"
+      ],
+      "env": {
+        "RAILS_ENV": "test"
+      }
+    },
+    {
       "name": "(ruby-debug) RSpec - all",
       "type": "ruby-debug",
       "request": "launch",
@@ -143,8 +157,8 @@
       // },
     },
     {
-      "name": "Lruby-debugn for rdebug-ide",
-      "type": "ruby-debug",
+      "name": "(Ruby) for rdebug-ide",
+      "type": "Ruby",
       "request": "attach",
       "remoteHost": "127.0.0.1",
       "remotePort": "1234",
@@ -152,8 +166,8 @@
       "cwd": "${workspaceRoot}"
     },
     {
-      "name": "Lruby-debugn for rdebug-ide (workers)",
-      "type": "ruby-debug",
+      "name": "(Ruby) for rdebug-ide (workers)",
+      "type": "Ruby",
       "request": "attach",
       "remoteHost": "workers",
       "remotePort": "1235",
@@ -161,8 +175,8 @@
       "cwd": "${workspaceRoot",
     },
     {
-      "name": "Lruby-debugn for rdebug-ide (workers_test)",
-      "type": "ruby-debug",
+      "name": "(Ruby) for rdebug-ide (workers_test)",
+      "type": "Ruby",
       "request": "attach",
       "remoteHost": "workers_test",
       "remotePort": "1236",

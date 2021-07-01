@@ -21,6 +21,8 @@ require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 
 module Baw
   def self.configure_logging(config)
+    # trigger some autoloads so they don't happen in trap contexts
+    _ = SemanticLogger::Utils
     log_name = BawWorkers::Config.baw_workers_entry? ? 'workers' : 'rails'
     tag = Settings.logs.tag.blank? ? '' : ".#{Settings.logs.tag}"
     config.paths['log'] = [
@@ -43,10 +45,10 @@ module Baw
 
     config.log_level = BawApp.log_level
 
-    if BawApp.log_to_stdout?
-      STDOUT.sync = true
-      config.semantic_logger.add_appender(io: STDOUT, formatter: config.rails_semantic_logger.format)
-    end
+    return unless BawApp.log_to_stdout?
+
+    $stdout.sync = true
+    config.semantic_logger.add_appender(io: $stdout, formatter: config.rails_semantic_logger.format)
 
     # the rails_semantic_logger gem automatically replaces all rails standard loggers
     # with tagged loggers
@@ -77,7 +79,7 @@ module Baw
     # add patches
     # zeitwerk specifically does not deal with the concept of overrides,
     # so patches need to be required manually
-    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).sort.each do |override|
+    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).each do |override|
       #puts "loading #{override}"
       require override
     end
@@ -126,7 +128,8 @@ module Baw
       ErrorsController.action(:uncaught_error).call(env)
     }
 
-    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
+    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody',
+                                                       'colgroup'])
 
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
