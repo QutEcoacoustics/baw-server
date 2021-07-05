@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
-
-require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
-
 # tests audio file integrity functionality
-describe BawAudioTools::AudioBase do
+describe BawAudioTools::AudioBase, '#integrity_check' do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'
@@ -90,6 +87,7 @@ describe BawAudioTools::AudioBase do
         _ = audio_base.integrity_check(audio_file_wac_2)
       end
     end
+
     context 'fails' do
       it 'processing empty .ogg file' do
         result = audio_base.integrity_check(audio_file_empty)

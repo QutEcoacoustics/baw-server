@@ -202,6 +202,8 @@ RSpec.configure do |config|
   require_relative 'helpers/shared_examples/a_route_that_stores_images'
   require_relative 'helpers/shared_examples/permissions_for'
 
+  require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"
+
   # Ensure we actually perform jobs with resque.
   # We don't want to run jobs inline, it produces unrealistic tests.
   # https://github.com/rails/rails/issues/37270#issuecomment-558278392

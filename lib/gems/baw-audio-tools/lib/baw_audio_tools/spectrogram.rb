@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module BawAudioTools
+  # Generate spectrograms (or Waveforms) with SoX (or ffmpeg)
   class Spectrogram
     attr_reader :audio_base, :image_image_magick, :temp_dir
 
@@ -12,7 +13,6 @@ module BawAudioTools
     end
 
     def self.from_executables(audio_master, im_convert_exe, im_identify_exe, spectrogram_defaults, temp_dir)
-      audio_master = audio_master
       image_image_magick = ImageImageMagick.new(im_convert_exe, im_identify_exe, temp_dir)
 
       Spectrogram.new(audio_master, image_image_magick, spectrogram_defaults, temp_dir)
@@ -28,7 +28,7 @@ module BawAudioTools
       im_info = @image_image_magick.parse_info_output(im_info_output[:stdout])
 
       im_info[:data_length_bytes] = File.size(source)
-      im_info[:media_type] = 'image/' + im_info[:media_type].downcase
+      im_info[:media_type] = "image/#{im_info[:media_type].downcase}"
       im_info[:height] = im_info[:height].to_i
       im_info[:width] = im_info[:width].to_i
 
@@ -48,7 +48,8 @@ module BawAudioTools
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       source_info = audio_base.info(source)
-      audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds, @spectrogram_defaults.max_duration_seconds, modify_parameters)
+      audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds,
+                               @spectrogram_defaults.max_duration_seconds, modify_parameters)
 
       # spectrogram parameters
       start_offset = modify_parameters.include?(:start_offset) ? modify_parameters[:start_offset] : nil
@@ -63,30 +64,24 @@ module BawAudioTools
       # waveform parameters
       width = modify_parameters.include?(:width) ? modify_parameters[:width] : 1292
       height = modify_parameters.include?(:height) ? modify_parameters[:height] : 256
-      colour_bg = modify_parameters.include?(:colour_bg) ? modify_parameters[:colour_bg] : 'efefefff'
-      colour_fg = modify_parameters.include?(:colour_fg) ? modify_parameters[:colour_fg] : '00000000'
-      scale = modify_parameters.include?(:scale) ? modify_parameters[:scale] : :linear
-      db_min = modify_parameters.include?(:db_min) ? modify_parameters[:db_min] : -48
-      db_max = modify_parameters.include?(:db_max) ? modify_parameters[:db_max] : 0
 
-      if colour.to_s.downcase == 'w'
+      if ['w', 'waveform'].include?(colour.to_s.downcase)
         # first create temp wav file using
         # start_offset, end_offset, channel, sample_rate
         temp_wav_file = @audio_base.temp_file('wav')
         @audio_base.modify(source, temp_wav_file, {
-                             start_offset: start_offset,
-                             end_offset: end_offset,
-                             channel: channel,
-                             sample_rate: sample_rate
-                           })
+          start_offset: start_offset,
+          end_offset: end_offset,
+          channel: channel,
+          sample_rate: sample_rate
+        })
 
-        # create waveform with wav2png
-        cmd =
-          @audio_base.audio_wav2png.command(temp_wav_file, source_info, target,
-                                            width, height, colour_bg, colour_fg, scale, db_min, db_max)
+        # create waveform with ffmpeg
+        cmd = @audio_base.audio_waveform.command(
+          temp_wav_file, source_info, target,
+          width: width, height: height
+        )
 
-        @audio_base.execute(cmd)
-        @audio_base.check_target(target)
       else
         # create spectrogram with sox
         cmd =
@@ -99,9 +94,9 @@ module BawAudioTools
 
         # remove dc offset using image magick
         cmd = @image_image_magick.modify_command(target, target)
-        @audio_base.execute(cmd)
-        @audio_base.check_target(target)
       end
+      @audio_base.execute(cmd)
+      @audio_base.check_target(target)
     end
   end
 end

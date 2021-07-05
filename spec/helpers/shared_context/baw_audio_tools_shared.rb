@@ -6,8 +6,6 @@ shared_context 'common' do
   let(:amplitude_range) { 0.02 }
   let(:bit_rate_range) { 400 }
   let(:bit_rate_min) { 192_000 }
-
-
 end
 
 shared_context 'audio base' do
@@ -35,7 +33,6 @@ shared_context 'audio base' do
       sox: audio_tools.sox_executable,
       wavpack: audio_tools.wavpack_executable,
       shntool: audio_tools.shntool_executable,
-      wav2png: audio_tools.wav2png_executable,
       wac2wav: audio_tools.wac2wav_executable
     )
   }
@@ -88,9 +85,8 @@ shared_context 'temp media files' do
   def temp_file(stem: nil, extension: '.tmp')
     stem = ::SecureRandom.hex(7) if stem.blank?
     extension =
-      case
-      when extension.blank? then ''
-      when extension.start_with?('.') then extension
+      if extension.blank? then ''
+      elsif extension.start_with?('.') then extension
       else ".#{extension}"
       end
     path = temp_dir / "#{stem}#{extension}"
@@ -99,11 +95,11 @@ shared_context 'temp media files' do
     path
   end
 
-  before(:each) do
+  before do
     @temp_files.filter(&:exist?).each(&:delete)
   end
 
-  after(:each) do
+  after do
     @temp_files.filter(&:exist?).each(&:delete)
   end
 end

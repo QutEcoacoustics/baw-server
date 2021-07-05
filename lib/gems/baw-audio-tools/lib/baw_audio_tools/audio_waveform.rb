@@ -1,112 +1,91 @@
 # frozen_string_literal: true
 
 module BawAudioTools
-  # deprecated: no longer supported
+  # Generate a waveform
+  # https://ffmpeg.org/ffmpeg-filters.html#toc-showwavespic
   class AudioWaveform
-    def initialize(wav2png_executable, temp_dir)
-      @wav2png_executable = wav2png_executable
+    def initialize(ffmpeg_executable, temp_dir)
+      raise 'not ffmpeg' unless ffmpeg_executable =~ /ffmpeg/
+
+      @ffmpeg_executable = ffmpeg_executable
       @temp_dir = temp_dir
     end
 
-    def command(source, _source_info, target,
-                width = 1800, height = 280,
-                colour_bg = 'efefefff', colour_fg = '00000000',
-                scale = :linear,
-                db_min = -48, db_max = 0)
+    def command(
+      source, _source_info, target,
+      width: 1800, height: 280,
+      colour_fg: 'FF9329FF', # audacity dark theme orange
+      scale: :lin
+    )
+      source = Pathname(source)
+      target = Pathname(target)
 
-      # Too hard to maintain, wav2png is hard to install, feature never used.
-      # If we want this to work then ffmpeg has a `showwavespic` command.
-      raise NotImplementedError, 'Drawing waveforms has been deprecated and is no longer supported'
-
-      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.file? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.file? target
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.extname == '.wav'
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.extname == '.png'
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless source.exist?
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if target.exist?
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_scale = arg_scale(scale)
-      cmd_colour_bg = arg_colour_bg(colour_bg)
-      cmd_colour_fg = arg_colour_fg(colour_fg)
-      cmd_width = arg_width(width)
-      cmd_height = arg_height(height)
-      cmd_db_min = arg_db_min(db_min)
-      cmd_db_max = arg_db_max(db_max)
+      cmd_colour_fg = arg_colour(colour_fg)
+      cmd_size = arg_size(width, height)
 
-      "#{@wav2png_executable} #{cmd_scale} #{cmd_colour_bg} #{cmd_colour_fg} " \
-        "#{cmd_width} #{cmd_height} #{cmd_db_max} #{cmd_db_min} " \
-        "--output \"#{target}\" \"#{source}\""
+      args = [cmd_scale, cmd_colour_fg, cmd_size].join(':')
+
+      # ffmpeg -i spec/fixtures/files/test-audio-mono.ogg -filter_complex 'showwavespic=colors=#00FFFF' waveform.png -y
+      "#{@ffmpeg_executable} -nostdin -i '#{source}'" \
+        " -filter_complex 'showwavespic=#{args}'" \
+        " '#{target}'"
     end
 
     def self.scale_options
-      [:linear, :logarithmic]
+      [:lin, :log, :sqrt, :chrt]
     end
 
     def arg_scale(scale)
-      # -d [ --db-scale ] use logarithmic (e.g. decibel) scale instead of linear scale
-      cmd_arg = ''
-      all_scale_options = AudioWaveform.scale_options.join(', ')
+      scale = :lin if scale.blank?
 
-      unless scale.blank?
+      scale_param = scale.to_s
 
-        scale_param = scale.to_s
-        unless AudioWaveform.scale_options.include? scale_param.to_sym
-          raise ArgumentError, "Scale must be one of '#{all_scale_options}', given '#{scale_param}'."
-        end
+      return "scale=#{scale_param}" if self.class.scale_options.include? scale_param.to_sym
 
-        cmd_arg = scale_param.to_sym == :logarithmic ? '--db-scale' : ''
-      end
-
-      cmd_arg
+      raise ArgumentError, "Scale must be one of '#{self.class.scale_options}', given '#{scale_param}'."
     end
 
-    def arg_colour_bg(value)
-      # -b [ --background-color ] arg (=efefefff)  color of background in hex rgba
-      arg_hex('Background colour', '--background-color', value)
+    def arg_colour(value)
+      # colors
+      # Set colors separated by ’|’ which are going to be used for drawing of each channel.
+      arg_hex('colour_fg', 'colors', value)
     end
 
-    def arg_colour_fg(value)
-      # -f [ --foreground-color ] arg (=00000000)  color of background in hex rgba
-      arg_hex('Foreground colour', '--foreground-color', value)
-    end
+    def arg_size(width, height)
+      # size, s
+      # Specify the video size for the output. Default value is 600x240.
 
-    def arg_width(value)
-      # -w [ --width ] arg (=1800) width of generated image
-      arg_number('Width', '--width', value)
-    end
-
-    def arg_height(value)
-      # -h [ --height ] arg (=280) height of generated image
-      arg_number('Height', '--height', value)
-    end
-
-    def arg_db_min(value)
-      # --db-min arg (=-48) minimum value of the signal in dB, that will be visible in the waveform
-      arg_number('Db minimum', '--db-min', value)
-    end
-
-    def arg_db_max(value)
-      # --db-max arg (=0)  maximum value of the signal in dB, that will be visible in the waveform.
-      #Usefull, if you now, that your signal peaks at a certain level.
-      arg_number('Db maximum', '--db-max', value)
+      check_number('Width', width)
+      check_number('Width', height)
+      "size=#{width}x#{height}"
     end
 
     private
 
-    def numeric?(value)
-      return true if value =~ /\A\d+\Z/
+    def integer?(value)
+      return true if value =~ /[0-9]+/
 
       begin
-        true if Float(value)
+        return true if Integer(value)
       rescue StandardError
-        false
+        return false
       end
+
+      false
     end
 
-    def arg_number(name, param_string, value)
+    def check_number(name, value)
       raise ArgumentError, "#{name} must not be blank." if value.blank?
-      raise ArgumentError, "#{name} must be a number, given '#{value}'." unless numeric?(value)
+      raise ArgumentError, "#{name} must be a number, given '#{value}'." unless integer?(value)
 
-      "#{param_string} #{value}"
+      value
     end
 
     def hex_digits?(value)
@@ -114,18 +93,16 @@ module BawAudioTools
     end
 
     def arg_hex(name, param_string, value)
-      cmd_arg = ''
-      unless value.blank?
-        value_param = value.to_s
+      value = '000000FF' if value.blank?
+      value_param = value.to_s
 
-        if !hex_digits?(value_param) || value_param.length != 8
-          raise ArgumentError, "#{name} must be a hexadecimal rgba value, given '#{value_param}'."
-        end
-
-        cmd_arg = "#{param_string} #{value_param}"
+      if !hex_digits?(value_param) || value_param.length != 8
+        raise ArgumentError, "#{name} must be a hexadecimal RGBA value, given '#{value_param}'."
       end
 
-      cmd_arg
+      value_param = "##{value_param}" unless value_param.start_with?('#')
+
+      "#{param_string}=#{value_param}"
     end
   end
 end

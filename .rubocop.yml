@@ -43,6 +43,7 @@ Metrics/BlockLength:
   IgnoredMethods:
     - resource
     - describe
+    - example_group
     - shared_examples_for
     - shared_examples
     - shared_context

@@ -55,7 +55,7 @@ module Api
       window_size = get_param_value(request_params, modified_params, :window_size, @default_spectrogram.window)
       window_function = get_param_value(request_params, modified_params, :window_function,
                                         @default_spectrogram.window_function)
-      colour = get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour)
+      colour = normalize_color(get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour))
 
       current_details = {
         start_offset: start_offset.to_f,
@@ -97,7 +97,7 @@ module Api
             formats: available_formats.image,
             window_sizes: window_options,
             window_functions: window_function_options,
-            colours: colour_options,
+            colours: BawAudioTools::AudioSox.colour_options.merge({ w: :waveform }),
             valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(nil, audio_recording[:sample_rate_hertz])
           }
         },
@@ -295,7 +295,7 @@ module Api
       end
 
       # check colour
-      if request_params.include?(:colour) && !colour_options.keys.include?(request_params[:colour].to_sym)
+      if request_params.include?(:colour) && !colour_options.include?(request_params[:colour].to_sym)
         msg = "colour parameter (#{request_params[:colour]}) must be valid (#{colour_options})."
         raise CustomErrors::UnprocessableEntityError, msg
       end
@@ -336,7 +336,17 @@ module Api
     end
 
     def colour_options
-      BawAudioTools::AudioSox.colour_options
+      @colour_options ||= BawAudioTools::AudioSox.colour_options.to_a.flatten + [:w, :waveform]
+    end
+
+    def normalize_color(color)
+      color = color&.to_sym
+      return :w if [:w, :waveform].include?(color)
+      return color if BawAudioTools::AudioSox.colour_options.key?(color)
+
+      return BawAudioTools::AudioSox.colour_options.key(color) if BawAudioTools::AudioSox.colour_options.value?(color)
+
+      raise "unhandled color: #{color}"
     end
 
     # Get param value if available, otherwise a default value.

@@ -121,6 +121,8 @@ class MediaPoll
         completed = true if !resque_status.blank? && resque_status.completed?
         completed = true unless existing_files.empty?
 
+        #Rails.logger.debug('polling data', existing_files: existing_files, resque_status: resque_status)
+
         completed
       }
 
@@ -130,7 +132,7 @@ class MediaPoll
 
         msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay with resque job status '#{resque_task_status}'. Could not find media files."
         job_info = poll_result.merge({
-          uuid: resque_status.nil? ? nil : resque_status.uuid,
+          uuid: resque_status.nil? ? nil : resque_status.job_id,
           time: resque_status.nil? ? nil : resque_status.time,
           status: resque_task_status,
           poll_locations: poll_locations,

@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
-
-
-# waveform generation disabled because we cant install wav2png
-describe BawAudioTools::AudioWaveform, :skip do
+describe BawAudioTools::AudioWaveform do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'
@@ -13,12 +10,12 @@ describe BawAudioTools::AudioWaveform, :skip do
     audio_tools = Settings.audio_tools
 
     BawAudioTools::AudioWaveform.new(
-      audio_tools.wav2png_executable,
+      audio_tools.ffmpeg_executable,
       temp_dir
     )
   }
 
-  context 'waveform' do
+  context 'when generating waveform commands' do
     it 'creates correct command line' do
       source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
@@ -26,7 +23,9 @@ describe BawAudioTools::AudioWaveform, :skip do
       target = temp_file(extension: '.png')
       cmd = waveform.command(source, nil, target)
 
-      expect(cmd).to include('wav2png  --background-color efefefff --foreground-color 00000000 --width 1800 --height 280 --db-max 0 --db-min -48 --output "')
+      expect(cmd).to include(
+        "ffmpeg -nostdin -i '#{source}' -filter_complex 'showwavespic=scale=lin:colors=#FF932900:size=1800x280' '#{target}'"
+      )
     end
 
     it 'respects custom options in command line' do
@@ -35,12 +34,12 @@ describe BawAudioTools::AudioWaveform, :skip do
 
       target = temp_file(extension: '.png')
       cmd = waveform.command(source, nil, target,
-                             width = 2000, height = 500,
-                             colour_bg = '000000ff', colour_fg = '00000000',
-                             scale = :logarithmic,
-                             db_min = -60, db_max = 10)
+                             width: 2000, height: 500, colour_fg: '00000000',
+                             scale: :log)
 
-      expect(cmd).to include('wav2png --db-scale --background-color 000000ff --foreground-color 00000000 --width 2000 --height 500 --db-max 10 --db-min -60 --output "')
+      expect(cmd).to include(
+        "ffmpeg -nostdin -i '#{source}' -filter_complex 'showwavespic=scale=log:colors=#00000000:size=2000x500' '#{target}'"
+      )
     end
   end
 end

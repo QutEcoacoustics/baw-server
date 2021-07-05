@@ -33,16 +33,6 @@ module BawWorkers
       # @!attribute [r] original_sample_rate
       #   @return [Integer]
       attribute :original_sample_rate, ::BawWorkers::Dry::Types::SampleRate
-
-      # @!attribute [r] window
-      #   @return [Integer]
-      attribute? :window, ::BawWorkers::Dry::Types::Window
-      # @!attribute [r] window_function
-      #   @return [String]
-      attribute? :window_function, ::BawWorkers::Dry::Types::String
-      # @!attribute [r] colour
-      #   @return [String]
-      attribute? :colour, ::BawWorkers::Dry::Types::String
     end
   end
 end

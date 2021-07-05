@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-
-
 # tests converting between audio formats
-describe BawAudioTools::AudioBase do
+example_group 'convert' do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'

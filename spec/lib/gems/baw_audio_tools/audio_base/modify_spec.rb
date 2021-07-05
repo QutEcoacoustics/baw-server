@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
-
-require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
-
 # tests modifying audio and argument restrictions
-describe BawAudioTools::AudioBase do
+describe BawAudioTools::AudioBase, '#modify' do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'
@@ -35,11 +32,13 @@ describe BawAudioTools::AudioBase do
       expect(info[:bit_rate_bps]).to be_within(400).of(128_000)
     end
   end
+
   context 'restrictions are enforced' do
     it 'mp3splt must have a mp3 file as the source' do
       temp_audio_file = temp_file(extension: '.mp3')
       expect {
-        audio_base.audio_mp3splt.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s), temp_audio_file)
+        audio_base.audio_mp3splt.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s),
+                                                temp_audio_file)
       }.to raise_error(ArgumentError, /Source is not a mp3 file/)
     end
 
@@ -57,14 +56,16 @@ describe BawAudioTools::AudioBase do
       temp_media_file_b = temp_file(extension: '.wav')
 
       expect {
-        audio_base.audio_mp3splt.modify_command(temp_media_file_a, audio_base.info(temp_media_file_a), temp_media_file_b)
+        audio_base.audio_mp3splt.modify_command(temp_media_file_a, audio_base.info(temp_media_file_a),
+                                                temp_media_file_b)
       }.to raise_error(ArgumentError, /not a mp3 file/)
     end
 
     it 'wavpack must have a wavpack file as the source' do
       temp_audio_file = temp_file(extension: '.mp3')
       expect {
-        audio_base.audio_wavpack.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s), temp_audio_file)
+        audio_base.audio_wavpack.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s),
+                                                temp_audio_file)
       }.to raise_error(ArgumentError, /Source is not a wavpack file/)
     end
 
@@ -81,7 +82,8 @@ describe BawAudioTools::AudioBase do
       temp_media_file_b = temp_file(extension: '.wv')
 
       expect {
-        audio_base.audio_wavpack.modify_command(temp_media_file_a, audio_base.info(temp_media_file_a), temp_media_file_b)
+        audio_base.audio_wavpack.modify_command(temp_media_file_a, audio_base.info(temp_media_file_a),
+                                                temp_media_file_b)
       }.to raise_error(ArgumentError, /not a wav file/)
     end
 

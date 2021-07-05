@@ -179,6 +179,7 @@ class MediaController < ApplicationController
 
     case media_info[:category]
     when :audio
+      generation_request = generation_request.except(:window, :window_function, :colour)
       # check if audio file exists in cache
       cached_audio_info = audio_cached.path_info(generation_request)
       media_category = :audio

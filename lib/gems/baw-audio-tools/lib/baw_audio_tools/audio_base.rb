@@ -4,7 +4,7 @@ module BawAudioTools
   class AudioBase
     attr_reader :audio_defaults, :logger, :temp_dir, :timeout_sec,
                 :audio_ffmpeg, :audio_mp3splt, :audio_sox,
-                :audio_wavpack, :audio_shntool, :audio_wav2png,
+                :audio_wavpack, :audio_shntool, :audio_waveform,
                 :audio_wac2wav
 
     # @return [BawAudioTools::RunExternalProgram]
@@ -21,7 +21,7 @@ module BawAudioTools
     # @option opts [BawAudioTools::AudioSox] :sox
     # @option opts [BawAudioTools::AudioWavpack] :wavpack
     # @option opts [BawAudioTools::AudioShntool] :shntool
-    # @option opts [BawAudioTools::AudioWaveform] :wav2png
+    # @option opts [BawAudioTools::AudioWaveform] :waveform
     # @option opts [BawAudioTools::AudioWac2wav] :wac2wav
     # @return [BawAudioTools::AudioBase]
     def initialize(audio_defaults, logger, temp_dir, run_program, opts = {})
@@ -35,7 +35,7 @@ module BawAudioTools
       @audio_sox = opts[:sox]
       @audio_wavpack = opts[:wavpack]
       @audio_shntool = opts[:shntool]
-      @audio_wav2png = opts[:wav2png]
+      @audio_waveform = opts[:waveform]
       @audio_wac2wav = opts[:wac2wav]
 
       @class_name = self.class.name
@@ -53,7 +53,6 @@ module BawAudioTools
     # @option opts [String] :sox path to executable
     # @option opts [String] :wavpack path to executable
     # @option opts [String] :shntool path to executable
-    # @option opts [String] :wav2png path to executable
     # @return [BawAudioTools::AudioBase]
     def self.from_executables(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
       audio_tool_opts = {
@@ -62,7 +61,7 @@ module BawAudioTools
         sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
         wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
         shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir),
-        wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir),
+        waveform: BawAudioTools::AudioWaveform.new(opts[:ffmpeg], temp_dir),
         wac2wav: BawAudioTools::AudioWac2wav.new(opts[:wac2wav], temp_dir)
       }
 

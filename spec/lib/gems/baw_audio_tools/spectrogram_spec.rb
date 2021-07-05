@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe BawAudioTools::Spectrogram do
   include_context 'common'
   include_context 'audio base'
@@ -20,7 +18,7 @@ describe BawAudioTools::Spectrogram do
     )
   }
 
-  context 'getting info about image' do
+  context 'when getting info about image' do
     it 'returns all required information' do
       source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
@@ -36,25 +34,58 @@ describe BawAudioTools::Spectrogram do
     end
   end
 
-  context 'generating spectrogram' do
+  context 'when generating a spectrogram' do
+    before do
+      FileUtils.mkdir_p(temp_dir / 'demo')
+    end
+
     it 'runs to completion when given an existing audio file' do
       source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
       target = temp_file(extension: '.png')
       spectrogram.modify(source, target)
-    end
-  end
 
-  context 'generating waveform' do
-    it 'runs to completion when given an existing audio file' do
+      # copy file for manual inspection
+      FileUtils.copy_file(target, temp_dir / 'demo' / target.basename)
+    end
+
+    [:h, :high_contrast,
+     :pr, :pink_red,
+     :tg, :teal_green,
+     :yg, :yellow_green,
+     :gr, :green_red,
+     :tb, :teal_blue,
+     :rb, :red_blue].each do |option|
+      it "can generate colour spectrograms (#{option})" do
+        source = temp_file(extension: '.wav')
+        audio_base.modify(audio_file_mono, source)
+
+        target = temp_file(stem: option, extension: '.png')
+        spectrogram.modify(source, target, colour: option)
+        # copy file for manual inspection
+        FileUtils.copy_file(target, temp_dir / 'demo' / target.basename)
+      end
+    end
+
+    it 'will reject other colours' do
       source = temp_file(extension: '.wav')
       audio_base.modify(audio_file_mono, source)
 
       target = temp_file(extension: '.png')
       expect {
-        spectrogram.modify(source, target, colour: 'w', sample_rate: 22_050)
-      }.to raise_error(NotImplementedError, 'Drawing waveforms has been deprecated and is no longer supported')
+        spectrogram.modify(source, target, colour: 'idontexist')
+      }.to raise_error(ArgumentError, /Colour must be one of/)
+    end
+  end
+
+  context 'when generating a waveform' do
+    it 'runs to completion when given an existing audio file' do
+      source = temp_file(extension: '.wav')
+      audio_base.modify(audio_file_mono, source)
+
+      target = temp_file(extension: '.png')
+      spectrogram.modify(source, target, colour: 'w', sample_rate: 22_050)
     end
   end
 end

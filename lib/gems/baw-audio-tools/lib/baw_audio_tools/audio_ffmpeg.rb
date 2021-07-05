@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module BawAudioTools
+  # Used to manipulate the ffmpeg command line tool
   class AudioFfmpeg
     ERROR_FRAME_SIZE_1 = 'Could not find codec parameters for stream [0-9]+ \\(Audio\\: [a-zA-Z0-9]+\\, [0-9]+ channels\\, [a-zA-Z0-9]+\\)\\: unspecified frame size'
     ERROR_FRAME_SIZE_2 = 'Failed to read frame size: Could not seek to [0-9]+\\.'
@@ -33,7 +34,6 @@ module BawAudioTools
       raise ArgumentError, "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
-      cmd_sample_rate = arg_sample_rate(sample_rate)
 
       cmd_sample_rate = if sample_rate.blank? && source_info.include?(:sample_rate)
                           arg_sample_rate(source_info[:sample_rate])
@@ -69,10 +69,12 @@ module BawAudioTools
       stderr = execute_msg[:stderr]
 
       if !stderr.blank? && /#{ERROR_FRAME_SIZE_1}/.match(stderr)
-        raise Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError,
+              "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && /#{ERROR_FRAME_SIZE_2}/.match(stderr)
-        raise Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError,
+              "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && /#{ERROR_END_OF_FILE}/i.match(stderr)
         raise Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
@@ -197,7 +199,7 @@ module BawAudioTools
           unless index.nil?
             current_key = line[0, index].strip
             current_value = line[index + 1, line.length].strip
-            result[ffprobe_current_block_name + ' ' + current_key] = current_value
+            result["#{ffprobe_current_block_name} #{current_key}"] = current_value
           end
         end
       end
@@ -318,12 +320,12 @@ module BawAudioTools
         codec = codec_high_vorbis
       when 'OGA'
         codec = codec_high_vorbis
-        target = target.chomp(File.extname(target)) + '.ogg'
+        target = "#{target.chomp(File.extname(target))}.ogg"
       when 'WEBM'
         codec = codec_high_vorbis
       when 'WEBMA'
         codec = codec_high_vorbis
-        target = target.chomp(File.extname(target)) + '.webm'
+        target = "#{target.chomp(File.extname(target))}.webm"
       when 'WV'
         codec = codec_high_wavpack
       when 'FLAC'

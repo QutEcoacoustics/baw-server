@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-
-require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
 require 'benchmark'
 
-describe BawAudioTools::AudioBase do
+example_group 'benchmarks' do
   include_context 'audio base'
   include_context 'temp media files'
 

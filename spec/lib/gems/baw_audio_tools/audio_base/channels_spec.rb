@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
-
-require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
-
 # tests audio channels
-describe BawAudioTools::AudioBase do
+example_group 'channels' do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'
@@ -12,17 +9,17 @@ describe BawAudioTools::AudioBase do
 
   it 'gets the correct channel count for mono audio file' do
     info = audio_base.info(audio_file_mono)
-    expect(info[:channels]).to eql(1)
+    expect(info[:channels]).to be(1)
   end
 
   it 'gets the correct channel count for stereo audio file' do
     info = audio_base.info(audio_file_stereo)
-    expect(info[:channels]).to eql(2)
+    expect(info[:channels]).to be(2)
   end
 
   it 'gets the correct channel count for 3 channel audio file' do
     info = audio_base.info(audio_file_amp_3_channels)
-    expect(info[:channels]).to eql(3)
+    expect(info[:channels]).to be(3)
   end
 
   it 'segments and converts successfully for 2 channels' do

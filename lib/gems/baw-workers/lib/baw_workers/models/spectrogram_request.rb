@@ -2,8 +2,6 @@
 
 module BawWorkers
   module Models
-
-
     class SpectrogramRequest < AudioRequest
       # @!attribute [r] window
       #   @return [Integer]
@@ -13,7 +11,7 @@ module BawWorkers
       attribute :window_function, ::BawWorkers::Dry::Types::String
       # @!attribute [r] colour
       #   @return [String]
-      attribute :colour, ::BawWorkers::Dry::Types::String
+      attribute :colour, ::BawWorkers::Dry::Types::Coercible::String
     end
   end
 end

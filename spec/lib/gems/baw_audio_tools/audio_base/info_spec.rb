@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-
-
 # tests getting audio info
-describe BawAudioTools::AudioBase do
+describe BawAudioTools::AudioBase, '#info' do
   include_context 'common'
   include_context 'audio base'
   include_context 'temp media files'
@@ -50,7 +48,7 @@ describe BawAudioTools::AudioBase do
 [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4"
       expect {
         audio_base.audio_ffmpeg.check_for_errors(stderr: input)
-      }.to_not raise_error
+      }.not_to raise_error
     end
 
     it 'fails on end of line error for ffmpeg' do
