@@ -18,7 +18,7 @@ if !ENV.key?('RUNNING_RSPEC') && defined?(::ActiveJob::TestHelper)
         module ClassMethods
           def queue_adapter # rubocop:disable
             # intentional noop - rubocop keeps removing this method, but it needs to be here
-            noop = :noop
+            _noop = :noop
             super
           end
 

@@ -69,23 +69,7 @@ module BawWorkers
       STATUS_KILLED = 'killed'
       STATUS_ERRORED = 'errored'
 
-      # Dry::Types definitions for the status module
-      module StatusTypes
-        # @!parse
-        #   include Dry::Types
-        include ::Dry.Types
-
-        Statuses = String.enum(
-          STATUS_QUEUED,
-          STATUS_WORKING,
-          STATUS_COMPLETED,
-          STATUS_FAILED,
-          STATUS_ERRORED,
-          STATUS_KILLED
-        )
-      end
-
-      STATUSES = StatusTypes::Statuses.values.to_a.freeze
+      STATUSES = ::BawWorkers::Dry::Types::Statuses.values.to_a.freeze
       TERMINAL_STATUSES = [
         STATUS_COMPLETED,
         STATUS_FAILED,
@@ -219,13 +203,13 @@ module BawWorkers
 
       private
 
-      STATUS_MODULE_NAME = name.freeze
+      STATUS_TAG = '[Status]'
 
       # hook called by ActiveJob
       def around_perform_with_status(&block)
-        logger.debug { { message: "#{STATUS_MODULE_NAME} fetching status", job_id: job_id } }
-        refresh_status!
-        logger.debug { { message: "#{STATUS_MODULE_NAME} fetched status", job_id: job_id, status: @status } }
+        logger.debug { { message: "#{STATUS_TAG} fetching" } }
+        ensure_status
+        logger.debug { { message: "#{STATUS_TAG} fetched", status: @status } }
 
         safe_perform!(&block)
       end
@@ -252,7 +236,7 @@ module BawWorkers
 
       # @param [Killed] kill_error
       def handle_kill(kill_error)
-        logger.warn("#{STATUS_MODULE_NAME} job killed", location: kill_error.kill_location)
+        logger.warn("#{STATUS_TAG} job killed", location: kill_error.kill_location)
         persistance.killed(job_id)
         on_killed
       ensure
@@ -260,7 +244,7 @@ module BawWorkers
       end
 
       def handle_error(error)
-        logger.warn("#{STATUS_MODULE_NAME} job failed", error: error.to_s)
+        logger.warn("#{STATUS_TAG} job failed", error: error.to_s)
         update_status("The task failed because of an error: #{error}", status: STATUS_ERRORED)
 
         handle = on_errored(error)
@@ -273,6 +257,17 @@ module BawWorkers
         raise ArgumentError, 'job_id cannot contain a space' if job_id.include?(' ')
 
         job_id
+      end
+
+      # when the job is performed immediately then status may not exist
+      def ensure_status
+        refresh_status!
+        return unless @status.nil?
+
+        logger.debug("#{STATUS_TAG} created during perform")
+        create([
+          'previous status not found - was this job run with #perform_now'
+        ])
       end
 
       #
@@ -301,14 +296,18 @@ module BawWorkers
         )
         logger.debug do
           {
-            message: "#{STATUS_MODULE_NAME} updating status",
+            message: "#{STATUS_TAG} updating",
             old_status: old_status,
             status: status,
             percent_complete: @status.percent_complete,
             messages: messages
           }
         end
-        persistance.set(@status)
+        persistance.set(@status).tap do |successful|
+          next if successful
+
+          logger.error { 'Failed to update status ' }
+        end
       end
 
       def parse_decimal(input, name)
@@ -321,6 +320,26 @@ module BawWorkers
       def persistance
         @persistance ||= BawWorkers::ActiveJob::Status::Persistance
       end
+
+      # https://github.com/rails/rails/blob/30033e6a1d25dcd80ec235af820ba3f780e9e2ff/activesupport/lib/active_support/rescuable.rb#L164
+      # dirty monkey patch
+      # discard_on is one-shot (multiple classes can't hook into it)
+      # after_perform won't run?
+      # around_perform is not reliable because order dictates we may miss some failures
+      # note: could not get this to work
+      # def rescue_with_handler(exception)
+      #   # last ditch effort to record a status
+      #   # if status is not terminal, log a status
+      #   if !status.nil? && !status&.terminal? && exception.is_a?(StandardError)
+      #     begin
+      #       update_status("The task failed because of an error: #{exception}", status: STATUS_ERRORED)
+      #     rescue StandardError => e
+      #       logger.error('failed to set status', e)
+      #     end
+      #   end
+
+      #   super(exception)
+      # end
     end
   end
 end

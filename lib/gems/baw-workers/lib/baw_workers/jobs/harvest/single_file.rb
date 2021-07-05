@@ -26,7 +26,7 @@ module BawWorkers
       # @param [Boolean] is_real_run
       # @param [Boolean] copy_on_success
       # @return [Array<String>] existing target paths
-      def run(file_info_hash, is_real_run, copy_on_success = false)
+      def run(file_info_hash, is_real_run, _copy_on_success = false)
         file_info_hash.deep_symbolize_keys!
 
         project_id = file_info_hash[:project_id]
@@ -137,20 +137,6 @@ module BawWorkers
         # anything here fails, the harvest is still successful.
         # only run this if harvest was successful
         if harvest_completed_successfully
-
-          # enqueue task to copy harvested file
-          if copy_on_success
-            source = File.expand_path(existing_target_paths[0])
-
-            copy_base_path = Settings.actions.harvest.copy_base_path
-            raw_destination = File.join(copy_base_path, create_relative_path(storage_file_opts))
-            destination = File.expand_path(raw_destination)
-
-            BawWorkers::Mirror::Action.action_enqueue(source, [destination])
-
-            @logger.info(@class_name) { "Enqueued mirror task with source #{source} and destination #{destination}" }
-          end
-
           # enqueue task to run analysis
           # BawWorkers::Analysis::Action.
         end
@@ -191,7 +177,8 @@ module BawWorkers
       end
 
       def get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
-        create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
+        create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash,
+                                                               security_info)
 
         response_meta = create_response[:response]
         response_hash = create_response[:response_json]
@@ -275,14 +262,16 @@ module BawWorkers
         # rename file once it is copied to all destinations
         source_size = File.size(file_path)
 
-        check_target_paths = storage_target_paths.select { |file| File.exist?(file) && File.file?(file) && File.size(file) == source_size }
+        check_target_paths = storage_target_paths.select { |file|
+          File.exist?(file) && File.file?(file) && File.size(file) == source_size
+        }
 
         if storage_target_paths.size == check_target_paths.size
           @logger.info(@class_name) do
             "Source file #{file_path} was copied successfully to all destinations, renaming source file."
           end
 
-          renamed_source_file = file_path + '.completed'
+          renamed_source_file = "#{file_path}.completed"
           File.rename(file_path, renamed_source_file)
 
           if File.exist?(renamed_source_file)
@@ -322,7 +311,7 @@ module BawWorkers
       # @param [String] file_path
       # @return [String] new file name
       def rename_file(file_path, suffix)
-        renamed_source_file = file_path + '.' + suffix
+        renamed_source_file = "#{file_path}.#{suffix}"
         File.rename(file_path, renamed_source_file)
 
         if File.exist?(renamed_source_file)

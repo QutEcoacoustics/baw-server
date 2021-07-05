@@ -151,4 +151,34 @@ describe BawWorkers::ActiveJob::Identity do
       expect(job.job_id).to eq('abc123:jobargispassedintojobarguments')
     end
   end
+
+  context 'when deserialized' do
+    subject(:job) {
+      FakeJob.new
+    }
+
+    before do
+      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      impl = Class.new(ApplicationJob) do
+        def name
+          "#{self.class.name}: fake job name for #{job_id}"
+        end
+
+        def create_job_id
+          "abc123:#{arguments[0]}"
+        end
+      end
+      stub_const('FakeJob', impl)
+    end
+
+    it 'has the she same name after deserialization' do
+      data = job.serialize
+      expect(data).to be_an_instance_of(Hash)
+
+      job2 = FakeJob.deserialize(data)
+      expect(job2).not_to eq job
+
+      expect(job2.name).to eq job.name
+    end
+  end
 end

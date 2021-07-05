@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-
-
-describe BawWorkers::Media::WorkHelper do
+describe BawWorkers::Jobs::Media::WorkHelper do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
   let(:work_helper) {
-    BawWorkers::Media::WorkHelper.new(
+    BawWorkers::Jobs::Media::WorkHelper.new(
       BawWorkers::Config.audio_helper,
       BawWorkers::Config.spectrogram_helper,
       BawWorkers::Config.original_audio_helper,
@@ -35,7 +33,7 @@ describe BawWorkers::Media::WorkHelper do
   let(:original_file_path_old) { File.join(original_file_dir, original_file_name_old) }
   let(:original_file_path_new) { File.join(original_file_dir, original_file_name_new) }
 
-  before(:each) do
+  before do
     FileUtils.mkpath(original_file_dir)
     # src, dest, preserve, dereference
     # If preserve is true, this method preserves owner, group, permissions and modified time.
@@ -43,7 +41,7 @@ describe BawWorkers::Media::WorkHelper do
     FileUtils.copy_file(original_audio_file, original_file_path_new, true)
   end
 
-  after(:each) do
+  after do
     FileUtils.rm_rf(Settings.paths.original_audios)
     FileUtils.rm_rf(Settings.paths.cached_audios)
     FileUtils.rm_rf(Settings.paths.cached_spectrograms)

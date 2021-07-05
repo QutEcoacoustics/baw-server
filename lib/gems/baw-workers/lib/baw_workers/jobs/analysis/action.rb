@@ -118,13 +118,6 @@ module BawWorkers
         def action_enqueue(analysis_params, invariant_group_key = nil)
           analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
 
-          # split and validate the invariant params
-          # no-op id invariant_group_key is blank
-          analysis_params_sym = BawWorkers::Analysis::Payload.validate_and_create_invariant_opts(
-            analysis_params_sym,
-            invariant_group_key
-          )
-
           result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params_sym)
           BawWorkers::Config.logger_worker.info(logger_name) do
             "Job enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
@@ -183,15 +176,6 @@ module BawWorkers
 
         def action_payload
           BawWorkers::Analysis::Payload.new(BawWorkers::Config.logger_worker)
-        end
-
-        # Get a Resque::Status hash for if an analysis job has a matching payload.
-        # @param [Hash] analysis_params
-        # @return [Resque::Plugins::Status::Hash] status
-        def get_job_status(analysis_params)
-          analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
-          payload = { analysis_params: analysis_params_sym }
-          BawWorkers::ResqueApi.status(BawWorkers::Analysis::Action, payload)
         end
 
         private

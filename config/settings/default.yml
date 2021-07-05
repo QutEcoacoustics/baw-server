@@ -28,7 +28,6 @@ resque:
     - maintenance_<%= BawApp.env %>
     - harvest_<%= BawApp.env %>
     - media_<%= BawApp.env %>
-    - mirror_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
     - default_<%= BawApp.env %>
   connection: *redis_config
@@ -52,13 +51,9 @@ actions:
     to_do_path: ./tmp/_harvester_to_do_path
     config_file_name: harvest.yml
     progressive_upload_directory: ./tmp/_progressive-upload/
-    # top level directory for mirroring harvested files, used by dequeue workers only
-    copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
   media:
     queue: media_<%= BawApp.env %>
     dry_run: false
-  mirror:
-    queue: mirror_<%= BawApp.env %>
   audio_check:
     queue: maintenance_<%= BawApp.env %>
   active_storage:

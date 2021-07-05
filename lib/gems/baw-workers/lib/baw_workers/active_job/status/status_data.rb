@@ -7,29 +7,29 @@ module BawWorkers
       class StatusData < ::BawWorkers::Dry::StrictStruct
         # @!attribute [r] job_id
         #   @return [String]
-        attribute :job_id, StatusTypes::String
+        attribute :job_id, ::BawWorkers::Dry::Types::String
         # @!attribute [r] name
         #   @return [String]
-        attribute :name, StatusTypes::String.optional
+        attribute :name, ::BawWorkers::Dry::Types::String.optional
         # @!attribute [r] status
         #   @return [String]
-        attribute :status, StatusTypes::Statuses
+        attribute :status, ::BawWorkers::Dry::Types::Statuses
         # @!attribute [r] messages
         #   @return [Array<String>]
-        attribute :messages, StatusTypes::Array.of(StatusTypes::String).default([].freeze)
+        attribute :messages, ::BawWorkers::Dry::Types::Array.of(::BawWorkers::Dry::Types::String).default([].freeze)
         # @!attribute [r] time
         #   @return [DateTime]
-        attribute :time, (StatusTypes::JSON::Time.default { Time.now })
+        attribute :time, (::BawWorkers::Dry::Types::JSON::Time.default { Time.now })
         # @!attribute [r] options
         #   @return [String]
-        attribute :options, StatusTypes::Hash
+        attribute :options, ::BawWorkers::Dry::Types::Hash
 
         # @!attribute [r] progress
         #   @return [BigDecimal]
-        attribute :progress, StatusTypes::JSON::Decimal
+        attribute :progress, ::BawWorkers::Dry::Types::JSON::Decimal
         # @!attribute [r] total
         #   @return [BigDecimal]
-        attribute :total, StatusTypes::JSON::Decimal
+        attribute :total, ::BawWorkers::Dry::Types::JSON::Decimal
 
         def queued?
           status == STATUS_QUEUED

@@ -95,7 +95,6 @@ describe 'Analysis Jobs' do
   end
 
   def reset
-    BawWorkers::PartialPayload.delete_all
     BawWorkers::ResqueApi.clear_queue(@queue_name)
     Resque::Failure.clear
   end

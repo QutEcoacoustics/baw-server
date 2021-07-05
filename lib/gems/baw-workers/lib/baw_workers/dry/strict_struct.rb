@@ -18,13 +18,5 @@ module BawWorkers
       # don't allow keys other than what is expected
       schema schema.strict
     end
-
-    module Types
-      # @!parse
-      #   include Dry::Types
-      include ::Dry.Types
-
-      StrictSymbolizingHash = Types::Hash.schema({}).strict.with_key_transform(&:to_sym)
-    end
   end
 end

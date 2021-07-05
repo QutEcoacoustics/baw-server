@@ -41,6 +41,8 @@ module BawWorkers
       end
 
       # Produces a sensible friendly name for this payload, shown in UIs.
+      # Must be inferred from serialized job parameters or else won't be shown
+      # properly in remote jobs.
       # Should be unique but does not need to be. Has no operational effect.
       # Abstract, your job should override.
       # @return [String]
@@ -67,12 +69,12 @@ module BawWorkers
       end
 
       # Optionally produces a unique key to ensure uniqueness of this job.
-      # See IdHelpers module methods for examples job_id generators you can use.
+      # See the Generators module methods for example job_id generators you can use.
       def create_job_id
         application_job_overrides_method!(__method__)
 
         # default implementation for framework jobs
-        Helpers.generate_uuid(self)
+        Generators.generate_uuid(self)
       end
 
       # This is our hook into ActiveJob::Base.

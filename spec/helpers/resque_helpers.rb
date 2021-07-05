@@ -143,12 +143,12 @@ module ResqueHelpers
   # of an example. Can use in `it`/`example` blocks.
   # This module should be included into an example group.
   module Example
-    include BawWorkers::ResqueApi
+    #include BawWorkers::ResqueApi
 
     PERFORMED_KEYS = BawWorkers::ActiveJob::Status::TERMINAL_STATUSES
 
     def clear_pending_jobs
-      clear_queues
+      BawWorkers::ResqueApi.clear_queues
     end
 
     # Expects the completed job statuses to be of a certain size. Includes completed, failed, and killed jobs.
@@ -179,17 +179,18 @@ module ResqueHelpers
 
     # Expects the enqueued queues to be of a certain size.
     # @param [Integer] count - the count of enqueued jobs we expect
-    # @param [Class] klass - of which class we expected enqueued jobs to be. Defaults to `nil` which matches any class.
+    # @param [Class] of_class - of which class we expected enqueued jobs to be. Defaults to `nil` which matches any class.
     # @return [Array<Hash>]
-    def expect_enqueued_jobs(count, klass: nil)
-      jobs = if klass.nil?
+    def expect_enqueued_jobs(count, klass: nil, of_class: nil)
+      of_class ||= klass
+      jobs = if of_class.nil?
                BawWorkers::ResqueApi.jobs_queued
              else
-               BawWorkers::ResqueApi.jobs_queued_of(klass)
+               BawWorkers::ResqueApi.jobs_queued_of(of_class)
              end
 
       aggregate_failures do
-        expect(statuses).to be_a(Array)
+        expect(jobs).to be_a(Array)
         expect(jobs).to have(count).items
       end
       jobs
@@ -210,7 +211,9 @@ module ResqueHelpers
       actual_failed = BawWorkers::ResqueApi.failed
       actual_enqueued = BawWorkers::ResqueApi.jobs_queued
       aggregate_failures do
-        expect([actual_completed, actual_failed, actual_enqueued]).to all(be_a(Array))
+        expect(actual_completed).to be_a(Array)
+        expect(actual_failed).to be_a(Array)
+        expect(actual_enqueued).to be_a(Array)
         expect(actual_completed).to have(completed).items
         expect(actual_failed).to have(failed).items
         expect(actual_enqueued).to have(enqueued).items

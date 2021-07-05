@@ -177,20 +177,23 @@ class MediaController < ApplicationController
     # get parameters for creating/retrieving cache
     generation_request = metadata.generation_request(original, current)
 
-    if media_info[:category] == :audio
+    case media_info[:category]
+    when :audio
       # check if audio file exists in cache
       cached_audio_info = audio_cached.path_info(generation_request)
       media_category = :audio
 
       existing_files, time_waiting_start = create_media(media_category, cached_audio_info, generation_request)
-      response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
-    elsif media_info[:category] == :image
+      response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request,
+                                   time_start, time_waiting_start)
+    when :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
       media_category = :spectrogram
 
       existing_files, time_waiting_start = create_media(media_category, cached_spectrogram_info, generation_request)
-      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
+      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request,
+                                 time_start, time_waiting_start)
     end
   end
 
@@ -306,7 +309,7 @@ class MediaController < ApplicationController
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
     start_time = Time.now
-    target_existing_paths = BawWorkers::Media::Action.make_media_request(media_category, generation_request)
+    target_existing_paths = BawWorkers::Jobs::Media::Job.make_media_request(media_category, generation_request)
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
@@ -320,13 +323,15 @@ class MediaController < ApplicationController
   # @return [Resque::Plugins::Status::Hash] job status
   def create_media_resque(expected_files, media_category, generation_request)
     start_time = Time.now
-    BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
+    job = BawWorkers::Jobs::Media::Job.action_enqueue(media_category, generation_request) # TODO: broken
+    job_id = job.job_id
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
     poll_result = MediaPoll.poll_resque_and_media(
       expected_files,
       media_category,
       generation_request,
-      Settings.audio_tools_timeout_sec
+      Settings.audio_tools_timeout_sec,
+      job_id: job_id
     )
     end_time = Time.now
 
@@ -339,7 +344,8 @@ class MediaController < ApplicationController
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
-    suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
+    suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset],
+                                                                 options[:end_offset], response_extra_info, options[:format])
 
     existing_file = existing_files.first
     content_length = File.size(existing_file)
@@ -528,6 +534,6 @@ class MediaController < ApplicationController
   # @return String
   def add_header_hash(audio_recording)
     protocol, value = audio_recording.split_file_hash
-    headers['Digest'] = protocol + '=' + value
+    headers['Digest'] = "#{protocol}=#{value}"
   end
 end

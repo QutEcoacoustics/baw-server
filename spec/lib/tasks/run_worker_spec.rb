@@ -35,7 +35,7 @@ describe 'rake tasks' do
 
       expect(worker_log_content).to match(/"test":true,"environment":"test","files":\[.*"#{new_file}".*\]/)
       expect(worker_log_content).to include('"redis":{"namespace":"resque","connection":{"host":"redis","port":6379,"password":null,"db":1}')
-      expect(worker_log_content).to include("\"resque_worker\":{\"running\":true,\"mode\":\"bg\",\"pid_file\":\"#{pid_file}\",\"queues\":\"analysis_test,maintenance_test,harvest_test,media_test,mirror_test\",\"poll_interval\":0.5}")
+      expect(worker_log_content).to include("\"resque_worker\":{\"running\":true,\"mode\":\"bg\",\"pid_file\":\"#{pid_file}\",\"queues\":\"analysis_test,maintenance_test,harvest_test,media_test\",\"poll_interval\":0.5}")
       expect(worker_log_content).to include('"logging":{"worker":1,"mailer":1,"audio_tools":1')
 
       File.delete pid_file if File.exist? pid_file
@@ -51,7 +51,7 @@ describe 'rake tasks' do
 
       expect(worker_log_content).to match(%r{"test":true,"environment":"test","files":\[.+/baw-server/config/settings/test.yml"})
       expect(worker_log_content).to include('"redis":{"namespace":"resque","connection":{"host":"redis","port":6379,"password":null,"db":1}')
-      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"fg","pid_file":null,"queues":"analysis_test,maintenance_test,harvest_test,media_test,mirror_test","poll_interval":0.5}')
+      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"fg","pid_file":null,"queues":"analysis_test,maintenance_test,harvest_test,media_test","poll_interval":0.5}')
       expect(worker_log_content).to include('"logging":{"worker":1,"mailer":1,"audio_tools":1')
     end
 

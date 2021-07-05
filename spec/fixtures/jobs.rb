@@ -3,8 +3,9 @@
 module Fixtures
   FIXTURE_QUEUE = :default_test
 
-  class FixtureJob < BawWorkers::ApplicationJob
+  class FixtureJob < BawWorkers::Jobs::ApplicationJob
     queue_as FIXTURE_QUEUE
+    perform_expects String
 
     def name
       @name ||= job_id
@@ -28,13 +29,14 @@ module Fixtures
 
       return if executions >= ATTEMPTS
 
-      raise BawWorkers::IntentionalRetry
+      raise BawWorkers::Jobs::IntentionalRetry
     end
 
-    retry_on BawWorkers::IntentionalRetry, wait: 1, attempts: ATTEMPTS
+    retry_on BawWorkers::Jobs::IntentionalRetry, wait: 1, attempts: ATTEMPTS
   end
 
   class WorkingJob < FixtureJob
+    perform_expects String, Integer
     #
     # Does the work
     #

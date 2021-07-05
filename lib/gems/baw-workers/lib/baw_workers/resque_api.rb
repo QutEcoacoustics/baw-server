@@ -3,6 +3,8 @@
 module BawWorkers
   # Custom api for access to resque information.
   module ResqueApi
+    include SemanticLogger::Loggable
+
     module_function
 
     # Get a count of jobs that are pending in all queues.
@@ -15,28 +17,6 @@ module BawWorkers
     # @return [Integer]
     def delayed_count
       Resque.delayed_queue_schedule_size
-    end
-
-    # Is this type of job with these args currently queued?
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Boolean]
-    def job_queued?(klass, args = {})
-      job_queued_in?(Resque.queue_from_class(klass), klass, args)
-    end
-
-    # Does this queue have this type of job with these args?
-    # @param [String] queue
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Boolean]
-    def job_queued_in?(_queue, _klass, _args = {})
-      raise 'deprecated'
-      # from https://github.com/neighborland/resque_solo/blob/master/lib/resque_ext/resque.rb
-      # item = BawWorkers::ResqueJobIdBROKEN!!!.create_payload(klass, args)
-      # return nil unless ResqueSolo::Queue.is_unique?(item)
-
-      # ResqueSolo::Queue.queued?(queue, item)
     end
 
     # Get all currently queued jobs.
@@ -73,17 +53,6 @@ module BawWorkers
       jobs_queued_in(queue).select { |job| job_class(job) == match_klass }
     end
 
-    # Get jobs in this queue of this type with these args.
-    # @param [String] queue
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Array<Hash>]
-    def jobs_queued_in_of_with(_queue, _klass, _args = {})
-      raise 'deprecated'
-      # item = BawWorkers::ResqueJobIdBROKEN!!!.create_payload(klass, args)
-      # jobs_queued_in(queue).select { |job| job_class(job) == item['class'] && compare_args(job['args'], item['args']) }
-    end
-
     # Get queued jobs of this type.
     # @param [Class] klass
     # @return [Array<Hash>]
@@ -92,16 +61,6 @@ module BawWorkers
       match_klass = klass.to_s
       puts jobs_queued
       jobs_queued.select { |job| job_class(job) == match_klass }
-    end
-
-    # Get queued jobs of this type with these args.
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Array<Hash>]
-    def jobs_queued_of_with(_klass, _args = {})
-      raise 'deprecated'
-      # item = BawWorkers::ResqueJobIdBROKEN!!!.create_payload(klass, args)
-      # jobs_queued.select { |job| job['class'] == item['class'] && compare_args(job['args'], item['args']) }
     end
 
     # Get the currently running jobs.
@@ -120,16 +79,6 @@ module BawWorkers
       jobs_running.select { |job| job_class(job) == match_klass }
     end
 
-    # Get the currently running jobs.
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Array<Hash>]
-    def jobs_running_of_with(_klass, _args = {})
-      raise 'deprecated'
-      # item = BawWorkers::ResqueJobIdBROKEN!!!.create_payload(klass, args)
-      # jobs_running.select { |job| job['class'] == item['class'] && compare_args(job['args'], item['args']) }
-    end
-
     # Get all jobs.
     # @return [Array<Hash>]
     def jobs
@@ -141,14 +90,6 @@ module BawWorkers
     # @return [Array<Hash>]
     def jobs_of(klass)
       jobs_queued_of(klass) + jobs_running_of(klass)
-    end
-
-    # Get all jobs of this type with these args.
-    # @param [Class] klass
-    # @param [Hash] args
-    # @return [Array<Hash>]
-    def jobs_of_with(klass, args = {})
-      jobs_queued_of_with(klass, args) + jobs_running_of_with(klass, args)
     end
 
     def compare_args(a, b)
@@ -233,12 +174,26 @@ module BawWorkers
       pids
     end
 
-    def clear_queues(env = BawApp.env)
+    def any_worker_working_on_queue(name)
+      logger.measure_debug('ResqueApi::any_worker_working_on_queue') do
+        Resque.redis.sscan(:workers, '', { match: "*#{name}*", count: 1 })[1].any?
+      end
+    end
+
+    def queues_being_worked_on
+      logger.measure_debug('ResqueApi::queues_being_worked_on') do
+        #Resque::Worker.data_store.worker_ids.map { |id| id&.split(',')&.last }.uniq.compact
+        Resque.redis.sscan_each(':workers').map { |id| id }
+      end
+    end
+
+    def queue_names(env = BawApp.env)
       env_regex = Regexp.new(env)
-      Resque
-        .queues
-        .select { |queue| queue =~ env_regex }
-        .each { |queue| clear_queue(queue) }
+      Resque.queues.filter { |queue| queue =~ env_regex }
+    end
+
+    def clear_queues(_env = BawApp.env)
+      queue_names.each { |queue| clear_queue(queue) }
     end
 
     # Clear a queue
@@ -310,17 +265,6 @@ module BawWorkers
       BawWorkers::Config.logger_worker.warn {
         "Retried #{retried_count} failed jobs."
       }
-    end
-
-    # Get a Resque::Status hash for the matching action job and payload.
-    # Required when you need to regenerate a deterministic key.
-    # @param [Class] action_class
-    # @param [Hash] args
-    # @return [BawWorkers::ActiveJob::Status::StatusData] status
-    def status(_action_class, _args = {})
-      raise 'deprecated'
-      # job_id = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(action_class, args)
-      # BawWorkers::ActiveJob::Status::Persistance.get(job_id)
     end
 
     # Get a Resque::Status hash for the provided unique key.

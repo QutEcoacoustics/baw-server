@@ -188,33 +188,6 @@ module BawWorkers
         BawWorkers::Validation.check_custom_hash(normalised_keys, BawWorkers::Analysis::Payload::OPTS_FIELDS)
         normalised_keys
       end
-
-      # Split apart the variant and invariant parts of the payload.
-      # @param [Hash] analysis_params
-      # @param [String] group_key
-      def self.validate_and_create_invariant_opts(analysis_params, group_key)
-        # 0. verify group key
-        return analysis_params if group_key.blank?
-
-        # 1. split out invariant keys
-        invariant = {}
-        BASE_FIELDS.each do |key|
-          raise "analysis_params is missing required key #{key}" unless analysis_params.key?(key)
-
-          invariant[key] = analysis_params.delete(key)
-        end
-
-        # e.g. baw-workers:partial_payload:analysis:20-1472601600 (leading namespace added by PartialPayload)
-        unique_key = 'analysis:' + analysis_params[:job_id].to_s + '-' + group_key
-
-        # 2. check if invariant payload already exists
-        # 3. if it does, validate it is identical
-        # 4. if it does not, insert it
-        payload = BawWorkers::PartialPayload.create_or_validate(invariant, unique_key)
-
-        # 5. return the lean analysis_params merge with the partial payload key
-        payload.merge(analysis_params)
-      end
     end
   end
 end

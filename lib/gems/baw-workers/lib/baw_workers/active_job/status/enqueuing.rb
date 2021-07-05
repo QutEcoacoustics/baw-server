@@ -34,13 +34,13 @@ module BawWorkers
             result = yield
 
             unless result
-              logger.error("#{STATUS_MODULE_NAME} removed status after aborted creation", job_id: job_id)
+              logger.error("#{STATUS_TAG} removed after aborted creation", job_id: job_id)
               persistance.remove(job_id)
             end
 
             result
           rescue StandardError => e
-            logger.error("#{STATUS_MODULE_NAME} removed status after error raised during creation", job_id: job_id)
+            logger.error("#{STATUS_TAG} removed after error raised during creation", job_id: job_id)
             persistance.remove(job_id)
 
             raise e
@@ -54,7 +54,7 @@ module BawWorkers
           [0, ((scheduled_at || now).to_i - now.to_i)].max
         end
 
-        def _job_name
+        def safe_job_name
           # the Identity is optional, so the job may or may not have a name method
           return nil unless respond_to?(:name)
 
@@ -63,21 +63,23 @@ module BawWorkers
           return nil if job_name == job_id
 
           job_name
+        rescue StandardError => e
+          "error while generating name: #{e.message}"
         end
 
-        def create
+        def create(messages = nil)
           @status = StatusData.new(
             job_id: job_id,
-            name: _job_name,
+            name: safe_job_name,
             status: STATUS_QUEUED,
-            messages: [],
+            messages: messages || [],
             options: serialize.deep_symbolize_keys,
             progress: 0,
             total: 1
           )
 
           logger.debug do
-            { message: "#{STATUS_MODULE_NAME}: Creating status", status: @status }
+            { message: "#{STATUS_TAG}: creating", status: @status }
           end
 
           persistance.create(@status, delay_ttl: delay_ttl)
@@ -103,8 +105,11 @@ module BawWorkers
           )
 
           logger.debug do
-            { message: "#{STATUS_MODULE_NAME}: Updating status for job retry", status: @status,
-              executions: executions }
+            {
+              message: "#{STATUS_TAG}: updating for job retry",
+              status: @status,
+              executions: executions
+            }
           end
 
           persistance.set(@status)

@@ -45,9 +45,10 @@ describe BawWorkers::Analysis::Action do
     { analysis_params: analysis_params }
   }
 
-  let(:analysis_query_normalised) { BawWorkers::ResqueJobIdBROKEN!!!.normalise(analysis_query) }
+  let(:analysis_query_normalised) { raise "broken" }
 
-  let(:analysis_params_id) { BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Analysis::Action, analysis_query) }
+  let(:analysis_params_id) {  raise "broken" }
+
 
   let(:expected_payload) {
     {
@@ -154,10 +155,7 @@ describe BawWorkers::Analysis::Action do
 
       found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Analysis::Action, analysis_query)
 
-      job_id = BawWorkers::ResqueJobIdBROKEN!!!.create_id_props(BawWorkers::Analysis::Action, analysis_query)
-      # status = Resque::Plugins::Status::Hash.get(job_id)
-
-      status = BawWorkers::Analysis::Action.get_job_status(analysis_params)
+      status = BawWorkers::ResqueApi.status_by_key(job_id) # TODO: broken
 
       expect(found.size).to eq(1)
       expect(found[0]['class']).to eq(BawWorkers::Analysis::Action.to_s)

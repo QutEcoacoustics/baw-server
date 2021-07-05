@@ -21,10 +21,14 @@ ActiveSupport.on_load(:active_job) do
     prepend BawWorkers::ActiveJob::Status
   end
 
-  BawWorkers::ApplicationJob.include(BawWorkers::ActiveJob::Unique)
-  BawWorkers::ApplicationJob.include(BawWorkers::ActiveJob::Extensions)
+  BawWorkers::Jobs::ApplicationJob.include(BawWorkers::ActiveJob::Unique)
+  BawWorkers::Jobs::ApplicationJob.include(BawWorkers::ActiveJob::Extensions)
+  BawWorkers::Jobs::ApplicationJob.include(BawWorkers::ActiveJob::Arguments)
 
   ::ActiveJob::QueueAdapters::ResqueAdapter::JobWrapper.class_eval do
     extend Resque::Plugins::JobStats
   end
+
+  # our tests run real jobs
+  require "#{BawApp.root}/spec/fixtures/jobs" if BawApp.test?
 end

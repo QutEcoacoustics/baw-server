@@ -55,6 +55,8 @@ module BawWorkers
 
       included { unique_setup }
 
+      # Was this job unique when enqueued?
+      # @return [Boolean,nil] nil if uniqueness has not yet been evaluated
       def unique?
         @unique
       end

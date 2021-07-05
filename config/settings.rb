@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 # settings loaded in config/initializers/config.rb
 # Accessible through Settings.xxx
 # Environment specific settings expected in config/settings/{environment_name}.yml
 module BawWeb
   module Settings
-    MEDIA_PROCESSOR_LOCAL = 'local'.freeze
-    MEDIA_PROCESSOR_RESQUE = 'resque'.freeze
-    BAW_SERVER_VERSION_KEY = 'BAW_SERVER_VERSION'.freeze
+    MEDIA_PROCESSOR_LOCAL = 'local'
+    MEDIA_PROCESSOR_RESQUE = 'resque'
+    BAW_SERVER_VERSION_KEY = 'BAW_SERVER_VERSION'
 
     def sources
       @config_sources.map { |s| s.instance_of?(Config::Sources::YAMLSource) ? s.path : s }
@@ -106,6 +108,14 @@ module BawWeb
 
     def min_duration_larger_overlap?
       audio_recording_max_overlap_sec >= audio_recording_min_duration_sec
+    end
+
+    def queue_names
+      @queue_names ||= resque.queues_to_process
+    end
+
+    def queue_to_process_includes?(name)
+      queue_names.include?(name) || queue_names.include?('*')
     end
   end
 end

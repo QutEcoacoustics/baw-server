@@ -117,8 +117,10 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'removes a status if a callback further down the chain fails' do
-      impl = Class.new(BawWorkers::ApplicationJob) do
+      impl = Class.new(BawWorkers::Jobs::ApplicationJob) do
         before_enqueue { throw :abort }
+        perform_expects
+        def perform; end
 
         def name
           "#{self.class.name}: fake job name for #{job_id}"
@@ -131,7 +133,7 @@ describe BawWorkers::ActiveJob::Status do
 
       expect(persistance).to receive(:create).and_call_original
       expect(persistance).to receive(:remove).and_call_original
-      result = impl.perform_later('don\'t create')
+      result = impl.perform_later
       expect(result).to eq false
       expect(persistance.get_status_ids).to be_empty
       expect(persistance.marked_for_kill_ids).to be_empty
@@ -418,7 +420,7 @@ describe BawWorkers::ActiveJob::Status do
       # 1) attempt 1 / execution 0 --> failure
       # 2) attempt 2 / execution 1 --> failure
       # 3) attempt 3 / execution 2 --> success
-      perform_jobs(count: 3)
+      perform_jobs(count: 3, timeout: 5)
 
       job.refresh_status!
       job_refresh = ::ActiveJob::Base.deserialize(job.status.options.with_indifferent_access)
@@ -431,10 +433,10 @@ describe BawWorkers::ActiveJob::Status do
             a_collection_containing_exactly(
               'Attempt 1',
               'tick 1/3',
-              'The task failed because of an error: BawWorkers::IntentionalRetry',
+              'The task failed because of an error: BawWorkers::Jobs::IntentionalRetry',
               'Attempt 2',
               'tick 2/3',
-              'The task failed because of an error: BawWorkers::IntentionalRetry',
+              'The task failed because of an error: BawWorkers::Jobs::IntentionalRetry',
               'Attempt 3',
               'tick 3/3',
               a_string_matching(/Completed at/)
@@ -442,6 +444,34 @@ describe BawWorkers::ActiveJob::Status do
           )
         expect(job.status.time).to eq(original_time)
       }
+    end
+  end
+
+  describe 'perform_now works' do
+    # essentially no effect here since perform_now does not enqueue
+    pause_all_jobs
+
+    let(:job) { Fixtures::BasicJob.new('immediate') }
+
+    it 'has the expected job_id' do
+      expect(job.job_id).to eq 'Fixtures::BasicJob:immediate'
+    end
+
+    it 'backfills a status object' do
+      job.perform_now
+      expect(job.status).to be_an_instance_of(BawWorkers::ActiveJob::Status::StatusData)
+
+      expect(job.status).to be_completed
+
+      #job.refresh_status!
+      # unlike other jobs, we have the instance of the job that
+      # performed the work... so fetch from redis to see if it
+      # really got updates
+      remote_status = BawWorkers::ActiveJob::Status::Persistance.get(job.job_id)
+      expect(remote_status).not_to be_nil
+      expect(remote_status).to be_completed
+      expect(remote_status.messages).to include(/Completed at/)
+      expect(remote_status.messages).to include('previous status not found - was this job run with #perform_now')
     end
   end
 end

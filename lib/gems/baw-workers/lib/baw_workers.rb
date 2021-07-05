@@ -49,7 +49,5 @@ if BawApp.test?
   end
   ::ActiveJob::Base.queue_adapter = :resque
 
-  require "#{BawApp.root}/spec/fixtures/jobs"
-
   raise 'Resque::Job has not been patched for tests' unless Resque::Job.include?(Resque::Plugins::PauseDequeueForTests)
 end
