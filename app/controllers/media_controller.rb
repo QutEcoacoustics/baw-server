@@ -309,7 +309,7 @@ class MediaController < ApplicationController
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
     start_time = Time.now
-    target_existing_paths = BawWorkers::Jobs::Media::Job.make_media_request(media_category, generation_request)
+    target_existing_paths = make_job(media_category, generation_request).perform_now
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
@@ -323,8 +323,20 @@ class MediaController < ApplicationController
   # @return [Resque::Plugins::Status::Hash] job status
   def create_media_resque(expected_files, media_category, generation_request)
     start_time = Time.now
-    job = BawWorkers::Jobs::Media::Job.action_enqueue(media_category, generation_request) # TODO: broken
-    job_id = job.job_id
+    job = make_job(media_category, generation_request)
+    case job.enqueue
+    in ::BawWorkers::Jobs::ApplicationJob
+      # default case
+      job.job_id
+    in false if !job.unique?
+      # debounce
+      logger.debug('Duplicate job debounced', job_id: job.job_id)
+      job.job_id
+    else
+      logger.error('unhandled job enqueue failure', job: job)
+      raise "Failed to enqueue job: #{job}"
+    end => job_id
+
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
     poll_result = MediaPoll.poll_resque_and_media(
       expected_files,
@@ -338,6 +350,22 @@ class MediaController < ApplicationController
     add_header_processing_elapsed(end_time - start_time)
 
     poll_result
+  end
+
+  # @return [BawWorkers::Jobs::Media::AudioJob,BawWorkers::Jobs::Media::SpectrogramJob]
+  def make_job(media_category, generation_request)
+    case media_category
+    when :audio
+      BawWorkers::Jobs::Media::AudioJob.new(
+        ::BawWorkers::Models::AudioRequest.new(generation_request)
+      )
+    when :spectrogram
+      BawWorkers::Jobs::Media::SpectrogramJob.new(
+        ::BawWorkers::Models::SpectrogramRequest.new(generation_request)
+      )
+    else
+      raise "Invalid media type: #{media_category}"
+    end
   end
 
   def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request, time_start, time_waiting_start)

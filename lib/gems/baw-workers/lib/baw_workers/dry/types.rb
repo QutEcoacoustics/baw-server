@@ -25,13 +25,13 @@ module BawWorkers
       #   :spectrogram
       # )
 
-      SampleRate = Types::Strict::Integer.constrained(gt: 0)
+      SampleRate = Types::Coercible::Integer.constrained(gt: 0)
 
-      Window = Types::Strict::Integer.constrained(
+      Window = Types::Coercible::Integer.constrained(
         included_in: [128, 256, 512, 1024, 2048, 4096]
       )
 
-      Channel = Types::Strict::Integer.constrained(
+      Channel = Types::Coercible::Integer.constrained(
         gteq: 0,
         lt: 16
       )

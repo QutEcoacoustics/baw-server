@@ -4,7 +4,7 @@
 module Api
   class MediaMetadata
     # accepts '111', '11.123', not '.11'
-    OFFSET_REGEXP = /^-?(\d+\.)?\d+$/.freeze
+    OFFSET_REGEXP = /^-?(\d+\.)?\d+$/
 
     # Create a new Api::Media instance.
     # @param [BawAudioTools::AudioBase] audio
@@ -53,7 +53,8 @@ module Api
       channel = get_param_value(request_params, modified_params, :channel, 0)
       sample_rate = get_param_value(request_params, modified_params, :sample_rate, audio_recording.sample_rate_hertz)
       window_size = get_param_value(request_params, modified_params, :window_size, @default_spectrogram.window)
-      window_function = get_param_value(request_params, modified_params, :window_function, @default_spectrogram.window_function)
+      window_function = get_param_value(request_params, modified_params, :window_function,
+                                        @default_spectrogram.window_function)
       colour = get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour)
 
       current_details = {
@@ -67,7 +68,7 @@ module Api
         colour: colour,
         media_type: media_info[:media_type],
         extension: media_info[:format],
-        ppms: (sample_rate.to_f / window_size.to_f) / 1000.0
+        ppms: (sample_rate.to_f / window_size) / 1000.0
       }
 
       [current_details, modified_params]
@@ -84,7 +85,8 @@ module Api
           formats: available_formats.audio.map do |format|
                      {
                        name: format,
-                       valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz])
+                       valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(format,
+                                                                                       audio_recording[:sample_rate_hertz])
                      }
                    end
         },
@@ -221,7 +223,7 @@ module Api
           raise CustomErrors::UnprocessableEntityError, msg
         end
 
-        if start_offset < 0
+        if start_offset.negative?
           msg = "start_offset parameter (#{start_offset}) must be greater than or equal to 0."
           raise CustomErrors::UnprocessableEntityError, msg
         end
@@ -247,11 +249,9 @@ module Api
         end
       end
 
-      if request_params.include?(:start_offset) && request_params.include?(:end_offset)
-        if start_offset >= end_offset
-          msg = "start_offset parameter (#{start_offset}) must be smaller than end_offset (#{end_offset})."
-          raise CustomErrors::UnprocessableEntityError, msg
-        end
+      if request_params.include?(:start_offset) && request_params.include?(:end_offset) && (start_offset >= end_offset)
+        msg = "start_offset parameter (#{start_offset}) must be smaller than end_offset (#{end_offset})."
+        raise CustomErrors::UnprocessableEntityError, msg
       end
 
       # don't need to check overall duration - one of the start/end offset checks will pick it up?
@@ -275,7 +275,8 @@ module Api
 
       # check sample rate
       if request_params.include?(:sample_rate)
-        unless valid_sample_rates(request_params[:format], audio_recording.sample_rate_hertz.to_i).include?(request_params[:sample_rate].to_i)
+        unless valid_sample_rates(request_params[:format],
+                                  audio_recording.sample_rate_hertz.to_i).include?(request_params[:sample_rate].to_i)
           msg = "sample_rate parameter (#{request_params[:sample_rate]}) must be valid (#{valid_sample_rates})."
           raise CustomErrors::UnprocessableEntityError, msg
         end

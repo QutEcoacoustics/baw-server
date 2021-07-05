@@ -67,6 +67,14 @@ module BawWorkers
           Success(job)
         end
       end
+
+      # best not to monkey patch unless needed
+      # def halted_callback_hook(filter, name)
+      #   logger.debug do
+      #     { message: 'ActiveJob callbacks halted', filter: filter, name: name }
+      #   end
+      #   super
+      # end
     end
   end
 end
