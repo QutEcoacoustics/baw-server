@@ -165,7 +165,7 @@ class AnalysisJobsItem < ApplicationRecord
     audio_recordings_inner = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
 
     # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
-    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| '"' + table_name + '"."' + c + '"' }
+    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| "\"#{table_name}\".\"#{c}\"" }
 
     # then add an extra select to shift the audio_recording.id into audio_recording_id
     projections = columns.unshift("\"#{audio_recordings_inner.name}\".\"id\" AS \"audio_recording_id\"")
@@ -184,9 +184,7 @@ class AnalysisJobsItem < ApplicationRecord
     query = from(subquery)
 
     # merge with AudioRecording to apply default scope (e.g. where deleted_at IS NULL)
-    query_without_deleted = query.joins(:audio_recording)
-
-    query_without_deleted
+    query.joins(:audio_recording)
   end
 
   #
@@ -336,12 +334,12 @@ class AnalysisJobsItem < ApplicationRecord
 
     begin
       # the second argument groups all items in this job together so that their common payload is stored efficiently
-      result = BawWorkers::Analysis::Action.action_enqueue(payload, analysis_job.created_at.to_i.to_s)
+      result = BawWorkers::Jobs::Analysis::Action.action_enqueue(payload, analysis_job.created_at.to_i.to_s)
 
       # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
       self.queue_id = result
     rescue StandardError => e
-      # Note: exception used to be swallowed. We might need better error handling here later on.
+      # NOTE: exception used to be swallowed. We might need better error handling here later on.
       Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
       raise
     end
@@ -383,16 +381,16 @@ class AnalysisJobsItem < ApplicationRecord
 
     # merge base
     payload.merge({
-                    command_format: command_format,
+      command_format: command_format,
 
-                    config: config_string,
-                    job_id: job_id,
+      config: config_string,
+      job_id: job_id,
 
-                    uuid: audio_recording.uuid,
-                    id: audio_recording.id,
-                    datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-                    original_format: audio_recording.original_format_calculated
-                  })
+      uuid: audio_recording.uuid,
+      id: audio_recording.id,
+      datetime_with_offset: audio_recording.recorded_date.iso8601(3),
+      original_format: audio_recording.original_format_calculated
+    })
   end
 
   def is_new_when_created

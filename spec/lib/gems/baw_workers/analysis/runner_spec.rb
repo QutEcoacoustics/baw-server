@@ -1,18 +1,16 @@
 # frozen_string_literal: true
 
-
-
-describe BawWorkers::Analysis::Runner do
+describe BawWorkers::Jobs::Analysis::Runner do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
-  before(:each) do
+  before do
     copy_test_programs
   end
 
   let(:runner) {
-    BawWorkers::Analysis::Runner.new(
+    BawWorkers::Jobs::Analysis::Runner.new(
       audio_original,
       analysis_cache,
       BawWorkers::Config.logger_worker,
@@ -21,7 +19,7 @@ describe BawWorkers::Analysis::Runner do
     )
   }
 
-  after(:each) do
+  after do
     FileUtils.rm_rf(Settings.paths.cached_analysis_jobs)
   end
 
@@ -56,8 +54,8 @@ describe BawWorkers::Analysis::Runner do
     prepared_opts = runner.prepare(analysis_params)
 
     # check started file exists
-    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Analysis::Runner::FILE_WORKER_STARTED)
-    expect(File.exist?(started_file)).to be_truthy
+    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Jobs::Analysis::Runner::FILE_WORKER_STARTED)
+    expect(File).to exist(started_file)
 
     result = runner.execute(prepared_opts, analysis_params)
 
@@ -76,7 +74,7 @@ describe BawWorkers::Analysis::Runner do
     expect(result_string).to include(expected_5)
     expect(result_string).to include(expected_6)
 
-    expect(result).to_not be_blank
+    expect(result).not_to be_blank
 
     result_json = result.to_json
     expect(result_json).to include('_analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
@@ -112,17 +110,18 @@ describe BawWorkers::Analysis::Runner do
     prepared_opts = runner.prepare(analysis_params)
 
     # check started file exists
-    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Analysis::Runner::FILE_WORKER_STARTED)
-    expect(File.exist?(started_file)).to be_truthy
+    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Jobs::Analysis::Runner::FILE_WORKER_STARTED)
+    expect(File).to exist(started_file)
 
     runner.execute(prepared_opts, analysis_params)
 
     # check started file does not exist
-    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Analysis::Runner::FILE_WORKER_STARTED)
-    expect(File.exist?(started_file)).to be_falsey
+    started_file = File.join(prepared_opts[:dir_output], BawWorkers::Jobs::Analysis::Runner::FILE_WORKER_STARTED)
+    expect(File).not_to exist(started_file)
 
     # check executable failure file exists
-    executable_fail_file = File.join(prepared_opts[:dir_output], BawWorkers::Analysis::Runner::FILE_EXECUTABLE_FAILURE)
-    expect(File.exist?(executable_fail_file)).to be_truthy
+    executable_fail_file = File.join(prepared_opts[:dir_output],
+                                     BawWorkers::Jobs::Analysis::Runner::FILE_EXECUTABLE_FAILURE)
+    expect(File).to exist(executable_fail_file)
   end
 end

@@ -103,26 +103,26 @@ namespace :baw do
       desc 'Enqueue a file to analyse using Resque'
       task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Analysis::Action.action_enqueue_rake(args.analysis_config_file)
+        BawWorkers::Jobs::Analysis::Action.action_enqueue_rake(args.analysis_config_file)
       end
 
       desc 'Enqueue files to analyse using Resque from a csv file'
       task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
+        BawWorkers::Jobs::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
     end
     namespace :standalone do
       desc 'Directly analyse an audio file'
       task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Analysis::Action.action_perform_rake(args.analysis_config_file)
+        BawWorkers::Jobs::Analysis::Action.action_perform_rake(args.analysis_config_file)
       end
 
       desc 'Directly analyse audio files from csv file'
       task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Analysis::Action.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
+        BawWorkers::Jobs::Analysis::Action.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
     end
   end
@@ -134,7 +134,7 @@ namespace :baw do
         args.with_defaults(real_run: 'dry_run')
         is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
         init(settings_file: args.settings_file)
-        BawWorkers::AudioCheck::Action.action_enqueue_rake(args.csv_file, is_real_run)
+        BawWorkers::Jobs::AudioCheck::Action.action_enqueue_rake(args.csv_file, is_real_run)
       end
     end
     namespace :standalone do
@@ -143,13 +143,13 @@ namespace :baw do
         args.with_defaults(real_run: 'dry_run')
         is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
         init(settings_file: args.settings_file)
-        BawWorkers::AudioCheck::Action.action_perform_rake(args.csv_file, is_real_run)
+        BawWorkers::Jobs::AudioCheck::Action.action_perform_rake(args.csv_file, is_real_run)
       end
 
       desc 'Test reading csv files'
       task :test_csv, [:audio_recordings_csv, :hash_csv, :result_csv] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::AudioCheck::CsvHelper.write_audio_recordings_csv(
+        BawWorkers::Jobs::AudioCheck::CsvHelper.write_audio_recordings_csv(
           args.audio_recordings_csv, args.hash_csv, args.result_csv
         )
       end
@@ -157,13 +157,13 @@ namespace :baw do
       desc 'Extract CSV lines from a log file'
       task :extract_csv_from_log, [:log_file, :output_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::AudioCheck::CsvHelper.extract_csv_logs(args.log_file, args.output_file)
+        BawWorkers::Jobs::AudioCheck::CsvHelper.extract_csv_logs(args.log_file, args.output_file)
       end
 
       desc 'Confirm database and audio files match'
       task :compare, [:settings_file, :csv_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::AudioCheck::CsvHelper.compare_csv_db(args.csv_file)
+        BawWorkers::Jobs::AudioCheck::CsvHelper.compare_csv_db(args.csv_file)
       end
     end
   end
@@ -176,7 +176,7 @@ namespace :baw do
         is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
         copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
         init(settings_file: args.settings_file)
-        BawWorkers::Harvest::Action.action_enqueue_rake(args.harvest_dir, is_real_run, copy_on_success)
+        BawWorkers::Jobs::Harvest::Action.action_enqueue_rake(args.harvest_dir, is_real_run, copy_on_success)
       end
     end
     namespace :standalone do
@@ -187,7 +187,7 @@ namespace :baw do
         copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
 
         init(settings_file: args.settings_file)
-        BawWorkers::Harvest::Action.action_perform_rake(args.harvest_dir, is_real_run, copy_on_success)
+        BawWorkers::Jobs::Harvest::Action.action_perform_rake(args.harvest_dir, is_real_run, copy_on_success)
       end
     end
   end

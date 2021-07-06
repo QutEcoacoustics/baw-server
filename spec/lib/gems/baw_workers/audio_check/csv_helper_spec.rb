@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-
-
-describe BawWorkers::AudioCheck::CsvHelper do
+describe BawWorkers::Jobs::AudioCheck::CsvHelper do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
@@ -65,7 +63,7 @@ describe BawWorkers::AudioCheck::CsvHelper do
     FileUtils.touch(additional_file)
     expected_files_without_db_entry.push(File.basename(additional_file).downcase)
 
-    result = BawWorkers::AudioCheck::CsvHelper.compare_csv_db(csv_file)
+    result = BawWorkers::Jobs::AudioCheck::CsvHelper.compare_csv_db(csv_file)
 
     expect(result[:intersection].size).to eq(21)
     expect(result[:intersection]).to match_array(expected_intersection)

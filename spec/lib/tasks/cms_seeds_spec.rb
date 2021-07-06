@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
-
-require(Rails.root / 'spec' / 'helpers' / 'shared-context' / 'rake_context')
+require(Rails.root / 'spec' / 'helpers' / 'shared_context' / 'rake_context')
 
 describe 'baw:import_cms' do
   include_context 'rake_spec_context'
 
-  its(:prerequisites) { should include('db:seed') }
+  its(:prerequisites) { is_expected.to include('db:seed') }
 end
 
 describe 'db:seed' do
   include_context 'rake_spec_context'
 
-  its(:actions) { should have_at_least(2).items }
+  its(:actions) { is_expected.to have_at_least(2).items }
 
   # we can't actually test that the action is the one we expect
   # best we can do is check which file the proc came from

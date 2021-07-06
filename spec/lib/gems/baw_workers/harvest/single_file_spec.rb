@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-
-
-describe BawWorkers::Harvest::SingleFile do
+describe BawWorkers::Jobs::Harvest::SingleFile do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
@@ -12,7 +10,7 @@ describe BawWorkers::Harvest::SingleFile do
   let(:api_comm) { BawWorkers::Config.api_communicator }
 
   let(:gather_files) {
-    BawWorkers::Harvest::GatherFiles.new(
+    BawWorkers::Jobs::Harvest::GatherFiles.new(
       BawWorkers::Config.logger_worker,
       file_info,
       Settings.available_formats.audio + Settings.available_formats.audio_decode_only,
@@ -21,7 +19,7 @@ describe BawWorkers::Harvest::SingleFile do
   }
 
   let(:single_file) {
-    BawWorkers::Harvest::SingleFile.new(
+    BawWorkers::Jobs::Harvest::SingleFile.new(
       BawWorkers::Config.logger_worker,
       file_info,
       api_comm,
@@ -34,7 +32,7 @@ describe BawWorkers::Harvest::SingleFile do
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
 
   context 'entire process' do
-    it 'should succeed with valid ogg file and settings' do
+    it 'succeeds with valid ogg file and settings' do
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
@@ -61,7 +59,8 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                               'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
@@ -154,17 +153,17 @@ describe BawWorkers::Harvest::SingleFile do
       stub_ready_status.should have_been_made.once
 
       # ensure file is moved to correct location
-      expect(File.exist?(possible_paths[1])).to be_truthy
+      expect(File).to exist(possible_paths[1])
 
       # ensure source file is renamed to *.completed
-      expect(File.exist?(dest_audio_file)).to be_falsey
-      expect(File.exist?(dest_audio_file + '.completed')).to be_truthy
+      expect(File).not_to exist(dest_audio_file)
+      expect(File).to exist("#{dest_audio_file}.completed")
 
       # clean up
       FileUtils.rm_rf(sub_folder)
     end
 
-    it 'should succeed with valid wac file and settings' do
+    it 'succeeds with valid wac file and settings' do
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
@@ -191,7 +190,8 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                               'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
@@ -284,11 +284,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_ready_status.should have_been_made.once
 
       # ensure file is moved to correct location
-      expect(File.exist?(possible_paths[1])).to be_truthy
+      expect(File).to exist(possible_paths[1])
 
       # ensure source file is renamed to *.completed
-      expect(File.exist?(dest_audio_file)).to be_falsey
-      expect(File.exist?(dest_audio_file + '.completed')).to be_truthy
+      expect(File).not_to exist(dest_audio_file)
+      expect(File).to exist("#{dest_audio_file}.completed")
 
       # clean up
       FileUtils.rm_rf(sub_folder)
@@ -323,7 +323,8 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                               'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
@@ -394,11 +395,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_create.should have_been_made.once
 
       # ensure file was not moved to new location
-      expect(File.exist?(possible_paths[1])).to be_falsy
+      expect(File).not_to exist(possible_paths[1])
 
       # ensure source file is renamed to *.error_duration
-      expect(File.exist?(dest_audio_file)).to be_falsey
-      expect(File.exist?(dest_audio_file + '.error_duration')).to be_truthy
+      expect(File).not_to exist(dest_audio_file)
+      expect(File).to exist("#{dest_audio_file}.error_duration")
 
       # clean up
       FileUtils.rm_rf(sub_folder)
@@ -433,14 +434,15 @@ describe BawWorkers::Harvest::SingleFile do
       file_info_hash = gather_files.run(dest_audio_file)
       expect {
         single_file.run(file_info_hash[0], true)
-      }.to raise_error(BawAudioTools::Exceptions::FileEmptyError, /File has no content \(length of 0 bytes\) renamed to/)
+      }.to raise_error(BawAudioTools::Exceptions::FileEmptyError,
+                       /File has no content \(length of 0 bytes\) renamed to/)
 
       # ensure file was not moved to new location
-      expect(File.exist?(possible_paths[1])).to be_falsey
+      expect(File).not_to exist(possible_paths[1])
 
       # ensure source file is renamed to *.error_empty
-      expect(File.exist?(dest_audio_file)).to be_falsey
-      expect(File.exist?(dest_audio_file + '.error_empty')).to be_truthy
+      expect(File).not_to exist(dest_audio_file)
+      expect(File).to exist("#{dest_audio_file}.error_empty")
 
       # clean up
       FileUtils.rm_rf(sub_folder)
