@@ -139,7 +139,7 @@ module BawWorkers
 
         # Set up standard redis wrapper.
         @redis_communicator = BawWorkers::RedisCommunicator.new(
-          BawWorkers::Config.logger_worker,
+          SemanticLogger[RedisCommunicator],
           communicator_redis,
           # options go here if defined
           {

@@ -5,6 +5,8 @@ class MediaPoll
   HEADER_KEY_RESPONSE_START = 'X-Media-Response-Start'
 
   HEADER_VALUE_RESPONSE_CACHE = 'Cache'
+  HEADER_VALUE_RESPONSE_REMOTE_CACHE = 'Remote+Fast Cache'
+
   HEADER_VALUE_RESPONSE_REMOTE = 'Generated Remotely'
   HEADER_VALUE_RESPONSE_LOCAL = 'Generated Locally'
 
@@ -105,14 +107,31 @@ class MediaPoll
       status
     end
 
-    def poll_resque_and_media(expected_files, _media_type, _media_request_params, wait_max, poll_delay = 0.5, job_id:)
+    def poll_resque_and_media(expected_files, _media_type, _media_request_params, wait_max, job_id:, poll_delay: 0.4)
       poll_locations = prepare_locations(expected_files)
       existing_files = []
-
       resque_status = nil
+
+      should_check_redis_cache = Settings.actions.media.cache_to_redis
+      in_memory_file = nil
+      redis_cache_key = nil
+
+      if should_check_redis_cache
+        redis_cache_key = Pathname(expected_files.first).basename.to_s
+        in_memory_file = BawWorkers::IO.new_binary_string_io(capacity: 200_000)
+      end
+      Rails.logger.debug { { message: 'fast cache', should_check_redis_cache: should_check_redis_cache } }
 
       poll_result = poll(wait_max, poll_delay) {
         resque_status = BawWorkers::ActiveJob::Status::Persistance.get(job_id)
+
+        # check redis cache
+        if should_check_redis_cache
+          result = BawWorkers::Config.redis_communicator.get_file(redis_cache_key, in_memory_file)
+          # stop the poll loop and send back the file
+          next true if result&.positive?
+        end
+
         existing_files = get_existing_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
@@ -142,6 +161,7 @@ class MediaPoll
       end
 
       {
+        in_memory_file: in_memory_file&.string,
         existing_files: existing_files,
         resque_status: resque_status
       }

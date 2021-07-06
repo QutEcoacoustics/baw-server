@@ -4,7 +4,7 @@ module BawWorkers
   module Jobs
     module Media
       # Cuts audio files and generates spectrograms.
-      class SpectrogramJob < BawWorkers::Jobs::ApplicationJob
+      class SpectrogramJob < MediaJob
         queue_as Settings.actions.media.queue
         perform_expects ::BawWorkers::Models::SpectrogramRequest
 
@@ -34,21 +34,6 @@ module BawWorkers
 
         private
 
-        # Get helper class instance.
-        # @return [BawWorkers::Media::WorkHelper]
-        def action_helper
-          BawWorkers::Jobs::Media::WorkHelper.new(
-            BawWorkers::Config.audio_helper,
-            BawWorkers::Config.spectrogram_helper,
-            BawWorkers::Config.original_audio_helper,
-            BawWorkers::Config.audio_cache_helper,
-            BawWorkers::Config.spectrogram_cache_helper,
-            BawWorkers::Config.file_info,
-            logger,
-            BawWorkers::Config.temp_dir
-          )
-        end
-
         # Create specified media type by applying media request params.
         # @param [Symbol] media_type
         # @param [::BawWorkers::Models::SpectrogramRequest] media_request_params
@@ -60,8 +45,9 @@ module BawWorkers
 
           target_existing_paths = action_helper.generate_spectrogram(params_sym)
 
+          result = redis_cache_upload(target_existing_paths)
           logger.info do
-            "Created cache files: #{target_existing_paths}."
+            "Created cache files: #{target_existing_paths}. Uploaded to redis?: #{result}"
           end
 
           target_existing_paths

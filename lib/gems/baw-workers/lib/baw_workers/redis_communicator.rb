@@ -72,6 +72,15 @@ module BawWorkers
     end
 
     # @param [String] key
+    # @param [Hash] opts
+    # @return [Boolean]
+    def exists?(key, opts = {})
+      key = add_namespace(key) unless opts[:no_namespace]
+
+      @redis.exists?(key)
+    end
+
+    # @param [String] key
     # @return [Hash]
     def get(key, opts = {})
       key = add_namespace(key) unless opts[:no_namespace]
@@ -90,11 +99,105 @@ module BawWorkers
 
       opts[:key] = key
 
-      set_opts = {}
-      set_opts[:ex] = opts[:expire_seconds] if opts[:expire_seconds]
-      result = @redis.set(key, encode(value), set_opts)
+      result = @redis.set(key, encode(value), ex: opts[:expire_seconds])
 
       boolify(result)
+    end
+
+    FILE_EXPIRE_SECONDS = 60
+    BINARY_ENCODING = Encoding::ASCII_8BIT
+
+    def set_file(key, path)
+      raise ArgumentError, 'key must not be blank' if key.blank?
+
+      path = Pathname(path)
+      raise ArgumentError, 'path does not exist' unless path.exist?
+
+      # sanitize the name
+      key = safe_file_name(key)
+      key = add_namespace(key)
+
+      result = logger.measure_debug('storing large binary key', payload: { key: key, size: path.size }) {
+        @redis.set(
+          key.force_encoding(BINARY_ENCODING),
+          File.binread(path),
+          ex: FILE_EXPIRE_SECONDS
+        )
+      }
+
+      boolify(result)
+    end
+
+    # practically the same as exist but applies safe file name transform
+    # to the key parameter first.
+    def exists_file?(key)
+      # sanitize the name
+      key = safe_file_name(key)
+      key = add_namespace(key)
+
+      redis.exists?(key)
+    end
+
+    def delete_file(key)
+      # sanitize the name
+      key = safe_file_name(key)
+      key = add_namespace(key)
+
+      redis.del(key) == 1
+    end
+
+    # @return [Integer] the number of bytes written
+    def get_file(key, dest)
+      key = safe_file_name(key)
+      key = add_namespace(key)
+
+      # delay opening IO until we've fetched a key, otherwise there's a chance we could
+      # truncate a file before we know if the fetch was successful
+      io = nil
+      if BawWorkers::IO.io_ish?(dest)
+        open_io = -> { dest }
+      else
+        dest = Pathname(dest)
+        # make containing directory
+        dest.parent.mkpath
+
+        logger.warn("Overwriting file at #{dest}") if dest.exist?
+
+        open_io = -> { File.open(dest, 'wb:ASCII-8BIT') }
+      end
+
+      begin
+        result = logger.measure_debug('fetching large binary key', payload: { key: key, dest: dest.to_s }) {
+          # i say binary response, but it's just a string
+          binary_response = @redis.get(key.force_encoding(BINARY_ENCODING))
+          return nil if binary_response.nil?
+
+          binary_response.force_encoding(BINARY_ENCODING)
+
+          # open, write, continue
+          io = open_io.call
+          io.binmode
+          io.write(binary_response)
+        }
+
+        logger.warn('io must have binary encoding') unless io.external_encoding == BINARY_ENCODING
+
+        result
+      ensure
+        io&.close
+      end
+    end
+
+    # Get the time to live (in seconds) for a key.
+    #
+    # @param [String] key
+    # @return [Integer] remaining time to live in seconds.
+    #
+    #     - The command returns -2 if the key does not exist.
+    #     - The command returns -1 if the key exists but has no associated expire.
+    def ttl(key)
+      key = add_namespace(key)
+      @redis.ttl(key)
     end
 
     # Checks to see if we can contact redis
@@ -131,6 +234,10 @@ module BawWorkers
     end
 
     private
+
+    def safe_file_name(key)
+      key.to_s.strip.tr("\u{202E}%$|*[]:;/\t\r\n\\ ", '-')
+    end
 
     def boolify(value)
       value.is_a?(String) && value == 'OK'

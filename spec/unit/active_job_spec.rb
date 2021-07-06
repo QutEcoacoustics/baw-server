@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-
-
 describe 'Active Job' do
   include ActiveJob::TestHelper
 
   # #resque_log_level :debug
 
-  it 'should be using the resque adapter by default' do
+  it 'is using the resque adapter by default' do
     logger.info('test!')
     logger.debug('test!')
     expect(ActiveJob::Base.queue_adapter).to be_a(ActiveJob::QueueAdapters::ResqueAdapter)

@@ -54,6 +54,7 @@ actions:
   media:
     queue: media_<%= BawApp.env %>
     dry_run: false
+    cache_to_redis: true
   audio_check:
     queue: maintenance_<%= BawApp.env %>
   active_storage:

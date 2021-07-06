@@ -151,6 +151,12 @@ describe BawWorkers::Jobs::Media::AudioJob do
       expect(File).to exist(*expected_paths)
 
       expect(ActionMailer::Base.deliveries.count).to eq(0)
+
+      # expect file to be in redis
+      expected_paths.each do |path|
+        path = Pathname(path)
+        expect(BawWorkers::Config.redis_communicator.exists_file?(path.basename)).to eq true
+      end
     end
   end
 end

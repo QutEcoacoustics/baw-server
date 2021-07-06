@@ -12,7 +12,7 @@ module BawWorkers
     # @return [Hash] information about an existing file
     def audio_info(source)
       # based on how harvester gets file hash.
-      generated_file_hash = 'SHA256::' + generate_hash(source).hexdigest
+      generated_file_hash = "SHA256::#{generate_hash(source).hexdigest}"
 
       # integrity
       integrity_check = @audio.integrity_check(source)
@@ -147,7 +147,8 @@ module BawWorkers
         result[:uploader_id] = uploader_id.to_i
 
         result[:utc_offset] = 'Z'
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, 'Z').iso8601(3)
+        result[:recorded_date] =
+          DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, 'Z').iso8601(3)
         result[:prefix] = ''
         result[:separator] = '_'
         result[:suffix] = ''
@@ -172,11 +173,14 @@ module BawWorkers
         }
         available_offset = offset || utc_offset
         if available_offset.blank?
-          raise BawWorkers::Exceptions::HarvesterConfigurationError, 'No UTC offset provided and file name did not contain a utc offset.'
+          raise BawWorkers::Exceptions::HarvesterConfigurationError,
+                'No UTC offset provided and file name did not contain a utc offset.'
         end
 
         result[:utc_offset] = available_offset
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset]).iso8601(3)
+        result[:recorded_date] =
+          DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i,
+                       result[:utc_offset]).iso8601(3)
         result[:prefix] = prefix.blank? ? '' : prefix
         result[:separator] = separator.blank? ? '' : separator
         result[:suffix] = suffix.blank? ? '' : suffix

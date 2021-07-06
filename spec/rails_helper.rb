@@ -93,6 +93,7 @@ require 'database_cleaner/redis'
 require 'super_diff/rspec-rails'
 
 require 'helpers/misc_helper'
+require 'helpers/temp_file_helper'
 require 'fixtures/fixtures'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: [
@@ -260,20 +261,27 @@ RSpec.configure do |config|
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
-  config.before do |example|
+  config.before do |_example|
     # ensure any email is cleared
     ActionMailer::Base.deliveries.clear
 
     # start database cleaner
     DatabaseCleaner.start
-    example_description = example.description
-    logger.info "\n\n#{example_description}\n#{'-' * example_description.length}"
   end
 
   config.after do
     DatabaseCleaner.clean
 
     Warden.test_reset!
+  end
+
+  example_logger = SemanticLogger[RSpec]
+  config.around do |example|
+    example_description = example.description
+    example_logger.info("BEGIN #{example_description}\n")
+    example_logger.measure_debug('END') {
+      example.run
+    }
   end
 
   # enable options requests in feature tests
