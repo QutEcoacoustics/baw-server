@@ -38,7 +38,10 @@ module BawWorkers
 
     # Attach a logger to this multi logger.
     def attach(logger)
-      raise ArgumentError, "Must be a Logger, given #{logger.inspect}." unless logger.is_a?(::Logger)
+      unless logger.is_a?(::Logger) || logger.is_a?(SemanticLogger::Logger)
+        raise ArgumentError,
+              "Must be a Logger, given #{logger.inspect}."
+      end
 
       logger.formatter = CustomFormatter.new if logger.respond_to?(:formatter=)
       @loggers.push(logger)
@@ -97,7 +100,7 @@ module BawWorkers
     def close
       @loggers.each do |logger|
         # Why can't this just call logger.close ?
-        logger.instance_eval('@logdev')&.close
+        logger.instance_eval('@logdev', __FILE__, __LINE__)&.close
       end
     end
 
@@ -174,7 +177,9 @@ module BawWorkers
 
     # Set formatter on all contained loggers.
     def formatter=(value)
-      raise 'formatter should never be set to a QuietFormatter' if BawApp.dev_or_test? && value.is_a?(Resque::QuietFormatter)
+      if BawApp.dev_or_test? && value.is_a?(Resque::QuietFormatter)
+        raise 'formatter should never be set to a QuietFormatter'
+      end
 
       @loggers.each do |logger|
         logger.formatter = value if logger.respond_to?(:formatter=)

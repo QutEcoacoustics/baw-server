@@ -56,8 +56,10 @@ class SavedSearch < ApplicationRecord
 
                        saved_search_hash = {}
 
-                       saved_search_hash[:project_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
-                       saved_search_hash[:analysis_job_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
+                       saved_search_hash[:project_ids] =
+                         fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
+                       saved_search_hash[:analysis_job_ids] =
+                         fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
                        saved_search_hash.merge!(item.render_markdown_for_api_for(:description))
                        [item, saved_search_hash]
                      },

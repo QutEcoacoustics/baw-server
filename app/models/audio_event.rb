@@ -38,7 +38,7 @@ class AudioEvent < ApplicationRecord
 
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
-  has_many :taggings, inverse_of: :audio_event
+  has_many :taggings, inverse_of: :audio_event, strict_loading: false
   has_many :tags, through: :taggings
 
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
@@ -75,8 +75,12 @@ class AudioEvent < ApplicationRecord
   scope :end_before, ->(offset_seconds) { where('end_time_seconds < ?', offset_seconds) }
 
   # postgres-specific
-  scope :select_start_absolute, -> { select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute') }
-  scope :select_end_absolute, -> { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
+  scope :select_start_absolute, lambda {
+                                  select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute')
+                                }
+  scope :select_end_absolute, lambda {
+                                select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute')
+                              }
 
   # Define filter api settings
   def self.filter_settings
@@ -156,11 +160,11 @@ class AudioEvent < ApplicationRecord
   # @param [String] timezone_name
   # @return [Arel:SelectManager]
   def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
-    # Note: if other modifications are made to the default_scope (like acts_as_paranoid does),
+    # NOTE: if other modifications are made to the default_scope (like acts_as_paranoid does),
     # manually constructed queries like this need to be updated to match
     # (search for ':deleted_at' to find the relevant places)
 
-    # Note: tried using Arel from ActiveRecord
+    # NOTE: tried using Arel from ActiveRecord
     # e.g. AudioEvent.all.ast.cores[0].wheres
     # but was more trouble to use than directly constructing Arel
 
@@ -176,10 +180,11 @@ class AudioEvent < ApplicationRecord
     timezone_name = 'UTC' if timezone_name.blank?
     timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
     field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset.utc_offset)
-    field_suffix = "#{timezone_offset.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+', '')}".parameterize.underscore
+    field_suffix = "#{timezone_offset.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
+                                                                                         '')}".parameterize.underscore
 
     timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
-    format_offset = timezone_offset.utc_offset == 0 ? 'Z' : field_suffix_offset
+    format_offset = timezone_offset.utc_offset.zero? ? 'Z' : field_suffix_offset
 
     format_date = Arel::Nodes.build_quoted('YYYY-MM-DD')
     format_time = Arel::Nodes.build_quoted('HH24:MI:SS')
@@ -255,21 +260,31 @@ class AudioEvent < ApplicationRecord
         audio_events[:id].as('audio_event_id'),
         audio_recordings[:id].as('audio_recording_id'),
         audio_recordings[:uuid].as('audio_recording_uuid'),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_date).as("audio_recording_start_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_time).as("audio_recording_start_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_date).as("event_created_at_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_time).as("event_created_at_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+                                   format_date).as("audio_recording_start_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+                                   format_time).as("audio_recording_start_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+                                   format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+                                   format_date).as("event_created_at_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+                                   format_time).as("event_created_at_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+                                   format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
         projects_aggregate.as('projects'),
         sites[:id].as('site_id'),
         sites[:name].as('site_name'),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_date).as("event_start_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_time).as("event_start_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_iso8601).as("event_start_datetime_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+                                   format_date).as("event_start_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+                                   format_time).as("event_start_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+                                   format_iso8601).as("event_start_datetime_#{field_suffix}"),
         audio_events[:start_time_seconds].as('event_start_seconds'),
         audio_events[:end_time_seconds].as('event_end_seconds'),
-        infix_operation(:-, audio_events[:end_time_seconds], audio_events[:start_time_seconds]).as('event_duration_seconds'),
+        infix_operation(:-, audio_events[:end_time_seconds],
+                        audio_events[:start_time_seconds]).as('event_duration_seconds'),
         audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
         audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
         audio_events[:is_reference].as('is_reference'),
@@ -288,7 +303,7 @@ class AudioEvent < ApplicationRecord
         )
             .as('listen_url'),
         Arel::Nodes::SqlLiteral.new(
-          "'#{url_base}" + 'library/\' || "audio_recordings"."id" || \'/audio_events/\' || audio_events.id'
+          "'#{url_base}library/' || \"audio_recordings\".\"id\" || '/audio_events/' || audio_events.id"
         )
             .as('library_url')
       )
@@ -355,17 +370,14 @@ class AudioEvent < ApplicationRecord
   def set_tags
     # for each tagging, check if a tag with that text already exists
     # if one does, delete that tagging and add the existing tag
-
     tag_ids_to_add = []
-
     taggings.each do |tagging|
       tag = tagging.tag
       # ensure string comparison is case insensitive
       existing_tag = Tag.where('lower(text) = ?', tag.text.downcase).first
-
       next if existing_tag.blank?
 
-      #remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
+      # remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
       tags.each do |audio_event_tag|
         # The collection.delete method removes one or more objects from the collection by setting their foreign keys to NULL.
         # ensure string comparison is case insensitive
@@ -381,7 +393,8 @@ class AudioEvent < ApplicationRecord
 
     # add the tagging using the existing tag id
     tag_ids_to_add.each do |tag_id|
-      taggings << Tagging.new(tag_id: tag_id)
+      current = Tagging.new(tag_id: tag_id)
+      taggings << current
     end
   end
 

@@ -85,6 +85,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
       job2.refresh_status!
 
       expect(job1.status.status).to eq job2.status.status
+      clear_pending_jobs
     end
   end
 

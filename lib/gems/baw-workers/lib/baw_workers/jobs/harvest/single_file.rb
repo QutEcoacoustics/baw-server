@@ -139,7 +139,7 @@ module BawWorkers
           # only run this if harvest was successful
           if harvest_completed_successfully
             # enqueue task to run analysis
-            # BawWorkers::Jobs::Analysis::Action.
+            # BawWorkers::Jobs::Analysis::Job.
           end
 
           @logger.info(@class_name) { "Finished processing #{file_path}: #{audio_info_hash}" }

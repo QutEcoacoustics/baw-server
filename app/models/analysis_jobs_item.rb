@@ -333,8 +333,7 @@ class AnalysisJobsItem < ApplicationRecord
     error = nil
 
     begin
-      # the second argument groups all items in this job together so that their common payload is stored efficiently
-      result = BawWorkers::Jobs::Analysis::Action.action_enqueue(payload, analysis_job.created_at.to_i.to_s)
+      result = BawWorkers::Jobs::Analysis::Job.action_enqueue(payload)
 
       # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
       self.queue_id = result

@@ -11,8 +11,8 @@ module BawWorkers
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
-          settings = Settings.actions.dig(:template)
-          settings.nil? ? (NAME + '_default') : settings.queue
+          settings = Settings.actions[:template]
+          settings.nil? ? "#{NAME}_default" : settings.queue
         end
 
         # Perform work! Callstack: Resque->ActionBase::perform->Action::action_perform.
@@ -30,7 +30,7 @@ module BawWorkers
         # @param [Hash] template_params - the payload
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue(template_params)
+        def self.action_enqueue(template_params)
           # call the resque-status create method
           result = BawWorkers::Template::Action.create(template_params: template_params)
 
@@ -40,18 +40,6 @@ module BawWorkers
 
           result
         end
-      end
-
-      #
-      # Instance methods
-      #
-
-      # Get the keys for the action_perform options hash.
-      # order is important
-      # List of keys to pull out of options/payload hash.
-      # @return [Array<String>]
-      def perform_options_keys
-        ['template_params']
       end
 
       # Produces a sensible name for this payload.

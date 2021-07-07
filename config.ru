@@ -23,4 +23,4 @@ puts 'baw-workbench: running rails server...' if is_rails_server
 puts 'baw-workbench: booting passenger and web app...' unless is_rails_server
 
 require "#{__dir__}/config/environment"
-run Rails.application
+Rails.application.load_server

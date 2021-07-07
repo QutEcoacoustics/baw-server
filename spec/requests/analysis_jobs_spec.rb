@@ -47,7 +47,7 @@ describe 'Analysis Jobs' do
 
   before(:all) do
     @default_queue = Settings.actions.analysis.queue
-    @manual_queue = "#{@default_queue}_manual_tick"
+    @manual_queue = @default_queue
     @queue_name = @manual_queue
 
     # cleanup resque queues before each test
@@ -69,11 +69,6 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = writer_token
 
     @analysis_job_url = '/analysis_jobs'
-
-    # we want to control the execution of jobs for this set of tests,
-    # so change the queue name so the test worker does not
-    # automatically process the jobs
-    allow(BawWorkers::Jobs::Analysis::Action).to receive(:queue).and_return(@manual_queue)
   end
 
   after do |example|

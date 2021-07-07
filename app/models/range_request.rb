@@ -114,35 +114,45 @@ class RangeRequest
   # @param [IO] output_io
   def write_content_to_output(in_buffer, info, output_io)
     StringIO.open(in_buffer, 'rb') { |file_io| # rb = readonly binary
-      info[:range_start_bytes].size.times do |index|
-        range_start = info[:range_start_bytes][index].to_i
-        range_end = info[:range_end_bytes][index].to_i
+      write_io_content_to_output(file_io, info, output_io)
+    }
+  end
 
-        file_io.seek(range_start, IO::SEEK_SET)
+  def write_file_content_to_output(path, info, output_io)
+    File.open(path, 'rb') { |file_io| # rb = readonly binary
+      write_io_content_to_output(file_io, info, output_io)
+    }
+  end
 
-        remaining = range_end - range_start + CONVERT_INDEX_TO_LENGTH
+  def write_io_content_to_output(input_io, info, output_io)
+    info[:range_start_bytes].size.times do |index|
+      range_start = info[:range_start_bytes][index].to_i
+      range_end = info[:range_end_bytes][index].to_i
 
-        if info[:is_multipart]
-          output_io.write("--#{MULTIPART_BOUNDARY}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_RANGE}: #{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
-        end
+      input_io.seek(range_start, IO::SEEK_SET)
 
-        while remaining.positive?
-          # check if client is connected
+      remaining = range_end - range_start + CONVERT_INDEX_TO_LENGTH
 
-          # calculate check size
-          chunk_size = @write_buffer_size < remaining ? @write_buffer_size : remaining
-          data = file_io.read(chunk_size)
-          output_io.write(data)
-
-          remaining -= chunk_size
-          output_io.flush
-        end
+      if info[:is_multipart]
+        output_io.write("--#{MULTIPART_BOUNDARY}\r\n")
+        output_io.write("#{HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
+        output_io.write("#{HTTP_HEADER_CONTENT_RANGE}: #{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
       end
 
-      # io is closed by ruby block
-    }
+      while remaining.positive?
+        # check if client is connected
+
+        # calculate check size
+        chunk_size = @write_buffer_size < remaining ? @write_buffer_size : remaining
+        data = input_io.read(chunk_size)
+        output_io.write(data)
+
+        remaining -= chunk_size
+        output_io.flush
+      end
+    end
+
+    # io is closed by ruby block
   end
 
   private

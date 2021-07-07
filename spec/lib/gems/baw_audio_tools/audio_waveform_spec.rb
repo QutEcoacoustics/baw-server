@@ -24,7 +24,7 @@ describe BawAudioTools::AudioWaveform do
       cmd = waveform.command(source, nil, target)
 
       expect(cmd).to include(
-        "ffmpeg -nostdin -i '#{source}' -filter_complex 'showwavespic=scale=lin:colors=#FF932900:size=1800x280' '#{target}'"
+        "ffmpeg -nostdin -i '#{source}' -filter_complex 'showwavespic=scale=lin:colors=#FF9329FF:size=1800x280' '#{target}'"
       )
     end
 

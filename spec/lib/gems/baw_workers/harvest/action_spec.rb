@@ -51,11 +51,11 @@ describe BawWorkers::Jobs::Harvest::Action do
   end
 
   it 'works on the harvest queue' do
-    expect(Resque.queue_from_class(BawWorkers::Jobs::Harvest::Action)).to eq(queue_name)
+    expect((BawWorkers::Jobs::Harvest::Action.queue_name)).to eq(queue_name)
   end
 
   it 'can enqueue' do
-    result = BawWorkers::Jobs::Harvest::Action.action_enqueue(test_harvest_request_params)
+    result = BawWorkers::Jobs::Harvest::Action.perform_later!(test_harvest_request_params)
     expect(Resque.size(queue_name)).to eq(1)
 
     actual = Resque.peek(queue_name)
@@ -65,7 +65,8 @@ describe BawWorkers::Jobs::Harvest::Action do
   it 'has a sensible name' do
     allow_any_instance_of(BawWorkers::Jobs::Harvest::SingleFile).to receive(:run).and_return(['/tmp/a_fake_file_mock'])
 
-    unique_key = BawWorkers::Jobs::Harvest::Action.action_enqueue(test_harvest_request_params)
+    job = BawWorkers::Jobs::Harvest::Action.perform_later!(test_harvest_request_params)
+    unique_key = job.job_id
 
     was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Harvest::Action.queue)
     status = BawWorkers::ResqueApi.status_by_key(unique_key)

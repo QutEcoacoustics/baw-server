@@ -111,7 +111,7 @@ module BawWorkers
         # @return [String] An unique key for the job (a UUID) if enqueuing was successful.
         # @param [String] invariant_group_key - a token used to group invariant payloads. Must be provided for partial
         # payloads to work. Must be common to all payloads in a group.
-        def action_enqueue(analysis_params)
+        def self.action_enqueue(analysis_params)
           analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalise_opts(analysis_params)
 
           result = BawWorkers::Jobs::Analysis::Job.perform_later!(analysis_params: analysis_params_sym)
@@ -125,7 +125,7 @@ module BawWorkers
         # @param [String] single_file_config
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue_rake(single_file_config)
+        def self.action_enqueue_rake(single_file_config)
           path = BawWorkers::Validation.normalise_file(single_file_config)
           config = YAML.load_file(path)
           BawWorkers::Jobs::Analysis::Job.perform_later!(config)
@@ -137,7 +137,7 @@ module BawWorkers
         # @param [String] command_file
         # @return [<Array<Boolean>] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue_rake_csv(csv_file, config_file, command_file)
+        def self.action_enqueue_rake_csv(csv_file, config_file, command_file)
           payloads = action_payload.from_csv(csv_file, config_file, command_file)
 
           results = []
@@ -196,20 +196,17 @@ module BawWorkers
           :successful
         end
 
-        #
-        # Instance methods
-        #
-
-        def perform_options_keys
-          ['analysis_params']
-        end
-
         # Produces a sensible name for this payload.
         # Should be unique but does not need to be. Has no operational effect.
         # This value is only used when the status is updated by resque:status.
         def name
           ap = @options['analysis_params']
           "Analysis for: #{ap['id']}, job=#{ap['job_id']}"
+        end
+
+        def create_job_id
+          # duplicate jobs should be detected
+          ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'analysis_job')
         end
       end
     end

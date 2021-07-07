@@ -7,9 +7,9 @@ class UserAccountsController < ApplicationController
   def index
     do_authorize_class
 
-    order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
+    order = Arel.sql('CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
-ELSE last_sign_in_at END DESC'
+ELSE last_sign_in_at END DESC')
     @users = User.order(order).page(params[:page])
 
     respond_to do |format|
@@ -157,7 +157,9 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_annotations = Access::ByUserModified.audio_events(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
+    @user_annotations = Access::ByUserModified.audio_events(@user).includes(audio_recording: [:site]).references(
+      :audio_recordings, :sites
+    )
                                               .order('audio_events.updated_at DESC')
                                               .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|

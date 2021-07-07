@@ -50,7 +50,7 @@ describe BawWorkers::Jobs::Analysis::Job do
 
   let(:expected_payload) {
     {
-      'class' => 'BawWorkers::Jobs::Analysis::Action',
+      'class' => 'BawWorkers::Jobs::Analysis::Job',
       'args' => [
         analysis_params_id,
         {
@@ -75,28 +75,28 @@ describe BawWorkers::Jobs::Analysis::Job do
 
   context 'queues' do
     it 'checks we\'re using a manual queue' do
-      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Action)).to end_with('_manual_tick')
+      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Job)).to end_with('_manual_tick')
     end
 
     it 'works on the analysis queue' do
-      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Action)).to eq(queue_name)
+      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Job)).to eq(queue_name)
     end
 
     it 'can enqueue' do
-      result = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      result = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
 
       actual = Resque.peek(queue_name)
     end
 
     it 'has a sensible name' do
-      allow(BawWorkers::Jobs::Analysis::Action).to receive(:action_perform).and_return(mock: 'a_fake_mock_result')
+      allow(BawWorkers::Jobs::Analysis::Job).to receive(:action_perform).and_return(mock: 'a_fake_mock_result')
 
-      unique_key = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      unique_key = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
 
       expect(unique_key).not_to eq(''), 'enqueuing not successful'
 
-      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
 
       expect(was_run).to be true
 
@@ -108,27 +108,27 @@ describe BawWorkers::Jobs::Analysis::Job do
 
     it 'does not enqueue the same payload into the same queue more than once' do
       expect(Resque.size(queue_name)).to eq(0)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(false)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(false)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
 
-      result1 = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to be_a(String)
       expect(result1.size).to eq(32)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      result2 = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      result2 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result2).to eq(nil)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      result3 = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      result3 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result3).to eq(nil)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
       actual = Resque.peek(queue_name)
       expect(actual).to include(expected_payload)
@@ -141,22 +141,22 @@ describe BawWorkers::Jobs::Analysis::Job do
 
     it 'can retrieve the job' do
       expect(Resque.size(queue_name)).to eq(0)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(false)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(false)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
 
-      result1 = BawWorkers::Jobs::Analysis::Action.action_enqueue(analysis_params)
+      result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to be_a(String)
       expect(result1.size).to eq(32)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Jobs::Analysis::Action, analysis_query)
+      found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Jobs::Analysis::Job, analysis_query)
 
       status = BawWorkers::ResqueApi.status_by_key(job_id) # TODO: broken
 
       expect(found.size).to eq(1)
-      expect(found[0]['class']).to eq(BawWorkers::Jobs::Analysis::Action.to_s)
+      expect(found[0]['class']).to eq(BawWorkers::Jobs::Analysis::Job.to_s)
       expect(found[0]['queue']).to eq(queue_name)
       expect(found[0]['args'].size).to eq(2)
       expect(found[0]['args'][0]).to eq(job_id)
@@ -233,7 +233,7 @@ describe BawWorkers::Jobs::Analysis::Job do
          .to_return(status: 200, body: '', headers: {})
 
     # Run analysis
-    result = BawWorkers::Jobs::Analysis::Action.action_perform(custom_analysis_params)
+    result = BawWorkers::Jobs::Analysis::Job.perform_later!(custom_analysis_params)
 
     # ensure the new file exists
     output_file = analysis_cache.possible_paths(job_output_params)[0]

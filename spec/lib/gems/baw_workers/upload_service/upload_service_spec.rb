@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe BawWorkers::UploadService::Communicator do
   it 'can be instantiated' do
     upload_service = BawWorkers::UploadService::Communicator.new(
@@ -9,7 +7,7 @@ describe BawWorkers::UploadService::Communicator do
       logger: BawWorkers::Config.logger_worker
     )
 
-    expect(upload_service).to_not be_nil
+    expect(upload_service).not_to be_nil
     expect(upload_service.client).to be_a(SftpgoClient::ApiClient)
     expect(upload_service.client.connection).to be_a(Faraday::Connection)
 
@@ -17,7 +15,7 @@ describe BawWorkers::UploadService::Communicator do
     expect(upload_service.client.base_uri).to eq(base_uri)
     expect(upload_service.client.connection.url_prefix).to eq(base_uri)
 
-    expect(upload_service.service_logger).to be_a(Logger)
+    expect(upload_service.service_logger).to be_a(SemanticLogger::Logger)
     expect(upload_service.service_logger).to be(BawWorkers::Config.logger_worker)
   end
 

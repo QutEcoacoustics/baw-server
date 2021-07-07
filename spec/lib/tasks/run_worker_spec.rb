@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
-
-
 describe 'rake tasks' do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
   context 'rake task' do
-    before(:each) do
+    before do
       File.delete worker_log_file if File.exist? worker_log_file
     end
 
-    after(:each) do
+    after do
       # reset settings
-      BawWorkers::Config.run({})
+      BawWorkers::Config.run_web(Rails.logger, Settings)
     end
 
     it 'runs the setup task for bg worker' do
@@ -75,7 +73,7 @@ describe 'rake tasks' do
       BawWorkers::ResqueApi.workers_running
 
       expect(worker_log_content).to include('No Resque workers currently running.')
-      expect(worker_log_content).to_not include("Pids of running Resque workers: ''.")
+      expect(worker_log_content).not_to include("Pids of running Resque workers: ''.")
     end
   end
 end

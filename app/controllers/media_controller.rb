@@ -229,7 +229,7 @@ class MediaController < ApplicationController
 
     # add the data hash so downloads can be verified
     add_header_hash(audio_recording)
-
+    file_path = existing_files.first
     download_options = {
       media_type: audio_recording.media_type,
       site_name: audio_recording.site.name,
@@ -239,7 +239,8 @@ class MediaController < ApplicationController
       recording_id: audio_recording.id,
       ext: Mime::Type.file_extension_of(audio_recording.media_type),
       # assume first file of returned files is correct
-      file_path: existing_files.first,
+      file_path: file_path,
+      file_size: File.size(file_path),
       start_offset: 0,
       end_offset: audio_recording.duration_seconds,
       # provide our own name for the recording (normally generated in range request)
@@ -249,7 +250,7 @@ class MediaController < ApplicationController
     range_request = Settings.range_request
 
     # last param is time_waiting_start - we've spent zero time waiting because no transcoding was done
-    download_file(download_options, rails_request, range_request, time_start, 0)
+    download_file(nil, download_options, rails_request, range_request, time_start, 0)
   end
 
   def create_media(media_category, files_info, generation_request)
@@ -454,7 +455,7 @@ class MediaController < ApplicationController
 
     # headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
     # content length is added by RangeRequest
-
+    file_path = options[:file_path]
     info = range_request.build_response(options, rails_request)
 
     headers.merge!(info[:response_headers])
@@ -471,12 +472,15 @@ class MediaController < ApplicationController
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if has_content && is_range
-      buffer = write_to_response_stream(buffer, info, range_request)
+      buffer = write_to_response_stream(buffer, file_path, info, range_request)
       response_send_data(buffer, info)
 
     elsif has_content && !is_range
-      logger.info('sending buffer:', size: buffer.size)
-      response_send_data(buffer, info)
+      if buffer.nil?
+        response_send_file(info)
+      else
+        response_send_data(buffer, info)
+      end
 
     elsif !has_content
       head_response_inline(
@@ -492,14 +496,18 @@ class MediaController < ApplicationController
     end
   end
 
-  def write_to_response_stream(in_buffer, info, range_request)
+  def write_to_response_stream(in_buffer, file_path, info, range_request)
     # write audio data from the file to a stringIO
     # use the StringIO in send_data
 
     # must be a mutable string
     buffer = String.new
     StringIO.open(buffer, 'w') do |string_io|
-      range_request.write_content_to_output(in_buffer, info, string_io)
+      if in_buffer.nil?
+        range_request.write_content_to_output(in_buffer, info, string_io)
+      else
+        range_request.write_file_content_to_output(file_path, info, string_io)
+      end
     end
     buffer
   end

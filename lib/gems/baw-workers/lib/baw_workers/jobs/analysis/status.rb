@@ -120,7 +120,7 @@ module BawWorkers
           BawWorkers::Mail::Mailer.send_worker_error_email(
             BawWorkers::Jobs::Analysis::Status,
             { params: params, status: status },
-            BawWorkers::Jobs::Analysis::Action.queue,
+            BawWorkers::Jobs::Analysis::Job.queue,
             e || StandardError.new('Could not update AnalysisJobsItems status')
           )
         end

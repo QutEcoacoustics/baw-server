@@ -72,7 +72,7 @@ module BawWorkers
     def io_ish?(object)
       return false if nil?
 
-      return true if  object.is_a?(IO) || object.is_a?(StringIO)
+      return true if  object.is_a?(IO) || object.is_a?(StringIO) || object.is_a?(File)
 
       false
     end

@@ -58,7 +58,7 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @param [Boolean] copy_on_success
         # @return [Hash] array of hashes representing operations performed
-        def action_perform_rake(to_do_path, is_real_run, copy_on_success = false)
+        def self.action_perform_rake(to_do_path, is_real_run, copy_on_success = false)
           # returns results from action_gather_and_process
           action_gather_and_process(to_do_path, is_real_run, copy_on_success) do |file_hash|
             BawWorkers::Jobs::Harvest::Action.action_run(file_hash, is_real_run) if is_real_run
@@ -69,7 +69,7 @@ module BawWorkers
         # @param [Hash] harvest_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue(harvest_params)
+        def self.action_enqueue(harvest_params)
           result = BawWorkers::Jobs::Harvest::Action.create(harvest_params: harvest_params)
           BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using #{harvest_params}."
@@ -82,7 +82,7 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @param [Boolean] copy_on_success
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_enqueue_rake(to_do_path, is_real_run, copy_on_success = false)
+        def self.action_enqueue_rake(to_do_path, is_real_run, copy_on_success = false)
           # returns results from action_gather_and_process
           action_gather_and_process(to_do_path, is_real_run, copy_on_success) do |file_hash|
             BawWorkers::Jobs::Harvest::Action.perform_later!(file_hash) if is_real_run
@@ -167,7 +167,7 @@ module BawWorkers
           summary
         end
 
-        def action_gather_and_process(to_do_path, is_real_run, copy_on_success = false)
+        def self.action_gather_and_process(to_do_path, is_real_run, copy_on_success = false)
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
@@ -190,16 +190,17 @@ module BawWorkers
           { results: results[:results], path: to_do_path, summary: summary }
         end
 
-        def perform_options_keys
-          ['harvest_params']
-        end
-
         # Produces a sensible name for this payload.
         # Should be unique but does not need to be. Has no operational effect.
         # This value is only used when the status is updated by resque:status.
         def name
           hp = @options['harvest_params']
           "Harvest for: #{hp['file_name']}, data_length_bytes=#{hp['data_length_bytes']}, site_id=#{hp['site_id']}"
+        end
+
+        def create_job_id
+          # duplicate jobs should be detected
+          ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'harvest_job')
         end
       end
     end

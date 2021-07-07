@@ -73,7 +73,7 @@ module BawWorkers
         # @param [Hash] audio_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue(audio_params)
+        def self.action_enqueue(audio_params)
           audio_params_sym = BawWorkers::Jobs::AudioCheck::WorkHelper.validate(audio_params)
           #result = Resque.enqueue(BawWorkers::Jobs::AudioCheck::Action, audio_params_sym)
           result = BawWorkers::Jobs::AudioCheck::Action.perform_later!({ audio_params: audio_params_sym })
@@ -87,7 +87,7 @@ module BawWorkers
         # @param [String] csv_file
         # @param [Boolean] is_real_run
         # @return [Hash]
-        def action_enqueue_rake(csv_file, is_real_run)
+        def self.action_enqueue_rake(csv_file, is_real_run)
           BawWorkers::Validation.normalise_file(csv_file)
 
           successes = []
@@ -122,8 +122,16 @@ module BawWorkers
           )
         end
 
-        def perform_options_keys
-          ['audio_params']
+        def create_job_id
+          # duplicate jobs should be detected
+          ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'analysis_job')
+        end
+
+        # Produces a sensible name for this payload.
+        # Should be unique but does not need to be. Has no operational effect.
+        # This value is only used when the status is updated by status.
+        def name
+          job_id
         end
       end
     end

@@ -103,26 +103,26 @@ namespace :baw do
       desc 'Enqueue a file to analyse using Resque'
       task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Action.action_enqueue_rake(args.analysis_config_file)
+        BawWorkers::Jobs::Analysis::Job.action_enqueue_rake(args.analysis_config_file)
       end
 
       desc 'Enqueue files to analyse using Resque from a csv file'
       task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
+        BawWorkers::Jobs::Analysis::Job.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
     end
     namespace :standalone do
       desc 'Directly analyse an audio file'
       task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Action.action_perform_rake(args.analysis_config_file)
+        BawWorkers::Jobs::Analysis::Job.action_perform_rake(args.analysis_config_file)
       end
 
       desc 'Directly analyse audio files from csv file'
       task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
         init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Action.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
+        BawWorkers::Jobs::Analysis::Job.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
     end
   end

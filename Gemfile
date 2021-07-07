@@ -121,7 +121,7 @@ group :server do
 
   # MODELS
   # -------------------------------------
-  gem 'jc-validates_timeliness', '~> 3.1.1'
+  gem 'validates_timeliness', '~> 6.0.0.alpha1'
 
   # https://github.com/delynn/userstamp
   # no changes in a long time, and we are very dependant on how this works
