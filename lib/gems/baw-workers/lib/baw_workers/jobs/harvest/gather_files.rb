@@ -8,19 +8,20 @@ module BawWorkers
       # Get a list of files to be harvested.
       class GatherFiles
         # Create a new BawWorkers::Jobs::Harvest::GatherFiles.
-        # @param [Logger] logger
+        # @param [SemanticLogger::Logger] logger
         # @param [BawWorkers::FileInfo] file_info_helper
         # @param [Array<String>] ext_include
         # @param [String] config_file_name
+        # @param [Pathname] to_do_root
         # @return [BawWorkers::Jobs::Harvest::GatherFiles]
-        def initialize(logger, file_info_helper, ext_include, config_file_name)
+        def initialize(logger, file_info_helper, ext_include, config_file_name, to_do_root:)
           @logger = logger
           @file_info_helper = file_info_helper
 
-          @ext_include = ext_include #Settings.available_formats.audio
-          @ext_exclude = ['completed', 'log', 'yml']
+          @ext_include = ext_include
+          @ext_exclude = ['completed', 'log', 'harvest.yml']
           @config_file_name = config_file_name
-
+          @to_do_root = to_do_root
           @class_name = self.class.name
         end
 
@@ -57,8 +58,6 @@ module BawWorkers
           results.compact
         end
 
-        private
-
         def process(path, top_dir, recurse = true)
           dirs = []
           results = []
@@ -82,11 +81,11 @@ module BawWorkers
             dirs = directories_in_directory(current_dir) if recurse
 
           else
-            @logger.warn(@class_name) { "Not a recognised file or directory: #{path}." }
+            @logger.warn(@class_name) { "Not a recognized file or directory: #{path}." }
             return results
           end
 
-          dir_settings = get_folder_settings(File.join(current_dir, @config_file_name))
+          dir_settings = get_folder_settings(File.join(current_dir, @config_file_name), top_dir)
 
           # process any files found
           files.each do |file|
@@ -108,7 +107,7 @@ module BawWorkers
 
         # Check properties for a directory.
         # @param [String] path directory
-        # @return [Array<Hash>] directory
+        # @return [String] directory
         def check_directory(path)
           unless File.directory?(path)
             msg = "'#{path}' is not a directory."
@@ -149,7 +148,12 @@ module BawWorkers
 
           @logger.debug(@class_name) { "Valid extension #{path}." }
 
-          dir_settings = get_folder_settings(File.join(File.dirname(path), @config_file_name)) if dir_settings.blank?
+          if dir_settings.blank?
+            dir_settings = get_folder_settings(
+              File.join(File.dirname(path), @config_file_name),
+              top_dir
+            )
+          end
 
           basic_info, advanced_info = file_info(path, dir_settings[:utc_offset])
 
@@ -160,7 +164,7 @@ module BawWorkers
             @logger.debug(@class_name) { "Complete information found for #{path}." }
             result = {}
             result = result.merge(basic_info).merge(dir_settings).merge(advanced_info)
-            result[:file_rel_path] = Pathname.new(path).relative_path_from(Pathname.new(top_dir)).to_s
+            result[:file_rel_path] = Pathname.new(path).relative_path_from(@to_do_root).to_s
             result
           end
         end
@@ -221,10 +225,28 @@ module BawWorkers
         # If the config file does not exist, that's ok,
         # some files might have that info in their file names
         # so the settings file might not exist
-        # @param [string] file
+        # @param [String] file
         # @return [Hash]
-        def get_folder_settings(file)
-          unless File.file?(file)
+        def get_folder_settings(file, top_dir)
+          found = File.file?(file)
+          path = Pathname(file)
+          dir, basename = path.split
+
+          found_parent = false
+          unless found
+            @logger.warn('harvest.yml not found, searching in parent directories', expected: file)
+
+            file = dir.ascend { |current|
+              break  nil if current.to_s == top_dir
+
+              file = current / basename
+              break file if file.exist?
+            }
+            found_parent = !file.nil?
+            @logger.warn('harvest.yml not found, searched in parent directories', found: file)
+          end
+
+          unless found || found_parent
             @logger.debug(@class_name) { "Harvest directory config file was not found '#{file}'." }
             return {}
           end
@@ -242,14 +264,23 @@ module BawWorkers
               site_id: config['site_id'],
               uploader_id: config['uploader_id'],
               utc_offset: config['utc_offset'],
-              metadata: config['metadata']
+              metadata: config['metadata'],
+              recursive: config['recursive']
             }
 
             if @file_info_helper.numeric?(folder_settings[:project_id]) &&
                @file_info_helper.numeric?(folder_settings[:site_id]) &&
                @file_info_helper.numeric?(folder_settings[:uploader_id]) &&
-               @file_info_helper.time_offset?(folder_settings[:utc_offset])
+               @file_info_helper.time_offset?(folder_settings[:utc_offset]) &&
+               @file_info_helper.booleric?(folder_settings[:recursive])
               @logger.debug(@class_name) { "Harvest directory settings loaded from config file #{file}." }
+              if found_parent && folder_settings[:recursive] != true
+                @logger.warn(
+                  'Parent harvest config file is not recursive, it cannot apply to this folder',
+                  parent: file, dir: dir
+                )
+                return {}
+              end
               folder_settings
             else
               @logger.warn(@class_name) do

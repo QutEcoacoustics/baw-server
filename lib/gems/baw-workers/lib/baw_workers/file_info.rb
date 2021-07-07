@@ -119,6 +119,10 @@ module BawWorkers
       !value.nil? && value.is_a?(Integer)
     end
 
+    def booleric?(value)
+      [true, false].include?(value)
+    end
+
     # Check is a settings value is a time offset.
     # @example
     #      '+1000'

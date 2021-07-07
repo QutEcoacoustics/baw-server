@@ -850,6 +850,41 @@ ALTER SEQUENCE public.datasets_id_seq OWNED BY public.datasets.id;
 
 
 --
+-- Name: harvest_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.harvest_items (
+    id bigint NOT NULL,
+    path character varying,
+    status character varying,
+    info jsonb,
+    audio_recording_id integer,
+    uploader_id integer NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: harvest_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.harvest_items_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: harvest_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.harvest_items_id_seq OWNED BY public.harvest_items.id;
+
+
+--
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1690,6 +1725,13 @@ ALTER TABLE ONLY public.datasets ALTER COLUMN id SET DEFAULT nextval('public.dat
 
 
 --
+-- Name: harvest_items id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items ALTER COLUMN id SET DEFAULT nextval('public.harvest_items_id_seq'::regclass);
+
+
+--
 -- Name: permissions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1990,6 +2032,14 @@ ALTER TABLE ONLY public.dataset_items
 
 ALTER TABLE ONLY public.datasets
     ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: harvest_items harvest_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT harvest_items_pkey PRIMARY KEY (id);
 
 
 --
@@ -2580,6 +2630,13 @@ CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_transla
 
 
 --
+-- Name: index_harvest_items_on_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_harvest_items_on_status ON public.harvest_items USING btree (status);
+
+
+--
 -- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3072,6 +3129,14 @@ ALTER TABLE ONLY public.questions
 
 
 --
+-- Name: harvest_items fk_rails_220bbcd4e4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_220bbcd4e4 FOREIGN KEY (uploader_id) REFERENCES public.users(id);
+
+
+--
 -- Name: responses fk_rails_325af149a3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3237,6 +3302,14 @@ ALTER TABLE ONLY public.dataset_items
 
 ALTER TABLE ONLY public.progress_events
     ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: harvest_items fk_rails_dc2d52ddad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
 
 
 --
@@ -3505,6 +3578,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20200901011916'),
 ('20200904064318'),
 ('20210707050202'),
-('20210707050203');
+('20210707050203'),
+('20210707074343');
 
 

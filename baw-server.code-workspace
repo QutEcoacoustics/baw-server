@@ -99,6 +99,7 @@
       "qutecoacoustics",
       "rakefile",
       "rdebug",
+      "realdirpath",
       "realpath",
       "recaptcha",
       "rmtree",

@@ -25,6 +25,10 @@ require 'rake'
 Rake.application
 # https://docs.ruby-lang.org/en/2.2.0/Rake/Application.html
 Rake.application.init('baw-workers', ARGV)
+
+# our app must execute from root dir - relative paths in settings assume this
+Dir.chdir("#{__dir__}/..")
+
 # this allows us to print a list of tasks
 Rake::TaskManager.record_task_metadata = true
 Rake.load_rakefile("#{__dir__}/../lib/gems/baw-workers/lib/baw_workers/tasks/run_worker.rake")

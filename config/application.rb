@@ -71,6 +71,10 @@ module Baw
 
     config.load_defaults '6.0'
 
+    # TODO: fix, dangerous!
+    # https://stackoverflow.com/questions/53878453/upgraded-rails-to-6-getting-blocked-host-error
+    config.hosts.clear
+
     # we should never need to to autoload anything in ./app
     config.add_autoload_paths_to_load_path = false
 

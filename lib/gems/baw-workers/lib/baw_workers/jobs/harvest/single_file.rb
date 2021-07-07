@@ -8,7 +8,7 @@ module BawWorkers
         attr_accessor :logger, :file_info_helper, :api_comm
 
         # Create a new BawWorkers::Jobs::Harvest::SingleFile.
-        # @param [Logger] logger
+        # @param [SemanticLogger::Logger] logger
         # @param [BawWorkers::FileInfo] file_info_helper
         # @param [BawWorkers::ApiCommunicator] api_comm
         # @param [BawWorkers::Storage::AudioOriginal] original_audio
@@ -27,7 +27,7 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @param [Boolean] copy_on_success
         # @return [Array<String>] existing target paths
-        def run(file_info_hash, is_real_run, _copy_on_success = false)
+        def run(file_info_hash, is_real_run, _copy_on_success = false, harvest_item:)
           file_info_hash.deep_symbolize_keys!
 
           project_id = file_info_hash[:project_id]
@@ -80,6 +80,15 @@ module BawWorkers
           audio_recording_id = response_hash['data']['id']
           audio_recording_uuid = response_hash['data']['uuid']
           audio_recording_recorded_date = response_hash['data']['recorded_date']
+
+          harvest_item.audio_recording_id = audio_recording_id.to_i
+          save_result = harvest_item.save
+          logger.debug(
+            "harvest item associated with recording",
+            id: harvest_item.id,
+            audio_recording_id: audio_recording_id,
+            success: save_result
+          )
 
           # catch any errors after audio is created so status can be updated
           # -----------------------------

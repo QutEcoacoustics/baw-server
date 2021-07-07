@@ -57,6 +57,9 @@ group :server do
   gem 'rails', RAILS_VERSION
   gem 'responders', '~> 3.0.1'
 
+  # deal with chrome and same site cookies
+  gem 'rails_same_site_cookie'
+
   # bumping to latest RC because it has pre-compiled native binaries
   gem 'nokogiri', '~> 1.11.0.rc3'
 

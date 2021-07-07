@@ -66,7 +66,8 @@ module BawWorkers
     # @param [Hash] security_info
     # @param [Hash] body
     # @return [Net::HTTP::Response] The response.
-    def send_request(description, method, host, port, endpoint, security_info = { auth_token: nil, cookies: nil }, body = nil)
+    def send_request(description, method, host, port, endpoint, security_info = { auth_token: nil,
+                                                                                  cookies: nil }, body = nil)
       case method
       when :get
         request = Net::HTTP::Get.new(endpoint)
@@ -120,7 +121,7 @@ module BawWorkers
       begin
         #res = Net::HTTP::Proxy('127.0.0.1', '8888').start(host, port) do |http|
 
-        res = Net::HTTP.start(host, port, use_ssl: true) { |http|
+        res = Net::HTTP.start(host, port, use_ssl: !BawApp.dev_or_test?) { |http|
           response = http.request(request)
 
           @logger.debug(@class_name) {
@@ -149,7 +150,8 @@ module BawWorkers
     # Request an auth token (using an existing token if available).
     # @return [Hash]
     def request_login
-      login_response = send_request('Login request', :post, host, port, endpoint_login, nil, { email: user, password: password })
+      login_response = send_request('Login request', :post, host, port, endpoint_login, nil,
+                                    { email: user, password: password })
 
       # get cookies
       # from http://stackoverflow.com/a/9320190/31567
@@ -157,7 +159,7 @@ module BawWorkers
 
       cookies = nil
 
-      if all_cookies&.respond_to?(:each)
+      if all_cookies.respond_to?(:each)
         cookies_array = []
         all_cookies.each do |cookie|
           cookies_array.push(cookie.split('; ')[0])
@@ -190,7 +192,8 @@ module BawWorkers
     # Update audio recording metadata
     def update_audio_recording_details(description, file_to_process, audio_recording_id, update_hash, security_info)
       endpoint = endpoint_audio_recording.gsub(':id', audio_recording_id.to_s)
-      response = send_request("Update audio recording metadata - #{description}", :put, host, port, endpoint, security_info, update_hash)
+      response = send_request("Update audio recording metadata - #{description}", :put, host, port, endpoint,
+                              security_info, update_hash)
       msg = "Code #{response.code}, Id: #{audio_recording_id}, Hash: '#{update_hash}', File: '#{file_to_process}'"
 
       if response.code.to_i == 200 || response.code.to_i == 204
@@ -287,7 +290,8 @@ module BawWorkers
     # @return [Boolean] successful?
     def update_audio_recording_status(description, file_to_process, audio_recording_id, update_hash, security_info)
       endpoint = endpoint_audio_recording_update_status.gsub(':id', audio_recording_id.to_s)
-      response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint, security_info, update_hash)
+      response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint,
+                              security_info, update_hash)
       msg = "'#{description}'. Code #{response.code}, File: '#{file_to_process}', Id: #{audio_recording_id}, Hash: '#{update_hash}'"
       if response.code.to_i == 200 || response.code.to_i == 204
         @logger.info(@class_name) do
@@ -358,7 +362,7 @@ module BawWorkers
         endpoint,
         security_info,
         {
-          "status": status
+          status: status
         }
       )
 

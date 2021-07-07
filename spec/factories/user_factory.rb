@@ -45,7 +45,7 @@
 #  users_user_name_unique               (user_name) UNIQUE
 #
 FactoryBot.define do
-  factory :unconfirmed_user, class: User do
+  factory :unconfirmed_user, class: 'User' do
     sequence(:user_name) { |n| "unconfirmed_user #{n}" }
     sequence(:email) { |n| "user#{n}@example.com" }
     sequence(:authentication_token) { |n| "some random token #{n}" }
@@ -76,6 +76,8 @@ FactoryBot.define do
 
     trait :harvester_role do
       sequence(:user_name) { |n| "harvester_user #{n}" }
+      email { 'harvester@example.com' }
+      password { 'password' }
       roles_mask { 4 } # harvester role
     end
 

@@ -35,18 +35,12 @@ describe BawWorkers::Jobs::Harvest::Action do
     }
   }
   let(:expected_payload) {
-    {
-      'class' => 'BawWorkers::Jobs::Harvest::Action',
-      'args' => [
-        'c32a6e87d0563574c11971714f2c6f06',
-        { 'harvest_params' => test_harvest_request_params.stringify_keys }
-      ]
-    }
+    [
+      { 'harvest_params' => test_harvest_request_params.stringify_keys }
+    ]
   }
 
   before do
-    BawWorkers::ResqueApi.clear_queue(queue_name)
-
     clear_harvester_to_do
   end
 
@@ -55,24 +49,18 @@ describe BawWorkers::Jobs::Harvest::Action do
   end
 
   it 'can enqueue' do
-    result = BawWorkers::Jobs::Harvest::Action.perform_later!(test_harvest_request_params)
-    expect(Resque.size(queue_name)).to eq(1)
+    job = BawWorkers::Jobs::Harvest::Action.perform_later!(test_harvest_request_params)
+    expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::Action)
 
-    actual = Resque.peek(queue_name)
-    expect(actual.to_json.to_s).to eq(expected_payload.to_json.to_s)
+    clear_pending_jobs
   end
 
   it 'has a sensible name' do
-    allow_any_instance_of(BawWorkers::Jobs::Harvest::SingleFile).to receive(:run).and_return(['/tmp/a_fake_file_mock'])
-
-    job = BawWorkers::Jobs::Harvest::Action.perform_later!(test_harvest_request_params)
+    job = BawWorkers::Jobs::Harvest::Action.new(test_harvest_request_params)
     unique_key = job.job_id
 
-    was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Harvest::Action.queue)
-    status = BawWorkers::ResqueApi.status_by_key(unique_key)
-
     expected = 'Harvest for: TEST_20140731_100956.wav, data_length_bytes=498220, site_id=1109'
-    expect(status.name).to eq(expected)
+    expect(job.name).to eq(expected)
   end
 
   it 'can enqueue from rake using resque in dry run' do

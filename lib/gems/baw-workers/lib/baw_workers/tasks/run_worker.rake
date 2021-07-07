@@ -169,16 +169,14 @@ namespace :baw do
   end
 
   namespace :harvest do
-    namespace :resque do
-      desc 'Enqueue files to harvest using Resque'
-      task :from_files, [:settings_file, :harvest_dir, :real_run, :copy_on_success] do |_t, args|
-        args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
-        copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Harvest::Action.action_enqueue_rake(args.harvest_dir, is_real_run, copy_on_success)
-      end
+    desc 'Enqueue files to harvest using Resque'
+    task :scan, [:real_run] => ['baw:worker:setup'] do |_t, args|
+      args.with_defaults(real_run: 'dry_run')
+      is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
+      invoke_dir = Rake.original_dir
+      BawWorkers::Jobs::Harvest::Enqueue.scan(invoke_dir, is_real_run)
     end
+
     namespace :standalone do
       desc 'Directly harvest audio files'
       task :from_files, [:settings_file, :harvest_dir, :real_run, :copy_on_success] do |_t, args|

@@ -24,12 +24,12 @@ resque:
   # queues_to_process is only needed when running a Resque worker to
   # specify the Resque queues to watch.
   queues_to_process:
-    - analysis_<%= BawApp.env %>
-    - maintenance_<%= BawApp.env %>
-    - harvest_<%= BawApp.env %>
     - media_<%= BawApp.env %>
+    - harvest_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
+    - maintenance_<%= BawApp.env %>
     - default_<%= BawApp.env %>
+    - analysis_<%= BawApp.env %>
   connection: *redis_config
   namespace: resque
   log_level: "Logger::INFO"
@@ -48,7 +48,7 @@ actions:
   harvest:
     queue: harvest_<%= BawApp.env %>
     dry_run: false
-    to_do_path: ./tmp/_harvester_to_do_path
+    to_do_path: <%= BawApp.root %>/real_data
     config_file_name: harvest.yml
     progressive_upload_directory: ./tmp/_progressive-upload/
   media:
@@ -137,7 +137,7 @@ endpoints:
 api:
   host: web
   port: 3000
-  user: address@example.com
+  user: harvester@example.com
   password: password
 upload_service:
   host: upload
@@ -145,10 +145,10 @@ upload_service:
   username: upload_admin
   password: password
 harvester:
-  email: address+harvester@example.com
+  email: harvester@example.com
   password: password
 admin_user:
-  email: address+admin@example.com
+  email: admin@example.com
   password: password
 mailer:
   # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
@@ -196,6 +196,10 @@ available_formats:
     - wac
   image:
     - png
+  metadata:
+    - xlsx
+    - csv
+    - txt
 audio_tools:
   ffmpeg_executable: ffmpeg
   ffprobe_executable: ffprobe

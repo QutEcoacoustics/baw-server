@@ -14,7 +14,7 @@ module BawWorkers
         def perform(analysis_params)
           analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalise_opts(analysis_params)
 
-          BawWorkers::Config.logger_worker.info(logger_name) do
+          BawWorkers::Config.logger_worker.info do
             "Started analysis using '#{format_params_for_log(analysis_params_sym)}'."
           end
 
@@ -37,13 +37,13 @@ module BawWorkers
             final_status = :cancelled
 
             # if killed legitimately don't email
-            BawWorkers::Config.logger_worker.warn(logger_name) do
+            BawWorkers::Config.logger_worker.warn do
               "Analysis cancelled: '#{e}'"
             end
             raise e
           rescue StandardError => e
             final_status = :failed
-            BawWorkers::Config.logger_worker.error(logger_name) { e }
+            BawWorkers::Config.logger_worker.error { e }
 
             args = analysis_params_sym
             args = all_opts unless all_opts.blank?
@@ -66,11 +66,11 @@ module BawWorkers
           # to succeed first (so logs/configs are moved, any available results are retained)
           # raising here to not send email when executable fails, logs are in output dir
           if !result.blank? && result.include?(:error) && !result[:error].blank?
-            BawWorkers::Config.logger_worker.error(logger_name) { result[:error] }
+            BawWorkers::Config.logger_worker.error { result[:error] }
             raise result[:error]
           end
 
-          BawWorkers::Config.logger_worker.info(logger_name) do
+          BawWorkers::Config.logger_worker.info do
             log_opts = all_opts.blank? ? analysis_params_sym : all_opts
             "Completed analysis with parameters #{format_params_for_log(log_opts)} and result '#{format_params_for_log(result)}'."
           end
@@ -100,7 +100,7 @@ module BawWorkers
             result = BawWorkers::Jobs::Analysis::Job.perform_later!(payload)
             results.push(result)
           rescue StandardError => e
-            BawWorkers::Config.logger_worker.error(logger_name) { e }
+            BawWorkers::Config.logger_worker.error { e }
           end
 
           results
@@ -115,7 +115,7 @@ module BawWorkers
           analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalise_opts(analysis_params)
 
           result = BawWorkers::Jobs::Analysis::Job.perform_later!(analysis_params: analysis_params_sym)
-          BawWorkers::Config.logger_worker.info(logger_name) do
+          BawWorkers::Config.logger_worker.info do
             "Job enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
           end
           result
@@ -145,7 +145,7 @@ module BawWorkers
             result = BawWorkers::Jobs::Analysis::Job.perform_later!(payload)
             results.push(result)
           rescue StandardError => e
-            BawWorkers::Config.logger_worker.error(logger_name) { e }
+            BawWorkers::Config.logger_worker.error { e }
           end
           results
         end
