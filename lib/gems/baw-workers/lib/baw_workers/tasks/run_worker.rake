@@ -7,23 +7,27 @@ require 'resque/tasks'
 # NOTE: This is an entrypoint for workers. DO NOT require this file from rails
 # application
 #
-
-require "#{__dir__}/../../../../../../config/application"
-# baw-app, the workers code, and all other requires are done through rails
-# initialization in application.rb and then in other initializers.
-# Be VERY careful changing the order of things here. It breaks in very
-# subtle ways.
-# For example, requiring baw_app will mean the ruby-config settings won't
-# detect the rails constant and won't add the Rails railtie, and thus the settings
-# won't load! ... but only for workers and not the rails server!
-
-# set time zone
-Time.zone = 'UTC'
+require "#{__dir__}/../../../../baw-app/lib/baw_app"
 
 namespace :baw do
-  def init(is_worker: false, settings_file: nil, args: nil)
+  def init(is_worker: false, settings_file: nil)
+    BawApp.setup(settings_file)
+
+    # initialize the app
+    # baw-app, the workers code, and all other requires are done through rails
+    # initialization in application.rb and then in other initializers.
+    # Be VERY careful changing the order of things here. It breaks in very
+    # subtle ways.
+    # For example, requiring baw_app will mean the ruby-config settings won't
+    # detect the rails constant and won't add the Rails railtie, and thus the settings
+    # won't load! ... but only for workers and not the rails server!
+    # We now force load the config railtie in application.rb!
+    require "#{__dir__}/../../../../../../config/application"
+
+    # set time zone
+    Time.zone = 'UTC'
+
     BawWorkers::Config.set(is_resque_worker: is_worker)
-    BawApp.custom_configs = [args.settings_file] unless settings_file.nil?
 
     # Initialize the Rails application.
     Rails.application.initialize!
@@ -40,7 +44,7 @@ namespace :baw do
     # kill -s QUIT $(/home/user/folder/workers/media.pid)
     desc 'Run a resque:work with the specified settings file.'
     task :setup, [:settings_file] do |_t, args|
-      init(is_worker: true, settings_file: args.settings_file, args: args)
+      init(is_worker: true, settings_file: args.settings_file)
     end
 
     desc 'Run a resque:work with the specified settings file.'

@@ -16,6 +16,12 @@ Bundler.require(*Rails.groups, :server, :workers)
 # NOTE: the global Settings const is not yet available. We have to wait for the preload hook.
 #   See initializers/config.rb
 require "#{__dir__}/../lib/gems/baw-app/lib/baw_app"
+
+# need to load this manually because we load config before rails in workers
+# and the rail tie does not integrate
+# https://github.com/rubyconfig/config/blob/fe909388b5fc9426bae85480dd3c82f67731d381/lib/config.rb#L82
+require('config/integrations/rails/railtie')
+
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 

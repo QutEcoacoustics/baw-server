@@ -102,6 +102,12 @@ module BawApp
     default
   end
 
-  # currently a no-op, thinking about collapsing the concept of initializers and patches
-  def initialize; end
+  # add custom configs before other things start
+  def setup(configs = nil)
+    return if @setup
+
+    @setup = true
+
+    @custom_configs = configs || []
+  end
 end

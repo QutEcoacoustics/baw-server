@@ -86,6 +86,8 @@ if BawApp.test?
   ::Resque::Job.include(Resque::Plugins::PauseDequeueForTests)
   puts 'Monkey patched Resque::Job with Resque::Plugins::PauseDequeueForTests'
 
+  raise 'Resque::Job has not been patched for tests' unless Resque::Job.include?(Resque::Plugins::PauseDequeueForTests)
+
 elsif BawApp.development?
   raise 'Resque::Plugins::PauseDequeueForTests must not be loaded in a non-test environment!!!'
 else

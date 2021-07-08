@@ -52,5 +52,5 @@ if BawApp.test?
   end
   ::ActiveJob::Base.queue_adapter = :resque
 
-  raise 'Resque::Job has not been patched for tests' unless Resque::Job.include?(Resque::Plugins::PauseDequeueForTests)
+  require "#{__dir__}/resque/plugins/pause_dequeue_for_tests"
 end

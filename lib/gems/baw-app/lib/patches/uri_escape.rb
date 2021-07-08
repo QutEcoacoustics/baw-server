@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'uri'
+
 # URI escape was deprecated for Ruby 3, but paperclip depends on it!
 module Baw
   module URI
