@@ -57,7 +57,7 @@ module BawApp
     @custom_configs = value.map { |file|
       next file if File.exist?(file)
 
-      raise FileNotFound, "The settings must exist and yet the file could not be found: #{file}"
+      raise ArgumentError, "The settings must exist and yet the file could not be found: #{file}"
     }
   end
 

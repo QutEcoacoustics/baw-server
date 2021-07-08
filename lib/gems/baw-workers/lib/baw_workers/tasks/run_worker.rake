@@ -21,7 +21,7 @@ require "#{__dir__}/../../../../../../config/application"
 Time.zone = 'UTC'
 
 namespace :baw do
-  def init(is_worker: false, settings_file: nil)
+  def init(is_worker: false, settings_file: nil, args: nil)
     BawWorkers::Config.set(is_resque_worker: is_worker)
     BawApp.custom_configs = [args.settings_file] unless settings_file.nil?
 
@@ -40,7 +40,7 @@ namespace :baw do
     # kill -s QUIT $(/home/user/folder/workers/media.pid)
     desc 'Run a resque:work with the specified settings file.'
     task :setup, [:settings_file] do |_t, args|
-      init(is_worker: true, settings_file: args.settings_file)
+      init(is_worker: true, settings_file: args.settings_file, args: args)
     end
 
     desc 'Run a resque:work with the specified settings file.'
