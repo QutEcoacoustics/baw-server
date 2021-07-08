@@ -2,6 +2,16 @@
 
 require "#{__dir__}/../../../../baw-app/lib/baw_app"
 
+# zeitwerk obsessively tries to load this class, provide a dummy constant to make
+# it feel happy
+
+module Resque
+  module Plugins
+    module PauseDequeueForTests
+    end
+  end
+end
+
 if BawApp.test?
   module Resque
     module Plugins
