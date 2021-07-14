@@ -1,7 +1,20 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
+# == Schema Information
+#
+# Table name: progress_events
+#
+#  id              :integer          not null, primary key
+#  activity        :string
+#  created_at      :datetime
+#  creator_id      :integer
+#  dataset_item_id :integer
+#
+# Foreign Keys
+#
+#  fk_rails_...  (creator_id => users.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#
 RSpec.describe ProgressEvent, type: :model do
   subject { FactoryBot.build(:progress_event) }
   it 'has a valid factory' do

@@ -1,7 +1,42 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
+# == Schema Information
+#
+# Table name: sites
+#
+#  id                 :integer          not null, primary key
+#  deleted_at         :datetime
+#  description        :text
+#  image_content_type :string
+#  image_file_name    :string
+#  image_file_size    :integer
+#  image_updated_at   :datetime
+#  latitude           :decimal(9, 6)
+#  longitude          :decimal(9, 6)
+#  name               :string           not null
+#  notes              :text
+#  rails_tz           :string(255)
+#  tzinfo_tz          :string(255)
+#  created_at         :datetime
+#  updated_at         :datetime
+#  creator_id         :integer          not null
+#  deleter_id         :integer
+#  region_id          :integer
+#  updater_id         :integer
+#
+# Indexes
+#
+#  index_sites_on_creator_id  (creator_id)
+#  index_sites_on_deleter_id  (deleter_id)
+#  index_sites_on_updater_id  (updater_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...         (region_id => regions.id)
+#  sites_creator_id_fk  (creator_id => users.id)
+#  sites_deleter_id_fk  (deleter_id => users.id)
+#  sites_updater_id_fk  (updater_id => users.id)
+#
 latitudes = [
   { -100 => false },
   { -91 => false },

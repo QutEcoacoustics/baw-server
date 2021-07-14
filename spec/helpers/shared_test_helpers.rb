@@ -77,13 +77,15 @@ shared_context 'shared_test_helpers' do
   let(:api_security_response) {}
 
   def create_original_audio(options, example_file_name, new_name_style = false, delete_other = false)
+    options = options.to_h unless options.is_a?(Hash)
     # ensure :datetime_with_offset is an ActiveSupport::TimeWithZone object
     if options.include?(:datetime_with_offset) && options[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
       # all good - no op
     elsif options.include?(:datetime_with_offset) && options[:datetime_with_offset].end_with?('Z')
       options[:datetime_with_offset] = Time.zone.parse(options[:datetime_with_offset])
     else
-      raise ArgumentError, "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
+      raise ArgumentError,
+            "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
     end
 
     original_possible_paths = audio_original.possible_paths(options)
@@ -191,10 +193,12 @@ shared_context 'shared_test_helpers' do
   end
 
   def get_cached_audio_paths(options)
+    options = options.to_h unless options.is_a?(Hash)
     audio_cache.possible_paths(options)
   end
 
   def get_cached_spectrogram_paths(options)
+    options = options.to_h unless options.is_a?(Hash)
     spectrogram_cache.possible_paths(options)
   end
 
@@ -276,7 +280,8 @@ shared_context 'shared_test_helpers' do
       expect(expected_request).to have_been_made.once
 
       matches = expected_request.matches?(actual_requests[index])
-      expect(matches).to be_truthy, "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
+      expect(matches).to be_truthy,
+                         "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
     end
   end
 end

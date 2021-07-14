@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module BawAudioTools
+  # Used to manipulate the SoX command line tool
   class AudioSox
     ERROR_NO_HANDLER = 'FAIL formats: no handler for file extension'
     ERROR_CANNOT_OPEN = 'FAIL formats: can\'t open input file'
@@ -61,9 +62,10 @@ module BawAudioTools
     end
 
     def spectrogram_command(
-        source, _source_info, target,
-        start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
-        window = nil, window_function = nil, colour = nil)
+      source, _source_info, target,
+      start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
+      window = nil, window_function = nil, colour = nil
+    )
       source = Pathname(source)
       target = Pathname(target)
       raise ArgumentError, "Source is not a wav file: #{source}" unless source.extname == '.wav'
@@ -104,7 +106,16 @@ module BawAudioTools
     end
 
     def self.colour_options
-      { g: :greyscale }
+      {
+        g: :greyscale,
+        h: :high_contrast,
+        pr: :pink_red,
+        tg: :teal_green,
+        yg: :yellow_green,
+        gr: :green_red,
+        tb: :teal_blue,
+        rb: :red_blue
+      }.freeze
     end
 
     def self.window_function_options
@@ -219,7 +230,8 @@ module BawAudioTools
 
         window_function_param = window_function.to_s
         unless AudioSox.window_function_options.map { |wf| wf }.include? window_function_param
-          raise ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
+          raise ArgumentError,
+                "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
         end
 
         cmd_arg = "-w #{window_function_param}"
@@ -228,27 +240,28 @@ module BawAudioTools
       cmd_arg
     end
 
+    def colours_available
+      AudioSox.colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
+    end
+
     def arg_colour(colour)
-      cmd_arg = ''
-      colours_available = AudioSox.colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
-      colour_param = ''
+      colour = 'g' if colour.blank?
 
-      unless colour.blank?
-        colour_param = colour.to_s
-        unless AudioSox.colour_options.include? colour_param.to_sym
-          raise ArgumentError, "Colour must be one of '#{colours_available}', given ''."
-        end
-      end
+      # normalize to argument
+      case colour.to_s
+      when 'g', 'greyscale' then '-m'
+      when 'h', 'high_contrast' then '-h'
+      when 'pr', 'pink_red' then '-p 1'
+      when 'tg', 'teal_green' then '-p 2'
+      when 'yg', 'yellow_green' then '-p 3'
+      when 'gr', 'green_red' then '-p 4'
+      when 'tb', 'teal_blue' then '-p 5'
+      when 'rb', 'red_blue' then '-p 6'
+      else
+        raise ArgumentError, "Colour must be one of '#{colours_available}', given '#{colour}'."
+      end => colour_param
 
-      default = '-m -q 249 -z 100'
-      cmd_arg = case colour_param
-                when 'g'
-                  default
-                else
-                  default
-                end
-
-      cmd_arg
+      "#{colour_param} -q 249 -z 100"
     end
 
     def arg_pixels_second(sample_rate, window_size)
@@ -261,7 +274,7 @@ module BawAudioTools
       # (viewable when the SoX global option −V is in effect). See also −x and −d.
       cmd_arg = ''
       if !sample_rate.blank? && !window_size.blank?
-        pixels_per_second = sample_rate.to_f / window_size.to_f
+        pixels_per_second = sample_rate.to_f / window_size
         cmd_arg = "-X #{pixels_per_second}"
       end
 

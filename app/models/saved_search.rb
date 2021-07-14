@@ -1,5 +1,29 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: saved_searches
+#
+#  id           :integer          not null, primary key
+#  deleted_at   :datetime
+#  description  :text
+#  name         :string           not null
+#  stored_query :jsonb            not null
+#  created_at   :datetime         not null
+#  creator_id   :integer          not null
+#  deleter_id   :integer
+#
+# Indexes
+#
+#  index_saved_searches_on_creator_id   (creator_id)
+#  index_saved_searches_on_deleter_id   (deleter_id)
+#  saved_searches_name_creator_id_uidx  (name,creator_id) UNIQUE
+#
+# Foreign Keys
+#
+#  saved_searches_creator_id_fk  (creator_id => users.id)
+#  saved_searches_deleter_id_fk  (deleter_id => users.id)
+#
 class SavedSearch < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
@@ -32,8 +56,10 @@ class SavedSearch < ApplicationRecord
 
                        saved_search_hash = {}
 
-                       saved_search_hash[:project_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
-                       saved_search_hash[:analysis_job_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
+                       saved_search_hash[:project_ids] =
+                         fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
+                       saved_search_hash[:analysis_job_ids] =
+                         fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
                        saved_search_hash.merge!(item.render_markdown_for_api_for(:description))
                        [item, saved_search_hash]
                      },

@@ -145,6 +145,7 @@ They are based on `/config/settings/default.yml`.
     - e.g. `docker-compose workers exec ...`
 - list worker commands: `baw-workers -T` or `baw-workers` (using the manually maintained binstub)
 - run a new worker: `baw-workers baw:worker:run`
+- run a scheduler to process time-delayed tasks: `baw-workers baw:worker:run_scheduler`
 
 Debugging:
 ```

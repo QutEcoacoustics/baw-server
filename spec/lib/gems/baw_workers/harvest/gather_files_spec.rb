@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
-
-describe BawWorkers::Harvest::GatherFiles do
+describe BawWorkers::Jobs::Harvest::GatherFiles do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
-  before(:each) do
+  before do
     clear_harvester_to_do
   end
 
@@ -16,7 +14,7 @@ describe BawWorkers::Harvest::GatherFiles do
   let(:file_info) { BawWorkers::Config.file_info }
 
   let(:gather_files) {
-    BawWorkers::Harvest::GatherFiles.new(
+    BawWorkers::Jobs::Harvest::GatherFiles.new(
       BawWorkers::Config.logger_worker,
       file_info,
       Settings.available_formats.audio + Settings.available_formats.audio_decode_only,
@@ -31,70 +29,70 @@ describe BawWorkers::Harvest::GatherFiles do
   context 'get file info' do
     let(:result) { file_info.basic(example_audio) }
 
-    it 'should match full path' do
+    it 'matches full path' do
       expect(result[:file_path]).to eq(example_audio)
     end
 
-    it 'should match file name' do
+    it 'matches file name' do
       expect(result[:file_name]).to eq(File.basename(example_audio))
     end
 
-    it 'should match file extension' do
+    it 'matches file extension' do
       expect(result[:extension]).to eq(File.extname(example_audio).trim('.', ''))
     end
 
-    it 'should match file access time' do
+    it 'matches file access time' do
       expect(result[:access_time]).to eq(File.atime(example_audio))
     end
 
-    it 'should match file change time' do
+    it 'matches file change time' do
       expect(result[:change_time]).to eq(File.ctime(example_audio))
     end
 
-    it 'should match modified extension' do
+    it 'matches modified extension' do
       expect(result[:modified_time]).to eq(File.mtime(example_audio))
     end
 
-    it 'should match file size' do
+    it 'matches file size' do
       expect(result[:data_length_bytes]).to eq(File.size(example_audio))
     end
   end
 
   context 'settings values' do
-    it 'should fail if value is not numeric' do
-      expect(file_info.numeric?('10')).to be_falsey
+    it 'fails if value is not numeric' do
+      expect(file_info).not_to be_numeric('10')
     end
 
-    it 'should succeed if value is numeric' do
-      expect(file_info.numeric?(4)).to be_truthy
+    it 'succeeds if value is numeric' do
+      expect(file_info).to be_numeric(4)
     end
 
-    it 'should fail if value is not a time offset' do
-      expect(file_info.time_offset?('4')).to be_falsey
+    it 'fails if value is not a time offset' do
+      expect(file_info).not_to be_time_offset('4')
     end
 
-    it 'should succeed if value is a time offset' do
-      expect(file_info.time_offset?('+10')).to be_truthy
+    it 'succeeds if value is a time offset' do
+      expect(file_info).to be_time_offset('+10')
     end
 
-    it 'should succeed if value is a time offset' do
-      expect(file_info.time_offset?('+1000')).to be_truthy
+    it 'succeeds if value is a time offset' do
+      expect(file_info).to be_time_offset('+1000')
     end
 
-    it 'should succeed if value is a time offset' do
-      expect(file_info.time_offset?('+10:00')).to be_truthy
+    it 'succeeds if value is a time offset' do
+      expect(file_info).to be_time_offset('+10:00')
     end
   end
 
   context 'get folder settings' do
-    it 'should fail if file does not exist' do
+    it 'fails if file does not exist' do
       sub_folder = File.join(harvest_to_do_path, 'settings_do_not_exist')
       FileUtils.mkpath(sub_folder)
       file = File.join(sub_folder, config_file_name)
       expect(gather_files.run(file)).to be_empty
     end
 
-    it 'should succeed if file does exist' do
+    it 'succeeds if file does exist' do
       audio_file = File.expand_path audio_file_mono
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
 
@@ -118,14 +116,14 @@ describe BawWorkers::Harvest::GatherFiles do
   end
 
   context 'get file info' do
-    it 'should reject directories' do
+    it 'rejects directories' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
       FileUtils.mkpath(File.join(sub_folder, 'two', 'four'))
       expect(gather_files.run(harvest_to_do_path)).to be_empty
     end
 
-    it 'should error on read-only directories' do
+    it 'errors on read-only directories' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       three = File.join(sub_folder, 'two', 'three')
       four = File.join(sub_folder, 'two', 'four')
@@ -137,7 +135,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.rm_rf(sub_folder, secure: true)
     end
 
-    it 'should skip log files' do
+    it 'skips log files' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
@@ -145,14 +143,14 @@ describe BawWorkers::Harvest::GatherFiles do
       expect(gather_files.run(harvest_to_do_path)).to be_empty
     end
 
-    it 'should skip folder settings file' do
+    it 'skips folder settings file' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
       expect(gather_files.run(harvest_to_do_path)).to be_empty
     end
 
-    it 'should include other files' do
+    it 'includes other files' do
       # there should be at least one valid file for all accepted audio file types
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
@@ -205,45 +203,45 @@ describe BawWorkers::Harvest::GatherFiles do
       expect(results.find { |item|
                item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/prefix_20140101_235959.mp3'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/SERF_20130314_000021_000.wav'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/p1_s2_u3_d20140101_t235959Z.mp3'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/three/prefix_20140101_235959+10.mp3'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/four/prefix_20140101_235959+10.webm'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/five/prefix_20140101_235959+10.ogg'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/six/prefix_20140101_235959+10.flac'
-             }).to_not be_nil
+             }).not_to be_nil
 
       expect(results.find { |item|
                !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/seven/prefix_20140101_235959+10.wac'
-             }).to_not be_nil
+             }).not_to be_nil
     end
 
-    it 'should error on read-only directory' do
+    it 'errors on read-only directory' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))

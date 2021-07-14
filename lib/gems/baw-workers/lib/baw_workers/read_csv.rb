@@ -25,7 +25,7 @@ module BawWorkers
         #audio_params_array = []
 
         # load csv file
-        CSV.foreach(csv_file, { headers: true, return_headers: false }) do |row|
+        CSV.foreach(csv_file, **{ headers: true, return_headers: false }) do |row|
           # get values from row, put into hash that matches what check action expects
           audio_params = index_to_key_map.inject({}) { |hash, (k, _v)|
             hash.merge(k.to_sym => row[k.to_s])
@@ -36,7 +36,12 @@ module BawWorkers
 
           if original_format.blank?
             original_file_name = audio_params[:original_file_name]
-            original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.', '').downcase
+            original_extension = if original_file_name.blank?
+                                   ''
+                                 else
+                                   File.extname(original_file_name).trim('.',
+                                                                         '').downcase
+                                 end
             original_format = original_extension
           end
 

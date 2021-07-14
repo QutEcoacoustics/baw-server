@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
-
 describe 'rake tasks' do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
   context 'rake task' do
-    before(:each) do
+    before do
       File.delete worker_log_file if File.exist? worker_log_file
     end
 
-    after(:each) do
+    after do
       # reset settings
-      BawWorkers::Config.run({})
+      BawWorkers::Config.run_web(Rails.logger, Settings)
     end
 
     it 'runs the setup task for bg worker' do
@@ -35,7 +33,7 @@ describe 'rake tasks' do
 
       expect(worker_log_content).to match(/"test":true,"environment":"test","files":\[.*"#{new_file}".*\]/)
       expect(worker_log_content).to include('"redis":{"namespace":"resque","connection":{"host":"redis","port":6379,"password":null,"db":1}')
-      expect(worker_log_content).to include("\"resque_worker\":{\"running\":true,\"mode\":\"bg\",\"pid_file\":\"#{pid_file}\",\"queues\":\"analysis_test,maintenance_test,harvest_test,media_test,mirror_test\",\"poll_interval\":0.5}")
+      expect(worker_log_content).to include("\"resque_worker\":{\"running\":true,\"mode\":\"bg\",\"pid_file\":\"#{pid_file}\",\"queues\":\"analysis_test,maintenance_test,harvest_test,media_test\",\"poll_interval\":0.5}")
       expect(worker_log_content).to include('"logging":{"worker":1,"mailer":1,"audio_tools":1')
 
       File.delete pid_file if File.exist? pid_file
@@ -51,7 +49,7 @@ describe 'rake tasks' do
 
       expect(worker_log_content).to match(%r{"test":true,"environment":"test","files":\[.+/baw-server/config/settings/test.yml"})
       expect(worker_log_content).to include('"redis":{"namespace":"resque","connection":{"host":"redis","port":6379,"password":null,"db":1}')
-      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"fg","pid_file":null,"queues":"analysis_test,maintenance_test,harvest_test,media_test,mirror_test","poll_interval":0.5}')
+      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"fg","pid_file":null,"queues":"analysis_test,maintenance_test,harvest_test,media_test","poll_interval":0.5}')
       expect(worker_log_content).to include('"logging":{"worker":1,"mailer":1,"audio_tools":1')
     end
 
@@ -75,7 +73,7 @@ describe 'rake tasks' do
       BawWorkers::ResqueApi.workers_running
 
       expect(worker_log_content).to include('No Resque workers currently running.')
-      expect(worker_log_content).to_not include("Pids of running Resque workers: ''.")
+      expect(worker_log_content).not_to include("Pids of running Resque workers: ''.")
     end
   end
 end

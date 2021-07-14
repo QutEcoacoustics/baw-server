@@ -58,7 +58,7 @@ Rails.application.configure do
   config.action_controller.action_on_unpermitted_parameters = :raise
 
   # Raises error for missing translations
-  config.action_view.raise_on_missing_translations = true
+  config.i18n.raise_on_missing_translations = true
 
   # profile requests
   #config.middleware.insert 0, Rack::RequestProfiler, printer: ::RubyProf::CallTreePrinter

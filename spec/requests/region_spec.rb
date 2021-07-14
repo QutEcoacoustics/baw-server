@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe 'Regions' do
   create_audio_recordings_hierarchy

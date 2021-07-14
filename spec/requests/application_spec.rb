@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'Common behaviour', { type: :request } do
   it '404 should return 404' do

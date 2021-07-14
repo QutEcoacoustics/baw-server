@@ -5,10 +5,10 @@ require 'pathname'
 module BawWorkers
   # Common validation methods.
   class Validation
-    PATH_REGEXP = %r{\A(?:[0-9a-zA-Z_\-./])+\z}.freeze
-    INVALID_CHARS_REGEXP = %r{[^0-9a-z\-._\\/]}i.freeze
-    TOP_DIR_VALID_CHARS_REGEXP = /[0-9a-z\-_]/i.freeze
-    UUID_REGEXP = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
+    PATH_REGEXP = %r{\A(?:[0-9a-zA-Z_\-./])+\z}
+    INVALID_CHARS_REGEXP = %r{[^0-9a-z\-._\\/]}i
+    TOP_DIR_VALID_CHARS_REGEXP = /[0-9a-z\-_]/i
+    UUID_REGEXP = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
 
     class << self
       # true / false validation
@@ -118,7 +118,7 @@ module BawWorkers
         safer_path = safer_path.gsub('/.', "#{File::SEPARATOR}#{replace_char}")
         safer_path = safer_path.gsub('\\.', "#{File::SEPARATOR}#{replace_char}")
 
-        safer_path = replace_char if safer_path == '.' || safer_path == '..'
+        safer_path = replace_char if ['.', '..'].include?(safer_path)
 
         unless top_level_dir.blank?
 
@@ -131,7 +131,8 @@ module BawWorkers
 
           # ensure path starts with top_level_dir
           unless safer_path.start_with?(safer_top_level_dir)
-            raise ArgumentError, "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
+            raise ArgumentError,
+                  "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
           end
 
           raise ArgumentError, "Path must start with / but got #{safer_path}." unless safer_path.start_with?('/')
@@ -210,10 +211,10 @@ module BawWorkers
       def deep_symbolize_keys(hash)
         deep_transform_keys(hash) { |key|
           begin
-                                            key.to_sym
+            key.to_sym
           rescue StandardError
             key
-                                          end
+          end
         }
       end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'mime type extension patch' do
   let(:mime_types) {

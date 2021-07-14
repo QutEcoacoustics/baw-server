@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'CRUD Sites as valid user with owner permission', type: :feature do
   create_entire_hierarchy

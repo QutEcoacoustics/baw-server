@@ -1,5 +1,49 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: users
+#
+#  id                     :integer          not null, primary key
+#  authentication_token   :string
+#  confirmation_sent_at   :datetime
+#  confirmation_token     :string
+#  confirmed_at           :datetime
+#  current_sign_in_at     :datetime
+#  current_sign_in_ip     :string
+#  email                  :string           not null
+#  encrypted_password     :string           not null
+#  failed_attempts        :integer          default(0)
+#  image_content_type     :string
+#  image_file_name        :string
+#  image_file_size        :integer
+#  image_updated_at       :datetime
+#  invitation_token       :string
+#  last_seen_at           :datetime
+#  last_sign_in_at        :datetime
+#  last_sign_in_ip        :string
+#  locked_at              :datetime
+#  preferences            :text
+#  rails_tz               :string(255)
+#  remember_created_at    :datetime
+#  reset_password_sent_at :datetime
+#  reset_password_token   :string
+#  roles_mask             :integer
+#  sign_in_count          :integer          default(0)
+#  tzinfo_tz              :string(255)
+#  unconfirmed_email      :string
+#  unlock_token           :string
+#  user_name              :string           not null
+#  created_at             :datetime
+#  updated_at             :datetime
+#
+# Indexes
+#
+#  index_users_on_authentication_token  (authentication_token) UNIQUE
+#  index_users_on_confirmation_token    (confirmation_token) UNIQUE
+#  index_users_on_email                 (email) UNIQUE
+#  users_user_name_unique               (user_name) UNIQUE
+#
 require 'role_model'
 
 class User < ApplicationRecord

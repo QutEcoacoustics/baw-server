@@ -6,7 +6,7 @@ class NameyWamey
     # @param [AudioRecording] audio_recording
     # @param [float] start_offset
     # @param [float] end_offset
-    # @param [Hash|string] extra_options
+    # @param [Hash,string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
     def create_audio_recording_name(audio_recording, start_offset, end_offset, extra_options = '', extension = '')
@@ -34,7 +34,7 @@ class NameyWamey
 
     # Suggest a file name based on project, extra options and extension.
     # @param [Project] project
-    # @param [Hash|string] extra_options
+    # @param [Hash,string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
     def create_project_name(project, extra_options = '', extension = '')
@@ -52,7 +52,7 @@ class NameyWamey
     # Suggest a file name based on project, site, extra options and extension.
     # @param [Project] project
     # @param [Site] site
-    # @param [Hash|string] extra_options
+    # @param [Hash,string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
     def create_site_name(project, site, extra_options = '', extension = '')
@@ -77,7 +77,7 @@ class NameyWamey
 
     # Suggest a file name based on user, extra options and extension.
     # @param [User] user
-    # @param [Hash|string] extra_options
+    # @param [Hash,string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
     def create_user_name(user, extra_options = '', extension = '')
@@ -100,12 +100,13 @@ class NameyWamey
 
     def get_extra_options(extra_options)
       extra_options_formatted = ''
-      if extra_options.is_a?(Hash)
+      case extra_options
+      when Hash
         extra_options.each_pair do |_key, value|
           extra_options_formatted = value.to_s if extra_options_formatted.blank?
           extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
         end
-      elsif extra_options.is_a?(Array)
+      when Array
         extra_options.each do |value|
           extra_options_formatted = value.to_s if extra_options_formatted.blank?
           extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
@@ -113,14 +114,14 @@ class NameyWamey
       else
         extra_options_formatted = extra_options
       end
-      !extra_options_formatted.empty? ? '_' + extra_options_formatted : extra_options_formatted
+      extra_options_formatted.empty? ? extra_options_formatted : "_#{extra_options_formatted}"
     end
 
     def build_name(standard, extra, extension)
       name = standard.join('_') + get_extra_options(extra)
       name_parameterize = name.parameterize(separator: '_')
 
-      name_parameterize + '.' + extension.trim('.', '').parameterize(separator: '_')
+      "#{name_parameterize}.#{extension.trim('.', '').parameterize(separator: '_')}"
     end
   end
 end

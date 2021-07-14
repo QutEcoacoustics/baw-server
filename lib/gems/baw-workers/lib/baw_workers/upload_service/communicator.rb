@@ -63,7 +63,7 @@ module BawWorkers
       end
 
       # Gets a user
-      # @param [SftpgoClient::User|Integer] A user class to extract an id from, or an id
+      # @param [SftpgoClient::User,Integer] A user class to extract an id from, or an id
       # @return [SftpgoClient::User]
       def get_user(user)
         user_id = get_id(user, SftpgoClient::User)
@@ -93,13 +93,13 @@ module BawWorkers
       end
 
       # Gets the service status (safely)
-      # @return  [Dry::Monads::Result::Success<SftpgoClient::ApiResponse>|Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
+      # @return  [Dry::Monads::Result::Success<SftpgoClient::ApiResponse>,Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
       def service_status
         client.get_provider_status
       end
 
       # Gets the service version info (safely)
-      # @return [Dry::Monads::Result::Success<SftpgoClient::VersionInfo>|Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
+      # @return [Dry::Monads::Result::Success<SftpgoClient::VersionInfo>,Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
       def server_version
         client.get_version
       end

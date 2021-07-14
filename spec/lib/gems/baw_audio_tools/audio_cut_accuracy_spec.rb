@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
-require_relative '../../../helpers/shared_context/baw_audio_tools_shared'
-
 describe BawAudioTools::AudioBase do
   include_context 'audio base'
   include_context 'temp media files'

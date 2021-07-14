@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'CORS requests' do
   expose_headers = (MediaPoll::HEADERS_EXPOSED + ['X-Archived-At', 'X-Error-Type']).join(', ')

@@ -13,7 +13,7 @@ SET row_security = off;
 -- Name: is_json(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE OR REPLACE FUNCTION public.is_json(input text) RETURNS boolean
+CREATE FUNCTION public.is_json(input text) RETURNS boolean
     LANGUAGE plpgsql IMMUTABLE
     AS $$
   DECLARE
@@ -78,7 +78,8 @@ CREATE TABLE public.active_storage_blobs (
     metadata text,
     byte_size bigint NOT NULL,
     checksum character varying NOT NULL,
-    created_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone NOT NULL,
+    service_name character varying NOT NULL
 );
 
 
@@ -99,6 +100,36 @@ CREATE SEQUENCE public.active_storage_blobs_id_seq
 --
 
 ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage_blobs.id;
+
+
+--
+-- Name: active_storage_variant_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_variant_records (
+    id bigint NOT NULL,
+    blob_id bigint NOT NULL,
+    variation_digest character varying NOT NULL
+);
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_variant_records_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.active_storage_variant_records.id;
 
 
 --
@@ -819,6 +850,41 @@ ALTER SEQUENCE public.datasets_id_seq OWNED BY public.datasets.id;
 
 
 --
+-- Name: harvest_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.harvest_items (
+    id bigint NOT NULL,
+    path character varying,
+    status character varying,
+    info jsonb,
+    audio_recording_id integer,
+    uploader_id integer NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: harvest_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.harvest_items_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: harvest_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.harvest_items_id_seq OWNED BY public.harvest_items.id;
+
+
+--
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1151,6 +1217,152 @@ ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
+-- Name: sftpgo_folders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sftpgo_folders (
+    id integer NOT NULL,
+    path character varying(512) NOT NULL,
+    used_quota_size bigint NOT NULL,
+    used_quota_files integer NOT NULL,
+    last_quota_update bigint NOT NULL
+);
+
+
+--
+-- Name: sftpgo_folders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sftpgo_folders_id_seq OWNED BY public.sftpgo_folders.id;
+
+
+--
+-- Name: sftpgo_folders_mapping; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sftpgo_folders_mapping (
+    id integer NOT NULL,
+    virtual_path character varying(512) NOT NULL,
+    quota_size bigint NOT NULL,
+    quota_files integer NOT NULL,
+    folder_id integer NOT NULL,
+    user_id integer NOT NULL
+);
+
+
+--
+-- Name: sftpgo_folders_mapping_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_mapping_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sftpgo_folders_mapping_id_seq OWNED BY public.sftpgo_folders_mapping.id;
+
+
+--
+-- Name: sftpgo_schema_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sftpgo_schema_version (
+    id integer NOT NULL,
+    version integer NOT NULL
+);
+
+
+--
+-- Name: sftpgo_schema_version_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_schema_version_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_schema_version_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sftpgo_schema_version_id_seq OWNED BY public.sftpgo_schema_version.id;
+
+
+--
+-- Name: sftpgo_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sftpgo_users (
+    id integer NOT NULL,
+    username character varying(255) NOT NULL,
+    password text,
+    public_keys text,
+    home_dir character varying(512) NOT NULL,
+    uid integer NOT NULL,
+    gid integer NOT NULL,
+    max_sessions integer NOT NULL,
+    quota_size bigint NOT NULL,
+    quota_files integer NOT NULL,
+    permissions text NOT NULL,
+    used_quota_size bigint NOT NULL,
+    used_quota_files integer NOT NULL,
+    last_quota_update bigint NOT NULL,
+    upload_bandwidth integer NOT NULL,
+    download_bandwidth integer NOT NULL,
+    expiration_date bigint NOT NULL,
+    last_login bigint NOT NULL,
+    status integer NOT NULL,
+    filters text,
+    filesystem text
+);
+
+
+--
+-- Name: sftpgo_users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sftpgo_users_id_seq OWNED BY public.sftpgo_users.id;
+
+
+--
 -- Name: sites; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1373,6 +1585,13 @@ ALTER TABLE ONLY public.active_storage_blobs ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: active_storage_variant_records id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAULT nextval('public.active_storage_variant_records_id_seq'::regclass);
+
+
+--
 -- Name: analysis_jobs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1506,6 +1725,13 @@ ALTER TABLE ONLY public.datasets ALTER COLUMN id SET DEFAULT nextval('public.dat
 
 
 --
+-- Name: harvest_items id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items ALTER COLUMN id SET DEFAULT nextval('public.harvest_items_id_seq'::regclass);
+
+
+--
 -- Name: permissions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1562,6 +1788,34 @@ ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scri
 
 
 --
+-- Name: sftpgo_folders id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders ALTER COLUMN id SET DEFAULT nextval('public.sftpgo_folders_id_seq'::regclass);
+
+
+--
+-- Name: sftpgo_folders_mapping id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping ALTER COLUMN id SET DEFAULT nextval('public.sftpgo_folders_mapping_id_seq'::regclass);
+
+
+--
+-- Name: sftpgo_schema_version id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_schema_version ALTER COLUMN id SET DEFAULT nextval('public.sftpgo_schema_version_id_seq'::regclass);
+
+
+--
+-- Name: sftpgo_users id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_users ALTER COLUMN id SET DEFAULT nextval('public.sftpgo_users_id_seq'::regclass);
+
+
+--
 -- Name: sites id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1610,6 +1864,14 @@ ALTER TABLE ONLY public.active_storage_attachments
 
 ALTER TABLE ONLY public.active_storage_blobs
     ADD CONSTRAINT active_storage_blobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_variant_records active_storage_variant_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
 
 
 --
@@ -1773,6 +2035,14 @@ ALTER TABLE ONLY public.datasets
 
 
 --
+-- Name: harvest_items harvest_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT harvest_items_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1837,6 +2107,54 @@ ALTER TABLE ONLY public.scripts
 
 
 --
+-- Name: sftpgo_folders_mapping sftpgo_folders_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT sftpgo_folders_mapping_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_folders sftpgo_folders_path_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders
+    ADD CONSTRAINT sftpgo_folders_path_key UNIQUE (path);
+
+
+--
+-- Name: sftpgo_folders sftpgo_folders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders
+    ADD CONSTRAINT sftpgo_folders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_schema_version sftpgo_schema_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_schema_version
+    ADD CONSTRAINT sftpgo_schema_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_users sftpgo_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_users
+    ADD CONSTRAINT sftpgo_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_users sftpgo_users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_users
+    ADD CONSTRAINT sftpgo_users_username_key UNIQUE (username);
+
+
+--
 -- Name: sites sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1866,6 +2184,14 @@ ALTER TABLE ONLY public.tag_groups
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_folders_mapping unique_mapping; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT unique_mapping UNIQUE (user_id, folder_id);
 
 
 --
@@ -1940,6 +2266,20 @@ CREATE INDEX dataset_items_idx ON public.dataset_items USING btree (start_time_s
 
 
 --
+-- Name: folders_mapping_folder_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX folders_mapping_folder_id_idx ON public.sftpgo_folders_mapping USING btree (folder_id);
+
+
+--
+-- Name: folders_mapping_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX folders_mapping_user_id_idx ON public.sftpgo_folders_mapping USING btree (user_id);
+
+
+--
 -- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1958,6 +2298,13 @@ CREATE UNIQUE INDEX index_active_storage_attachments_uniqueness ON public.active
 --
 
 CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_blobs USING btree (key);
+
+
+--
+-- Name: index_active_storage_variant_records_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
 
 
 --
@@ -2280,6 +2627,13 @@ CREATE INDEX index_comfy_cms_translations_on_locale ON public.comfy_cms_translat
 --
 
 CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_translations USING btree (page_id);
+
+
+--
+-- Name: index_harvest_items_on_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_harvest_items_on_status ON public.harvest_items USING btree (status);
 
 
 --
@@ -2775,6 +3129,14 @@ ALTER TABLE ONLY public.questions
 
 
 --
+-- Name: harvest_items fk_rails_220bbcd4e4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_220bbcd4e4 FOREIGN KEY (uploader_id) REFERENCES public.users(id);
+
+
+--
 -- Name: responses fk_rails_325af149a3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2863,6 +3225,14 @@ ALTER TABLE ONLY public.sites
 
 
 --
+-- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
 -- Name: regions fk_rails_a2bcbc219c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2935,6 +3305,14 @@ ALTER TABLE ONLY public.progress_events
 
 
 --
+-- Name: harvest_items fk_rails_dc2d52ddad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+
+
+--
 -- Name: regions fk_rails_e89672d43e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2956,6 +3334,22 @@ ALTER TABLE ONLY public.regions
 
 ALTER TABLE ONLY public.datasets
     ADD CONSTRAINT fk_rails_faaf9c0bcd FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: sftpgo_folders_mapping folders_mapping_folder_id_fk_folders_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT folders_mapping_folder_id_fk_folders_id FOREIGN KEY (folder_id) REFERENCES public.sftpgo_folders(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: sftpgo_folders_mapping folders_mapping_user_id_fk_users_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT folders_mapping_user_id_fk_users_id FOREIGN KEY (user_id) REFERENCES public.sftpgo_users(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
 
 
 --
@@ -3182,6 +3576,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20200714005247'),
 ('20200831130746'),
 ('20200901011916'),
-('20200904064318');
+('20200904064318'),
+('20210707050202'),
+('20210707050203'),
+('20210707074343');
 
 

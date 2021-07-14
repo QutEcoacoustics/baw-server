@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe 'Sites' do
   create_entire_hierarchy

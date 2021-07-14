@@ -44,7 +44,10 @@ gem 'addressable'
 
 gem 'descriptive-statistics'
 
-RAILS_VERSION = '~> 6.0.3'
+# for sorting hashes by keys
+gem 'deep_sort'
+
+RAILS_VERSION = '~> 6.1.3.2'
 
 group :server do
   # RAILS
@@ -53,6 +56,9 @@ group :server do
   gem 'rack-cors', '~> 1.1.1', require: 'rack/cors'
   gem 'rails', RAILS_VERSION
   gem 'responders', '~> 3.0.1'
+
+  # deal with chrome and same site cookies
+  gem 'rails_same_site_cookie'
 
   # bumping to latest RC because it has pre-compiled native binaries
   gem 'nokogiri', '~> 1.11.0.rc3'
@@ -92,9 +98,6 @@ group :server do
   gem 'kaminari'
   gem 'recaptcha', require: 'recaptcha/rails'
 
-  # for tying inflections into I18n
-  gem 'i18n-inflector-rails', '~>1.0', require: false
-
   # USERS & PERMISSIONS
   # -------------------------------------
   # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
@@ -121,7 +124,7 @@ group :server do
 
   # MODELS
   # -------------------------------------
-  gem 'jc-validates_timeliness', '~> 3.1.1'
+  gem 'validates_timeliness', '~> 6.0.0.alpha1'
 
   # https://github.com/delynn/userstamp
   # no changes in a long time, and we are very dependant on how this works
@@ -134,7 +137,7 @@ group :server do
   gem 'enumerize'
   gem 'uuidtools', '~> 2.1.5'
 
-  # Note: if other modifications are made to the default_scope
+  # NOTE: if other modifications are made to the default_scope
   # there are manually constructed queries that need to be updated to match
   # (search for ':deleted_at' to find the relevant places)
   gem 'acts_as_paranoid'
@@ -163,10 +166,10 @@ end
 
 group :workers do
   gem 'actionmailer', RAILS_VERSION
-  gem 'activesupport', RAILS_VERSION
   gem 'activejob', RAILS_VERSION
-  gem 'activestorage', RAILS_VERSION
   gem 'activerecord', RAILS_VERSION
+  gem 'activestorage', RAILS_VERSION
+  gem 'activesupport', RAILS_VERSION
 end
 
 group :workers, :server do
@@ -186,9 +189,7 @@ group :workers, :server do
   gem 'redis', '~> 4.1'
   gem 'resque'
   gem 'resque-job-stats'
-  # source copied into repo, see lib/gems/resque-status
-  # gem 'resque-status'
-  gem 'resque_solo'
+  gem 'resque-scheduler'
 
   # Active storage analyzers
   gem 'image_processing'
@@ -202,16 +203,19 @@ end
 # gems that are only required on development machines or for testings
 group :development do
   # allow debugging
-  gem 'debase', '>= 0.2.5.beta1'
+  gem 'debase', '>= 0.2.5.beta2'
   gem 'readapt'
   gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'
 
   # a ruby language server
   gem 'solargraph'
+  gem 'solargraph-rails', '>= 0.2.2.pre.2'
+  # needed by bundler/soalrgraph for language server?
+  gem 'actionview', RAILS_VERSION
 
   gem 'bullet'
-  gem 'i18n-tasks', '~> 0.9.0'
+  gem 'i18n-tasks', '~> 0.9.31'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
 
@@ -220,6 +224,9 @@ group :development do
 
   # generating changelogs
   gem 'github_changelog_generator'
+
+  # documents models
+  gem 'annotate'
 end
 
 group :test do
@@ -235,6 +242,8 @@ group :test do
   gem 'rspec-its'
   gem 'rspec-mocks'
   gem 'timecop'
+  # better diffs
+  gem 'super_diff'
   # for multi-step specs
   gem 'turnip'
   # for profiling
@@ -257,4 +266,7 @@ end
 group :development, :test do
   # restart workers when their code changes
   gem 'rerun'
+
+  # linting
+  gem 'rubocop-rspec', require: false
 end

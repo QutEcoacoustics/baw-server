@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawAudioTools::AudioFfmpeg do
   include_context 'common'

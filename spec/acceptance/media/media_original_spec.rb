@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 require 'helpers/resque_helpers'
@@ -18,7 +17,7 @@ resource 'Media/original' do
 
   create_entire_hierarchy
 
-  after(:each) do
+  after do
     remove_media_dirs
   end
 
@@ -48,14 +47,14 @@ resource 'Media/original' do
     let(:start_offset) { nil }
     let(:end_offset) { nil }
 
-    before(:each) do
+    before do
       # the standard media route only allows short recordings, purposely mock a long duration to make sure long
       # original recordings succeed.
       audio_recording.update_attribute(:duration_seconds, 3600) # one hour
       create_media_options(audio_recording, audio_file_mono)
     end
 
-    after(:each) do
+    after do
       remove_media_dirs
     end
 
@@ -68,7 +67,7 @@ resource 'Media/original' do
         expected_response_header_values: {
           'Content-Length' => context.audio_file_mono_size_bytes.to_s,
           'Content-Disposition' => "attachment; filename=\"#{filename}\"; filename*=UTF-8''#{filename}",
-          'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
+          'Digest' => "SHA256=#{context.audio_recording.split_file_hash[1]}"
         },
         is_range_request: false
       })
@@ -79,7 +78,8 @@ resource 'Media/original' do
 
       let(:authentication_token) { reader_token }
 
-      standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+      standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden,
+                               { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -87,7 +87,8 @@ resource 'Media/original' do
 
       let(:authentication_token) { writer_token }
 
-      standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+      standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden,
+                               { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -95,7 +96,8 @@ resource 'Media/original' do
 
       let(:authentication_token) { no_access_token }
 
-      standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+      standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden,
+                               { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -103,7 +105,8 @@ resource 'Media/original' do
 
       let(:authentication_token) { invalid_token }
 
-      standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
+      standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized,
+                               { expected_json_path: get_json_error_path(:sign_in) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -111,7 +114,8 @@ resource 'Media/original' do
 
       let(:authentication_token) { owner_token }
 
-      standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+      standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden,
+                               { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do

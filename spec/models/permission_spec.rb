@@ -1,7 +1,37 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
+# == Schema Information
+#
+# Table name: permissions
+#
+#  id              :integer          not null, primary key
+#  allow_anonymous :boolean          default(FALSE), not null
+#  allow_logged_in :boolean          default(FALSE), not null
+#  level           :string           not null
+#  created_at      :datetime
+#  updated_at      :datetime
+#  creator_id      :integer          not null
+#  project_id      :integer          not null
+#  updater_id      :integer
+#  user_id         :integer
+#
+# Indexes
+#
+#  index_permissions_on_creator_id           (creator_id)
+#  index_permissions_on_project_id           (project_id)
+#  index_permissions_on_updater_id           (updater_id)
+#  index_permissions_on_user_id              (user_id)
+#  permissions_project_allow_anonymous_uidx  (project_id,allow_anonymous) UNIQUE WHERE (allow_anonymous IS TRUE)
+#  permissions_project_allow_logged_in_uidx  (project_id,allow_logged_in) UNIQUE WHERE (allow_logged_in IS TRUE)
+#  permissions_project_user_uidx             (project_id,user_id) UNIQUE WHERE (user_id IS NOT NULL)
+#
+# Foreign Keys
+#
+#  permissions_creator_id_fk  (creator_id => users.id)
+#  permissions_project_id_fk  (project_id => projects.id)
+#  permissions_updater_id_fk  (updater_id => users.id)
+#  permissions_user_id_fk     (user_id => users.id)
+#
 describe Permission, type: :model do
   subject { FactoryBot.build(:read_permission, project: FactoryBot.create(:project)) }
 

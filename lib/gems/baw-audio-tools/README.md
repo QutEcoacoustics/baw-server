@@ -18,20 +18,14 @@ You may need to install some additional tools for working with audio and images,
  - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
  - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
  - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
- - [wav2png](https://github.com/beschulz/wav2png) is used to generate waveform images.
  - [wac2wav](https://github.com/QutBioacoustics/wac2wavcmd) is used to convert from `.wac` to `.wav`.
  - [redis](http://redis.io/) is used by [Resque](https://github.com/resque/resque/tree/v1.25.2) to manage long-running tasks.
 
-Audio tools from apt: imagemagick, wavpack, sox, shntool, mp3splt. Ffmpeg is installed from a binary, and wav2png can be built from source.
+Audio tools from apt: imagemagick, wavpack, sox, shntool, mp3splt. Ffmpeg is installed from a binary.
 
     sudo apt-get install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools
 
-Download, build and install wav2png:
 
-    cd ~/Downloads
-    git clone https://github.com/beschulz/wav2png.git
-    make -C ./wav2png/build all
-    sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin/
 
 Download and install latest ffmpeg:
 

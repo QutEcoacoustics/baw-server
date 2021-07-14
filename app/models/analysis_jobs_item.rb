@@ -1,5 +1,31 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: analysis_jobs_items
+#
+#  id                 :integer          not null, primary key
+#  cancel_started_at  :datetime
+#  completed_at       :datetime
+#  queued_at          :datetime
+#  status             :string(255)      default("new"), not null
+#  work_started_at    :datetime
+#  created_at         :datetime         not null
+#  analysis_job_id    :integer          not null
+#  audio_recording_id :integer          not null
+#  queue_id           :string(255)
+#
+# Indexes
+#
+#  index_analysis_jobs_items_on_analysis_job_id     (analysis_job_id)
+#  index_analysis_jobs_items_on_audio_recording_id  (audio_recording_id)
+#  queue_id_uidx                                    (queue_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (analysis_job_id => analysis_jobs.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#
 class AnalysisJobsItem < ApplicationRecord
   # allow a state machine to work with this class
   include AASM
@@ -139,7 +165,7 @@ class AnalysisJobsItem < ApplicationRecord
     audio_recordings_inner = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
 
     # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
-    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| '"' + table_name + '"."' + c + '"' }
+    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| "\"#{table_name}\".\"#{c}\"" }
 
     # then add an extra select to shift the audio_recording.id into audio_recording_id
     projections = columns.unshift("\"#{audio_recordings_inner.name}\".\"id\" AS \"audio_recording_id\"")
@@ -158,9 +184,7 @@ class AnalysisJobsItem < ApplicationRecord
     query = from(subquery)
 
     # merge with AudioRecording to apply default scope (e.g. where deleted_at IS NULL)
-    query_without_deleted = query.joins(:audio_recording)
-
-    query_without_deleted
+    query.joins(:audio_recording)
   end
 
   #
@@ -309,13 +333,12 @@ class AnalysisJobsItem < ApplicationRecord
     error = nil
 
     begin
-      # the second argument groups all items in this job together so that their common payload is stored efficiently
-      result = BawWorkers::Analysis::Action.action_enqueue(payload, analysis_job.created_at.to_i.to_s)
+      result = BawWorkers::Jobs::Analysis::Job.action_enqueue(payload)
 
       # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
       self.queue_id = result
     rescue StandardError => e
-      # Note: exception used to be swallowed. We might need better error handling here later on.
+      # NOTE: exception used to be swallowed. We might need better error handling here later on.
       Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
       raise
     end
@@ -357,16 +380,16 @@ class AnalysisJobsItem < ApplicationRecord
 
     # merge base
     payload.merge({
-                    command_format: command_format,
+      command_format: command_format,
 
-                    config: config_string,
-                    job_id: job_id,
+      config: config_string,
+      job_id: job_id,
 
-                    uuid: audio_recording.uuid,
-                    id: audio_recording.id,
-                    datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-                    original_format: audio_recording.original_format_calculated
-                  })
+      uuid: audio_recording.uuid,
+      id: audio_recording.id,
+      datetime_with_offset: audio_recording.recorded_date.iso8601(3),
+      original_format: audio_recording.original_format_calculated
+    })
   end
 
   def is_new_when_created

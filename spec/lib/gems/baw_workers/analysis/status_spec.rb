@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
-
-describe BawWorkers::Analysis::Status do
+describe BawWorkers::Jobs::Analysis::Status do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
@@ -10,10 +8,10 @@ describe BawWorkers::Analysis::Status do
   # we want to control the execution of jobs for this set of tests,
   # so change the queue name so the test worker does not
   # automatically process the jobs
-  before(:each) do
+  before do
     default_queue = Settings.actions.analysis.queue
 
-    allow(Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.analysis).to receive(:queue).and_return("#{default_queue}_manual_tick")
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
@@ -118,7 +116,7 @@ describe BawWorkers::Analysis::Status do
     expect(Resque.size(queue_name)).to eq(0)
 
     # enqueue
-    _ = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+    _ = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -131,7 +129,7 @@ describe BawWorkers::Analysis::Status do
 
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
-      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
 
       expect(was_run).to eq(true)
     end
@@ -144,13 +142,14 @@ describe BawWorkers::Analysis::Status do
     expect(Resque.size(queue_name)).to eq(0)
 
     # override the timeout value
-    allow(BawWorkers::Analysis::Runner).to receive(:timeout_seconds).and_return(0.05)
+    allow(BawWorkers::Jobs::Analysis::Runner).to receive(:timeout_seconds).and_return(0.05)
     # and insert a sleep into the command to run
     analysis_params_modified = analysis_params.dup
-    analysis_params_modified[:command_format] = 'sleep 5 && <{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"'
+    analysis_params_modified[:command_format] =
+      'sleep 5 && <{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"'
 
     # enqueue
-    _ = BawWorkers::Analysis::Action.action_enqueue(analysis_params_modified)
+    _ = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params_modified)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -164,7 +163,7 @@ describe BawWorkers::Analysis::Status do
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
       expect {
-        _ = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+        _ = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
       }.to raise_error(BawAudioTools::Exceptions::AudioToolTimedOutError)
     end
   end
@@ -176,10 +175,11 @@ describe BawWorkers::Analysis::Status do
     expect(Resque.size(queue_name)).to eq(0)
     # and insert error output into the command to run
     analysis_params_modified = analysis_params.dup
-    analysis_params_modified[:command_format] = '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>" >&2 && (exit 1)'
+    analysis_params_modified[:command_format] =
+      '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>" >&2 && (exit 1)'
 
     # enqueue
-    result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params_modified)
+    result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params_modified)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -193,7 +193,7 @@ describe BawWorkers::Analysis::Status do
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
       expect {
-        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
       }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
     end
   end
@@ -206,7 +206,7 @@ describe BawWorkers::Analysis::Status do
     # and insert error output into the command to run
 
     # enqueue
-    result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+    result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -218,7 +218,7 @@ describe BawWorkers::Analysis::Status do
 
     expect_requests_made_in_order(l, s1, s2) do
       # dequeue and run a job
-      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
       expect(was_run).to eq(true)
     end
   end
@@ -231,7 +231,7 @@ describe BawWorkers::Analysis::Status do
     ActionMailer::Base.deliveries.clear
 
     # enqueue
-    result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+    result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -246,7 +246,7 @@ describe BawWorkers::Analysis::Status do
       # dequeue and run a job
       was_run = false
       time = Benchmark.realtime {
-        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+        was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
       }
 
       expect(was_run).to eq(true)

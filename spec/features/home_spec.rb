@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'visiting the homepage', type: :feature do
   before do

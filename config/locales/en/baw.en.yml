@@ -55,19 +55,19 @@ en:
           title: Library
           description: Annotation library
         profile:
-          title: "@{my:My|their:Their|My} Profile"
-          description: "View @{my:My|their:Their} profile"
+          title: "My Profile"
+          description: "View My profile"
         profile_projects:
-          title: "@{my:My|their:Their} Projects"
+          title: "My Projects"
           description: "Projects %{user_name} can access"
         profile_sites:
-          title: "@{my:My|their:Their} Sites"
+          title: "My Sites"
           description: "Sites %{user_name} can access"
         profile_bookmarks:
-          title: "@{my:My|their:Their} Bookmarks"
+          title: "My Bookmarks"
           description: "Bookmarks created by %{user_name}"
         profile_audio_events:
-          title: "@{my:My|their:Their} Annotations"
+          title: "My Annotations"
           description: "Annotations created by %{user_name}"
         admin_area:
           title: Administration

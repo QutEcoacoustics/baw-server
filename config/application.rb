@@ -16,11 +16,19 @@ Bundler.require(*Rails.groups, :server, :workers)
 # NOTE: the global Settings const is not yet available. We have to wait for the preload hook.
 #   See initializers/config.rb
 require "#{__dir__}/../lib/gems/baw-app/lib/baw_app"
+
+# need to load this manually because we load config before rails in workers
+# and the rail tie does not integrate
+# https://github.com/rubyconfig/config/blob/fe909388b5fc9426bae85480dd3c82f67731d381/lib/config.rb#L82
+require('config/integrations/rails/railtie')
+
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 
 module Baw
   def self.configure_logging(config)
+    # trigger some autoloads so they don't happen in trap contexts
+    _ = SemanticLogger::Utils
     log_name = BawWorkers::Config.baw_workers_entry? ? 'workers' : 'rails'
     tag = Settings.logs.tag.blank? ? '' : ".#{Settings.logs.tag}"
     config.paths['log'] = [
@@ -31,9 +39,10 @@ module Baw
     time_format = '%Y-%m-%dT%H:%M:%S.%#3N'
     config.rails_semantic_logger.format = \
       if BawApp.dev_or_test?
+        color_map = SemanticLogger::Formatters::Color::ColorMap.new(warn: SemanticLogger::AnsiColors::YELLOW)
         SemanticLogger::Formatters::Color.new(
           ap: { multiline: false, ruby19_syntax: true },
-          color_map: { warn: SemanticLogger::AnsiColors::YELLOW },
+          color_map: color_map,
           time_format: time_format
         )
       else
@@ -42,10 +51,10 @@ module Baw
 
     config.log_level = BawApp.log_level
 
-    if BawApp.log_to_stdout?
-      STDOUT.sync = true
-      config.semantic_logger.add_appender(io: STDOUT, formatter: config.rails_semantic_logger.format)
-    end
+    return unless BawApp.log_to_stdout?
+
+    $stdout.sync = true
+    config.semantic_logger.add_appender(io: $stdout, formatter: config.rails_semantic_logger.format)
 
     # the rails_semantic_logger gem automatically replaces all rails standard loggers
     # with tagged loggers
@@ -68,6 +77,10 @@ module Baw
 
     config.load_defaults '6.0'
 
+    # TODO: fix, dangerous!
+    # https://stackoverflow.com/questions/53878453/upgraded-rails-to-6-getting-blocked-host-error
+    config.hosts.clear
+
     # we should never need to to autoload anything in ./app
     config.add_autoload_paths_to_load_path = false
 
@@ -76,7 +89,7 @@ module Baw
     # add patches
     # zeitwerk specifically does not deal with the concept of overrides,
     # so patches need to be required manually
-    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).sort.each do |override|
+    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).each do |override|
       #puts "loading #{override}"
       require override
     end
@@ -125,7 +138,8 @@ module Baw
       ErrorsController.action(:uncaught_error).call(env)
     }
 
-    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
+    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody',
+                                                       'colgroup'])
 
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.

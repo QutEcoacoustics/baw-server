@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 def expect_invalid_file_name(file_name)
   it file_name do |example|

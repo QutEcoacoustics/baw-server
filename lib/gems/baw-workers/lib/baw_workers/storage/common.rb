@@ -80,8 +80,8 @@ module BawWorkers
               else
                 next
               end
-            else
-              yield path if block_given?
+            elsif block_given?
+              yield path
             end
           end
         end
@@ -145,7 +145,8 @@ module BawWorkers
         raise ArgumentError, "#{validate_msg_base} end_offset. #{provided}" unless opts.include? :end_offset
 
         if opts[:start_offset].to_f >= opts[:end_offset].to_f
-          raise ArgumentError, "end_offset (#{opts[:end_offset]}) must be greater than start_offset (#{opts[:start_offset]}). #{provided}"
+          raise ArgumentError,
+                "end_offset (#{opts[:end_offset]}) must be greater than start_offset (#{opts[:start_offset]}). #{provided}"
         end
       end
 
@@ -184,7 +185,8 @@ module BawWorkers
         raise ArgumentError, "#{validate_msg_base} window. #{provided}" unless opts.include? :window
 
         unless BawAudioTools::AudioSox.window_options.include?(opts[:window].to_i)
-          raise ArgumentError, "window must be in #{BawAudioTools::AudioSox.window_options}: #{opts[:window]}. #{provided}"
+          raise ArgumentError,
+                "window must be in #{BawAudioTools::AudioSox.window_options}: #{opts[:window]}. #{provided}"
         end
       end
 
@@ -192,9 +194,11 @@ module BawWorkers
         provided = validate_msg_provided(opts)
         raise ArgumentError, "#{validate_msg_base} colour. #{provided}" unless opts.include? :colour
 
-        unless BawAudioTools::AudioSox.colour_options.keys.include?(opts[:colour].to_sym)
-          raise ArgumentError, "colour must be in #{BawAudioTools::AudioSox.colour_options.keys}: #{opts[:colour]}. #{provided}"
-        end
+        return if BawAudioTools::AudioSox.colour_options.keys.include?(opts[:colour].to_sym)
+        return if opts[:colour].to_sym == :w
+
+        raise ArgumentError,
+              "colour must be in #{BawAudioTools::AudioSox.colour_options.keys}: #{opts[:colour]}. #{provided}"
       end
 
       def validate_window_function(opts)
@@ -202,7 +206,8 @@ module BawWorkers
         raise ArgumentError, "#{validate_msg_base} window function. #{provided}" unless opts.include? :window_function
 
         unless BawAudioTools::AudioSox.window_function_options.include?(opts[:window_function].to_s)
-          raise ArgumentError, "window_function must be in #{BawAudioTools::AudioSox.window_function_options}: #{opts[:window_function]}. #{provided}"
+          raise ArgumentError,
+                "window_function must be in #{BawAudioTools::AudioSox.window_function_options}: #{opts[:window_function]}. #{provided}"
         end
       end
 
@@ -242,7 +247,7 @@ module BawWorkers
       def validate_saved_search_id(opts)
         provided = validate_msg_provided(opts)
         raise ArgumentError, "#{validate_msg_base} saved_search_id. #{provided}" unless opts.include? :saved_search_id
-        unless opts[:saved_search_id].to_i > 0
+        unless opts[:saved_search_id].to_i.positive?
           raise ArgumentError, "saved_search_id must be greater than 0: #{opts[:saved_search_id]}. #{provided}"
         end
       end

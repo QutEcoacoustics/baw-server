@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 require 'helpers/resque_helpers'
@@ -18,7 +17,7 @@ resource 'Media' do
 
   create_entire_hierarchy
 
-  after(:each) do
+  after do
     remove_media_dirs
   end
 
@@ -45,7 +44,8 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
-    standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader)', :not_acceptable, { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
+    standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader)', :not_acceptable,
+                             { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -53,12 +53,14 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'zjfyrdnd' }
     # can't respond with the format requested
-    standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader)', :not_acceptable, { expected_json_path: 'meta/error/info/available_formats' })
+    standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader)', :not_acceptable,
+                             { expected_json_path: 'meta/error/info/available_formats' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+    parameter :format,
+              'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
     let(:raw_post) { params.to_json }
 
@@ -144,6 +146,14 @@ resource 'Media' do
         'data/options/image/spectrogram/window_functions',
         'data/options/image/spectrogram/colours',
         'data/options/image/spectrogram/colours/g',
+        'data/options/image/spectrogram/colours/h',
+        'data/options/image/spectrogram/colours/pr',
+        'data/options/image/spectrogram/colours/tg',
+        'data/options/image/spectrogram/colours/yg',
+        'data/options/image/spectrogram/colours/gr',
+        'data/options/image/spectrogram/colours/tb',
+        'data/options/image/spectrogram/colours/rb',
+        'data/options/image/spectrogram/colours/w',
         'data/options/image/spectrogram/valid_sample_rates',
         'data/options/text',
         'data/options/text/formats'
@@ -156,17 +166,23 @@ resource 'Media' do
 
       check_hash_matches(json_paths, response_body, unexpected_json_paths)
 
-      mp3_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr| vsr['name'] == 'mp3' })[0]['valid_sample_rates']
-      wav_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr| vsr['name'] == 'wav' })[0]['valid_sample_rates']
+      mp3_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr|
+                                  vsr['name'] == 'mp3'
+                                })[0]['valid_sample_rates']
+      wav_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr|
+                                  vsr['name'] == 'wav'
+                                })[0]['valid_sample_rates']
 
       expect(mp3_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000])
-      expect(wav_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000, 96_000])
+      expect(wav_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000,
+                                            96_000])
     end
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+    parameter :format,
+              'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
     let(:raw_post) { params.to_json }
 
@@ -428,6 +444,57 @@ resource 'Media' do
     )
   end
 
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'png' }
+    let(:colour) { 'tg' }
+
+    media_request_options(
+      :get,
+      'MEDIA (spectrogram, IN COLOUR, get request as reader)',
+      :ok,
+      {
+        document: document_media_requests,
+        expected_response_content_type: 'image/png'
+      }
+    )
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'png' }
+    let(:colour) { 'teal_green' }
+
+    media_request_options(
+      :get,
+      'MEDIA (spectrogram, IN COLOUR, long name, get request as reader)',
+      :ok,
+      {
+        document: document_media_requests,
+        expected_response_content_type: 'image/png'
+      }
+    )
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'png' }
+    let(:colour) { 'w' }
+
+    media_request_options(
+      :get,
+      'MEDIA (waveform, get request as reader)',
+      :ok,
+      {
+        document: document_media_requests,
+        expected_response_content_type: 'image/png'
+      }
+    )
+  end
+
   describe 'requesting non-standard sample rates' do
     let(:audio_file_mono2) {
       {
@@ -439,7 +506,7 @@ resource 'Media' do
       }
     }
 
-    before(:each) do
+    before do
       audio_recording.update_attribute(:sample_rate_hertz, 7777)
       # create_media_options creates the options for testing, but also copies the actual file
       # so we need to call it here again to copy the correct file
@@ -522,7 +589,8 @@ resource 'Media' do
 
     get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-      parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+      parameter :format,
+                'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
       let(:authentication_token) { reader_token }
       let(:format) { 'json' }
       let(:sample_rate) { 7777 }
@@ -594,25 +662,32 @@ resource 'Media' do
 
     get '/audio_recordings/:audio_recording_id/media.:format' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-      parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+      parameter :format,
+                'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
       let(:raw_post) { params.to_json }
       let(:authentication_token) { reader_token }
       let(:format) { 'json' }
 
-      example 'MEDIA (as reader) checking available and formats valid sample rates for audio recording with non-standard original sample rate - 200', document: true do
+      example 'MEDIA (as reader) checking available and formats valid sample rates for audio recording with non-standard original sample rate - 200',
+              document: true do
         do_request
         expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
-        mp3_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr| vsr['name'] == 'mp3' })[0]['valid_sample_rates']
-        wav_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr| vsr['name'] == 'wav' })[0]['valid_sample_rates']
+        mp3_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr|
+                                    vsr['name'] == 'mp3'
+                                  })[0]['valid_sample_rates']
+        wav_valid_sample_rates = (JsonSpec::Helpers.parse_json(response_body)['data']['options']['audio']['formats'].select { |vsr|
+                                    vsr['name'] == 'wav'
+                                  })[0]['valid_sample_rates']
 
         available = JsonSpec::Helpers.parse_json(response_body)['data']['available']['audio'].keys
 
         # mp3 not included in available because native sample of 7777 rate not supported by mp3
         expect(available).to eq(['webm', 'ogg', 'flac', 'wav'])
         expect(mp3_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000])
-        expect(wav_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000, 96_000, 7777])
+        expect(wav_valid_sample_rates).to eq([8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000,
+                                              96_000, 7777])
       end
     end
   end
@@ -681,10 +756,12 @@ resource 'Media' do
     let(:end_offset) { 7 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5,
+                                                    end_time_seconds: 6, is_reference: true)
     end
 
-    standard_request_options(:get, 'MEDIA (as reader, valid audio event request offsets with read access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
+    standard_request_options(:get,
+                             'MEDIA (as reader, valid audio event request offsets with read access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -702,11 +779,13 @@ resource 'Media' do
     }
 
     let(:audio_event_id) {
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5,
+                                                    end_time_seconds: 6, is_reference: true)
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader, valid audio event request offsets with no access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
+    standard_request_options(:get,
+                             'MEDIA (as reader, valid audio event request offsets with no access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -718,10 +797,12 @@ resource 'Media' do
     let(:end_offset) { 150 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0,
+                                                    end_time_seconds: 10, is_reference: true)
     end
 
-    standard_request_options(:get, 'MEDIA (as reader, invalid audio event request offsets)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+    standard_request_options(:get, 'MEDIA (as reader, invalid audio event request offsets)', :forbidden,
+                             { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -737,11 +818,13 @@ resource 'Media' do
       audio_recording.id
     }
     let(:audio_event_id) {
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 21,
+                                                    end_time_seconds: 22, is_reference: false)
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader, not a reference audio event)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+    standard_request_options(:get, 'MEDIA (as reader, not a reference audio event)', :forbidden,
+                             { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -767,7 +850,8 @@ resource 'Media' do
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader, audio event request not related to audio recording)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+    standard_request_options(:get, 'MEDIA (as reader, audio event request not related to audio recording)', :forbidden,
+                             { expected_json_path: get_json_error_path(:permissions) })
   end
 
   #
@@ -878,7 +962,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:colour) { 'h' }
+    let(:colour) { 'z' }
     standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_entity,
                              { expected_json_path: 'meta/error/details', response_body_content: 'colour parameter' })
   end

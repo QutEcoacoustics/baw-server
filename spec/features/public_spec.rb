@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 require 'helpers/shared_test_helpers'
 
 xdescribe 'Website forms with user', type: :feature do

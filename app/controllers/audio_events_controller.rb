@@ -49,10 +49,11 @@ class AudioEventsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(audio_event_params)
+
     get_audio_recording
     do_authorize_instance
 
-    if @audio_event.save
+    if @audio_event.save!
       respond_create_success(audio_recording_audio_event_path(@audio_recording, @audio_event))
     else
       respond_change_fail
@@ -161,15 +162,16 @@ class AudioEventsController < ApplicationController
     # end offset
     if params_cleaned[:end_offset]
       end_offset = params_cleaned[:end_offset].to_f
-    else
-      end_offset = audio_recording.duration_seconds if audio_recording
+    elsif audio_recording
+      end_offset = audio_recording.duration_seconds
     end
 
     # timezone
     timezone_name = params_cleaned[:selected_timezone_name] || 'UTC'
 
     unless is_authorized
-      raise CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
+      raise CustomErrors::RoutingArgumentError,
+            'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
     end
 
     # create file name

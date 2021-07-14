@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
 require 'helpers/resque_helpers'
 require 'rspec/mocks'
 
@@ -27,7 +26,7 @@ describe 'Analysis Jobs' do
 
   let!(:saved_search) {
     Creation::Common.create_saved_search(writer_user, project,
-                                         'site_id': { 'eq': site.id })
+                                         site_id: { eq: site.id })
   }
 
   let!(:script) {
@@ -48,7 +47,7 @@ describe 'Analysis Jobs' do
 
   before(:all) do
     @default_queue = Settings.actions.analysis.queue
-    @manual_queue = @default_queue + '_manual_tick'
+    @manual_queue = @default_queue
     @queue_name = @manual_queue
 
     # cleanup resque queues before each test
@@ -65,19 +64,14 @@ describe 'Analysis Jobs' do
     @worker, _job = ResqueHelpers::Emulate.resque_worker_with_job(FakeJob, { an_argument: 3 }, options)
   end
 
-  before(:each) do
+  before do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = writer_token
 
     @analysis_job_url = '/analysis_jobs'
-
-    # we want to control the execution of jobs for this set of tests,
-    # so change the queue name so the test worker does not
-    # automatically process the jobs
-    allow(BawWorkers::Analysis::Action).to receive(:queue).and_return(@manual_queue)
   end
 
-  after(:each) do |example|
+  after do |example|
     if example.exception
       require 'json'
 
@@ -95,7 +89,6 @@ describe 'Analysis Jobs' do
   end
 
   def reset
-    BawWorkers::PartialPayload.delete_all
     BawWorkers::ResqueApi.clear_queue(@queue_name)
     Resque::Failure.clear
   end
@@ -121,7 +114,7 @@ describe 'Analysis Jobs' do
       analysis_job: {
         script_id: this_script.id,
         saved_search_id: saved_search.id,
-        name: 'Analysis Job #' + Time.now.to_s,
+        name: "Analysis Job ##{Time.now}",
         custom_settings: this_script.executable_settings,
         description: 'Description...'
       }
@@ -141,7 +134,7 @@ describe 'Analysis Jobs' do
     analysis_job = AnalysisJob.new
     analysis_job.script_id = this_script.id
     analysis_job.saved_search_id = saved_search.id
-    analysis_job.name = 'Analysis Job #' + Time.now.to_s
+    analysis_job.name = "Analysis Job ##{Time.now}"
     analysis_job.custom_settings = this_script.executable_settings
     analysis_job.description = 'Description...'
     analysis_job.creator = writer_user
@@ -313,13 +306,13 @@ describe 'Analysis Jobs' do
         message += @job_perform_failure.backtrace.join('\n')
       end
 
-      raise 'job perform failed: ' + message
+      raise "job perform failed: #{message}"
     end
   end
 
   describe 'Creating an analysis job' do
     describe 'status: "new"' do
-      before(:each) do
+      before do
         reset
 
         # stub the prepare_job method so that it is a no-op
@@ -330,8 +323,8 @@ describe 'Analysis Jobs' do
         @analysis_job = create_analysis_job
       end
 
-      it 'should be :new after just being created' do
-        expect(@analysis_job.new?).to be_truthy
+      it 'is :new after just being created' do
+        expect(@analysis_job).to be_new
       end
 
       it 'has the correct progress statistics' do
@@ -349,7 +342,7 @@ describe 'Analysis Jobs' do
     end
 
     describe 'status: "preparing"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
@@ -371,12 +364,12 @@ describe 'Analysis Jobs' do
         expect(mail['to'].to_s).to include(writer_user.email)
         expect(mail['subject'].value).to include(@analysis_job.name)
         expect(mail['subject'].value).to include('New job')
-        expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
-        expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
+        expect(mail.body.raw_source).to include("ID: #{@analysis_job.id}")
+        expect(mail.body.raw_source).to include("localhost:3000/analysis_jobs/#{@analysis_job.id}")
       end
 
-      it 'should be :preparing when preparing' do
-        expect(@analysis_job.preparing?).to be_truthy
+      it 'is :preparing when preparing' do
+        expect(@analysis_job).to be_preparing
       end
 
       it 'has the correct progress statistics' do
@@ -402,7 +395,7 @@ describe 'Analysis Jobs' do
     end
 
     describe 'distributed patterns, "preparing" -> "completed"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
       end
@@ -443,7 +436,7 @@ describe 'Analysis Jobs' do
           }
         }, 6)
 
-        expect(@analysis_job.processing?).to be_truthy
+        expect(@analysis_job).to be_processing
       end
 
       it 'allows for all jobs items to have completed while still preparing - and to skip `processing` completely' do
@@ -483,12 +476,12 @@ describe 'Analysis Jobs' do
           }
         }, 6)
 
-        expect(@analysis_job.completed?).to be_truthy
+        expect(@analysis_job).to be_completed
       end
     end
 
     describe 'status: "processing"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
@@ -524,8 +517,8 @@ describe 'Analysis Jobs' do
         4.times { perform_job }
       end
 
-      it 'should be :processing when processing' do
-        expect(@analysis_job.processing?).to be_truthy
+      it 'is :processing when processing' do
+        expect(@analysis_job).to be_processing
       end
 
       it 'ensures some all jobs exist in the message queue' do
@@ -606,7 +599,7 @@ describe 'Analysis Jobs' do
     end
 
     describe 'status: "suspended"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
@@ -663,8 +656,8 @@ describe 'Analysis Jobs' do
         @analysis_job.reload
       end
 
-      it 'should be :suspended when suspended' do
-        expect(@analysis_job.suspended?).to be_truthy
+      it 'is :suspended when suspended' do
+        expect(@analysis_job).to be_suspended
       end
 
       it 'DOES NOTHING to the items in to the message queue' do
@@ -708,7 +701,7 @@ describe 'Analysis Jobs' do
         }, 6)
       end
 
-      it 'It confirms cancellation when the job tries to run (:cancelling --> :cancelled)' do
+      it 'confirms cancellation when the job tries to run (:cancelling --> :cancelled)' do
         perform_job
 
         expect {
@@ -746,7 +739,7 @@ describe 'Analysis Jobs' do
       end
 
       describe 'status: "suspended"→"processing"' do
-        before(:each) do
+        before do
           #reset
           # reset our mocks, or else create_payload will be mocked again!
           RSpec::Mocks.space.proxy_for(AnalysisJobsItem).reset
@@ -782,8 +775,8 @@ describe 'Analysis Jobs' do
           @analysis_job.reload
         end
 
-        it 'should be :processing when processing' do
-          expect(@analysis_job.processing?).to be_truthy
+        it 'is :processing when processing' do
+          expect(@analysis_job).to be_processing
         end
 
         it 'ADDs all :cancelled jobs items in to the message queue' do
@@ -798,7 +791,7 @@ describe 'Analysis Jobs' do
           expect(get_items_count('queued')).to eq(2)
 
           # expect first item (which was cancelled to get a new queue_id)
-          expect(@old_items[0].queue_id).to_not eq(AnalysisJobsItem.find(@old_items[0].id).queue_id)
+          expect(@old_items[0].queue_id).not_to eq(AnalysisJobsItem.find(@old_items[0].id).queue_id)
 
           # expect second one to have its old id
           expect(@old_items[1].queue_id).to eq(AnalysisJobsItem.find(@old_items[1].id).queue_id)
@@ -820,7 +813,7 @@ describe 'Analysis Jobs' do
     end
 
     describe 'status: "completed"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
@@ -855,8 +848,8 @@ describe 'Analysis Jobs' do
         @analysis_job.reload
       end
 
-      it 'should be :completed when completed' do
-        expect(@analysis_job.completed?).to be_truthy
+      it 'is :completed when completed' do
+        expect(@analysis_job).to be_completed
       end
 
       it 'ensures NO jobs exist in the message queue' do
@@ -890,12 +883,12 @@ describe 'Analysis Jobs' do
         expect(mail['to'].to_s).to include(writer_user.email)
         expect(mail['subject'].value).to include(@analysis_job.name)
         expect(mail['subject'].value).to include('Completed job')
-        expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
-        expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
+        expect(mail.body.raw_source).to include("ID: #{@analysis_job.id}")
+        expect(mail.body.raw_source).to include("localhost:3000/analysis_jobs/#{@analysis_job.id}")
       end
 
       describe 'retrying failed items, status: "completed"→"processing"' do
-        before(:each) do
+        before do
           #reset
           ActionMailer::Base.deliveries.clear
 
@@ -931,8 +924,8 @@ describe 'Analysis Jobs' do
           @analysis_job.reload
         end
 
-        it 'should be :processing when processing' do
-          expect(@analysis_job.processing?).to be_truthy
+        it 'is :processing when processing' do
+          expect(@analysis_job).to be_processing
         end
 
         it 'ADDs all :cancelled jobs items in to the message queue' do
@@ -947,7 +940,7 @@ describe 'Analysis Jobs' do
           expect(get_items_count('queued')).to eq(3)
 
           @old_items.each do |item|
-            expect(item.queue_id).to_not eq(AnalysisJobsItem.find(item.id).queue_id)
+            expect(item.queue_id).not_to eq(AnalysisJobsItem.find(item.id).queue_id)
           end
         end
 
@@ -970,8 +963,8 @@ describe 'Analysis Jobs' do
           expect(mail['to'].to_s).to include(writer_user.email)
           expect(mail['subject'].value).to include(@analysis_job.name)
           expect(mail['subject'].value).to include('Retrying job')
-          expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
-          expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
+          expect(mail.body.raw_source).to include("ID: #{@analysis_job.id}")
+          expect(mail.body.raw_source).to include("localhost:3000/analysis_jobs/#{@analysis_job.id}")
         end
 
         it 'can still complete!' do
@@ -980,7 +973,7 @@ describe 'Analysis Jobs' do
           perform_job
 
           @analysis_job.reload
-          expect(@analysis_job.completed?).to be_truthy
+          expect(@analysis_job).to be_completed
           expect(get_queue_count).to eq(0)
           expect(get_failed_queue_count).to eq(1)
 
@@ -1000,8 +993,8 @@ describe 'Analysis Jobs' do
           expect(mail['to'].to_s).to include(writer_user.email)
           expect(mail['subject'].value).to include(@analysis_job.name)
           expect(mail['subject'].value).to include('Completed job')
-          expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
-          expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
+          expect(mail.body.raw_source).to include("ID: #{@analysis_job.id}")
+          expect(mail.body.raw_source).to include("localhost:3000/analysis_jobs/#{@analysis_job.id}")
         end
       end
     end
@@ -1009,11 +1002,11 @@ describe 'Analysis Jobs' do
 
   describe 'Deleting an analysis job' do
     describe 'status: "new"' do
-      before(:each) do
+      before do
         reset
         @analysis_job = create_analysis_job_direct
 
-        expect(@analysis_job.new?).to be_truthy
+        expect(@analysis_job).to be_new
       end
 
       it 'cannot be deleted while new' do
@@ -1025,7 +1018,7 @@ describe 'Analysis Jobs' do
     end
 
     describe 'status: "preparing"' do
-      before(:each) do
+      before do
         reset
         @analysis_job = create_analysis_job_direct
 
@@ -1037,7 +1030,7 @@ describe 'Analysis Jobs' do
 
         @analysis_job.prepare!
 
-        expect(@analysis_job.preparing?).to be_truthy
+        expect(@analysis_job).to be_preparing
       end
 
       it 'cannot be deleted while preparing' do
@@ -1049,11 +1042,11 @@ describe 'Analysis Jobs' do
     end
 
     describe 'status: "processing"' do
-      before(:each) do
+      before do
         reset
         @analysis_job = create_analysis_job
 
-        expect(@analysis_job.processing?).to be_truthy
+        expect(@analysis_job).to be_processing
 
         status_code, response = destroy_analysis_job(@analysis_job.id)
         expect(status_code).to eq(204)
@@ -1061,19 +1054,19 @@ describe 'Analysis Jobs' do
         @analysis_job.reload
       end
 
-      it 'should be :suspended when deleted' do
-        expect(@analysis_job.suspended?).to be_truthy
+      it 'is :suspended when deleted' do
+        expect(@analysis_job).to be_suspended
       end
     end
 
     describe 'status: "suspended"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
         @analysis_job = create_analysis_job
 
-        expect(@analysis_job.processing?).to be_truthy
+        expect(@analysis_job).to be_processing
 
         status_code, response = destroy_analysis_job(@analysis_job.id)
         expect(status_code).to eq(204)
@@ -1081,8 +1074,8 @@ describe 'Analysis Jobs' do
         @analysis_job.reload
       end
 
-      it 'should be :suspended when deleted' do
-        expect(@analysis_job.suspended?).to be_truthy
+      it 'is :suspended when deleted' do
+        expect(@analysis_job).to be_suspended
       end
 
       it 'DOES NOT change the message queue' do
@@ -1119,7 +1112,7 @@ describe 'Analysis Jobs' do
         update_analysis_job_item(@analysis_job.id, item.audio_recording_id, 'successful')
 
         item.reload
-        expect(item.successful?).to be_truthy
+        expect(item).to be_successful
 
         @analysis_job.reload
         test_stats_for(@analysis_job, {
@@ -1199,16 +1192,16 @@ describe 'Analysis Jobs' do
           }
         }, 6)
 
-        expect(@analysis_job.suspended?).to be_truthy
+        expect(@analysis_job).to be_suspended
         expect(@analysis_job.deleted?).to eq(true)
 
         mail = ActionMailer::Base.deliveries.last
-        expect(mail['subject'].value).to_not include('Completed analysis job')
+        expect(mail['subject'].value).not_to include('Completed analysis job')
       end
     end
 
     describe 'status: "completed"' do
-      before(:each) do
+      before do
         reset
         ActionMailer::Base.deliveries.clear
 
@@ -1226,11 +1219,11 @@ describe 'Analysis Jobs' do
         expect(@analysis_job.deleted?).to eq(true)
       end
 
-      it 'should be :completed when deleted' do
-        expect(@analysis_job.completed?).to be_truthy
+      it 'is :completed when deleted' do
+        expect(@analysis_job).to be_completed
       end
 
-      it 'should have no job items to remove from the message queue' do
+      it 'has no job items to remove from the message queue' do
         expect(get_queue_count).to eq(0)
         expect(get_failed_queue_count).to eq(0)
       end

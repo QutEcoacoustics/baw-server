@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'action_mailer'
-raise 'modified resque status hash class not loaded' unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
-
 module BawWorkers
   class Config
     class << self
@@ -11,6 +8,13 @@ module BawWorkers
       # @return [Boolean]
       def resque_worker?
         @is_resque_worker
+      end
+
+      @is_scheduler = false
+      # Is this a scheduler?
+      # @return [Boolean]
+      def scheduler?
+        @is_scheduler
       end
 
       @is_baw_workers_entry = false
@@ -70,8 +74,9 @@ module BawWorkers
 
       # Adjust initialization context when started from rake task
       # @param [Boolean] :resque_worker (false) are we running in the context of a Resque worker?
-      def set(is_resque_worker: false)
-        @is_resque_worker = !!is_resque_worker
+      def set(is_resque_worker: false, is_scheduler: false)
+        @is_resque_worker = !is_resque_worker.nil?
+        @is_scheduler = !is_scheduler.nil?
         @is_baw_workers_entry = true
       end
 
@@ -79,8 +84,6 @@ module BawWorkers
       # @param [SemanticLogger::Logger] the base log to work with
       # @param [Config::Options] the settings to use
       def run_web(core_logger, settings)
-        is_test = BawApp.test?
-
         # assert settings is a singleton
         raise StandardError, 'run_web: Settings should have already been initialized' if settings.nil?
         raise StandardError, 'run_web: Settings were nil but should be defined' if Settings.nil?
@@ -110,6 +113,7 @@ module BawWorkers
 
         # configure resque worker
         configure_resque_worker if resque_worker?
+        configure_scheduler if scheduler?
 
         result = format_result(settings)
         result = format_resque_worker(result, settings)
@@ -121,7 +125,7 @@ module BawWorkers
 
       private
 
-      def baw_workers_mode?(settings)
+      def baw_workers_mode(settings)
         return :library unless baw_workers_entry?
 
         return :resque_foreground if settings.resque.background_pid_file.blank?
@@ -135,7 +139,7 @@ module BawWorkers
 
         # Set up standard redis wrapper.
         @redis_communicator = BawWorkers::RedisCommunicator.new(
-          BawWorkers::Config.logger_worker,
+          SemanticLogger[RedisCommunicator],
           communicator_redis,
           # options go here if defined
           {
@@ -245,11 +249,9 @@ module BawWorkers
       end
 
       def configure_resque(settings)
-        # resque job status expiry for job status entries
-        Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
-
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         Resque.redis.namespace = Settings.resque.namespace
+        BawWorkers::ActiveJob::Status::Persistance.configure(Resque.redis.redis)
 
         # Logger set automatically by SemanticLogger RailTie
         raise 'Resque logger not configured' unless Resque.logger.is_a?(SemanticLogger::Logger)
@@ -269,13 +271,49 @@ module BawWorkers
         ENV['QUEUES'] = Settings.resque.queues_to_process.join(',')
         ENV['INTERVAL'] = Settings.resque.polling_interval_seconds.to_s
 
-        # set resque verbose on
-        #ENV['VERBOSE '] = '1'
-        #ENV['VVERBOSE '] = '1'
+        # ensure resque does not kill workers with exit!
+        # Note: do not set this, it will cause failures in retry_on
+        #ENV['RUN_AT_EXIT_HOOKS'] = 'true'
+        # use new killer, it's a little bit graceful
+        ENV['GRACEFUL_TERM'] = 'true'
+        ENV['TERM_CHILD'] = 'true'
+        # timeout for graceful death
+        ENV['RESQUE_TERM_TIMEOUT'] = '10.0'
 
-        # use new signal handling
-        # http://hone.heroku.com/resque/2012/08/21/resque-signals.html
-        #ENV['TERM_CHILD'] = '1'
+        # if BawApp.dev_or_test?
+        #   Resque.after_fork do
+        #     at_exit do
+        #       pid = $PROCESS_ID
+        #       tid = Thread.current.object_id
+        #       error = $ERROR_INFO
+        #       puts <<~MSG
+        #         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        #         Worker exited! PID: #{pid} TID: #{tid}
+        #         Caller: #{caller}
+        #         Error: #{error}
+        #         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        #       MSG
+        #       exit!
+        #     end
+        #   end
+        # end
+      end
+
+      def configure_scheduler
+        Resque::Scheduler.configure do |c|
+          c.poll_sleep_amount = Settings.resque.polling_interval_seconds
+        end
+        # If you want to be able to dynamically change the schedule,
+        # uncomment this line.  A dynamic schedule can be updated via the
+        # Resque::Scheduler.set_schedule (and remove_schedule) methods.
+        # When dynamic is set to true, the scheduler process looks for
+        # schedule changes and applies them on the fly.
+        # Note: This feature is only available in >=2.0.0.
+        #
+        # We don't use schedules, but if we do, it will be dynamic
+        Resque::Scheduler.dynamic = true
+        Resque::Scheduler.logger = SemanticLogger['Resque::Scheduler']
+        Resque::Scheduler.logger.level = Settings.resque_scheduler.log_level.constantize
       end
 
       def check_resque_formatter
@@ -301,6 +339,7 @@ module BawWorkers
         {
           context: resque_worker? ? 'worker' : 'rails',
           baw_workers_entry: baw_workers_entry?,
+          scheduler: scheduler?,
           settings: {
             test: BawApp.test?,
             environment: BawApp.env.to_s,
@@ -313,9 +352,9 @@ module BawWorkers
             connection: Resque.redis.connection,
             info: Resque.info
           },
-          resque: {
+          active_job: {
             status: {
-              expire_in: Resque::Plugins::Status::Hash.expire_in
+              expire_in: BawWorkers::ActiveJob::Status::Persistance.expire_values
             }
           },
           logging: {
@@ -331,7 +370,7 @@ module BawWorkers
         is_resque_worker = resque_worker?
         result[:resque_worker] = {
           running: is_resque_worker,
-          mode: baw_workers_mode?(settings),
+          mode: baw_workers_mode(settings),
           pid_file: is_resque_worker ? ENV['PIDFILE'] : nil,
           queues: is_resque_worker ? ENV['QUEUES'] : nil,
           poll_interval: is_resque_worker ? ENV['INTERVAL'].to_f : nil

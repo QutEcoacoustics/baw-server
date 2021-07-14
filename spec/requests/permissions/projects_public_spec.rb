@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 # refresher:
 # our permission system has two options for non-user project permissions:

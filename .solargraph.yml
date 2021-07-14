@@ -9,11 +9,18 @@ exclude:
 require: []
 domains: []
 reporters:
-  - all!
+  - rubocop
+  - require_not_found
+  - typecheck:typed
+  - update_errors
 require_paths:
   - spec/lib
   - spec/helpers
   - spec
   - lib
-
+formatter:
+  rubocop:
+    cops: all
 max_files: 5000
+plugins:
+  - solargraph-rails

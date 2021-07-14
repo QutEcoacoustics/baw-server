@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 describe 'api-docs' do
   it 'the OpenAPI UI is mounted at api_docs' do

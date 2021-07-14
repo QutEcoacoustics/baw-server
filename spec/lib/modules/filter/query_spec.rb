@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 def compare_filter_sql(filter, sql_result)
   filter_query = create_filter(filter)

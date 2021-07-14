@@ -7,7 +7,7 @@ require 'rack/utils'
 module BawWorkers
   module Mail
     class Mailer < ActionMailer::Base
-      prepend_view_path BawWorkers::MODULE_ROOT
+      prepend_view_path BawWorkers::ROOT
 
       def self.logger
         BawWorkers::Config.logger_mailer

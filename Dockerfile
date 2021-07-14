@@ -1,6 +1,6 @@
 # Debian releases:
 #
-FROM ruby:2.6-slim-buster
+FROM ruby:3.0.1-slim-buster
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -10,7 +10,6 @@ ARG trimmed=false
 # install audio tools and other binaries
 COPY ./provision/install_audio_tools.sh \
   ./provision/install_postgresql_client.sh \
-  ./provision/dev_setup.sh \
   /tmp/
 
 RUN apt-get update \
@@ -30,10 +29,12 @@ RUN apt-get update \
   && /tmp/install_postgresql_client.sh \
   # install audio tools and other binaries
   && /tmp/install_audio_tools.sh \
-  && (if [ "x${trimmed}" != "xtrue" ]; then /tmp/dev_setup.sh ; fi) \
   && apt-get clean \
   && rm -rf /tmp/*.sh \
   && rm -rf /var/lib/apt/lists/*
+
+COPY ./provision/dev_setup.sh /tmp/
+
 RUN \
   # create a user for the app
   # -D is for defaults, which includes NO PASSWORD
@@ -48,6 +49,8 @@ RUN \
   # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
   && mkdir -p "$GEM_HOME/bin" \
   && chmod 777 "$GEM_HOME/bin" \
+  && (if [ "x${trimmed}" != "xtrue" ]; then /tmp/dev_setup.sh ; fi) \
+  && rm -rf /tmp/*.sh \
   # https://github.com/moby/moby/issues/20437
   && mkdir /home/${app_user}/${app_name}/tmp \
   && chown ${app_user}:${app_user} /home/${app_user}/${app_name}/tmp
@@ -80,16 +83,16 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-RUN true \
+#RUN true \
   # temporarily upgrade bundler until we can jump to ruby 2.7
-  && gem update --system \
-  && gem install bundler \
-  && ([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true \
-  && ([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true \
+  # && gem update --system \
+  # && gem install bundler \
+RUN (([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true) \
+  && (([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true)
   # install baw-server
-  && bundle install \
+RUN bundle install \
   # install docs for dev work
-  && ([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true
+  && (([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true)
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}

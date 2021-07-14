@@ -25,13 +25,18 @@
 class RangeRequest
   module Constants
     MULTIPART_BOUNDARY = '<q1w2e3r4t5y6u7i8o9p0>'
-    MULTIPART_CONTENT_TYPE = 'multipart/byteranges boundary=' + MULTIPART_BOUNDARY
+    MULTIPART_CONTENT_TYPE = "multipart/byteranges boundary=#{MULTIPART_BOUNDARY}"
     DEFAULT_CONTENT_TYPE = 'application/octet-stream'
     MULTIPART_HEADER_LENGTH = 49
     MULTIPART_DASH_LINE_BREAK_LENGTH = 8
     CONVERT_INDEX_TO_LENGTH = 1
     CONVERT_LENGTH_TO_INDEX = -1
-    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type].freeze
+    REQUIRED_PARAMETERS = [
+      :start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext,
+      :file_path,
+      :file_size,
+      :media_type
+    ].freeze
 
     HTTP_HEADER_ACCEPT_RANGES = 'Accept-Ranges'
     HTTP_HEADER_ACCEPT_RANGES_BYTES = 'bytes'
@@ -107,38 +112,47 @@ class RangeRequest
 
   # @param [Hash] info
   # @param [IO] output_io
-  def write_content_to_output(info, output_io)
-    file_name = info[:file_path]
-    open(file_name, 'rb') { |file_io| # rb = readonly binary
-      info[:range_start_bytes].size.times do |index|
-        range_start = info[:range_start_bytes][index].to_i
-        range_end = info[:range_end_bytes][index].to_i
+  def write_content_to_output(in_buffer, info, output_io)
+    StringIO.open(in_buffer, 'rb') { |file_io| # rb = readonly binary
+      write_io_content_to_output(file_io, info, output_io)
+    }
+  end
 
-        file_io.seek(range_start, IO::SEEK_SET)
+  def write_file_content_to_output(path, info, output_io)
+    File.open(path, 'rb') { |file_io| # rb = readonly binary
+      write_io_content_to_output(file_io, info, output_io)
+    }
+  end
 
-        remaining = range_end - range_start + CONVERT_INDEX_TO_LENGTH
+  def write_io_content_to_output(input_io, info, output_io)
+    info[:range_start_bytes].size.times do |index|
+      range_start = info[:range_start_bytes][index].to_i
+      range_end = info[:range_end_bytes][index].to_i
 
-        if info[:is_multipart]
-          output_io.write("--#{MULTIPART_BOUNDARY}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_RANGE}: #{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
-        end
+      input_io.seek(range_start, IO::SEEK_SET)
 
-        while remaining > 0
-          # check if client is connected
+      remaining = range_end - range_start + CONVERT_INDEX_TO_LENGTH
 
-          # calculate check size
-          chunk_size = @write_buffer_size < remaining ? @write_buffer_size : remaining
-          data = file_io.read(chunk_size)
-          output_io.write(data)
-
-          remaining -= chunk_size
-          output_io.flush
-        end
+      if info[:is_multipart]
+        output_io.write("--#{MULTIPART_BOUNDARY}\r\n")
+        output_io.write("#{HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
+        output_io.write("#{HTTP_HEADER_CONTENT_RANGE}: #{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
       end
 
-      # file is closed by ruby block
-    }
+      while remaining.positive?
+        # check if client is connected
+
+        # calculate check size
+        chunk_size = @write_buffer_size < remaining ? @write_buffer_size : remaining
+        data = input_io.read(chunk_size)
+        output_io.write(data)
+
+        remaining -= chunk_size
+        output_io.flush
+      end
+    end
+
+    # io is closed by ruby block
   end
 
   private
@@ -156,7 +170,8 @@ class RangeRequest
 
   def check_options(options, sym_array)
     msg = 'RangeRequest - Required parameter missing:'
-    provided = "Provided parameters: #{options}"
+    # possibility of a buffer in here, can't print hash itself
+    provided = "Provided parameters: #{options.keys}"
     sym_array.each do |sym|
       raise ArgumentError, "#{msg} #{sym}. #{provided}" unless options.include?(sym) && !options[sym].blank?
     end
@@ -164,7 +179,7 @@ class RangeRequest
 
   def file_entity_tag(info)
     # create the ETag from full file path and last modified date of file
-    etag_string = info[:file_path].to_s + '|' + info[:file_modified_time].getutc.to_s + '|' + info[:file_size].to_s
+    etag_string = "#{info[:file_path]}|#{info[:file_modified_time].getutc}|#{info[:file_size]}"
     Digest::SHA256.hexdigest etag_string
   end
 
@@ -216,7 +231,8 @@ class RangeRequest
     return_value[:response_code] = HTTP_CODE_PARTIAL_CONTENT
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_CONTENT_RANGE] = "#{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{file_size}"
+    return_value[:response_headers][HTTP_HEADER_CONTENT_RANGE] =
+      "#{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{file_size}"
     return_value[:response_headers][HTTP_HEADER_CONTENT_LENGTH] = content_length
     return_value[:response_headers][HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
 
@@ -242,9 +258,10 @@ class RangeRequest
 
     return_value[:response_headers] = {}
     return_value[:response_headers][HTTP_HEADER_LAST_MODIFIED] = info[:file_modified_time].httpdate
-    return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + info[:file_entity_tag] + '"'
+    return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = "\"#{info[:file_entity_tag]}\""
     return_value[:response_headers][HTTP_HEADER_ACCEPT_RANGES] = HTTP_HEADER_ACCEPT_RANGES_BYTES
-    return_value[:response_headers][HTTP_HEADER_CONTENT_DISPOSITION] = "#{info[:response_disposition_type]}; filename=\"#{info[:response_suggested_file_name]}\""
+    return_value[:response_headers][HTTP_HEADER_CONTENT_DISPOSITION] =
+      "#{info[:response_disposition_type]}; filename=\"#{info[:response_suggested_file_name]}\""
 
     return_value
   end
@@ -275,8 +292,8 @@ class RangeRequest
       raise ArgumentError, "Unknown content disposition type #{disposition_type}"
     end
 
-    file_modified_time = File.mtime(file_path).getutc
-    file_size = File.size(file_path)
+    file_modified_time = File.exist?(file_path) ? File.mtime(file_path).getutc : Time.now
+    file_size = options[:file_size]
 
     # convert request headers to a hash
     request_headers_hash = {}
@@ -412,8 +429,10 @@ class RangeRequest
       if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
         raise CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
       end
+
       if start_range > end_range
-        raise CustomErrors::BadRequestError, 'The requested range specified a first byte that was greater than the last byte.'
+        raise CustomErrors::BadRequestError,
+              'The requested range specified a first byte that was greater than the last byte.'
       end
 
       return_value[:range_start_bytes].push(start_range)
@@ -535,7 +554,7 @@ class RangeRequest
           next unless etag_value == info[:file_entity_tag]
 
           return_value[:response_headers] = {}
-          return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + etag_value + '"'
+          return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = "\"#{etag_value}\""
 
           return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
           return_value[:response_is_range] = false

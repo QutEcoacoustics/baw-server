@@ -1,7 +1,37 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
+# == Schema Information
+#
+# Table name: audio_events
+#
+#  id                   :integer          not null, primary key
+#  deleted_at           :datetime
+#  end_time_seconds     :decimal(10, 4)
+#  high_frequency_hertz :decimal(10, 4)
+#  is_reference         :boolean          default(FALSE), not null
+#  low_frequency_hertz  :decimal(10, 4)   not null
+#  start_time_seconds   :decimal(10, 4)   not null
+#  created_at           :datetime
+#  updated_at           :datetime
+#  audio_recording_id   :integer          not null
+#  creator_id           :integer          not null
+#  deleter_id           :integer
+#  updater_id           :integer
+#
+# Indexes
+#
+#  index_audio_events_on_audio_recording_id  (audio_recording_id)
+#  index_audio_events_on_creator_id          (creator_id)
+#  index_audio_events_on_deleter_id          (deleter_id)
+#  index_audio_events_on_updater_id          (updater_id)
+#
+# Foreign Keys
+#
+#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  audio_events_creator_id_fk          (creator_id => users.id)
+#  audio_events_deleter_id_fk          (deleter_id => users.id)
+#  audio_events_updater_id_fk          (updater_id => users.id)
+#
 describe AudioEvent, type: :model do
   subject { FactoryBot.build(:audio_event) }
   it 'has a valid factory' do
@@ -176,12 +206,12 @@ describe AudioEvent, type: :model do
       FROM "projects"
       INNER
       JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id" 
+      ON "projects"."id" = "projects_sites"."project_id"
       WHERE "projects"."deleted_at"
       IS
       NULL
       AND "sites"."id" = "projects_sites"."site_id")
-           
+
       ORDER
       BY "audio_events"."id"
       DESC
@@ -323,7 +353,7 @@ describe AudioEvent, type: :model do
       FROM "projects"
       INNER
       JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id" 
+      ON "projects"."id" = "projects_sites"."project_id"
       WHERE "projects"."deleted_at"
       IS
       NULL

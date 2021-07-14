@@ -4,7 +4,7 @@ Code that runs as background jobs for the web application.
 Workers can process various long-running or intensive tasks. File storage provides helper methods for calculating paths to original and cached files.
 
 This app can either be used as a library (when used from the web app)
-or used as in an independent application (when used from the 
+or used as in an independent application (when used from the
 `tasks/run_worker.rake` rakefile)
 
 This code was historically maintained in https://github.com/QutEcoacoustics/baw-workers
@@ -32,7 +32,7 @@ Runs checks on original audio recording files. This action checks an entire sing
 
 ### Harvest
 
-Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
+Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system.
 
  - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
  - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
@@ -54,10 +54,10 @@ See [baw-audio-tools](https://github.com/QutBioacoustics/baw-audio-tools) for mo
 There are classes for working with file storage paths:
 
  - original audio files
- - caches for 
+ - caches for
     - cut audio
     - generated spectrograms
-    - analysis results. 
+    - analysis results.
 
 ## Running Workers
 
@@ -75,7 +75,7 @@ Based on the answers to these questions
  - or create a new config file based on an existing one, named in a similar way.
 
 Once you've got your config file, then a worker can be started.
-Workers are run using rake tasks. A list of the available rake tasks can be obtained 
+Workers are run using rake tasks. A list of the available rake tasks can be obtained
 by running this command in the `baw-workers` cloned directory or the directory containing your `Gemfile`:
 
     bundle exec rake -T
@@ -97,7 +97,7 @@ Some things to check and look out for when creating and modifying worker config 
 
 #### `settings.resque.queues_to_process`
 
-This setting is only needed when running a Resque dequeue worker. 
+This setting is only needed when running a Resque dequeue worker.
 It specifies a priority array of the Resque queues to reserve jobs from.
 The jobs in a queue specify the action class that will be used to process that job.
 
@@ -149,12 +149,13 @@ Other parameters are described in the `Actions` section below.
     bundle exec rake baw:audio_check:resque:from_csv[settings_file,csv_file]                 # Enqueue audio recording file checks from a csv file to be processed using Resque worker
     bundle exec rake baw:harvest:resque:from_files[settings_file,harvest_dir]                # Enqueue files to harvest using Resque
     # media action can only be run as a Resque dequeue worker
-    
+
 #### Resque dequeue
 
 A Resque dequeue worker can process any queue with any type of job.
 
     bundle exec rake baw:worker:current[settings_file]                                       # List running workers
     bundle exec rake baw:worker:run[settings_file]                                           # Run a resque:work with the specified settings file
+    bundle exec rake baw:worker:run_scheduler[settings_file]                                 # Run resque:scheduler with the specified settings file
     bundle exec rake baw:worker:setup[settings_file]                                         # Run a resque:work with the specified settings file
     bundle exec rake baw:worker:stop_all[settings_file]                                      # Quit running workers

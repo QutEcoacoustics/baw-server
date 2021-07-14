@@ -24,6 +24,11 @@ class BawConfigContract < Dry::Validation::Contract
       required(:active_job_default).hash do
         required(:queue).filled(:string)
       end
+
+      required(:media).hash do
+        required(:queue).filled(:string)
+        required(:cache_to_redis).filled(:bool)
+      end
     end
 
     required(:logs).hash do
@@ -41,7 +46,12 @@ class BawConfigContract < Dry::Validation::Contract
       required(:connection).hash
       required(:namespace).filled(:string)
       required(:log_level).filled(Baw::CustomTypes::LogLevel)
-      required(:polling_interval_seconds).filled(:float)
+      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
+    end
+
+    required(:resque_scheduler).hash do
+      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
+      required(:log_level).filled(Baw::CustomTypes::LogLevel)
     end
   end
 
@@ -59,11 +69,6 @@ module ConfigExtensions
   # override the default settings locations
   def setting_files(config_root, env)
     BawApp.config_files(config_root, env)
-  end
-
-  def load_files(*files)
-    super(*files)
-    #puts "Settings loaded from #{files}"
   end
 end
 Config.singleton_class.prepend ConfigExtensions

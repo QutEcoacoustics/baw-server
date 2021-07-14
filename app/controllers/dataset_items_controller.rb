@@ -51,7 +51,7 @@ class DatasetItemsController < ApplicationController
     query = query.group('dataset_items.id')
     query = query.order('COUNT(progress_events.id) ASC')
     if current_user
-      query = query.order('SUM (CASE WHEN ("progress_events"."creator_id" = ' + current_user.id.to_s + ') THEN 1 ELSE 0 END) ASC')
+      query = query.order(Arel.sql("SUM (CASE WHEN (\"progress_events\".\"creator_id\" = #{current_user.id}) THEN 1 ELSE 0 END) ASC"))
     end
     query = query.order('dataset_items.order ASC')
     query = query.order('dataset_items.id ASC')

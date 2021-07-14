@@ -87,9 +87,13 @@ require 'rspec/rails'
 require 'rspec-benchmark'
 require 'webmock/rspec'
 require 'paperclip/matchers'
-require 'database_cleaner'
+require 'database_cleaner/active_record'
+require 'database_cleaner/redis'
+
+require 'super_diff/rspec-rails'
 
 require 'helpers/misc_helper'
+require 'helpers/temp_file_helper'
 require 'fixtures/fixtures'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: [
@@ -162,6 +166,7 @@ RSpec.configure do |config|
   config.include RSpec::Benchmark::Matchers
 
   require_relative 'helpers/logger_helper'
+  config.extend LoggerHelpers::ExampleGroup
   config.include LoggerHelpers::Example
 
   require_relative 'helpers/migrations_helper'
@@ -198,6 +203,8 @@ RSpec.configure do |config|
   require_relative 'helpers/shared_examples/a_route_that_stores_images'
   require_relative 'helpers/shared_examples/permissions_for'
 
+  require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"
+
   # Ensure we actually perform jobs with resque.
   # We don't want to run jobs inline, it produces unrealistic tests.
   # https://github.com/rails/rails/issues/37270#issuecomment-558278392
@@ -229,9 +236,10 @@ RSpec.configure do |config|
     DatabaseCleaner[:active_record].strategy = :transaction
 
     DatabaseCleaner[:redis].db = Redis.new(Settings.redis.connection.to_h)
-    DatabaseCleaner[:redis].strategy = :truncation
+    DatabaseCleaner[:redis].strategy = :deletion
 
-    DatabaseCleaner.clean_with(:truncation)
+    DatabaseCleaner[:active_record].clean_with(:truncation)
+    DatabaseCleaner[:redis].clean
 
     begin
       DatabaseCleaner.start
@@ -253,27 +261,38 @@ RSpec.configure do |config|
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
-  config.before(:each) do |example|
+  config.before do |_example|
     # ensure any email is cleared
     ActionMailer::Base.deliveries.clear
 
     # start database cleaner
     DatabaseCleaner.start
-    example_description = example.description
-    Rails.logger.info "\n\n#{example_description}\n#{'-' * example_description.length}"
   end
 
-  config.after(:each) do
+  config.after do
     DatabaseCleaner.clean
 
     Warden.test_reset!
   end
 
+  example_logger = SemanticLogger[RSpec]
+  config.around do |example|
+    example_description = example.description
+    example_logger.info("BEGIN #{example_description}\n")
+    example_logger.measure_debug('END') {
+      example.run
+    }
+  end
+
   # enable options requests in feature tests
-  module ActionDispatch::Integration::RequestHelpers
-    # REVIEW: for rails 7: should exist
-    def options(path, **args)
-      process(:options, path, **args)
+  module ActionDispatch
+    module Integration
+      module RequestHelpers
+        # REVIEW: for rails 7: should exist
+        def options(path, **args)
+          process(:options, path, **args)
+        end
+      end
     end
   end
 end
@@ -287,7 +306,7 @@ Shoulda::Matchers.configure do |config|
 end
 
 # load so-called "global" spec steps
-Dir.glob(File.expand_path('helpers/steps/**/*steps.rb', __dir__)).sort.each { |f| require f }
+Dir.glob(File.expand_path('helpers/steps/**/*steps.rb', __dir__)).each { |f| require f }
 # load any step file that is next to a feature file of the same name.
 # based on: https://github.com/jnicklas/turnip/pull/96#issuecomment-39579471
 RSpec.configure do |config|

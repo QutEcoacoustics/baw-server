@@ -7,40 +7,60 @@
   "settings": {
     "cSpell.words": [
       "Bootsnap",
+      "Cyclomatic",
       "Ecoacoustics",
       "FILESYSTEMS",
       "FLAC",
       "Gemfile",
       "KRAMDOWN",
       "Kramdown",
+      "Loggable",
+      "PIDFILE",
       "Passengerfile",
       "RSPEC",
+      "Ractor",
       "Railtie",
       "Resque",
+      "Retryable",
+      "Rswag",
+      "Serializers",
       "Sftpgo",
       "Timecop",
+      "Truskinger",
       "Zeitwerk",
       "appender",
       "arel",
+      "arity",
       "autoflush",
       "autoload",
       "autoloaded",
       "autoloaders",
+      "autoloads",
       "backtrace",
       "behaviour",
+      "binmode",
+      "binread",
       "binstub",
+      "boolify",
       "bootsnap",
       "bowra",
       "chown",
       "cleanpath",
+      "completionist",
+      "concat",
       "constantize",
       "cors",
       "datetime",
+      "decr",
+      "deepsort",
       "deleter",
       "deserialization",
+      "deserializes",
       "devcontainer",
       "downcase",
+      "enqueues",
       "entrypoint",
+      "errored",
       "evented",
       "executables",
       "exitstatus",
@@ -51,13 +71,21 @@
       "fmap",
       "gitkeep",
       "gsub",
+      "gteq",
+      "hexdigest",
       "imagemagick",
       "jsonb",
+      "keyreq",
+      "killable",
       "klass",
+      "lindex",
       "ltrim",
+      "memsize",
+      "mget",
       "middlewares",
       "mkdir",
       "mkpath",
+      "nodoc",
       "organisation",
       "paginator",
       "pids",
@@ -66,21 +94,35 @@
       "precompiled",
       "preload",
       "prepend",
+      "prepended",
+      "prepending",
       "qutecoacoustics",
       "rakefile",
       "rdebug",
+      "realdirpath",
       "realpath",
       "recaptcha",
       "rmtree",
       "rubocop",
+      "sadd",
+      "scard",
+      "securerandom",
       "sendfile",
       "serializable",
       "sftpgo",
       "shntool",
+      "shoulda",
+      "sismember",
+      "smembers",
       "smtp",
       "solargraph",
+      "sqlite",
+      "srem",
+      "strftime",
+      "structs",
       "symlink",
       "symlinks",
+      "typecheck",
       "unpermitted",
       "unregister",
       "unshift",
@@ -90,7 +132,13 @@
       "wavpack",
       "webdav",
       "webm",
-      "wvunpack"
+      "wvunpack",
+      "zadd",
+      "zcard",
+      "zrange",
+      "zrangebyscore",
+      "zrem",
+      "zrevrange"
     ],
     "files.associations": {
       "**/provision/*.json": "jsonc",
@@ -131,28 +179,50 @@
     "solargraph.rename": true,
     "solargraph.references": true,
     "solargraph.folding": true,
+    "solargraph.checkGemVersion": true,
     "solargraph.logLevel": "debug",
-    "solargraph.bundlerPath": "bundle",
     "editor.formatOnSave": true,
-    //"ruby.rubocop.onSave": true,
-    "ruby.intellisense": false,
-    "ruby.format": false,
-    "ruby.useBundler": true,
-    "ruby.useLanguageServer": false,
-    "ruby.lint": {},
-    //  {
-    //   "rubocop": {
-    //     "useBundler": true,
-    //     "lint": true,
-    //   }
-    // },
+    "ruby.useBundler": true, //run non-lint commands with bundle exec
+    "ruby.useLanguageServer": true, // use the internal language server (see below)
+    "ruby.intellisense": "rubyLocate",
+    "ruby.lint": {
+      "rubocop": {
+        "useBundler": true, // enable rubocop via bundler,
+        "lint": true,
+        "rails": true
+      },
+      // "reek": {
+      //   "useBundler": true // enable reek via bundler
+      // }
+    },
+    "ruby.format": "rubocop", // use rubocop for formatting
     "[ruby]": {
-      "editor.defaultFormatter": "castwide.solargraph"
+      "editor.defaultFormatter": "castwide.solargraph",
+      //"editor.defaultFormatter": "rebornix.ruby"
     },
     "cSpell.enableFiletypes": [
       "ruby"
     ],
-    "editor.minimap.size": "fit"
+    "editor.minimap.size": "fit",
+    // "solargraph.transport": "external",
+    // "solargraph.externalServer": {
+    //   "host": "localhost",
+    //   "port": 7658
+    // }
+    "terminal.integrated.profiles.linux": {
+      "bash": {
+        "path": "bash"
+      },
+      "pwsh": {
+        "path": "pwsh"
+      }
+    },
+    "terminal.integrated.cwd": "",
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "remote.extensionKind": {
+      "ms-azuretools.vscode-docker": "ui"
+    },
+    "python.pythonPath": "/usr/bin/python3"
   },
   "extensions": {
     "recommendations": [
@@ -166,7 +236,8 @@
       //"connorshea.vscode-ruby-test-adapter",
       "knisterpeter.vscode-github",
       "castwide.ruby-debug",
-      "pavlitsky.yard"
+      "pavlitsky.yard",
+      "ms-azuretools.vscode-docker"
     ]
   }
 }

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+
 
 xdescribe 'User account actions', type: :feature do
   # from: http://guides.rubyonrails.org/testing.html

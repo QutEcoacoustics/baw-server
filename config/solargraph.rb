@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Instructions: https://solargraph.org/guides/rails
 # sourced from: https://gist.githubusercontent.com/castwide/28b349566a223dfb439a337aea29713e/raw/d1d4462b92f411b378d87a39482b830e012513bd/rails.rb
 
@@ -20,6 +21,20 @@
 #     extend ActiveRecord::FinderMethods
 #     extend ActiveRecord::Associations::ClassMethods
 #     include ActiveRecord::Persistence
+#   end
+#   class ActiveJob::Base
+#     include ActiveJob::Core
+#     include ActiveJob::QueueAdapter
+#     include ActiveJob::QueueName
+#     include ActiveJob::QueuePriority
+#     include ActiveJob::Enqueuing
+#     include ActiveJob::Execution
+#     include ActiveJob::Callbacks
+#     include ActiveJob::Exceptions
+#     include ActiveJob::Instrumentation
+#     include ActiveJob::Logging
+#     include ActiveJob::Timezones
+#     include ActiveJob::Translation
 #   end
 # @!override ActiveRecord::FinderMethods#find
 #   @overload find(id)

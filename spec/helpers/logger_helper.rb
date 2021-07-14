@@ -1,18 +1,25 @@
+# frozen_string_literal: true
+
 module LoggerHelpers
-  module Example
+  module ExampleGroup
     def logger
       @logger ||= SemanticLogger[RSpec]
     end
+  end
 
-    def logger_example
-      @logger ||= SemanticLogger[logger_name]
+  module Example
+    attr_accessor :logger_name
+
+    def logger
+      raise 'logger not setup yet' if @logger_name.nil?
+
+      @logger ||= SemanticLogger[@logger_name]
     end
 
     def self.included(example_group)
-      logger_name = example_group
-      example_group.let(:logger_name) {
-        logger_name
-      }
+      example_group.prepend_before do
+        @logger_name = example_group.name
+      end
     end
   end
 end

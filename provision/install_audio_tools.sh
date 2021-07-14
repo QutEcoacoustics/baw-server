@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-# Historical note:
-# no longer installing libpng or wav2png
-
 # add-apt-repository ppa:jonathonf/ffmpeg-4
 
 apt-get update

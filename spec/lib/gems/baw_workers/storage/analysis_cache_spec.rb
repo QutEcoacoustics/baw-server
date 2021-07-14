@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
+
 
 describe BawWorkers::Storage::AnalysisCache do
   include_context 'shared_test_helpers'

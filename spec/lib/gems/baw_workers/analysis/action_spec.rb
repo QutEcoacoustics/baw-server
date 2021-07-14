@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-require 'workers_helper'
 require 'webmock/rspec'
 
-describe BawWorkers::Analysis::Action do
+describe BawWorkers::Jobs::Analysis::Job do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
@@ -11,10 +10,10 @@ describe BawWorkers::Analysis::Action do
   # we want to control the execution of jobs for this set of tests,
   # so change the queue name so the test worker does not
   # automatically process the jobs
-  before(:each) do
+  before do
     default_queue = Settings.actions.analysis.queue
 
-    allow(Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.analysis).to receive(:queue).and_return("#{default_queue}_manual_tick")
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
@@ -45,13 +44,13 @@ describe BawWorkers::Analysis::Action do
     { analysis_params: analysis_params }
   }
 
-  let(:analysis_query_normalised) { BawWorkers::ResqueJobId.normalise(analysis_query) }
+  let(:analysis_query_normalised) { raise 'broken' }
 
-  let(:analysis_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Analysis::Action, analysis_query) }
+  let(:analysis_params_id) { raise 'broken' }
 
   let(:expected_payload) {
     {
-      'class' => 'BawWorkers::Analysis::Action',
+      'class' => 'BawWorkers::Jobs::Analysis::Job',
       'args' => [
         analysis_params_id,
         {
@@ -76,28 +75,28 @@ describe BawWorkers::Analysis::Action do
 
   context 'queues' do
     it 'checks we\'re using a manual queue' do
-      expect(Resque.queue_from_class(BawWorkers::Analysis::Action)).to end_with('_manual_tick')
+      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Job)).to end_with('_manual_tick')
     end
 
     it 'works on the analysis queue' do
-      expect(Resque.queue_from_class(BawWorkers::Analysis::Action)).to eq(queue_name)
+      expect(Resque.queue_from_class(BawWorkers::Jobs::Analysis::Job)).to eq(queue_name)
     end
 
     it 'can enqueue' do
-      result = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      result = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
 
       actual = Resque.peek(queue_name)
     end
 
     it 'has a sensible name' do
-      allow(BawWorkers::Analysis::Action).to receive(:action_perform).and_return(mock: 'a_fake_mock_result')
+      allow(BawWorkers::Jobs::Analysis::Job).to receive(:action_perform).and_return(mock: 'a_fake_mock_result')
 
-      unique_key = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      unique_key = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
 
-      expect(unique_key).to_not eq(''), 'enqueuing not successful'
+      expect(unique_key).not_to eq(''), 'enqueuing not successful'
 
-      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Analysis::Action.queue)
+      was_run = ResqueHelpers::Emulate.resque_worker(BawWorkers::Jobs::Analysis::Job.queue)
 
       expect(was_run).to be true
 
@@ -109,27 +108,27 @@ describe BawWorkers::Analysis::Action do
 
     it 'does not enqueue the same payload into the same queue more than once' do
       expect(Resque.size(queue_name)).to eq(0)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
 
-      result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to be_a(String)
       expect(result1.size).to eq(32)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      result2 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      result2 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result2).to eq(nil)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      result3 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      result3 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result3).to eq(nil)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
       actual = Resque.peek(queue_name)
       expect(actual).to include(expected_payload)
@@ -142,31 +141,28 @@ describe BawWorkers::Analysis::Action do
 
     it 'can retrieve the job' do
       expect(Resque.size(queue_name)).to eq(0)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(false)
 
-      result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      result1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to be_a(String)
       expect(result1.size).to eq(32)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(true)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::Jobs::Analysis::Job, analysis_query)).to eq(true)
 
-      found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Analysis::Action, analysis_query)
+      found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Jobs::Analysis::Job, analysis_query)
 
-      job_id = BawWorkers::ResqueJobId.create_id_props(BawWorkers::Analysis::Action, analysis_query)
-      # status = Resque::Plugins::Status::Hash.get(job_id)
-
-      status = BawWorkers::Analysis::Action.get_job_status(analysis_params)
+      status = BawWorkers::ResqueApi.status_by_key(job_id) # TODO: broken
 
       expect(found.size).to eq(1)
-      expect(found[0]['class']).to eq(BawWorkers::Analysis::Action.to_s)
+      expect(found[0]['class']).to eq(BawWorkers::Jobs::Analysis::Job.to_s)
       expect(found[0]['queue']).to eq(queue_name)
       expect(found[0]['args'].size).to eq(2)
       expect(found[0]['args'][0]).to eq(job_id)
       expect(found[0]['args'][1]).to eq(analysis_query_normalised)
 
-      expect(job_id).to_not be_nil
+      expect(job_id).not_to be_nil
 
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
@@ -213,43 +209,48 @@ describe BawWorkers::Analysis::Action do
     # they are heavily tested in status_spec.rb so only put light restrictions here
     l = stub_request(:post, 'https://web:3000/security')
         .with(body: '{"email":"address@example.com","password":"password"}',
-              headers: { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+              headers: { 'Accept' => 'application/json',
+                         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
         .to_return(status: 200, body: '', headers: {})
     s1 = stub_request(:get, 'https://web:3000/analysis_jobs/20/audio_recordings/123456')
-         .with(headers: { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+         .with(headers: { 'Accept' => 'application/json',
+                          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
          .to_return(status: 200, body: '', headers: {})
     s2 = stub_request(:put, 'https://web:3000/analysis_jobs/20/audio_recordings/123456')
          .with(body: '{"status":"failed"}',
-               headers: { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+               headers: { 'Accept' => 'application/json',
+                          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
          .to_return(status: 200, body: '', headers: {})
     s3 = stub_request(:put, 'https://web:3000/analysis_jobs/20/audio_recordings/123456')
          .with(body: '{"status":"working"}',
-               headers: { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+               headers: { 'Accept' => 'application/json',
+                          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
          .to_return(status: 200, body: '', headers: {})
     s4 = stub_request(:put, 'https://web:3000/analysis_jobs/20/audio_recordings/123456')
          .with(body: '{"status":"successful"}',
-               headers: { 'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+               headers: { 'Accept' => 'application/json',
+                          'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
          .to_return(status: 200, body: '', headers: {})
 
     # Run analysis
-    result = BawWorkers::Analysis::Action.action_perform(custom_analysis_params)
+    result = BawWorkers::Jobs::Analysis::Job.perform_later!(custom_analysis_params)
 
     # ensure the new file exists
     output_file = analysis_cache.possible_paths(job_output_params)[0]
     expect(File.exist?(output_file)).to be_truthy, output_file
 
     # make sure log and config are copied to correct location, and success file exists
-    worker_log_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Analysis::Runner::FILE_LOG))[0]
-    config_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Analysis::Runner::FILE_CONFIG))[0]
-    success_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Analysis::Runner::FILE_SUCCESS))[0]
-    started_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Analysis::Runner::FILE_WORKER_STARTED))[0]
+    worker_log_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Jobs::Analysis::Runner::FILE_LOG))[0]
+    config_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Jobs::Analysis::Runner::FILE_CONFIG))[0]
+    success_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Jobs::Analysis::Runner::FILE_SUCCESS))[0]
+    started_file = analysis_cache.possible_paths(job_output_params.merge(file_name: BawWorkers::Jobs::Analysis::Runner::FILE_WORKER_STARTED))[0]
 
-    expect(File.exist?(worker_log_file)).to be_truthy
-    expect(File.exist?(config_file)).to be_truthy
-    expect(File.exist?(success_file)).to be_truthy
-    expect(File.exist?(started_file)).to be_falsey
+    expect(File).to exist(worker_log_file)
+    expect(File).to exist(config_file)
+    expect(File).to exist(success_file)
+    expect(File).not_to exist(started_file)
 
     # deletes the run dir when finished
-    expect(Dir.exist?(result[:dir_run])).to be_falsey
+    expect(Dir).not_to exist(result[:dir_run])
   end
 end

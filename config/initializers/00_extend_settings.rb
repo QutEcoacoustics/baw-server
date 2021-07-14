@@ -6,5 +6,3 @@ module Config
     prepend BawWeb::Settings
   end
 end
-
-

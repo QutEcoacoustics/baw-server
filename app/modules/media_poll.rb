@@ -5,6 +5,8 @@ class MediaPoll
   HEADER_KEY_RESPONSE_START = 'X-Media-Response-Start'
 
   HEADER_VALUE_RESPONSE_CACHE = 'Cache'
+  HEADER_VALUE_RESPONSE_REMOTE_CACHE = 'Remote+Fast Cache'
+
   HEADER_VALUE_RESPONSE_REMOTE = 'Generated Remotely'
   HEADER_VALUE_RESPONSE_LOCAL = 'Generated Locally'
 
@@ -50,9 +52,9 @@ class MediaPoll
       if poll_result[:result].nil?
         msg = "Media file was not found within #{wait_max} seconds."
         job_info = poll_result.merge({
-                                       poll_locations: poll_locations,
-                                       existing_files: existing_files
-                                     })
+          poll_locations: poll_locations,
+          existing_files: existing_files
+        })
         raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
@@ -67,12 +69,12 @@ class MediaPoll
     # @param [Number] wait_max
     # @param [Number] poll_delay
     # @return [Resque::Plugins::Status::Hash] job status
-    def poll_resque(media_type, media_request_params, wait_max, poll_delay = 0.5)
+    def poll_resque(_media_type, _media_request_params, wait_max, poll_delay = 0.5, job_id:)
       # store most recent status when polling ends
       status = nil
 
       poll_result = poll(wait_max, poll_delay) {
-        status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
+        status = BawWorkers::ActiveJob::Status::Persistance.get(job_id)
         #current_status = status.status # e.g. Resque::Plugins::Status::STATUS_QUEUED
 
         # the accuracy of the polling time is the poll_delay
@@ -95,24 +97,41 @@ class MediaPoll
 
         msg = "Resque did not complete media request within #{wait_max} seconds, result was '#{resque_task_status}'."
         job_info = poll_result.merge({
-                                       uuid: status.nil? ? nil : status.uuid,
-                                       time: status.nil? ? nil : status.time,
-                                       status: resque_task_status
-                                     })
+          uuid: status.nil? ? nil : status.uuid,
+          time: status.nil? ? nil : status.time,
+          status: resque_task_status
+        })
         raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       status
     end
 
-    def poll_resque_and_media(expected_files, media_type, media_request_params, wait_max, poll_delay = 0.5)
+    def poll_resque_and_media(expected_files, _media_type, _media_request_params, wait_max, job_id:, poll_delay: 0.4)
       poll_locations = prepare_locations(expected_files)
       existing_files = []
-
       resque_status = nil
 
+      should_check_redis_cache = Settings.actions.media.cache_to_redis
+      in_memory_file = nil
+      redis_cache_key = nil
+
+      if should_check_redis_cache
+        redis_cache_key = Pathname(expected_files.first).basename.to_s
+        in_memory_file = BawWorkers::IO.new_binary_string_io(capacity: 200_000)
+      end
+      Rails.logger.debug { { message: 'fast cache', should_check_redis_cache: should_check_redis_cache } }
+
       poll_result = poll(wait_max, poll_delay) {
-        resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
+        resque_status = BawWorkers::ActiveJob::Status::Persistance.get(job_id)
+
+        # check redis cache
+        if should_check_redis_cache
+          result = BawWorkers::Config.redis_communicator.get_file(redis_cache_key, in_memory_file)
+          # stop the poll loop and send back the file
+          next true if result&.positive?
+        end
+
         existing_files = get_existing_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
@@ -120,6 +139,8 @@ class MediaPoll
 
         completed = true if !resque_status.blank? && resque_status.completed?
         completed = true unless existing_files.empty?
+
+        #Rails.logger.debug('polling data', existing_files: existing_files, resque_status: resque_status)
 
         completed
       }
@@ -130,16 +151,17 @@ class MediaPoll
 
         msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay with resque job status '#{resque_task_status}'. Could not find media files."
         job_info = poll_result.merge({
-                                       uuid: resque_status.nil? ? nil : resque_status.uuid,
-                                       time: resque_status.nil? ? nil : resque_status.time,
-                                       status: resque_task_status,
-                                       poll_locations: poll_locations,
-                                       existing_files: existing_files
-                                     })
+          uuid: resque_status.nil? ? nil : resque_status.job_id,
+          time: resque_status.nil? ? nil : resque_status.time,
+          status: resque_task_status,
+          poll_locations: poll_locations,
+          existing_files: existing_files
+        })
         raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       {
+        in_memory_file: in_memory_file&.string,
         existing_files: existing_files,
         resque_status: resque_status
       }

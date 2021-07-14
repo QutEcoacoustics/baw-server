@@ -177,20 +177,26 @@ class MediaController < ApplicationController
     # get parameters for creating/retrieving cache
     generation_request = metadata.generation_request(original, current)
 
-    if media_info[:category] == :audio
+    case media_info[:category]
+    when :audio
+      generation_request = generation_request.except(:window, :window_function, :colour)
       # check if audio file exists in cache
       cached_audio_info = audio_cached.path_info(generation_request)
       media_category = :audio
 
-      existing_files, time_waiting_start = create_media(media_category, cached_audio_info, generation_request)
-      response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
-    elsif media_info[:category] == :image
+      existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_audio_info,
+                                                                        generation_request)
+      response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request,
+                                   time_start, time_waiting_start, in_memory_file: in_memory_file)
+    when :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
       media_category = :spectrogram
 
-      existing_files, time_waiting_start = create_media(media_category, cached_spectrogram_info, generation_request)
-      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
+      existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_spectrogram_info,
+                                                                        generation_request)
+      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request,
+                                 time_start, time_waiting_start, in_memory_file: in_memory_file)
     end
   end
 
@@ -223,7 +229,7 @@ class MediaController < ApplicationController
 
     # add the data hash so downloads can be verified
     add_header_hash(audio_recording)
-
+    file_path = existing_files.first
     download_options = {
       media_type: audio_recording.media_type,
       site_name: audio_recording.site.name,
@@ -233,7 +239,8 @@ class MediaController < ApplicationController
       recording_id: audio_recording.id,
       ext: Mime::Type.file_extension_of(audio_recording.media_type),
       # assume first file of returned files is correct
-      file_path: existing_files.first,
+      file_path: file_path,
+      file_size: File.size(file_path),
       start_offset: 0,
       end_offset: audio_recording.duration_seconds,
       # provide our own name for the recording (normally generated in range request)
@@ -243,7 +250,7 @@ class MediaController < ApplicationController
     range_request = Settings.range_request
 
     # last param is time_waiting_start - we've spent zero time waiting because no transcoding was done
-    download_file(download_options, rails_request, range_request, time_start, 0)
+    download_file(nil, download_options, rails_request, range_request, time_start, 0)
   end
 
   def create_media(media_category, files_info, generation_request)
@@ -265,18 +272,25 @@ class MediaController < ApplicationController
       add_header_generated_remote
 
       Rails.logger.debug "media_controller#create_media: Begin remote processing to create #{expected_files}"
-      job_status = create_media_resque(expected_files, media_category, generation_request)
+      result = create_media_resque(expected_files, media_category, generation_request)
 
       time_start_waiting = Time.now
 
-      Rails.logger.debug "media_controller#create_media: Submitted processing job for #{expected_files}"
+      if result[:in_memory_file]
+        Rails.logger.debug "media_controller#create_media: found file in fast cache #{expected_files}"
+        add_header_remote_and_fast_cache
+        in_memory_file = result[:in_memory_file]
+        return [[expected_files.first], time_start_waiting, in_memory_file]
+      else
 
-      # poll disk for audio
-      # will throw with a timeout if file does not appear on disk
-      existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
+        Rails.logger.debug "media_controller#create_media: Submitted processing job for #{expected_files}"
 
-      Rails.logger.debug "media_controller#create_media: Actual files from disk poll after remote processing #{existing_files}"
+        # poll disk for audio
+        # will throw with a timeout if file does not appear on disk
+        existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
 
+        Rails.logger.debug "media_controller#create_media: Actual files from disk poll after remote processing #{existing_files}"
+      end
     elsif !existing_files.blank?
       add_header_cache
       add_header_processing_elapsed(0)
@@ -297,7 +311,7 @@ class MediaController < ApplicationController
     end
 
     time_start_waiting = Time.now if time_start_waiting.nil?
-    [existing_files, time_start_waiting]
+    [existing_files, time_start_waiting, nil]
   end
 
   # Create a media request locally.
@@ -306,7 +320,7 @@ class MediaController < ApplicationController
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
     start_time = Time.now
-    target_existing_paths = BawWorkers::Media::Action.make_media_request(media_category, generation_request)
+    target_existing_paths = make_job(media_category, generation_request).perform_now
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
@@ -320,13 +334,27 @@ class MediaController < ApplicationController
   # @return [Resque::Plugins::Status::Hash] job status
   def create_media_resque(expected_files, media_category, generation_request)
     start_time = Time.now
-    BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
+    job = make_job(media_category, generation_request)
+    case job.enqueue
+    in ::BawWorkers::Jobs::ApplicationJob
+      # default case
+      job.job_id
+    in false if !job.unique?
+      # debounce
+      logger.debug('Duplicate job debounced', job_id: job.job_id)
+      job.job_id
+    else
+      logger.error('unhandled job enqueue failure', job: job)
+      raise "Failed to enqueue job: #{job}"
+    end => job_id
+
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
     poll_result = MediaPoll.poll_resque_and_media(
       expected_files,
       media_category,
       generation_request,
-      Settings.audio_tools_timeout_sec
+      Settings.audio_tools_timeout_sec,
+      job_id: job_id
     )
     end_time = Time.now
 
@@ -335,14 +363,31 @@ class MediaController < ApplicationController
     poll_result
   end
 
-  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request, time_start, time_waiting_start)
+  # @return [BawWorkers::Jobs::Media::AudioJob,BawWorkers::Jobs::Media::SpectrogramJob]
+  def make_job(media_category, generation_request)
+    case media_category
+    when :audio
+      BawWorkers::Jobs::Media::AudioJob.new(
+        ::BawWorkers::Models::AudioRequest.new(generation_request)
+      )
+    when :spectrogram
+      BawWorkers::Jobs::Media::SpectrogramJob.new(
+        ::BawWorkers::Models::SpectrogramRequest.new(generation_request)
+      )
+    else
+      raise "Invalid media type: #{media_category}"
+    end
+  end
+
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request, time_start, time_waiting_start, in_memory_file:)
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
-    suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
+    suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset],
+                                                                 options[:end_offset], response_extra_info, options[:format])
 
     existing_file = existing_files.first
-    content_length = File.size(existing_file)
+    content_length = in_memory_file.nil? ? File.size(existing_file) : in_memory_file.size
 
     add_header_length(content_length)
 
@@ -353,7 +398,14 @@ class MediaController < ApplicationController
 
     if rails_request.head?
       head_response_inline(:ok, { content_length: content_length }, options[:media_type], suggested_file_name, 'inline')
-
+    elsif !in_memory_file.nil?
+      info = {
+        response_suggested_file_name: suggested_file_name,
+        response_disposition_type: 'inline',
+        file_media_type: options[:media_type],
+        response_code: :ok
+      }
+      response_send_data(in_memory_file, info)
     else
       info = {
         file_path: existing_file,
@@ -367,7 +419,8 @@ class MediaController < ApplicationController
     end
   end
 
-  def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
+  def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start, in_memory_file:)
+    file_path = existing_files.first
     download_options = {
       media_type: generation_request[:media_type],
       site_name: audio_recording.site.name,
@@ -376,19 +429,23 @@ class MediaController < ApplicationController
       recording_duration: audio_recording.duration_seconds,
       recording_id: audio_recording.id,
       ext: generation_request[:format],
-      file_path: existing_files.first,
+      file_path: file_path,
+      file_size: in_memory_file&.size || File.size(file_path),
       start_offset: generation_request[:start_offset],
       end_offset: generation_request[:end_offset]
     }
 
-    download_file(download_options, rails_request, range_request, time_start, time_waiting_start)
+    # just always read file into memory
+    in_memory_file = File.binread(file_path) if in_memory_file.nil?
+
+    download_file(in_memory_file, download_options, rails_request, range_request, time_start, time_waiting_start)
   end
 
   # Respond with audio range request.
   # @param [Hash] options
   # @param [ActionDispatch::Request] rails_request
   # @param [RangeRequest] range_request
-  def download_file(options, rails_request, range_request, time_start, time_waiting_start)
+  def download_file(buffer, options, rails_request, range_request, time_start, time_waiting_start)
     #raise ArgumentError, 'File does not exist on disk' if full_path.blank?
     # are HEAD requests supported? Yes
     # more info: http://patshaughnessy.net/2010/10/11/activerecord-with-large-result-sets-part-2-streaming-data
@@ -398,7 +455,7 @@ class MediaController < ApplicationController
 
     # headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
     # content length is added by RangeRequest
-
+    file_path = options[:file_path]
     info = range_request.build_response(options, rails_request)
 
     headers.merge!(info[:response_headers])
@@ -415,11 +472,15 @@ class MediaController < ApplicationController
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if has_content && is_range
-      buffer = write_to_response_stream(info, range_request)
+      buffer = write_to_response_stream(buffer, file_path, info, range_request)
       response_send_data(buffer, info)
 
     elsif has_content && !is_range
-      response_send_file(info)
+      if buffer.nil?
+        response_send_file(info)
+      else
+        response_send_data(buffer, info)
+      end
 
     elsif !has_content
       head_response_inline(
@@ -435,14 +496,18 @@ class MediaController < ApplicationController
     end
   end
 
-  def write_to_response_stream(info, range_request)
+  def write_to_response_stream(in_buffer, file_path, info, range_request)
     # write audio data from the file to a stringIO
     # use the StringIO in send_data
 
-    # must be amutable string
+    # must be a mutable string
     buffer = String.new
     StringIO.open(buffer, 'w') do |string_io|
-      range_request.write_content_to_output(info, string_io)
+      if in_buffer.nil?
+        range_request.write_content_to_output(in_buffer, info, string_io)
+      else
+        range_request.write_file_content_to_output(file_path, info, string_io)
+      end
     end
     buffer
   end
@@ -491,6 +556,10 @@ class MediaController < ApplicationController
     headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_CACHE
   end
 
+  def add_header_remote_and_fast_cache
+    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_REMOTE_CACHE
+  end
+
   def add_header_generated_remote
     headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
   end
@@ -528,6 +597,6 @@ class MediaController < ApplicationController
   # @return String
   def add_header_hash(audio_recording)
     protocol, value = audio_recording.split_file_hash
-    headers['Digest'] = protocol + '=' + value
+    headers['Digest'] = "#{protocol}=#{value}"
   end
 end

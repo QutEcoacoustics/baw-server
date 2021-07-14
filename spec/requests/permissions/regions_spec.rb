@@ -1,4 +1,4 @@
-require 'rails_helper'
+
 
 describe 'Region permissions' do
   create_entire_hierarchy

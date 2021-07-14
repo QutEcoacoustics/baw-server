@@ -3,11 +3,11 @@
 require 'dry-validation'
 require 'config'
 
-Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
+Dir.glob("#{__dir__}/patches/**/*.rb").each do |override|
   require override
 end
 
-Dir.glob("#{__dir__}/initializers/**/*.rb").sort.each do |file|
+Dir.glob("#{__dir__}/initializers/**/*.rb").each do |file|
   require file
 end
 
@@ -57,7 +57,7 @@ module BawApp
     @custom_configs = value.map { |file|
       next file if File.exist?(file)
 
-      raise FileNotFound, "The settings must exist and yet the file could not be found: #{file}"
+      raise ArgumentError, "The settings must exist and yet the file could not be found: #{file}"
     }
   end
 
@@ -93,15 +93,21 @@ module BawApp
     false
   end
 
-  def log_level
+  def log_level(default = Logger::DEBUG)
     # The default Rails log level is warn in production env and info in any other env.
     return ENV['RAILS_LOG_LEVEL'] if ENV.key?('RAILS_LOG_LEVEL')
     return Logger::INFO if Rails.env.staging?
     return Logger::WARN if Rails.env.production?
 
-    Logger::DEBUG
+    default
   end
 
-  # currently a no-op, thinking about collapsing the concept of initializers and patches
-  def initialize; end
+  # add custom configs before other things start
+  def setup(configs = nil)
+    return if @setup
+
+    @setup = true
+
+    @custom_configs = configs || []
+  end
 end

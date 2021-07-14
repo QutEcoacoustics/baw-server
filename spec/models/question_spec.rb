@@ -1,7 +1,22 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
+# == Schema Information
+#
+# Table name: questions
+#
+#  id         :integer          not null, primary key
+#  data       :text
+#  text       :text
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  creator_id :integer
+#  updater_id :integer
+#
+# Foreign Keys
+#
+#  fk_rails_...  (creator_id => users.id)
+#  fk_rails_...  (updater_id => users.id)
+#
 RSpec.describe Question, type: :model do
   let(:study) {
     FactoryBot.create(:study)
