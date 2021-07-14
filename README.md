@@ -1,8 +1,11 @@
-# baw-server
+# workbench-server
 
-The bioacoustic workbench server. Manages the structure and audio data. Provides an API for client access.
+The ecoacoustics workbench server. Manages the structure and metadata for environmental audio data. Provides an API for client access.
+
+<small>(Previously known as baw-server)</small>
 
 ![Run tests, publish docker image](https://github.com/QutEcoacoustics/baw-server/workflows/Run%20tests,%20publish%20docker%20image/badge.svg)
+[![DOI](https://zenodo.org/badge/13489668.svg)](https://zenodo.org/badge/latestdoi/13489668)
 
 ## Dependencies
 
