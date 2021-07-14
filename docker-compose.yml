@@ -58,7 +58,7 @@ services:
       MIGRATE_DB: "false"
     networks:
       - baw_network
-    ports: []
+    #ports: []
       # rdebug-ide port (mapped for workers)
       #- "1235:1235"
       #- "26162:26162"
