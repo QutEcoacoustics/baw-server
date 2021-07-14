@@ -47,3 +47,4 @@ passenger.3000.pid
 passenger.3000.pid.lock
 rspec_results.html
 provision/upload/config/id_*
+real_data/*
