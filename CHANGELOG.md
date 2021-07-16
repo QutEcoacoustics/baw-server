@@ -1,5 +1,84 @@
 # Changelog
 
+## [4.1.0](https://github.com/QutEcoacoustics/baw-server/tree/4.1.0) (2021-07-16)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.4...4.1.0)
+
+**Fixed bugs:**
+
+- Media generation bug: An Errno::ENOENT occurred in media\#show: [\#521](https://github.com/QutEcoacoustics/baw-server/issues/521)
+
+## [4.0.4](https://github.com/QutEcoacoustics/baw-server/tree/4.0.4) (2021-07-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.3...4.0.4)
+
+## [4.0.3](https://github.com/QutEcoacoustics/baw-server/tree/4.0.3) (2021-07-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.2...4.0.3)
+
+## [4.0.2](https://github.com/QutEcoacoustics/baw-server/tree/4.0.2) (2021-07-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.1...4.0.2)
+
+## [4.0.1](https://github.com/QutEcoacoustics/baw-server/tree/4.0.1) (2021-07-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.0...4.0.1)
+
+## [4.0.0](https://github.com/QutEcoacoustics/baw-server/tree/4.0.0) (2021-07-07)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/3.0.4...4.0.0)
+
+## [3.0.4](https://github.com/QutEcoacoustics/baw-server/tree/3.0.4) (2021-05-11)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/3.0.3...3.0.4)
+
+## [3.0.3](https://github.com/QutEcoacoustics/baw-server/tree/3.0.3) (2021-05-11)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/3.0.2...3.0.3)
+
+**Closed issues:**
+
+- Missing account routes [\#439](https://github.com/QutEcoacoustics/baw-server/issues/439)
+- User accounts route with admin permissions [\#421](https://github.com/QutEcoacoustics/baw-server/issues/421)
+
+## [3.0.2](https://github.com/QutEcoacoustics/baw-server/tree/3.0.2) (2020-10-14)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/3.0.1...3.0.2)
+
+**Implemented enhancements:**
+
+- Add content management system [\#492](https://github.com/QutEcoacoustics/baw-server/issues/492)
+- Remove custom\_longitude/latitude values [\#489](https://github.com/QutEcoacoustics/baw-server/issues/489)
+- Project short descriptions [\#486](https://github.com/QutEcoacoustics/baw-server/issues/486)
+- Tracking site issues [\#477](https://github.com/QutEcoacoustics/baw-server/issues/477)
+- Missing admin orphan sites route [\#430](https://github.com/QutEcoacoustics/baw-server/issues/430)
+- Project route missing fields [\#425](https://github.com/QutEcoacoustics/baw-server/issues/425)
+- Create site route ignoring inputs [\#410](https://github.com/QutEcoacoustics/baw-server/issues/410)
+- Make site terminology customiseable [\#383](https://github.com/QutEcoacoustics/baw-server/issues/383)
+- Add docs generation to CI build [\#367](https://github.com/QutEcoacoustics/baw-server/issues/367)
+- Fixes cut speed for ffmpeg [\#498](https://github.com/QutEcoacoustics/baw-server/pull/498) ([atruskie](https://github.com/atruskie))
+- Adds an upload service [\#494](https://github.com/QutEcoacoustics/baw-server/pull/494) ([atruskie](https://github.com/atruskie))
+- Standardizes description markdown conversion in API [\#488](https://github.com/QutEcoacoustics/baw-server/pull/488) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Model description html markup [\#487](https://github.com/QutEcoacoustics/baw-server/issues/487)
+- Some site fields are not exposed in the API [\#406](https://github.com/QutEcoacoustics/baw-server/issues/406)
+
+**Closed issues:**
+
+- Slow points when harvesting [\#212](https://github.com/QutEcoacoustics/baw-server/issues/212)
+
+**Merged pull requests:**
+
+- Adds a CMS [\#493](https://github.com/QutEcoacoustics/baw-server/pull/493) ([atruskie](https://github.com/atruskie))
+- Adds regions and active storage [\#491](https://github.com/QutEcoacoustics/baw-server/pull/491) ([atruskie](https://github.com/atruskie))
+- Bump kramdown from 2.2.1 to 2.3.0 [\#485](https://github.com/QutEcoacoustics/baw-server/pull/485) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [3.0.1](https://github.com/QutEcoacoustics/baw-server/tree/3.0.1) (2020-08-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/3.0.0.0...3.0.1)
+
 ## [3.0.0.0](https://github.com/QutEcoacoustics/baw-server/tree/3.0.0.0) (2020-07-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/2.0.1...3.0.0.0)

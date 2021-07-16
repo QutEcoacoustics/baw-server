@@ -28,6 +28,10 @@ function script:exec {
 $ErrorActionPreference = 'Stop'
 $env:NEXT_VERSION = $next_version
 
+if ($null -eq $env:CHANGELOG_GITHUB_TOKEN) {
+  Write-Error "Cannot generate change log unless CHANGELOG_GITHUB_TOKEN environment variable is set"
+}
+
 Write-Output "Generate changelog"
 exec { docker-compose run web rake changelog }
 
