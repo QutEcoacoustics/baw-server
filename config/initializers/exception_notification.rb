@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'exception_notification/rails'
 
 # resque failures are emailed just like exceptions from Rails.
@@ -7,7 +9,6 @@ require 'exception_notification/resque'
 
 Resque::Failure::Multiple.classes = [Resque::Failure::Redis, ExceptionNotification::Resque]
 Resque::Failure.backend = Resque::Failure::Multiple
-
 
 ExceptionNotification.configure do |config|
   # Ignore additional exception types.
@@ -28,6 +29,7 @@ ExceptionNotification.configure do |config|
     sender_address: Settings.mailer.emails.sender_address,
     exception_recipients: Settings.mailer.emails.required_recipients
   }
+  config.error_grouping = true
 
   # Campfire notifier sends notifications to your Campfire room. Requires 'tinder' gem.
   # config.add_notifier :campfire, {
@@ -47,5 +49,4 @@ ExceptionNotification.configure do |config|
   #   :url => 'http://example.com:5555/hubot/path',
   #   :http_method => :post
   # }
-
 end

@@ -43,7 +43,7 @@ module Baw
       #   # => "@%3F@%21"
       #
       def escape(*arg)
-        warn "URI.#{__callee__} is obsolete", uplevel: 1
+        __warn_obsolete
         PATCH_DEFAULT_PARSER.escape(*arg)
       end
       alias encode escape
@@ -74,10 +74,15 @@ module Baw
       #   # => "http://example.com/?a=\t\r"
       #
       def unescape(*arg)
-        warn "URI.#{__callee__} is obsolete", uplevel: 1
+        __warn_obsolete
         PATCH_DEFAULT_PARSER.unescape(*arg)
       end
       alias decode unescape
+
+      def __warn_obsolete
+        warn "URI.#{__callee__} is obsolete", uplevel: 2 unless @warned
+        @warned = true
+      end
     end
 
     extend Escape
