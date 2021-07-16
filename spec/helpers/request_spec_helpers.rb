@@ -31,10 +31,21 @@ module RequestSpecHelpers
       }
     end
 
+    def with_range_request_headers(headers, ranges:)
+      headers ||= {}
+      raise 'ranges must not be empty' if ranges.empty?
+
+      value = 'bytes=' + ranges.map { |r| "#{r.begin}-#{r.end}" }.join(',')
+
+      headers[RangeRequest::HTTP_HEADER_RANGE] = value
+
+      headers
+    end
+
     def response_body
       # the != false is not redundant here... safe access could result in nil
       # which would evaluate to false and execute wrong half of conditional
-      @response_body ||= response&.body&.empty? != false ? nil : response.body
+      @response_body ||= response&.body&.empty? == false ? response.body : nil
     end
 
     def api_result
@@ -99,7 +110,7 @@ module RequestSpecHelpers
     def expect_data_is_hash
       data = api_result[:data]
       expect(data).to be_a(Hash)
-      expect(data).to_not be_empty
+      expect(data).not_to be_empty
     end
 
     def expect_data_is_hash_with_any_id
@@ -214,7 +225,7 @@ module RequestSpecHelpers
       body = request.body.read
 
       if mime&.start_with?('multipart/form-data')
-        return body.split(/-{10,}.*\r\n"/).map { |x| x.split("\r\n\r\n").first + "\n<...snip...>" }.join("\n")
+        return body.split(/-{10,}.*\r\n"/).map { |x| "#{x.split("\r\n\r\n").first}\n<...snip...>" }.join("\n")
       end
 
       return '<binary payload>' if MIME::Types[mime]&.first&.binary?

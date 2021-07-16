@@ -121,7 +121,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.content_length).to be_within(100).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_REMOTE_CACHE
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.5).of(3)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.5).of(2.9)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.5).of(2.8)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.01)
 

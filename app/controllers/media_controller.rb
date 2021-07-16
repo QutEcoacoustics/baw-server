@@ -501,15 +501,15 @@ class MediaController < ApplicationController
     # use the StringIO in send_data
 
     # must be a mutable string
-    buffer = String.new
-    StringIO.open(buffer, 'w') do |string_io|
+    out_buffer = BawWorkers::IO.new_binary_string
+    StringIO.open(out_buffer, 'w') do |string_io|
       if in_buffer.nil?
-        range_request.write_content_to_output(in_buffer, info, string_io)
-      else
         range_request.write_file_content_to_output(file_path, info, string_io)
+      else
+        range_request.write_content_to_output(in_buffer, info, string_io)
       end
     end
-    buffer
+    out_buffer
   end
 
   # Responds with data in buffer, using metadata from info.
