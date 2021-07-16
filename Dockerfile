@@ -49,6 +49,7 @@ RUN \
   # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
   && mkdir -p "$GEM_HOME/bin" \
   && chmod 777 "$GEM_HOME/bin" \
+  && chmod u+x /tmp/*.sh  \
   && (if [ "x${trimmed}" != "xtrue" ]; then /tmp/dev_setup.sh ; fi) \
   && rm -rf /tmp/*.sh \
   # https://github.com/moby/moby/issues/20437
