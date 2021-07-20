@@ -69,8 +69,10 @@ class AudioRecording < ApplicationRecord
   has_many :dataset_items, inverse_of: :audio_recording
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings, optional: true
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings,
+                       optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings,
+                       optional: true
   belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
@@ -106,7 +108,8 @@ class AudioRecording < ApplicationRecord
   validates :status, inclusion: { in: AVAILABLE_STATUSES }, presence: true
   validates :uuid, presence: true, length: { is: 36 }, uniqueness: { case_sensitive: false }
   validates :recorded_date, presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
-  validates :duration_seconds, presence: true, numericality: { greater_than_or_equal_to: Settings.audio_recording_min_duration_sec }
+  validates :duration_seconds, presence: true,
+                               numericality: { greater_than_or_equal_to: Settings.audio_recording_min_duration_sec }
   validates :sample_rate_hertz, presence: true, numericality: { only_integer: true, greater_than: 0 }
 
   # the channels field encodes our special version of a bit flag. 0 (no bits flipped) represents
@@ -132,8 +135,12 @@ class AudioRecording < ApplicationRecord
   scope :start_before, ->(time) { where('recorded_date <= ?', time) }
   scope :start_before_not_equal, ->(time) { where('recorded_date < ?', time) }
   scope :end_after, ->(time) { where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time) }
-  scope :end_after_not_equal, ->(time) { where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  > ?', time) }
-  scope :end_before, ->(time) { where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time) }
+  scope :end_after_not_equal, lambda { |time|
+                                where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  > ?', time)
+                              }
+  scope :end_before, lambda { |time|
+                       where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time)
+                     }
   scope :has_tag, ->(tag) { includes(:tags).where('tags.text = ?', tag) }
   scope :has_tags, ->(tags) { includes(:tags).where('tags.text IN ?', tags) }
   scope :does_not_have_tag, ->(tag) { includes(:tags).where('tags.text <> ?', tag) }
@@ -162,7 +169,11 @@ class AudioRecording < ApplicationRecord
                      contains_value = "#{sanitized_value}%"
                      includes(:tags).where(Tag.arel_table[:text].matches(contains_value))
                    }
-  scope :order_by_absolute_end_desc, -> { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC') }
+  scope :order_by_absolute_end_desc, lambda {
+                                       order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')
+                                     }
+  scope :total_data_bytes, -> { sum(arel_table[:data_length_bytes].cast('bigint')) }
+  scope :total_duration_seconds, -> { sum(arel_table[:duration_seconds].cast('bigint')) }
 
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
@@ -396,7 +407,8 @@ class AudioRecording < ApplicationRecord
   # ("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || 'seconds' as interval)
   def self.arel_recorded_end_date
     seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
-    infix_op_string_join = Arel::Nodes::InfixOperation.new('||'.to_sym, AudioRecording.arel_table[:duration_seconds], seconds_as_interval)
+    infix_op_string_join = Arel::Nodes::InfixOperation.new(:'||', AudioRecording.arel_table[:duration_seconds],
+                                                           seconds_as_interval)
     function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
     Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
   end

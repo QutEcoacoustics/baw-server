@@ -58,54 +58,17 @@ class PublicController < ApplicationController
   end
 
   def website_status
-    #storage_msg = AudioRecording.check_storage
-
-    online_window = 2.hours.ago
-    users_online = User.where('last_seen_at > ? OR current_sign_in_at > ? OR last_sign_in_at > ?', online_window,
-                              online_window, online_window).count
-    users_total = User.count
-
-    month_ago = 1.month.ago
-    annotations_total = AudioEvent.count
-    annotations_recent = AudioEvent.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
-    annotations_total_duration = AudioEvent.sum('end_time_seconds - start_time_seconds').to_f
-    annotations_total_duration = 0 if annotations_total_duration.blank?
-
-    audio_recording_total = AudioRecording.count
-    audio_recording_recent = AudioRecording.where('created_at > ?', month_ago).count
-
-    audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
-    audio_recording_total_duration = 0 if audio_recording_total_duration.blank?
-
-    audio_recording_total_size = AudioRecording.sum(:data_length_bytes)
-    audio_recording_total_size = 0 if audio_recording_total_size.blank?
-
-    tags_total = Tag.count
-    tags_applied_total = Tagging.count
-
-    #percent_annotated = annotations_total_duration.to_f / audio_recording_total_duration.to_f * 100
-
-    #unannotated_audio = audio_recording_total_duration - annotations_total_duration
-
-    @status_info = {
-      #storage: storage_msg,
-      users_online: users_online,
-      users_total: users_total,
-      online_window_start: online_window,
-      annotations_total: annotations_total,
-      annotations_total_duration: annotations_total_duration,
-      annotations_recent: annotations_recent,
-      audio_recording_total: audio_recording_total,
-      audio_recording_recent: audio_recording_recent,
-      audio_recording_total_duration: audio_recording_total_duration,
-      audio_recording_total_size: audio_recording_total_size,
-      tags_total: tags_total,
-      tags_applied_total: tags_applied_total
-      #percent_annotated: percent_annotated
-    }
-
-    recent_audio_recordings
-    recent_audio_events
+    result = StatsController.fetch_stats(current_user)
+    @status_info = result[:summary]
+    # use .includes to eager load associations
+    @recent_audio_recordings =
+      result
+      .dig(:recent, :audio_recordings)
+      &.includes([:creator, { site: :projects }])
+    @recent_audio_events =
+      result
+      .dig(:recent, :audio_events)
+      .includes([:updater, { audio_recording: :site }])
 
     respond_to do |format|
       format.html
@@ -292,36 +255,6 @@ class PublicController < ApplicationController
   end
 
   private
-
-  def recent_audio_recordings
-    order_by_coalesce = 'COALESCE(audio_recordings.updated_at, audio_recordings.created_at) DESC'
-
-    if current_user.blank?
-      @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
-    else
-      @recent_audio_recordings = Access::ByPermission.audio_recordings(current_user).includes(site: :projects).order(order_by_coalesce).limit(10)
-    end
-  end
-
-  def recent_audio_events
-    order_by_coalesce = 'COALESCE(audio_events.updated_at, audio_events.created_at) DESC'
-
-    @recent_audio_events = if current_user.blank?
-                             AudioEvent
-                               .order(order_by_coalesce)
-                               .limit(7)
-                           elsif Access::Core.is_admin?(current_user)
-                             AudioEvent
-                               .includes([:creator, { audio_recording: { site: :projects } }])
-                               .order(order_by_coalesce)
-                               .limit(10)
-                           else
-                             Access::ByPermission
-                               .audio_events(current_user)
-                               .includes([:updater, { audio_recording: :site }])
-                               .order(order_by_coalesce).limit(10)
-                           end
-  end
 
   def annotation_download
     selected_params = annotation_download_params

@@ -34,16 +34,20 @@
 #
 describe AudioEvent, type: :model do
   subject { FactoryBot.build(:audio_event) }
+
   it 'has a valid factory' do
     expect(FactoryBot.create(:audio_event)).to be_valid
   end
+
   it 'can have a blank end time' do
     ae = FactoryBot.build(:audio_event, end_time_seconds: nil)
     expect(ae).to be_valid
   end
+
   it 'can have a blank high frequency' do
     expect(FactoryBot.build(:audio_event, high_frequency_hertz: nil)).to be_valid
   end
+
   it 'can have a blank end time and  a blank high frequency' do
     expect(FactoryBot.build(:audio_event, { end_time_seconds: nil, high_frequency_hertz: nil })).to be_valid
   end
@@ -75,6 +79,34 @@ describe AudioEvent, type: :model do
 
   it 'is invalid if the end frequency is less then the low frequency' do
     expect(build(:audio_event, { low_frequency_hertz: 1000, high_frequency_hertz: 100 })).not_to be_valid
+  end
+
+  it 'has a recent scope' do
+    FactoryBot.create_list(:audio_event, 20)
+
+    events = AudioEvent.most_recent(5).to_a
+    expect(events).to have(5).items
+    expect(AudioEvent.order(created_at: :desc).limit(5).to_a).to eq(events)
+  end
+
+  it 'has a total duration scope' do
+    FactoryBot.create_list(:audio_event, 10) do |item|
+      item.start_time_seconds = 0
+      item.end_time_seconds = 60
+      item.save!
+    end
+
+    total = AudioEvent.total_duration_seconds
+    expect(total).to an_instance_of(BigDecimal)
+    expect(total).to eq(600)
+  end
+
+  it 'has a recent_within scope' do
+    old = FactoryBot.create(:audio_event, created_at: 2.months.ago)
+
+    actual = AudioEvent.created_within(1.month.ago)
+    expect(actual.count).to eq(AudioEvent.count - 1)
+    expect(actual).not_to include(old)
   end
 
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
@@ -384,7 +416,8 @@ describe AudioEvent, type: :model do
         site.destroy if site_n == 1
 
         (0..1).each do |audio_recording_n|
-          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user, site: site)
+          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user,
+                                                                               site: site)
           audio_recording.destroy if audio_recording_n == 1
 
           (0..1).each do |audio_event_n|
@@ -438,11 +471,10 @@ describe AudioEvent, type: :model do
         site.save!
 
         2.times do
-          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user, site: site)
+          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user,
+                                                                               site: site)
 
-          2.times do
-            FactoryBot.create(:audio_event, creator: user, audio_recording: audio_recording)
-          end
+          FactoryBot.create_list(:audio_event, 2, creator: user, audio_recording: audio_recording)
         end
       end
     end
