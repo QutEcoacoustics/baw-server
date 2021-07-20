@@ -702,7 +702,7 @@ Rails.application.routes.draw do
   root to: 'public#index'
 
   # site status API
-  get '/status/' => 'public#status', defaults: { format: 'json' }
+  get '/status/' => 'status#index', defaults: { format: 'json' }
   get '/website_status/' => 'public#website_status'
 
   # feedback and contact forms
