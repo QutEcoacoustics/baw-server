@@ -82,7 +82,8 @@ class User < ApplicationRecord
   roles :admin, :user, :harvester, :guest
 
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#' },
+                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#',
+                              spanhalf: '30x30#' },
                     default_url: '/images/user/user_:style.png'
 
   # relations
@@ -97,10 +98,14 @@ class User < ApplicationRecord
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
 
-  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :deleter_id, inverse_of: :deleter
-  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :flagger_id, inverse_of: :flagger
+  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id,
+                                          inverse_of: :creator
+  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :updater_id,
+                                          inverse_of: :updater
+  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :deleter_id,
+                                          inverse_of: :deleter
+  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :flagger_id,
+                                          inverse_of: :flagger
 
   has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
@@ -113,8 +118,12 @@ class User < ApplicationRecord
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :creator_id, inverse_of: :creator
-  has_many :deleted_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :created_saved_searches, lambda {
+                                      includes :project
+                                    }, class_name: 'SavedSearch', foreign_key: :creator_id, inverse_of: :creator
+  has_many :deleted_saved_searches, lambda {
+                                      includes :project
+                                    }, class_name: 'SavedSearch', foreign_key: :deleter_id, inverse_of: :deleter
 
   has_many :created_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :updater_id, inverse_of: :updater
@@ -156,6 +165,14 @@ class User < ApplicationRecord
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
+  scope :recently_seen,
+        lambda { |time|
+          where(
+            (arel_table[:last_seen_at] > time)
+            .or(arel_table[:current_sign_in_at] > time)
+            .or(arel_table[:last_sign_in_at] > time)
+          )
+        }
 
   # store preferences as json in a text column
   serialize :preferences, JSON
@@ -173,7 +190,8 @@ class User < ApplicationRecord
   validate :excluded_login, on: :create
 
   def excluded_login
-    reserved_user_names = ['admin', 'harvester', 'analysis_runner', 'root', 'superuser', 'administrator', 'admins', 'administrators']
+    reserved_user_names = ['admin', 'harvester', 'analysis_runner', 'root', 'superuser', 'administrator', 'admins',
+                           'administrators']
     errors.add(:login, 'is reserved') if reserved_user_names.include?(login.downcase)
     errors.add(:user_name, 'is reserved') if reserved_user_names.include?(user_name.downcase)
   end
@@ -186,7 +204,8 @@ class User < ApplicationRecord
   #           format: {with:VALID_EMAIL_REGEX, message: 'Basic email validation failed. It should have at least 1 `@` and 1 `.`'}
 
   validates :roles_mask, presence: true
-  validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$}, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
+                                            message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # before and after methods
   before_validation :ensure_user_role

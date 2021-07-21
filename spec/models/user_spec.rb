@@ -45,23 +45,23 @@
 #  users_user_name_unique               (user_name) UNIQUE
 #
 describe User, type: :model do
-  it 'should error on invalid timezone' do
+  it 'errors on invalid timezone' do
     expect {
       FactoryBot.create(:user, tzinfo_tz: 'blah')
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognized timezone ('blah')")
   end
 
-  it 'should be valid for a valid timezone' do
+  it 'is valid for a valid timezone' do
     expect(FactoryBot.create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
-  it 'should be valid for a nil tzinfo' do
+  it 'is valid for a nil tzinfo' do
     expect(FactoryBot.create(:user, tzinfo_tz: nil)).to be_valid
   end
 
   # see https://github.com/QutBioacoustics/baw-server/issues/270
   # We store friendly values
-  it 'should not allow bad tz_info' do
+  it 'does not allow bad tz_info' do
     user = FactoryBot.create(:user)
 
     user.tzinfo_tz = 'Australia/fsdjljfssl'
@@ -72,13 +72,37 @@ describe User, type: :model do
     }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognized timezone/)
   end
 
-  it 'should include TimeZoneAttribute' do
+  it 'includes TimeZoneAttribute' do
     expect(User.new).to be_a_kind_of(TimeZoneAttribute)
   end
 
   it { is_expected.to have_many(:created_regions) }
   it { is_expected.to have_many(:updated_regions) }
   it { is_expected.to have_many(:deleted_regions) }
+
+  context 'when using the recently seen scope' do
+    KEYS = [:last_seen_at, :current_sign_in_at, :last_sign_in_at].freeze
+    subject(:user) { FactoryBot.create(:user) }
+
+    before do
+      old = 2.months.ago
+
+      KEYS.each { |key| user[key] = old }
+      user.save!
+    end
+
+    it 'does not show non-recent users' do
+      expect(User.recently_seen(1.month.ago).to_a).not_to include(user)
+    end
+
+    KEYS.each { |key|
+      it "will show if #{key} is recent" do
+        user[key] = 1.day.ago
+        user.save!
+        expect(User.recently_seen(1.month.ago).to_a).to include(user)
+      end
+    }
+  end
 
   #pending "add some examples to (or delete) #{__FILE__}"
 

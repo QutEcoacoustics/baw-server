@@ -81,6 +81,9 @@ class AudioEvent < ApplicationRecord
   scope :select_end_absolute, lambda {
                                 select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute')
                               }
+  scope :duration_seconds, -> { arel_table[:end_time_seconds] - arel_table[:start_time_seconds] }
+
+  scope :total_duration_seconds, -> { sum((duration_seconds.cast('bigint'))) }
 
   # Define filter api settings
   def self.filter_settings
@@ -118,7 +121,7 @@ class AudioEvent < ApplicationRecord
       field_mappings: [
         {
           name: :duration_seconds,
-          value: (AudioEvent.arel_table[:end_time_seconds] - AudioEvent.arel_table[:start_time_seconds])
+          value: AudioEvent.duration_seconds
         }
       ],
       valid_associations: [
@@ -298,8 +301,8 @@ class AudioEvent < ApplicationRecord
         tags_others_ids.as('other_tag_ids'),
         Arel::Nodes::SqlLiteral.new(
           "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
-                '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
-                '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
+                           '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
+                           '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
         )
             .as('listen_url'),
         Arel::Nodes::SqlLiteral.new(

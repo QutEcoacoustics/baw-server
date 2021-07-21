@@ -119,7 +119,7 @@ group :server do
   gem 'pg'
 
   # extensions to arel https://github.com/Faveod/arel-extensions
-  # in particular, we use `cast`
+  # in particular, we use `cast`, and `coalesce`
   gem 'arel_extensions'
 
   # MODELS

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 RSpec.configure do |config|
   # Specify a root folder where Swagger JSON files are generated
   # NOTE: If you're using the rswag-api to serve API descriptions, you'll need
@@ -191,6 +189,43 @@ RSpec.configure do |config|
                     full_path: { type: 'string', format: 'uri-reference' }
                   },
                   additionalProperties: false
+                }
+              }
+            },
+            additionalProperties: false
+          },
+          stats: {
+            type: 'object',
+            required: [:summary, :recent],
+            properties: {
+              summary: {
+                type: 'object',
+                properties: {
+                  users_online: { type: 'integer' },
+                  users_total: { type: 'integer' },
+                  online_window_start: { type: 'string', format: 'date-time', readOnly: true },
+                  annotations_total: { type: 'integer' },
+                  annotations_total_duration: { type: 'number' },
+                  annotations_recent: { type: 'integer' },
+                  audio_recording_total: { type: 'integer' },
+                  audio_recording_recent: { type: 'integer' },
+                  audio_recording_total_duration: { type: 'number' },
+                  audio_recording_total_size: { type: 'integer' },
+                  tags_total: { type: 'integer' },
+                  tags_applied_total: { type: 'integer' }
+                }
+              },
+              recent: {
+                type: 'object',
+                properties: {
+                  audio_recordings: {
+                    type: 'array',
+                    items: { '$ref' => '#/components/schemas/id' }
+                  },
+                  audio_events: {
+                    type: 'array',
+                    items: { '$ref' => '#/components/schemas/id' }
+                  }
                 }
               }
             },

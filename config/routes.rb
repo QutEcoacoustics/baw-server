@@ -704,6 +704,7 @@ Rails.application.routes.draw do
   # site status API
   get '/status/' => 'status#index', defaults: { format: 'json' }
   get '/website_status/' => 'public#website_status'
+  get '/stats/' => 'stats#index', defaults: { format: 'json' }
 
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
