@@ -10,6 +10,19 @@ AllCops:
     - '**/*.rb'
   TargetRubyVersion: 3.1
   NewCops: enable
+# Bug in rubocop-rspec config merge: https://github.com/rubocop/rubocop-rspec/pull/1163
+# RSpec:
+#   inherit_mode:
+#     override:
+#       - Merge
+#   Language:
+#     ExampleGroups:
+#       # rswag example group aliases
+#       - path
+#       - get
+#       - push
+#       - post
+#       - delete
 
 # Customized options
 Lint/DeprecatedOpenSSLConstant:

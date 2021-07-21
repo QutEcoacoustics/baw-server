@@ -2,8 +2,7 @@
 
 require 'swagger_helper'
 
-# the cms service is provided by a third party, hence its API
-# varies from our common format.
+# the stats service does not return a model, and has no C-UD, only -R-- (Read).
 describe 'stats', type: :request do
   let(:skip_automatic_description) { true }
 
