@@ -2,7 +2,7 @@
 
 class PublicController < ApplicationController
   skip_authorization_check only: [
-    :index, :status,
+    :index,
     :website_status,
     :credits,
     :disclaimers,
@@ -28,8 +28,8 @@ class PublicController < ApplicationController
   def index
     base_path = "#{Rails.root}/public"
     image_base = '/system/home/'
-    json_data_file = base_path + image_base + 'animals.json'
-    sensor_tree = base_path + image_base + 'sensor_tree.jpg'
+    json_data_file = "#{base_path}#{image_base}animals.json"
+    sensor_tree = "#{base_path}#{image_base}sensor_tree.jpg"
     if File.exist?(json_data_file) && File.exist?(sensor_tree)
       species_data = JSON.load(File.read(json_data_file))
       item_count = species_data['species'].size
@@ -38,7 +38,7 @@ class PublicController < ApplicationController
       @selected_images = {
         animal: species_data['species'][item_index],
         sensor_tree: "#{image_base}sensor_tree.jpg",
-        image_base: image_base + 'media/',
+        image_base: "#{image_base}media/",
         example_spectrogram: "#{image_base}spectrogram_example.jpg",
         ecologist: "#{image_base}eco.jpg"
       }
@@ -57,65 +57,12 @@ class PublicController < ApplicationController
     end
   end
 
-  # only returns json
-  def status
-    statuses = Concurrent::Promises::FactoryMethods.zip(
-      Concurrent::Promises::FactoryMethods.future {
-        # indicates if audio recording storage is available
-        AudioRecording.check_storage
-      },
-      Concurrent::Promises::FactoryMethods.future {
-        # can we ping redis?
-        BawWorkers::Config.redis_communicator.ping
-      },
-      Concurrent::Promises::FactoryMethods.future {
-        # can we ping upload service?
-        BawWorkers::Config.upload_communicator.service_status
-      },
-      Concurrent::Promises::FactoryMethods.future {
-        ActiveRecord::Base.connection_pool.with_connection do
-          ActiveRecord::Base.connection.active?
-        end
-      }
-    )
-
-    timed_out = statuses.wait(10) == false
-
-    storage, redis, upload, database = statuses.value(0)
-    # check promise values contain healthy values for each check.
-    # is any promise was rejected then #value returns nil
-    status = [
-      !timed_out, statuses.fulfilled?,
-      storage&.fetch(:success, false), redis == 'PONG', upload&.success?, database
-    ].all?
-
-    result = {
-      status: status ? 'good' : 'bad',
-      timed_out: timed_out,
-      database: safe_result(statuses, index: 3),
-      redis: safe_result(statuses, index: 1),
-      storage: safe_result(statuses, index: 0) { |v| v[:message] },
-      upload: safe_result(statuses, index: 2) { |v|
-        status = v.value_or(v.failure&.response&.fetch(:body))
-        case status
-        when SftpgoClient::ApiResponse
-          [status.message, status.error].compact.join('. ')
-        else
-          status.to_s.strip
-        end
-      }
-    }
-
-    respond_to do |format|
-      format.json { render json: result, status: :ok }
-    end
-  end
-
   def website_status
     #storage_msg = AudioRecording.check_storage
 
     online_window = 2.hours.ago
-    users_online = User.where('last_seen_at > ? OR current_sign_in_at > ? OR last_sign_in_at > ?', online_window, online_window, online_window).count
+    users_online = User.where('last_seen_at > ? OR current_sign_in_at > ? OR last_sign_in_at > ?', online_window,
+                              online_window, online_window).count
     users_total = User.count
 
     month_ago = 1.month.ago
@@ -308,7 +255,8 @@ class PublicController < ApplicationController
     # this method caters for all MALFORMED OPTIONS requests.
     # it will not be used for valid OPTIONS requests
     # valid OPTIONS requests will be caught by the rails-cors gem (see application.rb)
-    raise CustomErrors::BadRequestError, "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
+    raise CustomErrors::BadRequestError,
+          "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
   end
 
   def nav_menu
@@ -344,29 +292,6 @@ class PublicController < ApplicationController
   end
 
   private
-
-  # Transform a promise into a safe string
-  # @param [Concurrent::Promises::Future] promise
-  def safe_result(promise, index:)
-    return 'unknown' if promise.pending?
-
-    # result returns a tuple (an array) of
-    # [fulfilled?, value, reason]
-    # In our case, the value and reasons are arrays of values because we're
-    # dealing with a series of zipped promises
-    fulfilled, values, reasons = promise.result(0)
-    return 'timed out' if fulfilled.nil?
-
-    value = values[index]
-    return 'error: ' + reasons[index].to_s  if value.nil?
-
-    begin
-      return (block_given? ? yield(value) : value)
-    rescue StandardError => e
-      Rails.logger.error(e)
-      return 'error getting value'
-    end
-  end
 
   def recent_audio_recordings
     order_by_coalesce = 'COALESCE(audio_recordings.updated_at, audio_recordings.created_at) DESC'

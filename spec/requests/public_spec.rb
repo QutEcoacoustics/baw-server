@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 def update_page(slug, text)
   page = Comfy::Cms::Page.where(slug: slug).first
   fragment = page.fragments.where(identifier: 'content').first
@@ -26,7 +24,7 @@ describe '/credits', type: :request do
     )
   end
 
-  it 'should render the CMS page' do
+  it 'renders the CMS page' do
     get '/credits'
 
     expect(response_body).to include(
@@ -61,7 +59,7 @@ describe '/data_upload', type: :request do
     )
   end
 
-  it 'should render the CMS page' do
+  it 'renders the CMS page' do
     get '/data_upload'
 
     expect(response_body).to include(
@@ -96,7 +94,7 @@ describe '/ethics', type: :request do
     )
   end
 
-  it 'should render the CMS page' do
+  it 'renders the CMS page' do
     get '/ethics_statement'
 
     expect(response_body).to include(
@@ -131,7 +129,7 @@ describe '/privacy', type: :request do
     )
   end
 
-  it 'should render the CMS page' do
+  it 'renders the CMS page' do
     get '/disclaimers'
 
     expect(response_body).to include(
@@ -166,7 +164,7 @@ describe '/', type: :request do
     )
   end
 
-  it 'should render the CMS page' do
+  it 'renders the CMS page' do
     get '/'
 
     expect(response_body).to include(
@@ -181,115 +179,5 @@ describe '/', type: :request do
         Where we’ll plan our escape”</p>
       HTML
     )
-  end
-end
-
-describe '/status.json' do
-  before(:each) do
-    BawWorkers::Config.original_audio_helper.possible_dirs.each { |path|
-      FileUtils.mkdir_p(path)
-    }
-  end
-
-  example 'everything ok' do
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'good',
-      timed_out: false,
-      database: true,
-      redis: 'PONG',
-      storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
-    })
-  end
-
-  example 'timeout (storage)' do
-    allow(AudioRecording).to receive(:check_storage) {
-      # simulate timeout
-      (1..120).each { |i| puts i; sleep(0.25) }
-      raise 'This should not happen'
-    }
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'bad',
-      timed_out: true,
-      database: 'unknown',
-      redis: 'unknown',
-      storage: 'unknown',
-      upload: 'unknown'
-    })
-  end
-
-  example 'redis cant connect' do
-    allow(BawWorkers::Config.redis_communicator).to \
-      receive(:ping)
-      .and_raise(Redis::CannotConnectError, 'message')
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'bad',
-      timed_out: false,
-      database: true,
-      redis: 'error: message',
-      storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
-    })
-  end
-
-  example 'upload service, bad storage' do
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
-      .to_return(body: '{"message":"abc", "error": "error message"}', status: 500, headers: {content_type: 'application/json'})
-
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'bad',
-      timed_out: false,
-      database: true,
-      redis: 'PONG',
-      storage: '1 audio recording storage directory available.',
-      upload: 'abc. error message'
-    })
-  end
-
-  example 'upload service, somewhere in the middle error' do
-    # error generated due to bad config in prod, but we didn't handle it well, hence the test
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
-      .to_return(body: "Client sent an HTTP request to an HTTPS server.\n", status: 400)
-
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'bad',
-      timed_out: false,
-      database: true,
-      redis: 'PONG',
-      storage: '1 audio recording storage directory available.',
-      upload: 'Client sent an HTTP request to an HTTPS server.'
-    })
-  end
-
-  example 'upload service, time out' do
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
-      .to_timeout
-
-    get '/status.json'
-
-    expect_success
-    expect(api_result).to match({
-      status: 'bad',
-      timed_out: false,
-      database: true,
-      redis: 'PONG',
-      storage: '1 audio recording storage directory available.',
-      upload: 'error: execution expired'
-    })
   end
 end
