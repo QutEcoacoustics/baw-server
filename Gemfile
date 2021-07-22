@@ -243,7 +243,8 @@ group :test do
   gem 'rspec-mocks'
   gem 'timecop'
   # better diffs
-  gem 'super_diff'
+  # 0.8.0 causes ifinite hangs during some specs (spec/requests/media/edge_cases_spec.rb)
+  gem 'super_diff', '0.7.0'
   # for multi-step specs
   gem 'turnip'
   # for profiling

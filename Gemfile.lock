@@ -625,7 +625,7 @@ GEM
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
     sqlite3 (1.4.2)
-    super_diff (0.8.0)
+    super_diff (0.7.0)
       attr_extras (>= 6.2.4)
       diff-lcs
       patience_diff
@@ -778,7 +778,7 @@ DEPENDENCIES
   solargraph
   solargraph-rails (>= 0.2.2.pre.2)
   sqlite3
-  super_diff
+  super_diff (= 0.7.0)
   test-prof
   thin
   timecop
