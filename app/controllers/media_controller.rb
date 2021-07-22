@@ -14,7 +14,7 @@ class MediaController < ApplicationController
     # should the response include content?
     is_head_request = request.head?
 
-    # check authorisation manually, take audio event into account
+    # check authorization manually, take audio event into account
     audio_recording, audio_event = authorise_custom(request_params, current_user)
 
     # can the audio recording be accessed?

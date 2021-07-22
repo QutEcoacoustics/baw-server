@@ -2,9 +2,11 @@
 
 # Common definitions for ApiController and ApplicationController
 module IncludeController
+  extend ActiveSupport::Concern
+
   include Api::ApiAuth
 
-  def included
+  included do
     # custom authentication for api only
     before_action :authenticate_user_custom!
 
@@ -569,12 +571,12 @@ module IncludeController
     )
   end
 
-  def orpan_site_error_response(error)
+  def orphan_site_error_response(error)
     render_error(
       :bad_request,
       error.message,
       error,
-      'orpan_site_error_response'
+      'orphan_site_error_response'
     )
   end
 

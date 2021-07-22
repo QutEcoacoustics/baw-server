@@ -54,7 +54,7 @@ class ErrorsController < ApplicationController
     when 429, '429', 'too_many_requests'
       status_symbol = :too_many_requests
       detail_message = "There have been too many requests. Take it easy, we're doing our best here."
-      end
+    end
 
     render_error(status_symbol, detail_message, error, method_name, additional_info)
   end
@@ -116,31 +116,29 @@ class ErrorsController < ApplicationController
   end
 
   def test_exceptions
-    if ENV['RAILS_ENV'] == 'test'
-      if params.include?(:exception_class)
-        msg = 'Purposeful exception raised for testing.'
-        error_class_string = params[:exception_class]
+    if BawApp.test? && params.include?(:exception_class)
+      msg = 'Purposeful exception raised for testing.'
+      error_class_string = params[:exception_class]
 
-        # Unsafe reflection method constantize called with parameter value.
-        # I think this is ok as it's only available in test env.
-        error_class = error_class_string.constantize
+      # Unsafe reflection method constantize called with parameter value.
+      # I think this is ok as it's only available in test env.
+      error_class = error_class_string.constantize
 
-        case error_class_string
-        when 'ActionController::BadRequest'
-          raise error_class, response
+      case error_class_string
+      when 'ActionController::BadRequest'
+        raise error_class, response
 
-        when 'ActiveRecord::RecordNotUnique'
-          raise error_class, msg
+      when 'ActiveRecord::RecordNotUnique'
+        raise error_class, msg
 
-        when 'CustomErrors::UnsupportedMediaTypeError',
-              'CustomErrors::NotAcceptableError'
-          raise error_class.new(msg, Settings.supported_media_types)
+      when 'CustomErrors::UnsupportedMediaTypeError',
+            'CustomErrors::NotAcceptableError'
+        raise error_class.new(msg, Settings.supported_media_types)
 
-        else
-          raise error_class, msg
-        end
-
+      else
+        raise error_class, msg
       end
+
     end
   end
 end
