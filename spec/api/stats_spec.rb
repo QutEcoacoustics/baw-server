@@ -11,7 +11,7 @@ describe 'stats', type: :request do
       tags 'stats'
       produces 'application/json'
       response '200', 'stats retrieved' do
-        schema schema allOf: [
+        schema allOf: [
           { '$ref' => '#/components/schemas/standard_response' },
           {
             type: 'object',
