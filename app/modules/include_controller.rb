@@ -43,9 +43,10 @@ module IncludeController
     rescue_from CustomErrors::MethodNotAllowedError, with: :method_not_allowed_error_response
     rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
     rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
+    rescue_from CustomErrors::RequestedMediaTooLong, with: :unprocessable_entity_error_response
     rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
     rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
-    rescue_from CustomErrors::OrphanedSiteError, with: :orpan_site_error_response
+    rescue_from CustomErrors::OrphanedSiteError, with: :orphan_site_error_response
     rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
 
     # Don't rescue this, it is the base for 406 and 415
@@ -222,6 +223,25 @@ module IncludeController
   end
 
   # TODO: Simplify Function
+  # Render error is called in three cases:
+  #   1. When ErrorsController handles uncaught errors
+  #   2. From our own methods for when we want to intentionally return an API error without an exception
+  #   3. When ApplicationController rescue_from handles an exception
+  # The exception notifier is a rack middleware as is ActionDispatch::ShowExceptions.
+  # Note: in tests ActionDispatch::ShowExceptions will raise rather than handling and rendering the error by default.
+  # In case 1:
+  #   action throws unexpected error -> exception notifier notifies
+  #     -> ActionDispatch::ShowExceptions catches -> ErrorsController#show -> render_error called
+  # In case 2:
+  #   action decides to render_error
+  #     -> exception notifier not triggered
+  #     -> ActionDispatch::ShowExceptions not triggered
+  # In case 3:
+  #   action throws error -> rescue_from triggered -> with handler called -> render_error called
+  #     -> exception notifier not triggered
+  #     -> ActionDispatch::ShowExceptions not triggered
+  # For the case where an exception is not rising through the middleware stack
+  # we have the options[:should_notify_error] option to send emails if needed
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options.merge!(error_details: detail_message) # overwrites error_details
     options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
@@ -457,7 +477,11 @@ module IncludeController
   end
 
   def unprocessable_entity_error_response(error)
-    options = error.additional_details.nil? ? {} : { error_info: error.additional_details }
+    # don't email when someone has sent us bad parameters
+    options = { should_notify_error: false }
+
+    options[:error_info] = error.additional_details if error.additional_details.nil?
+
     render_error(
       :unprocessable_entity,
       "The request could not be understood: #{error.message}",

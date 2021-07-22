@@ -176,6 +176,10 @@ RSpec.configure do |config|
   config.extend Creation::ExampleGroup
   config.include Creation::Example
 
+  require_relative 'helpers/mailer_helpers'
+  config.extend MailerHelpers::ExampleGroup
+  config.include MailerHelpers::Example
+
   require_relative 'helpers/citizen_science_creation_helper'
   config.extend CitizenScienceCreation::ExampleGroup
 
@@ -327,7 +331,7 @@ RSpec.configure do |config|
       conventional_module = conventional_step_file.basename('.*').to_s.split('_').each(&:capitalize!).join
       unless Module.const_defined?(conventional_module)
         raise NameError, "Expected module named `#{conventional_module}` to be defined in #{conventional_step_file}," \
-          ' but it has not been loaded. Is it defined?'
+                         ' but it has not been loaded. Is it defined?'
       end
 
       group.include Module.const_get(conventional_module)

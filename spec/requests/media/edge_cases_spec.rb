@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :request, aggregate_failures: true do
+describe '.../media', type: :request, aggregate_failures: true do
   include_context 'shared_test_helpers'
 
   create_audio_recordings_hierarchy
 
   let(:lt_recording) {
-    create(
+    FactoryBot.create(
       :audio_recording,
       recorded_date: Time.zone.parse('2019-09-13T00:00:01+1000 '),
       duration_seconds: audio_file_bar_lt_metadata[:duration_seconds],

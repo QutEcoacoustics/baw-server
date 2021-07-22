@@ -159,11 +159,13 @@ shared_context 'shared_test_helpers' do
       # some of these dirs are referenced on shared file systems (e.g. Docker)
       # thus, don't remove dir, clear contents
       path = Pathname(path)
-      next unless path.exist?
-
-      path.children.each { |entry|
-        entry.rmtree unless entry.basename.to_s == '.gitkeep'
-      }
+      if path.exist?
+        path.children.each { |entry|
+          entry.rmtree unless entry.basename.to_s == '.gitkeep'
+        }
+      else
+        path.mkpath
+      end
     end
   end
 

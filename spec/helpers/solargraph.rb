@@ -14,6 +14,9 @@ RSpec.describe '', skip: true do
   extend RequestSpecHelpers::ExampleGroup
   include RequestSpecHelpers::Example
 
+  extend MailerHelpers::ExampleGroup
+  include MailerHelpers::Example
+
   extend ApiSpecHelpers::ExampleGroup
 
   extend PermissionsHelpers::ExampleGroup
@@ -26,7 +29,7 @@ RSpec.describe '', skip: true do
   extend CitizenScienceCreation::ExampleGroup
 end
 
-RSpec.shared_examples :nothing do
+RSpec.shared_examples 'nothing' do
   extend ResqueHelpers::ExampleGroup
   include ResqueHelpers::Example
 

@@ -3,6 +3,21 @@
 module RequestSpecHelpers
   # config.extend allows these methods to be used in describe/context groups
   module ExampleGroup
+    # By default: exceptions are raised and not rescued by the error controller.
+    # https://github.com/eliotsykes/rails-testing-toolbox/blob/master/error_responses.rb
+    def render_error_responses
+      around do |example|
+        env_config = Rails.application.env_config
+        original_show_exceptions = env_config['action_dispatch.show_exceptions']
+        original_show_detailed_exceptions = env_config['action_dispatch.show_detailed_exceptions']
+        env_config['action_dispatch.show_exceptions'] = true
+        env_config['action_dispatch.show_detailed_exceptions'] = false
+        example.call
+      ensure
+        env_config['action_dispatch.show_exceptions'] = original_show_exceptions
+        env_config['action_dispatch.show_detailed_exceptions'] = original_show_detailed_exceptions
+      end
+    end
   end
 
   # config.include allows these methods to be used in specs/before/let
@@ -25,7 +40,7 @@ module RequestSpecHelpers
 
     def form_multipart_headers(token, accept: 'json')
       headers = {
-        'ACCEPT' => MIME::Types.type_for('json').first.content_type,
+        'ACCEPT' => MIME::Types.type_for(accept).first.content_type,
         'HTTP_AUTHORIZATION' => token,
         'CONTENT_TYPE' => 'form/multipart'
       }

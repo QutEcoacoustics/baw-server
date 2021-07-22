@@ -191,12 +191,12 @@ module Api
       # now check bounds
       if requested_duration > max_duration
         msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is greater than maximum (#{max_duration})."
-        raise BawAudioTools::Exceptions::SegmentRequestTooLong, msg
+        raise CustomErrors::RequestedMediaTooLong, msg
       end
 
       if requested_duration < min_duration
         msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is less than minimum (#{min_duration})."
-        raise BawAudioTools::Exceptions::SegmentRequestTooLong, msg
+        raise CustomErrors::RequestedMediaTooLong, msg
       end
     end
 
