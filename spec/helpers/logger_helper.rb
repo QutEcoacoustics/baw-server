@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 module LoggerHelpers
+  # use when you need to log outside of an example group and an example
+  def self.logger
+    SemanticLogger[LoggerHelpers]
+  end
+
   module ExampleGroup
     def logger
-      @logger ||= SemanticLogger[RSpec]
+      SemanticLogger[RSpec]
     end
   end
 
@@ -11,7 +16,7 @@ module LoggerHelpers
     attr_accessor :logger_name
 
     def logger
-      raise 'logger not setup yet' if @logger_name.nil?
+      return SemanticLogger[RSpec] if @logger_name.nil?
 
       @logger ||= SemanticLogger[@logger_name]
     end

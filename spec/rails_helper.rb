@@ -155,6 +155,13 @@ RSpec.configure do |config|
   Zonebie.set_random_timezone
   puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
+  require_relative 'helpers/logger_helper'
+  config.extend LoggerHelpers::ExampleGroup
+  config.include LoggerHelpers::Example
+
+  require_relative 'helpers/metadata_state'
+  config.include MetadataState
+
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::ControllerHelpers, type: :view
   config.include Devise::Test::ControllerHelpers, type: :helper
@@ -164,10 +171,6 @@ RSpec.configure do |config|
   config.include FactoryBotHelpers::Example
 
   config.include RSpec::Benchmark::Matchers
-
-  require_relative 'helpers/logger_helper'
-  config.extend LoggerHelpers::ExampleGroup
-  config.include LoggerHelpers::Example
 
   require_relative 'helpers/migrations_helper'
   config.include MigrationsHelpers, :migration

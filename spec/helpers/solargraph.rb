@@ -8,6 +8,9 @@ require_relative 'request_spec_helpers'
 # into each example group / example depending on RSpec metadata. That dynamic inclusion
 # is the reason these type hints will produce false positives.
 RSpec.describe '', skip: true do
+  include MetadataState
+  extend MetadataState::ExampleGroup
+
   extend ResqueHelpers::ExampleGroup
   include ResqueHelpers::Example
 

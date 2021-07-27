@@ -73,27 +73,22 @@ module ResqueHelpers
   # This module should be extended into an example group.
   module ExampleGroup
     # Whether or not to pause test jobs
-    # @return [Boolean]
-    attr_reader :pause_test_jobs
+    # @!attribute [r] get_pause_test_jobs
+    #   @return [Boolean]
+    # @!method set_pause_test_jobs
+    #   @param [Boolean] value
+    #   @return [void]
 
     # Pause resque jobs in the test environment until they are manually triggered
     # by ResqueHelper::Example.perform_jobs.
     def pause_all_jobs
-      @pause_test_jobs = true
+      set_pause_test_jobs(true, caller)
     end
 
     # Do not pause any resque jobs in the test environment. In other words,
     # run the resque worker normally.
     def perform_all_jobs_normally
-      @pause_test_jobs = false
-    end
-
-    # Whether or not to pause test jobs
-    # @return [Boolean]
-    def pause_test_jobs?
-      # pause jobs by default
-      true if @pause_test_jobs.nil?
-      !!@pause_test_jobs
+      set_pause_test_jobs(false, caller)
     end
 
     # Temporarily change the resque logger level for the duration of the test
@@ -107,15 +102,23 @@ module ResqueHelpers
       end
     end
 
-    # do not throw an error if there are outstanding jobs left in the queue
+    #
+    #  do not throw an error if there are outstanding jobs left in the queue
+    # @!attribute [r] get_ignore_leftover_jobs
+    #   @return [Boolean]
+    # @!method set_ignore_leftover_jobs
+    #   @param [Boolean] value
+    #   @return [void]
+
     def ignore_pending_jobs
-      let(:ignore_leftovers_jobs) { true }
+      set_ignore_leftover_jobs(true, caller)
       logger.info 'will ignore leftovers', class: name
     end
 
     # RSpec hooks are only available once this module has been extended into RSpec::Core::ExampleGroup
     def self.extended(example_group)
-      example_group.let(:ignore_leftovers_jobs) { false }
+      example_group.define_metadata_state :pause_test_jobs, default: false
+      example_group.define_metadata_state :ignore_leftover_jobs, default: false
 
       example_group.before do
         # Disable the inbuilt test adapter for every test!
@@ -125,14 +128,16 @@ module ResqueHelpers
         end
         ActiveJob::Base.queue_adapter = :resque
 
-        Resque::Plugins::PauseDequeueForTests.set_paused(example_group.pause_test_jobs?)
+        logger.info(trace_metadata(:pause_test_jobs))
+        BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(get_pause_test_jobs)
       end
 
       example_group.after do
         remaining = BawWorkers::ResqueApi.queued_count
         next if remaining.zero?
 
-        raise "There are #{remaining} uncompleted jobs for this spec" unless ignore_leftovers_jobs
+        logger.info(trace_metadata(:ignore_leftover_jobs))
+        raise "There are #{remaining} uncompleted jobs for this spec" unless get_ignore_leftover_jobs
 
         logger.warn "#{remaining} jobs are still in the queue, ignored intentionally by ignore_pending_jobs"
       end
@@ -233,12 +238,12 @@ module ResqueHelpers
     def perform_all_jobs_immediately
       raise ArgumentError, 'A block must be given to `perform_all_jobs_immediately`' unless block_given?
 
-      original_pause_value = Resque::Plugins::PauseDequeueForTests.paused?
-      Resque::Plugins::PauseDequeueForTests.set_paused(false)
+      original_pause_value = BawWorkers::ResquePatch::PauseDequeueForTests.paused?
+      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(false)
 
       yield
 
-      Resque::Plugins::PauseDequeueForTests.set_paused(original_pause_value)
+      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(original_pause_value)
     end
 
     #
@@ -291,7 +296,7 @@ module ResqueHelpers
       logger.info "Performing #{count} jobs..."
       started = Time.now
 
-      expect(Resque::Plugins::PauseDequeueForTests.set_perform_count(count)).to eq 'OK'
+      expect(BawWorkers::ResquePatch::PauseDequeueForTests.set_perform_count(count)).to eq 'OK'
 
       statuses = []
       elapsed = 0
