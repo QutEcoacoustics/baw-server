@@ -1,26 +1,23 @@
 # frozen_string_literal: true
 
-require "#{__dir__}/../../../../baw-app/lib/baw_app"
-
-# zeitwerk obsessively tries to load this class, provide a dummy constant to make
-# it feel happy
-
-module Resque
-  module Plugins
-    module PauseDequeueForTests
-    end
-  end
-end
-
 if BawApp.test?
-  module Resque
-    module Plugins
+  module BawWorkers
+    # this is a monkey patch because Resque does not run the before|after_dequeue
+    # hooks when a worker reserves a job, only when a job is removed from the queue
+    # See
+    # https://github.com/resque/resque/issues/512
+    # And the inspiration for this patch:
+    # https://github.com/rringler/resque-serializer/blob/master/lib/resque-serializer/monkey_patches/resque.rb
+    module ResquePatch
+      # Manipulate a flag that controls whether jobs are dequeued
       module PauseDequeueForTests
-        VERSION = 0.1
+        VERSION = 0.2
 
         TEST_PERFORM_LOCK_KEY = 'plugins:pause_dequeue_for_test:perform_count'
-        TEST_PERFORM_PAUSED = 0
-        TEST_PERFORM_UNLOCKED = -1
+        TEST_PERFORM_PAUSED = '0'
+        TEST_PERFORM_UNLOCKED = '-1'
+
+        include SemanticLogger::Loggable
 
         # Set a number of jobs workers should be allowed to process
         # @param [Integer] count the number of jobs that will be allowed to dequeue.
@@ -49,22 +46,20 @@ if BawApp.test?
           Resque.redis.get(TEST_PERFORM_LOCK_KEY) == TEST_PERFORM_PAUSED
         end
 
-        def before_dequeue_0_pause_queue_for_test
-          # Plugins hooks should not use the hook name but should suffix an identifier. We're using the `before_dequeue` hook.
-          # Hooks are then called alphabetically, hence the _0_ in the name to ensure this hook is executed first.
-
+        def self.should_dequeue_job?
           #  Called with the job args before a job is removed from the queue.
           # If the hook returns false, the job will not be removed from the queue.
 
           should_dequeue = Resque.redis.get(TEST_PERFORM_LOCK_KEY)
+
           case should_dequeue
           when TEST_PERFORM_PAUSED
             # Do not dequeue. Wait for next round. This is the pause.
-            Resque.logger.info('Resque::Plugins::PauseDequeueForTests did not execute job because work is paused')
+            logger.info('did not execute job because work is paused', test_perform: should_dequeue)
             false
           when TEST_PERFORM_UNLOCKED, nil
             # Act like this plugin is not activated. Do nothing.
-            Resque.logger.info('Resque::Plugins::PauseDequeueForTests ran a job immediately because work is NOT paused')
+            logger.info('ran a job immediately because work is NOT paused', test_perform: should_dequeue)
             true
           when ->(x) { !Integer(x, 10, exception: false).nil? }
             # We encountered a integer, indicating a number of jobs to complete
@@ -73,33 +68,45 @@ if BawApp.test?
             to_do = should_dequeue.to_i
             if to_do <= 0
               raise ArgumentError,
-                    "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
+                    "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
             end
 
             # decrement the counter by 1, to process one job for this pass
-            remaining = Resque.redis.decr(to_do - 1)
+            remaining = Resque.redis.decr(TEST_PERFORM_LOCK_KEY)
 
-            Resque.logger.info("Resque::Plugins::PauseDequeueForTests will run a job. There are #{remaining} jobs.")
+            logger.info('will run a job', test_perform: should_dequeue, jobs_remaining: remaining)
 
             # finally allow the job to run
             true
           else
             raise ArgumentError,
-                  "Resque::Plugins::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
+                  "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
           end
+        end
+      end
+
+      # The actual monkey patch
+      module PauseDequeue
+        # NOTE: `Resque#pop` is called when working queued jobs via the
+        # `resque:work` rake task.
+        # Original: https://github.com/resque/resque/blob/c19d9e2409847ce0d3f56ec56c3091cfa11581bc/lib/resque.rb#L357
+        def pop(queue)
+          first_item = Resque.redis.peek_in_queue(queue, 0, 1)
+
+          # don't do our fanciness unless there is something in the queue
+          return nil if !first_item.nil? && !PauseDequeueForTests.should_dequeue_job?
+
+          super
         end
       end
     end
   end
 
   # Patch all resque jobs (global so we can catch jobs defined by third parties like ActiveJob)
-  ::Resque::Job.include(Resque::Plugins::PauseDequeueForTests)
-  puts 'Monkey patched Resque::Job with Resque::Plugins::PauseDequeueForTests'
+  ::Resque.prepend(BawWorkers::ResquePatch::PauseDequeue)
+  puts 'Monkey patched Resque with BawWorkers::Resque::PauseDequeue'
 
-  raise 'Resque::Job has not been patched for tests' unless Resque::Job.include?(Resque::Plugins::PauseDequeueForTests)
-
-elsif BawApp.development?
-  raise 'Resque::Plugins::PauseDequeueForTests must not be loaded in a non-test environment!!!'
+  raise 'Resque has not been patched for tests' unless ::Resque.include?(BawWorkers::ResquePatch::PauseDequeue)
 else
-  warn 'Resque::Plugins::PauseDequeueForTests must not be loaded in a non-test environment!!!'
+  puts 'BawWorkers::ResquePatch::PauseDequeue loading skipped'
 end

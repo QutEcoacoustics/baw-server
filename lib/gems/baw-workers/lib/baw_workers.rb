@@ -51,6 +51,4 @@ if BawApp.test?
     klass.disable_test_adapter if defined?(klass.disable_test_adapter)
   end
   ::ActiveJob::Base.queue_adapter = :resque
-
-  require "#{__dir__}/resque/plugins/pause_dequeue_for_tests"
 end
