@@ -217,7 +217,7 @@ describe BawWorkers::ActiveJob::Status::Persistance do
     it 'can kill all jobs' do
       persistance.mark_all_for_kill
       expect(persistance.mark_for_kill_count).to eq 2
-      expect(persistance.marked_for_kill_ids).to eq [basic_status.job_id, another_status.job_id]
+      expect(persistance.marked_for_kill_ids).to contain_exactly(basic_status.job_id, another_status.job_id)
       expect(persistance.should_kill?(basic_status.job_id)).to eq true
       expect(persistance.should_kill?(another_status.job_id)).to eq true
     end

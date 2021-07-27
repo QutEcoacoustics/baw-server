@@ -88,7 +88,8 @@ module BawWorkers
 
         @status = persistance.get(id_to_test)
 
-        if @status.terminal?
+        # race conditions could mean we fail to get status after existence test
+        if @status.nil? || @status.terminal?
           logger.debug do
             { message: 'BawWorkers::ActiveJob::Unique existing job is terminal, ignoring presence and continuing with new job',
               job_id: id_to_test }

@@ -163,6 +163,62 @@ describe BawWorkers::ActiveJob::Status do
     end
   end
 
+  context 'when potential create race conditions occur' do
+    pause_all_jobs
+    it 'will try to be resilient' do
+      # the basic flow goes:
+      # job 1: is unique? yes
+      # job 2: is unique? yes
+      # job 2: enqueue
+      # job 1: enqueue -> failure, can't create status again
+
+      # simulate a race condition
+      count = 10
+      jobs = (1..count).map { |i| Fixtures::DuplicateJob.new('duplicate', i) }
+      expect(jobs.length).to eq count
+
+      allow(jobs[0]).to receive(:id_unique?).and_wrap_original do |_m, *_args|
+        logger.warn 'not aborting'
+        true
+      end
+      # ensure the second job does not abort, i.e. make it think it is unique
+      allow(jobs[1]).to receive(:id_unique?).and_wrap_original do |_m, *_args|
+        # add a little sleep here to ensure order of events are accurate
+        logger.warn 'not aborting'
+        true
+      end
+      futures = Concurrent::Promises.zip(
+        *jobs.map { |j|
+          Concurrent::Promises.delay {
+            logger.warn 'enqueuing'
+            j.enqueue
+          }
+        }
+      )
+
+      monitor_redis(io: $stdout) do
+        futures.wait
+      end
+
+      results = futures.value!
+
+      enqueue_aborts = count - 1
+
+      expect(results).to contain_exactly(
+        *([false] * enqueue_aborts),
+        an_instance_of(Fixtures::DuplicateJob)
+      )
+
+      expect(jobs).to contain_exactly(
+        *([having_attributes(unique?: false)] * enqueue_aborts),
+        having_attributes(unique?: true)
+      )
+      expect_enqueued_jobs(1)
+
+      clear_pending_jobs
+    end
+  end
+
   describe 'scheduled tasks' do
     pause_all_jobs
     ignore_pending_jobs

@@ -46,13 +46,13 @@ module BawWorkers
 
         # @param status [StatusData]
         # @param delay_ttl [Integer] - seconds, use to up the TTL for scheduled jobs.
-        # @return [Boolean] true if created, false is the status already existed
+        # @return [Boolean] true if created, false is the status already exists
         def create(status, delay_ttl: 0)
           # save the status to status:{job_id}
           success = redis.set(
             *prepare_status(status),
             ex: expire_in(status) + delay_ttl,
-            nx: true # only set the key unless it already exists
+            nx: true # set the key unless it already exists
           )
           return false unless success
 
@@ -76,7 +76,7 @@ module BawWorkers
         end
 
         #
-        # Checks if the given status
+        # Checks if the given status exists
         #
         # @param [String,StatusData] job_id
         #
@@ -294,6 +294,10 @@ module BawWorkers
             status_prefix(status.job_id),
             encode(status)
           ]
+        end
+
+        def inspect
+          format('#<%s:0x%x <cut>>', self.class, object_id)
         end
 
         private :prepare_status, :check_status, :check_job_id

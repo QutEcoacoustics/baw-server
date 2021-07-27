@@ -113,4 +113,16 @@ module Fixtures
       # will never get called
     end
   end
+
+  class DuplicateJob < FixtureJob
+    perform_expects String, Integer
+
+    def perform(_echo_id, _sanity_id)
+      'i am a job'
+    end
+
+    def name
+      @name ||= job_id + "(Copy #{arguments[1]})"
+    end
+  end
 end

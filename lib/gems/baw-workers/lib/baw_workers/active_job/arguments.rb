@@ -37,7 +37,7 @@ module BawWorkers
       private
 
       def validate_perform
-        logger.debug('validating', arguments)
+        # logger.debug('validating', arguments)
 
         parameters = self.class.instance_method(:perform).parameters
         arity = parameters.count
@@ -58,7 +58,7 @@ module BawWorkers
       end
 
       def validate_argument(parameter, index)
-        logger.debug("validating#{parameter}")
+        # logger.debug("validating#{parameter}")
         signature = self.class.perform_signature
         arg_type, name = parameter
         type = signature[index]

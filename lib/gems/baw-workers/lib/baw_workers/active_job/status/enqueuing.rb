@@ -10,25 +10,32 @@ module BawWorkers
         def around_enqueue_check_and_create_status
           check_job_id(job_id)
 
-          # 4 cases
+          # 4 cases (+ race conditions)
           old_status = persistance.get(job_id)
-          success =
-            case old_status
-            in nil
-              # status does not exist: create
-              create
-            in StatusData if executions.positive?
-              # status does exist, and we're retrying the job: set status
-              merge_existing_job(old_status)
-            in StatusData if executions.zero?
-              # status does exist, and is old: delete, then create
-              persistance.remove(job_id) && create
-            else
-              # status does exist, and is a duplicate: handled by Unique
-              raise "Unexpected case: #{old_status},#{executions}"
-            end
 
-          raise BawWorkers::ActiveJob::EnqueueError, 'failed to create status' unless success
+          case old_status
+          in nil
+            # status does not exist: create
+            create
+          in StatusData if executions.positive?
+            # status does exist, and we're retrying the job: set status
+            merge_existing_job(old_status)
+          in StatusData if executions.zero? && status&.terminal?
+            # status does exist, and is old: delete, then create
+            raise BawWorkers::ActiveJob::EnqueueError, 'failed to remove old status' unless persistance.remove(job_id)
+
+            create
+          else
+            # status does exist, and is a duplicate: handled by Unique
+            false
+            #raise "Unexpected case: #{old_status.inspect},#{executions}"
+          end => create_result
+
+          if create_result == false
+            # will throw or will continue, in the continue case we do not want to enqueue job, so return false
+            handle_bad_create_result
+            return false
+          end
 
           begin
             result = yield
@@ -79,10 +86,33 @@ module BawWorkers
           )
 
           logger.debug do
-            { message: "#{STATUS_TAG}: creating", status: @status }
+            { message: "#{STATUS_TAG}: creating", job_id: job_id, name: name }
           end
 
           persistance.create(@status, delay_ttl: delay_ttl)
+        end
+
+        def handle_bad_create_result
+          # OK: if we're here and ready to throw, one of two cases have happened:
+          # 1: genuine bug in the code
+          # 2: a race condition has happened where the previous safe guards have completed,
+          #    but in the meantime another thread has completed safe guards and has been enqueued.
+          # For 2: check if the status that was preventing us from enqueuing is valid, and suppress error.
+          duplicate_status = persistance.get(job_id)
+          logger.warn("#{STATUS_TAG}: creating failed, duplicate status detected", job_id: job_id)
+          if duplicate_status.queued? || duplicate_status.working?
+            # probably the same job, has the same id and status
+            logger.warn(
+              "#{STATUS_TAG}: duplicate status is similar, aborting instead of throwing",
+              job_id: job_id,
+              status: @status
+            )
+            # if the unique module is included indicate why we failed
+            @unique = false if defined?(@unique)
+            @status = duplicate_status
+          else
+            raise BawWorkers::ActiveJob::EnqueueError, "failed to create status: #{@status.inspect}"
+          end
         end
 
         def merge_existing_job(status)
@@ -112,7 +142,11 @@ module BawWorkers
             }
           end
 
-          persistance.set(@status)
+          result = persistance.set(@status)
+
+          raise BawWorkers::ActiveJob::EnqueueError, 'failed to merge status' unless result
+
+          result
         end
       end
     end
