@@ -43,7 +43,7 @@ module IncludeController
     rescue_from CustomErrors::MethodNotAllowedError, with: :method_not_allowed_error_response
     rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
     rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
-    rescue_from CustomErrors::RequestedMediaTooLong, with: :unprocessable_entity_error_response
+    rescue_from CustomErrors::RequestedMediaDurationInvalid, with: :unprocessable_entity_error_response
     rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
     rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
     rescue_from CustomErrors::OrphanedSiteError, with: :orphan_site_error_response
