@@ -39,7 +39,7 @@ describe '.../media', type: :request, aggregate_failures: true do
         ],
         [
           'start_offset=0&end_offset=6000',
-          'Custom Errors/Requested Media Too Long',
+          'Custom Errors/Requested Media Duration Invalid',
           'Requested duration 6000.0 (0.0 to 6000.0) is greater than maximum (300.0).'
         ]
       ])

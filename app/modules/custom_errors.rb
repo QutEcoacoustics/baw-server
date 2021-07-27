@@ -48,7 +48,7 @@ module CustomErrors
     end
   end
 
-  class RequestedMediaTooLong < UnprocessableEntityError; end
+  class RequestedMediaDurationInvalid < UnprocessableEntityError; end
 
   class BadRequestError < StandardError; end
 
