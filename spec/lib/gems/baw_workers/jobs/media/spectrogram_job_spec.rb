@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Media::SpectrogramJob do
-  require 'helpers/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   pause_all_jobs

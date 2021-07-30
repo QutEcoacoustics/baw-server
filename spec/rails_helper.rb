@@ -207,6 +207,8 @@ RSpec.configure do |config|
     file_path: Regexp.new('/spec/requests/permissions')
   }
 
+  require_relative 'helpers/image_helpers'
+
   require_relative 'helpers/shared_examples/a_route_that_stores_images'
   require_relative 'helpers/shared_examples/permissions_for'
 
