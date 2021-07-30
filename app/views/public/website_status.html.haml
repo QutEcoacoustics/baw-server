@@ -32,7 +32,7 @@
           %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
           Audio recordings
           %span.badge
-            = number_with_delimiter(@status_info[:audio_recording_total], delimiter: ' ')
+            = number_with_delimiter(@status_info[:audio_recordings_total], delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-users{aria: {hidden: 'true' }}
           Users
@@ -73,18 +73,18 @@
           %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
           overall audio recording file size
           %span.badge
-            = number_to_human_size(@status_info[:audio_recording_total_size], delimiter: ' ')
+            = number_to_human_size(@status_info[:audio_recordings_total_size], delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
           New audio recordings in last month
           %span.badge
-            = number_with_delimiter(@status_info[:audio_recording_recent], delimiter: ' ')
+            = number_with_delimiter(@status_info[:audio_recordings_recent], delimiter: ' ')
 
         %li.list-group-item
           %span.fa.fa-clock-o{aria: {hidden: 'true' }}
           Overall audio duration
           %span.badge
-            = distance_of_time(@status_info[:audio_recording_total_duration], highest_measures: 2)
+            = distance_of_time(@status_info[:audio_recordings_total_duration], highest_measures: 2)
 
 
   .row
