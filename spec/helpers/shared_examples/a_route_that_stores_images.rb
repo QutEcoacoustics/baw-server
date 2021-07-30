@@ -1,5 +1,7 @@
-# Note: this set of specs is intended to be used inside of a request spec file
-RSpec.shared_examples :a_route_that_stores_images do |options|
+# frozen_string_literal: true
+
+# NOTE: this set of specs is intended to be used inside of a request spec file
+RSpec.shared_examples 'a route that stores images' do |options|
   # basic integration tests for ActiveStorage images on models
   # Note these tests are for models that use ActiveStorage and NOT paperclip!
 
@@ -56,8 +58,8 @@ RSpec.shared_examples :a_route_that_stores_images do |options|
     aggregate_failures do
       expect(blob).to be_an_instance_of(ActiveStorage::Attached::One)
       expect(blob.attached?).to eq true
-      expect(blob.key).to_not be_blank
-      expect(blob.signed_id).to_not be_blank
+      expect(blob.key).not_to be_blank
+      expect(blob.signed_id).not_to be_blank
       expect(rails_blob_path(blob, only_path: true)).to start_with('/rails/active_storage/blobs')
 
       path = ActiveStorage::Blob.service.path_for(blob.key)
@@ -69,13 +71,13 @@ RSpec.shared_examples :a_route_that_stores_images do |options|
     end
   end
 
-  around(:each) do |example|
+  around do |example|
     perform_all_jobs_immediately do
       example.run
     end
   end
 
-  after(:each) do
+  after do
     path = ActiveStorage::Blob.service.path_for(current.send(field_name).key)
     expect(File.exist?(path)).to eq true
 

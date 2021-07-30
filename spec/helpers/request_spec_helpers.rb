@@ -39,7 +39,7 @@ module RequestSpecHelpers
     end
 
     def form_multipart_headers(token, accept: 'json')
-      headers = {
+      {
         'ACCEPT' => MIME::Types.type_for(accept).first.content_type,
         'HTTP_AUTHORIZATION' => token,
         'CONTENT_TYPE' => 'form/multipart'
@@ -50,9 +50,9 @@ module RequestSpecHelpers
       headers ||= {}
       raise 'ranges must not be empty' if ranges.empty?
 
-      value = 'bytes=' + ranges.map { |r| "#{r.begin}-#{r.end}" }.join(',')
+      range_spec = ranges.map { |r| "#{r.begin}-#{r.end}" }.join(',')
 
-      headers[RangeRequest::HTTP_HEADER_RANGE] = value
+      headers[RangeRequest::HTTP_HEADER_RANGE] = "bytes=#{range_spec}"
 
       headers
     end

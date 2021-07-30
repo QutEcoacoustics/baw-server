@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -14,63 +13,67 @@ resource 'Errors' do
   # default format
   let(:format) { 'json' }
 
-  around(:each) do |example|
-    stored_request_local = Rails.application.config.consider_all_requests_local
-    Rails.application.config.consider_all_requests_local = false
-
-    stored_show_exceptions = Rails.application.config.action_dispatch.show_exceptions
-    Rails.application.config.action_dispatch.show_exceptions = true
-    example.run
-    Rails.application.config.consider_all_requests_local = stored_request_local
-    Rails.application.config.action_dispatch.show_exceptions = stored_show_exceptions
-  end
+  extend RequestSpecHelpers::ExampleGroup
+  render_error_responses
 
   get '/does_not_exist' do
-    standard_request_options(:get, 'ROUTE (does not exist)', :not_found, { expected_json_path: 'meta/error/info/original_route', response_body_content: 'does_not_exist' })
+    standard_request_options(:get, 'ROUTE (does not exist)', :not_found,
+                             { expected_json_path: 'meta/error/info/original_route', response_body_content: 'does_not_exist' })
   end
 
   get '/does_not_exist/42' do
-    standard_request_options(:get, 'ROUTE (does not exist with id)', :not_found, { expected_json_path: 'meta/error/info/original_route', response_body_content: 'does_not_exist/42' })
+    standard_request_options(:get, 'ROUTE (does not exist with id)', :not_found,
+                             { expected_json_path: 'meta/error/info/original_route', response_body_content: 'does_not_exist/42' })
   end
 
   get '/test_exceptions?exception_class=ActiveRecord::RecordNotFound' do
-    standard_request_options(:get, 'ROUTE (does not exist with id)', :not_found, { expected_json_path: 'meta/error/details', response_body_content: 'Could not find the requested item' })
+    standard_request_options(:get, 'ROUTE (does not exist with id)', :not_found,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'Could not find the requested item' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::ItemNotFoundError' do
-    standard_request_options(:get, 'ERROR', :not_found, { expected_json_path: 'meta/error/details', response_body_content: 'Could not find the requested item' })
+    standard_request_options(:get, 'ERROR', :not_found,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'Could not find the requested item' })
   end
 
   get '/test_exceptions?exception_class=ActiveRecord::RecordNotUnique' do
-    standard_request_options(:get, 'ERROR', :conflict, { expected_json_path: 'meta/error/details', response_body_content: 'The item must be unique' })
+    standard_request_options(:get, 'ERROR', :conflict,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'The item must be unique' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::UnsupportedMediaTypeError' do
-    standard_request_options(:get, 'ERROR', :unsupported_media_type, { expected_json_path: 'meta/error/details', response_body_content: 'The format of the request is not supported' })
+    standard_request_options(:get, 'ERROR', :unsupported_media_type,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'The format of the request is not supported' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::NotAcceptableError' do
-    standard_request_options(:get, 'ERROR', :not_acceptable, { expected_json_path: 'meta/error/details', response_body_content: 'None of the acceptable response formats are available' })
+    standard_request_options(:get, 'ERROR', :not_acceptable,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'None of the acceptable response formats are available' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::UnprocessableEntityError' do
-    standard_request_options(:get, 'ERROR', :unprocessable_entity, { expected_json_path: 'meta/error/details', response_body_content: 'The request could not be understood' })
+    standard_request_options(:get, 'ERROR', :unprocessable_entity,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'The request could not be understood' })
   end
 
   get '/test_exceptions?exception_class=ActionController::BadRequest' do
-    standard_request_options(:get, 'ERROR', :bad_request, { expected_json_path: 'meta/error/details', response_body_content: 'The request was not valid' })
+    standard_request_options(:get, 'ERROR', :bad_request,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'The request was not valid' })
   end
 
   get '/test_exceptions?exception_class=CanCan::AccessDenied' do
-    standard_request_options(:get, 'ERROR', :unauthorized, { expected_json_path: get_json_error_path(:confirm), response_body_content: 'sign_in' })
+    standard_request_options(:get, 'ERROR', :unauthorized,
+                             { expected_json_path: get_json_error_path(:confirm), response_body_content: 'sign_in' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do
-    standard_request_options(:get, 'ERROR', :not_found, { expected_json_path: 'meta/error/info/original_route', response_body_content: 'Could not find the requested page' })
+    standard_request_options(:get, 'ERROR', :not_found,
+                             { expected_json_path: 'meta/error/info/original_route', response_body_content: 'Could not find the requested page' })
   end
 
   get '/test_exceptions?exception_class=CustomErrors::FilterArgumentError' do
-    standard_request_options(:get, 'ERROR', :bad_request, { expected_json_path: 'meta/error/details', response_body_content: 'Filter parameters were not valid' })
+    standard_request_options(:get, 'ERROR', :bad_request,
+                             { expected_json_path: 'meta/error/details', response_body_content: 'Filter parameters were not valid' })
   end
 
   head '/test_exceptions?exception_class=BawAudioTools::Exceptions::AudioToolError' do
@@ -89,7 +92,8 @@ resource 'Errors' do
     standard_request_options(:get, 'ERROR AudioToolError', :internal_server_error,
                              {
                                expected_json_path: 'meta/error/details',
-                               response_body_content: ['Internal Server Error', 'Purposeful exception raised for testing']
+                               response_body_content: ['Internal Server Error',
+                                                       'Purposeful exception raised for testing']
                              })
   end
 end

@@ -182,6 +182,7 @@ These commands should be executed automatically but are listed because they are 
 - Then migrate and seed the test database: `rails db:migrate db:seed RAILS_ENV=test`
 - Prepare the local development database: `rails db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
+- Run rspec tests and generate a HTML report: `rspec  --format html --out rspec_results.html`
 - Generate API documentation: `RAILS_ENV=test rails rswag`
 
 

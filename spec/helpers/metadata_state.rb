@@ -123,7 +123,7 @@ module MetadataState
           line.zip(widths).map { |c, w| c.ljust(w) }.join(' ')
         }
       ]
-      result.join("\n")
+      result.map(&:rstrip).join("\n")
     end
 
     private
