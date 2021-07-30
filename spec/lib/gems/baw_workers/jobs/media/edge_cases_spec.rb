@@ -105,12 +105,13 @@ context 'with edge cases in media generation' do
       correct_audio = hash(audio_cache_path)
       correct_spectrogram = calculate_image_data_hash(spectrogram_cache_path)
 
-      # our test worker only has single concurrency, so instead we'll run both jobs locally, concurrently
-      # extract the reason for promise rejection (failures) from results
+      # Our test worker only has single concurrency, so instead we'll run both jobs locally, concurrently.
       all = (
         perform_many_times(audio_cache_path, audio_job, audio_payload) +
         perform_many_times(spectrogram_cache_path, spectrogram_job, spectrogram_payload)
       ).shuffle!
+
+      # Extract the reason for promise rejection (failures) from results.
       _, _, reason = Concurrent::Promises.zip(*all).wait.result
 
       # Example exceptions that did occur but should no longer:

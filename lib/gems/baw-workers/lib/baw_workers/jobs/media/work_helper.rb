@@ -76,7 +76,7 @@ module BawWorkers
           )
         end
 
-        # Create audio segment, with a few extra safety checky
+        # Create audio segment, with a few extra safety checks.
         # So we have a long tradition of race conditions breaking things.
         # The basic cause is both media types tend to be requested by the player at the same time.
         # So

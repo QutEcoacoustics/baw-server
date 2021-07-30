@@ -225,14 +225,6 @@ module ResqueHelpers
       end
     end
 
-    # Perform a job in the RSpec context
-    # @param [String] queue_name - the queue to pull a job from
-    def perform_job_locally(queue_name)
-      # from the resque readme
-      klass, args = Resque.reserve(queue_name)
-      klass.perform(*args)
-    end
-
     # Run all jobs as soon as they're enqueued, reverting settings when the given block has finished.
     # Will NOT block for job completion!
     # Must be supplied with a block.
