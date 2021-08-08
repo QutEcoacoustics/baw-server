@@ -51,7 +51,7 @@ context 'with edge cases in media generation' do
   end
 
   # https://github.com/QutEcoacoustics/baw-server/issues/527
-  context 'race conditions in interleaved audio & spectrograms jobs targeting the same segment' do
+  context 'with race conditions in interleaved audio & spectrograms jobs targeting the same segment', :slow do
     # we're running all jobs in the RSpec environment not on the workers for this test
     pause_all_jobs
 
