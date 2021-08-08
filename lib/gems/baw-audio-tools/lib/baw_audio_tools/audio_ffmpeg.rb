@@ -21,11 +21,11 @@ module BawAudioTools
     end
 
     def info_command(source)
-      "#{@ffprobe_executable} -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
+      "#{@ffprobe_executable} -hide_banner -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
     end
 
     def integrity_command(source)
-      "#{@ffmpeg_executable} -loglevel repeat+verbose -nostdin -i \"#{source}\" -codec copy -f null -"
+      "#{@ffmpeg_executable} -hide_banner -loglevel repeat+verbose -nostdin -i \"#{source}\" -codec copy -f null -"
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
@@ -50,7 +50,7 @@ module BawAudioTools
       #   from O(n) to O(1), which makes a big difference on longer files!
       #   For a 2 hour file cut speed drop to < 3 seconds, from 8.25 seconds.
       # See: https://github.com/QutEcoacoustics/baw-server/pull/498
-      audio_cmd = "#{@ffmpeg_executable} #{cmd_offsets} -i \"#{source}\" #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\" -nostdin -y"
+      audio_cmd = "#{@ffmpeg_executable} -hide_banner #{cmd_offsets} -i \"#{source}\" #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\" -nostdin -y"
       cmd = ''
 
       if codec_info[:target] == codec_info[:old_target]

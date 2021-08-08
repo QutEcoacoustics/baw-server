@@ -162,6 +162,11 @@ Tests can also be run with a specified seed using rspec:
 
     $ rspec --seed <number>
 
+There are some slower tests that do not always need to be run. These are marked
+with the `slow` metadata and can be skipped with:
+
+    $ rspec --tag ~slow
+
 ### Style
 
 Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-guide.

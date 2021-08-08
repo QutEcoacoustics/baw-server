@@ -16,25 +16,26 @@ describe '.../media', type: :request, aggregate_failures: true do
       site: site
     )
   }
-
-  before do
-    clear_audio_cache
-
-    # backfill our audio storage with a fixture
-    @test_file = link_original_audio(
+  # backfill our audio storage with a fixture
+  let!(:test_file) {
+    link_original_audio(
       target: Fixtures.bar_lt_file,
       uuid: lt_recording.uuid,
       datetime_with_offset: lt_recording.recorded_date,
       original_format: audio_file_bar_lt_metadata[:format]
     )
+  }
+
+  before do
+    clear_audio_cache
   end
 
-  after(:all) do
-    @test_file&.unlink
+  after do
+    test_file.unlink
   end
 
-  def media_url(start_offset, end_offset)
-    "/audio_recordings/#{lt_recording.id}/media.mp3?start_offset=#{start_offset}&end_offset=#{end_offset}"
+  def media_url(start_offset, end_offset, format = 'mp3')
+    "/audio_recordings/#{lt_recording.id}/media.#{format}?start_offset=#{start_offset}&end_offset=#{end_offset}"
   end
 
   # we're trying to emulate an error case from production,
