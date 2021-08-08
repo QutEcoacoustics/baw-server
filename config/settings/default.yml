@@ -16,6 +16,8 @@ host:
     - !ruby/regexp '/\A(https?:\/\/)?localhost(:\d+)?\z/'
     - !ruby/regexp '/\A(https?:\/\/)?127\.0\.0\.1(:\d+)?\z/'
     - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
+    # development.ecosounds.org is a redirect to localhost
+    - !ruby/regexp '/\A(https?:\/\/)?development.ecosounds.org(:\d+)?\z/'
 action_cable:
   adapter: redis
   url: redis://redis:6379/0
