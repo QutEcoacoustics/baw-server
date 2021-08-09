@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.1.0](https://github.com/QutEcoacoustics/baw-server/tree/4.1.0) (2021-08-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.1.0...4.1.0)
+
+**Implemented enhancements:**
+
+- Performance enhancements for Media polling [\#329](https://github.com/QutEcoacoustics/baw-server/issues/329)
+- Fixes stats page and adds stats endpoint [\#524](https://github.com/QutEcoacoustics/baw-server/pull/524) ([atruskie](https://github.com/atruskie))
+- Move status endpoint to dedicated controller [\#522](https://github.com/QutEcoacoustics/baw-server/pull/522) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Bug: A BawWorkers::ActiveJob::EnqueueError occurred in media\#show: [\#526](https://github.com/QutEcoacoustics/baw-server/issues/526)
+- website\_status page broken [\#523](https://github.com/QutEcoacoustics/baw-server/issues/523)
+- Resolve resque polling errors [\#217](https://github.com/QutEcoacoustics/baw-server/issues/217)
+
+**Closed issues:**
+
+- Missing statistics route [\#413](https://github.com/QutEcoacoustics/baw-server/issues/413)
+
 ## [4.1.0](https://github.com/QutEcoacoustics/baw-server/tree/4.1.0) (2021-07-16)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.0.4...4.1.0)
