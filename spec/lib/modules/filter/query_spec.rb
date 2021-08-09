@@ -1,21 +1,15 @@
 # frozen_string_literal: true
 
-
-
-def compare_filter_sql(filter, sql_result)
-  filter_query = create_filter(filter)
-  comparison_ignore_spaces(filter_query.query_full.to_sql, sql_result)
-  filter_query
-end
-
-def comparison_ignore_spaces(actual, expected)
-  a_mod = actual.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-  b_mod = expected.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-  expect(a_mod).to eq(b_mod)
-end
-
 describe Filter::Query do
   create_entire_hierarchy
+
+  include SqlHelpers::Example
+
+  def compare_filter_sql(filter, sql_result)
+    filter_query = create_filter(filter)
+    comparison_sql(filter_query.query_full.to_sql, sql_result)
+    filter_query
+  end
 
   def create_filter(params)
     Filter::Query.new(
@@ -105,7 +99,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to_not raise_error
+      }.not_to raise_error
     end
 
     it 'occurs when not has more than one filter' do
@@ -122,7 +116,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to_not raise_error
+      }.not_to raise_error
     end
 
     it 'occurs when a combiner is not recognised with valid filters' do
@@ -197,7 +191,8 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, "Range filter must use either ('from' and 'to') or ('interval'), not both.")
+      }.to raise_error(CustomErrors::FilterArgumentError,
+                       "Range filter must use either ('from' and 'to') or ('interval'), not both.")
     end
 
     it 'occurs when a range has no recognised properties' do
@@ -317,7 +312,12 @@ describe Filter::Query do
     end
 
     it 'occurs with a deformed \'in\' filter' do
-      filter_params = { 'filter' => { 'siteId' => { 'in' => [{ 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 508, 'locationObfuscated' => true, 'name' => 'Site 1', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/508'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 400, 'locationObfuscated' => true, 'name' => 'Site 2', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/400'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 402, 'locationObfuscated' => true, 'name' => 'Site 3', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/402'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 399, 'locationObfuscated' => true, 'name' => 'Site 4', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/399', 'http://example.com/projects/469/sites/399'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 401, 'locationObfuscated' => true, 'name' => 'Site 5', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/401'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 398, 'locationObfuscated' => true, 'name' => 'Site 6', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/398', 'http://example.com/projects/469/sites/398'] }] } }, 'projection' => { 'include' => ['id', 'siteId', 'durationSeconds', 'recordedDate'] } }
+      filter_params = {
+        'filter' => { 'siteId' => { 'in' => [
+          { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 508, 'locationObfuscated' => true,
+            'name' => 'Site 1', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/508'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 400, 'locationObfuscated' => true, 'name' => 'Site 2', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/400'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 402, 'locationObfuscated' => true, 'name' => 'Site 3', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/402'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 399, 'locationObfuscated' => true, 'name' => 'Site 4', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/399', 'http://example.com/projects/469/sites/399'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 401, 'locationObfuscated' => true, 'name' => 'Site 5', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/401'] }, { 'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 398, 'locationObfuscated' => true, 'name' => 'Site 6', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/398', 'http://example.com/projects/469/sites/398'] }
+        ] } }, 'projection' => { 'include' => ['id', 'siteId', 'durationSeconds', 'recordedDate'] }
+      }
 
       expect {
         create_filter(filter_params).query_full
@@ -328,7 +328,8 @@ describe Filter::Query do
       filter_params = { 'filter' => { 'durationSeconds' => { 'inRange' => '(5,6)' } } }
       expect {
         create_filter(filter_params).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
+      }.to raise_error(CustomErrors::FilterArgumentError,
+                       "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
     end
   end
 
@@ -545,7 +546,7 @@ describe Filter::Query do
             }
           }
         },
-        'audio_events.is_reference'.to_sym => {
+        'audio_events.is_reference': {
           eq: true
         },
         channels: {
@@ -571,7 +572,7 @@ describe Filter::Query do
             eq: 1,
             less_than_or_equal: 8888
           },
-          'sites.id'.to_sym => {
+          'sites.id': {
             eq: 5
           },
           status: {
@@ -582,7 +583,7 @@ describe Filter::Query do
           duration_seconds: {
             not_eq: 140
           },
-          'tags.text'.to_sym => {
+          'tags.text': {
             contains: 'koala'
           }
         }
@@ -693,7 +694,7 @@ describe Filter::Query do
       SQL
 
       full_query = filter_query.query_full
-      comparison_ignore_spaces(full_query.to_sql, complex_result_2)
+      comparison_sql(full_query.to_sql, complex_result_2)
 
       # ensure query can be run (it obvs won't return anything)
       expect(full_query.pluck(:recorded_date)).to eq([])
@@ -860,7 +861,7 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result_2)
+      comparison_sql(filter_query.query_full.to_sql, complex_result_2)
     end
 
     it 'audio_recording with projects' do
@@ -988,7 +989,7 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result_2)
+      comparison_sql(filter_query.query_full.to_sql, complex_result_2)
     end
 
     it 'analysis_jobs_items - system, using a virtual table' do
@@ -1096,7 +1097,7 @@ describe Filter::Query do
         AnalysisJobsItem.filter_settings(true)
       )
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result)
+      comparison_sql(filter_query.query_full.to_sql, complex_result)
     end
   end
 
@@ -1177,7 +1178,7 @@ describe Filter::Query do
         OFFSET0
       SQL
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
+      comparison_sql(filter_query.query_full.to_sql, expected_sql)
     end
 
     it 'audio_event.duration_seconds for sorting' do
@@ -1259,7 +1260,7 @@ describe Filter::Query do
         OFFSET 0
       SQL
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
+      comparison_sql(filter_query.query_full.to_sql, expected_sql)
     end
 
     it 'audio_recording.recorded_end_date in filter' do
@@ -1328,7 +1329,7 @@ describe Filter::Query do
         OFFSET 0
       SQL
 
-      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
+      comparison_sql(filter_query.query_full.to_sql, expected_sql)
     end
   end
 
@@ -1623,7 +1624,8 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_event_comments(the_user, levels: Access::Core.levels_none, audio_event: audio_event2),
+        Access::ByPermission.audio_event_comments(the_user, levels: Access::Core.levels_none,
+                                                            audio_event: audio_event2),
         AudioEventComment,
         AudioEventComment.filter_settings
       )
@@ -1733,7 +1735,8 @@ describe Filter::Query do
       )
 
       # defaults to 'and' when no combiner is specified
-      expect(filter.filter).to eq({ duration_seconds: { eq: 78 }, start_time_seconds: { eq: 10 }, end_time_seconds: { eq: 88 } })
+      expect(filter.filter).to eq({ duration_seconds: { eq: 78 }, start_time_seconds: { eq: 10 },
+                                    end_time_seconds: { eq: 88 } })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_event.id]
@@ -1763,7 +1766,8 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expect(filter.filter).to eq({ duration_seconds: { eq: 120 }, or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
+      expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
+                                    or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]
@@ -1793,7 +1797,8 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expect(filter.filter).to eq({ duration_seconds: { eq: 120 }, or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
+      expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
+                                    or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]

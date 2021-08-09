@@ -47,7 +47,10 @@ gem 'descriptive-statistics'
 # for sorting hashes by keys
 gem 'deep_sort'
 
-RAILS_VERSION = '~> 6.1.3.2'
+# DO NOT change rails version without also changing composite_primary_keys version
+# https://github.com/composite-primary-keys/composite_primary_keys
+RAILS_VERSION = '~> 6.1.4'
+COMPOSITE_PRIMARY_KEYS_VERSION = '~> 13'
 
 group :server do
   # RAILS
@@ -122,6 +125,9 @@ group :server do
   # in particular, we use `cast`, and `coalesce`
   gem 'arel_extensions'
 
+  # as the name says
+  gem 'composite_primary_keys', COMPOSITE_PRIMARY_KEYS_VERSION
+
   # MODELS
   # -------------------------------------
   gem 'validates_timeliness', '~> 6.0.0.alpha1'
@@ -167,7 +173,7 @@ end
 group :workers do
   gem 'actionmailer', RAILS_VERSION
   gem 'activejob', RAILS_VERSION
-  gem 'activerecord', RAILS_VERSION
+  #gem 'activerecord', RAILS_VERSION
   gem 'activestorage', RAILS_VERSION
   gem 'activesupport', RAILS_VERSION
 end
@@ -229,11 +235,28 @@ group :development do
   gem 'annotate'
 end
 
+group :development, :test do
+  # restart workers when their code changes
+  gem 'rerun'
+
+  # linting
+  gem 'rubocop-rspec', require: false
+
+  # factories for data objects
+  # allows factory generators to be used when in devlepment group as well as test
+  gem 'factory_bot_rails'
+
+  # rspec helpers for rails
+  # allows factory generators to be used when in devlepment group as well as test
+  gem 'rspec-rails'
+end
+
+
 group :test do
   gem 'coveralls', '>= 0.8.23', require: false
   gem 'database_cleaner-active_record'
   gem 'database_cleaner-redis'
-  gem 'factory_bot_rails'
+
   gem 'faker'
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
@@ -257,17 +280,9 @@ group :test do
   gem 'zonebie'
 
   # api docs
-  gem 'rspec-rails'
   gem 'rswag-specs'
 
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
 end
 
-group :development, :test do
-  # restart workers when their code changes
-  gem 'rerun'
-
-  # linting
-  gem 'rubocop-rspec', require: false
-end

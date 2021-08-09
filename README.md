@@ -188,7 +188,7 @@ These commands should be executed automatically but are listed because they are 
 - Prepare the local development database: `rails db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
 - Run rspec tests and generate a HTML report: `rspec  --format html --out rspec_results.html`
-- Generate API documentation: `RAILS_ENV=test rails rswag`
+- Generate API documentation: `bin/generate_docs.sh`
 
 
 ## Production setup and deploying

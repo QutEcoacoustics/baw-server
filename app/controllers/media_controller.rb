@@ -3,6 +3,10 @@
 class MediaController < ApplicationController
   skip_authorization_check only: [:show, :original]
 
+  attr_reader :audio_response_duration
+
+  after_action :update_statistics
+
   def show
     # start timing request
     overall_start = Time.now
@@ -15,10 +19,10 @@ class MediaController < ApplicationController
     is_head_request = request.head?
 
     # check authorization manually, take audio event into account
-    audio_recording, audio_event = authorise_custom(request_params, current_user)
+    @audio_recording, audio_event = authorise_custom(request_params, current_user)
 
     # can the audio recording be accessed?
-    is_audio_ready = audio_recording_ready?(audio_recording)
+    is_audio_ready = audio_recording_ready?(@audio_recording)
 
     # parse and validate the requested media type
     requested_format, requested_media_type = get_media_type(request_params)
@@ -32,7 +36,7 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
+      raise CustomErrors::ItemNotFoundError, "Audio recording id #{@audio_recording.id} is not ready"
     elsif !is_supported_format && is_head_request
       head :not_acceptable
     elsif !is_supported_format && !is_head_request
@@ -52,7 +56,7 @@ class MediaController < ApplicationController
         timing_overall_start: overall_start
       }
 
-      supported_media_response(audio_recording, audio_event, media_info, request_params)
+      supported_media_response(@audio_recording, audio_event, media_info, request_params)
     else
       raise CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
@@ -64,16 +68,34 @@ class MediaController < ApplicationController
     time_start = Time.now
 
     # unlike a standard media request, the only parameter we allow here is an audio recording id
-    # (:format is irrelevant becuase return mime is whatever mime the original recording is)
+    # (:format is irrelevant because return mime is whatever mime the original recording is)
     request_params = params.slice(:audio_recording_id).permit(:audio_recording_id).to_h
 
-    # check authorisation manually, take audio event into account
-    audio_recording, _audio_event = authorise_custom(request_params, current_user)
+    # check authorization manually, take audio event into account
+    @audio_recording, _audio_event = authorise_custom(request_params, current_user)
 
-    original_file_response(audio_recording, request, time_start)
+    original_file_response(@audio_recording, request, time_start)
   end
 
   private
+
+  def update_statistics
+    return if request.head?
+    return unless response.successful?
+
+    case action_name.to_sym
+    when :show
+      return if audio_response_duration.nil?
+
+      AudioRecordingStatistics.increment_segment(@audio_recording, duration: audio_response_duration)
+      UserStatistics.increment_segment(current_user, duration: audio_response_duration)
+    when :original
+      AudioRecordingStatistics.increment_original(@audio_recording)
+      UserStatistics.increment_original(current_user, @audio_recording)
+    else
+      raise "Unsupported action #{action_name} in update_statistics"
+    end
+  end
 
   def authorise_custom(request_params, user)
     # AT 2018-02-26: removed the following condition because it should be covered by standard abilities
@@ -420,6 +442,7 @@ class MediaController < ApplicationController
   end
 
   def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start, in_memory_file:)
+    @audio_response_duration = generation_request[:end_offset] - generation_request[:start_offset]
     file_path = existing_files.first
     download_options = {
       media_type: generation_request[:media_type],

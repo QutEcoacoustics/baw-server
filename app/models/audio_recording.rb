@@ -68,6 +68,8 @@ class AudioRecording < ApplicationRecord
   has_many :tags, through: :audio_events
   has_many :dataset_items, inverse_of: :audio_recording
 
+  has_one :statistics, class_name: AudioRecordingStatistics.name
+
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings,
                        optional: true

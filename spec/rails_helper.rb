@@ -10,7 +10,7 @@ if ENV['RAILS_ENV'] != 'test'
       ***
       Tests must be run in the test environment.
       The current environment `#{ENV['RAILS_ENV']}` has been changed to `test`.
-      See rails_helper.rb to disable this check
+      See #{__FILE__} to disable this check
       ***
     MESSAGE
   ENV['RAILS_ENV'] = 'test'
@@ -200,7 +200,7 @@ RSpec.configure do |config|
   require_relative 'helpers/api_spec_helpers'
   config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
   require_relative 'helpers/shared_context/api_spec_shared_context'
-  config.include_context :api_spec_shared_context, { file_path: Regexp.new('/spec/api/') }
+  config.include_context 'with api helpers', { file_path: Regexp.new('/spec/api/') }
 
   require_relative 'helpers/permissions_helper'
   config.extend PermissionsHelpers::ExampleGroup, {
@@ -208,9 +208,11 @@ RSpec.configure do |config|
   }
 
   require_relative 'helpers/image_helpers'
+  require_relative 'helpers/sql_helpers'
 
   require_relative 'helpers/shared_examples/a_route_that_stores_images'
   require_relative 'helpers/shared_examples/permissions_for'
+  require_relative 'helpers/shared_examples/a_stats_bucket'
 
   require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"
 
