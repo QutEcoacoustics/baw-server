@@ -2,6 +2,9 @@
 
 describe '/stats' do
   create_audio_recordings_hierarchy
+  prepare_project
+  prepare_region
+  prepare_site
   prepare_audio_event
   prepare_tag
   prepare_audio_events_tags
@@ -18,6 +21,9 @@ describe '/stats' do
         users_online: 0,
         users_total: 10,
         online_window_start: an_instance_of(String),
+        projects_total: 2,
+        regions_total: 1,
+        sites_total: 3,
         annotations_total: 2,
         annotations_total_duration: 2.0,
         annotations_recent: 2,
@@ -26,7 +32,8 @@ describe '/stats' do
         audio_recordings_total_duration: 180_000.0,
         audio_recordings_total_size: 11_400,
         tags_total: 1,
-        tags_applied_total: 1
+        tags_applied_total: 1,
+        tags_applied_unique_total: 1
       },
       recent: {
         audio_recording_ids: [2],

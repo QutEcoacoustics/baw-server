@@ -1,4 +1,15 @@
 RSpec.shared_context :api_spec_shared_context do
+  around do |example|
+    # need to freeze time so that docs generation does not produce different
+    # output every time it's run. This affects timestamps in particular.
+    original_tz = ::Time.zone
+    Zonebie.backend.zone = ::ActiveSupport::TimeZone['UTC']
+    Timecop.freeze(Time.local(2020, 1, 2, 3, 4, 5.678))
+    example.run
+    Timecop.return
+    Zonebie.backend.zone = original_tz
+  end
+
   before do
     # need to freeze time so that docs generation does not produce different
     # output every time it's run. This affects timestamps in particular.
