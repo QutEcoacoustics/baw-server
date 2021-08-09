@@ -204,6 +204,9 @@ RSpec.configure do |config|
                   users_online: { type: 'integer' },
                   users_total: { type: 'integer' },
                   online_window_start: { type: 'string', format: 'date-time', readOnly: true },
+                  projects_total: { type: 'integer' },
+                  regions_total: { type: 'integer' },
+                  sites_total: { type: 'integer' },
                   annotations_total: { type: 'integer' },
                   annotations_total_duration: { type: 'number' },
                   annotations_recent: { type: 'integer' },
@@ -212,7 +215,8 @@ RSpec.configure do |config|
                   audio_recordings_total_duration: { type: 'number' },
                   audio_recordings_total_size: { type: 'integer' },
                   tags_total: { type: 'integer' },
-                  tags_applied_total: { type: 'integer' }
+                  tags_applied_total: { type: 'integer' },
+                  tags_applied_unique_total: { type: 'integer' }
                 }
               },
               recent: {
