@@ -1,14 +1,5 @@
 # frozen_string_literal: true
 
-class ApiPermissionsUriProcessor
-  def self.transform(_name, value)
-    puts({ name: _name, value: value })
-    return 'empty_parameter' if value.nil?
-
-    value
-  end
-end
-
 RSpec.shared_examples 'permissions for' do |options|
   @user = options[:user]
   let(:request_body_options) {
