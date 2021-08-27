@@ -71,9 +71,9 @@ module Api
       result = normalized_path_name(directory, bases)
       children_listing = children.map { |child| fake_dir_info(child['path'], bases) }
       result = result.merge({
-                              type: 'directory',
-                              children: children_listing
-                            })
+        type: 'directory',
+        children: children_listing
+      })
       result = extra_payload.merge(result)
 
       respond(result, is_head_request, api_opts)
@@ -105,9 +105,9 @@ module Api
       children = dir_list(path, bases, paging) if FileSystems::Combined.directory_exists?(path)
 
       result.merge({
-                     type: 'directory',
-                     children: children
-                   })
+        type: 'directory',
+        children: children
+      })
     end
 
     # Lists files in a directory.
@@ -151,17 +151,17 @@ module Api
       has_children = FileSystems::Combined.directory_has_children?(path)
 
       result.merge({
-                     type: 'directory',
-                     has_children: has_children
-                   })
+        type: 'directory',
+        has_children: has_children
+      })
     end
 
     def fake_dir_info(path, bases)
       result = normalized_path_name(path, bases)
       result.merge({
-                     type: 'directory',
-                     has_children: true
-                   })
+        type: 'directory',
+        has_children: true
+      })
     end
 
     def file_info(path)
@@ -203,7 +203,7 @@ module Api
       # but why three folders? To which directory structure was this specialized for?
       #regex = /#{base_directory.gsub('/', '\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/
       #regex = Regexp.new(base_directory + '/[^/]+/[^/]+/[^/]+/?')
-      regex = Regexp.new(base_directory + '/?')
+      regex = Regexp.new("#{base_directory}/?")
       path_without_base = path.gsub(regex, '')
       path_without_base.blank? ? '/' : "/#{path_without_base}"
     end

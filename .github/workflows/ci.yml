@@ -25,30 +25,32 @@ jobs:
       # by default the user on GH seems to have the UID 1001
       # however our docker container expects a uid of 1000.
       # This is not an issue in Docker since we chown files when they are added.
-      # However when docker-compose bind mounts the volumes for development
+      # However when docker compose bind mounts the volumes for development
       # the permissions of the files reflect those that are on the host, in the
       # GH action case uid 1001 and gid 116.
       # The easiest way I can think of to get this working is to just set the
       # uid to 1000.
       - name: Set permissions for checked out files
         run: sudo chown -R 1000 .
-      # there is a bug where docker build and docker-compose don't produce the
+      # there is a bug where docker build and docker compose don't produce the
       # same results
       # see https://github.com/docker/compose/issues/883
       # So we use docker-compose build instead
       - name: Build image
         #run: docker build .
-        run: docker-compose build --no-rm web
+        run: docker compose build --no-rm web
+        env:
+          DOCKER_BUILDKIT: 1
       # there appears to be a race condition between entrypoint script (which does a migration)
       # and the following prepare database step
-      - name: Start docker-compose
-        run: docker-compose up -d && sleep 15
+      - name: Start docker compose
+        run: docker compose up -d && sleep 15
       - name: prepare test database
-        run: docker-compose run web echo 'database created'
+        run: docker compose run web echo 'database created'
         env:
           RAILS_ENV: test
       - name: Run tests
-        run: docker-compose run web rspec --format progress --format html --out rspec_results.html
+        run: docker compose run web rspec --format progress --format html --out rspec_results.html
         env:
           RAILS_ENV: test
       - name: Upload test results
@@ -66,11 +68,11 @@ jobs:
 
       # update api docs
       - name: Generate API docs
-        run: docker-compose run web generate_docs.sh
+        run: docker compose run web generate_docs.sh
 
-      - name: Stop docker-compose
+      - name: Stop docker compose
         if: ${{ always() }}
-        run: docker-compose stop
+        run: docker compose stop
 
       # Undo permissions change
       - name: Undo Set permissions for checked out files

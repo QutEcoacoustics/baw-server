@@ -1,6 +1,7 @@
+# syntax=docker/dockerfile:1.3
 # Debian releases:
 #
-FROM ruby:3.0.1-slim-buster
+FROM ruby:3.0.2-slim-buster
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -8,11 +9,9 @@ ARG version=
 ARG trimmed=false
 
 # install audio tools and other binaries
-COPY ./provision/install_audio_tools.sh \
-  ./provision/install_postgresql_client.sh \
-  /tmp/
-
-RUN apt-get update \
+# apt is cleaned automatically: https://github.com/GoogleContainerTools/base-images-docker/blob/master/debian/reproducible/overlay/etc/apt/apt.conf.d/docker-clean
+RUN --mount=type=bind,source=./provision,target=/provision \
+  apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   # - git: we'd like to remove git dependency but we have multiple git based dependencies
   # in our gem files
@@ -24,36 +23,22 @@ RUN apt-get update \
   sqlite3 libsqlite3-dev libgmp-dev \
   # the following are for nokogiri and the like
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
-  && chmod u+x /tmp/*.sh  \
   # for the pg gem we need postgresql-client (also used by rails rake db commands)
-  && /tmp/install_postgresql_client.sh \
+  && /provision/install_postgresql_client.sh \
   # install audio tools and other binaries
-  && /tmp/install_audio_tools.sh \
-  && apt-get clean \
-  && rm -rf /tmp/*.sh \
-  && rm -rf /var/lib/apt/lists/*
+  && /provision/install_audio_tools.sh
 
-COPY ./provision/dev_setup.sh /tmp/
-
-RUN \
+RUN --mount=type=bind,source=./provision,target=/provision \
   # create a user for the app
-  # -D is for defaults, which includes NO PASSWORD
-  # adduser myappuser
-  # we use useradd instead of adduser, since it can be done without any interactivity
-  # might need to do some other stuff achieve the full effect of adduser.
-  groupadd -g 1000 ${app_user} \
-  && useradd -u 1000 -g ${app_user} ${app_user} \
-  && mkdir -p /home/${app_user}/${app_name} \
-  && chown -R ${app_user}:${app_user} /home/${app_user} \
+  addgroup --gid 1000 ${app_user} \
+  && adduser --uid 1000 --gid 1000 --home /home/${app_user} --shell /bin/sh --disabled-password --gecos "" ${app_user} \
   # allow bundle install to work as app_user
   # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
   && mkdir -p "$GEM_HOME/bin" \
   && chmod 777 "$GEM_HOME/bin" \
-  && chmod u+x /tmp/*.sh  \
-  && (if [ "x${trimmed}" != "xtrue" ]; then /tmp/dev_setup.sh ; fi) \
-  && rm -rf /tmp/*.sh \
+  && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi) \
   # https://github.com/moby/moby/issues/20437
-  && mkdir /home/${app_user}/${app_name}/tmp \
+  && mkdir -p /home/${app_user}/${app_name}/tmp \
   && chown ${app_user}:${app_user} /home/${app_user}/${app_name}/tmp
 
 
@@ -84,14 +69,13 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-#RUN true \
-  # temporarily upgrade bundler until we can jump to ruby 2.7
-  # && gem update --system \
-  # && gem install bundler \
 RUN (([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true) \
   && (([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true)
+  # ensure required bundler version is installed
+  # https://bundler.io/blog/2019/05/14/solutions-for-cant-find-gem-bundler-with-executable-bundle.html
+RUN gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)" \
   # install baw-server
-RUN bundle install \
+  && bundle install \
   # install docs for dev work
   && (([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true)
 

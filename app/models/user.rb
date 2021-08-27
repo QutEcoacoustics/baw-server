@@ -163,6 +163,8 @@ class User < ApplicationRecord
   has_many :updated_studies, class_name: 'Study', foreign_key: :updater_id, inverse_of: :updater
   has_many :updated_questions, class_name: 'Question', foreign_key: :updater_id, inverse_of: :updater
 
+  has_one :statistics, class_name: UserStatistics.name
+
   # scopes
   scope :users, -> { where(roles_mask: 2) }
   scope :recently_seen,

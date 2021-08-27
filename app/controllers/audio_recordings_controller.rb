@@ -202,7 +202,11 @@ class AudioRecordingsController < ApplicationController
   def update_status_user_check
     # auth is checked manually here - not sure if this is necessary or not
     if current_user.blank?
-      raise CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :update_status_user_check, AudioRecording)
+      raise CanCan::AccessDenied.new(
+        I18n.t('devise.failure.unauthenticated'),
+        :update_status_user_check,
+        AudioRecording
+      )
     elsif Access::Core.is_harvester?(current_user)
       update_status_params_check
     else
@@ -293,7 +297,7 @@ class AudioRecordingsController < ApplicationController
       :uploader_id,
       :site_id,
       :creator_id,
-      notes: {}
+      { notes: {} }
     ]
 
     params.require(:audio_recording).permit(*permitted_attributes)

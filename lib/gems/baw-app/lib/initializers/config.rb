@@ -32,7 +32,6 @@ class BawConfigContract < Dry::Validation::Contract
     end
 
     required(:logs).hash do
-      required(:stdout).filled(:bool)
       required(:tag).maybe(:string)
       required(:directory).filled(:string)
     end

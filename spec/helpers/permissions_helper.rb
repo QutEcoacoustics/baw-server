@@ -9,7 +9,8 @@ module PermissionsHelpers
     STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
     def self.extended(base)
-      base.class_attribute :registered_users, :route, :route_params, :request_body_options, :expected_list_items_callback, :update_attrs_subset
+      base.class_attribute :registered_users, :route, :route_params, :request_body_options,
+                           :expected_list_items_callback, :update_attrs_subset
 
       base.registered_users = Set.new
       base.after(:all) do
@@ -17,7 +18,7 @@ module PermissionsHelpers
 
         next if users_not_tested.empty?
 
-        route = base.instance_variable_get(:'@route')
+        route = base.instance_variable_get(:@route)
         untested = users_not_tested.to_a.join(', ')
         raise "Some users were not tested by the permissions spec for #{route}. Add tests for the following users: #{untested}"
       end
@@ -105,7 +106,7 @@ module PermissionsHelpers
         actions = can.map { |x| normalize(x, route, :successful, true) } +
                   cannot.map { |x| normalize(x, route, fails_with, false) }
 
-        it_behaves_like :permissions_for, {
+        it_behaves_like 'permissions for', {
           route: route,
           route_params: route_params,
           user: user,
@@ -188,10 +189,11 @@ module PermissionsHelpers
     def validate_tests_all(user, can_do:, and_cannot_do:)
       message = "The permission spec for the `:#{user}` user"
       # ensure we've covered all the standard actions
-      missing = STANDARD_ACTIONS - (can_do + and_cannot_do)
-      unless missing.empty?
-        raise "#{message} does not cover all standard actions. The following are missing: #{missing}"
-      end
+      get_action = ->(x) { x.is_a?(Symbol) ? x : x[:action] }
+      missing = STANDARD_ACTIONS - (can_do + and_cannot_do).map(&get_action)
+      return if missing.empty?
+
+      raise "#{message} does not cover all standard actions. The following are missing: #{missing}"
     end
 
     def normalize(item, route, expected_status, can)
@@ -211,13 +213,14 @@ module PermissionsHelpers
 
       validate_action_hash(result, item)
 
-      result[:path] = Addressable::Template.new(route + '/' + result[:path])
+      route_param = result[:path]
+      result[:path] = Addressable::Template.new("#{route}/#{route_param}")
       result
     end
 
     def validate_action_hash(action, item)
-      unless [:list, :single, :nothing, :template, :created].include?(action[:expect])
-        raise "expect value #{action[:expect]} is not recognized" unless action[:expect].is_a?(Proc)
+      if ![:list, :single, :nothing, :template, :created].include?(action[:expect]) && !action[:expect].is_a?(Proc)
+        raise "expect value #{action[:expect]} is not recognized"
       end
 
       return if action.is_a?(Hash) &&

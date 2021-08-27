@@ -76,7 +76,7 @@ module BawWorkers
       # @param [Boolean] :resque_worker (false) are we running in the context of a Resque worker?
       def set(is_resque_worker: false, is_scheduler: false)
         @is_resque_worker = !is_resque_worker.nil?
-        @is_scheduler = !is_scheduler.nil?
+        @is_scheduler = is_scheduler == true
         @is_baw_workers_entry = true
       end
 

@@ -10,7 +10,7 @@ require 'resque/tasks'
 require "#{__dir__}/../../../../baw-app/lib/baw_app"
 
 namespace :baw do
-  def init(is_worker: false, settings_file: nil)
+  def init(is_worker: false, settings_file: nil, is_scheduler: false)
     BawApp.setup(settings_file)
 
     # initialize the app
@@ -27,7 +27,7 @@ namespace :baw do
     # set time zone
     Time.zone = 'UTC'
 
-    BawWorkers::Config.set(is_resque_worker: is_worker)
+    BawWorkers::Config.set(is_resque_worker: is_worker, is_scheduler: is_scheduler)
 
     # Initialize the Rails application.
     Rails.application.initialize!
@@ -58,7 +58,8 @@ namespace :baw do
     end
 
     desc 'Run the resque scheduler with the specified settings file.'
-    task :run_scheduler, [:settings_file] => [:setup] do |_t, _args|
+    task :run_scheduler, [:settings_file] do |_t, args|
+      init(is_worker: false, settings_file: args.settings_file, is_scheduler: true)
       BawWorkers::Config.logger_worker.info('rake_task:baw:worker:run_scheduler') do
         'Resque scheduler starting...'
       end
@@ -179,18 +180,6 @@ namespace :baw do
       is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
       invoke_dir = Rake.original_dir
       BawWorkers::Jobs::Harvest::Enqueue.scan(invoke_dir, is_real_run)
-    end
-
-    namespace :standalone do
-      desc 'Directly harvest audio files'
-      task :from_files, [:settings_file, :harvest_dir, :real_run, :copy_on_success] do |_t, args|
-        args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
-        copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
-
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Harvest::Action.action_perform_rake(args.harvest_dir, is_real_run, copy_on_success)
-      end
     end
   end
 

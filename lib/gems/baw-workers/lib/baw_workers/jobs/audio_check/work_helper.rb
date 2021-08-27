@@ -31,7 +31,7 @@ module BawWorkers
             audio_params_sym[:recorded_date] = Time.zone.parse(audio_params_sym[:recorded_date])
           else
             raise ArgumentError,
-                  ":recorded_date must be a UTC time (i.e. end with Z), given #{audio_params_sym[:recorded_date]}"
+              ":recorded_date must be a UTC time (i.e. end with Z), given #{audio_params_sym[:recorded_date]}"
           end
 
           # get the original possible and existing paths, and new and old file names
@@ -213,9 +213,9 @@ module BawWorkers
 
               # write row of csv into log file
               log_csv_line(existing_file, true, nil,
-                           compare_hash, nil, nil,
-                           :medium_multiple_properties_do_not_match,
-                           audio_params[:id])
+                compare_hash, nil, nil,
+                :medium_multiple_properties_do_not_match,
+                audio_params[:id])
 
               raise BawAudioTools::Exceptions::FileCorruptError, msg
             end
@@ -378,9 +378,9 @@ module BawWorkers
 
             # write row of csv into log file
             log_csv_line(original_paths[:possible][0], false, nil,
-                         nil, nil, nil,
-                         :high_original_file_does_not_exist,
-                         audio_params[:id])
+              nil, nil, nil,
+              :high_original_file_does_not_exist,
+              audio_params[:id])
 
             raise BawAudioTools::Exceptions::FileNotFoundError, msg
           end
@@ -410,10 +410,10 @@ module BawWorkers
           # write to csv
           csv_options = { col_sep: ',', force_quotes: true }
 
-          csv_header_line = logged_csv_line[:headers].to_csv(csv_options).strip
+          csv_header_line = CSV.generate_line(logged_csv_line[:headers], **csv_options).strip
           @logger.fatal(@class_name) { "[CSV-header], #{csv_header_line}" }
 
-          csv_value_line = logged_csv_line[:values].to_csv(csv_options).strip
+          csv_value_line = CSV.generate_line(logged_csv_line[:values], **csv_options).strip
           @logger.fatal(@class_name) { "[CSV-data], #{csv_value_line}" }
         end
 

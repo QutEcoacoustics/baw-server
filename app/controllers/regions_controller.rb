@@ -12,7 +12,6 @@ class RegionsController < ApplicationController
     do_authorize_instance(:show, @project) unless @project.nil?
 
     respond_to do |format|
-      #format.html # index.html.erb
       format.json do
         @regions, opts = Settings.api_response.response_advanced(
           api_filter_params,
@@ -128,6 +127,13 @@ class RegionsController < ApplicationController
   def region_params
     sanitize_associative_array(:tag, :notes)
 
-    params.require(:region).permit(:name, :description, :notes, :project_id, :image, notes: {})
+    wrapper = params.require(:region)
+
+    # form data munges json objects, so disallow notes being updates in these cases
+    if request.form_data?
+      wrapper.permit(:name, :description, :notes, :project_id, :image)
+    else
+      wrapper.permit(:name, :description, :notes, :project_id, :image, notes: {})
+    end
   end
 end

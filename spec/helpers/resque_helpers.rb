@@ -132,12 +132,15 @@ module ResqueHelpers
         BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(get_pause_test_jobs)
       end
 
-      example_group.after do
+      example_group.after do |example|
         remaining = BawWorkers::ResqueApi.queued_count
         next if remaining.zero?
 
         logger.info(trace_metadata(:ignore_leftover_jobs))
-        raise "There are #{remaining} uncompleted jobs for this spec" unless get_ignore_leftover_jobs
+        unless get_ignore_leftover_jobs
+          spec_info = example.location
+          raise "There are #{remaining} uncompleted jobs for this spec: #{spec_info}"
+        end
 
         logger.warn "#{remaining} jobs are still in the queue, ignored intentionally by ignore_pending_jobs"
       end
@@ -156,16 +159,23 @@ module ResqueHelpers
       BawWorkers::ResqueApi.clear_queues
     end
 
+    def expect_queue_count(queue_name, count)
+      expect(Resque.size(queue_name)).to eq count
+    end
+
+    def expect_failed_queue_count(count)
+      expect(Resque::Failure.count).to eq count
+    end
+
     # Expects the completed job statuses to be of a certain size. Includes completed, failed, and killed jobs.
     # @param [Integer] count - the count of job statuses we expect
-    # @param [Class] klass - of which class we expected the job statuses jobs to be. Defaults to `nil` which matches any class.
+    # @param [Class] of_class - of which class we expected the job statuses jobs to be. Defaults to `nil` which matches any class.
     # @return [Array<BawWorkers::ActiveJob::Status::StatusData>]
-    def expect_performed_jobs(count, klass: nil)
-      statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS, klass: klass)
+    def expect_performed_jobs(count, klass: nil, of_class: nil)
+      of_class ||= klass
+      statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS, klass: of_class)
 
-      expect(statuses).to be_a(Array)
-      expect(statuses).to have(count).items
-
+      expect(statuses).to be_a(Array).and(have_attributes(count: count))
       statuses
     end
 
@@ -176,8 +186,7 @@ module ResqueHelpers
     def expect_failed_jobs(count, klass: nil)
       failures = BawWorkers::ResqueApi.failed(klass: klass)
 
-      expect(statuses).to be_a(Array)
-      expect(failures).to have(count).items
+      expect(failures).to be_a(Array).and(have_attributes(count: count))
 
       failures
     end
@@ -188,17 +197,16 @@ module ResqueHelpers
     # @return [Array<Hash>]
     def expect_enqueued_jobs(count, klass: nil, of_class: nil)
       of_class ||= klass
-      jobs = if of_class.nil?
-               BawWorkers::ResqueApi.jobs_queued
-             else
-               BawWorkers::ResqueApi.jobs_queued_of(of_class)
-             end
+      queued = if of_class.nil?
+                 BawWorkers::ResqueApi.jobs_queued
+               else
+                 BawWorkers::ResqueApi.jobs_queued_of(of_class)
+               end
 
       aggregate_failures do
-        expect(jobs).to be_a(Array)
-        expect(jobs).to have(count).items
+        expect(queued).to be_a(Array).and(have_attributes(count: count))
       end
-      jobs
+      queued
     end
 
     def expect_delayed_jobs(count)
@@ -209,41 +217,29 @@ module ResqueHelpers
     # @param [Integer] completed - the count of completed jobs we expect
     # @param [Integer] failed - the count of failed jobs we expect, defaults to 0
     # @param [Integer] enqueued - the count of enqueued jobs we expect, defaults to 0
-    # @param [Class] klass - of which class we expected completed jobs to be. Defaults to `nil` which matches any class.
-    def expect_jobs_to_be(completed:, failed: 0, enqueued: 0, klass: nil)
-      actual_completed = BawWorkers::ResqueApi.statuses(statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
-                                                        klass: klass)
-      actual_failed = BawWorkers::ResqueApi.failed
-      actual_enqueued = BawWorkers::ResqueApi.jobs_queued
+    # @param [Class] of_class - of which class we expected completed jobs to be. Defaults to `nil` which matches any class.
+    def expect_jobs_to_be(completed:, failed: 0, enqueued: 0, klass: nil, of_class: nil)
+      of_class ||= klass
+      actual_completed = BawWorkers::ResqueApi.statuses(
+        statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
+        of_class: of_class
+      )
+      actual_failed = BawWorkers::ResqueApi.statuses(
+        statuses: [
+          BawWorkers::ActiveJob::Status::STATUS_FAILED,
+          BawWorkers::ActiveJob::Status::STATUS_ERRORED
+        ],
+        of_class: of_class
+      )
+      actual_enqueued = BawWorkers::ResqueApi.statuses(
+        statuses: BawWorkers::ActiveJob::Status::STATUS_QUEUED,
+        of_class: of_class
+      )
       aggregate_failures do
-        expect(actual_completed).to be_a(Array)
-        expect(actual_failed).to be_a(Array)
-        expect(actual_enqueued).to be_a(Array)
-        expect(actual_completed).to have(completed).items
-        expect(actual_failed).to have(failed).items
-        expect(actual_enqueued).to have(enqueued).items
+        expect(actual_completed).to be_a(Array).and(have_attributes(count: completed))
+        expect(actual_failed).to be_a(Array).and(have_attributes(count: failed))
+        expect(actual_enqueued).to be_a(Array).and(have_attributes(count: enqueued))
       end
-    end
-
-    # Run all jobs as soon as they're enqueued, reverting settings when the given block has finished.
-    # Will NOT block for job completion!
-    # Must be supplied with a block.
-    # Intended for use in an RSpec around hook.
-    # @example
-    #   around(:each) do |example|
-    #     perform_all_jobs_immediately do
-    #       example.run
-    #     end
-    #   end
-    def perform_all_jobs_immediately
-      raise ArgumentError, 'A block must be given to `perform_all_jobs_immediately`' unless block_given?
-
-      original_pause_value = BawWorkers::ResquePatch::PauseDequeueForTests.paused?
-      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(false)
-
-      yield
-
-      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(original_pause_value)
     end
 
     #
@@ -278,13 +274,75 @@ module ResqueHelpers
       r.value!
     end
 
+    # Pop a single job off of `queue_name` and run it locally.
+    # Optionally yields the job before performing it (useful for setting up mocks).
+    # @param [String] queue_name - the name of the queue to pop a job from
+    # @param [ActiveJob::Base] block - yielded with the job just before it is performed
+    # @return [Object] the result of `perform_now`
+    def perform_job_locally(queue_name, &block)
+      job = BawWorkers::ResqueApi.pop(queue_name)
+      block.call(job) if block_given?
+      job.perform_now
+    end
+
+    # Run all jobs as soon as they're enqueued, reverting settings when the given block has finished.
+    # Will NOT block for job completion!
+    # Must be supplied with a block.
+    # Intended for use in an RSpec around hook.
+    # @example
+    #   around(:each) do |example|
+    #     perform_all_jobs_immediately do
+    #       example.run
+    #     end
+    #   end
+    def perform_all_jobs_immediately
+      raise ArgumentError, 'A block must be given to `perform_all_jobs_immediately`' unless block_given?
+
+      original_pause_value = BawWorkers::ResquePatch::PauseDequeueForTests.paused?
+      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(false)
+
+      yield
+
+      BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(original_pause_value)
+    end
+
+    # Run `count` jobs as soon as they're enqueued
+    # Will NOT block for job completion!
+    def perform_jobs_immediately(count:)
+      total = BawWorkers::ResquePatch::PauseDequeueForTests.increment_perform_count(count)
+      logger.info('Allowing for test jobs to be performed', { new: count, total: total })
+      expect(total).to be >= count
+    end
+
+    # wait for running jobs (either enqueued or running) to be completed for a short period.
+    def wait_for_jobs(timeout: 5)
+      started = Time.now
+      elapsed = 0
+      count = 0
+      while elapsed < timeout
+        now = Time.now
+        elapsed = now - started
+
+        count = BawWorkers::ResqueApi.statuses(
+          statuses: [BawWorkers::ActiveJob::Status::STATUS_QUEUED, BawWorkers::ActiveJob::Status::STATUS_WORKING]
+        ).count
+
+        logger.info('Waiting for test jobs to be performed', { remaining: count })
+        break if count <= 0
+
+        sleep 0.5
+      end
+
+      logger.info('Finished waiting for test jobs to be performed', { remaining: count })
+    end
+
     # Perform a number of jobs and **BLOCK** execution until the jobs are completed.
     # Set a flag in redis that the Test worker listens for.
     # That worker will then complete the given number of jobs.
     # @param [Integer,nil] count the number of jobs to perform. Use `nil` to indicate that all enqueued jobs should be performed.
     # @param [Float] timeout the amount of time to wait for a job to finish
     # @return [Array<BawWorkers::ActiveJob::Status::StatusData>] an array of job statuses that were performed.
-    def perform_jobs(count: nil, timeout: 30)
+    def perform_jobs(count: nil, timeout: 30, wait_for_resque_failures: true)
       stats = job_stats
       existing = stats[:statuses].count
       count = stats[:total_pending] if count.nil?
@@ -313,6 +371,14 @@ module ResqueHelpers
         sleep(0.5)
       }
 
+      # from us reporting a failed status to this watcher receiving it, there is
+      # not enough time for resque to report a failure (mainly due to email error templating time)
+      error_statuses_count = statuses.select(&:errored?).count
+      if wait_for_resque_failures && error_statuses_count.positive? && BawWorkers::ResqueApi.failed_count != error_statuses_count
+        logger.info('Waiting for failures to be reported')
+        sleep 0.5 until BawWorkers::ResqueApi.failed_count == error_statuses_count || (Time.now - started) > (timeout + 10)
+      end
+
       unless error.blank?
         details = BawWorkers::ResqueApi.failed.reduce('') { |message, failed| "#{message}\n#{failed}" }
         raise "#{error}\nFailures that occurred while waiting: #{details}\nStatuses received #{statuses}"
@@ -331,6 +397,7 @@ module ResqueHelpers
         delayed: delayed,
         total_pending: enqueued + delayed,
         statuses: statuses,
+        statuses_count: statuses.count,
         status_execution_count: statuses.sum { |s| (s&.options&.fetch(:executions, nil) || 0) + 1 }
       }
     end

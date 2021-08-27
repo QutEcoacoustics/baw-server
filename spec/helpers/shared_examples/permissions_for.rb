@@ -1,4 +1,6 @@
-RSpec.shared_examples :permissions_for do |options|
+# frozen_string_literal: true
+
+RSpec.shared_examples 'permissions for' do |options|
   @user = options[:user]
   let(:request_body_options) {
     options[:request_body_options]
@@ -40,7 +42,6 @@ RSpec.shared_examples :permissions_for do |options|
     verb = action[:verb]
     path = action[:path]
     action = action[:action]
-    headers = headers.dup
     url = path.expand(route_params)
 
     # some endpoints require a valid body is included

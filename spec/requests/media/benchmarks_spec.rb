@@ -37,7 +37,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
     "/audio_recordings/#{lt_recording.id}/media.wav?start_offset=#{start_offset}&end_offset=#{end_offset}"
   end
 
-  context 'without fast cache' do
+  context 'without fast cache', :slow do
     before do
       Settings.actions.media.cache_to_redis = false
       expect(Settings.actions.media.cache_to_redis).to eq false

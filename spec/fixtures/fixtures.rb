@@ -86,6 +86,16 @@ module Fixtures
     ensure_exists FILES_PATH / 'IMG_1318.JPG'
   end
 
+  # @return [Pathname]
+  def self.bowra2_image_jpeg
+    ensure_exists FILES_PATH / 'IMG_night.jpg'
+  end
+
+  # @return [Pathname]
+  def self.a_very_large_image_jpeg
+    ensure_exists FILES_PATH / 'a_very_large_image.jpg'
+  end
+
   #
   # Check a fixture exists
   #
@@ -96,7 +106,7 @@ module Fixtures
   def self.ensure_exists(pathname)
     unless pathname.exist?
       raise IOError,
-            "Given fixture refers to a file that does not exist: #{pathname}"
+        "Given fixture refers to a file that does not exist: #{pathname}"
     end
 
     pathname

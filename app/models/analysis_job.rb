@@ -74,11 +74,15 @@ class AnalysisJob < ApplicationRecord
   validates :custom_settings, :overall_progress, presence: true
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
   validates :overall_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-  validates :overall_duration_seconds, presence: true, numericality: { only_integer: false, greater_than_or_equal_to: 0 }
+  validates :overall_duration_seconds, presence: true,
+                                       numericality: { only_integer: false, greater_than_or_equal_to: 0 }
   validates :overall_status_modified_at, :overall_progress_modified_at,
             presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
-  validates :started_at, allow_blank: true, allow_nil: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
-  validates :overall_data_length_bytes, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :started_at, allow_blank: true, allow_nil: true, timeliness: { on_or_before: lambda {
+                                                                                           Time.zone.now
+                                                                                         }, type: :datetime }
+  validates :overall_data_length_bytes, presence: true,
+                                        numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   renders_markdown_for :description
 
@@ -326,7 +330,7 @@ class AnalysisJob < ApplicationRecord
   end
 
   def are_all_cancelled?
-    AnalysisJobsItem.queued_for_analysis_job(id).count == 0
+    AnalysisJobsItem.queued_for_analysis_job(id).count.zero?
   end
 
   def all_job_items_completed?
@@ -334,7 +338,7 @@ class AnalysisJob < ApplicationRecord
   end
 
   def are_any_job_items_failed?
-    AnalysisJobsItem.failed_for_analysis_job(id).count > 0
+    AnalysisJobsItem.failed_for_analysis_job(id).count.positive?
   end
 
   #

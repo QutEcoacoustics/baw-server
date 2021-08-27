@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file should contain all the record creation needed to seed the database with its default values.
 # The data can then be loaded with the rake db:seed (or created alongside the db with db:setup).
 
@@ -10,11 +12,13 @@ def ensure_user(user_name:, email:, password:, roles:)
     user = User.new(user_name: user_name, email: email, roles: roles)
     user.password = password
     user.skip_confirmation!
+
   else
     user.email = email
     user.password = password unless user.valid_password?(password)
     user.roles = roles
   end
+  user.skip_creation_email = true
 
   user.save!(validate: false)
   user

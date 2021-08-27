@@ -159,6 +159,7 @@ describe AudioRecording, type: :model do
     it { is_expected.to have_many(:audio_events) }
     it { is_expected.to have_many(:bookmarks) }
     it { is_expected.to have_many(:tags) }
+    it { is_expected.to have_one(:statistics) }
 
     it { is_expected.to accept_nested_attributes_for(:site) }
     it { is_expected.to serialize(:notes) }

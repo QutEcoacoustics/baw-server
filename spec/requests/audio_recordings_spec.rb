@@ -1,9 +1,9 @@
+# frozen_string_literal: true
 
-
-describe 'Audio Recordings' do
+describe '/audio_recordings' do
   create_entire_hierarchy
 
-  context 'provides a timezone along with recorded date' do
+  context 'when shown, provides a timezone along with recorded date' do
     example 'when the timezone is present in the site' do
       site.tzinfo_tz = 'Australia/Sydney'
       site.save!

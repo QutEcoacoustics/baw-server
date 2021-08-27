@@ -174,7 +174,10 @@ module Creation
         FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
       }
       let!(alternate_name) { project_anon } if alternate_name
-      let!(:permission_anon) { FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
+      let!(:permission_anon) {
+        FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true,
+                                       level: 'reader')
+      }
     end
 
     def prepare_project_logged_in(alternate_name = nil)
@@ -182,7 +185,10 @@ module Creation
         FactoryBot.create(:project, creator: owner_user, name: 'Logged In Project')
       }
       let!(alternate_name) { project_logged_in } if alternate_name
-      let!(:permission_logged_in) { FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
+      let!(:permission_logged_in) {
+        FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true,
+                                       level: 'reader')
+      }
     end
 
     def prepare_project_anon_and_logged_in(alternate_name = nil)
@@ -293,7 +299,8 @@ module Creation
 
     def prepare_progress_event
       let!(:default_dataset_item) {
-        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording, dataset: default_dataset)
+        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording,
+                                                 dataset: default_dataset)
       }
       let!(:progress_event) {
         Common.create_progress_event(admin_user, default_dataset_item)

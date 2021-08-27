@@ -14,7 +14,7 @@ module FactoryBotHelpers
       schema = model_name.to_s.classify.constantize.schema
       # was using attributes_for here but it doesn't include associations!
       # full = attributes_for(model_name)
-      full = build(factory || model_name, **factory_args).attributes.symbolize_keys
+      full = build(factory || model_name, **(factory_args || {})).attributes.symbolize_keys
       writeable = schema[:properties]
                   .reject { |_key, value| value[:readOnly] }
                   .keys

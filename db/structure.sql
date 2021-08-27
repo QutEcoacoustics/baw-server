@@ -10,6 +10,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: btree_gist; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
+
+
+--
 -- Name: is_json(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -341,6 +355,20 @@ CREATE SEQUENCE public.audio_events_tags_id_seq
 --
 
 ALTER SEQUENCE public.audio_events_tags_id_seq OWNED BY public.audio_events_tags.id;
+
+
+--
+-- Name: audio_recording_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE UNLOGGED TABLE public.audio_recording_statistics (
+    audio_recording_id bigint NOT NULL,
+    bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
+    original_download_count bigint DEFAULT 0,
+    segment_download_count bigint DEFAULT 0,
+    segment_download_duration numeric DEFAULT 0.0
+)
+WITH (fillfactor='70');
 
 
 --
@@ -1512,6 +1540,20 @@ ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 
 
 --
+-- Name: user_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE UNLOGGED TABLE public.user_statistics (
+    user_id bigint,
+    bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
+    audio_segment_download_count bigint DEFAULT 0,
+    audio_original_download_count bigint DEFAULT 0,
+    audio_download_duration numeric DEFAULT 0.0
+)
+WITH (fillfactor='70');
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2019,6 +2061,38 @@ ALTER TABLE ONLY public.comfy_cms_translations
 
 
 --
+-- Name: audio_recording_statistics constraint_baw_audio_recording_statistics_non_overlapping; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_recording_statistics
+    ADD CONSTRAINT constraint_baw_audio_recording_statistics_non_overlapping EXCLUDE USING gist (audio_recording_id WITH =, bucket WITH &&);
+
+
+--
+-- Name: audio_recording_statistics constraint_baw_audio_recording_statistics_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_recording_statistics
+    ADD CONSTRAINT constraint_baw_audio_recording_statistics_unique UNIQUE (audio_recording_id, bucket);
+
+
+--
+-- Name: user_statistics constraint_baw_user_statistics_non_overlapping; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_statistics
+    ADD CONSTRAINT constraint_baw_user_statistics_non_overlapping EXCLUDE USING gist (user_id WITH =, bucket WITH &&);
+
+
+--
+-- Name: user_statistics constraint_baw_user_statistics_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_statistics
+    ADD CONSTRAINT constraint_baw_user_statistics_unique UNIQUE (user_id, bucket);
+
+
+--
 -- Name: dataset_items dataset_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2441,6 +2515,13 @@ CREATE INDEX index_audio_events_tags_on_updater_id ON public.audio_events_tags U
 
 
 --
+-- Name: index_audio_recording_statistics_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_recording_statistics_on_audio_recording_id ON public.audio_recording_statistics USING btree (audio_recording_id);
+
+
+--
 -- Name: index_audio_recordings_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2795,6 +2876,13 @@ CREATE INDEX index_tags_on_creator_id ON public.tags USING btree (creator_id);
 --
 
 CREATE INDEX index_tags_on_updater_id ON public.tags USING btree (updater_id);
+
+
+--
+-- Name: index_user_statistics_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_user_statistics_on_user_id ON public.user_statistics USING btree (user_id);
 
 
 --
@@ -3193,6 +3281,14 @@ ALTER TABLE ONLY public.questions_studies
 
 
 --
+-- Name: audio_recording_statistics fk_rails_6f222e0805; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_recording_statistics
+    ADD CONSTRAINT fk_rails_6f222e0805 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+
+
+--
 -- Name: responses fk_rails_7a62c4269f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3238,6 +3334,14 @@ ALTER TABLE ONLY public.active_storage_variant_records
 
 ALTER TABLE ONLY public.regions
     ADD CONSTRAINT fk_rails_a2bcbc219c FOREIGN KEY (deleter_id) REFERENCES public.users(id);
+
+
+--
+-- Name: user_statistics fk_rails_a4ae2a454b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_statistics
+    ADD CONSTRAINT fk_rails_a4ae2a454b FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -3579,6 +3683,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20200904064318'),
 ('20210707050202'),
 ('20210707050203'),
-('20210707074343');
+('20210707074343'),
+('20210730051645');
 
 

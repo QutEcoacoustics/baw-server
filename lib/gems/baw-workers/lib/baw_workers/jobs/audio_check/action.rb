@@ -37,7 +37,7 @@ module BawWorkers
             #     queue,
             #     e
             # )
-            raise e
+            raise
           end
 
           BawWorkers::Config.logger_worker.info(name) do
@@ -47,71 +47,21 @@ module BawWorkers
           result
         end
 
-        # Perform check on multiple audio files from a csv file.
-        # @param [String] csv_file
-        # @param [Boolean] is_real_run
-        # @return [Array<Hash>] array of hashes representing operations performed
-        def action_perform_rake(csv_file, is_real_run)
-          BawWorkers::Validation.normalise_file(csv_file)
-
-          successes = []
-          failures = []
-          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
-            result = BawWorkers::Jobs::AudioCheck::Action.action_run(audio_params, is_real_run)
-            successes.push({ params: audio_params, result: result })
-          rescue StandardError => e
-            failures.push({ params: audio_params, exception: e })
-          end
-
-          {
-            successes: successes,
-            failures: failures
-          }
-        end
-
         # Enqueue an audio file check request.
         # @param [Hash] audio_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def self.action_enqueue(audio_params)
           audio_params_sym = BawWorkers::Jobs::AudioCheck::WorkHelper.validate(audio_params)
-          #result = Resque.enqueue(BawWorkers::Jobs::AudioCheck::Action, audio_params_sym)
-          result = BawWorkers::Jobs::AudioCheck::Action.perform_later!({ audio_params: audio_params_sym })
+
+          job = BawWorkers::Jobs::AudioCheck::Action.new({ audio_params: audio_params_sym })
+
+          result = job.enqueue != false
           BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using #{audio_params}."
           end
-          result
-        end
 
-        # Enqueue multiple audio file check requests from a csv file.
-        # @param [String] csv_file
-        # @param [Boolean] is_real_run
-        # @return [Hash]
-        def self.action_enqueue_rake(csv_file, is_real_run)
-          BawWorkers::Validation.normalise_file(csv_file)
-
-          successes = []
-          failures = []
-          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
-            result = nil
-            result = BawWorkers::Jobs::AudioCheck::Action.perform_later!(audio_params) if is_real_run
-            successes.push({ params: audio_params, result: result })
-          rescue StandardError => e
-            failures.push({ params: audio_params, exception: e })
-          end
-
-          results = {
-            successes: successes,
-            failures: failures
-          }
-
-          BawWorkers::Config.logger_worker.info(name) do
-            msg1 = is_real_run ? 'Enqueued jobs.' : 'Dry run without enqueuing jobs.'
-            msg2 = "#{successes.size} jobs successful and #{failures.size} jobs failed"
-            "#{msg1} #{msg2}: #{results}"
-          end
-
-          results
+          job.job_id
         end
 
         def action_audio_check

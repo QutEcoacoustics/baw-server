@@ -22,6 +22,12 @@ module RequestSpecHelpers
 
   # config.include allows these methods to be used in specs/before/let
   module Example
+    def auth_header(token)
+      {
+        'HTTP_AUTHORIZATION' => token
+      }
+    end
+
     def api_request_headers(token, send_body: false, content_type: 'application/json')
       headers = {
         'ACCEPT' => 'application/json',
@@ -29,6 +35,27 @@ module RequestSpecHelpers
       }
       headers['CONTENT_TYPE'] = content_type if send_body
       headers
+    end
+
+    def api_headers(token)
+      {
+        headers: {
+          'ACCEPT' => 'application/json',
+          'HTTP_AUTHORIZATION' => token
+        },
+        as: :json
+      }
+    end
+
+    def api_with_body_headers(token, content_type: 'application/json')
+      {
+        headers: {
+          'ACCEPT' => 'application/json',
+          'HTTP_AUTHORIZATION' => token,
+          'CONTENT_TYPE' => content_type
+        },
+        as: :json
+      }
     end
 
     def media_request_headers(token, format: 'wav')
@@ -40,9 +67,11 @@ module RequestSpecHelpers
 
     def form_multipart_headers(token, accept: 'json')
       {
-        'ACCEPT' => MIME::Types.type_for(accept).first.content_type,
-        'HTTP_AUTHORIZATION' => token,
-        'CONTENT_TYPE' => 'form/multipart'
+        headers: {
+          'ACCEPT' => MIME::Types.type_for(accept).first.content_type,
+          'HTTP_AUTHORIZATION' => token,
+          'CONTENT_TYPE' => 'multipart/form-data'
+        }
       }
     end
 
@@ -60,11 +89,14 @@ module RequestSpecHelpers
     def response_body
       # the != false is not redundant here... safe access could result in nil
       # which would evaluate to false and execute wrong half of conditional
-      @response_body ||= response&.body&.empty? == false ? response.body : nil
+      #
+      # don't cache this, subsequent requests will not work
+      response&.body&.empty? == false ? response.body : nil
     end
 
     def api_result
-      @api_result ||= response_body.nil? ? nil : JSON.parse(response_body, symbolize_names: true)
+      # don't cache this, subsequent requests will not work
+      response_body.nil? ? nil : JSON.parse(response_body, symbolize_names: true)
     end
 
     # Asserts there is a meta/data structure and then extracts data
@@ -171,27 +203,26 @@ module RequestSpecHelpers
       expect(response).to have_http_status(:success)
     end
 
-    def expect_error(status, details)
+    def expect_error(status, details, info)
+      status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
+
+      raise "Status is not acceptable #{status}" unless status.is_a?(Integer)
+
       aggregate_failures 'error response' do
+        expect(response).to have_http_status(:unprocessable_entity)
+
         expect_json_response
 
-        message =
-          case status
-          when 400
-            'Bad Request'
-          when 404
-            'Not Found'
-          else
-            raise "Message not yet implemented for status #{status}"
-          end
+        message = Rack::Utils::HTTP_STATUS_CODES[status]
 
+        error_hash = {}
+        error_hash[:details] = details unless details.nil?
+        error_hash[:info] = info unless info.nil?
         expect(api_result).to match({
           meta: hash_including({
             status: status,
             message: message,
-            error: hash_including({
-              details: details
-            })
+            error: hash_including(error_hash)
           }),
           data: nil
         })

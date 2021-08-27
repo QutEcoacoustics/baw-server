@@ -41,12 +41,24 @@ class Region < ApplicationRecord
 
   # add model image
   has_one_attached :image
+  # Named variants not available until rails 7
+  #has_one_attached :image do |attachable|
+  #attachable.variant :thumb, resize: "#{BawApp.attachment_thumb_size}"
+  #end
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2 }
 
+  validates :image,
+    size: {
+      less_than_or_equal_to: BawApp.attachment_size_limit,
+      message: "%{attribute} size %{file_size} is greater than #{ActiveSupport::NumberHelper.number_to_human_size(BawApp.attachment_size_limit)}, try a smaller file"
+    },
+    content_type: [:png, :jpg, :jpeg]
+
   def self.filter_settings
-    common_fields = [:id, :name, :description, :notes, :creator_id, :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :project_id]
+    common_fields = [:id, :name, :description, :notes, :creator_id, :created_at, :updater_id, :updated_at, :deleter_id,
+                     :deleted_at, :project_id]
     {
       valid_fields: common_fields,
       render_fields: common_fields,
@@ -54,7 +66,8 @@ class Region < ApplicationRecord
       custom_fields: lambda { |item, _user|
         extra_fields = {
           site_ids: item.sites.pluck(:id).flatten,
-          **item.render_markdown_for_api_for(:description)
+          **item.render_markdown_for_api_for(:description),
+          image_urls: Api::Image.image_urls(item.image)
         }
         [item, extra_fields]
       },
@@ -98,7 +111,9 @@ class Region < ApplicationRecord
         **Api::Schema.all_user_stamps,
         notes: { type: 'object' },
         project_id: { '$ref' => '#/components/schemas/id' },
-        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } }
+        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        image_urls: Api::Schema.image_urls,
+        image: { type: 'string', format: 'binary', writeOnly: true, nullable: true }
       },
       required: [
         :id,
@@ -114,7 +129,8 @@ class Region < ApplicationRecord
         :updated_at,
         :deleter_id,
         :deleted_at,
-        :site_ids
+        :site_ids,
+        :image_urls
       ]
     }.freeze
   end

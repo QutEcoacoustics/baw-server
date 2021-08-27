@@ -59,8 +59,29 @@ module BawWorkers
     def jobs_queued_of(klass)
       check_class(klass)
       match_klass = klass.to_s
-      puts jobs_queued
+
       jobs_queued.select { |job| job_class(job) == match_klass }
+    end
+
+    def peek(queue_name)
+      payload = Resque.peek(queue_name)
+
+      deserialize(payload)
+    end
+
+    def pop(queue_name)
+      # bypass our test pause dequeue module
+      payload = Resque.respond_to?(:__pop) ? Resque.__pop(queue_name) : Resque.pop(queue_name)
+      Rails.logger.info(payload: payload)
+      deserialize(payload)
+    end
+
+    def deserialize(resque_payload)
+      return nil if resque_payload.nil?
+
+      ::ActiveJob::Base.deserialize(resque_payload['args'][0]).tap do |job|
+        job.send(:deserialize_arguments_if_needed)
+      end
     end
 
     # Get the currently running jobs.
@@ -284,15 +305,19 @@ module BawWorkers
     # Get a list of statuses.
     # Most useful for getting completed jobs.
     # @param [Array<String>] statuses which statuses to retrieve
-    # @param [Class] klass the type to filter on
+    # @param [Class] of_class the type to filter on
     # @return [Array<BawWorkers::ActiveJob::Status::StatusData>] an array of job statuses.
-    def statuses(statuses: nil, klass: nil)
+    def statuses(statuses: nil, klass: nil, of_class: nil)
+      of_class ||= klass
+
+      statuses = Array(statuses)
       results = BawWorkers::ActiveJob::Status::Persistance.get_statuses
       results = results.filter { |s| statuses.include?(s.status) } unless statuses.blank?
 
-      unless klass.nil?
-        class_name = klass.to_s
-        results = results.filter { |s| class_name = s.klass }
+      unless of_class.nil?
+        check_class(of_class)
+        class_name = of_class.to_s
+        results = results.filter { |s| class_name == s.options[:job_class] }
       end
 
       results

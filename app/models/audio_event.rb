@@ -46,7 +46,10 @@ class AudioEvent < ApplicationRecord
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events, optional: true
   has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
 
-  accepts_nested_attributes_for :tags
+  # AT 2021: disabled. Nested associations are extremely complex,
+  # and as far as we are aware, they are not used anywhere in production
+  # TODO: remove on passing test suite
+  #accepts_nested_attributes_for :tags
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -66,7 +69,10 @@ class AudioEvent < ApplicationRecord
   validate :start_must_be_lte_end
   validate :low_must_be_lte_high
 
-  before_validation :set_tags, on: :create
+  # AT 2021: disabled. Nested associations are extremely complex,
+  # and as far as we are aware, they are not used anywhere in production
+  # TODO: remove on passing test suite
+  #before_validation :set_tags, on: :create
 
   # Scopes
   scope :start_after, ->(offset_seconds) { where('start_time_seconds > ?', offset_seconds) }
@@ -370,36 +376,38 @@ class AudioEvent < ApplicationRecord
     end
   end
 
-  def set_tags
-    # for each tagging, check if a tag with that text already exists
-    # if one does, delete that tagging and add the existing tag
-    tag_ids_to_add = []
-    taggings.each do |tagging|
-      tag = tagging.tag
-      # ensure string comparison is case insensitive
-      existing_tag = Tag.where('lower(text) = ?', tag.text.downcase).first
-      next if existing_tag.blank?
+  # AT 2021: disabled. I can't work out what this code does or what effect is has
+  # TODO: remove on passing test suite
+  # def set_tags
+  # for each tagging, check if a tag with that text already exists
+  # if one does, delete that tagging and add the existing tag
+  # tag_ids_to_add = []
+  # taggings.each do |tagging|
+  #   tag = tagging.tag
+  #   # ensure string comparison is case insensitive
+  #   existing_tag = Tag.where('lower(text) = ?', tag.text.downcase).first
+  #   next if existing_tag.blank?
 
-      # remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
-      tags.each do |audio_event_tag|
-        # The collection.delete method removes one or more objects from the collection by setting their foreign keys to NULL.
-        # ensure string comparison is case insensitive
-        tags.delete(audio_event_tag) if existing_tag.text.downcase == audio_event_tag.text.downcase
-      end
+  #   # remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
+  #   tags.each do |audio_event_tag|
+  #     # The collection.delete method removes one or more objects from the collection by setting their foreign keys to NULL.
+  #     # ensure string comparison is case insensitive
+  #     tags.delete(audio_event_tag) if existing_tag.text.downcase == audio_event_tag.text.downcase
+  #   end
 
-      # remove the tagging association
-      taggings.delete(tagging)
+  #   # remove the tagging association
+  #   taggings.delete(tagging)
 
-      # record the tag id
-      tag_ids_to_add.push(existing_tag.id)
-    end
+  #   # record the tag id
+  #   tag_ids_to_add.push(existing_tag.id)
+  # end
 
-    # add the tagging using the existing tag id
-    tag_ids_to_add.each do |tag_id|
-      current = Tagging.new(tag_id: tag_id)
-      taggings << current
-    end
-  end
+  # # add the tagging using the existing tag id
+  # tag_ids_to_add.each do |tag_id|
+  #   current = Tagging.new(tag_id: tag_id)
+  #   taggings << current
+  # end
+  #end
 
   def self.function_datetime_timezone(function_name, value1, interval, value2)
     Arel::Nodes::NamedFunction.new(

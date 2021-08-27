@@ -12,10 +12,10 @@ module BawWorkers
         # @param [Hash] analysis_params
         # @return [Hash] result information
         def perform(analysis_params)
-          analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalise_opts(analysis_params)
+          analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalize_opts(analysis_params)
 
           BawWorkers::Config.logger_worker.info do
-            "Started analysis using '#{format_params_for_log(analysis_params_sym)}'."
+            { message: 'Started analysis', parameters: Job.format_params_for_log(analysis_params_sym) }
           end
 
           runner = action_runner
@@ -40,22 +40,10 @@ module BawWorkers
             BawWorkers::Config.logger_worker.warn do
               "Analysis cancelled: '#{e}'"
             end
-            raise e
+            raise
           rescue StandardError => e
             final_status = :failed
-            BawWorkers::Config.logger_worker.error { e }
-
-            args = analysis_params_sym
-            args = all_opts unless all_opts.blank?
-            args = { params: args, results: result } unless result.nil?
-
-            BawWorkers::Mail::Mailer.send_worker_error_email(
-              BawWorkers::Jobs::Analysis::Job,
-              args,
-              queue,
-              e
-            )
-            raise e
+            raise
           ensure
             # run no matter what
             # update our action tracker
@@ -72,7 +60,7 @@ module BawWorkers
 
           BawWorkers::Config.logger_worker.info do
             log_opts = all_opts.blank? ? analysis_params_sym : all_opts
-            "Completed analysis with parameters #{format_params_for_log(log_opts)} and result '#{format_params_for_log(result)}'."
+            "Completed analysis with parameters #{Job.format_params_for_log(log_opts)} and result '#{Job.format_params_for_log(result)}'."
           end
 
           result
@@ -108,17 +96,21 @@ module BawWorkers
 
         # Enqueue an analysis request.
         # @param [Hash] analysis_params
-        # @return [String] An unique key for the job (a UUID) if enqueuing was successful.
-        # @param [String] invariant_group_key - a token used to group invariant payloads. Must be provided for partial
+        # @return [String] An unique key for the job if enqueuing was successful.
         # payloads to work. Must be common to all payloads in a group.
-        def self.action_enqueue(analysis_params)
-          analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalise_opts(analysis_params)
+        def self.action_enqueue(analysis_params, job_class = nil)
+          BawWorkers::Config.logger_worker.info('args', analysis_params: analysis_params, job_class: job_class)
+          analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalize_opts(analysis_params)
 
-          result = BawWorkers::Jobs::Analysis::Job.perform_later!(analysis_params: analysis_params_sym)
+          job_class ||= BawWorkers::Jobs::Analysis::Job
+          job = job_class.new(analysis_params_sym)
+
+          result = job.enqueue != false
           BawWorkers::Config.logger_worker.info do
-            "Job enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
+            "#{job_class} enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
           end
-          result
+
+          job.job_id
         end
 
         # Enqueue an analysis request using a single file via an analysis config file.
@@ -150,6 +142,16 @@ module BawWorkers
           results
         end
 
+        def self.format_params_for_log(params)
+          return params if params.blank? || !params.is_a?(Hash)
+
+          if params.include?(:config)
+            params.except(:config)
+          else
+            params
+          end
+        end
+
         # Create a BawWorkers::Jobs::Analysis::Runner instance.
         # @return [BawWorkers::Jobs::Analysis::Runner]
         def action_runner
@@ -164,24 +166,23 @@ module BawWorkers
 
         # @return [BawWorkers::Jobs::Analysis::Status]
         def action_status_updater
-          BawWorkers::Jobs::Analysis::Status.new(BawWorkers::Config.api_communicator)
+          @action_status_updater ||= BawWorkers::Jobs::Analysis::Status.new(BawWorkers::Config.api_communicator)
         end
 
         def action_payload
           BawWorkers::Jobs::Analysis::Payload.new(BawWorkers::Config.logger_worker)
         end
 
-        private
-
-        def format_params_for_log(params)
-          return params if params.blank? || !params.is_a?(Hash)
-
-          if params.include?(:config)
-            params.except(:config)
-          else
-            params
-          end
+        # Produces a sensible name for this payload.
+        # Should be unique but does not need to be. Has no operational effect.
+        # This value is only used when the status is updated by resque:status.
+        def name
+          id = arguments&.first&.fetch(:id)
+          job_id = arguments&.first&.fetch(:job_id)
+          "Analysis for: #{id}, job=#{job_id}"
         end
+
+        private
 
         # Note, the status symbols returned adhere to the states of an baw-server `AnalysisJobItem`
         def status_from_result(result)
@@ -194,14 +195,6 @@ module BawWorkers
           end
 
           :successful
-        end
-
-        # Produces a sensible name for this payload.
-        # Should be unique but does not need to be. Has no operational effect.
-        # This value is only used when the status is updated by resque:status.
-        def name
-          ap = @options['analysis_params']
-          "Analysis for: #{ap['id']}, job=#{ap['job_id']}"
         end
 
         def create_job_id

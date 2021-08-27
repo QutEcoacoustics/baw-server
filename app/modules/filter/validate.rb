@@ -162,7 +162,8 @@ module Filter
     def validate_node_or_attribute(value)
       check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute)
       unless check
-        raise CustomErrors::FilterArgumentError, "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}"
+        raise CustomErrors::FilterArgumentError,
+          "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}"
       end
     end
 
@@ -210,7 +211,7 @@ module Filter
       end
 
       # if there are no items, let it through
-      if value.count > 0
+      if value.count.positive?
         # all items must be the same type. Assume the first item is the correct type.
         type_compare_item = value[0].class
         type_compare = value.all? { |item| item.is_a?(type_compare_item) }
@@ -221,7 +222,8 @@ module Filter
           max_string_length = 120
           string_length = value.all? { |item| item.size <= max_string_length }
           unless string_length
-            raise CustomErrors::FilterArgumentError, "Array values that are strings must be #{max_string_length} characters or less."
+            raise CustomErrors::FilterArgumentError,
+              "Array values that are strings must be #{max_string_length} characters or less."
           end
         end
 
@@ -309,19 +311,19 @@ module Filter
       return if value.is_a?(NilClass) || value.is_a?(Integer) || value.is_a?(String) || value.is_a?(Float) ||
                 value.is_a?(TrueClass) || value.is_a?(FalseClass)
 
-      node_descr = node.respond_to?(:name) ? node.name : '(custom item)'
+      node_name = node.respond_to?(:name) ? node.name : '(custom item)'
 
       # allow treating a hash as a basic value if it serialized into json/jsonb
       # in the database
-      if value.is_a?(Hash)
-        unless json_column?(node)
-          raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a hash (unless its underlying type is a hash)"
-        end
+      type_caster: node.type_caster, type_caster_type: node.type_caster.type)
+      if value.is_a?(Hash) && !json_column?(node)
+        raise CustomErrors::FilterArgumentError,
+          "The value for #{node_name} must not be a hash (unless its underlying type is a hash)"
       end
 
-      raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be an array" if value.is_a?(Array)
-      raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a set" if value.is_a?(Set)
-      raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a range" if value.is_a?(Range)
+      raise CustomErrors::FilterArgumentError, "The value for #{node_name} must not be an array" if value.is_a?(Array)
+      raise CustomErrors::FilterArgumentError, "The value for #{node_name} must not be a set" if value.is_a?(Set)
+      raise CustomErrors::FilterArgumentError, "The value for #{node_name} must not be a range" if value.is_a?(Range)
     end
 
     # Check that a hash contains a key with expected type of value.
@@ -339,7 +341,8 @@ module Filter
       is_class = value.class === Class
       is_valid = value_types_normalised.any? { |value_type| is_class ? value < value_type : value.is_a?(value_type) }
       unless is_valid
-        raise CustomErrors::FilterArgumentError, "Hash key must be one of #{value_types_normalised}, got #{hash[key].class}."
+        raise CustomErrors::FilterArgumentError,
+          "Hash key must be one of #{value_types_normalised}, got #{hash[key].class}."
       end
     end
 
@@ -353,7 +356,8 @@ module Filter
                               .map(&:last)
                               .map { |name| name.to_s.ltrim('_').to_sym }
       unless parameters_normalised == parameters
-        raise CustomErrors::FilterArgumentError, "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalised}."
+        raise CustomErrors::FilterArgumentError,
+          "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalised}."
       end
     end
 

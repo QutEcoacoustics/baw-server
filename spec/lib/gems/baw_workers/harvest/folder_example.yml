@@ -13,6 +13,9 @@ uploader_id: 30
 # this is the timezone for all the recordings
 utc_offset: '+10'
 
+# apply settings in this config file to all sub-directories
+recursive: false
+
 # structured metadata to add to each recording.
 # use this to record information about sensors, etc...
 metadata:

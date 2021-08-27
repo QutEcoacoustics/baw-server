@@ -61,13 +61,15 @@ module Filter
     # @return [Array<Arel::Attributes::Attribute>] projections
     def projections(hash)
       if hash.blank? || hash.size != 1
-        raise CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.", { hash: hash })
+        raise CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.",
+          { hash: hash })
       end
 
       result = []
       hash.each do |key, value|
         unless [:include, :exclude].include?(key)
-          raise CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}", { hash: hash })
+          raise CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}",
+            { hash: hash })
         end
 
         result = projection(key, value)
@@ -127,7 +129,8 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def combiner_one(combiner, conditions)
       if conditions.blank? || conditions.size < 2
-        raise CustomErrors::FilterArgumentError, "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}."
+        raise CustomErrors::FilterArgumentError,
+          "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}."
       end
 
       combined_conditions = nil
@@ -244,12 +247,15 @@ module Filter
     # @param [nil, Hash] extra
     # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>]
     def parse_filter(primary, secondary = nil, extra = nil)
-      if primary.is_a?(Hash)
+      case primary
+      when Hash
         if primary.blank? || primary.empty?
-          raise CustomErrors::FilterArgumentError.new("Filter hash must have at least 1 entry, got #{primary.size}.", { hash: primary })
+          raise CustomErrors::FilterArgumentError.new("Filter hash must have at least 1 entry, got #{primary.size}.",
+            { hash: primary })
         end
         unless extra.blank?
-          raise CustomErrors::FilterArgumentError.new("Extra must be null when processing a hash, got #{extra}.", { hash: primary })
+          raise CustomErrors::FilterArgumentError.new("Extra must be null when processing a hash, got #{extra}.",
+            { hash: primary })
         end
 
         conditions = []
@@ -265,7 +271,7 @@ module Filter
 
         conditions
 
-      elsif primary.is_a?(Symbol)
+      when Symbol
 
         case primary
         when :and, :or
@@ -283,12 +289,11 @@ module Filter
 
           #fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {hash: filter_hash}) if result.size != 1
 
-          negated_conditions = if result.respond_to?(:map)
-                                 result.map { |c| compose_not(c) }
-                               else
-                                 [compose_not(result)]
-                               end
-          negated_conditions
+          if result.respond_to?(:map)
+            result.map { |c| compose_not(c) }
+          else
+            [compose_not(result)]
+          end
 
         when *@valid_fields.dup.push(/\./)
           field = primary
@@ -453,7 +458,9 @@ module Filter
       current_table = info[:arel_table]
       model = info[:model]
 
-      if current_table != @table
+      if current_table == @table
+        conditions
+      else
         base_query = @base_association.nil? ? @table : @table.from.from(@base_association.arel.as(@table.table_name))
         column_to_match_on = @filter_settings[:base_association_key] || :id
         subquery = base_query.project(@table[column_to_match_on])
@@ -476,8 +483,6 @@ module Filter
         end
 
         compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
-      else
-        conditions
       end
     end
 
@@ -573,8 +578,10 @@ module Filter
     def json_column?(node)
       # we only patched for Arel::Attributes::Attribute, sometimes other nodes (like a grouping) are tested here,
       # hence the safe try call
-      column_type = node.try(:type_caster)
-      column_type == :json || column_type == :jsonb
+      return unless node.respond_to?(:type_caster)
+
+      column_type = node.type_caster.type
+      [:json, :jsonb].include?(column_type)
     end
 
     # Parse association_allowed hashes and arrays to get names.
@@ -583,10 +590,11 @@ module Filter
     # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
     def build_associations(valid_associations, table)
       associations = []
-      if valid_associations.is_a?(Array)
+      case valid_associations
+      when Array
         more_associations = valid_associations.map { |i| build_associations(i, table) }
         associations.push(*more_associations.flatten.compact) unless more_associations.empty?
-      elsif valid_associations.is_a?(Hash)
+      when Hash
 
         join = valid_associations[:join]
         on = valid_associations[:on]

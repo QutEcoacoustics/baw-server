@@ -9,6 +9,7 @@
       "Bootsnap",
       "Cyclomatic",
       "Ecoacoustics",
+      "Enumerize",
       "FILESYSTEMS",
       "FLAC",
       "Gemfile",
@@ -28,6 +29,7 @@
       "Sftpgo",
       "Timecop",
       "Truskinger",
+      "UNLOGGED",
       "Unprocessable",
       "Zeitwerk",
       "appender",
@@ -56,6 +58,7 @@
       "decr",
       "deepsort",
       "deleter",
+      "denormalize",
       "deserialization",
       "deserializes",
       "devcontainer",
@@ -76,6 +79,7 @@
       "gteq",
       "hexdigest",
       "imagemagick",
+      "incrby",
       "jsonb",
       "keyreq",
       "killable",
@@ -91,9 +95,11 @@
       "mkdir",
       "mkpath",
       "nodoc",
+      "numericality",
       "organisation",
       "paginator",
       "pids",
+      "postgesql",
       "postgres",
       "postgresql",
       "precompiled",
@@ -128,13 +134,16 @@
       "structs",
       "symlink",
       "symlinks",
+      "taggings",
       "titleize",
+      "tsrange",
       "typecheck",
       "unpermitted",
       "unregister",
       "unshift",
       "upcase",
       "uploader",
+      "upsert",
       "uuid",
       "wavpack",
       "webdav",
@@ -222,6 +231,13 @@
       },
       "pwsh": {
         "path": "pwsh"
+      },
+      "test log": {
+        "path": "bash",
+        "args": [
+          "-c",
+          "'tail --follow log/rails.local.test.log'"
+        ]
       }
     },
     "terminal.integrated.cwd": "",
@@ -234,17 +250,15 @@
   "extensions": {
     "recommendations": [
       "rebornix.ruby",
-      //"misogi.ruby-rubocop",
       "castwide.solargraph",
-      // "bung87.vscode-gemfile",
       "streetsidesoftware.code-spell-checker",
-      "EditorConfig.EditorConfig",
+      "editorconfig.editorconfig",
       "ms-vscode-remote.vscode-remote-extensionpack",
-      //"connorshea.vscode-ruby-test-adapter",
       "knisterpeter.vscode-github",
       "castwide.ruby-debug",
       "pavlitsky.yard",
-      "ms-azuretools.vscode-docker"
+      "ms-azuretools.vscode-docker",
+      "github.copilot"
     ]
   }
 }

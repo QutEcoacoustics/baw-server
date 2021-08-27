@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -32,8 +31,8 @@ resource 'AnalysisJobs' do
     FactoryBot
       .attributes_for(:analysis_job, script_id: script.id, saved_search_id: saved_search.id)
       .except(:started_at, :overall_progress,
-              :overall_progress_modified_at, :overall_count,
-              :overall_duration_seconds, :overall_data_length_bytes)
+        :overall_progress_modified_at, :overall_count,
+        :overall_duration_seconds, :overall_data_length_bytes)
       .to_json
   }
 
@@ -73,7 +72,8 @@ resource 'AnalysisJobs' do
       saved_search.save!
       saved_search
     }
-    standard_request_options(:post, 'CREATE (as writer, testing projects error)', :created, { expected_json_path: 'data/saved_search_id' })
+    standard_request_options(:post, 'CREATE (as writer, testing projects error)', :created,
+      { expected_json_path: 'data/saved_search_id' })
   end
 
   describe 'update special case - retrying the job' do
@@ -85,6 +85,9 @@ resource 'AnalysisJobs' do
 
     # special case - retrying the job
     put '/analysis_jobs/:id' do
+      pause_all_jobs
+      ignore_pending_jobs
+
       id_params
       parameter :overall_status, 'Analysis Job script id in request body', required: true
       let(:id) {
@@ -94,11 +97,15 @@ resource 'AnalysisJobs' do
       }
       let(:raw_post) { { analysis_job: { overall_status: 'processing' } }.to_json }
       let(:authentication_token) { admin_token }
-      standard_request_options(:put, 'UPDATE (retry job, as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
+      standard_request_options(:put, 'UPDATE (retry job, as admin)', :ok,
+        { expected_json_path: 'data/saved_search_id' })
     end
 
     # special case - retrying the job
     put '/analysis_jobs/:id' do
+      pause_all_jobs
+      ignore_pending_jobs
+
       id_params
       parameter :overall_status, 'Analysis Job script id in request body', required: true
       let(:id) {
@@ -130,7 +137,8 @@ resource 'AnalysisJobs' do
       }
       let(:raw_post) { { analysis_job: { overall_status: 'suspended' } }.to_json }
       let(:authentication_token) { admin_token }
-      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
+      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok,
+        { expected_json_path: 'data/saved_search_id' })
     end
 
     # special case - pausing the job
@@ -166,7 +174,8 @@ resource 'AnalysisJobs' do
       }
       let(:raw_post) { { analysis_job: { overall_status: 'processing' } }.to_json }
       let(:authentication_token) { admin_token }
-      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
+      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok,
+        { expected_json_path: 'data/saved_search_id' })
     end
 
     # special case - resuming the job

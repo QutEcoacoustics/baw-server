@@ -52,6 +52,7 @@ data_provider:
   manage_users: 1
   track_quota: 0
   #pool_size:
+  update_mode: 0
   users_base_dir: /srv/sftpgo/data
   #actions:
   #external_auth_hook:

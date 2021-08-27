@@ -1,4 +1,6 @@
-RSpec.shared_context :api_spec_shared_context do
+# frozen_string_literal: true
+
+RSpec.shared_context 'with api shared context' do
   around do |example|
     # need to freeze time so that docs generation does not produce different
     # output every time it's run. This affects timestamps in particular.
@@ -48,7 +50,7 @@ RSpec.shared_context :api_spec_shared_context do
   end
 
   # after every api test
-  after(:each) do |example|
+  after do |example|
     # include the response as an example
     add_example(example)
 
@@ -71,20 +73,16 @@ RSpec.shared_context :api_spec_shared_context do
       abilities = Ability.new(user)
       abilities.can? route[:action].to_sym, model
     }
-    user_name = ->(user) { '`' + (user&.user_name.nil? ? 'anyone' : user.user_name) + '`' }
+    user_name = ->(user) { "`#{user&.user_name.nil? ? 'anyone' : user.user_name}`" }
 
     description = example.metadata[:operation][:description]
     description = <<~MARKDOWN
-      #{(description.nil? ? '' : description)}
+      #{description.nil? ? '' : description}
       Users that can invoke this route: #{can.map(&user_name).join(', ')}.<br />
       Users that can't: #{cannot.map(&user_name).join(', ')}.
 
       Note: accessing a list/index/filter endpoint may return no results due to project permissions
     MARKDOWN
     example.metadata[:operation][:description] = description
-  end
-
-  before(:each) do |example|
-    #    puts example.metadata
   end
 end

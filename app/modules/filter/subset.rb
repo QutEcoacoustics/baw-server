@@ -194,7 +194,8 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_range_options_node(node, hash)
       unless hash.is_a?(Hash)
-        raise CustomErrors::FilterArgumentError, "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got #{hash}"
+        raise CustomErrors::FilterArgumentError,
+          "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got #{hash}"
       end
 
       from = hash[:from]
@@ -202,7 +203,9 @@ module Filter
       interval = hash[:interval]
 
       if !from.blank? && !to.blank? && !interval.blank?
-        raise CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", { hash: hash })
+        raise CustomErrors::FilterArgumentError.new(
+          "Range filter must use either ('from' and 'to') or ('interval'), not both.", { hash: hash }
+        )
       elsif from.blank? && !to.blank?
         raise CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", { hash: hash })
       elsif !from.blank? && to.blank?
@@ -255,7 +258,9 @@ module Filter
       range_regex = /(\[|\()(.*),(.*)(\)|\])/i
       matches = range_string.match(range_regex)
       unless matches
-        raise CustomErrors::FilterArgumentError.new("Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}", { field: column_name })
+        raise CustomErrors::FilterArgumentError.new(
+          "Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}", { field: column_name }
+        )
       end
 
       captures = matches.captures
@@ -263,7 +268,7 @@ module Filter
       # get ends spec's and values
       start_exclude = captures[0] == ')'
       start_value = captures[1]
-      end_value = captures[2]
+      end_value = captures[2].strip
       end_exclude = captures[3] == ')'
 
       # build using gt, lt, gteq, lteq
@@ -321,6 +326,7 @@ module Filter
       validate_node_or_attribute(node)
       validate_basic_class(node, from)
       validate_basic_class(node, to)
+
       range = Range.new(from, to, true)
       node.in(range)
     end

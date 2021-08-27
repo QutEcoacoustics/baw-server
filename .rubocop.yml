@@ -46,6 +46,8 @@ Layout/FirstHashElementIndentation:
 # We sometimes leave commented out code in the code base
 Layout/LeadingCommentSpace:
   Enabled: false
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
 Metrics/ClassLength:
   Max: 300
 Metrics/CyclomaticComplexity:
@@ -71,6 +73,7 @@ Metrics/BlockLength:
     - define
     - factory
     - path
+    - Async
 Metrics/MethodLength:
   Max: 30
   IgnoredMethods:
@@ -87,6 +90,8 @@ RSpec/ExampleLength:
 RSpec/ExpectInHook:
   # https://github.com/rubocop/rubocop-rspec/pull/445
   Enabled: false
+RSpec/ImplicitSubject:
+  EnforcedStyle: single_statement_only
 RSpec/MultipleExpectations:
   Max: 6
 RSpec/NestedGroups:
@@ -101,6 +106,7 @@ Style/BlockDelimiters:
   AllowBracesOnProceduralOneLiners: true
   IgnoredMethods:
     - its
+    - it
 Style/ExponentialNotation:
   Enabled: true
   EnforcedStyle: scientific

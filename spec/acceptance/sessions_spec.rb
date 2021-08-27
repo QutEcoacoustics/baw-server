@@ -81,7 +81,7 @@ resource 'Sessions' do
     parameter :login, 'User name or email (must provide one of email or login)', required: false
     parameter :password, 'User password', required: true
 
-    let(:raw_post) { { email: harvester_user.email, password: harvester_user.password }.to_json }
+    let(:raw_post) { { email: Settings.harvester.email, password: Settings.harvester.password }.to_json }
     standard_request_options(:post, 'Sign In (harvester using email and password)', :ok,
                              { response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token' })
   end

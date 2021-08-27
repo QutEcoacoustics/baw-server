@@ -79,6 +79,7 @@ describe User, type: :model do
   it { is_expected.to have_many(:created_regions) }
   it { is_expected.to have_many(:updated_regions) }
   it { is_expected.to have_many(:deleted_regions) }
+  it { is_expected.to have_one(:statistics) }
 
   context 'when using the recently seen scope' do
     KEYS = [:last_seen_at, :current_sign_in_at, :last_sign_in_at].freeze

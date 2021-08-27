@@ -25,14 +25,14 @@ module Api
       @url_helpers ||= UrlHelpers::Base.new
     end
 
-    def self.method_missing(method, *args, &block)
+    def self.method_missing(method, *args, **keywords, &block)
       @url_helpers ||= UrlHelpers::Base.new
 
       if @url_helpers.respond_to?(method)
-        @url_helpers.send(method, *args, &block)
+        @url_helpers.send(method, *args, **keywords, &block)
       else
         # calls method in class this was include into.
-        super method, *args, &block
+        super method, *args, **keywords, &block
       end
     end
   end
