@@ -58,7 +58,9 @@ describe AudioEvent, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to have_many(:tags) }
-  it { is_expected.to accept_nested_attributes_for(:tags) }
+  # AT 2021: disabled. Nested associations are extremely complex,
+  # and as far as we are aware, they are not used anywhere in production
+  it { is_expected.not_to accept_nested_attributes_for(:tags) }
 
   # this test is not possible, since everything is converted to a bool when set to :is_reference...
   #it { is_expected.to validate_inclusion_of(:is_reference).in_array([true, false]) }

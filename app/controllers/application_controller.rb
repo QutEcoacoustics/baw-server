@@ -4,6 +4,8 @@
 class ApplicationController < ActionController::Base
   include IncludeController
 
+  include ActiveStorage::SetCurrent
+
   layout :select_layout
 
   def select_layout

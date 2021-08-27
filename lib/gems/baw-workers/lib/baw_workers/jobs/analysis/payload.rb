@@ -181,13 +181,13 @@ module BawWorkers
           raise ArgumentError, msg
         end
 
-        # Normalise opts so that keys are Symbols and check all required keys are present.
+        # Normalize opts so that keys are Symbols and check all required keys are present.
         # @param [Hash] opts
         # @return [Hash] normalised opts
-        def self.normalise_opts(opts)
-          normalised_keys = BawWorkers::Validation.deep_symbolize_keys(opts)
-          BawWorkers::Validation.check_custom_hash(normalised_keys, BawWorkers::Jobs::Analysis::Payload::OPTS_FIELDS)
-          normalised_keys
+        def self.normalize_opts(opts)
+          normalized_keys = BawWorkers::Validation.deep_symbolize_keys(opts)
+          BawWorkers::Validation.check_custom_hash(normalized_keys, BawWorkers::Jobs::Analysis::Payload::OPTS_FIELDS)
+          normalized_keys
         end
       end
     end

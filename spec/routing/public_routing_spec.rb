@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
-
-
 describe PublicController, type: :routing do
   describe :routing do
     it { expect(get('/')).to route_to('public#index') }
-    it { expect(get('/status')).to route_to('public#status', format: 'json') }
     it { expect(get('/website_status')).to route_to('public#website_status') }
 
     #it { expect(get('/job_queue_status')).to route_to('Resque::Server') }
@@ -28,9 +25,23 @@ describe PublicController, type: :routing do
     it { expect(get('/disclaimers')).to route_to('public#disclaimers') }
 
     # CORS tests (invalid, as they do not have correct headers)
-    it { expect(options: '/projects').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'projects') }
-    it { expect(options: '/sites').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'sites') }
-    it { expect(options: '/blah_blah').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'blah_blah') }
-    it { expect(options: '/projects/1/sites/2/audio_recordings/3').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'projects/1/sites/2/audio_recordings/3') }
+    it {
+      expect(options: '/projects').to route_to(controller: 'public', action: 'cors_preflight',
+        requested_route: 'projects')
+    }
+
+    it {
+      expect(options: '/sites').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'sites')
+    }
+
+    it {
+      expect(options: '/blah_blah').to route_to(controller: 'public', action: 'cors_preflight',
+        requested_route: 'blah_blah')
+    }
+
+    it {
+      expect(options: '/projects/1/sites/2/audio_recordings/3').to route_to(controller: 'public', action: 'cors_preflight',
+        requested_route: 'projects/1/sites/2/audio_recordings/3')
+    }
   end
 end

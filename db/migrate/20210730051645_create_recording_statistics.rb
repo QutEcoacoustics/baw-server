@@ -20,7 +20,7 @@ class CreateRecordingStatistics < ActiveRecord::Migration[6.1]
     # - and need the EXCLUSION constraint to ensure non-overlapping ranges
     # Ideally an exclusion constraint could be used as a uniqueness constraint
 
-    # SET UNLGOGED disables the write ahead log - that is writing to disk before finishing the transaction.
+    # SET UNLOGGED disables the write ahead log - that is writing to disk before finishing the transaction.
     # Greatly improves write speed but at the risk of losing the most recent entries if the database crashes.
     unique_name = "constraint_baw_#{table}_unique"
     no_overlap_name = "constraint_baw_#{table}_non_overlapping"

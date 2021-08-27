@@ -163,8 +163,6 @@ group :server do
   gem 'rack-rewrite', '~> 1.5.1'
 
   # Application/webserver
-  # We used to use thin for development
-  gem 'thin', group: [:development, :test]
   # Now we use passenger for all environments. The require: allows for integration
   # with the `rails server` command
   gem 'passenger', require: 'phusion_passenger/rack_handler'
@@ -202,7 +200,6 @@ group :workers, :server do
   gem 'mini_magick', '>= 4.9.5'
 
   # Upload service API
-  # gem "sftpgo_generated_client" - required manually, see lib/gems/sftpgo_generated_client
   gem 'typhoeus'
 end
 
@@ -247,10 +244,14 @@ group :development, :test do
   gem 'factory_bot_rails'
 
   # rspec helpers for rails
-  # allows factory generators to be used when in devlepment group as well as test
+  # allows factory generators to be used when in development group as well as test
   gem 'rspec-rails'
-end
 
+  # we're using falcon and these async primitives in web_server_helper for tests
+  gem 'async', git: 'https://github.com/socketry/async'
+  gem 'async-http', git: 'https://github.com/socketry/async-http'
+  gem 'falcon', git: 'https://github.com/socketry/falcon'
+end
 
 group :test do
   gem 'coveralls', '>= 0.8.23', require: false
@@ -264,6 +265,8 @@ group :test do
   gem 'rspec-collection_matchers'
   gem 'rspec-its'
   gem 'rspec-mocks'
+  # for use in rspec HTML reports
+  gem 'coderay'
   gem 'timecop'
   # better diffs
   # 0.8.0 causes ifinite hangs during some specs (spec/requests/media/edge_cases_spec.rb)
@@ -285,4 +288,3 @@ group :test do
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
 end
-

@@ -24,7 +24,7 @@ module BawWorkers
         @client = SftpgoClient::ApiClient.new(
           username: config.username,
           password: config.password,
-          scheme: BawApp.dev_or_test? ? 'http' : 'https',
+          scheme: BawApp.http_scheme,
           host: config.host,
           port: config.port,
           logger: logger

@@ -127,7 +127,7 @@ class AnalysisJobsResultsController < ApplicationController
 
       dirs = paths
              .select { |p| is_root_path || FileSystems::Combined.directory_exists?(p) }
-             .map { |d| d.end_with?(File::SEPARATOR + '.') ? d[0..-2] : d }
+             .map { |d| d.end_with?("#{File::SEPARATOR}.") ? d[0..-2] : d }
       files = paths.select { |p| FileSystems::Combined.file_exists?(p) }
 
       # fail if no paths are files or dirs ... I don't know if that's possible or not.
@@ -141,7 +141,8 @@ class AnalysisJobsResultsController < ApplicationController
       # if all dirs, assume all the same and return file list for first existing dir
       base_paths = paths.map { |path| get_base_path(path, analysis_job_id, audio_recording.uuid) }
       if !dirs.empty? && files.empty?
-        respond_with_directory(dirs, base_paths, get_base_url_path, analysis_job_item.as_json, is_head_request, api_opts)
+        respond_with_directory(dirs, base_paths, get_base_url_path, analysis_job_item.as_json, is_head_request,
+                               api_opts)
       end
 
     else

@@ -20,7 +20,7 @@ class AnalysisJobsController < ApplicationController
 
   # GET /analysis_jobs/1
   def show
-    return system_show if is_system?
+    return system_show if system_job?
 
     do_load_resource
     do_authorize_instance
@@ -58,7 +58,7 @@ class AnalysisJobsController < ApplicationController
 
   # PUT|PATCH /analysis_jobs/1
   def update
-    return system_mutate if is_system?
+    return system_mutate if system_job?
 
     do_load_resource
     do_authorize_instance
@@ -81,7 +81,7 @@ class AnalysisJobsController < ApplicationController
 
   # DELETE /analysis_jobs/1
   def destroy
-    return system_mutate if is_system?
+    return system_mutate if system_job?
 
     do_load_resource
     do_authorize_instance
@@ -130,7 +130,7 @@ class AnalysisJobsController < ApplicationController
     raise CustomErrors::MethodNotAllowedError.new('Cannot update a system job', [:post, :put, :patch, :delete])
   end
 
-  def is_system?
+  def system_job?
     params[:id] == 'system'
   end
 

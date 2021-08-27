@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 
-
-
 describe BawWorkers::ApiCommunicator do
   require 'helpers/shared_test_helpers'
-
+ 
   include_context 'shared_test_helpers'
+
 
   let(:api) { BawWorkers::Config.api_communicator }
   let(:api_different) {
-    api = OpenStruct.new({ ** Settings.api, password: 'different password' })
+    api = Settings.api.dup.merge!({ password: 'different password' })
     BawWorkers::ApiCommunicator.new(
       BawWorkers::Config.logger_worker,
       api,
       Settings.endpoints
     )
   }
+ 
 
   context 'login request' do
     it 'should succeed with valid credentials' do
       auth_token_server = 'auth_token_string'
-      email = 'address@example.com'
+      email = 'harvester@example.com'
       password = 'different password'
       endpoint_login = default_uri + Settings.endpoints.login
       body = get_api_security_request(email, password)
@@ -37,7 +37,7 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should throw error with invalid credentials' do
       auth_token = 'auth_token_string'
-      email = 'address@example.com'
+      email = 'harvester@example.com'
       password = 'different password'
       endpoint_login = default_uri + Settings.endpoints.login
 

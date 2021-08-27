@@ -3,7 +3,7 @@
 shared_context 'shared_test_helpers' do
   let(:host) { Settings.api.host }
   let(:port) { Settings.api.port }
-  let(:scheme) { 'https' }
+  let(:scheme) { BawApp.http_scheme }
   let(:default_uri) { "#{scheme}://#{host}:#{port}" }
 
   # example files
@@ -149,7 +149,7 @@ shared_context 'shared_test_helpers' do
 
   def clear_harvester_to_do
     paths = [harvest_to_do_path]
-    clear_directories(paths, '/tmp/_harvester_to_do_path')
+    clear_directories(paths, '/tmp/_test_harvester_to_do_path')
   end
 
   def clear_directories(directories, sanity_check = '_test_')

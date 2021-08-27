@@ -29,6 +29,18 @@ if BawApp.test?
           )
         end
 
+        # Increment the number of jobs workers should be allowed to process
+        # Use this in a non-blocking scenario, otherwise subsequent calls to allow more jobs to run will just overwrite
+        # the current value.
+        # @param [Integer] count the number of jobs that will be allowed to dequeue.
+        # @return [Integer] the new value
+        def self.increment_perform_count(count)
+          Resque.redis.incrby(
+            TEST_PERFORM_LOCK_KEY,
+            count
+          )
+        end
+
         # Pauses or unlocks workers.
         # When unlocked workers will dequeue as normal.
         # @param [Boolean] paused if `true` will pause dequeuing, if false will unlock workers to dequeue as normal.
@@ -101,7 +113,7 @@ if BawApp.test?
       end
     end
   end
-
+  ::Resque.alias_method :__pop, :pop
   # Patch all resque jobs (global so we can catch jobs defined by third parties like ActiveJob)
   ::Resque.prepend(BawWorkers::ResquePatch::PauseDequeue)
   puts 'Monkey patched Resque with BawWorkers::Resque::PauseDequeue'

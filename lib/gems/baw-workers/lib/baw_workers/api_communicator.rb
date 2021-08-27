@@ -140,7 +140,7 @@ module BawWorkers
         raise e
       end
 
-      @logger.info(@class_name) do
+      @logger.debug(@class_name) do
         "[HTTP] Received response for #{msg}, Code: #{response.code}, Body: #{response.body}, Headers: #{response.to_hash}"
       end
 
@@ -347,6 +347,7 @@ module BawWorkers
     # @return [Hash] a hash containing :response,: response_json, and :status
     # @param [Symbol] status
     def update_analysis_jobs_item_status(analysis_job_id, audio_recording_id, status, security_info)
+      status = status.to_sym
       approved_statuses = [:working, :successful, :failed, :timed_out, :cancelled]
 
       raise "Cannot set status to `#{status}`" unless approved_statuses.include?(status)

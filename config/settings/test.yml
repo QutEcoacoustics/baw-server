@@ -14,5 +14,7 @@ devise:
   secret_key: 128 char random pepper 128 char random pepper
 secret_token: some long secret token - at least 30 chars, all random
 secret_key_base: some long secret token - at least 30 chars, all random
+upload_service:
+  host: upload.test
 # if a test is failing is just takes way too long to wait for a 60s poll timeout!
 audio_tools_timeout_sec: 10

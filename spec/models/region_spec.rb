@@ -27,13 +27,15 @@ describe Region, type: :model do
   it 'has a valid factory' do
     expect(FactoryBot.create(:region)).to be_valid
   end
+
   it 'is invalid without a name' do
     expect(FactoryBot.build(:region, name: nil)).not_to be_valid
   end
+
   it 'requires a name with at least two characters' do
     s = FactoryBot.build(:region, name: 's')
     expect(s).not_to be_valid
-    expect(s.valid?).to be_falsey
+    expect(s).not_to be_valid
     expect(s.errors[:name].size).to eq(1)
   end
 
@@ -42,4 +44,8 @@ describe Region, type: :model do
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
+
+  it { is_expected.to validate_size_of(:image).less_than_or_equal_to(BawApp.attachment_size_limit) }
+  it { is_expected.to validate_content_type_of(:image).allowing('image/png', 'image/jpeg') }
+  it { is_expected.to validate_content_type_of(:image).rejecting('text/plain', 'text/xml') }
 end

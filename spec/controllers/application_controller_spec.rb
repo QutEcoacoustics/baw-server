@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe ApplicationController, type: :controller do
   describe 'Application wide tests' do
     controller do
@@ -13,7 +11,7 @@ describe ApplicationController, type: :controller do
       end
     end
 
-    it 'it fails if content-length is negative' do
+    it 'fails if content-length is negative' do
       expect {
         get :index
       }.to raise_error(CustomErrors::BadHeaderError)
@@ -46,7 +44,7 @@ describe ApplicationController, type: :controller do
       end
     end
 
-    before(:each) do
+    before do
       routes.draw do
         post 'nested' => 'anonymous#nested'
         post 'index' => 'anonymous#index'
@@ -78,7 +76,7 @@ describe ApplicationController, type: :controller do
       }
     end
 
-    shared_examples_for :sanitization, :aggregate_failures do |current_action|
+    shared_examples_for 'sanitization', :aggregate_failures do |current_action|
       let(:current_action) { current_action }
 
       def invoke(test_value, expected = :unprocessable_entity)
@@ -168,6 +166,12 @@ describe ApplicationController, type: :controller do
           ).to include({ 'some_field' => { 'test' => 'value' } })
         end
 
+        it 'preserve raw literals in an object' do
+          expect(
+            invoke({ 'test' => 'value', 'test2' => 3, 'test4' => true }, :created)
+          ).to include({ 'some_field' => { 'test' => 'value', 'test2' => 3, 'test4' => true } })
+        end
+
         it 'reject an array' do
           expect(
             invoke([1, 2, 3])
@@ -177,11 +181,11 @@ describe ApplicationController, type: :controller do
     end
 
     describe 'for root values,' do
-      it_should_behave_like :sanitization, :index
+      it_behaves_like 'sanitization', :index
     end
 
     describe 'for nested values,' do
-      it_should_behave_like :sanitization, :nested
+      it_behaves_like 'sanitization', :nested
     end
   end
 end

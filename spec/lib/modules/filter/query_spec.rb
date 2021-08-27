@@ -192,7 +192,7 @@ describe Filter::Query do
           }
         ).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-                       "Range filter must use either ('from' and 'to') or ('interval'), not both.")
+        "Range filter must use either ('from' and 'to') or ('interval'), not both.")
     end
 
     it 'occurs when a range has no recognised properties' do
@@ -329,7 +329,7 @@ describe Filter::Query do
       expect {
         create_filter(filter_params).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-                       "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
+        "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
     end
   end
 
@@ -377,7 +377,7 @@ describe Filter::Query do
       }
 
       complex_result = <<~SQL
-        SELECT "audio_recordings". "id", "audio_recordings". "duration_seconds"
+        SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
         AND ("audio_recordings"."site_id" = 5)
@@ -402,7 +402,7 @@ describe Filter::Query do
     #       }
     #       complex_result =
     #           "SELECT \
-    # EXTRACT(month,\"audio_recordings\".\"recorded_date\"), \
+    # EXTRACT (month,\"audio_recordings\".\"recorded_date\"), \
     # sum(\"audio_recordings\".\"site_id\"), \
     #           \"audio_recordings\".\"site_id\" \
     # FROM\"audio_recordings\" \
@@ -601,94 +601,94 @@ describe Filter::Query do
 
       user_id = user.id
       complex_result_2 = <<~SQL
-        SELECT"audio_recordings"."recorded_date","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."media_type"
-        FROM"audio_recordings"
+        SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."media_type"
+        FROM "audio_recordings"
         INNER
-        JOIN"sites"
-        ON("sites"."deleted_at"
+        JOIN "sites"
+        ON ("sites"."deleted_at"
         IS
         NULL)
-        AND("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_recordings"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND(
-        EXISTS(
+        AND (
+        EXISTS (
         SELECT 1
-        FROM"projects_sites"
-        INNER JOIN"projects"ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
-        AND EXISTS(
+        FROM "projects_sites"
+        INNER JOIN "projects"ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
+        AND EXISTS (
         SELECT 1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        AND("audio_recordings"."site_id"<123456)
-        AND("audio_recordings"."site_id">9876)
-        AND("audio_recordings"."site_id"
-        IN(1,2,3))
-        AND("audio_recordings"."site_id">=100)
-        AND("audio_recordings"."site_id"<200)
-        AND("audio_recordings"."status">='4567')
-        AND("audio_recordings"."status"
-        ILIKE'%containtext%')
-        AND("audio_recordings"."status"
-        ILIKE'startswithtext%')
-        AND("audio_recordings"."status"
-        ILIKE'%endswithtext')
-        AND("audio_recordings"."status">='123')
-        AND("audio_recordings"."status"<='128')
-        AND("audio_recordings"."status"='hello_status')
-        AND("audio_recordings"."duration_seconds"
-        IN(4.0,5.0,6.0))
-        AND("audio_recordings"."duration_seconds"=123.0)
-        AND(("audio_recordings"."duration_seconds"!=40.0)
-        OR(
-        NOT("audio_recordings"."channels"<=9999)))
-        AND("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
-        LEFT OUTER JOIN"audio_events"
-        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
-        WHERE"audio_events"."is_reference"=
+        AND ("audio_recordings"."site_id" < 123456)
+        AND ("audio_recordings"."site_id" > 9876)
+        AND ("audio_recordings"."site_id"
+        IN (1, 2, 3))
+        AND ("audio_recordings"."site_id" >= 100)
+        AND ("audio_recordings"."site_id" < 200)
+        AND ("audio_recordings"."status" >= '4567')
+        AND ("audio_recordings"."status"
+        ILIKE '%contain text%')
+        AND ("audio_recordings"."status"
+        ILIKE 'starts with text%')
+        AND ("audio_recordings"."status"
+        ILIKE '%ends with text')
+        AND ("audio_recordings"."status" >= '123')
+        AND ("audio_recordings"."status" <= '128')
+        AND ("audio_recordings"."status" = 'hello_status')
+        AND ("audio_recordings"."duration_seconds"
+        IN (4.0, 5.0, 6.0))
+        AND ("audio_recordings"."duration_seconds" = 123.0)
+        AND (("audio_recordings"."duration_seconds" != 40.0)
+        OR (
+        NOT ("audio_recordings"."channels" <= 9999)))
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
+        LEFT OUTER JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        WHERE "audio_events"."is_reference" =
         TRUE))
-        AND(("audio_recordings"."recorded_date"='2016-04-2412:00:00')
-        OR("audio_recordings"."media_type"
+        AND (("audio_recordings"."recorded_date" = '2016-04-24 12:00:00')
+        OR ("audio_recordings"."media_type"
           ILIKE '%world')
-        OR("audio_recordings"."media_type"
+        OR ("audio_recordings"."media_type"
           ILIKE '%testing\\_testing%')
-        OR("audio_recordings"."duration_seconds"=60.0)
-        OR("audio_recordings"."duration_seconds"<=70.0)
-        OR("audio_recordings"."duration_seconds"=50.0)
-        OR("audio_recordings"."duration_seconds">=80.0)
-        OR("audio_recordings"."channels"=1)
-        OR("audio_recordings"."channels"<=8888)
-        OR("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
-        LEFT OUTER JOIN"sites"ON"audio_recordings"."site_id"="sites"."id"
-        WHERE"sites"."id"=5))
-        OR("audio_recordings"."status"
+        OR ("audio_recordings"."duration_seconds" = 60.0)
+        OR ("audio_recordings"."duration_seconds" <= 70.0)
+        OR ("audio_recordings"."duration_seconds" = 50.0)
+        OR ("audio_recordings"."duration_seconds" >= 80.0)
+        OR ("audio_recordings"."channels" = 1)
+        OR ("audio_recordings"."channels" <= 8888)
+        OR ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
+        LEFT OUTER JOIN "sites"ON "audio_recordings"."site_id" = "sites"."id"
+        WHERE "sites"."id" = 5))
+        OR ("audio_recordings"."status"
         ILIKE '%testing\\_testing%'))
-        AND(NOT("audio_recordings"."duration_seconds"!=140.0))
-        AND(NOT("audio_recordings"."id"IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
-        LEFT OUTER JOIN"audio_events"ON"audio_recordings"."id"="audio_events"."audio_recording_id"
-        LEFT OUTER JOIN"audio_events_tags"ON"audio_events"."id"="audio_events_tags"."audio_event_id"
-        LEFT OUTER JOIN"tags"ON"audio_events_tags"."tag_id"="tags"."id"
-        WHERE"tags"."text"ILIKE'%koala%')))
-        AND("audio_recordings"."channels"=28)
-        ORDER BY"audio_recordings"."duration_seconds"DESC
+        AND (NOT ("audio_recordings"."duration_seconds" != 140.0))
+        AND (NOT ("audio_recordings"."id"IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
+        LEFT OUTER JOIN "audio_events"ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        LEFT OUTER JOIN "audio_events_tags"ON "audio_events"."id" = "audio_events_tags"."audio_event_id"
+        LEFT OUTER JOIN "tags"ON "audio_events_tags"."tag_id" = "tags"."id"
+        WHERE "tags"."text" ILIKE '%koala%')))
+        AND ("audio_recordings"."channels" = 28)
+        ORDER BY "audio_recordings"."duration_seconds"DESC
         LIMIT 10
         OFFSET 0
       SQL
@@ -724,49 +724,49 @@ describe Filter::Query do
         }
       }
       complex_result = <<~SQL
-        SELECT"audio_recordings"."id","audio_recordings"."duration_seconds"
-        FROM"audio_recordings"
-        WHERE("audio_recordings"."deleted_at"
+        SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
+        FROM "audio_recordings"
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"sites"
-        ON"audio_recordings"."site_id"="sites"."id"
-        WHERE"sites"."id"=5))
-        AND("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
+        WHERE "sites"."id" = 5))
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"audio_events"
-        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
-        WHERE"audio_events"."is_reference"=
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        WHERE "audio_events"."is_reference" = #{' '}
         TRUE))
-        AND("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"audio_events"
-        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
         LEFT
         OUTER
-        JOIN"audio_events_tags"
-        ON"audio_events"."id"="audio_events_tags"."audio_event_id"
+        JOIN "audio_events_tags"
+        ON "audio_events"."id" = "audio_events_tags"."audio_event_id"
         LEFT
         OUTER
-        JOIN"tags"
-        ON"audio_events_tags"."tag_id"="tags"."id"
-        WHERE"tags"."text"ILIKE'%koala%'))
+        JOIN "tags"
+        ON "audio_events_tags"."tag_id" = "tags"."id"
+        WHERE "tags"."text" ILIKE '%koala%'))
         ORDER
-        BY"audio_recordings"."recorded_date"
+        BY "audio_recordings"."recorded_date"
         DESC
         LIMIT 25
         OFFSET 0
@@ -778,77 +778,77 @@ describe Filter::Query do
       user_id = user.id
 
       complex_result_2 = <<~SQL
-        SELECT"audio_recordings"."id","audio_recordings"."duration_seconds"
-        FROM"audio_recordings"
+        SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
+        FROM "audio_recordings"
         INNER
-        JOIN"sites"
-        ON("sites"."deleted_at"
+        JOIN "sites"
+        ON ("sites"."deleted_at"
         IS
         NULL)
-        AND("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_recordings"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND(
-        EXISTS(
-        SELECT1
-        FROM"projects_sites"
+        AND (
+        EXISTS (
+        SELECT 1
+        FROM "projects_sites"
         INNER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
         AND
-        EXISTS(
-        SELECT1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        EXISTS (
+        SELECT 1
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
         AND ("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"sites"
-        ON"audio_recordings"."site_id"="sites"."id"
-        WHERE"sites"."id"=5))
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
+        WHERE "sites"."id" = 5))
         AND ("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"audio_events"
-        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
-        WHERE"audio_events"."is_reference"=
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        WHERE "audio_events"."is_reference" =#{' '}
         TRUE))
         AND ("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"audio_events"
-        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
         LEFT
         OUTER
-        JOIN"audio_events_tags"
-        ON"audio_events"."id"="audio_events_tags"."audio_event_id"
+        JOIN "audio_events_tags"
+        ON "audio_events"."id" = "audio_events_tags"."audio_event_id"
         LEFT
         OUTER
-        JOIN"tags"
-        ON"audio_events_tags"."tag_id"="tags"."id"
-        WHERE"tags"."text"
+        JOIN "tags"
+        ON "audio_events_tags"."tag_id" = "tags"."id"
+        WHERE "tags"."text"
         ILIKE '%koala%'))
         ORDER
-        BY"audio_recordings"."recorded_date"
+        BY "audio_recordings"."recorded_date"
         DESC
         LIMIT 25
         OFFSET 0
@@ -889,31 +889,31 @@ describe Filter::Query do
         }
       }
       complex_result = <<~SQL
-        SELECT"audio_recordings"."id","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."recorded_date","audio_recordings"."created_at"
-        FROM"audio_recordings"
-        WHERE("audio_recordings"."deleted_at"
+        SELECT "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."recorded_date", "audio_recordings"."created_at"
+        FROM "audio_recordings"
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND("audio_recordings"."id"
+        AND ("audio_recordings"."id"
         IN (
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"sites"
-        ON"audio_recordings"."site_id"="sites"."id"
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
         LEFT
         OUTER
-        JOIN"projects_sites"
-        ON"sites"."id"="projects_sites"."site_id"
+        JOIN "projects_sites"
+        ON "sites"."id" = "projects_sites"."site_id"
         LEFT
         OUTER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects"."id"<123456))
-        AND("audio_recordings"."duration_seconds"!=40.0)
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects"."id" < 123456))
+        AND ("audio_recordings"."duration_seconds" != 40.0)
         ORDER
-        BY"audio_recordings"."recorded_date"
+        BY "audio_recordings"."recorded_date"
         DESC
         LIMIT 20
         OFFSET 0
@@ -925,58 +925,58 @@ describe Filter::Query do
       user_id = user.id
 
       complex_result_2 = <<~SQL
-        SELECT"audio_recordings"."id","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."recorded_date","audio_recordings"."created_at"
-        FROM"audio_recordings"
+        SELECT "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."recorded_date", "audio_recordings"."created_at"
+        FROM "audio_recordings"
         INNER
-        JOIN"sites"
+        JOIN "sites"
         ON ("sites"."deleted_at"
         IS
         NULL)
-        AND("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_recordings"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND(
-        EXISTS(
+        AND (
+        EXISTS (
         SELECT 1
-        FROM"projects_sites"
+        FROM "projects_sites"
         INNER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
         AND
-        EXISTS(
-        SELECT1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        EXISTS (
+        SELECT 1
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        AND("audio_recordings"."id"
-        IN(
-        SELECT"audio_recordings"."id"
-        FROM"audio_recordings"
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
         LEFT
         OUTER
-        JOIN"sites"
-        ON"audio_recordings"."site_id"="sites"."id"
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
         LEFT
         OUTER
-        JOIN"projects_sites"
-        ON"sites"."id"="projects_sites"."site_id"
+        JOIN "projects_sites"
+        ON "sites"."id" = "projects_sites"."site_id"
         LEFT
         OUTER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects"."id"<123456))
-        AND("audio_recordings"."duration_seconds"!=40.0)
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects"."id" < 123456))
+        AND ("audio_recordings"."duration_seconds" != 40.0)
         ORDER
-        BY"audio_recordings"."recorded_date"
+        BY "audio_recordings"."recorded_date"
         DESC
         LIMIT 20
         OFFSET 0
@@ -1012,10 +1012,10 @@ describe Filter::Query do
       user_id = user.id
 
       complex_result = <<~SQL
-        SELECT "analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."audio_recording_id","analysis_jobs_items"."status"
+        SELECT "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."audio_recording_id", "analysis_jobs_items"."status"
         FROM (
         SELECT "tmp_audio_recordings_generator"."id"
-        AS "audio_recording_id","analysis_jobs_items"."id","analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."queue_id","analysis_jobs_items"."status","analysis_jobs_items"."created_at","analysis_jobs_items"."queued_at","analysis_jobs_items"."work_started_at",          "analysis_jobs_items"."completed_at","analysis_jobs_items"."cancel_started_at"
+        AS "audio_recording_id", "analysis_jobs_items"."id", "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."queue_id", "analysis_jobs_items"."status", "analysis_jobs_items"."created_at", "analysis_jobs_items"."queued_at", "analysis_jobs_items"."work_started_at",          "analysis_jobs_items"."completed_at", "analysis_jobs_items"."cancel_started_at"
         FROM "analysis_jobs_items"
           RIGHT
           OUTER
@@ -1036,25 +1036,25 @@ describe Filter::Query do
               NULL)
                AND ("sites"."id" = "audio_recordings"."site_id")
         WHERE (
-          EXISTS(
+          EXISTS (
             SELECT 1
                       FROM "projects_sites"
                       INNER
                       JOIN "projects"
                       ON "projects_sites"."project_id" = "projects"."id"
-                      WHERE "projects_sites"."site_id"="sites"."id"
+                      WHERE "projects_sites"."site_id" = "sites"."id"
                       AND
-                      EXISTS(
+                      EXISTS (
                       SELECT 1
                       FROM "permissions"
                       WHERE "permissions"."level"
-                      IN ('owner','writer','reader')
+                      IN ('owner', 'writer', 'reader')
                       AND "projects"."id" = "permissions"."project_id"
                       AND "projects"."deleted_at"
                       IS
                       NULL
                       AND (("permissions"."user_id" = #{user_id})
-                      OR ("permissions"."allow_logged_in"=
+                      OR ("permissions"."allow_logged_in" =#{' '}
                       TRUE)))))
               AND ("analysis_jobs_items"."audio_recording_id"
               IN (
@@ -1063,7 +1063,7 @@ describe Filter::Query do
                   SELECT "analysis_jobs_items".*
                   FROM (
                     SELECT "tmp_audio_recordings_generator"."id"
-                    AS "audio_recording_id","analysis_jobs_items"."id","analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."queue_id","analysis_jobs_items"."status","analysis_jobs_items"."created_at","analysis_jobs_items"."queued_at","analysis_jobs_items"."work_started_at","analysis_jobs_items"."completed_at","analysis_jobs_items"."cancel_started_at"
+                    AS "audio_recording_id", "analysis_jobs_items"."id", "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."queue_id", "analysis_jobs_items"."status", "analysis_jobs_items"."created_at", "analysis_jobs_items"."queued_at", "analysis_jobs_items"."work_started_at", "analysis_jobs_items"."completed_at", "analysis_jobs_items"."cancel_started_at"
                   FROM "analysis_jobs_items"
                     RIGHT
                     OUTER
@@ -1122,60 +1122,60 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL
-        SELECT"audio_events"."id","audio_events"."audio_recording_id","audio_events"."start_time_seconds","audio_events"."end_time_seconds","audio_events"."low_frequency_hertz","audio_events"."high_frequency_hertz","audio_events"."is_reference","audio_events"."creator_id","audio_events"."updated_at","audio_events"."created_at"
-        FROM"audio_events"
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at"
+        FROM "audio_events"
         INNER
-        JOIN"audio_recordings"
-        ON("audio_recordings"."deleted_at"
+        JOIN "audio_recordings"
+        ON ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND ("audio_recordings"."id"="audio_events"."audio_recording_id")
+        AND ("audio_recordings"."id" = "audio_events"."audio_recording_id")
         INNER
-        JOIN"sites"
-        ON("sites"."deleted_at"
+        JOIN "sites"
+        ON ("sites"."deleted_at"
         IS
         NULL)
-        AND ("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_events"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_events"."deleted_at"
         IS
         NULL)
-        AND((
-        EXISTS(
-        SELECT1
-        FROM"projects_sites"
+        AND ((
+        EXISTS (
+        SELECT 1
+        FROM "projects_sites"
         INNER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
         AND
-        EXISTS(
-        SELECT1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        EXISTS (
+        SELECT 1
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        OR(
-        EXISTS(
-        SELECT1
-        FROM"audio_events""ae_ref"
-        WHERE"ae_ref"."deleted_at"
+        OR (
+        EXISTS (
+        SELECT 1
+        FROM "audio_events" "ae_ref"
+        WHERE "ae_ref"."deleted_at"
         IS
         NULL
-        AND"ae_ref"."is_reference"=
+        AND "ae_ref"."is_reference" =#{' '}
         TRUE
-        AND"ae_ref"."id"="audio_events"."id")))
-        AND(("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")>3)
+        AND "ae_ref"."id" = "audio_events"."id")))
+        AND (("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 3)
         ORDER
-        BY"audio_events"."created_at"
+        BY "audio_events"."created_at"
         DESC
-        LIMIT25
-        OFFSET0
+        LIMIT 25
+        OFFSET 0
       SQL
 
       comparison_sql(filter_query.query_full.to_sql, expected_sql)
@@ -1205,56 +1205,56 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL
-        SELECT"audio_events"."id","audio_events"."audio_recording_id","audio_events"."start_time_seconds","audio_events"."end_time_seconds","audio_events"."low_frequency_hertz","audio_events"."high_frequency_hertz","audio_events"."is_reference","audio_events"."creator_id","audio_events"."updated_at","audio_events"."created_at"
-        FROM"audio_events"
-        INNER JOIN"audio_recordings"
-        ON("audio_recordings"."deleted_at"
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at"
+        FROM "audio_events"
+        INNER JOIN "audio_recordings"
+        ON ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND ("audio_recordings"."id"="audio_events"."audio_recording_id")
+        AND ("audio_recordings"."id" = "audio_events"."audio_recording_id")
         INNER
-        JOIN"sites"
-        ON("sites"."deleted_at"
+        JOIN "sites"
+        ON ("sites"."deleted_at"
         IS
         NULL)
-        AND("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_events"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_events"."deleted_at"
         IS
         NULL)
-        AND((
-        EXISTS(
-        SELECT1
-        FROM"projects_sites"
-        INNER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
-        AND
-        EXISTS(
+        AND ((
+        EXISTS (
         SELECT 1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        FROM "projects_sites"
+        INNER
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
+        AND
+        EXISTS (
+        SELECT 1
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        OR(
-        EXISTS(
-        SELECT1
-        FROM"audio_events""ae_ref"
-        WHERE"ae_ref"."deleted_at"
+        OR (
+        EXISTS (
+        SELECT 1
+        FROM "audio_events" "ae_ref"
+        WHERE "ae_ref"."deleted_at"
         IS
         NULL
-        AND"ae_ref"."is_reference"=
+        AND "ae_ref"."is_reference" =#{' '}
         TRUE
-        AND"ae_ref"."id"="audio_events"."id")))
-        AND(("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")>3)
+        AND "ae_ref"."id" = "audio_events"."id")))
+        AND (("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 3)
         ORDER
-        BY("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")
+        BY ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
         ASC
         LIMIT 25
         OFFSET 0
@@ -1284,46 +1284,46 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL
-        SELECT"audio_recordings"."id","audio_recordings"."uuid","audio_recordings"."recorded_date","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."sample_rate_hertz","audio_recordings"."channels","audio_recordings"."bit_rate_bps","audio_recordings"."media_type","audio_recordings"."data_length_bytes","audio_recordings"."status","audio_recordings"."created_at","audio_recordings"."updated_at"
-        FROM"audio_recordings"
+        SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."updated_at"
+        FROM "audio_recordings"
         INNER
-        JOIN"sites"
-        ON("sites"."deleted_at"
+        JOIN "sites"
+        ON ("sites"."deleted_at"
         IS
         NULL)
-        AND ("sites"."id"="audio_recordings"."site_id")
-        WHERE("audio_recordings"."deleted_at"
+        AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND(
-        EXISTS(
-        SELECT1
-        FROM"projects_sites"
+        AND (
+        EXISTS (
+        SELECT 1
+        FROM "projects_sites"
         INNER
-        JOIN"projects"
-        ON"projects_sites"."project_id"="projects"."id"
-        WHERE"projects_sites"."site_id"="sites"."id"
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE "projects_sites"."site_id" = "sites"."id"
         AND
-        EXISTS(
-        SELECT1
-        FROM"permissions"
-        WHERE"permissions"."level"
-        IN('owner','writer','reader')
-        AND"projects"."id"="permissions"."project_id"
-        AND"projects"."deleted_at"
+        EXISTS (
+        SELECT 1
+        FROM "permissions"
+        WHERE "permissions"."level"
+        IN ('owner', 'writer', 'reader')
+        AND "projects"."id" = "permissions"."project_id"
+        AND "projects"."deleted_at"
         IS
         NULL
-        AND(("permissions"."user_id"=#{user_id})
-        OR("permissions"."allow_logged_in"=
+        AND (("permissions"."user_id" = #{user_id})
+        OR ("permissions"."allow_logged_in" =
         TRUE)))))
-        AND("audio_recordings"."recorded_date"+
-        CAST("audio_recordings"."duration_seconds"||'seconds'asinterval)<'2016-03-01
+        AND ("audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval) < '2016-03-01
         T02:00:00')
-        AND("audio_recordings"."recorded_date"+
-        CAST("audio_recordings"."duration_seconds"||'seconds'asinterval)>'2016-03-01
+        AND ("audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval) > '2016-03-01
         T01:50:00')
         ORDER
-        BY"audio_recordings"."recorded_date"
+        BY "audio_recordings"."recorded_date"
         DESC
         LIMIT 25
         OFFSET 0

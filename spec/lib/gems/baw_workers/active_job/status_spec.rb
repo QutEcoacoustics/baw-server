@@ -386,7 +386,7 @@ describe BawWorkers::ActiveJob::Status do
     before do
       #  dereference let
       job
-      perform_jobs
+      perform_jobs(wait_for_resque_failures: false)
       job.refresh_status!
     end
 
@@ -396,8 +396,37 @@ describe BawWorkers::ActiveJob::Status do
 
     it 'has only error messages' do
       expect(job.status.messages).to contain_exactly(
-        "The task failed because of an error: I'm a bad little job",
+        /The job failed because of an error: I'm a bad little job at .*/,
         "on error called: I'm a bad little job"
+      )
+    end
+
+    it 'has terminal TTL' do
+      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+    end
+  end
+
+  describe 'discarded job' do
+    pause_all_jobs
+
+    let(:job) { Fixtures::DiscardJob.perform_later!('do_an_discard') }
+
+    before do
+      #  dereference let
+      job
+      perform_jobs(wait_for_resque_failures: false)
+      job.refresh_status!
+    end
+
+    it 'has a status of failed' do
+      expect(job.status).to be_failed
+    end
+
+    it 'has only error messages' do
+      expect(job.status.messages).to contain_exactly(
+        /The job failed because of an error: should be discarded at .*/,
+        /The job was discarded: .*/
       )
     end
 
@@ -489,10 +518,10 @@ describe BawWorkers::ActiveJob::Status do
             a_collection_containing_exactly(
               'Attempt 1',
               'tick 1/3',
-              'The task failed because of an error: BawWorkers::Jobs::IntentionalRetry',
+              /The job failed because of an error: BawWorkers::Jobs::IntentionalRetry at .*/,
               'Attempt 2',
               'tick 2/3',
-              'The task failed because of an error: BawWorkers::Jobs::IntentionalRetry',
+              /The job failed because of an error: BawWorkers::Jobs::IntentionalRetry at .*/,
               'Attempt 3',
               'tick 3/3',
               a_string_matching(/Completed at/)

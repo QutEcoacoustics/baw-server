@@ -18,7 +18,8 @@ describe BawWorkers::Jobs::Harvest::GatherFiles do
       BawWorkers::Config.logger_worker,
       file_info,
       Settings.available_formats.audio + Settings.available_formats.audio_decode_only,
-      config_file_name
+      config_file_name,
+      to_do_root: Pathname(Settings.actions.harvest.to_do_path).realpath
     )
   }
 

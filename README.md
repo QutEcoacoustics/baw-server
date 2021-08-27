@@ -27,6 +27,7 @@ Docker and docker-compose are required to run this application.
 Install:
 - Optionally: At least Windows 10 Version 2004
 - Docker desktop
+  - a [recent version (>3.4) with Docker Compose V2](https://docs.docker.com/compose/cli-command/)!
 - WSL Version 2 (and add a default Ubuntu distro): https://docs.microsoft.com/en-us/windows/wsl/install-win10
 - Enable the `metadata` flag for DrvFS mounts: https://docs.microsoft.com/en-us/windows/wsl/wsl-config#configure-per-distro-launch-settings-with-wslconf
 - If you have issue with bind mount permissions, boot the container as the root
@@ -50,20 +51,20 @@ This will prepare a complete development environment. To see what is involved in
 the setup, look at the  [`Dockerfile`](./Dockerfile) and [`bin/setup`](bin/setup) files.
 
 You can `stop` the running containers using <kbd>ctrl+c</kbd> which is equivalent
-to `docker-compose stop`.
+to `docker compose stop`.
 
-- `docker-compose stop` will stop the containers
-- `docker-compose down` will stop containers, remove containers, and delete networks
+- `docker compose stop` will stop the containers
+- `docker compose down` will stop containers, remove containers, and delete networks
     - images will not be deleted
     - the primary application state (on the postgres volume) will not be removed
 
-**NOTE:** changes in the Dockerfile will not be reflected in docker-compose images
+**NOTE:** changes in the Dockerfile will not be reflected in docker compose images
 or containers unless the compose project is destroyed or the containers are
 rebuilt.
 
 ### Destroy or rebuild the docker environment
 
-By default docker volume state is persisted between restarts of `docker-compose`.
+By default docker volume state is persisted between restarts of `docker compose`.
 This means you can return to your previous development session easily. If,
 however, you want to start from scratch you can remove state by doing one of
 the following.
@@ -104,10 +105,10 @@ For the following commands:
   in the built in terminal
 - if you're entering these commands from your host
   - cd to this directory
-  - prefix commands with `docker-compose web exec` to run the commands once off
-  - if the service isn't started, use `docker-compose web start` to start it
-  - use `docker-compose web run xxx` to run the web service and then run command `xxx`
-  - `docker-compose exec web bash` to enter an interactive session
+  - prefix commands with `docker compose web exec` to run the commands once off
+  - if the service isn't started, use `docker compose web start` to start it
+  - use `docker compose web run xxx` to run the web service and then run command `xxx`
+  - `docker compose exec web bash` to enter an interactive session
 
 Common tasks that you may need:
 
@@ -127,9 +128,9 @@ need to use `bundle exec`.
 
 Docker commands:
 
-- `docker-compose stop` will stop the containers
-- `docker-compose stop web` stop web container so you can do something else
-- `docker-compose exec bundle exec passenger start` - the default action for `docker-compose up`
+- `docker compose stop` will stop the containers
+- `docker compose stop web` stop web container so you can do something else
+- `docker compose exec bundle exec passenger start` - the default action for `docker compose up`
 
 When running the server in `development` or `test` modes, these configuration
 files will be used:
@@ -142,7 +143,7 @@ They are based on `/config/settings/default.yml`.
 ### Workers
 
 - run commands on the worker container
-    - e.g. `docker-compose workers exec ...`
+    - e.g. `docker compose workers exec ...`
 - list worker commands: `baw-workers -T` or `baw-workers` (using the manually maintained binstub)
 - run a new worker: `baw-workers baw:worker:run`
 - run a scheduler to process time-delayed tasks: `baw-workers baw:worker:run_scheduler`
@@ -187,7 +188,7 @@ These commands should be executed automatically but are listed because they are 
 - Then migrate and seed the test database: `rails db:migrate db:seed RAILS_ENV=test`
 - Prepare the local development database: `rails db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
-- Run rspec tests and generate a HTML report: `rspec  --format html --out rspec_results.html`
+- Run rspec tests and generate a HTML report: `rspec --format html --out rspec_results.html`
 - Generate API documentation: `bin/generate_docs.sh`
 
 
@@ -209,7 +210,7 @@ A basic redis setup is included with the docker-compose file.
 3. Set the GitHub auth token for docs generation:
   - `export CHANGELOG_GITHUB_TOKEN=xxx`
 4. Generate the release notes:
-  - `docker-compose run web rake changelog`
+  - `docker compose run web rake changelog`
 5. Update the version in the `VERSION` file
   - `echo "$NEXT_VERSION" > VERSION`
 6. Commit the changed files

@@ -5,7 +5,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
   create_audio_recordings_hierarchy
 
   let(:lt_recording) {
-    create(
+    FactoryBot.create(
       :audio_recording,
       recorded_date: Time.zone.parse('2019-09-13T00:00:01+1000 '),
       duration_seconds: audio_file_bar_lt_metadata[:duration_seconds],
@@ -69,6 +69,10 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
     "/audio_recordings/#{lt_recording.id}/original"
   end
 
+  # these tests are slow because we're actually generating a bunch of media
+  # segments. I thought about faking media generation but every fake adds
+  # technical debt (see "Why mocking is bad)" and it would be more effort to
+  # disable a working service.
   context 'with the admin user', :slow do
     let(:user) { admin_user }
     let(:token) { admin_token }

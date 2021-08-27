@@ -1,4 +1,6 @@
-version: "3.8"
+# now using `docker compose` (over  `docker-compose`) and
+# the version is the latest schema defined by the docker compose specification.
+# https://github.com/compose-spec/compose-spec/blob/master/spec.md#Requirements-and-optional-attributes
 services:
   redis:
     image: redis:6-alpine
@@ -20,15 +22,16 @@ services:
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
 
-  upload:
+  upload: &upload
     # Default command is `sftpgo serve`
     #command: sftpgo serve
     image: drakkan/sftpgo:edge-alpine
     depends_on:
       - db
+    environment:
+      RAILS_ENV: development
     networks:
-      - baw_upload_network
-      - baw_network
+      baw_network:
     ports:
       - "8080:8080"
       - "2022:2022"
@@ -38,30 +41,46 @@ services:
       - type: bind
         source: ./provision/upload/config
         target: /var/lib/sftpgo
-      # mount the harvester to do directory - this is where we want to allow uploads
+        # mount the harvester to do directory - this is where we want to allow uploads
       - type: bind
         # the rails app knows about this directory from config (actions/harvest/to_do_path)
-        source: ./tmp/_harvester_to_do_path
+        source: ./tmp/_development_harvester_to_do_path
+        target: /srv/sftpgo/data
+  upload_test:
+    <<: *upload
+    environment:
+      RAILS_ENV: test
+      SFTPGO_DATA_PROVIDER__NAME: baw_local_test
+    networks:
+      baw_network:
+        aliases:
+          - upload.test
+    ports:
+      # note this only changes host mapping, internal port is still 8080 and what is used by the web service's tests
+      - "8081:8080"
+      - "2023:2022"
+      - "8091:8090"
+    volumes:
+      - type: bind
+        source: ./provision/upload/config
+        target: /var/lib/sftpgo
+      - type: bind
+        source: ./tmp/_test_harvester_to_do_path
         target: /srv/sftpgo/data
 
   workers: &worker
     build:
-      context: .
-    #bundle exec rdebug-ide --host 0.0.0.0 --port 1235 --skip_wait_for_start -- bin/baw-workers baw:worker:run
+        context: .
+        dockerfile: ./Dockerfile
     command: >-
       rerun -- bin/baw-workers baw:worker:run
     depends_on:
       - db
       - redis
     environment:
-      RAILS_ENV: ${RAILS_ENV:-development}
-      MIGRATE_DB: "false"
+      RAILS_ENV: development
     networks:
       - baw_network
-    #ports: []
-      # rdebug-ide port (mapped for workers)
-      #- "1235:1235"
-      #- "26162:26162"
     restart: on-failure
     volumes:
       - type: bind
@@ -73,7 +92,6 @@ services:
     <<: *worker
     environment:
       RAILS_ENV: test
-      MIGRATE_DB: "false"
   scheduler:
     <<: *worker
     command: >-
@@ -84,26 +102,27 @@ services:
       rerun -- bin/baw-workers baw:worker:run_scheduler
     environment:
       RAILS_ENV: test
-      MIGRATE_DB: "false"
 
   web:
     build:
-      context: .
+        context: .
+        dockerfile: ./Dockerfile
     command: bundle exec rails server
     depends_on:
       - db
       - redis
       - upload
+      - upload_test
       - workers
       - workers_test
       - scheduler
       - scheduler_test
     environment:
-      RAILS_ENV: ${RAILS_ENV:-development}
+      RAILS_ENV: development
       MIGRATE_DB: "true"
       # pass through values
-      NEXT_VERSION:
-      CHANGELOG_GITHUB_TOKEN:
+      NEXT_VERSION: ~
+      CHANGELOG_GITHUB_TOKEN: ~
     user: baw_web
     volumes:
       - type: bind
@@ -116,10 +135,8 @@ services:
       - "26162:26162"
     networks:
       - baw_network
-      - baw_upload_network
 networks:
   baw_network:
-  baw_upload_network:
 
 volumes:
   # We're using a volume mount for tmp because it offers better performance

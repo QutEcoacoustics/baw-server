@@ -89,7 +89,7 @@ module BawWorkers
           # job.
           # it will also allow us to re-enqueue if the duplicated job has a terminal status
 
-          if item.status == 'completed'
+          if item.status == HarvestItem::STATUS_COMPLETED
             logger.info(
               'will not attempt item again, it is completed',
               rel_path: rel_path,
@@ -118,7 +118,7 @@ module BawWorkers
           raise ArgumentError, "#{root_to_do_path}/#{path} does not exist" unless (root_to_do_path / rel_path).exist?
 
           # don't store any info, we're going to recalculate it all on dequeue anyway
-          HarvestItem.new(path: rel_path, status: 'new', uploader_id: id, info: {})
+          HarvestItem.new(path: rel_path, status: HarvestItem::STATUS_NEW, uploader_id: id, info: {})
         end
 
         # TODO: dedupe
@@ -136,7 +136,7 @@ module BawWorkers
           is_child = path.to_s.start_with?(to_do_path.to_s)
           unless is_child
             raise ArgumentError,
-                  "harvest path `#{path}` is not a child of harvester to_do_path `#{to_do_path}`"
+              "harvest path `#{path}` is not a child of harvester to_do_path `#{to_do_path}`"
           end
 
           path

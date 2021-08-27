@@ -42,8 +42,8 @@ module SftpgoClient
     def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v1/', logger: nil)
       @base_uri =
         case scheme
-        when 'http' then URI::HTTP.build({host: host, port: port, path: base_path })
-        when 'https' then URI::HTTPS.build({host: host, port: port, path: base_path })
+        when 'http' then URI::HTTP.build({ host: host, port: port, path: base_path })
+        when 'https' then URI::HTTPS.build({ host: host, port: port, path: base_path })
         else
           raise ArgumentError, "Unsupported scheme `#{scheme}`"
         end

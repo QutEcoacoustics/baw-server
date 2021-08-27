@@ -4,21 +4,6 @@ describe BawWorkers::Jobs::AudioCheck::Action do
   require 'helpers/shared_test_helpers'
 
   include_context 'shared_test_helpers'
-
-  # we want to control the execution of jobs for this set of tests,
-  # so change the queue name so the test worker does not
-  # automatically process the jobs
-  before do
-    default_queue = Settings.actions.audio_check.queue
-
-    allow(Settings.actions.audio_check).to receive(:queue).and_return("#{default_queue}_manual_tick")
-
-    # cleanup resque queues before each test
-    BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(Settings.actions.audio_check.queue)
-    Resque::Plugins::Status::Hash.clear
-  end
-
   let(:queue_name) { Settings.actions.audio_check.queue }
 
   let(:audio_file_check) {
@@ -46,65 +31,50 @@ describe BawWorkers::Jobs::AudioCheck::Action do
     }
   }
 
-  context 'queues' do
-    let(:expected_payload) {
-      {
-        'class' => BawWorkers::Jobs::AudioCheck::Action.to_s,
-        'args' => [
-          '2f65b9b2d3ffd4222b82102bc0e15e79',
-          {
-            'audio_params' => test_params
-          }
-        ]
-      }
+  let(:expected_payload) {
+    {
+      audio_params: test_params.deep_symbolize_keys
     }
+  }
 
-    it 'checks we\'re using a manual queue' do
-      expect(Resque.queue_from_class(BawWorkers::Jobs::AudioCheck::Action)).to end_with('_manual_tick')
+  pause_all_jobs
+
+  context 'queues' do
+    after do
+      clear_pending_jobs
     end
 
-    it 'works on the media queue' do
-      expect(Resque.queue_from_class(BawWorkers::Jobs::AudioCheck::Action)).to eq(queue_name)
+    it 'works on the audio_check queue' do
+      expect(BawWorkers::Jobs::AudioCheck::Action.queue_name).to eq(queue_name)
     end
 
     it 'can enqueue' do
       BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
-      expect(Resque.size(queue_name)).to eq(1)
-
-      actual = Resque.peek(queue_name)
-      expect(actual).to include(expected_payload)
+      expect_queue_count(queue_name, 1)
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-      queued_query = { audio_params: test_params }
+      expect_queue_count(queue_name, 0)
 
-      expect(Resque.size(queue_name)).to eq(0)
-      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Jobs::AudioCheck::Action, queued_query)).to eq(false)
-      expect(Resque.enqueued?(BawWorkers::Jobs::AudioCheck::Action, queued_query)).to eq(false)
+      job_id1 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
+      expect_queue_count(queue_name, 1)
+      expect(job_id1).to match /analysis_job:[a-f0-9]{32}/
 
-      result1 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
-      expect(Resque.size(queue_name)).to eq(1)
-      expect(Resque.enqueued?(BawWorkers::Jobs::AudioCheck::Action, queued_query)).to eq(true)
-      expect(result1).to be_a(String)
-      expect(result1.size).to eq(32)
+      job_id2 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
+      expect_queue_count(queue_name, 1)
+      expect(job_id2).to eq(job_id1)
 
-      result2 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
-      expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(nil)
-      expect(Resque.enqueued?(BawWorkers::Jobs::AudioCheck::Action, queued_query)).to eq(true)
+      job_id3 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
+      expect_queue_count(queue_name, 1)
+      expect(job_id3).to eq(job_id1)
 
-      result3 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
-      expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(nil)
-      expect(Resque.enqueued?(BawWorkers::Jobs::AudioCheck::Action, queued_query)).to eq(true)
+      actual = BawWorkers::ResqueApi.peek(queue_name)
+      expect(actual.arguments.first).to include(expected_payload)
+      expect_queue_count(queue_name, 1)
 
-      actual = Resque.peek(queue_name)
-      expect(actual).to include(expected_payload)
-      expect(Resque.size(queue_name)).to eq(1)
-
-      popped = Resque.pop(queue_name)
-      expect(popped).to include(expected_payload)
-      expect(Resque.size(queue_name)).to eq(0)
+      popped = BawWorkers::ResqueApi.pop(queue_name)
+      expect(popped.arguments.first).to include(expected_payload)
+      expect_queue_count(queue_name, 0)
     end
   end
 
@@ -112,18 +82,21 @@ describe BawWorkers::Jobs::AudioCheck::Action do
     context 'raises error' do
       it 'with a params that is not a hash' do
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform('not a hash')
-        }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
+          BawWorkers::Jobs::AudioCheck::Action.new('not a hash').action_run('not a hash', true)
+        }.to raise_error(
+          ArgumentError, "Param was a 'String'. It must be a 'Hash'. 'not a hash'."
+        )
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'with a params missing required value' do
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(test_params.except('original_format'))
+          BawWorkers::Jobs::AudioCheck::Action.new(test_params.except('original_format')).action_run(test_params.except('original_format'),
+            true)
         }.to raise_error(ArgumentError, /Audio params must include original_format/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'with correct parameters when file does not exist' do
@@ -141,11 +114,11 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         end
 
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError,
-                         /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
+          /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file hash is incorrect' do
@@ -164,11 +137,11 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError,
-                         /File hashes DO NOT match for.*?:file_hash=>:fail/)
+          /File hashes DO NOT match for.*?:file_hash=>:fail/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file extension is incorrect' do
@@ -187,10 +160,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file hashes do not match' do
@@ -215,10 +188,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file integrity is uncertain' do
@@ -236,10 +209,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /Header processing failed/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file hash is empty and other properties do not match' do
@@ -260,11 +233,11 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError,
-                         /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
+          /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when recorded date is in incorrect format' do
@@ -284,10 +257,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(original_params, true)
         }.to raise_error(ArgumentError, /recorded_date must be a UTC time \(i\.e\. end with Z\), given/)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
     end
 
@@ -306,7 +279,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, false, true)
 
         # act
-        result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+        result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
         # assert
         expect(result.size).to eq(1)
@@ -319,7 +292,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         expect(File).not_to exist(original_possible_paths.first)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'with correct parameters for file with new style name' do
@@ -336,7 +309,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, true, true)
 
         # act
-        result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+        result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
         # assert
         expect(result.size).to eq(1)
@@ -346,7 +319,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         expect(File).not_to exist(original_possible_paths.first)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'with correct parameters when both old and new files exist' do
@@ -364,7 +337,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, false)
 
         # act
-        result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+        result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
         # assert
         expect(result.size).to eq(2)
@@ -379,7 +352,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         expect(result[0][:moved_path]).to be_falsey
         expect(result[1][:moved_path]).to be_falsey
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when updating audio file properties' do
@@ -410,10 +383,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         cookie_value = "XSRF-TOKEN=#{xsrf_value}; path=/"
         login_request = stub_request(:post, "#{default_uri}/security")
                         .with(body: get_api_security_request(email, password),
-                              headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
-                                         'User-Agent' => 'Ruby' })
+                          headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                                     'User-Agent' => 'Ruby' })
                         .to_return(status: 200, body: get_api_security_response(email,
-                                                                                auth_token).to_json, headers: { 'Set-Cookie' => cookie_value })
+                          auth_token).to_json, headers: { 'Set-Cookie' => cookie_value })
 
         expected_request_body = {
           media_type: audio_file_mono_media_type.to_s,
@@ -426,13 +399,13 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
           .with(body: expected_request_body.to_json,
-                headers: { 'Accept' => 'application/json', 'Authorization' => "Token token=\"#{auth_token}\"",
-                           'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
-                           'X-Xsrf-Token' => xsrf_decoded })
+            headers: { 'Accept' => 'application/json', 'Authorization' => "Token token=\"#{auth_token}\"",
+                       'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
+                       'X-Xsrf-Token' => xsrf_decoded })
           .to_return(status: 200)
 
         # act
-        result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+        result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
         # assert
         expect(result.size).to eq(1)
@@ -442,9 +415,9 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         expect(File).not_to exist(original_possible_paths.first)
 
-        expect(result[0][:api_response]).to eq(:success)
+        expect(result[0][:api_response]).to eq(:notrequired)
 
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect_no_sent_mail
       end
 
       it 'when file hash not given, and only file hash needs to be updated' do
@@ -469,18 +442,18 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         password = 'password'
         login_request = stub_request(:post, "#{default_uri}/security")
                         .with(body: get_api_security_request(email, password),
-                              headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
-                                         'User-Agent' => 'Ruby' })
+                          headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                                     'User-Agent' => 'Ruby' })
                         .to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
         stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
           .with(body: expected_request_body.to_json,
-                headers: { 'Accept' => 'application/json', 'Authorization' => "Token token=\"#{auth_token}\"",
-                           'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+            headers: { 'Accept' => 'application/json', 'Authorization' => "Token token=\"#{auth_token}\"",
+                       'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
           .to_return(status: 200)
 
         # act
-        result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+        result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
         # assert
         expect(result.size).to eq(1)
@@ -490,8 +463,8 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
         expect(File).not_to exist(original_possible_paths.first)
 
-        expect(result[0][:api_response]).to eq(:success)
-        expect(ActionMailer::Base.deliveries.count).to eq(0)
+        expect(result[0][:api_response]).to eq(:notrequired)
+        expect_no_sent_mail
       end
 
       context 'in dry run mode' do
@@ -520,8 +493,8 @@ describe BawWorkers::Jobs::AudioCheck::Action do
           password = 'password'
           login_request = stub_request(:post, "#{default_uri}/security")
                           .with(body: get_api_security_request(email, password),
-                                headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
-                                           'User-Agent' => 'Ruby' })
+                            headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json',
+                                       'User-Agent' => 'Ruby' })
                           .to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
           expected_request_body = {
@@ -535,12 +508,12 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
           update_request = stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
                            .with(body: expected_request_body.to_json,
-                                 headers: { 'Accept' => 'application/json',
-                                            'Authorization' => "Token token=\"#{auth_token}\"", 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+                             headers: { 'Accept' => 'application/json',
+                                        'Authorization' => "Token token=\"#{auth_token}\"", 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
                            .to_return(status: 200)
 
           # act
-          #result = BawWorkers::Jobs::AudioCheck::Action.action_perform(original_params)
+          #result = BawWorkers::Jobs::AudioCheck::Action.new(original_params).action_run(test_params, true)
 
           result = audio_file_check.run(original_params, false)
           # assert
@@ -549,7 +522,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
           original_possible_paths = audio_original.possible_paths(media_request_params)
           expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
           expect(File.exist?(original_possible_paths.second)).to be_falsey,
-                                                                 "File should not exist #{original_possible_paths.second}"
+            "File should not exist #{original_possible_paths.second}"
 
           expect(login_request).not_to have_been_requested
           login_request.should_not have_been_requested
@@ -558,35 +531,9 @@ describe BawWorkers::Jobs::AudioCheck::Action do
           update_request.should_not have_been_requested
 
           expect(result[0][:api_response]).to eq(:dry_run)
-          expect(ActionMailer::Base.deliveries.count).to eq(0)
+          expect_no_sent_mail
         end
       end
     end
-  end
-
-  it 'runs standalone with errors' do
-    csv_file = copy_test_audio_check_csv
-
-    BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
-      audio_params[:datetime_with_offset] = audio_params[:recorded_date]
-      create_original_audio(audio_params, audio_file_mono, false)
-      # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))
-    end
-
-    result = BawWorkers::Jobs::AudioCheck::Action.action_perform_rake(csv_file, false)
-
-    expect(worker_log_content).to include('File hash and other properties DO NOT match')
-    expect(result[:successes].size).to eq(0)
-    expect(result[:failures].size).to eq(24)
-  end
-
-  it 'runs successfully using resque' do
-    csv_file = copy_test_audio_check_csv
-
-    result = BawWorkers::Jobs::AudioCheck::Action.action_enqueue_rake(csv_file, true)
-
-    expect(worker_log_content).to match(/INFO-BawWorkers::Jobs::AudioCheck::Action-.+\] Job enqueue returned/)
-    expect(result[:successes].size).to eq(24)
-    expect(result[:failures].size).to eq(0)
   end
 end

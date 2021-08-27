@@ -14,7 +14,7 @@ module UploadServiceSteps
   end
 
   step 'service not available' do
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
+    stub_request(:get, "#{@upload_host}:8080/api/v1/providerstatus")
       .to_return(body: 'error message', status: 500)
   end
 
@@ -91,11 +91,13 @@ module UploadServiceSteps
     # not worth adding the tools for one test
     output = `#{command} -v 2>&1`
 
-    message = -> { "Expected exit code 0, got #{$CHILD_STATUS.exitstatus}.\nCommand: #{command}\nOutput & errpr:\n#{output}" }
+    message = lambda {
+      "Expected exit code 0, got #{$CHILD_STATUS.exitstatus}.\nCommand: #{command}\nOutput & errpr:\n#{output}"
+    }
     if should_work
       expect($CHILD_STATUS.exitstatus).to be_zero, message
     else
-      expect($CHILD_STATUS.exitstatus).to_not be_zero, message
+      expect($CHILD_STATUS.exitstatus).not_to be_zero, message
     end
   end
 
@@ -103,7 +105,7 @@ module UploadServiceSteps
     @upload_path = Fixtures.send(file.to_sym)
 
     run_curl(
-      %(curl --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://upload:2022"),
+      %(curl --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://#{@upload_host}:2022"),
       should_work: should
     )
   end
@@ -111,14 +113,14 @@ module UploadServiceSteps
   step 'it should exist in the harvester directory, in the user directory' do
     #tmp/_harvester_to_do_path/harvest_1/test-audio-mono.ogg
     expected = Pathname(harvest_to_do_path) / @username / @upload_path.basename
-    expect(File).to exist(expected)
+    expect(File).to exist(expected), expected
   end
 
   step 'I upload:' do |table|
     @users = table.rows.map { |(file, to, expected)|
       send_path = Fixtures.send(file.to_sym)
       run_curl(
-        %(curl --user "#{@username}:#{@password}" -T #{send_path} -k "sftp://upload:2022#{to}" --ftp-create-dirs),
+        %(curl --user "#{@username}:#{@password}" -T #{send_path} -k "sftp://#{@upload_host}:2022#{to}" --ftp-create-dirs),
         should_work: true
       )
 
@@ -131,21 +133,26 @@ module UploadServiceSteps
     user_dir = Pathname(harvest_to_do_path) / @username
     user_dir.glob('**/*.*') do |file_path|
       remote_path = file_path.relative_path_from(user_dir)
-      command = %(curl --user "#{@username}:#{@password}" -Q '-RM "#{remote_path}"' "sftp://upload:2022" --insecure)
+      command = %(curl --user "#{@username}:#{@password}" -Q '-RM "#{remote_path}"' "sftp://#{@upload_host}:2022" --insecure)
       run_curl(command, should_work: true)
-      expect(file_path).to_not exist
+      expect(file_path).not_to exist
     end
 
     user_dir.glob('**/*/').sort_by { |x| -x.to_s.count('/') }.each do |dir_path|
       remote_path = dir_path.relative_path_from(user_dir)
-      command = %(curl --user "#{@username}:#{@password}" -Q '-RMDIR "#{remote_path}"' "sftp://upload:2022" --insecure)
+      command = %(curl --user "#{@username}:#{@password}" -Q '-RMDIR "#{remote_path}"' "sftp://#{@upload_host}:2022" --insecure)
       run_curl(command, should_work: true)
 
-      expect(dir_path).to_not exist
+      expect(dir_path).not_to exist
     end
   end
 
   def self.included(example_group)
+    example_group.before(:all) do
+
+      @upload_host = Settings.upload_service.host
+
+    end
     example_group.after(:all) do
       BawWorkers::Config.upload_communicator.delete_all_users
     end

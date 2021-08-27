@@ -48,7 +48,7 @@ actions:
   harvest:
     queue: harvest_<%= BawApp.env %>
     dry_run: false
-    to_do_path: <%= BawApp.root %>/real_data
+    to_do_path: <%= BawApp.root %>/tmp/_<%= BawApp.env %>_harvester_to_do_path
     config_file_name: harvest.yml
     progressive_upload_directory: ./tmp/_progressive-upload/
   media:
@@ -122,7 +122,6 @@ paths:
   programs_dir: <%= BawApp.root %>/programs
 logs:
   # used to disambiguate log file refs in a multi instance scenario
-  stdout: <%= BawApp.log_to_stdout? %>
   tag: 'local'
   directory: <%= BawApp.root %>/log
 # used by workers to contact a web-server

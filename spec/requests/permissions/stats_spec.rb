@@ -4,7 +4,9 @@ describe 'Stats permissions' do
   create_entire_hierarchy
 
   given_the_route '/stats' do
-    {}
+    {
+      id: :invalid
+    }
   end
 
   send_create_body do
@@ -26,8 +28,13 @@ describe 'Stats permissions' do
     action: :index
   }
 
-  ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous, :invalid,
+  ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous,
           can: [custom_index],
-          cannot: [:create, :update, :destroy],
+          cannot: [:create, :update, :destroy, :new, :filter, :show],
           fails_with: :not_found
+
+  the_user :invalid,
+           can_do: nothing,
+           and_cannot_do: everything,
+           fails_with: :unauthorized
 end

@@ -70,10 +70,10 @@ module IncludeController
 
     # update users last activity log every 10 minutes
     before_action :set_last_seen_at,
-                  if: proc {
-                    user_signed_in? &&
-                      (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
-                  }
+      if: proc {
+        user_signed_in? &&
+          (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
+      }
 
     # We've had headers misbehave. Validating them here means we can email someone about the problem!
     after_action :validate_headers
@@ -143,7 +143,7 @@ module IncludeController
     audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
     if audio_recording.blank?
       raise CustomErrors::ItemNotFoundError,
-            "Could not find audio recording with id #{request_params[:audio_recording_id]}."
+        "Could not find audio recording with id #{request_params[:audio_recording_id]}."
     end
 
     # can? also checks for admin access
@@ -153,7 +153,7 @@ module IncludeController
     has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?
     unless has_any_permission
       raise CanCan::AccessDenied,
-            "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given."
+        "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given."
     end
 
     audio_recording
@@ -389,7 +389,7 @@ module IncludeController
         end
       rescue JSON::ParserError
         raise CustomErrors::BadRequestError,
-              "#{field} is not valid JSON. Additionally, support for string-encoded JSON is deprecated."
+          "#{field} is not valid JSON. Additionally, support for string-encoded JSON is deprecated."
       end
     end
 
@@ -480,7 +480,7 @@ module IncludeController
     # don't email when someone has sent us bad parameters
     options = { should_notify_error: false }
 
-    options[:error_info] = error.additional_details if error.additional_details.nil?
+    options[:error_info] = error.additional_details unless error.additional_details.nil?
 
     render_error(
       :unprocessable_entity,

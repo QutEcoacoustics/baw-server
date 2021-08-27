@@ -83,6 +83,8 @@ describe AnalysisJobsItem, type: :model do
   end
 
   describe 'state machine' do
+    pause_all_jobs
+    ignore_pending_jobs
     let(:analysis_jobs_item) {
       create(:analysis_jobs_item)
     }

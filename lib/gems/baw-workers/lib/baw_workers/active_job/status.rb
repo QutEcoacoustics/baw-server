@@ -85,6 +85,8 @@ module BawWorkers
           around_enqueue :around_enqueue_check_and_create_status
           around_perform :around_perform_with_status
 
+          IntrumentationSubscriber.attach_to :active_job
+
           discard_on BawWorkers::ActiveJob::Status::Killed
         end
       end
@@ -102,7 +104,9 @@ module BawWorkers
       # Update the #status attribute with a fresh status check from Redis.
       # @return [StatusData]
       def refresh_status!
-        @status = persistance.get(job_id)
+        logger.measure_debug("#{STATUS_TAG} fetching for #{job_id}") do
+          @status = persistance.get(job_id)
+        end
       end
 
       # Marks a job for death (to be killed).
@@ -138,6 +142,7 @@ module BawWorkers
       # Add a message to the job status.
       # Does not trigger kill!
       # Should only be called by a worker.
+      # @return [Boolean] if message was persisted
       def push_message(message)
         update_status(message)
       end
@@ -155,7 +160,7 @@ module BawWorkers
         raise Killed.new("Killed at #{Time.now}", caller_locations(1, 1))
       end
 
-      # Marks the current job as failed but does not throw
+      # Marks the current job as failed but does not raise an exception.
       # Halts the job.
       # Should only be called by a worker.
       # @return [void]
@@ -207,9 +212,7 @@ module BawWorkers
 
       # hook called by ActiveJob
       def around_perform_with_status(&block)
-        logger.debug { { message: "#{STATUS_TAG} fetching" } }
         ensure_status
-        logger.debug { { message: "#{STATUS_TAG} fetched", status: @status } }
 
         safe_perform!(&block)
       end
@@ -245,7 +248,10 @@ module BawWorkers
 
       def handle_error(error)
         logger.warn("#{STATUS_TAG} job failed", error: error.to_s)
-        update_status("The task failed because of an error: #{error}", status: STATUS_ERRORED)
+        update_status(
+          "The job failed because of an error: #{error} at #{error&.backtrace&.slice(5)}",
+          status: STATUS_ERRORED
+        )
 
         handle = on_errored(error)
 
@@ -261,6 +267,8 @@ module BawWorkers
 
       # when the job is performed immediately then status may not exist
       def ensure_status
+        return unless @status.nil?
+
         refresh_status!
         return unless @status.nil?
 
@@ -280,10 +288,12 @@ module BawWorkers
       # @param [BigDecimal] total The new total for progress
       # @return [Boolean] True if status was updated successfully
       def update_status(*messages, status: nil, progress: nil, total: nil)
+        ensure_status
+
         status ||= @status.status
         unless TERMINAL_STATUSES.include?(status) || status == STATUS_WORKING
           raise ArgumentError,
-                "status #{status} is not valid at this stage"
+            "status #{status} is not valid at this stage"
         end
 
         # copy attributes to a new @status object (structs are readonly)
@@ -313,7 +323,8 @@ module BawWorkers
       def parse_decimal(input, name)
         BigDecimal(input)
       rescue ArgumentError => e
-        raise ArgumentError, "#{name} was `#{input}` which is not a valid number: #{e.message}"
+        raise ArgumentError,
+          "#{name} was `#{input}` which is not a valid number: #{e.message}.\n#{e.backtrace.slice(5)}\n<snip>"
       end
 
       # @return [Module<BawWorkers::ActiveJob::Status::Persistance>]
@@ -326,20 +337,15 @@ module BawWorkers
       # discard_on is one-shot (multiple classes can't hook into it)
       # after_perform won't run?
       # around_perform is not reliable because order dictates we may miss some failures
-      # note: could not get this to work
-      # def rescue_with_handler(exception)
-      #   # last ditch effort to record a status
-      #   # if status is not terminal, log a status
-      #   if !status.nil? && !status&.terminal? && exception.is_a?(StandardError)
-      #     begin
-      #       update_status("The task failed because of an error: #{exception}", status: STATUS_ERRORED)
-      #     rescue StandardError => e
-      #       logger.error('failed to set status', e)
-      #     end
-      #   end
-
-      #   super(exception)
-      # end
+      class IntrumentationSubscriber < ActiveSupport::Subscriber
+        def discard(event)
+          job = event.payload[:job]
+          error = event.payload[:error]
+          job.send(:update_status, "The job was discarded: #{error} is registered by discard_on", status: STATUS_FAILED)
+        rescue StandardError => e
+          Rails.logger.error('failed to set status', e)
+        end
+      end
     end
   end
 end

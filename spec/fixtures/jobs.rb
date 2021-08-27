@@ -69,6 +69,26 @@ module Fixtures
     end
   end
 
+  class DiscardJob < FixtureJob
+    # the error could happen before our handlers are registered
+    before_perform do
+      @status = nil
+    end
+
+    #
+    # Does the work
+    #
+    # @param [String] _echo_id a job name
+    #
+    # @return [void] Always throws
+    #
+    def perform(_echo_id)
+      raise ArgumentError, 'should be discarded'
+    end
+
+    discard_on ArgumentError
+  end
+
   class KillableJob < FixtureJob
     def perform(_echo_id)
       logger.info { 'starting killable ' }
@@ -123,6 +143,56 @@ module Fixtures
 
     def name
       @name ||= job_id + "(Copy #{arguments[1]})"
+    end
+  end
+
+  class FakeAnalysisJob < BawWorkers::Jobs::ApplicationJob
+    queue_as Settings.actions.analysis.queue
+    perform_expects Hash
+
+    def perform(analysis_params)
+      status_updater = BawWorkers::Jobs::Analysis::Status.new(BawWorkers::Config.api_communicator)
+      mock_result = analysis_params[:mock_result]&.to_sym || :successful
+      skip_completion = analysis_params[:skip_completion] == true
+      good_cancel_behaviour = analysis_params.fetch(:good_cancel_behaviour, true) == true
+
+      # do the working status update call
+      begin
+        # check if should cancel
+        status_updater.begin(analysis_params)
+      rescue BawWorkers::Exceptions::ActionCancelledError
+        status_updater.end(analysis_params, :cancelled) if good_cancel_behaviour
+        return
+      end
+
+      duration = analysis_params.fetch(:sleep, 0.0)
+      BawWorkers::Config.logger_worker.info('sleep for', sleep: duration)
+      sleep duration
+
+      # do some work
+      work = {
+        resque_id: job_id,
+        analysis_params: analysis_params,
+        result: Time.now
+      }
+
+      unless skip_completion
+        # simulate the complete call
+        status_updater.end(analysis_params, mock_result)
+
+        raise 'Fake analysis job failing on purpose' if mock_result == :failed
+      end
+
+      work
+    end
+
+    def create_job_id
+      # duplicate jobs should be detected
+      ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'fake_analysis_job')
+    end
+
+    def name
+      job_id
     end
   end
 end

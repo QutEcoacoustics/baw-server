@@ -85,21 +85,36 @@ module BawApp
 
   def log_to_stdout?
     return false if rspec?
+
+    env_value = ActiveModel::Type::Boolean.new.cast(ENV['RAILS_LOG_TO_STDOUT'])
+    return env_value unless env_value.nil?
+
     return true if development?
     return true if test?
 
-    return true unless ENV['RAILS_LOG_TO_STDOUT'].nil?
-
-    false
+    # container application by default, should log to std out
+    true
   end
 
   def log_level(default = Logger::DEBUG)
     # The default Rails log level is warn in production env and info in any other env.
     return ENV['RAILS_LOG_LEVEL'] if ENV.key?('RAILS_LOG_LEVEL')
     return Logger::INFO if Rails.env.staging?
-    return Logger::WARN if Rails.env.production?
+    return Logger::INFO if Rails.env.production?
 
     default
+  end
+
+  def http_scheme
+    @http_scheme ||= BawApp.dev_or_test? ? 'http' : 'https'
+  end
+
+  def attachment_size_limit
+    10.megabytes
+  end
+
+  def attachment_thumb_size
+    [512, 512]
   end
 
   # add custom configs before other things start

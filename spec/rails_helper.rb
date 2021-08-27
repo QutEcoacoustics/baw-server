@@ -96,10 +96,12 @@ require 'helpers/misc_helper'
 require 'helpers/temp_file_helper'
 require 'fixtures/fixtures'
 
-WebMock.disable_net_connect!(allow_localhost: true, allow: [
+WEBMOCK_DISABLE_ARGS = { allow_localhost: true, allow: [
   'codeclimate.com',
-  Settings.upload_service.host
-])
+  Settings.upload_service.host,
+  'web'
+] }.freeze
+WebMock.disable_net_connect!(**WEBMOCK_DISABLE_ARGS)
 
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
@@ -170,6 +172,10 @@ RSpec.configure do |config|
   require_relative 'helpers/factory_bot_helpers'
   config.include FactoryBotHelpers::Example
 
+  require 'active_storage_validations/matchers'
+  ActiveStorageValidations # need to kick start the autoloader for some reason
+  config.include ActiveStorageValidations::Matchers, { type: :model }
+
   config.include RSpec::Benchmark::Matchers
 
   require_relative 'helpers/migrations_helper'
@@ -193,6 +199,8 @@ RSpec.configure do |config|
   config.extend RequestSpecHelpers::ExampleGroup, { type: :request }
   config.include RequestSpecHelpers::Example, { type: :request }
 
+  require_relative 'helpers/web_server_helper'
+
   require_relative 'helpers/resque_helpers'
   config.extend ResqueHelpers::ExampleGroup
   config.include ResqueHelpers::Example
@@ -200,7 +208,7 @@ RSpec.configure do |config|
   require_relative 'helpers/api_spec_helpers'
   config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
   require_relative 'helpers/shared_context/api_spec_shared_context'
-  config.include_context 'with api helpers', { file_path: Regexp.new('/spec/api/') }
+  config.include_context 'with api shared context', { file_path: Regexp.new('/spec/api/') }
 
   require_relative 'helpers/permissions_helper'
   config.extend PermissionsHelpers::ExampleGroup, {
@@ -224,7 +232,7 @@ RSpec.configure do |config|
   ActiveJob::Base.queue_adapter = :resque
 
   # change the default creation strategy
-  # Previous versions of factory but would ensure associations used the :create
+  # Previous versions of factory bot would ensure associations used the :create
   # strategy, even if were built (:build). This  behavior is misleading since
   # the database is accessed and objects are saved even though the parent factory
   # was set to *not* save things via a build call.
@@ -236,6 +244,7 @@ RSpec.configure do |config|
   # See https://github.com/thoughtbot/factory_bot/blob/master/GETTING_STARTED.md#build-strategies-1
   FactoryBot.use_parent_strategy = false
 
+  DEFAULT_CLEANING_STRATEGY = :transaction
   config.before(:suite) do
     # if Rails.env == 'test'
     #   ActiveRecord::Tasks::DatabaseTasks.drop_current
@@ -244,7 +253,7 @@ RSpec.configure do |config|
     # end
 
     # https://github.com/DatabaseCleaner/database_cleaner
-    DatabaseCleaner[:active_record].strategy = :transaction
+    DatabaseCleaner[:active_record].strategy = DEFAULT_CLEANING_STRATEGY
 
     DatabaseCleaner[:redis].db = Redis.new(Settings.redis.connection.to_h)
     DatabaseCleaner[:redis].strategy = :deletion
@@ -261,7 +270,14 @@ RSpec.configure do |config|
     end
 
     # Load seeds for test db
-    Rails.application.load_seed
+    begin
+      Rails.application.load_seed
+    rescue Exception => e
+      puts 'failure while loading seeds'
+      puts e
+      puts e.inspect
+      exit 1
+    end
   end
 
   config.before type: :request do
@@ -271,10 +287,13 @@ RSpec.configure do |config|
     # clear paperclip attachments from tmp directory
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
+  example_logger = SemanticLogger[RSpec]
 
-  config.before do |_example|
+  config.before do |example|
     # ensure any email is cleared
     ActionMailer::Base.deliveries.clear
+    DatabaseCleaner[:active_record].strategy = example.metadata[:clean_by_truncation] ? :deletion : DEFAULT_CLEANING_STRATEGY
+    example_logger.info("DatabaseCleaner[:active_record] strategy is: #{DatabaseCleaner[:active_record].strategy}")
 
     # start database cleaner
     DatabaseCleaner.start
@@ -282,11 +301,14 @@ RSpec.configure do |config|
 
   config.after do
     DatabaseCleaner.clean
+    strategy = DatabaseCleaner[:active_record].strategy
+    if strategy.is_a?(DatabaseCleaner::ActiveRecord::Truncation) || strategy.is_a?(DatabaseCleaner::ActiveRecord::Deletion)
+      Rails.application.load_seed
+    end
 
     Warden.test_reset!
   end
 
-  example_logger = SemanticLogger[RSpec]
   config.around do |example|
     example_description = example.description
     example_logger.info("BEGIN #{example_description}\n")

@@ -16,10 +16,9 @@ ActiveSupport.on_load(:active_job) do
   # this extension point affects all jobs, including framework and library jobs!
   # See also ApplicationJob for an extension point for only our jobs
   Kernel.const_set(:ACTIVE_JOB_BASE_BACKUP, ::ActiveJob::Base.clone)
-  ::ActiveJob::Base.class_eval do
-    prepend BawWorkers::ActiveJob::Identity
-    prepend BawWorkers::ActiveJob::Status
-  end
+  ::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)
+  ::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Status)
+  BawWorkers::ActiveJob::Logging.setup
 
   BawWorkers::Jobs::ApplicationJob.include(BawWorkers::ActiveJob::Unique)
   BawWorkers::Jobs::ApplicationJob.include(BawWorkers::ActiveJob::Extensions)
