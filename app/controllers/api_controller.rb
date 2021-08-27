@@ -12,7 +12,7 @@
 class ApiController < ActionController::Base
   # TODO: remove this when we clean up our cookies/auth problems
   include ActionController::RequestForgeryProtection
-  include include ActiveStorage::SetCurrent
+  include ActiveStorage::SetCurrent
 
   include IncludeController
 
