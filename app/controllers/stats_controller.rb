@@ -27,6 +27,9 @@ class StatsController < ApiController
         users_online: User.recently_seen(online_window).count,
         users_total: User.count,
         online_window_start: online_window,
+        projects_total: Project.count,
+        regions_total: Region.count,
+        sites_total: Site.count,
         annotations_total: AudioEvent.count,
         annotations_total_duration: AudioEvent.total_duration_seconds,
         annotations_recent: AudioEvent.recent_within(recent_window).count,
@@ -35,7 +38,8 @@ class StatsController < ApiController
         audio_recordings_total_duration: AudioRecording.total_duration_seconds,
         audio_recordings_total_size: AudioRecording.total_data_bytes.to_i,
         tags_total: Tag.count,
-        tags_applied_total: Tagging.count
+        tags_applied_total: Tagging.count,
+        tags_applied_unique_total: Tagging.count_unique
       },
       recent: {
         audio_recordings: Access::ByPermission.audio_recordings(current_user).most_recent(recent_limit),
