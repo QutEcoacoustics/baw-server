@@ -10,9 +10,9 @@ class StatsController < ApiController
     result = StatsController.fetch_stats(current_user)
 
     # Simplify the response, by mutation. Show only ids from active record models.
-    result[:recent].transform_values! do |query|
-      query.pluck(:id)
-    end
+    result[:recent]
+      .transform_keys! { |key| "#{key.to_s[..-2]}_ids".to_sym }
+      .transform_values! { |query| query.pluck(:id) }
 
     built_response = Settings.api_response.build(:ok, result)
     render json: built_response, status: :ok, layout: false
@@ -30,10 +30,10 @@ class StatsController < ApiController
         annotations_total: AudioEvent.count,
         annotations_total_duration: AudioEvent.total_duration_seconds,
         annotations_recent: AudioEvent.recent_within(recent_window).count,
-        audio_recording_total: AudioRecording.count,
-        audio_recording_recent: AudioRecording.created_within(recent_window).count,
-        audio_recording_total_duration: AudioRecording.total_duration_seconds,
-        audio_recording_total_size: AudioRecording.total_data_bytes.to_i,
+        audio_recordings_total: AudioRecording.count,
+        audio_recordings_recent: AudioRecording.created_within(recent_window).count,
+        audio_recordings_total_duration: AudioRecording.total_duration_seconds,
+        audio_recordings_total_size: AudioRecording.total_data_bytes.to_i,
         tags_total: Tag.count,
         tags_applied_total: Tagging.count
       },

@@ -207,10 +207,10 @@ RSpec.configure do |config|
                   annotations_total: { type: 'integer' },
                   annotations_total_duration: { type: 'number' },
                   annotations_recent: { type: 'integer' },
-                  audio_recording_total: { type: 'integer' },
-                  audio_recording_recent: { type: 'integer' },
-                  audio_recording_total_duration: { type: 'number' },
-                  audio_recording_total_size: { type: 'integer' },
+                  audio_recordings_total: { type: 'integer' },
+                  audio_recordings_recent: { type: 'integer' },
+                  audio_recordings_total_duration: { type: 'number' },
+                  audio_recordings_total_size: { type: 'integer' },
                   tags_total: { type: 'integer' },
                   tags_applied_total: { type: 'integer' }
                 }
@@ -218,11 +218,11 @@ RSpec.configure do |config|
               recent: {
                 type: 'object',
                 properties: {
-                  audio_recordings: {
+                  audio_recording_ids: {
                     type: 'array',
                     items: { '$ref' => '#/components/schemas/id' }
                   },
-                  audio_events: {
+                  audio_event_ids: {
                     type: 'array',
                     items: { '$ref' => '#/components/schemas/id' }
                   }
