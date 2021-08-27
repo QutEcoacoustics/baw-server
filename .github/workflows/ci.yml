@@ -38,7 +38,7 @@ jobs:
       # So we use docker-compose build instead
       - name: Build image
         #run: docker build .
-        run: docker compose build --no-rm web
+        run: docker compose build
         env:
           DOCKER_BUILDKIT: 1
       # there appears to be a race condition between entrypoint script (which does a migration)
