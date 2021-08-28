@@ -1,6 +1,13 @@
 # now using `docker compose` (over  `docker-compose`) and
 # the version is the latest schema defined by the docker compose specification.
 # https://github.com/compose-spec/compose-spec/blob/master/spec.md#Requirements-and-optional-attributes
+
+x-gh_actions:  &gh_actions
+  # trial addtion for github actions
+  group_add:
+    - 116
+    - 1001
+
 services:
   redis:
     image: redis:6-alpine
@@ -23,6 +30,7 @@ services:
       POSTGRES_PASSWORD: password
 
   upload: &upload
+    <<: *gh_actions
     # Default command is `sftpgo serve`
     #command: sftpgo serve
     image: drakkan/sftpgo:edge-alpine
@@ -69,6 +77,7 @@ services:
         target: /srv/sftpgo/data
 
   workers: &worker
+    <<: *gh_actions
     build:
         context: .
         dockerfile: ./Dockerfile
@@ -104,6 +113,7 @@ services:
       RAILS_ENV: test
 
   web:
+    <<: *gh_actions
     build:
         context: .
         dockerfile: ./Dockerfile

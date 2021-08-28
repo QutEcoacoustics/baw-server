@@ -94,8 +94,8 @@ RSpec.configure do |config|
               properties: {
                 size: { type: 'string' },
                 url: { type: 'string', format: 'URI' },
-                width: { type: 'integer' },
-                height: { type: 'integer' }
+                width: { type: 'integer', nullable: true },
+                height: { type: 'integer', nullable: true }
               }
             }
           },

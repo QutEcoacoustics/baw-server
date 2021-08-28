@@ -194,7 +194,6 @@ RSpec.shared_examples 'a route that stores images' do |options|
 
       expect_json_response
       expect_data_is_hash
-      logger.debug('api data', api_data: api_data)
       variant_url = (api_data[:image_urls].select { |i| i[:size] == 'thumb' }).first[:url]
       expected_url_variant = %r{^/rails/active_storage/representations/proxy/.*/#{Fixtures.bowra2_image_jpeg.basename}}
       expect(variant_url).to match expected_url_variant
@@ -206,7 +205,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       expect(response.content_type).to eq('image/jpeg')
       expect(response.content_length).to eq(218_120) # size of variant
 
-      # the variant gets ana analyze job too!?
+      # the variant gets an analyze job too!?
       expect_enqueued_jobs(1, of_class: ActiveStorage::AnalyzeJob)
       perform_jobs(count: 1)
       expect_enqueued_jobs(0)

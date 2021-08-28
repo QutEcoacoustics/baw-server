@@ -22,6 +22,17 @@ jobs:
       - uses: actions/checkout@v2
         with:
           lfs: true
+          
+      - uses: docker/setup-buildx-action@v1
+        id: buildx
+        with:
+          install: true
+
+
+      # https://github.com/docker/compose-cli/blob/main/INSTALL.md#install-script
+      - name: Install docker-compose v2
+        run: curl -L https://raw.githubusercontent.com/docker/compose-cli/main/scripts/install/install_linux.sh | sh
+
       # by default the user on GH seems to have the UID 1001
       # however our docker container expects a uid of 1000.
       # This is not an issue in Docker since we chown files when they are added.
@@ -30,8 +41,8 @@ jobs:
       # GH action case uid 1001 and gid 116.
       # The easiest way I can think of to get this working is to just set the
       # uid to 1000.
-      - name: Set permissions for checked out files
-        run: sudo chown -R 1000 .
+      # - name: Set permissions for checked out files
+      #   run: sudo chown -R 1000 .
       # there is a bug where docker build and docker compose don't produce the
       # same results
       # see https://github.com/docker/compose/issues/883
@@ -75,8 +86,8 @@ jobs:
         run: docker compose stop
 
       # Undo permissions change
-      - name: Undo Set permissions for checked out files
-        run: sudo chown -R $(id -u) .
+      # - name: Undo Set permissions for checked out files
+        # run: sudo chown -R $(id -u) .
 
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v4

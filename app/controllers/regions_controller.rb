@@ -129,7 +129,7 @@ class RegionsController < ApplicationController
 
     wrapper = params.require(:region)
 
-    # form data munges json objects, so disallow notes being updates in these cases
+    # form data munges json objects, so disallow notes being updated in these cases
     if request.form_data?
       wrapper.permit(:name, :description, :notes, :project_id, :image)
     else

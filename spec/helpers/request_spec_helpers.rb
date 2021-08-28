@@ -203,13 +203,13 @@ module RequestSpecHelpers
       expect(response).to have_http_status(:success)
     end
 
-    def expect_error(status, details, info)
+    def expect_error(status, details, info = nil)
       status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
 
       raise "Status is not acceptable #{status}" unless status.is_a?(Integer)
 
       aggregate_failures 'error response' do
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(status)
 
         expect_json_response
 

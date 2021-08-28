@@ -494,7 +494,7 @@ describe BawWorkers::ActiveJob::Status do
     end
   end
 
-  describe 'retry' do
+  describe 'retry', :slow do
     let(:job) { Fixtures::RetryableJob.perform_later!("will_retry#{Time.now.strftime('%m%d%YT%H%M%S')}") }
 
     it 'merges messages for retries' do
@@ -505,7 +505,10 @@ describe BawWorkers::ActiveJob::Status do
       # 1) attempt 1 / execution 0 --> failure
       # 2) attempt 2 / execution 1 --> failure
       # 3) attempt 3 / execution 2 --> success
-      perform_jobs(count: 3, timeout: 5)
+      # - timeout based on jitter and back off: https://edgeapi.rubyonrails.org/classes/ActiveJob/Exceptions/ClassMethods.html#method-i-retry_on
+      # - we've got a fixed period of 1s for our fixture
+      # - if this test fails, check the scheduler container was running correctly!
+      perform_jobs(count: 3, timeout: 10)
 
       job.refresh_status!
       job_refresh = ::ActiveJob::Base.deserialize(job.status.options.with_indifferent_access)

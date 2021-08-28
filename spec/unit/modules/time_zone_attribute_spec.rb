@@ -1,8 +1,8 @@
-
+# frozen_string_literal: true
 
 describe TimeZoneAttribute do
   # extracted from prod so we can test possible cases
-  CASES = [
+  TIMEZONE_TEST_CASES = [
     ['Australia - Darwin', 'Darwin', 'Australia/Darwin', 'Darwin'],
     ['Asia - Makassar', '', 'Asia/Makassar', nil],
     ['Asia - Yangon', '', 'Asia/Yangon', nil],
@@ -29,6 +29,12 @@ describe TimeZoneAttribute do
     ['', nil, nil, nil]
   ].freeze
 
+  subject do
+    class TempModelTimezoneTest < ApplicationRecord
+      include TimeZoneAttribute
+    end
+  end
+
   before(:all) do
     ActiveRecord::Base.connection.drop_table :temp_model_timezone_tests, if_exists: true
     connection = ActiveRecord::Base.connection
@@ -42,14 +48,8 @@ describe TimeZoneAttribute do
     ActiveRecord::Base.connection.drop_table :temp_model_timezone_tests
   end
 
-  subject do
-    class TempModelTimezoneTest < ApplicationRecord
-      include TimeZoneAttribute
-    end
-  end
-
   context 'fixing bad values in database' do
-    CASES.each do |tzinfo_tz, rails_tz, expected, expected_rails_tz|
+    TIMEZONE_TEST_CASES.each do |tzinfo_tz, rails_tz, expected, expected_rails_tz|
       context [tzinfo_tz, rails_tz, expected] do
         it 'handles restoring bad values from the database' do
           # arrange
@@ -81,7 +81,7 @@ describe TimeZoneAttribute do
           if temp.valid?
             expect(temp.tzinfo_tz).to eq(expected)
           else
-            expect(temp).to_not be_valid
+            expect(temp).not_to be_valid
           end
 
           # it sets rails tz at the same time
@@ -123,7 +123,7 @@ describe TimeZoneAttribute do
 
     result = temp.save
     expect(result).to be false
-    expect(temp).to_not be_valid
+    expect(temp).not_to be_valid
     expect(temp.errors[:tzinfo_tz]).to include("is not a recognized timezone ('abc123')")
 
     temp.tzinfo_tz = 'Australia/Brisbane'
