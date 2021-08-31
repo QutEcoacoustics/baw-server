@@ -51,3 +51,6 @@ provision/upload/config/id_*
 
 # sometimes i mount large dirs here
 /real_data/*
+
+# health flag
+.ready

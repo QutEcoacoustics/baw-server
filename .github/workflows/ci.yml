@@ -58,13 +58,23 @@ jobs:
       # there appears to be a race condition between entrypoint script (which does a migration)
       # and the following prepare database step
       - name: Start docker compose
-        run: docker compose up -d && sleep 15
+        run: docker compose up -d -f docker-compose.yml -f .github/workflows/docker-compose.yml
+
+      - name: Wait for ready
+        run: |
+          while [ ! -f .ready ]; do
+            echo "waiting for .ready"
+            docker compose ps
+            sleep 1
+          done
+
       - name: prepare test database
         run: docker compose run web echo 'database created'
         env:
           RAILS_ENV: test
+
       - name: Run tests
-        run: docker compose exec web rspec --format progress --format html --out rspec_results.html
+        run: docker compose run web rspec --format progress --format html --out rspec_results.html
         env:
           RAILS_ENV: test
 
@@ -84,7 +94,7 @@ jobs:
 
       # update api docs
       - name: Generate API docs
-        run: docker compose exec web generate_docs.sh
+        run: docker compose run web generate_docs.sh
 
       - name: Stop docker compose
         if: ${{ always() }}

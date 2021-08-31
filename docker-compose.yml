@@ -118,6 +118,7 @@ services:
     environment:
       RAILS_ENV: test
 
+
   web:
     <<: *gh_actions
     build:
