@@ -69,5 +69,5 @@ exec {
 
 Write-Output "Pushing dockerfile"
 exec {
-  docker push -a qutecoacoustics/workbench-server
+  docker push -a qutecoacoustics/workbench-server:latest
 }

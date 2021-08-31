@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.6.2](https://github.com/QutEcoacoustics/baw-server/tree/4.6.2) (2021-08-31)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.6.1...4.6.2)
+
 ## [4.6.1](https://github.com/QutEcoacoustics/baw-server/tree/4.6.1) (2021-08-31)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.6.0...4.6.1)

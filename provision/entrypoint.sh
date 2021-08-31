@@ -7,8 +7,8 @@
 
 set -e
 
-# echo -e "\n== Debug container permissions  ==\n"
-#ls -la
+echo -e "\n== Debug container permissions  ==\n"
+ls -la
 
 echo "==> Booting baw-server container. "
 echo "==> $(id)"

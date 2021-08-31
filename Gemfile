@@ -206,9 +206,9 @@ end
 # gems that are only required on development machines or for testings
 group :development do
   # allow debugging
-  gem 'debase', '>= 0.2.5.beta2'
+  #gem 'debase', '>= 0.2.5.beta2'
   gem 'readapt'
-  gem 'ruby-debug-ide', '>= 0.7.2'
+  #gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'
 
   # a ruby language server
