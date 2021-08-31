@@ -6,6 +6,7 @@ The ecoacoustics workbench server. Manages the structure and metadata for enviro
 
 ![Run tests, publish docker image](https://github.com/QutEcoacoustics/baw-server/workflows/Run%20tests,%20publish%20docker%20image/badge.svg)
 [![DOI](https://zenodo.org/badge/13489668.svg)](https://zenodo.org/badge/latestdoi/13489668)
+[![Docker Image Version (latest semver)](https://img.shields.io/docker/v/qutecoacoustics/workbench-server)](https://hub.docker.com/repository/docker/qutecoacoustics/workbench-server/)
 
 ## Dependencies
 
