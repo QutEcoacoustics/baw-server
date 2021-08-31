@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module UploadService
     # Convenience methods for working with the sftpgo service
@@ -47,11 +49,11 @@ module BawWorkers
       def get_id(subject, target_class)
         case subject
         when target_class
-          subject.id
-        when Integer
+          subject.username
+        when String
           subject
         else
-          raise ArgumentError("Not a #{target_class.name} or id: #{subject}")
+          raise ArgumentError, "Not a #{target_class.name} or user name: #{subject}"
         end
       end
     end

@@ -14,7 +14,7 @@ module UploadServiceSteps
   end
 
   step 'service not available' do
-    stub_request(:get, "#{@upload_host}:8080/api/v1/providerstatus")
+    stub_request(:get, "#{@upload_host}:8080/api/v2/status")
       .to_return(body: 'error message', status: 500)
   end
 
@@ -23,9 +23,9 @@ module UploadServiceSteps
   end
 
   step 'it should be good' do
-    expect(@service_status).to eq(Success(SftpgoClient::ApiResponse.new(
-                                            message: 'Alive'
-                                          )))
+    expect(@service_status).to be_an_instance_of(Success)
+    expect(@service_status.value!).to be_an_instance_of(SftpgoClient::ServicesStatus)
+    expect(@service_status.value!.data_provider[:error]).to be_blank
   end
 
   step 'it should be bad' do
@@ -148,10 +148,8 @@ module UploadServiceSteps
   end
 
   def self.included(example_group)
-    example_group.before(:all) do
-
+    example_group.before(:all) do |_group|
       @upload_host = Settings.upload_service.host
-
     end
     example_group.after(:all) do
       BawWorkers::Config.upload_communicator.delete_all_users

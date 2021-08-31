@@ -18,10 +18,10 @@ module SftpgoClient
       Success(value)
     end
 
-    def validate_id(name, value)
-      return if value.is_a?(Integer) && value >= 0
+    def validate_user_name(name, value)
+      return if value.is_a?(String) && !value.blank?
 
-      raise ArgumentError "#{name} must be an integer and not negative"
+      raise ArgumentError "#{name} must be an non-blank string"
     end
 
     def add_to_params(hash, name, value, &validation)

@@ -29,15 +29,19 @@ services:
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
 
+  # Note: if the sftpgo service fails to start because a table already exists, it is because the database has the tables
+  # but none of the migration info in it. Delete the tables with `rails baw: truncate_sftpgo_tables`.
   upload: &upload
     <<: *gh_actions
     # Default command is `sftpgo serve`
     #command: sftpgo serve
-    image: drakkan/sftpgo:edge-alpine
+    image: drakkan/sftpgo:v2-alpine
     depends_on:
       - db
     environment:
       RAILS_ENV: development
+      SFTPGO_DEFAULT_ADMIN_USERNAME: admin
+      SFTPGO_DEFAULT_ADMIN_PASSWORD: password
     networks:
       baw_network:
     ports:
@@ -59,6 +63,8 @@ services:
     environment:
       RAILS_ENV: test
       SFTPGO_DATA_PROVIDER__NAME: baw_local_test
+      SFTPGO_DEFAULT_ADMIN_USERNAME: admin
+      SFTPGO_DEFAULT_ADMIN_PASSWORD: password
     networks:
       baw_network:
         aliases:

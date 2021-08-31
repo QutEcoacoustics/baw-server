@@ -8,7 +8,7 @@ module SftpgoClient
     SORT_DESCENDING = 'DESC'
     MAXIMUM_LIMIT = 500
 
-    USERS_PATH = 'user'
+    USERS_PATH = 'users'
 
     # Returns an array with one or more users
     # For security reasons hashed passwords are omitted in the response
@@ -32,12 +32,12 @@ module SftpgoClient
 
     # Find user by ID
     # For security reasons the hashed password is omitted in the response
-    # @param [Integer] user_id: ID of the user to retrieve
+    # @param [String] user_name: ID of the user to retrieve
     # @return [Dry::Monads::Result<SftpgoClient::User>]
-    def get_user(user_id:)
-      validate_id(:user_id, user_id)
+    def get_user(user_name:)
+      validate_user_name(:user_name, user_name)
 
-      wrap_response(@connection.get(user_path(user_id))).fmap { |r|
+      wrap_response(@connection.get(user_path(user_name))).fmap { |r|
         SftpgoClient::User.new(r.body)
       }
     end
@@ -53,29 +53,29 @@ module SftpgoClient
     end
 
     # Update an existing user
-    # @param [Integer] user_id: ID of the user to update
+    # @param [String] user_name: ID of the user to update
     # @param [Hash] user: a subset of user properties to update
     # @return [Dry::Monads::Result<SftpgoClient::ApiResponse>]
-    def update_user(user_id:, user:)
-      validate_id(:user_id, user_id)
-      response = wrap_response(@connection.put(user_path(user_id), user))
+    def update_user(user_name:, user:)
+      validate_user_name(:user_name, user_name)
+      response = wrap_response(@connection.put(user_path(user_name), user))
 
       response.fmap { |r| SftpgoClient::ApiResponse.new(r.body) }
     end
 
     # Delete an existing user
-    # @param user_id [Integer] ID of the user to delete
+    # @param user_name [String] ID of the user to delete
     # @return [Dry::Monads::Result<SftpgoClient::ApiResponse>]
-    def delete_user(user_id:)
-      validate_id(:user_id, user_id)
+    def delete_user(user_name:)
+      validate_user_name(:user_name, user_name)
 
-      wrap_response(@connection.delete(user_path(user_id))).fmap { |r| SftpgoClient::ApiResponse.new(r.body) }
+      wrap_response(@connection.delete(user_path(user_name))).fmap { |r| SftpgoClient::ApiResponse.new(r.body) }
     end
 
     private
 
-    def user_path(user_id)
-      "#{USERS_PATH}/#{user_id}"
+    def user_path(user_name)
+      "#{USERS_PATH}/#{user_name}"
     end
 
     def between_1_and_500(value)
@@ -86,7 +86,7 @@ module SftpgoClient
     end
 
     def valid_order(value)
-      return Success(value) if value == SORT_ASCENDING || value == SORT_DESCENDING
+      return Success(value) if [SORT_ASCENDING, SORT_DESCENDING].include?(value)
 
       Failure("#{value} was not `ASC`/`DESC`")
     end

@@ -56,9 +56,9 @@ module BawWorkers
       # Updates a user's status (enabled or disabled)
       # @return [SftpgoClient::ApiResponse]
       def set_user_status(user, enabled:)
-        user_id = get_id(user, SftpgoClient::User)
+        user_name = get_id(user, SftpgoClient::User)
         status = enabled ? USER_STATUS_ENABLED : USER_STATUS_DISABLED
-        response = client.update_user(user_id: user_id, user: { status: status })
+        response = client.update_user(user_name: user_name, user: { status: status })
         ensure_successful_response(response)
       end
 
@@ -66,9 +66,9 @@ module BawWorkers
       # @param [SftpgoClient::User,Integer] A user class to extract an id from, or an id
       # @return [SftpgoClient::User]
       def get_user(user)
-        user_id = get_id(user, SftpgoClient::User)
+        user_name = get_id(user, SftpgoClient::User)
 
-        ensure_successful_response(client.get_user(user_id: user_id))
+        ensure_successful_response(client.get_user(user_name: user_name))
       end
 
       # Deletes all users
@@ -78,7 +78,7 @@ module BawWorkers
         chain = future { get_all_users }
                 .then_flat { |users|
                   zip_futures_over(users) { |user|
-                    ensure_successful_response(client.delete_user(user_id: user.id))
+                    ensure_successful_response(client.delete_user(user_name: get_id(user, SftpgoClient::User)))
                   }
                 }
 
@@ -93,9 +93,9 @@ module BawWorkers
       end
 
       # Gets the service status (safely)
-      # @return  [Dry::Monads::Result::Success<SftpgoClient::ApiResponse>,Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
+      # @return  [Dry::Monads::Result::Success<SftpgoClient::ServicesStatus>,Dry::Monads::Result::Failure<SftpgoClient::ApiResponse>]
       def service_status
-        client.get_provider_status
+        client.get_status
       end
 
       # Gets the service version info (safely)

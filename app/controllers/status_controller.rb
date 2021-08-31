@@ -17,7 +17,9 @@ class StatusController < ApiController
     # is any promise was rejected then #value returns nil
     status = [
       !timed_out, statuses.fulfilled?,
-      storage&.fetch(:success, false), redis == 'PONG', upload&.success?, database
+      storage&.fetch(:success, false), redis == 'PONG',
+      upload&.success?, upload&.fmap { |r| r.try(:data_provider).fetch(:error) == '' }&.value_or(false),
+      database
     ].all?
 
     result = {
@@ -31,6 +33,9 @@ class StatusController < ApiController
         case status
         when SftpgoClient::ApiResponse
           [status.message, status.error].compact.join('. ')
+        when SftpgoClient::ServicesStatus
+          error = status.data_provider[:error]
+          error.blank? ? 'Alive' : error
         else
           status.to_s.strip
         end

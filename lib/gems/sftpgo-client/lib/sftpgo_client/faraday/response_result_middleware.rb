@@ -7,8 +7,8 @@ module SftpgoClient
   # Up to the caller as to whether or not the failure is raised.
   class ResponseResultMiddleware
     # rubocop:disable Naming/ConstantName
-    ClientErrorStatuses = (400...500).freeze
-    ServerErrorStatuses = (500...600).freeze
+    ClientErrorStatuses = (400...500)
+    ServerErrorStatuses = (500...600)
     # rubocop:enable Naming/ConstantName
 
     def initialize(app)
@@ -50,6 +50,7 @@ module SftpgoClient
 
       env
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     def response_values(env, message = nil)
       body = env.body
@@ -59,7 +60,7 @@ module SftpgoClient
         message || "The server responded to `#{env.url.path}` with status #{env.status}, and body:\n```\n#{env.body&.to_s&.truncate(1000)}\n```\nSee .inspect for more detail.",
         {
           status: env.status,
-          headers: env.response_headers,
+          headers: env.response_headers.to_h,
           body: body,
           request: {
             method: env.method,

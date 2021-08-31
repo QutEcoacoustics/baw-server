@@ -244,7 +244,9 @@ RSpec.configure do |config|
   # See https://github.com/thoughtbot/factory_bot/blob/master/GETTING_STARTED.md#build-strategies-1
   FactoryBot.use_parent_strategy = false
 
+  sftpgo_tables = ActiveRecord::Base.connection.tables.grep(/sftpgo.*/)
   DEFAULT_CLEANING_STRATEGY = :transaction
+  DELETION_CLEANING_STRATEGY = [:deletion, { except: sftpgo_tables }].freeze
   config.before(:suite) do
     # if Rails.env == 'test'
     #   ActiveRecord::Tasks::DatabaseTasks.drop_current
@@ -258,7 +260,7 @@ RSpec.configure do |config|
     DatabaseCleaner[:redis].db = Redis.new(Settings.redis.connection.to_h)
     DatabaseCleaner[:redis].strategy = :deletion
 
-    DatabaseCleaner[:active_record].clean_with(:truncation)
+    DatabaseCleaner[:active_record].clean_with(:truncation, { except: sftpgo_tables })
     DatabaseCleaner[:redis].clean
 
     begin
@@ -292,7 +294,12 @@ RSpec.configure do |config|
   config.before do |example|
     # ensure any email is cleared
     ActionMailer::Base.deliveries.clear
-    DatabaseCleaner[:active_record].strategy = example.metadata[:clean_by_truncation] ? :deletion : DEFAULT_CLEANING_STRATEGY
+    DatabaseCleaner[:active_record].strategy =
+      if example.metadata[:clean_by_truncation]
+        DELETION_CLEANING_STRATEGY
+      else
+        DEFAULT_CLEANING_STRATEGY
+      end
     example_logger.info("DatabaseCleaner[:active_record] strategy is: #{DatabaseCleaner[:active_record].strategy}")
 
     # start database cleaner

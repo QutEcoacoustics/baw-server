@@ -6,15 +6,19 @@ require_relative 'validation/validation'
 
 require_relative 'models/api_response'
 require_relative 'faraday/response_result_middleware'
+require_relative 'faraday/authentication_middleware'
 
 require_relative 'models/extensions_filter'
 require_relative 'models/filesystem_config'
 require_relative 'models/permission'
+require_relative 'models/services_status'
+require_relative 'models/token'
 require_relative 'models/virtual_folder'
 require_relative 'models/user_filter'
 require_relative 'models/user'
 require_relative 'models/version_info'
-require_relative 'provider_status_service'
+require_relative 'status_service'
+require_relative 'token_service'
 require_relative 'user_service'
 require_relative 'version_service'
 
@@ -23,8 +27,9 @@ module SftpgoClient
   class ApiClient
     include Dry::Monads[:result]
     include SftpgoClient::VersionService
+    include SftpgoClient::TokenService
     include SftpgoClient::UserService
-    include SftpgoClient::ProviderStatusService
+    include SftpgoClient::StatusService
 
     JSON_PARSER_OPTIONS = {
       allow_nan: true,
@@ -39,7 +44,11 @@ module SftpgoClient
     # @return [Faraday::Connection]
     attr_reader :connection
 
-    def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v1/', logger: nil)
+    # The auth token needed to send to the API.
+    # @return [Token]
+    attr_accessor :token
+
+    def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v2/', logger: nil)
       @base_uri =
         case scheme
         when 'http' then URI::HTTP.build({ host: host, port: port, path: base_path })
@@ -47,6 +56,8 @@ module SftpgoClient
         else
           raise ArgumentError, "Unsupported scheme `#{scheme}`"
         end
+      @username = username
+      @password = password
 
       log_options = { headers: false, bodies: false }
 
@@ -60,10 +71,12 @@ module SftpgoClient
       ) do |faraday|
         # the order of the middlewares is important!
         # https://lostisland.github.io/faraday/middleware/
-        faraday.basic_auth(username, password)
+        # authorization header set in our authentication middleware
+        faraday.request :authorization, 'Bearer', ''
         faraday.request :json
         faraday.response :logger, logger, log_options unless logger.nil?
-        faraday.use(SftpgoClient::ResponseResultMiddleware)
+        faraday.use SftpgoClient::ResponseResultMiddleware
+        faraday.use SftpgoClient::AuthenticationMiddleware, self, logger
         faraday.response :dates
         faraday.response :json, content_type: /\bjson$/, parser_options: JSON_PARSER_OPTIONS
       end

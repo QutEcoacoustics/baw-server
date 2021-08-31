@@ -65,6 +65,14 @@ data_provider:
   #check_password_hook:
   #check_password_scope:
   #password_hashing:
+  #  boolean. Before you can use SFTPGo you need to create an admin account.
+  # If you open the admin web UI, a setup screen will guide you in creating the
+  # first admin account. You can automatically create the first admin account by
+  # enabling this setting and setting the environment variables
+  # SFTPGO_DEFAULT_ADMIN_USERNAME and SFTPGO_DEFAULT_ADMIN_PASSWORD.
+  # You can also create the first admin by loading initial data.
+  # This setting has no effect if an admin account is already found within the data provider.
+  create_default_admin: true
 httpd:
   # all paths in this section are relative to config dir
   bind_port: 8080
