@@ -34,6 +34,8 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   && adduser --uid 1000 --gid 1000 --home /home/${app_user} --shell /bin/sh --disabled-password --gecos "" ${app_user} \
   && chown -R ${app_user}:${app_user} /home/${app_user} \
   && chmod g+s /home/${app_user} \
+  && mkdir /home/${app_user}/${app_name} \
+  && chmod g+s /home/${app_user}/${app_name} \
   # allow bundle install to work as app_user
   # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
   && mkdir -p "$GEM_HOME/bin" \
