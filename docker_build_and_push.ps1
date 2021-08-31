@@ -32,14 +32,22 @@ if ($null -eq $env:CHANGELOG_GITHUB_TOKEN) {
   Write-Error "Cannot generate change log unless CHANGELOG_GITHUB_TOKEN environment variable is set"
 }
 
+if ($null -eq $next_version -or '' -eq $next_version ) {
+  Write-Error "Next version variable is required"
+  exit 1
+}
+
 Write-Output "Generate changelog"
 exec { docker-compose run web rake changelog }
+
+Write-Output "Generate API docs"
+exec { docker-compose run web generate_docs.sh }
 
 Write-Output "Set VERSION $next_version"
 exec { Write-Output $next_version > VERSION }
 
 exec {
-  git add -A && git commit -m "Generated changelog for version $next_version"
+  git add -A && git commit -m "Generated changelog and API docs for version $next_version" -m "[skip ci]"
 }
 
 Write-Output "Creating tag $next_version"

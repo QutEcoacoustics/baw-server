@@ -1,12 +1,15 @@
 # Changelog
 
-## [4.1.0](https://github.com/QutEcoacoustics/baw-server/tree/4.1.0) (2021-08-15)
+## [4.6.0](https://github.com/QutEcoacoustics/baw-server/tree/4.6.0) (2021-08-31)
 
-[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.1.0...4.1.0)
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.1.0...4.6.0)
 
 **Implemented enhancements:**
 
+- Add media stats tracking [\#525](https://github.com/QutEcoacoustics/baw-server/issues/525)
+- Region image urls [\#497](https://github.com/QutEcoacoustics/baw-server/issues/497)
 - Performance enhancements for Media polling [\#329](https://github.com/QutEcoacoustics/baw-server/issues/329)
+-  Adds media download statistics tracking  [\#530](https://github.com/QutEcoacoustics/baw-server/pull/530) ([atruskie](https://github.com/atruskie))
 - Additional statistics [\#529](https://github.com/QutEcoacoustics/baw-server/pull/529) ([Allcharles](https://github.com/Allcharles))
 - Fixes stats page and adds stats endpoint [\#524](https://github.com/QutEcoacoustics/baw-server/pull/524) ([atruskie](https://github.com/atruskie))
 - Move status endpoint to dedicated controller [\#522](https://github.com/QutEcoacoustics/baw-server/pull/522) ([atruskie](https://github.com/atruskie))
