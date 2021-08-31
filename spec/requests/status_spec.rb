@@ -24,7 +24,10 @@ describe '/status.json' do
   example 'timeout (storage)' do
     allow(AudioRecording).to receive(:check_storage) {
       # simulate timeout
-      (1..120).each { |i| puts i; sleep(0.25) }
+      (1..120).each do |i|
+        puts i
+        sleep(0.25)
+      end
       raise 'This should not happen'
     }
     get '/status.json'
@@ -58,8 +61,12 @@ describe '/status.json' do
   end
 
   example 'upload service, bad storage' do
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
-      .to_return(body: '{"message":"abc", "error": "error message"}', status: 500, headers: { content_type: 'application/json' })
+    stub_request(:get, 'upload.test:8080/api/v2/status')
+      .to_return(
+        body: '{"data_provider":{"error": "error message"}}',
+        status: 200,
+        headers: { content_type: 'application/json' }
+      )
 
     get '/status.json'
 
@@ -70,13 +77,13 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'abc. error message'
+      upload: 'error message'
     })
   end
 
   example 'upload service, somewhere in the middle error' do
     # error generated due to bad config in prod, but we didn't handle it well, hence the test
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
+    stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_return(body: "Client sent an HTTP request to an HTTPS server.\n", status: 400)
 
     get '/status.json'
@@ -93,7 +100,7 @@ describe '/status.json' do
   end
 
   example 'upload service, time out' do
-    stub_request(:get, 'upload:8080/api/v1/providerstatus')
+    stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_timeout
 
     get '/status.json'

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -1028,7 +1027,7 @@ resource 'ProgressEvents' do
         {
           'filter' => {
             'datasets.id' => {
-              'eq' => 1
+              'eq' => dataset.id
             }
           }
         }.to_json
@@ -1039,10 +1038,14 @@ resource 'ProgressEvents' do
         :ok,
         {
           expected_json_path: 'data/0/creator_id',
-          data_item_count: 1,
           response_body_content: '"created_at":'
         }
-      )
+      ) do |example, opts|
+        opts[:data_item_count] = [
+          25, # page size
+          example.dataset.dataset_items.map { |di| di.progress_events.count }.sum
+        ].min
+      end
     end
   end
 end

@@ -13,6 +13,7 @@ describe '/stats' do
   let!(:reference_event) { FactoryBot.create(:audio_event, is_reference: true) }
 
   it 'can fetch stats' do
+    # anonymous request
     get '/stats'
 
     expect_success
@@ -36,7 +37,7 @@ describe '/stats' do
         tags_applied_unique_total: 1
       },
       recent: {
-        audio_recording_ids: [2],
+        audio_recording_ids: [audio_recording_anon.id],
         audio_event_ids: [reference_event.id]
       }
     })
