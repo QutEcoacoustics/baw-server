@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# when HarvestItem is used in the context of a job, it does not have access to
+# rails' normal autoloader... for some reason?
+require(BawApp.root / 'app/serializers/hash_serializer')
+
 # == Schema Information
 #
 # Table name: harvest_items
@@ -38,4 +42,6 @@ class HarvestItem < ApplicationRecord
   STATUSES = [STATUS_NEW, STATUS_FAILED, STATUS_COMPLETED, STATUS_ERRORED].freeze
 
   enumerize :status, in: STATUSES, default: :new
+
+  serialize :info, ::HashSerializer
 end

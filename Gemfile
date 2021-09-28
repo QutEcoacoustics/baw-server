@@ -26,6 +26,7 @@ gem 'bootsnap', require: false
 gem 'dry-monads'
 gem 'dry-struct'
 gem 'dry-validation'
+gem 'dry-transformer'
 
 # Async/promises/futures
 gem 'concurrent-ruby', '~> 1', require: 'concurrent'

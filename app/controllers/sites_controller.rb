@@ -139,9 +139,16 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
+    template = BawWorkers::Jobs::Harvest::Metadata.generate_yaml(
+      @project.id,
+      @site.id,
+      (@project.writers + @project.owners + [@project.creator, current_user]),
+      recursive: false
+    )
+
     respond_to do |format|
       format.yml {
-        render file: 'sites/_harvest.yml.haml', content_type: 'text/yaml', layout: false
+        render text: template, content_type: 'text/yaml', layout: false
       }
     end
   end

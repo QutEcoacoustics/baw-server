@@ -96,6 +96,10 @@ module Fixtures
     ensure_exists FILES_PATH / 'a_very_large_image.jpg'
   end
 
+  def self.bar_lt_faulty_duration
+    ensure_exists FILES_PATH / '3.17_Duration' / '20200801T000000+1000_REC.flac'
+  end
+
   #
   # Check a fixture exists
   #

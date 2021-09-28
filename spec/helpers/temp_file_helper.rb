@@ -2,6 +2,15 @@
 
 module TempFileHelpers
   module ExampleGroup
+    #
+    # Generate a temp file that id automatically cleaned up after a test.
+    # Does not create the file.
+    #
+    # @param [String] stem the basename for the temp file's name. If nil a random name will be used.
+    # @param [String] extension the extension for the temp file. '.tmp' by default.
+    #
+    # @return [Pathname] The path to the temp file.
+    #
     def temp_file(stem: nil, extension: '.tmp')
       stem = ::SecureRandom.hex(7) if stem.blank?
       extension =
@@ -9,7 +18,9 @@ module TempFileHelpers
         elsif extension.start_with?('.') then extension
         else ".#{extension}"
         end
+
       path = temp_dir / "#{stem}#{extension}"
+
       @temp_files << path
 
       path

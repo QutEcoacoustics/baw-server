@@ -24,7 +24,9 @@ require('config/integrations/rails/railtie')
 
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
+require "#{__dir__}/../lib/gems/emu/lib/emu"
 
+# The main module for this application.
 module Baw
   def self.configure_logging(config)
     # trigger some autoloads so they don't happen in trap contexts

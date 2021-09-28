@@ -5,6 +5,9 @@ module BawWorkers
     module Harvest
       # Get a list of files to be harvested.
       class SingleFile
+        FIXES = [
+          Emu::Fix::BAR_LT_DURATION_BUG
+        ].freeze
         attr_accessor :logger, :file_info_helper, :api_comm
 
         # Create a new BawWorkers::Jobs::Harvest::SingleFile.
@@ -54,8 +57,6 @@ module BawWorkers
           # -----------------------------
           audio_info_hash = get_audio_info_hash(file_info_hash, file_path)
 
-          file_hash = audio_info_hash[:file_hash]
-
           # stop here if it is a dry run, shouldn't create a new recording
           # -----------------------------
           unless is_real_run
@@ -64,6 +65,16 @@ module BawWorkers
             end
             return []
           end
+
+          # apply any fixes that are needed
+          fix_log = apply_fixes(file_path)
+          harvest_item.info[:fixes] = fix_log
+          harvest_item.save!
+
+          # update file info after fixes
+          audio_info_hash = get_audio_info_hash(file_info_hash, file_path)
+
+          file_hash = audio_info_hash[:file_hash]
 
           # get auth token
           # -----------------------------
@@ -84,7 +95,7 @@ module BawWorkers
           harvest_item.audio_recording_id = audio_recording_id.to_i
           save_result = harvest_item.save
           logger.debug(
-            "harvest item associated with recording",
+            'harvest item associated with recording',
             id: harvest_item.id,
             audio_recording_id: audio_recording_id,
             success: save_result
@@ -188,7 +199,7 @@ module BawWorkers
 
         def get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
           create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash,
-                                                                 security_info)
+            security_info)
 
           response_meta = create_response[:response]
           response_hash = create_response[:response_json]
@@ -341,6 +352,17 @@ module BawWorkers
           partial_path = @original_audio.partial_path(storage_file_opts)
           file_name = @original_audio.file_name_utc(storage_file_opts)
           File.join(partial_path, file_name)
+        end
+
+        def apply_fixes(file_path)
+          FIXES.map do |fix_id|
+            logger.debug('Checking if fix needed', fix_id: fix_id)
+            result = Emu::Fix.fix_if_needed(Pathname(file_path), fix_id)
+            raise 'Failed running EMU, see logs' if result&.success? != true
+
+            # return the fix log for the file
+            result.records.first
+          end
         end
       end
     end

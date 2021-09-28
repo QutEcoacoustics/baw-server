@@ -46,7 +46,7 @@ module BawWorkers
             logger.error(name, exception: e)
 
             item.info[:error] = e.message
-            item.status = one_of_our_exceptions(e) ? HarvestItem::STATUS_FAILED : HarvestItem::STATUS_ERROR
+            item.status = one_of_our_exceptions(e) ? HarvestItem::STATUS_FAILED : HarvestItem::STATUS_ERRORED
             item.save!
             failed!(e.message)
           end

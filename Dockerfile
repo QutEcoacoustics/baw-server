@@ -41,7 +41,7 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   # https://github.com/moby/moby/issues/20437
   && mkdir -p /home/${app_user}/${app_name}/tmp \
   && chown -R 1000:1000 /home/${app_user} \
-  && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi) 
+  && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi)
 
 
 ENV RAILS_ENV=production \
@@ -61,6 +61,9 @@ ENV RAILS_ENV=production \
 
 
 USER ${app_user}
+
+# "Install" our metadata utilitu
+COPY --from=qutecoacoustics/emu:latest --chown==${app_user} /emu /emu
 
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}

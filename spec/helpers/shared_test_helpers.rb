@@ -59,6 +59,7 @@ shared_context 'shared_test_helpers' do
 
   let(:default_settings_file) { RSpec.configuration.default_settings_path }
   let(:harvest_to_do_path) { File.expand_path(Settings.actions.harvest.to_do_path) }
+  let(:harvester_to_do_path) { Pathname(File.expand_path(Settings.actions.harvest.to_do_path)) }
   let(:custom_temp) { BawWorkers::Config.temp_dir }
 
   # easy access to config & settings
@@ -85,7 +86,7 @@ shared_context 'shared_test_helpers' do
       options[:datetime_with_offset] = Time.zone.parse(options[:datetime_with_offset])
     else
       raise ArgumentError,
-            "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
+        "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
     end
 
     original_possible_paths = audio_original.possible_paths(options)
@@ -283,7 +284,7 @@ shared_context 'shared_test_helpers' do
 
       matches = expected_request.matches?(actual_requests[index])
       expect(matches).to be_truthy,
-                         "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
+        "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
     end
   end
 end
