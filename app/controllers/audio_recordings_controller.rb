@@ -215,36 +215,30 @@ class AudioRecordingsController < ApplicationController
   end
 
   def update_status_params_check
-    opts = { error_info: { audio_recording_id: params[:id] } }
+    error_meta = { error_info: { audio_recording_id: params[:id] } }
 
     if @audio_recording.blank?
       respond_error(
         :not_found,
         "Could not find Audio Recording with id #{params[:id]}",
-        { error_info: { audio_recording_id: params[:id] } }
+        error_meta
       )
     elsif !params.include?(:file_hash)
       respond_error(:unprocessable_entity, 'Must include file hash')
     elsif @audio_recording.file_hash != params[:file_hash]
-      respond_error(
-        :unprocessable_entity,
-        'Incorrect file hash',
-        { error_info: { audio_recording: { id: params[:id], file_hash: {
-          stored: @audio_recording.file_hash,
-          request: params[:file_hash]
-        } } } }
-      )
+      error_meta.error_info.file_hash = {
+        stored: @audio_recording.file_hash,
+        request: params[:file_hash]
+      }
+      respond_error(:unprocessable_entity, 'Incorrect file hash', error_meta)
     elsif !params.include?(:uuid)
       respond_error(:unprocessable_entity, 'Must include uuid')
     elsif @audio_recording.uuid != params[:uuid]
-      respond_error(
-        :unprocessable_entity,
-        'Incorrect uuid',
-        { error_info: { audio_recording: { id: params[:id], uuid: {
-          stored: @audio_recording.uuid,
-          request: params[:uuid]
-        } } } }
-      )
+      error_meta.error_info.uuid = {
+        stored: @audio_recording.uuid,
+        request: params[:uuid]
+      }
+      respond_error(:unprocessable_entity, 'Incorrect uuid', error_meta)
     elsif !params.include?(:status)
       respond_error(:unprocessable_entity, 'Must include status')
     else
@@ -282,24 +276,8 @@ class AudioRecordingsController < ApplicationController
   end
 
   def audio_recording_params
-    permitted_attributes = [
-      :bit_rate_bps,
-      :channels,
-      :data_length_bytes,
-      :original_file_name,
-      :duration_seconds,
-      :file_hash,
-      :media_type,
-      :notes,
-      :recorded_date,
-      :sample_rate_hertz,
-      :status,
-      :uploader_id,
-      :site_id,
-      :creator_id,
-      { notes: {} }
-    ]
-
+    # Accept all audio recording inputs,  indicate notes takes an object input
+    permitted_attributes = AudioRecording.fields[:all_inputs].map { |key| key == :notes ? { notes: {} } : key }
     params.require(:audio_recording).permit(*permitted_attributes)
   end
 

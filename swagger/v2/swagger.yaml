@@ -2525,6 +2525,325 @@ paths:
                   image: 
                   tzinfo_tz: 
                   rails_tz: 
+  "/audio_recordings":
+    post:
+      summary: create audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/audio_recording"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/audio_recording"
+    get:
+      summary: list audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - audio_recordings
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: recorded_date
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/audio_recordings?direction=desc&items=25&order_by=recorded_date&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 37
+                  uuid: dd27eb82-7f25-49c5-969e-2833e6a80626
+                  recorded_date: '2012-03-26T07:06:59.000Z'
+                  site_id: 40
+                  duration_seconds: 60000.0
+                  sample_rate_hertz: 44100
+                  channels: 2
+                  bit_rate_bps: 64000
+                  media_type: audio/mpeg
+                  data_length_bytes: 3800
+                  status: ready
+                  created_at: '2020-01-02T03:04:05.677Z'
+                  updated_at: '2020-01-02T03:04:05.677Z'
+                  recorded_date_timezone: 
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/audio_recording"
+  "/audio_recordings/{id}":
+    put:
+      summary: update audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/audio_recording"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/audio_recording"
+    patch:
+      summary: update audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/audio_recording"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/audio_recording"
+    delete:
+      summary: delete audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - audio_recordings
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 404
+                  message: Not Found
+                  error:
+                    details: Could not find the requested page.
+                    info:
+                      original_route: audio_recordings/40
+                      original_http_method: DELETE
+                data: 
+    get:
+      summary: show audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - audio_recordings
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 41
+                  uuid: 834a9ecd-e107-44da-8a75-678b98768f0c
+                  recorded_date: '2012-03-26T07:06:59.000Z'
+                  site_id: 46
+                  duration_seconds: 60000.0
+                  sample_rate_hertz: 44100
+                  channels: 2
+                  bit_rate_bps: 64000
+                  media_type: audio/mpeg
+                  data_length_bytes: 3800
+                  status: ready
+                  created_at: '2020-01-02T03:04:05.677Z'
+                  updated_at: '2020-01-02T03:04:05.677Z'
+                  recorded_date_timezone: 
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/audio_recording"
+  "/audio_recordings/filter":
+    post:
+      summary: filter audio recording
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - audio_recordings
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: recorded_date
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/audio_recordings/filter?direction=desc&items=25&order_by=recorded_date&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 42
+                  uuid: f005b9d2-af67-43aa-a654-2917f5133254
+                  recorded_date: '2012-03-26T07:06:59.000Z'
+                  site_id: 47
+                  duration_seconds: 60000.0
+                  sample_rate_hertz: 44100
+                  channels: 2
+                  bit_rate_bps: 64000
+                  media_type: audio/mpeg
+                  data_length_bytes: 3800
+                  status: ready
+                  created_at: '2020-01-02T03:04:05.677Z'
+                  updated_at: '2020-01-02T03:04:05.677Z'
+                  recorded_date_timezone: 
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/audio_recording"
+  "/audio_recordings/new":
+    get:
+      summary: new audio recordings
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - audio_recordings
+      description: |2
+
+        Users that can invoke this route: `Admin`, `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: .
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  uuid: 1487ac64-970f-4a23-b0a1-9524b938e3f3
+                  recorded_date: 
+                  site_id: 
+                  duration_seconds: 
+                  sample_rate_hertz: 
+                  channels: 
+                  bit_rate_bps: 
+                  media_type: 
+                  data_length_bytes: 
+                  status: new
+                  created_at: 
+                  updated_at: 
+                  uploader_id: 
+                  file_hash: 
+                  original_file_name: 
   "/status":
     get:
       summary: Gets status
@@ -2538,12 +2857,13 @@ paths:
           content:
             application/json:
               example:
-                status: good
+                status: bad
                 timed_out: false
                 database: true
                 redis: PONG
-                storage: 1 audio recording storage directory available.
-                upload: Alive
+                storage: No audio recording storage directories are available.
+                upload: 'error: Failed to open TCP connection to upload.test:8080
+                  (getaddrinfo: Name or service not known)'
               schema:
                 type: object
                 properties:
@@ -2586,18 +2906,18 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 37
-                  audio_recording_id: 37
+                  id: 45
+                  audio_recording_id: 45
                   offset_seconds: 4.0
-                  name: name 37
+                  name: name 45
                   creator_id: 1
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: description 37
-                  category: category 37
-                  description_html: "<p>description 37</p>\n"
-                  description_html_tagline: description 37
+                  description: description 45
+                  category: category 45
+                  description_html: "<p>description 45</p>\n"
+                  description_html_tagline: description 45
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2644,18 +2964,18 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 38
-                  audio_recording_id: 38
-                  name: name 38
-                  category: category 38
-                  description: description 38
+                - id: 46
+                  audio_recording_id: 46
+                  name: name 46
+                  category: category 46
+                  description: description 46
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>description 38</p>\n"
-                  description_html_tagline: description 38
+                  description_html: "<p>description 46</p>\n"
+                  description_html_tagline: description 46
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2734,18 +3054,18 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 40
-                  audio_recording_id: 40
-                  name: name 40
-                  category: category 40
-                  description: description 40
+                - id: 48
+                  audio_recording_id: 48
+                  name: name 48
+                  category: category 48
+                  description: description 48
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>description 40</p>\n"
-                  description_html_tagline: description 40
+                  description_html: "<p>description 48</p>\n"
+                  description_html_tagline: description 48
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2785,18 +3105,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  audio_recording_id: 42
-                  name: name 42
-                  description: description 42
+                  audio_recording_id: 50
+                  name: name 50
+                  description: description 50
                   offset_seconds: 4.0
-                  category: category 42
+                  category: category 50
                   updater_id: 1
-                  id: 41
+                  id: 49
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>description 42</p>\n"
-                  description_html_tagline: description 42
+                  description_html: "<p>description 50</p>\n"
+                  description_html_tagline: description 50
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2838,18 +3158,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  audio_recording_id: 44
-                  name: name 44
-                  description: description 44
+                  audio_recording_id: 52
+                  name: name 52
+                  description: description 52
                   offset_seconds: 4.0
-                  category: category 44
+                  category: category 52
                   updater_id: 1
-                  id: 42
+                  id: 50
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>description 44</p>\n"
-                  description_html_tagline: description 44
+                  description_html: "<p>description 52</p>\n"
+                  description_html_tagline: description 52
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2914,18 +3234,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 44
-                  audio_recording_id: 46
+                  id: 52
+                  audio_recording_id: 54
                   offset_seconds: 4.0
-                  name: name 46
+                  name: name 54
                   creator_id: 1
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: description 46
-                  category: category 46
-                  description_html: "<p>description 46</p>\n"
-                  description_html_tagline: description 46
+                  description: description 54
+                  category: category 54
+                  description_html: "<p>description 54</p>\n"
+                  description_html_tagline: description 54
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3000,22 +3320,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 45
-                  name: saved search name 45
-                  description: saved search description 45
+                - id: 53
+                  name: saved search name 53
+                  description: saved search description 53
                   stored_query:
                     uuid:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 207
+                  creator_id: 248
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 49
+                  - 57
                   analysis_job_ids:
-                  - 45
-                  description_html: "<p>saved search description 45</p>\n"
-                  description_html_tagline: saved search description 45
+                  - 53
+                  description_html: "<p>saved search description 53</p>\n"
+                  description_html_tagline: saved search description 53
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3057,7 +3377,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: saved_searches/46
+                      original_route: saved_searches/54
                       original_http_method: PUT
                 data: 
       requestBody:
@@ -3119,7 +3439,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: saved_searches/48
+                      original_route: saved_searches/56
                       original_http_method: PATCH
                 data: 
       requestBody:
@@ -3156,22 +3476,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 49
-                  name: saved search name 51
-                  description: saved search description 51
+                  id: 57
+                  name: saved search name 59
+                  description: saved search description 59
                   stored_query:
                     uuid:
                       eq: blah blah
-                  creator_id: 225
+                  creator_id: 266
                   created_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 53
+                  - 61
                   analysis_job_ids:
-                  - 49
-                  description_html: "<p>saved search description 51</p>\n"
-                  description_html_tagline: saved search description 51
+                  - 57
+                  description_html: "<p>saved search description 59</p>\n"
+                  description_html_tagline: saved search description 59
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3214,22 +3534,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 50
-                  name: saved search name 52
-                  description: saved search description 52
+                - id: 58
+                  name: saved search name 60
+                  description: saved search description 60
                   stored_query:
                     uuid:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 229
+                  creator_id: 270
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 54
+                  - 62
                   analysis_job_ids:
-                  - 50
-                  description_html: "<p>saved search description 52</p>\n"
-                  description_html_tagline: saved search description 52
+                  - 58
+                  description_html: "<p>saved search description 60</p>\n"
+                  description_html_tagline: saved search description 60
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3262,9 +3582,9 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 52
-                  name: saved search name 54
-                  description: saved search description 54
+                  id: 60
+                  name: saved search name 62
+                  description: saved search description 62
                   stored_query:
                     uuid:
                       eq: blah blah
@@ -3274,8 +3594,8 @@ paths:
                   deleted_at: 
                   project_ids: []
                   analysis_job_ids: []
-                  description_html: "<p>saved search description 54</p>\n"
-                  description_html_tagline: saved search description 54
+                  description_html: "<p>saved search description 62</p>\n"
+                  description_html_tagline: saved search description 62
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3323,11 +3643,11 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 58
-                  name: site name 62
-                  description: site description 62
-                  notes: note number 62
-                  creator_id: 241
+                - id: 69
+                  name: site name 73
+                  description: site description 73
+                  notes: note number 73
+                  creator_id: 282
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3360,8 +3680,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 62</p>\n"
-                  description_html_tagline: site description 62
+                  description_html: "<p>site description 73</p>\n"
+                  description_html_tagline: site description 73
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3406,11 +3726,11 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 60
-                  name: site name 64
-                  description: site description 64
-                  notes: note number 64
-                  creator_id: 246
+                - id: 71
+                  name: site name 75
+                  description: site description 75
+                  notes: note number 75
+                  creator_id: 287
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3443,8 +3763,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 64</p>\n"
-                  description_html_tagline: site description 64
+                  description_html: "<p>site description 75</p>\n"
+                  description_html_tagline: site description 75
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3478,12 +3798,12 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 56
-                  name: region name 58
-                  description: site **description** 58
+                  id: 64
+                  name: region name 66
+                  description: site **description** 66
                   notes:
-                    region_note_58: 58
-                  project_id: 59
+                    region_note_66: 66
+                  project_id: 67
                   creator_id: 1
                   updater_id: 
                   deleter_id: 
@@ -3491,8 +3811,8 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
                   site_ids: []
-                  description_html: "<p>site <strong>description</strong> 58</p>\n"
-                  description_html_tagline: site <strong>description</strong> 58
+                  description_html: "<p>site <strong>description</strong> 66</p>\n"
+                  description_html_tagline: site <strong>description</strong> 66
                   image_urls: []
               schema:
                 allOf:
@@ -3540,22 +3860,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 57
-                  name: region name 59
-                  description: site **description** 59
+                - id: 65
+                  name: region name 67
+                  description: site **description** 67
                   notes:
-                    region_note_59: 59
-                  creator_id: 253
+                    region_note_67: 67
+                  creator_id: 294
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 60
+                  project_id: 68
                   site_ids:
-                  - 62
-                  description_html: "<p>site <strong>description</strong> 59</p>\n"
-                  description_html_tagline: site <strong>description</strong> 59
+                  - 73
+                  description_html: "<p>site <strong>description</strong> 67</p>\n"
+                  description_html_tagline: site <strong>description</strong> 67
                   image_urls: []
               schema:
                 allOf:
@@ -3601,22 +3921,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 58
-                  name: region name 60
-                  description: site **description** 60
+                - id: 66
+                  name: region name 68
+                  description: site **description** 68
                   notes:
-                    region_note_60: 60
-                  creator_id: 257
+                    region_note_68: 68
+                  creator_id: 298
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 61
+                  project_id: 69
                   site_ids:
-                  - 63
-                  description_html: "<p>site <strong>description</strong> 60</p>\n"
-                  description_html_tagline: site <strong>description</strong> 60
+                  - 74
+                  description_html: "<p>site <strong>description</strong> 68</p>\n"
+                  description_html_tagline: site <strong>description</strong> 68
                   image_urls: []
               schema:
                 allOf:
@@ -3657,22 +3977,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: region name 62
-                  description: site **description** 62
-                  project_id: 63
+                  name: region name 70
+                  description: site **description** 70
+                  project_id: 71
                   notes:
-                    region_note_62: 62
+                    region_note_70: 70
                   updater_id: 1
-                  id: 59
-                  creator_id: 261
+                  id: 67
+                  creator_id: 302
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
                   site_ids:
-                  - 64
-                  description_html: "<p>site <strong>description</strong> 62</p>\n"
-                  description_html_tagline: site <strong>description</strong> 62
+                  - 75
+                  description_html: "<p>site <strong>description</strong> 70</p>\n"
+                  description_html_tagline: site <strong>description</strong> 70
                   image_urls: []
               schema:
                 allOf:
@@ -3715,22 +4035,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 60
-                  name: region name 63
-                  description: site **description** 63
+                  id: 68
+                  name: region name 71
+                  description: site **description** 71
                   notes:
-                    region_note_63: 63
-                  project_id: 64
-                  creator_id: 267
+                    region_note_71: 71
+                  project_id: 72
+                  creator_id: 308
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
                   site_ids:
-                  - 65
-                  description_html: "<p>site <strong>description</strong> 63</p>\n"
-                  description_html_tagline: site <strong>description</strong> 63
+                  - 76
+                  description_html: "<p>site <strong>description</strong> 71</p>\n"
+                  description_html_tagline: site <strong>description</strong> 71
                   image_urls: []
               schema:
                 allOf:
@@ -3768,22 +4088,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: region name 65
-                  description: site **description** 65
-                  project_id: 66
+                  name: region name 73
+                  description: site **description** 73
+                  project_id: 74
                   notes:
-                    region_note_65: 65
+                    region_note_73: 73
                   updater_id: 1
-                  id: 61
-                  creator_id: 271
+                  id: 69
+                  creator_id: 312
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
                   site_ids:
-                  - 66
-                  description_html: "<p>site <strong>description</strong> 65</p>\n"
-                  description_html_tagline: site <strong>description</strong> 65
+                  - 77
+                  description_html: "<p>site <strong>description</strong> 73</p>\n"
+                  description_html_tagline: site <strong>description</strong> 73
                   image_urls: []
               schema:
                 allOf:
@@ -3890,19 +4210,19 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 62
-                  name: job name 62
-                  description: job description 62
+                - id: 70
+                  name: job name 70
+                  description: job description 70
                   annotation_name: 
-                  custom_settings: custom settings 62
-                  creator_id: 286
+                  custom_settings: custom settings 70
+                  creator_id: 327
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
-                  script_id: 62
-                  saved_search_id: 63
+                  script_id: 70
+                  saved_search_id: 71
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: new
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -3920,8 +4240,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 62</p>\n"
-                  description_html_tagline: job description 62
+                  description_html: "<p>job description 70</p>\n"
+                  description_html_tagline: job description 70
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3954,19 +4274,19 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 64
-                  name: job name 64
+                  id: 72
+                  name: job name 72
                   annotation_name: 
-                  custom_settings: custom settings 64
-                  script_id: 64
+                  custom_settings: custom settings 72
+                  script_id: 72
                   creator_id: 1
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: job description 64
-                  saved_search_id: 65
+                  description: job description 72
+                  saved_search_id: 73
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -3984,8 +4304,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 64</p>\n"
-                  description_html_tagline: job description 64
+                  description_html: "<p>job description 72</p>\n"
+                  description_html_tagline: job description 72
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4051,19 +4371,19 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 66
-                  name: job name 66
+                  id: 74
+                  name: job name 74
                   annotation_name: 
-                  custom_settings: custom settings 66
-                  script_id: 66
-                  creator_id: 301
+                  custom_settings: custom settings 74
+                  script_id: 74
+                  creator_id: 342
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: job description 66
-                  saved_search_id: 67
+                  description: job description 74
+                  saved_search_id: 75
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -4081,8 +4401,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 66</p>\n"
-                  description_html_tagline: job description 66
+                  description_html: "<p>job description 74</p>\n"
+                  description_html_tagline: job description 74
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4119,19 +4439,19 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 67
-                  name: job name 68
+                  id: 75
+                  name: job name 76
                   annotation_name: 
-                  custom_settings: custom settings 67
-                  script_id: 67
-                  creator_id: 305
+                  custom_settings: custom settings 75
+                  script_id: 75
+                  creator_id: 346
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: job description 68
-                  saved_search_id: 68
+                  description: job description 76
+                  saved_search_id: 76
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -4149,8 +4469,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 68</p>\n"
-                  description_html_tagline: job description 68
+                  description_html: "<p>job description 76</p>\n"
+                  description_html_tagline: job description 76
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4192,19 +4512,19 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 68
-                  name: job name 70
+                  id: 76
+                  name: job name 78
                   annotation_name: 
-                  custom_settings: custom settings 69
-                  script_id: 69
-                  creator_id: 312
+                  custom_settings: custom settings 77
+                  script_id: 77
+                  creator_id: 353
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description: job description 70
-                  saved_search_id: 70
+                  description: job description 78
+                  saved_search_id: 78
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -4222,8 +4542,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 70</p>\n"
-                  description_html_tagline: job description 70
+                  description_html: "<p>job description 78</p>\n"
+                  description_html_tagline: job description 78
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4316,19 +4636,19 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 70
-                  name: job name 72
-                  description: job description 72
+                - id: 78
+                  name: job name 80
+                  description: job description 80
                   annotation_name: 
-                  custom_settings: custom settings 72
-                  creator_id: 323
+                  custom_settings: custom settings 80
+                  creator_id: 364
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleted_at: 
-                  script_id: 72
-                  saved_search_id: 73
+                  script_id: 80
+                  saved_search_id: 81
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: new
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
@@ -4346,8 +4666,8 @@ paths:
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 72</p>\n"
-                  description_html_tagline: job description 72
+                  description_html: "<p>job description 80</p>\n"
+                  description_html_tagline: job description 80
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4392,15 +4712,15 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 71
-                  name: gen_dataset_name70
-                  description: dataset description 70
+                - id: 79
+                  name: gen_dataset_name78
+                  description: dataset description 78
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 326
+                  creator_id: 367
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 70</p>\n"
-                  description_html_tagline: dataset description 70
+                  description_html: "<p>dataset description 78</p>\n"
+                  description_html_tagline: dataset description 78
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4433,15 +4753,15 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 73
+                  id: 81
                   creator_id: 1
                   updater_id: 
-                  name: gen_dataset_name72
-                  description: dataset description 72
+                  name: gen_dataset_name80
+                  description: dataset description 80
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>dataset description 72</p>\n"
-                  description_html_tagline: dataset description 72
+                  description_html: "<p>dataset description 80</p>\n"
+                  description_html_tagline: dataset description 80
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4484,15 +4804,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 74
-                  creator_id: 335
+                  id: 82
+                  creator_id: 376
                   updater_id: 
-                  name: gen_dataset_name73
-                  description: dataset description 73
+                  name: gen_dataset_name81
+                  description: dataset description 81
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>dataset description 73</p>\n"
-                  description_html_tagline: dataset description 73
+                  description_html: "<p>dataset description 81</p>\n"
+                  description_html_tagline: dataset description 81
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4529,15 +4849,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  description: dataset description 75
-                  name: gen_dataset_name75
+                  description: dataset description 83
+                  name: gen_dataset_name83
                   updater_id: 1
-                  id: 75
-                  creator_id: 339
+                  id: 83
+                  creator_id: 380
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>dataset description 75</p>\n"
-                  description_html_tagline: dataset description 75
+                  description_html: "<p>dataset description 83</p>\n"
+                  description_html_tagline: dataset description 83
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4579,15 +4899,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  description: dataset description 77
-                  name: gen_dataset_name77
+                  description: dataset description 85
+                  name: gen_dataset_name85
                   updater_id: 1
-                  id: 76
-                  creator_id: 344
+                  id: 84
+                  creator_id: 385
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  description_html: "<p>dataset description 77</p>\n"
-                  description_html_tagline: dataset description 77
+                  description_html: "<p>dataset description 85</p>\n"
+                  description_html_tagline: dataset description 85
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4631,7 +4951,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: datasets/77
+                      original_route: datasets/85
                       original_http_method: DELETE
                 data: 
   "/datasets/new":
@@ -4700,15 +5020,15 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 79
-                  name: gen_dataset_name80
-                  description: dataset description 80
+                - id: 87
+                  name: gen_dataset_name88
+                  description: dataset description 88
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 357
+                  creator_id: 398
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 80</p>\n"
-                  description_html_tagline: dataset description 80
+                  description_html: "<p>dataset description 88</p>\n"
+                  description_html_tagline: dataset description 88
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5031,6 +5351,64 @@ components:
       - site_ids
       - region_ids
       - image_urls
+    audio_recording:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        uuid:
+          type: string
+        site_id:
+          "$ref": "#/components/schemas/id"
+        duration_seconds:
+          type: number
+        sample_rate_hertz:
+          type: number
+        channels:
+          type: number
+        bit_rate_bps:
+          type: number
+        media_type:
+          type: string
+        data_length_bytes:
+          type: number
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - string
+          format: date-time
+          readOnly: true
+        recorded_date:
+          type: string
+          format: date-time
+          readOnly: true
+        notes:
+          type:
+          - 'null'
+          - string
+      required:
+      - id
+      - uuid
+      - recorded_date
+      - site_id
+      - duration_seconds
+      - sample_rate_hertz
+      - channels
+      - bit_rate_bps
+      - media_type
+      - data_length_bytes
+      - status
+      - created_at
+      - updated_at
+      - notes
     analysis_job:
       type: object
       additionalProperties: false
