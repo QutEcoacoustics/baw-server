@@ -5,24 +5,36 @@ module Api
   # A small module that helps output boilerplate JSON schema definitions.
   # All the declarations here could be inlined with no ill-effect.
   module Schema
+    def self.id(nullable: false)
+      { '$ref' => nullable ? '#/components/schemas/nullableId' : '#/components/schemas/id' }
+    end
+
+    def self.ids(nullable: false)
+      { type: nullable ? ['null', 'array'] : 'array', items: id }
+    end
+
+    def self.date(nullable: false)
+      { type: nullable ? ['null', 'string'] : 'string', format: 'date-time' }
+    end
+
     def self.creator_user_stamp
       {
-        creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
-        created_at: { type: 'string', format: 'date-time', readOnly: true }
+        creator_id: { **id, readOnly: true },
+        created_at: { **date, readOnly: true }
       }
     end
 
     def self.updater_user_stamp
       {
-        updater_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        updated_at: { type: ['null', 'string'], format: 'date-time', readOnly: true }
+        updater_id: { **id(nullable: true), readOnly: true },
+        updated_at: { **date(nullable: true), readOnly: true }
       }
     end
 
     def self.deleter_user_stamp
       {
-        deleter_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        deleted_at: { type: ['null', 'string'], format: 'date-time', readOnly: true }
+        deleter_id: { **id(nullable: true), readOnly: true },
+        deleted_at: { **date(nullable: true), readOnly: true }
       }
     end
 

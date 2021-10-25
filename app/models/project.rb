@@ -44,9 +44,15 @@ class Project < ApplicationRecord
 
   has_many :permissions, inverse_of: :project
   # remove joins clause in next major rails version. See https://github.com/rails/rails/pull/39390/files
-  has_many :readers, -> { joins(:permissions).where({ permissions: { level: 'reader' } }).distinct }, through: :permissions, source: :user
-  has_many :writers, -> { joins(:permissions).where({ permissions: { level: 'writer' } }).distinct }, through: :permissions, source: :user
-  has_many :owners, -> { joins(:permissions).where({ permissions: { level: 'owner' } }).distinct }, through: :permissions, source: :user
+  has_many :readers, lambda {
+                       joins(:permissions).where({ permissions: { level: 'reader' } }).distinct
+                     }, through: :permissions, source: :user
+  has_many :writers, lambda {
+                       joins(:permissions).where({ permissions: { level: 'writer' } }).distinct
+                     }, through: :permissions, source: :user
+  has_many :owners, lambda {
+                      joins(:permissions).where({ permissions: { level: 'owner' } }).distinct
+                    }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
   has_many :regions, inverse_of: :project
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
@@ -56,8 +62,9 @@ class Project < ApplicationRecord
 
   #plugins
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#' },
-                    default_url: '/images/project/project_:style.png'
+    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#',
+              spanhalf: '30x30#' },
+    default_url: '/images/project/project_:style.png'
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -69,8 +76,10 @@ class Project < ApplicationRecord
   # attribute validations
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
-  validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z}, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
-  validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z}, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z},
+message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
+  validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z},
+message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # make sure the project has a permission entry for the creator after it is created
   after_create :create_owner_permission
@@ -156,15 +165,15 @@ class Project < ApplicationRecord
       type: 'object',
       additionalProperties: false,
       properties: {
-        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        id: { **Api::Schema.id, readOnly: true },
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
         **Api::Schema.all_user_stamps,
-        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
-        region_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
-        owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
+        site_ids: Api::Schema.ids,
+        region_ids: { **Api::Schema.ids, readOnly: true },
+        owner_ids: { **Api::Schema.ids, readOnly: true },
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels
       },

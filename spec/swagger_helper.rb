@@ -236,6 +236,7 @@ RSpec.configure do |config|
             additionalProperties: false
           },
           project: Project.schema,
+          audio_recording: AudioRecording.schema,
           analysis_job: AnalysisJob.schema,
           bookmark: Bookmark.schema,
           dataset: Dataset.schema,

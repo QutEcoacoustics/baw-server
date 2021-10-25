@@ -346,7 +346,7 @@ module IncludeController
     # json or form encoded with text/plain content type will have the form {}
     return unless request.POST.values.all?(&:blank?)
 
-    if request.body.string.blank?
+    if !request.body.methods.include?(:string) || request.body.string.blank?
       message = 'Request body was empty'
       status = :bad_request
       # include link to 'new' endpoint if body was empty

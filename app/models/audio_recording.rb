@@ -287,21 +287,36 @@ class AudioRecording < ApplicationRecord
     end
   end
 
+  def self.fields
+    field_data = {
+      input: {
+        public: [
+          :site_id, :uploader_id, :recorded_date,
+          :sample_rate_hertz, :media_type, :bit_rate_bps,
+          :data_length_bytes, :channels, :duration_seconds,
+          :file_hash, :notes
+        ],
+        private: [:original_file_name]
+      },
+      db: {
+        public: [
+          :id, :uuid, :status,
+          :creator_id, :created_at,
+          :updater_id, :updated_at
+          # :deleter_id, :deleted_at
+        ]
+      }
+    }
+    field_data[:all_inputs] = field_data[:input][:public] | field_data[:input][:private]
+    field_data[:all_public] = field_data[:db][:public] | field_data[:input][:public]
+    field_data
+  end
+
   # Define filter api settings
   def self.filter_settings
     {
-      valid_fields: [
-        :id, :uuid, :recorded_date, :site_id, :duration_seconds,
-        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-        :data_length_bytes, :status, :created_at, :updated_at,
-        :recorded_end_date
-        # :uploader_id, :file_hash, , :notes, :creator_id,
-        #:updater_id, :deleter_id, :deleted_at, :original_file_name
-      ],
-      render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
-                      :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-                      :data_length_bytes, :status, :created_at, :updated_at],
-      text_fields: [:media_type, :status],
+      valid_fields: fields[:all_public] | [:recorded_end_date],
+      render_fields: fields[:all_public],
       custom_fields: lambda { |item, _user|
         custom_fields = {
           recorded_date_timezone: item&.site&.timezone&.dig(:identifier)
@@ -309,20 +324,8 @@ class AudioRecording < ApplicationRecord
         [item, custom_fields]
       },
       new_spec_fields: lambda { |_user|
-                         {
-                           site_id: nil,
-                           uploader_id: nil,
-                           sample_rate_hertz: nil,
-                           media_type: nil,
-                           recorded_date: nil,
-                           bit_rate_bps: nil,
-                           data_length_bytes: nil,
-                           channels: nil,
-                           duration_seconds: nil,
-                           file_hash: nil,
-                           original_file_name: nil
-                         }
-                       },
+        fields[:all_inputs].map { |key| [key, nil] }.to_h
+      },
       controller: :audio_recordings,
       action: :filter,
       defaults: {
@@ -385,6 +388,30 @@ class AudioRecording < ApplicationRecord
     }
   end
 
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { **Api::Schema.id, readOnly: true },
+        uuid: { type: 'string' },
+        site_id: Api::Schema.id,
+        duration_seconds: { type: 'number' },
+        sample_rate_hertz: { type: 'number' },
+        channels: { type: 'number' },
+        bit_rate_bps: { type: 'number' },
+        media_type: { type: 'string' },
+        data_length_bytes: { type: 'number' },
+        status: { type: 'string' },
+        **Api::Schema.updater_and_creator_user_stamps,
+        recorded_date: { **Api::Schema.date, readOnly: true },
+        #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
+        notes: { type: ['null', 'string'] }
+      },
+      required: fields[:all_public]
+    }.freeze
+  end
+
   def set_uuid
     # only set uuid if uuid attribute is available, is blank, and this is a new object
     self.uuid = UUIDTools::UUID.random_create.to_s if has_attribute?(:uuid) && uuid.blank? && new_record?
@@ -410,7 +437,7 @@ class AudioRecording < ApplicationRecord
   def self.arel_recorded_end_date
     seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
     infix_op_string_join = Arel::Nodes::InfixOperation.new(:'||', AudioRecording.arel_table[:duration_seconds],
-                                                           seconds_as_interval)
+      seconds_as_interval)
     function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
     Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
   end
