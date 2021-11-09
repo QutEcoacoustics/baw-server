@@ -1,0 +1,186 @@
+#!/usr/bin/env pwsh
+
+# Requires -Version 7
+<#
+
+.DESCRIPTION
+
+  Downloads a set of recordings from an acoustic workbench.
+  Will work on Windows, Linux, or MacOSX with PowerShell Core.
+  See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
+  for installation instructions.
+
+  Version <%= @model.app_version %> from <%= @model.workbench_url %>.
+
+.EXAMPLE
+
+PS> ./download_audio_files.ps1
+
+.EXAMPLE
+
+$ chmod +x download_audio_files.ps1
+$ ./download_audio_files.ps1
+
+#>
+
+param(
+  # Where to download the recordings. Defaults to the present working directory if not specified.
+  $target = $null,
+  # The username to use to login to the workbench. This value's default value is templated when the script is generated.
+  $user_name = $null,
+  # The auth token to use to login to the workbench.
+  $auth_token = $null,
+  # The filter to use to select audio recordings to download. This value's default value is templated when the script is generated.
+  # See https://github.com/QutEcoacoustics/baw-server/wiki/API:-Filtering for details on valid filters. This argument
+  # should be a valid JSON encoded string.
+  $filter = $null,
+  # The acoustic workbench instance to use. This value's default value is templated when the script is generated.
+  $workbench_url = $null
+)
+
+$InformationPreference = 'Continue'
+
+Write-Information "Acoustic Workbench downloader script version <%= @model.app_version %>"
+
+if ($null -eq $target) {
+  $target = $pwd
+}
+
+# templated values from script generation
+if ($null -eq $auth_token) {
+  if ($null -eq $user_name) {
+    $user_name = "<%= @model.user_name %>"
+    if (-not $user_name) {
+      Write-Error "user_name is required"
+      exit 1
+    }
+  }
+  Write-Information "User name: $user_name"
+}
+else {
+  Write-Information "Using supplied auth token $auth_token"
+}
+
+if ($null -eq $filter) {
+  $filter = @'
+<%= raw( @model.filter.to_json ) %>
+'@
+}
+Write-Information "Filter: $filter"
+
+if ($null -eq $workbench_url) {
+  $workbench_url = "<%= @model.workbench_url %>"
+}
+Write-Information "Workbench URL: $workbench_url"
+
+# end templated values
+
+
+# log in
+$headers = @{}
+
+if ($null -eq $auth_token) {
+  $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
+  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{ @{"email"=$_.UserName;"password"=$_.Password}} | ConvertTo-Json
+
+  Write-Information "Logging in to workbench $workbench"
+
+
+    $auth_reponse = Invoke-WebRequest -Uri "$workbench_url/security" -Method POST -Body $json_credentials -Headers $headers -SkipHttpErrorCheck
+    if ($auth_reponse.BaseResponse.IsSuccessStatusCode) {
+      $auth_token = ($auth_reponse.Content | ConvertFrom-Json).data.auth_token
+    }
+    else {
+      Write-Error ("Login attempt failed ($($auth_reponse.StatusCode)) " + $auth_reponse.Content)
+      exit 1
+    }
+
+}
+else {
+  # we have auth token, nothing else to do?
+}
+$headers["Authorization"] = "Token token=`"$auth_token`""
+
+$json_headers = $headers.Clone()
+$json_headers["Content-Type"] = "application/json"
+$json_headers["Accept"] = "application/json"
+
+Write-Information "Downloading recordings"
+
+# start paging through results!
+$script:current_page = 0
+$script:max_page = $null
+function Get-NextPage() {
+  $script:current_page += 1
+  if (($null -ne $script:max_page) -and ($script:current_page -gt $script:max_page)) {
+    Write-Information "Reached end of pages"
+    return $null
+  }
+
+  Write-Information "Getting page $script:current_page"
+
+  $response = Invoke-RestMethod -Uri "$workbench_url/audio_recordings/filter?page=$script:current_page" `
+    -Method POST -Body $filter -Headers $json_headers -SkipHttpErrorCheck -StatusCodeVariable "status_code"
+
+  if ($status_code -ne 200) {
+    Write-Error ("Failed to get recordings ($status_code): ")
+    $response | Format-List | out-string | Write-Error
+    exit 1
+  }
+
+  $script:max_page = $response.meta.paging.max_page
+
+  Write-Information "Got page $script:current_page of $script:max_page, $($response.data.Count) recordings in this page."
+
+  return $response.data
+}
+
+$sites = @{}
+function Get-SiteName($id) {
+  if ($sites.ContainsKey($id)) {
+    return $sites[$id]
+  }
+
+  $response = Invoke-RestMethod -Uri "$workbench_url/sites/$id"  -Headers $headers -StatusCodeVariable "site_status_code"
+  if ($site_status_code -ne 200) {
+    Write-Warning ("Failed to get site name for site id $site_id ")
+    return $id
+  }
+
+
+  $name = $response.data.name
+  # Safe folder names
+  $name = $name -replace '[^-_A-Za-z0-9]',''
+  $sites[$id] = $name
+  return $name
+}
+
+# make output directory
+New-Item -ItemType Directory -Path $target -Force | Out-Null
+
+while ($null -ne ($recordings = Get-NextPage )) {
+  foreach($recording in $recordings) {
+    Write-Information "Downloading recording $($recording.id)"
+    $recording | write-output
+
+    $date = (Get-Date $recording.recorded_date).ToString("yyyyMMddTHHmmssZ")
+    $site_id = $recording.site_id
+    $audio_recording_id = $recording.id
+    $extension = [System.IO.Path]::GetExtension($recording.original_file_name)
+
+    $site_id = $recording.site_id
+    $safe_site_name = Get-SiteName $site_id
+    $sub_folder = Join-Path $target "${site_id}_$safe_site_name"
+    New-Item -ItemType Directory -Path $sub_folder -Force | Out-Null
+
+    $path = Join-Path $sub_folder "${date}_${site_id}_${audio_recording_id}${extension}"
+
+    Invoke-RestMethod -Uri "$workbench_url/audio_recordings/$audio_recording_id/original" `
+      -Method GET -Headers $headers -StatusCodeVariable "download_status_code" -OutFile $path `
+      -Resume
+
+      Write-Information "Downloaded recording $audio_recording_id to $path"
+  }
+}
+
+Write-Information "Done!"

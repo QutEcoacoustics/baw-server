@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class MediaController < ApplicationController
-  skip_authorization_check only: [:show, :original]
+  include Api::ControllerHelper
+
+  skip_authorization_check only: [:show]
 
   attr_reader :audio_response_duration
 
@@ -19,7 +21,7 @@ class MediaController < ApplicationController
     is_head_request = request.head?
 
     # check authorization manually, take audio event into account
-    @audio_recording, audio_event = authorise_custom(request_params, current_user)
+    @audio_recording, audio_event = authorize_custom(request_params, current_user)
 
     # can the audio recording be accessed?
     is_audio_ready = audio_recording_ready?(@audio_recording)
@@ -71,8 +73,8 @@ class MediaController < ApplicationController
     # (:format is irrelevant because return mime is whatever mime the original recording is)
     request_params = params.slice(:audio_recording_id).permit(:audio_recording_id).to_h
 
-    # check authorization manually, take audio event into account
-    @audio_recording, _audio_event = authorise_custom(request_params, current_user)
+    @audio_recording = AudioRecording.find(request_params[:audio_recording_id])
+    do_authorize_instance(:original, @audio_recording)
 
     original_file_response(@audio_recording, request, time_start)
   end
@@ -97,14 +99,14 @@ class MediaController < ApplicationController
     end
   end
 
-  def authorise_custom(request_params, user)
+  def authorize_custom(request_params, user)
     # AT 2018-02-26: removed the following condition because it should be covered by standard abilities
     # # (!Access::Core.is_standard_user?(user) && !Access::Core.is_admin?(user))
 
     # AT 2019-11-07: Public access will allow auth to progress past this point
     # where as it used to be if there was no user, we'd stop here.
-    # I'm stil going to make sure actual users are confirmed though.
-    raise CanCan::AccessDenied, 'xxxx' if !user.blank? && !user.confirmed?
+    # I'm still going to make sure actual users are confirmed though.
+    raise CanCan::AccessDenied, 'Account not confirmed' if !user.blank? && !user.confirmed?
 
     audio_recording = auth_custom_audio_recording(request_params, action_name.to_sym)
 
@@ -207,18 +209,18 @@ class MediaController < ApplicationController
       media_category = :audio
 
       existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_audio_info,
-                                                                        generation_request)
+        generation_request)
       response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request,
-                                   time_start, time_waiting_start, in_memory_file: in_memory_file)
+        time_start, time_waiting_start, in_memory_file: in_memory_file)
     when :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
       media_category = :spectrogram
 
       existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_spectrogram_info,
-                                                                        generation_request)
+        generation_request)
       response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request,
-                                 time_start, time_waiting_start, in_memory_file: in_memory_file)
+        time_start, time_waiting_start, in_memory_file: in_memory_file)
     end
   end
 
@@ -243,6 +245,7 @@ class MediaController < ApplicationController
     existing_files = audio_recording.original_file_paths
 
     if existing_files.empty?
+
       raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} can not be found on disk"
     end
 
@@ -406,7 +409,7 @@ class MediaController < ApplicationController
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
     suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset],
-                                                                 options[:end_offset], response_extra_info, options[:format])
+      options[:end_offset], response_extra_info, options[:format])
 
     existing_file = existing_files.first
     content_length = in_memory_file.nil? ? File.size(existing_file) : in_memory_file.size

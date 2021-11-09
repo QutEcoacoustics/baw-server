@@ -24,6 +24,12 @@ module BawApp
     @root ||= Pathname.new("#{__dir__}/../../../..").cleanpath
   end
 
+  # Returns the path to the tmp directory.
+  # @returns [Pathname] - for the tmp directory
+  def tmp_dir
+    @tmp_dir ||= root / 'tmp'
+  end
+
   # Get the config folder path.
   # @return [Pathname]
   def config_root

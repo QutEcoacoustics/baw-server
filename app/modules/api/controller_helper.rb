@@ -126,6 +126,31 @@ module Api
       render json: built_response, status: :ok, content_type: 'application/json', layout: false
     end
 
+    # Intended to take filter options and normalize them for a subsequent filter
+    # request.
+    # @return [Hash] - a hash including filter, paging, and sorting sub-hashes suitable for
+    #  passing to the filter POST method.
+    def build_filter_response_as_filter_query(content, opts = {})
+      # add custom fields
+      items = content.map { |item|
+        Settings.api_response.prepare(item, current_user, opts)
+      }
+
+      # build out the normal response
+      filter_response = Settings.api_response.build(:ok, items, opts.except(:total))
+
+      # choose a subset of response to format as a request filter
+      # data is discarded here
+      filter = filter_response[:meta].except(:status, :message, :paging)
+      if !opts[:page].blank? && !opts[:items].blank?
+        filter[:paging] = {
+          items: opts[:items]
+        }
+      end
+
+      filter
+    end
+
     def api_filter_params
       # for filter api, all validation is done in modules rather than in strong parameters.
       params.permit!
@@ -139,9 +164,7 @@ module Api
         get_resource.send("#{key}=", value)
       end
 
-      if custom_params.nil?
-        custom_params = params[resource_name.to_sym] if params.permitted?
-      end
+      custom_params = params[resource_name.to_sym] if custom_params.nil? && params.permitted?
 
       return if custom_params.blank?
 

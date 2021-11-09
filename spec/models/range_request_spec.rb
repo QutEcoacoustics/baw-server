@@ -154,7 +154,7 @@ describe RangeRequest, type: :model do
     expect(info[:range_end_bytes][4]).to eq(range_request.max_range_size + 50 - 1)
   end
 
-  context 'special open end range case' do
+  context 'with special open end range case' do
     # this test case comes from a real-world production bug: https://github.com/QutBioacoustics/baw-server/issues/318
     # the second part of a large range request triggers a negative content length and the last part of the content
     # range header to be less than the first part.
@@ -165,7 +165,7 @@ describe RangeRequest, type: :model do
     # info[:range_start]:                         512001
     # info[:range_end]:                           310279       <-- problem, end less than start!
     # info[:response_headers]['Content-Length']: -201721       <-- problem, negative range!
-    it 'succeeds with: [single range] special test case, open range greater than max range size' do
+    it 'works for open range greater than max range size' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=512001-'
       info = range_request.build_response(range_options, mock_request)
       expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
@@ -178,7 +178,7 @@ describe RangeRequest, type: :model do
       expect(info[:response_headers]['Content-Length']).to eq(310_280.to_s)
     end
 
-    it 'succeeds with: [single range] special test case, open range greater than max range size, larger file' do
+    it 'works for open range greater than max range size, larger file, limited by max range size' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=512001-'
 
       # ensure xxx- range still honors max_range_size
@@ -196,7 +196,7 @@ describe RangeRequest, type: :model do
       expect(info[:response_headers]['Content-Length']).to eq(range_request.max_range_size.to_s)
     end
 
-    it 'succeeds with: [single range] special test case, last bytes greater than max range offset' do
+    it 'works for last bytes greater than max range offset' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=-500'
       info = range_request.build_response(range_options, mock_request)
       expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
@@ -209,7 +209,7 @@ describe RangeRequest, type: :model do
       expect(info[:response_headers]['Content-Length']).to eq(500.to_s)
     end
 
-    it 'succeeds with: [single range] special test case, last bytes range greater than max range size' do
+    it 'works for last bytes range greater than max range size (will only send max range size)' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=-800000'
       info = range_request.build_response(range_options, mock_request)
       expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
@@ -222,7 +222,7 @@ describe RangeRequest, type: :model do
       expect(info[:response_headers]['Content-Length']).to eq(range_request.max_range_size.to_s)
     end
 
-    it 'succeeds with: [single range] special test case, entire file' do
+    it 'works for entire file' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=0-822280'
       range_request = RangeRequest.new(1_000_000)
       info = range_request.build_response(range_options, mock_request)
@@ -234,6 +234,31 @@ describe RangeRequest, type: :model do
       expect(info[:range_end_bytes][0]).to eq(audio_file_mono_size_bytes - 1)
 
       expect(info[:response_headers]['Content-Length']).to eq(audio_file_mono_size_bytes.to_s)
+    end
+
+    it 'works for resume-style downloads (offsets past the length of the content)' do
+      # https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
+      # When a tool like curl resumes a file for download it will ask for the next byte past what it has.
+      # Send back a 416 error code and the content size of the file.
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=822281-' # one byte longer than file
+      info = range_request.build_response(range_options, mock_request)
+
+      expect(info).to match(
+        a_hash_including(
+          response_code: RangeRequest::HTTP_CODE_RANGE_NOT_SATISFIABLE,
+          response_is_range: true,
+          is_multipart: false,
+
+          range_start_bytes: [audio_file_mono_size_bytes],
+          range_end_bytes: [audio_file_mono_size_bytes - 1],
+
+          response_headers: a_hash_including(
+            'Content-Length' => '0',
+            # https://datatracker.ietf.org/doc/html/rfc7233#section-4.2
+            'Content-Range' => "bytes */#{audio_file_mono_size_bytes}"
+          )
+        )
+      )
     end
   end
 

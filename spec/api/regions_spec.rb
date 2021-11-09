@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 
 describe 'regions', type: :request do
@@ -102,6 +104,7 @@ describe 'regions (nested)', type: :request do
   which_has_schema ref(:region)
 
   let(:project_id) { project.id }
+
   with_route_parameter(:project_id)
 
   path '/projects/{project_id}/regions/filter' do

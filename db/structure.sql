@@ -1001,7 +1001,8 @@ CREATE TABLE public.projects (
     image_file_size integer,
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    allow_original_download character varying
 );
 
 
@@ -1245,15 +1246,55 @@ ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
+-- Name: sftpgo_admins; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sftpgo_admins (
+    id integer NOT NULL,
+    username character varying(255) NOT NULL,
+    password character varying(255) NOT NULL,
+    email character varying(255),
+    status integer NOT NULL,
+    permissions text NOT NULL,
+    filters text,
+    additional_info text,
+    description character varying(512)
+);
+
+
+--
+-- Name: sftpgo_admins_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_admins_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_admins_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sftpgo_admins_id_seq OWNED BY public.sftpgo_admins.id;
+
+
+--
 -- Name: sftpgo_folders; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.sftpgo_folders (
     id integer NOT NULL,
-    path character varying(512) NOT NULL,
+    name character varying(255) NOT NULL,
+    path character varying(512),
     used_quota_size bigint NOT NULL,
     used_quota_files integer NOT NULL,
-    last_quota_update bigint NOT NULL
+    last_quota_update bigint NOT NULL,
+    description character varying(512),
+    filesystem text
 );
 
 
@@ -1347,6 +1388,8 @@ ALTER SEQUENCE public.sftpgo_schema_version_id_seq OWNED BY public.sftpgo_schema
 
 CREATE TABLE public.sftpgo_users (
     id integer NOT NULL,
+    status integer NOT NULL,
+    expiration_date bigint NOT NULL,
     username character varying(255) NOT NULL,
     password text,
     public_keys text,
@@ -1362,11 +1405,11 @@ CREATE TABLE public.sftpgo_users (
     last_quota_update bigint NOT NULL,
     upload_bandwidth integer NOT NULL,
     download_bandwidth integer NOT NULL,
-    expiration_date bigint NOT NULL,
     last_login bigint NOT NULL,
-    status integer NOT NULL,
     filters text,
-    filesystem text
+    filesystem text,
+    additional_info text,
+    description character varying(512)
 );
 
 
@@ -1830,6 +1873,13 @@ ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scri
 
 
 --
+-- Name: sftpgo_admins id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_admins ALTER COLUMN id SET DEFAULT nextval('public.sftpgo_admins_id_seq'::regclass);
+
+
+--
 -- Name: sftpgo_folders id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2181,6 +2231,22 @@ ALTER TABLE ONLY public.scripts
 
 
 --
+-- Name: sftpgo_admins sftpgo_admins_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_admins
+    ADD CONSTRAINT sftpgo_admins_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_admins sftpgo_admins_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_admins
+    ADD CONSTRAINT sftpgo_admins_username_key UNIQUE (username);
+
+
+--
 -- Name: sftpgo_folders_mapping sftpgo_folders_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2189,11 +2255,11 @@ ALTER TABLE ONLY public.sftpgo_folders_mapping
 
 
 --
--- Name: sftpgo_folders sftpgo_folders_path_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: sftpgo_folders sftpgo_folders_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.sftpgo_folders
-    ADD CONSTRAINT sftpgo_folders_path_key UNIQUE (path);
+    ADD CONSTRAINT sftpgo_folders_name_key UNIQUE (name);
 
 
 --
@@ -2210,6 +2276,14 @@ ALTER TABLE ONLY public.sftpgo_folders
 
 ALTER TABLE ONLY public.sftpgo_schema_version
     ADD CONSTRAINT sftpgo_schema_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sftpgo_folders_mapping sftpgo_unique_mapping; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT sftpgo_unique_mapping UNIQUE (user_id, folder_id);
 
 
 --
@@ -2258,14 +2332,6 @@ ALTER TABLE ONLY public.tag_groups
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
-
-
---
--- Name: sftpgo_folders_mapping unique_mapping; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sftpgo_folders_mapping
-    ADD CONSTRAINT unique_mapping UNIQUE (user_id, folder_id);
 
 
 --
@@ -2337,20 +2403,6 @@ CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON public.bookmarks USING btr
 --
 
 CREATE INDEX dataset_items_idx ON public.dataset_items USING btree (start_time_seconds, end_time_seconds);
-
-
---
--- Name: folders_mapping_folder_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX folders_mapping_folder_id_idx ON public.sftpgo_folders_mapping USING btree (folder_id);
-
-
---
--- Name: folders_mapping_user_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX folders_mapping_user_id_idx ON public.sftpgo_folders_mapping USING btree (user_id);
 
 
 --
@@ -2949,6 +3001,20 @@ CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON public.saved_searches
 
 
 --
+-- Name: sftpgo_folders_mapping_folder_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sftpgo_folders_mapping_folder_id_idx ON public.sftpgo_folders_mapping USING btree (folder_id);
+
+
+--
+-- Name: sftpgo_folders_mapping_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sftpgo_folders_mapping_user_id_idx ON public.sftpgo_folders_mapping USING btree (user_id);
+
+
+--
 -- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3441,22 +3507,6 @@ ALTER TABLE ONLY public.datasets
 
 
 --
--- Name: sftpgo_folders_mapping folders_mapping_folder_id_fk_folders_id; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sftpgo_folders_mapping
-    ADD CONSTRAINT folders_mapping_folder_id_fk_folders_id FOREIGN KEY (folder_id) REFERENCES public.sftpgo_folders(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
-
-
---
--- Name: sftpgo_folders_mapping folders_mapping_user_id_fk_users_id; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.sftpgo_folders_mapping
-    ADD CONSTRAINT folders_mapping_user_id_fk_users_id FOREIGN KEY (user_id) REFERENCES public.sftpgo_users(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
-
-
---
 -- Name: permissions permissions_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3577,6 +3627,22 @@ ALTER TABLE ONLY public.scripts
 
 
 --
+-- Name: sftpgo_folders_mapping sftpgo_folders_mapping_folder_id_fk_folders_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT sftpgo_folders_mapping_folder_id_fk_folders_id FOREIGN KEY (folder_id) REFERENCES public.sftpgo_folders(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: sftpgo_folders_mapping sftpgo_folders_mapping_user_id_fk_users_id; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sftpgo_folders_mapping
+    ADD CONSTRAINT sftpgo_folders_mapping_user_id_fk_users_id FOREIGN KEY (user_id) REFERENCES public.sftpgo_users(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
+
+
+--
 -- Name: sites sites_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3684,6 +3750,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210707050202'),
 ('20210707050203'),
 ('20210707074343'),
-('20210730051645');
+('20210730051645'),
+('20211024235556');
 
 

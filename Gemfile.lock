@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/socketry/async
-  revision: 731e93bca067a8ee20023bf52e992657120a7500
+  revision: cec74b739fe50d44b35f919381740cdc118f5cdf
   specs:
     async (2.0.0)
       console (~> 1.10)
@@ -9,7 +9,7 @@ GIT
 
 GIT
   remote: https://github.com/socketry/async-http
-  revision: 367d5176d91222eefc0b32def8ace47807389abf
+  revision: 07634ec6098648e1786d2ae5a1b6f871aa5e2f17
   specs:
     async-http (0.56.5)
       async (>= 1.25)
@@ -127,7 +127,7 @@ GEM
       faraday
     async-io (1.32.2)
       async
-    async-pool (0.3.8)
+    async-pool (0.3.9)
       async (>= 1.25)
     attr_extras (6.2.4)
     autoprefixer-rails (10.3.1.0)
@@ -261,7 +261,7 @@ GEM
       tzinfo
     ethon (0.14.0)
       ffi (>= 1.15.0)
-    event (1.0.2)
+    event (1.0.3)
     exception_notification (4.4.3)
       actionmailer (>= 4.0, < 7)
       activesupport (>= 4.0, < 7)
@@ -376,7 +376,7 @@ GEM
     listen (3.7.0)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
-    localhost (1.1.8)
+    localhost (1.1.9)
     loofah (2.12.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)

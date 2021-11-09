@@ -10,7 +10,7 @@ module PermissionsHelpers
 
     def self.extended(base)
       base.class_attribute :registered_users, :route, :route_params, :request_body_options,
-                           :expected_list_items_callback, :update_attrs_subset
+        :expected_list_items_callback, :update_attrs_subset
 
       base.registered_users = Set.new
       base.after(:all) do
@@ -53,6 +53,16 @@ module PermissionsHelpers
           ]
         }
       })
+    end
+
+    # Indicate we're not testing any method that sends a request body to update a model.
+    # This is POST/PUT/PATCH verbs or #create/#update actions.
+    def with_idempotent_requests_only
+      error = lambda {
+        raise 'a method that needs a request body was used, but this set of specs was marked as only testing idempotent methods'
+      }
+      send_create_body(&error)
+      send_update_body(&error)
     end
 
     def send_create_body(&block)
@@ -125,11 +135,11 @@ module PermissionsHelpers
     end
 
     def everything_but_new
+      # new is always accessible to everyone
       @everything_but_new ||= (STANDARD_ACTIONS - [:new]).freeze
     end
 
     def nothing
-      # new is always accessible to everyone
       @nothing ||= Set[].freeze
     end
 
