@@ -6,7 +6,7 @@ module Access
     class << self
       # Validate access level, which can include empty or nil.
       # @param [Object] level
-      # @return [Symbol] level
+      # @return [Symbol,nil] level
       def level(level)
         # ensure we choose just one element if an array was accidentally passed
         level = level.first if level.is_a?(Array)

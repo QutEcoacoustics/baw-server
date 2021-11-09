@@ -8,6 +8,15 @@ class ApplicationController < ActionController::Base
 
   layout :select_layout
 
+  def default_url_options
+    # see https://edgeguides.rubyonrails.org/action_controller_overview.html#default-url-options
+    {
+      host: Settings.host.name,
+      protocol: BawApp.http_scheme,
+      port: Settings.host.port
+    }
+  end
+
   def select_layout
     if json_request?
       'api'

@@ -4,21 +4,22 @@
 #
 # Table name: projects
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :integer
-#  image_updated_at   :datetime
-#  name               :string           not null
-#  notes              :text
-#  urn                :string
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  updater_id         :integer
+#  id                      :integer          not null, primary key
+#  allow_original_download :string
+#  deleted_at              :datetime
+#  description             :text
+#  image_content_type      :string
+#  image_file_name         :string
+#  image_file_size         :integer
+#  image_updated_at        :datetime
+#  name                    :string           not null
+#  notes                   :text
+#  urn                     :string
+#  created_at              :datetime
+#  updated_at              :datetime
+#  creator_id              :integer          not null
+#  deleter_id              :integer
+#  updater_id              :integer
 #
 # Indexes
 #
@@ -34,6 +35,8 @@
 #  projects_updater_id_fk  (updater_id => users.id)
 #
 class Project < ApplicationRecord
+  extend Enumerize
+
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
@@ -44,9 +47,15 @@ class Project < ApplicationRecord
 
   has_many :permissions, inverse_of: :project
   # remove joins clause in next major rails version. See https://github.com/rails/rails/pull/39390/files
-  has_many :readers, -> { joins(:permissions).where({ permissions: { level: 'reader' } }).distinct }, through: :permissions, source: :user
-  has_many :writers, -> { joins(:permissions).where({ permissions: { level: 'writer' } }).distinct }, through: :permissions, source: :user
-  has_many :owners, -> { joins(:permissions).where({ permissions: { level: 'owner' } }).distinct }, through: :permissions, source: :user
+  has_many :readers, lambda {
+                       joins(:permissions).where({ permissions: { level: 'reader' } }).distinct
+                     }, through: :permissions, source: :user
+  has_many :writers, lambda {
+                       joins(:permissions).where({ permissions: { level: 'writer' } }).distinct
+                     }, through: :permissions, source: :user
+  has_many :owners, lambda {
+                      joins(:permissions).where({ permissions: { level: 'owner' } }).distinct
+                    }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
   has_many :regions, inverse_of: :project
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
@@ -54,10 +63,10 @@ class Project < ApplicationRecord
 
   accepts_nested_attributes_for :permissions
 
-  #plugins
+  # plugins
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#' },
-                    default_url: '/images/project/project_:style.png'
+    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#' },
+    default_url: '/images/project/project_:style.png'
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -69,8 +78,14 @@ class Project < ApplicationRecord
   # attribute validations
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
-  validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z}, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
-  validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z}, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z},
+    message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
+  validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z},
+    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+
+  # ensure allow original download is a permission level.
+  # Do not add predicates to Project ( #reader?, #writer?, #owner? do not make sense when attached directly to Project).
+  enumerize :allow_original_download, in: Permission::AVAILABLE_LEVELS, default: nil, predicates: false
 
   # make sure the project has a permission entry for the creator after it is created
   after_create :create_owner_permission
@@ -156,17 +171,18 @@ class Project < ApplicationRecord
       type: 'object',
       additionalProperties: false,
       properties: {
-        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        id: Api::Schema.id,
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
         **Api::Schema.all_user_stamps,
-        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
-        region_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
-        owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
+        site_ids: Api::Schema.ids,
+        region_ids: Api::Schema.ids(read_only: true),
+        owner_ids: Api::Schema.ids(read_only: true),
         image_urls: Api::Schema.image_urls,
-        access_level: Api::Schema.permission_levels
+        access_level: Api::Schema.permission_levels,
+        allow_original_download: Api::Schema.permission_levels
       },
       required: [
         :id,
@@ -184,7 +200,8 @@ class Project < ApplicationRecord
         :owner_ids,
         :site_ids,
         :region_ids,
-        :image_urls
+        :image_urls,
+        :allow_original_download
       ]
     }.freeze
   end

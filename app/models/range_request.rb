@@ -25,7 +25,7 @@
 class RangeRequest
   module Constants
     MULTIPART_BOUNDARY = '<q1w2e3r4t5y6u7i8o9p0>'
-    MULTIPART_CONTENT_TYPE = "multipart/byteranges boundary=#{MULTIPART_BOUNDARY}"
+    MULTIPART_CONTENT_TYPE = "multipart/byteranges boundary=#{MULTIPART_BOUNDARY}".freeze
     DEFAULT_CONTENT_TYPE = 'application/octet-stream'
     MULTIPART_HEADER_LENGTH = 49
     MULTIPART_DASH_LINE_BREAK_LENGTH = 8
@@ -61,6 +61,7 @@ class RangeRequest
 
     HTTP_CODE_PARTIAL_CONTENT = 206
     HTTP_CODE_PRECONDITION_FAILED = 412
+    HTTP_CODE_RANGE_NOT_SATISFIABLE = 416
     HTTP_CODE_NOT_MODIFIED = 304
     HTTP_CODE_OK = 200
   end
@@ -228,11 +229,18 @@ class RangeRequest
 
     content_length = (range_end - range_start) + CONVERT_INDEX_TO_LENGTH
 
-    return_value[:response_code] = HTTP_CODE_PARTIAL_CONTENT
+    unsatisfiable = range_start >= (file_size + CONVERT_LENGTH_TO_INDEX)
+    return_value[:response_code] = unsatisfiable ? HTTP_CODE_RANGE_NOT_SATISFIABLE : HTTP_CODE_PARTIAL_CONTENT
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_CONTENT_RANGE] =
+    if unsatisfiable
+      # https://datatracker.ietf.org/doc/html/rfc7233#section-4.2
+      "#{HTTP_HEADER_ACCEPT_RANGES_BYTES} */#{file_size}"
+    else
       "#{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{file_size}"
+    end => range_header
+
+    return_value[:response_headers][HTTP_HEADER_CONTENT_RANGE] = range_header
     return_value[:response_headers][HTTP_HEADER_CONTENT_LENGTH] = content_length
     return_value[:response_headers][HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
 
@@ -386,6 +394,7 @@ class RangeRequest
 
     return_value[:range_start_bytes] = []
     return_value[:range_end_bytes] = []
+    max_end_index = info[:range_end_bytes_max]
 
     ranges.each do |range|
       current_range = range.split('-')
@@ -397,7 +406,7 @@ class RangeRequest
       if start_range.blank? && end_range.blank?
         # default to 0 - @max_range_size (or whatever is available) of file
         start_range = info[:range_start_bytes_min]
-        end_range = [@max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
+        end_range = [@max_range_size + CONVERT_LENGTH_TO_INDEX, max_end_index].min
 
       # e.g. "0-1", "0-500", "400-1000"
       elsif !start_range.blank? && !end_range.blank?
@@ -409,7 +418,7 @@ class RangeRequest
       elsif !start_range.blank? && end_range.blank?
         # given a start but no end, get the smallest of remaining length and @max_range_size
         start_range = start_range.to_i
-        end_range = [start_range + @max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
+        end_range = [start_range + @max_range_size + CONVERT_LENGTH_TO_INDEX, max_end_index].min
 
       # https://tools.ietf.org/html/rfc7233#page-5
       # assuming a representation of length 10000:
@@ -418,21 +427,27 @@ class RangeRequest
       # e.g. "-200"
       elsif start_range.blank? && !end_range.blank?
         # No beginning specified, get last n bytes of file
-        start_range = info[:range_end_bytes_max] + CONVERT_INDEX_TO_LENGTH - [end_range.to_i, @max_range_size].min
-        end_range = info[:range_end_bytes_max]
+        start_range = max_end_index + CONVERT_INDEX_TO_LENGTH - [end_range.to_i, @max_range_size].min
+        end_range = max_end_index
 
       end
 
       start_range = info[:range_start_bytes_min] if start_range < info[:range_start_bytes_min]
-      end_range = info[:range_end_bytes_max] if end_range > info[:range_end_bytes_max]
+      end_range = max_end_index if end_range > max_end_index
       # e.g. bytes=0-499, max_range_size=500 => 499 - 0 + 1 = 500 > 500
       if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
         raise CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
       end
 
-      if start_range > end_range
+      if start_range > max_end_index
+        # https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
+        # Range not satisfiable
+        # the current values should equate to zero bytes when we calculate the content length later on
+        end_range = start_range + CONVERT_LENGTH_TO_INDEX
+      elsif start_range > end_range
+
         raise CustomErrors::BadRequestError,
-              'The requested range specified a first byte that was greater than the last byte.'
+          "The requested range specified a first byte `#{start_range}` that was greater than the last byte `#{end_range}`. Requested range: `#{info[:requested_range]}`"
       end
 
       return_value[:range_start_bytes].push(start_range)

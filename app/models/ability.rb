@@ -147,6 +147,7 @@ class Ability
     # actions used for harvesting. See baw-workers.
     # :original is the permission to download an original audio file
     can [:new, :create, :check_uploader, :update_status, :update, :original], AudioRecording
+    can [:index], :downloader
 
     # omitted: :new, :create,
     # applied by default: :index, :show, :filter
@@ -340,6 +341,9 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter], AudioRecording
+
+    # anyone can access the downloader script
+    can [:index], :downloader
   end
 
   def to_audio_event(user, is_guest)
@@ -636,14 +640,29 @@ class Ability
     can [:show], :analysis unless is_guest
   end
 
-  def to_media(_user, _is_guest)
+  def to_media(user, is_guest)
     # available to any user, including guest
     # skips CanCan auth
     can [:show], :media
 
-    # See permissions for harvester:
-    #   - Only admin and harvester can download original recording (#original)
+    # download original recording (#original)
+    #
+    # - admin and harvester can (see for_harvester and for_admin)
+    # - logged in users can if the project says so
+    # - anonymous users cannot
     # GET       /audio_recordings/:id/original     media#original
+    return if is_guest
+
+    can [:original], AudioRecording do |audio_recording|
+      check_model(audio_recording)
+      Access::Core.check_orphan_site!(audio_recording.site)
+      projects = audio_recording.site.projects
+
+      # now check if original download flag is set
+      requested_levels = projects.map(&:allow_original_download)
+
+      Access::Core.can_any?(user, requested_levels, projects)
+    end
   end
 
   def to_error(_user, _is_guest)

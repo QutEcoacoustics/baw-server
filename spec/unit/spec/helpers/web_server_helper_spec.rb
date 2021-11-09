@@ -67,6 +67,9 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
       end
 
       # Can't work this out, known bugs exist with async and ruby <3.3. Try again later
+      # results in:
+      #  Errno::EBADF:
+      #    Bad file descriptor - epoll_ctl(process_wait)
       xit 'via system' do
         # Won't use the scheduler:
         system("curl '#{url}'")

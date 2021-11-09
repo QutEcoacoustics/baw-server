@@ -115,10 +115,10 @@ Common tasks that you may need:
 
 - `bundle install` to install a new gem
 - `rails db:xxx` to manipulate database
-    - `rails db:setup` - does all of the below
-    - `rails db:create` - create database
-    - `rails db:migrate` - run migrations
-    - `rails db:seed` - seed the database with default data
+  - `rails db:setup` - does all of the below
+  - `rails db:create` - create database
+  - `rails db:migrate` - run migrations
+  - `rails db:seed` - seed the database with default data
 - `rails console` to use the rails console
 - `rails start` to run a web server
 - `passenger-config restart-app /` to restart passenger and hot-reload code
@@ -132,42 +132,44 @@ Docker commands:
 - `docker compose stop` will stop the containers
 - `docker compose stop web` stop web container so you can do something else
 - `docker compose exec bundle exec passenger start` - the default action for `docker compose up`
+- use `docker compose restart workers workers_test scheduler scheduler_test` to restart rails apps in headless services
+  - this is useful for installing a new gem in associated containers after updating the Gemfile (entrypoint.sh does the `bundle install`)
 
 When running the server in `development` or `test` modes, these configuration
 files will be used:
 
- - `/config/settings/development.yml`
- - `/config/settings/test.yml`
+- `config/settings/development.yml`
+- `config/settings/test.yml`
 
-They are based on `/config/settings/default.yml`.
+They are based on `config/settings/default.yml`.
 
 ### Workers
 
 - run commands on the worker container
-    - e.g. `docker compose workers exec ...`
+  - e.g. `docker compose workers exec ...`
 - list worker commands: `baw-workers -T` or `baw-workers` (using the manually maintained binstub)
 - run a new worker: `baw-workers baw:worker:run`
 - run a scheduler to process time-delayed tasks: `baw-workers baw:worker:run_scheduler`
 
 Debugging:
-```
-docker-compose run --service-ports    --use-aliases  workers bash
-../bin/bundle exec rdebug-ide --host 0.0.0.0 --port 1234 ../bin/rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
-```
+
+  docker-compose run --service-ports    --use-aliases  workers bash
+  ../bin/bundle exec rdebug-ide --host 0.0.0.0 --port 1234 ../bin/rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
 
 ### Tests
+
 The tests are run using rspec:
 
-    $ bin/rspec
+    bin/rspec
 
 Tests can also be run with a specified seed using rspec:
 
-    $ rspec --seed <number>
+    rspec --seed <number>
 
 There are some slower tests that do not always need to be run. These are marked
 with the `slow` metadata and can be skipped with:
 
-    $ rspec --tag ~slow
+    rspec --tag ~slow
 
 ### Style
 
@@ -177,11 +179,10 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 
 Generate API documentation with:
 
-```shell
-$ bin/generate_docs.sh
-```
+  bin/generate_docs.sh
 
 ## Other commands
+
 These commands should be executed automatically but are listed because they are helpful to know.
 
 - Create the test database: `rails db:create RAILS_ENV=test`
@@ -205,18 +206,18 @@ A basic redis setup is included with the docker-compose file.
 
 1. `git switch master && git pull`
 2. Determine the next tag name and set it to an environment variable:
-  - `export NEXT_VERSION=x.x.x`
+    - `export NEXT_VERSION=x.x.x`
 3. Set the GitHub auth token for docs generation:
-  - `export CHANGELOG_GITHUB_TOKEN=xxx`
+    - `export CHANGELOG_GITHUB_TOKEN=xxx`
 4. Generate the release notes:
-  - `docker compose run web rake changelog`
+    - `docker compose run web rake changelog`
 5. Update the version in the `VERSION` file
-  - `echo "$NEXT_VERSION" > VERSION`
+    - `echo "$NEXT_VERSION" > VERSION`
 6. Commit the changed files
-  - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"`
+    - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"`
 7. Tag the release and push
-  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"`
-  - `git push --follow-tags`
+    - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"`
+    - `git push --follow-tags`
 
 ## Architecture
 
@@ -240,4 +241,5 @@ Other major credits go to:
 - [@JessieLOliver](https://github.com/JessieLOliver) for design and user experience feedback
 
 ## Licence
+
 Apache License, Version 2.0

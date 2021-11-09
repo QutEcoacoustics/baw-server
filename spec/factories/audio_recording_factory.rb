@@ -54,7 +54,7 @@ require "#{__dir__}/../helpers/misc_helper"
 FactoryBot.define do
   factory :audio_recording do
     sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n) }
-    recorded_date { '2012-03-26 07:06:59' }
+    sequence(:recorded_date) { |n| (DateTime.parse('2012-03-26 07:06:59') + n.to_i.day).to_s }
     duration_seconds { 60_000 }
     sample_rate_hertz { 22_050 }
     channels { 2 }
@@ -65,7 +65,10 @@ FactoryBot.define do
     sequence(:original_file_name) { |n| "original name #{n}.mp3" }
 
     creator
-    uploader
+    uploader do
+      # admin user
+      User.find(1)
+    end
     site
 
     trait :status_new do
@@ -83,7 +86,8 @@ FactoryBot.define do
       after(:create) do |audio_recording, evaluator|
         raise 'Creator was blank' if evaluator.creator.blank?
 
-        create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording: audio_recording, creator: evaluator.creator)
+        create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording: audio_recording,
+creator: evaluator.creator)
       end
     end
 
@@ -98,6 +102,7 @@ FactoryBot.define do
       end
     end
 
-    factory :audio_recording_with_audio_events_and_bookmarks, traits: [:with_audio_events, :with_bookmarks, :status_ready]
+    factory :audio_recording_with_audio_events_and_bookmarks,
+      traits: [:with_audio_events, :with_bookmarks, :status_ready]
   end
 end

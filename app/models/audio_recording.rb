@@ -294,14 +294,16 @@ class AudioRecording < ApplicationRecord
         :id, :uuid, :recorded_date, :site_id, :duration_seconds,
         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
         :data_length_bytes, :status, :created_at, :updated_at,
-        :recorded_end_date
-        # :uploader_id, :file_hash, , :notes, :creator_id,
-        #:updater_id, :deleter_id, :deleted_at, :original_file_name
+        :recorded_end_date, :file_hash, :uploader_id, :original_file_name
+        #, :notes, :creator_id,
+        #:updater_id, :deleter_id, :deleted_at,
       ],
       render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
                       :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-                      :data_length_bytes, :status, :created_at, :updated_at],
-      text_fields: [:media_type, :status],
+                      :data_length_bytes, :status, :created_at, :creator_id,
+                      :deleted_at, :deleter_id, :updated_at, :updater_id,
+                      :notes, :file_hash, :uploader_id, :original_file_name],
+      text_fields: [:media_type, :status, :original_file_name],
       custom_fields: lambda { |item, _user|
         custom_fields = {
           recorded_date_timezone: item&.site&.timezone&.dig(:identifier)
@@ -385,6 +387,55 @@ class AudioRecording < ApplicationRecord
     }
   end
 
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: Api::Schema.id,
+        uuid: Api::Schema.uuid,
+        site_id: Api::Schema.id,
+        duration_seconds: { type: 'number' },
+        sample_rate_hertz: { type: 'number' },
+        channels: { type: 'number' },
+        bit_rate_bps: { type: 'number' },
+        media_type: { type: 'string' },
+        data_length_bytes: { type: 'number' },
+        status: { type: 'string' },
+        **Api::Schema.all_user_stamps,
+        recorded_date: Api::Schema.date,
+        file_hash: { type: 'string' },
+        notes: { type: 'object' },
+        recorded_date_timezone: { type: ['null', 'string'] },
+        uploader_id: Api::Schema.id(nullable: true, read_only: false),
+        original_file_name: { type: 'string' }
+      },
+      required: [
+        :id,
+        :uuid,
+        :site_id,
+        :duration_seconds,
+        :sample_rate_hertz,
+        :channels,
+        :bit_rate_bps,
+        :media_type,
+        :data_length_bytes,
+        :status,
+        :creator_id,
+        :created_at,
+        :updater_id,
+        :updated_at,
+        :deleter_id,
+        :deleted_at,
+        :recorded_date,
+        :file_hash,
+        :notes,
+        :uploader_id,
+        :original_file_name
+      ]
+    }.freeze
+  end
+
   def set_uuid
     # only set uuid if uuid attribute is available, is blank, and this is a new object
     self.uuid = UUIDTools::UUID.random_create.to_s if has_attribute?(:uuid) && uuid.blank? && new_record?
@@ -410,7 +461,7 @@ class AudioRecording < ApplicationRecord
   def self.arel_recorded_end_date
     seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
     infix_op_string_join = Arel::Nodes::InfixOperation.new(:'||', AudioRecording.arel_table[:duration_seconds],
-                                                           seconds_as_interval)
+      seconds_as_interval)
     function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
     Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
   end

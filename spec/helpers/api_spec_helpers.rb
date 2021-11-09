@@ -31,16 +31,15 @@ module ApiSpecHelpers
     def self.extended(base); end
 
     attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model,
-                  :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
+      :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
 
+    # these tests document an API - they're not really for testing user access
+    # Even if they were, the OAS specification has no concept of different
+    # responses based on user roles. So all documentation tests are done under
+    # the admin user.
+    #
+    # Actual auth tests should be done in the requests specs.
     def with_authorization
-      # these tests document an API - they're not really for testing user access
-      # Even if they were, the OAS specification has no concept of different
-      # responses based on user roles. So all documentation tests are done under
-      # the admin user.
-      #
-      # Actual auth tests should be done in the requests specs.
-      #
       # NOTE: rswag won't use the let `Authorization` unless there is a
       # basic auth section defined in components/securitySchemes in swagger_helper!
       self.baw_security = [{ basic_auth_with_token: [] }]
@@ -49,7 +48,7 @@ module ApiSpecHelpers
 
     def with_query_string_authorization
       # see notes in with_authorization about token
-      self.baw_baw_security = [{ auth_token_query_string: [] }]
+      self.baw_security = [{ auth_token_query_string: [] }]
       let(:auth_token) { admin_token }
     end
 

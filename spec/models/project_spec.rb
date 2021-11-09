@@ -4,21 +4,22 @@
 #
 # Table name: projects
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :integer
-#  image_updated_at   :datetime
-#  name               :string           not null
-#  notes              :text
-#  urn                :string
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  updater_id         :integer
+#  id                      :integer          not null, primary key
+#  allow_original_download :string
+#  deleted_at              :datetime
+#  description             :text
+#  image_content_type      :string
+#  image_file_name         :string
+#  image_file_size         :integer
+#  image_updated_at        :datetime
+#  name                    :string           not null
+#  notes                   :text
+#  urn                     :string
+#  created_at              :datetime
+#  updated_at              :datetime
+#  creator_id              :integer          not null
+#  deleter_id              :integer
+#  updater_id              :integer
 #
 # Indexes
 #

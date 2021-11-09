@@ -16,7 +16,7 @@ module FactoryBotHelpers
       # full = attributes_for(model_name)
       full = build(factory || model_name, **(factory_args || {})).attributes.symbolize_keys
       writeable = schema[:properties]
-                  .reject { |_key, value| value[:readOnly] }
+                  .select { |_key, value| value.fetch(:readOnly, false) == false }
                   .keys
 
       partial = full.slice(*writeable, *subset)

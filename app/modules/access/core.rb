@@ -119,7 +119,7 @@ module Access
           :writer
         when 'owner', 'own'
           :owner
-          end
+        end
       end
 
       # Validate access level.
@@ -275,7 +275,8 @@ module Access
         when :reader
           [:reader]
         else
-          raise ArgumentError, "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
+          raise ArgumentError,
+            "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
       end
 
@@ -292,7 +293,8 @@ module Access
         when :reader
           [:reader, :writer, :owner]
         else
-          raise ArgumentError, "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
+          raise ArgumentError,
+            "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
       end
 
@@ -389,8 +391,8 @@ module Access
       # @param [Symbol, Array<Symbol>] requested_levels
       # @param [Symbol, Array<Symbol>] actual_levels
       # @return [Boolean]
-      def allowed?(requested_levels, actual_levels)
-        requested_array = Access::Validate.levels([requested_levels])
+      def allowed?(required_level, actual_levels)
+        requested_array = Access::Validate.levels([required_level])
         actual_array = Access::Validate.levels([actual_levels])
 
         # short circuit checking nils
@@ -423,11 +425,11 @@ module Access
 
       # Does this user have this access level to any of these projects?
       # @param [User] user
-      # @param [Symbol] level
+      # @param [Symbol,Array<Symbol>] levels one more required levels. The highest is chosen as the restriction.
       # @param [Array<Project>] projects
       # @return [Boolean]
-      def can_any?(user, level, projects)
-        requested_level = Access::Validate.level(level)
+      def can_any?(user, levels, projects)
+        requested_level = Access::Validate.levels(levels)
         actual_level = Access::Core.user_levels(user, projects)
 
         allowed?(requested_level, actual_level)

@@ -460,17 +460,17 @@ Rails.application.routes.draw do
   # standard devise for website authentication
   # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
   devise_for :users,
-             path: :my_account,
-             controllers: { sessions: 'users/sessions', registrations: 'users/registrations' }
+    path: :my_account,
+    controllers: { sessions: 'users/sessions', registrations: 'users/registrations' }
 
   # devise for RESTful API Authentication, see sessions_controller.rb
   devise_for :users,
-             controllers: { sessions: 'sessions' },
-             as: :security,
-             path: :security,
-             defaults: { format: 'json' },
-             only: [],
-             skip_helpers: true
+    controllers: { sessions: 'sessions' },
+    as: :security,
+    path: :security,
+    defaults: { format: 'json' },
+    only: [],
+    skip_helpers: true
 
   # provide a way to get the current user's auth token
   # will most likely use cookies, since there is no point using a token to get the token...
@@ -568,17 +568,17 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'analysis_jobs/filter' => 'analysis_jobs#filter',
-        via: [:get, :post], defaults: { format: 'json' }
+    via: [:get, :post], defaults: { format: 'json' }
   match 'analysis_jobs/:analysis_job_id/audio_recordings/filter' => 'analysis_jobs_items#filter',
-        via: [:get, :post], defaults: { format: 'json' }, as: :analysis_job_analysis_jobs_items_filter
+    via: [:get, :post], defaults: { format: 'json' }, as: :analysis_job_analysis_jobs_items_filter
   match 'saved_searches/filter' => 'saved_searches#filter',
-        via: [:get, :post], defaults: { format: 'json' }
+    via: [:get, :post], defaults: { format: 'json' }
 
   # route for AnalysisJobsItems and results
   match 'analysis_jobs/:analysis_job_id/results/' => 'analysis_jobs_results#index',
-        defaults: { format: 'json' }, as: :analysis_jobs_results_index, via: [:get, :head], format: false, action: 'index'
+    defaults: { format: 'json' }, as: :analysis_jobs_results_index, via: [:get, :head], format: false, action: 'index'
   match 'analysis_jobs/:analysis_job_id/results/:audio_recording_id(/*results_path)' => 'analysis_jobs_results#show',
-        defaults: { format: 'json' }, as: :analysis_jobs_results_show, via: [:get, :head], format: false, action: 'show'
+    defaults: { format: 'json' }, as: :analysis_jobs_results_show, via: [:get, :head], format: false, action: 'show'
 
   # API only for analysis_jobs, analysis_jobs_items and saved_searches
   resources :analysis_jobs, except: [:edit], defaults: { format: 'json' } do
@@ -589,6 +589,10 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: { format: 'json' }
+  namespace :audio_recordings do
+    match 'downloader' => 'downloader#index', via: [:get, :post], defaults: { format: 'json' }
+  end
+
   match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'taggings/filter' => 'taggings#filter', via: [:get, :post], defaults: { format: 'json' }
 
@@ -637,11 +641,11 @@ Rails.application.routes.draw do
 
   # audio event csv download routes
   get '/projects/:project_id/audio_events/download' => 'audio_events#download',
-      defaults: { format: 'csv' }, as: :download_project_audio_events
+    defaults: { format: 'csv' }, as: :download_project_audio_events
   get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download',
-      defaults: { format: 'csv' }, as: :download_site_audio_events
+    defaults: { format: 'csv' }, as: :download_site_audio_events
   get '/user_accounts/:user_id/audio_events/download' => 'audio_events#download',
-      defaults: { format: 'csv' }, as: :download_user_audio_events
+    defaults: { format: 'csv' }, as: :download_user_audio_events
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: { format: 'json' }
@@ -659,24 +663,24 @@ Rails.application.routes.draw do
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' =>
     'progress_events#create_by_dataset_item_params',
-        :constraints => {
-          dataset_id: /(\d+|default)/,
-          audio_recording_id: /\d+/,
-          start_time_seconds: /\d+(\.\d+)?/,
-          end_time_seconds: /\d+(\.\d+)?/
-        },
-        via: [:post],
-        defaults: { format: 'json' }
+    :constraints => {
+      dataset_id: /(\d+|default)/,
+      audio_recording_id: /\d+/,
+      start_time_seconds: /\d+(\.\d+)?/,
+      end_time_seconds: /\d+(\.\d+)?/
+    },
+    via: [:post],
+    defaults: { format: 'json' }
 
   # datasets, dataset_items
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter',
-        via: [:get, :post],
-        defaults: { format: 'json' }
+    via: [:get, :post],
+    defaults: { format: 'json' }
   match 'datasets/:dataset_id/dataset_items/next_for_me' => 'dataset_items#next_for_me',
-        via: [:get],
-        defaults: { format: 'json' }
+    via: [:get],
+    defaults: { format: 'json' }
   resources :datasets, except: :destroy, defaults: { format: 'json' } do
     resources :items, controller: 'dataset_items', defaults: { format: 'json' }
   end

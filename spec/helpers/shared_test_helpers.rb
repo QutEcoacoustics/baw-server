@@ -120,6 +120,12 @@ shared_context 'shared_test_helpers' do
     path.delete if path.exist?
     path.parent.mkpath
 
+    logger.info(
+      "Linking #{target} to #{path}",
+      uuid: uuid,
+      datetime_with_offset: datetime_with_offset,
+      original_format: original_format)
+
     path.make_symlink(target)
     path
   end
