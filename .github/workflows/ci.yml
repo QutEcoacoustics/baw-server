@@ -58,7 +58,7 @@ jobs:
       # there appears to be a race condition between entrypoint script (which does a migration)
       # and the following prepare database step
       - name: Start docker compose
-        run: docker compose up -d -f docker-compose.yml -f .github/workflows/docker-compose.yml
+        run: docker compose up -d docker-compose.yml
 
       - name: Wait for ready
         run: |
