@@ -1,4 +1,0 @@
-
-services:
-  web:
-    command: touch .ready
