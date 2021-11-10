@@ -67,7 +67,7 @@ FactoryBot.define do
     creator
     uploader do
       # admin user
-      User.find(1)
+      User.find_by(roles_mask: 1)
     end
     site
 

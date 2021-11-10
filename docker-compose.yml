@@ -29,8 +29,12 @@ services:
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
 
-  # Note: if the sftpgo service fails to start because a table already exists, it is because the database has the tables
-  # but none of the migration info in it. Delete the tables with `rails baw: truncate_sftpgo_tables`.
+  # Note: if the sftpgo service fails to start because a table already exists,
+  # it is because the database has the tables
+  # but none of the migration info in it. Delete the tables with
+  # `rails baw:truncate_sftpgo_tables`.
+  # Error from logs:
+  #   Unable to initialize/update the data provider: pq: relation "sftpgo_schema_version" already exists
   upload: &upload
     <<: *gh_actions
     # Default command is `sftpgo serve`

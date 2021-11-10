@@ -45,7 +45,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
     standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader)', :not_acceptable,
-                             { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
+      { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -54,13 +54,13 @@ resource 'Media' do
     let(:format) { 'zjfyrdnd' }
     # can't respond with the format requested
     standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader)', :not_acceptable,
-                             { expected_json_path: 'meta/error/info/available_formats' })
+      { expected_json_path: 'meta/error/info/available_formats' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :format,
-              'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+      'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
     let(:raw_post) { params.to_json }
 
@@ -182,7 +182,7 @@ resource 'Media' do
   get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :format,
-              'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+      'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
     let(:raw_post) { params.to_json }
 
@@ -590,7 +590,7 @@ resource 'Media' do
     get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
       parameter :format,
-                'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+        'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
       let(:authentication_token) { reader_token }
       let(:format) { 'json' }
       let(:sample_rate) { 7777 }
@@ -663,14 +663,14 @@ resource 'Media' do
     get '/audio_recordings/:audio_recording_id/media.:format' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
       parameter :format,
-                'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+        'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
 
       let(:raw_post) { params.to_json }
       let(:authentication_token) { reader_token }
       let(:format) { 'json' }
 
       example 'MEDIA (as reader) checking available and formats valid sample rates for audio recording with non-standard original sample rate - 200',
-              document: true do
+        document: true do
         do_request
         expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
@@ -761,7 +761,7 @@ resource 'Media' do
     end
 
     standard_request_options(:get,
-                             'MEDIA (as reader, valid audio event request offsets with read access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
+      'MEDIA (as reader, valid audio event request offsets with read access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -785,7 +785,7 @@ resource 'Media' do
     }
 
     standard_request_options(:get,
-                             'MEDIA (as reader, valid audio event request offsets with no access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
+      'MEDIA (as reader, valid audio event request offsets with no access to audio recording)', :ok, { expected_json_path: 'data/recording/recorded_date' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -802,7 +802,7 @@ resource 'Media' do
     end
 
     standard_request_options(:get, 'MEDIA (as reader, invalid audio event request offsets)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -824,7 +824,7 @@ resource 'Media' do
     }
 
     standard_request_options(:get, 'MEDIA (as reader, not a reference audio event)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -844,14 +844,14 @@ resource 'Media' do
     let(:audio_event_id) { audio_event.id }
     let!(:other_audio_event_id) { # so there is an additional audio event
       audio_event = FactoryBot.create(:audio_event,
-                                      audio_recording_id: audio_recording_id,
-                                      start_time_seconds: 11, end_time_seconds: 12,
-                                      is_reference: true)
+        audio_recording_id: audio_recording_id,
+        start_time_seconds: 11, end_time_seconds: 12,
+        is_reference: true)
       audio_event.id
     }
 
     standard_request_options(:get, 'MEDIA (as reader, audio event request not related to audio recording)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   #
@@ -864,7 +864,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid start_offset)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -873,7 +873,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid end_offset)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -882,7 +882,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { (audio_recording.duration_seconds + 1).to_s }
     standard_request_options(:get, 'MEDIA (as reader end_offset past original duration)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -891,7 +891,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { '0' }
     standard_request_options(:get, 'MEDIA (as reader end_offset too small)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -900,7 +900,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { audio_recording.duration_seconds.to_s }
     standard_request_options(:get, 'MEDIA (as reader start_offset past original duration)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -909,7 +909,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { '-1' }
     standard_request_options(:get, 'MEDIA (as reader start_offset smaller than 0)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -919,7 +919,7 @@ resource 'Media' do
     let(:start_offset) { '9' }
     let(:end_offset) { '8' }
     standard_request_options(:get, 'MEDIA (as reader start_offset larger than end_offset)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=:window_size' do
@@ -928,7 +928,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_size) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid window_size)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_function=:window_function' do
@@ -937,7 +937,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_function) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid window_function)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
@@ -946,7 +946,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:sample_rate) { '22' }
     standard_request_options(:get, 'MEDIA (as reader invalid sample_rate)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'sample_rate parameter' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'sample_rate parameter' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=:channel' do
@@ -955,7 +955,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:channel) { (audio_recording.channels + 1).to_s }
     standard_request_options(:get, 'MEDIA (as reader invalid channel)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'channel parameter' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'channel parameter' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
@@ -964,7 +964,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:colour) { 'z' }
     standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_entity,
-                             { expected_json_path: 'meta/error/details', response_body_content: 'colour parameter' })
+      { expected_json_path: 'meta/error/details', response_body_content: 'colour parameter' })
   end
 
   # ensure integer parameters are checked
@@ -973,10 +973,10 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/details',
-                               response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be an integer'
-                             })
+      {
+        expected_json_path: 'meta/error/details',
+        response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be an integer'
+      })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=512user_token=ANAUTHTOKEN' do
@@ -984,10 +984,10 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/details',
-                               response_body_content: 'The request could not be understood: window_size parameter (512user_token=ANAUTHTOKEN) must be valid'
-                             })
+      {
+        expected_json_path: 'meta/error/details',
+        response_body_content: 'The request could not be understood: window_size parameter (512user_token=ANAUTHTOKEN) must be valid'
+      })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=0user_token=ANAUTHTOKEN' do
@@ -995,10 +995,10 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/details',
-                               response_body_content: 'The request could not be understood: channel parameter (0user_token=ANAUTHTOKEN) must be valid'
-                             })
+      {
+        expected_json_path: 'meta/error/details',
+        response_body_content: 'The request could not be understood: channel parameter (0user_token=ANAUTHTOKEN) must be valid'
+      })
   end
 
   context 'range request' do
@@ -1054,7 +1054,7 @@ resource 'Media' do
           document: document_media_requests,
           expected_response_content_type: 'audio/wav',
           expected_partial_response_header_value: {
-            'Content-Disposition' => '20120326_070700_1_0.wav"'
+            'Content-Disposition' => '_1_0.wav"'
           }
         }
       )

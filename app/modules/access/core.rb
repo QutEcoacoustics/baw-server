@@ -425,7 +425,7 @@ module Access
 
       # Does this user have this access level to any of these projects?
       # @param [User] user
-      # @param [Symbol,Array<Symbol>] levels one more required levels. The highest is chosen as the restriction.
+      # @param [Symbol,Array<Symbol>] levels one or more required levels. The highest is chosen as the restriction.
       # @param [Array<Project>] projects
       # @return [Boolean]
       def can_any?(user, levels, projects)

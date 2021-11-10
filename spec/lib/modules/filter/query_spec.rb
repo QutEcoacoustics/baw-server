@@ -366,7 +366,9 @@ describe Filter::Query do
           exclude: [
             :uuid, :recorded_date, :site_id,
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-            :data_length_bytes, :status, :created_at, :updated_at
+            :data_length_bytes, :status, :created_at, :updated_at,
+            :creator_id, :deleted_at, :deleter_id, :updater_id,
+            :notes, :file_hash, :uploader_id, :original_file_name
           ]
         },
         filter: {
@@ -577,6 +579,9 @@ describe Filter::Query do
           },
           status: {
             contains: 'testing_testing'
+          },
+          original_file_name: {
+            contains: 'testing_testing'
           }
         },
         not: {
@@ -678,6 +683,8 @@ describe Filter::Query do
         LEFT OUTER JOIN "sites"ON "audio_recordings"."site_id" = "sites"."id"
         WHERE "sites"."id" = 5))
         OR ("audio_recordings"."status"
+        ILIKE '%testing\\_testing%')
+        OR ("audio_recordings"."original_file_name\"
         ILIKE '%testing\\_testing%'))
         AND (NOT ("audio_recordings"."duration_seconds" != 140.0))
         AND (NOT ("audio_recordings"."id"IN (
@@ -705,10 +712,8 @@ describe Filter::Query do
     it 'simple audio_recordings query' do
       request_body_obj = {
         projection: {
-          exclude: [
-            :uuid, :recorded_date, :site_id,
-            :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-            :data_length_bytes, :status, :created_at, :updated_at
+          include: [
+            :id, :duration_seconds
           ]
         },
         filter: {
@@ -1284,7 +1289,7 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL
-        SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."updated_at"
+        SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."creator_id", "audio_recordings"."deleted_at",  "audio_recordings"."deleter_id",  "audio_recordings"."updated_at", "audio_recordings"."updater_id", "audio_recordings"."notes", "audio_recordings"."file_hash", "audio_recordings"."uploader_id", "audio_recordings"."original_file_name"
         FROM "audio_recordings"
         INNER
         JOIN "sites"
@@ -1767,7 +1772,11 @@ describe Filter::Query do
       )
 
       expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
-                                    or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
+                                    or: {
+                                      media_type: { contains: 'mp3' },
+                                      status: { contains: 'mp3' },
+                                      original_file_name: { contains: 'mp3' }
+                                    } })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]
@@ -1798,7 +1807,11 @@ describe Filter::Query do
       )
 
       expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
-                                    or: { media_type: { contains: 'mp3' }, status: { contains: 'mp3' } } })
+                                    or: {
+                                      media_type: { contains: 'mp3' },
+                                      status: { contains: 'mp3' },
+                                      original_file_name: { contains: 'mp3' }
+                                    } })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]
