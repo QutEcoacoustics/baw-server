@@ -25,7 +25,7 @@ describe '/audio_recordings/downloader' do
       expect(response.body).to include('    $user_name = "reader"')
     end
 
-    it 'contains an empty string in user_name when and anonymous user downloads it' do
+    it 'contains an empty string in user_name when an anonymous user downloads it' do
       get '/audio_recordings/downloader', headers: api_request_headers(no_token)
       expect_success
 
