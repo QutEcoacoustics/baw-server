@@ -91,7 +91,7 @@ module Api
               }
             },
             permission_levels: {
-              type: 'string',
+              type: ['string', 'null'],
               enum: ['Owner', 'Writer', 'Reader', nil]
             },
             meta: {

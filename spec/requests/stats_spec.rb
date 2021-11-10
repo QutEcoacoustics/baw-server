@@ -20,7 +20,7 @@ describe '/stats' do
     expect(api_data).to match({
       summary: {
         users_online: 0,
-        users_total: 10,
+        users_total: User.count,
         online_window_start: an_instance_of(String),
         projects_total: 2,
         regions_total: 1,

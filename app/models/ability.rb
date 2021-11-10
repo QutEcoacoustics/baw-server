@@ -658,7 +658,7 @@ class Ability
       Access::Core.check_orphan_site!(audio_recording.site)
       projects = audio_recording.site.projects
 
-      # now check if original download flag is set
+      # now extract the required permission levels needed to allow original downloads
       requested_levels = projects.map(&:allow_original_download)
 
       Access::Core.can_any?(user, requested_levels, projects)

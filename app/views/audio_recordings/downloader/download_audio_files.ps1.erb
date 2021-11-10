@@ -14,9 +14,13 @@
 
 .EXAMPLE
 
+On Windows:
+
 PS> ./download_audio_files.ps1
 
 .EXAMPLE
+
+On Linux/MacOSX:
 
 $ chmod +x download_audio_files.ps1
 $ ./download_audio_files.ps1
@@ -28,7 +32,7 @@ param(
   $target = $null,
   # The username to use to login to the workbench. This value's default value is templated when the script is generated.
   $user_name = $null,
-  # The auth token to use to login to the workbench.
+  # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
   $auth_token = $null,
   # The filter to use to select audio recordings to download. This value's default value is templated when the script is generated.
   # See https://github.com/QutEcoacoustics/baw-server/wiki/API:-Filtering for details on valid filters. This argument

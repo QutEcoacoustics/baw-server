@@ -106,7 +106,9 @@ class Project < ApplicationRecord
                       :updater_id,
                       :updated_at,
                       :deleter_id,
-                      :deleted_at, :notes],
+                      :deleted_at,
+                      :notes,
+                      :allow_original_download],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection

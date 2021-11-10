@@ -186,7 +186,7 @@ ORDER BY project_count ASC, s.name ASC")
   private
 
   def project_params
-    params.require(:project).permit(:description, :image, :name, :notes, :urn)
+    params.require(:project).permit(:description, :image, :name, :notes, :urn, :allow_original_download)
   end
 
   def access_request_params
