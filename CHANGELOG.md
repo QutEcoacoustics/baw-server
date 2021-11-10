@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.8.0](https://github.com/QutEcoacoustics/baw-server/tree/4.8.0) (2021-11-10)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.7.1.0...4.8.0)
+
+**Implemented enhancements:**
+
+- Expose original audio download route to the public [\#538](https://github.com/QutEcoacoustics/baw-server/issues/538)
+- Expose original audio download route [\#548](https://github.com/QutEcoacoustics/baw-server/pull/548) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Use consistency\_fail gem to add db indexes for uniqueness constraints [\#138](https://github.com/QutEcoacoustics/baw-server/issues/138)
+
+**Closed issues:**
+
+- UI updates from design feedback [\#326](https://github.com/QutEcoacoustics/baw-server/issues/326)
+
+## [4.7.1.0](https://github.com/QutEcoacoustics/baw-server/tree/4.7.1.0) (2021-09-28)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.7...4.7.1.0)
+
 ## [4.7](https://github.com/QutEcoacoustics/baw-server/tree/4.7) (2021-09-28)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.6.3...4.7)
