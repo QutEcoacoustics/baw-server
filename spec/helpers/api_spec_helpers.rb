@@ -4,26 +4,26 @@
 require 'swagger_helper'
 
 require 'rswag/specs'
-load 'rswag/specs/swagger_formatter'
-module Rswag
-  module Specs
-    #https://github.com/rswag/rswag/issues/325
-    module PatchedSwaggerFormatter
-      def upgrade_content!(mime_list, target_node)
-        target_node[:content] ||= {} # Here we're avoiding "content" key overriding
-        schema = target_node[:schema]
-        return if mime_list.empty? || schema.nil?
+# load 'rswag/specs/swagger_formatter'
+# module Rswag
+#   module Specs
+#     #https://github.com/rswag/rswag/issues/325
+#     module PatchedSwaggerFormatter
+#       def upgrade_content!(mime_list, target_node)
+#         target_node[:content] ||= {} # Here we're avoiding "content" key overriding
+#         schema = target_node[:schema]
+#         return if mime_list.empty? || schema.nil?
 
-        mime_list.each do |mime_type|
-          # TODO: upgrade to have content-type specific schema
-          (target_node[:content][mime_type] ||= {}).merge!(schema: schema)
-        end
-      end
-    end
-  end
-end
+#         mime_list.each do |mime_type|
+#           # TODO: upgrade to have content-type specific schema
+#           (target_node[:content][mime_type] ||= {}).merge!(schema: schema)
+#         end
+#       end
+#     end
+#   end
+# end
 
-Rswag::Specs::SwaggerFormatter.prepend Rswag::Specs::PatchedSwaggerFormatter
+# Rswag::Specs::SwaggerFormatter.prepend Rswag::Specs::PatchedSwaggerFormatter
 
 # config.extend allows these methods to be used in describe/groups
 module ApiSpecHelpers

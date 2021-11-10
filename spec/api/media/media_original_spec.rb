@@ -27,11 +27,11 @@ describe 'media#original', type: :request do
   path '/audio_recordings/{id}/original' do
     get 'Downloads an original audio file' do
       tags 'AudioRecordings', 'Media'
-      produces 'audio/ogg'
 
       parameter name: :id, in: :path, type: :string, description: 'ID of the audio recording'
 
       response '200', 'original audio file' do
+        produces 'audio/ogg'
         let(:id) { audio_recording.id }
 
         run_test!
@@ -57,6 +57,7 @@ describe 'media#original', type: :request do
       parameter name: :id, in: :path, type: :string, description: 'ID of the audio recording'
 
       response '200', 'original audio file' do
+        produces 'audio/ogg'
         let(:id) { audio_recording.id }
 
         run_test!

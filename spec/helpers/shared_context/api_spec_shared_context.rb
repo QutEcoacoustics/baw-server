@@ -42,10 +42,12 @@ RSpec.shared_context 'with api shared context' do
     case response&.content_type
     when %r{.*application/json.*}
       spec_example.metadata[:response][:content] = json_example
-    when String
+    when %r{text/plain}
       spec_example.metadata[:response][:content] = raw_example
     else
       # add no example
+      logger.debug("Not adding response example for #{response.content_type}")
+
     end
   end
 
