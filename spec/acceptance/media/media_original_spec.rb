@@ -59,7 +59,7 @@ resource 'Media/original' do
     end
 
     def full_file_result(context, opts)
-      filename = context.audio_recording.canonical_filename
+      filename = context.audio_recording.friendly_name
       opts.merge!({
         expected_response_content_type: context.audio_recording.media_type,
         expected_response_has_content: true,

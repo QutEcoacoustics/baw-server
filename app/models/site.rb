@@ -110,6 +110,16 @@ class Site < ApplicationRecord
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
+  # get's a file system safe ([-A-Za-z0-9_]) version of the site name
+  # @return [String]
+  def safe_name
+    name
+      .gsub("'", '')
+      .gsub(/[^-_A-Za-z0-9]+/, '-')
+      .delete_prefix('-')
+      .delete_suffix('-')
+  end
+
   def get_bookmark
     Bookmark.where(audio_recording: audio_recordings).order(:updated_at).first
   end

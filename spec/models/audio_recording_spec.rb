@@ -521,4 +521,34 @@ describe AudioRecording, type: :model do
 
     expect(actual).to eq("#{uuid}_#{date}.wav")
   end
+
+  it 'can return a friendly file name for an audio recording' do
+    date = DateTime.parse('2018-02-26T22:29:30+10:00')
+    site = FactoryBot.create(:site, name: "Ant's super cool site", tzinfo_tz: 'Australia/Brisbane')
+    ar = FactoryBot.build(
+      :audio_recording,
+      site: site,
+      id: 123456,
+      recorded_date: date,
+      media_type: 'audio/wav')
+
+    actual = ar.friendly_name
+
+    expect(actual).to eq('20180226T222930+1000_Ants-super-cool-site_123456.wav')
+  end
+
+  it 'can return a friendly file name for an audio recording (site is missing a timezone)' do
+    date = DateTime.parse('2018-02-26T22:29:30+10:00').utc
+    site = FactoryBot.create(:site, name: "Ant's super cool site", tzinfo_tz: nil)
+    ar = FactoryBot.build(
+      :audio_recording,
+      site: site,
+      id: 123456,
+      recorded_date: date,
+      media_type: 'audio/wav')
+
+    actual = ar.friendly_name
+
+    expect(actual).to eq('20180226T122930Z_Ants-super-cool-site_123456.wav')
+  end
 end

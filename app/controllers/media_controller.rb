@@ -269,7 +269,7 @@ class MediaController < ApplicationController
       start_offset: 0,
       end_offset: audio_recording.duration_seconds,
       # provide our own name for the recording (normally generated in range request)
-      suggested_file_name: audio_recording.canonical_filename,
+      suggested_file_name: audio_recording.friendly_name,
       disposition_type: :attachment
     }
     range_request = Settings.range_request

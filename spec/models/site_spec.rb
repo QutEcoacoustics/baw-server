@@ -168,4 +168,9 @@ describe Site, type: :model do
   # it { should validate_attachment_content_type(:image).
   #                 allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
   #                 rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
+
+  it 'has a safe_name function' do
+    site = FactoryBot.build(:site, name: "!aNT\'s fully s!ck site 1337 ;;\n../\\")
+    expect(site.safe_name).to eq('aNTs-fully-s-ck-site-1337')
+  end
 end

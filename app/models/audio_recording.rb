@@ -219,6 +219,19 @@ class AudioRecording < ApplicationRecord
     audio_original.file_name_utc(modify_parameters)
   end
 
+  # gets a filename that looks nice enough to provide to a user
+  def friendly_name
+    name = site.safe_name
+    if site.timezone.blank?
+      recorded_date.utc.strftime('%Y%m%dT%H%M%SZ')
+    else
+      timezone = TimeZoneHelper.tzinfo_class(site.tzinfo_tz)
+      ActiveSupport::TimeWithZone.new(recorded_date, timezone).strftime('%Y%m%dT%H%M%S%z')
+    end => date
+
+    "#{date}_#{name}_#{id}.#{original_format_calculated}"
+  end
+
   # Calculate the format of original audio recording.
   def original_format_calculated
     # this method previously determined format based on `original_file_name` but this approach is erroneous;
