@@ -1391,7 +1391,7 @@ paths:
                     next: 
                 data:
                 - id: 20
-                  uuid: a3485eac-a901-4e78-b34e-bd3d8f79f7af
+                  uuid: 1eb68505-5f9b-4678-a876-3f0d7de1cfd9
                   recorded_date: '2012-04-15T07:06:59.000Z'
                   site_id: 20
                   duration_seconds: 60000.0
@@ -1409,7 +1409,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 20
-                  file_hash: SHA256::20jp24fn4bso9dp9ar4qqdxt9i08vynw6yrgjuunelaukyzu8cfruwggha8mayl5
+                  file_hash: SHA256::20810m5wsat308vb1zh2ctssfrfdmhpzgsz79hkcjf0w078gwkv93et259iafqow
                   uploader_id: 83
                   original_file_name: original name 20.mp3
                   recorded_date_timezone: 
@@ -1452,7 +1452,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  uuid: 92ecc91c-3d29-429b-a24b-589a1cb7fb50
+                  uuid: e046e7be-1a16-4610-9882-e8daebb6576a
                   duration_seconds: 66.0
                   updater_id: 1
                   id: 21
@@ -1464,7 +1464,7 @@ paths:
                   uploader_id: 87
                   site_id: 21
                   media_type: audio/mpeg
-                  file_hash: SHA256::21b2dr4q3haahkbmigl86lzc5d5bvbyahmw0or9uud7vgzsm0i5tgxdhhvsyfoek
+                  file_hash: SHA256::21c20mgxbdfoqinrqedzbrykin4r7yl06k651cs79dwj5fsiah6ka1zv2tvpl6rg
                   status: ready
                   notes:
                     test: note number 21
@@ -1517,7 +1517,7 @@ paths:
                   message: OK
                 data:
                   id: 22
-                  uuid: 98384a95-d6cd-44c0-85d4-e57ce36e64ea
+                  uuid: ce43bb99-420c-455a-937a-d42459933bc9
                   uploader_id: 91
                   recorded_date: '2012-04-17T07:06:59.000Z'
                   site_id: 22
@@ -1527,7 +1527,7 @@ paths:
                   bit_rate_bps: 64000
                   media_type: audio/mpeg
                   data_length_bytes: 3800
-                  file_hash: SHA256::22f8jkg21istjrmwkne918gacnzt8josoy6zp3i4dadsczdio4uepfdoukdtv1yy
+                  file_hash: SHA256::228v8w48r3pl8125kkq981iac8qix9ts52u0rghniya40uq0e2sbwoqj2mbn0bfz
                   status: ready
                   notes:
                     test: note number 22
@@ -1575,7 +1575,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  uuid: b7ed3752-8912-46f2-a77b-243b39f27778
+                  uuid: d05c1bb9-2687-440a-86b4-6ec3c91d88e4
                   duration_seconds: 66.0
                   updater_id: 1
                   id: 23
@@ -1587,7 +1587,7 @@ paths:
                   uploader_id: 95
                   site_id: 23
                   media_type: audio/mpeg
-                  file_hash: SHA256::23veixyxhdcvkt7lf3b12lq44tv7bk0h1d2qgszqlf35v422bxos2nsza1zexsjj
+                  file_hash: SHA256::23vdi1nftcz3yrj7ravsxwooiklxnntwhvztgdoed5tdvhjzewm65t9fyacif9a0
                   status: ready
                   notes:
                     test: note number 23
@@ -1635,7 +1635,7 @@ paths:
                   message: OK
                 data:
                   id: 
-                  uuid: 157a86b1-053a-4fdc-ad33-99aa35aafe5f
+                  uuid: 89f39fd5-0575-4870-b08b-7a64f27b9f28
                   uploader_id: 
                   recorded_date: 
                   site_id: 
@@ -1691,7 +1691,7 @@ paths:
                     next: 
                 data:
                 - id: 25
-                  uuid: 1c4c192b-ea2e-44dd-8872-5070c720f2ea
+                  uuid: 4f97f45e-080c-4d10-bba7-e52696d9d320
                   recorded_date: '2012-04-20T07:06:59.000Z'
                   site_id: 25
                   duration_seconds: 60000.0
@@ -1709,7 +1709,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 25
-                  file_hash: SHA256::25l61gfes49u4jnuuxgz9smlqflpi4engne80gcki6nzbq4j2igsq3mxwjs0fhun
+                  file_hash: SHA256::25zhdfyfw66hy11d63o1hwnhueyunsvkx19fithma2mxc3mj1hgmvnbsybjvh5d9
                   uploader_id: 103
                   original_file_name: original name 25.mp3
                   recorded_date_timezone: 
@@ -2258,8 +2258,8 @@ paths:
                   project_ids:
                   - 38
                   location_obfuscated: false
-                  custom_latitude: 19.724259
-                  custom_longitude: -62.975296
+                  custom_latitude: 33.173423
+                  custom_longitude: -146.195375
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -2361,8 +2361,8 @@ paths:
                   project_ids:
                   - 40
                   location_obfuscated: false
-                  custom_latitude: -61.859527
-                  custom_longitude: -161.827583
+                  custom_latitude: -86.609359
+                  custom_longitude: -101.866706
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -2437,8 +2437,8 @@ paths:
                   project_ids:
                   - 41
                   location_obfuscated: false
-                  custom_latitude: 62.953644
-                  custom_longitude: 42.284202
+                  custom_latitude: 38.354032
+                  custom_longitude: -111.109703
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -2638,8 +2638,8 @@ paths:
                   project_ids:
                   - 44
                   location_obfuscated: false
-                  custom_latitude: 45.809932
-                  custom_longitude: 110.445827
+                  custom_latitude: -58.800399
+                  custom_longitude: -105.25982
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -2722,8 +2722,8 @@ paths:
                   project_ids:
                   - 45
                   location_obfuscated: false
-                  custom_latitude: -70.43521
-                  custom_longitude: 63.476059
+                  custom_latitude: -81.25144
+                  custom_longitude: 179.016037
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -2794,7 +2794,7 @@ paths:
                   message: OK
                 data:
                   id: 
-                  uuid: 6e7a661d-a379-47a6-9863-d09b1f84f8b9
+                  uuid: '068de437-a9a9-4d3b-a91a-ae9b1d9aa345'
                   uploader_id: 
                   recorded_date: 
                   site_id: 
@@ -2851,7 +2851,7 @@ paths:
                   message: Created
                 data:
                   id: 44
-                  uuid: 10e5a932-7be2-4061-b004-5573523b28e7
+                  uuid: 1290bdb5-cee1-4b3b-b63f-b2905b13aab5
                   uploader_id: 1
                   recorded_date: '2012-05-09T07:06:59.000Z'
                   site_id: 44
@@ -2861,7 +2861,7 @@ paths:
                   bit_rate_bps: 64000
                   media_type: audio/mpeg
                   data_length_bytes: 3800
-                  file_hash: SHA256::4474x4khp522f69w843f113sjfbdw2kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhb
+                  file_hash: SHA256::44uhiaijkovp9n9ngw1reb1c1qlj92r3fwgylwhapa62qimj6mjgg3yvip0mpzki
                   status: new
                   notes:
                     test: note number 44
@@ -5129,8 +5129,8 @@ paths:
                   project_ids:
                   - 93
                   location_obfuscated: false
-                  custom_latitude: 2.728994
-                  custom_longitude: 81.955496
+                  custom_latitude: -75.992985
+                  custom_longitude: 58.284473
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -5260,8 +5260,8 @@ paths:
                   project_ids:
                   - 95
                   location_obfuscated: false
-                  custom_latitude: -36.294323
-                  custom_longitude: 111.904845
+                  custom_latitude: -66.578049
+                  custom_longitude: 105.602945
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -5347,8 +5347,8 @@ paths:
                   project_ids:
                   - 96
                   location_obfuscated: false
-                  custom_latitude: 72.494887
-                  custom_longitude: 57.87685
+                  custom_latitude: -55.495493
+                  custom_longitude: -147.17816
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -5429,8 +5429,8 @@ paths:
                   project_ids:
                   - 97
                   location_obfuscated: false
-                  custom_latitude: -22.913768
-                  custom_longitude: -79.581766
+                  custom_latitude: -6.901163
+                  custom_longitude: 153.875466
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -5631,8 +5631,8 @@ paths:
                   project_ids:
                   - 100
                   location_obfuscated: false
-                  custom_latitude: -68.304254
-                  custom_longitude: 50.869713
+                  custom_latitude: 79.906888
+                  custom_longitude: 31.419095
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -5685,14 +5685,16 @@ components:
         Example:
 
         ```
-        Authorization: Token token="xxxxxxxxxx"
+        Token token="xxxxxxxxxx"
         ```
+
+        Where the your auth_token is substituted into the placeholder.
       in: header
       name: Authorization
       scheme: Token
     auth_token_query_string:
       type: apiKey
-      name: auth_token
+      name: user_token
       in: query_string
   schemas:
     id:

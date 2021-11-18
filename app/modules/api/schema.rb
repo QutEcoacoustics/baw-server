@@ -58,9 +58,8 @@ module Api
             },
             auth_token_query_string: {
               type: :apiKey,
-              name: 'auth_token',
+              name: 'user_token',
               in: :query_string
-
             }
           },
           schemas: {

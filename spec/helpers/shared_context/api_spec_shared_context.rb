@@ -1,13 +1,25 @@
 # frozen_string_literal: true
+require "securerandom"
 
 RSpec.shared_context 'with api shared context' do
+  # ensure uuid generation is stable
+  #using InsecureRandom
+
   around do |example|
     # need to freeze time so that docs generation does not produce different
     # output every time it's run. This affects timestamps in particular.
     original_tz = ::Time.zone
     Zonebie.backend.zone = ::ActiveSupport::TimeZone['UTC']
     Timecop.freeze(Time.local(2020, 1, 2, 3, 4, 5.678))
+    SecureRandom.singleton_class.send(:alias_method, :old_gen_random, :gen_random)
+    SecureRandom.send(:define_singleton_method,:gen_random) do |n|
+      n = n ? n.to_int : 16
+      Array.new(n) { Kernel.rand(256) }.pack('C*')
+    end
+
     example.run
+
+    SecureRandom.singleton_class.send(:alias_method, :gen_random, :old_gen_random)
     Timecop.return
     Zonebie.backend.zone = original_tz
   end
