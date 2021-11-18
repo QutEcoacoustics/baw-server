@@ -21,10 +21,12 @@ SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.
     && echo $SNIPPET >> "/home/$USERNAME/.bashrc"
 
 # we're generating some powershell scripts from the server, thus we need powershell to test them
-# https://docs.microsoft.com/en-us/powershell/scripting/install/install-debian?view=powershell-7.1
-PWSH_VERSION=7.1.5
-cd ~
-curl -LOJ https://github.com/PowerShell/PowerShell/releases/download/v$PWSH_VERSION/powershell_$PWSH_VERSION-1.debian.10_amd64.deb
-dpkg -i powershell_$PWSH_VERSION-1.debian.10_amd64.deb
-DEBIAN_FRONTEND=noninteractive apt-get install liblttng-ust0
+# currently this is dev time only dependency
+# https://docs.microsoft.com/en-us/powershell/scripting/install/install-debian?view=powershell-7.2
 DEBIAN_FRONTEND=noninteractive apt-get install -f
+PWSH_VERSION=7.2.0
+cd ~
+#          https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell_7.2.0-1.deb_amd64.deb
+curl -LOJ https://github.com/PowerShell/PowerShell/releases/download/v$PWSH_VERSION/powershell_$PWSH_VERSION-1.deb_amd64.deb
+dpkg -i powershell_$PWSH_VERSION-1.deb_amd64.deb
+DEBIAN_FRONTEND=noninteractive apt-get install liblttng-ust0
