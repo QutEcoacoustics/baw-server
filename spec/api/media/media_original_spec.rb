@@ -2,7 +2,7 @@
 
 require 'swagger_helper'
 
-# we're using the rswag DLS here instead of our helper methods because the
+# we're using the rswag DSL here instead of our helper methods because the
 # download action is not part of our normal CRUD workflow.
 describe 'media#original', type: :request do
   include_context 'shared_test_helpers'
@@ -26,7 +26,7 @@ describe 'media#original', type: :request do
 
   path '/audio_recordings/{id}/original' do
     get 'Downloads an original audio file' do
-      tags 'AudioRecordings', 'Media'
+      tags 'media'
 
       parameter name: :id, in: :path, type: :string, description: 'ID of the audio recording'
 
@@ -51,7 +51,7 @@ describe 'media#original', type: :request do
     end
 
     head 'Gets HTTP headers for an original audio file' do
-      tags 'AudioRecordings', 'Media'
+      tags 'media'
       produces 'audio/ogg'
 
       parameter name: :id, in: :path, type: :string, description: 'ID of the audio recording'

@@ -39,9 +39,22 @@ module Api
         ],
         components: {
           securitySchemes: {
-            basic_auth_with_token: {
-              type: :http,
-              scheme: :basic
+            auth_token_header: {
+              type: :apiKey,
+              description: <<~MARKDOWN,
+                The api auth_token placed in the 'Authorization' header.
+                Example:
+
+                ```
+                Token token="xxxxxxxxxx"
+                ```
+
+                Where the your auth_token is substituted into the placeholder.
+              MARKDOWN
+              in: :header,
+              name: 'Authorization',
+              scheme: 'Token'
+
             },
             auth_token_query_string: {
               type: :apiKey,

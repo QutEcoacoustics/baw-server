@@ -19,6 +19,11 @@ The former two variants (permissions and functionality) should
 be modelled as request specs and placed in the `specs/requests`
 folder.
 
+Documentation requests are in `/spec/api`.
 API docs test API responses, and validate API request and response
 bodies according to schemas. These are supported by the
 `rswag` gem and should be placed in the API folder.
+
+
+All tests in `spec/acceptance` are deprecated and should be replaced
+when opportunities arrive.

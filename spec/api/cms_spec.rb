@@ -10,7 +10,7 @@ describe 'cms', type: :request do
 
   path '/cms' do
     get 'Retrieves the index blob (rendered HTML)' do
-      tags 'CMS'
+      tags 'cms'
       produces 'text/html'
       response '200', 'blob retrieved' do
         run_test! do

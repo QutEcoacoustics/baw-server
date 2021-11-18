@@ -40,9 +40,7 @@ module ApiSpecHelpers
     #
     # Actual auth tests should be done in the requests specs.
     def with_authorization
-      # NOTE: rswag won't use the let `Authorization` unless there is a
-      # basic auth section defined in components/securitySchemes in swagger_helper!
-      self.baw_security = [{ basic_auth_with_token: [] }]
+      self.baw_security = [{ auth_token_header: [] }]
       let(:Authorization) { admin_token }
     end
 

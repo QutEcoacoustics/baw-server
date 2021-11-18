@@ -13,7 +13,7 @@ describe 'downloader#index', type: :request do
 
   path '/audio_recordings/downloader' do
     get 'Gets a templated script which can download original audio files' do
-      tags 'AudioRecordings', 'Downloader'
+      tags 'downloader'
       produces 'text/plain'
 
       response '200', 'templated script' do
@@ -22,7 +22,7 @@ describe 'downloader#index', type: :request do
     end
 
     post 'Gets a templated script which can download original audio files. Accepts an audio recordings filter object' do
-      tags 'AudioRecordings', 'Downloader'
+      tags 'downloader'
       produces 'text/plain'
 
       response '200', 'templated script' do
