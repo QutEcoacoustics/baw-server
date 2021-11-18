@@ -23,10 +23,10 @@ SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.
 # we're generating some powershell scripts from the server, thus we need powershell to test them
 # currently this is dev time only dependency
 # https://docs.microsoft.com/en-us/powershell/scripting/install/install-debian?view=powershell-7.2
-DEBIAN_FRONTEND=noninteractive apt-get install -f
+DEBIAN_FRONTEND=noninteractive apt-get install liblttng-ust0 -y
 PWSH_VERSION=7.2.0
 cd ~
 #          https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell_7.2.0-1.deb_amd64.deb
 curl -LOJ https://github.com/PowerShell/PowerShell/releases/download/v$PWSH_VERSION/powershell_$PWSH_VERSION-1.deb_amd64.deb
 dpkg -i powershell_$PWSH_VERSION-1.deb_amd64.deb
-DEBIAN_FRONTEND=noninteractive apt-get install liblttng-ust0
+DEBIAN_FRONTEND=noninteractive apt-get install -f -y
