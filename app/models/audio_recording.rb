@@ -226,7 +226,7 @@ class AudioRecording < ApplicationRecord
       recorded_date.utc.strftime('%Y%m%dT%H%M%SZ')
     else
       timezone = TimeZoneHelper.tzinfo_class(site.tzinfo_tz)
-      ActiveSupport::TimeWithZone.new(recorded_date, timezone).strftime('%Y%m%dT%H%M%S%z')
+      recorded_date.in_time_zone(timezone).strftime('%Y%m%dT%H%M%S%z')
     end => date
 
     "#{date}_#{name}_#{id}.#{original_format_calculated}"

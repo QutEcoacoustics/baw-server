@@ -52,15 +52,15 @@
 describe AudioRecording, type: :model do
   it 'has a valid factory' do
     ar = create(:audio_recording,
-                recorded_date: Time.zone.now.advance(seconds: -20),
-                duration_seconds: Settings.audio_recording_min_duration_sec)
+      recorded_date: Time.zone.now.advance(seconds: -20),
+      duration_seconds: Settings.audio_recording_min_duration_sec)
     expect(ar).to be_valid
   end
 
   it 'has a valid FactoryBot factory' do
     ar = FactoryBot.create(:audio_recording,
-                           recorded_date: Time.zone.now.advance(seconds: -10),
-                           duration_seconds: Settings.audio_recording_min_duration_sec)
+      recorded_date: Time.zone.now.advance(seconds: -10),
+      duration_seconds: Settings.audio_recording_min_duration_sec)
     expect(ar).to be_valid
   end
 
@@ -468,7 +468,7 @@ describe AudioRecording, type: :model do
     expect {
       FactoryBot.create(:audio_recording, duration_seconds: Settings.audio_recording_min_duration_sec - 1)
     }.to raise_error(ActiveRecord::RecordInvalid,
-                     "Validation failed: Duration seconds must be greater than or equal to #{Settings.audio_recording_min_duration_sec}")
+      "Validation failed: Duration seconds must be greater than or equal to #{Settings.audio_recording_min_duration_sec}")
   end
 
   it 'allows audio recordings equal to than minimum duration' do
@@ -523,14 +523,15 @@ describe AudioRecording, type: :model do
   end
 
   it 'can return a friendly file name for an audio recording' do
-    date = DateTime.parse('2018-02-26T22:29:30+10:00')
+    date = DateTime.parse('2018-02-26T22:29:30+10:00').utc
     site = FactoryBot.create(:site, name: "Ant's super cool site", tzinfo_tz: 'Australia/Brisbane')
     ar = FactoryBot.build(
       :audio_recording,
       site: site,
-      id: 123456,
+      id: 123_456,
       recorded_date: date,
-      media_type: 'audio/wav')
+      media_type: 'audio/wav'
+    )
 
     actual = ar.friendly_name
 
@@ -543,9 +544,10 @@ describe AudioRecording, type: :model do
     ar = FactoryBot.build(
       :audio_recording,
       site: site,
-      id: 123456,
+      id: 123_456,
       recorded_date: date,
-      media_type: 'audio/wav')
+      media_type: 'audio/wav'
+    )
 
     actual = ar.friendly_name
 
