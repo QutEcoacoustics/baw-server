@@ -122,13 +122,22 @@ services:
     environment:
       RAILS_ENV: test
 
-
   web:
     <<: *gh_actions
     build:
-        context: .
-        dockerfile: ./Dockerfile
-    command: bundle exec rails server
+      context: .
+      dockerfile: ./Dockerfile
+    #command: bundle exec rails server
+    # I'm thinking this might be a better default command. Currently the compose
+    # file is only used for devleopment and we usually don't want a web server
+    # just starting - particularly in CI where we need the port for tests
+    command: touch .ready && sleep infinity
+    healthcheck:
+      test: [ "test", "-f", ".ready" ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
     depends_on:
       - db
       - redis

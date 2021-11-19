@@ -41,9 +41,6 @@ else
     echo -e "\n== GENERATE_ASSETS is '$GENERATE_ASSETS' (not 'true'), skipping generation =="
 fi
 
-echo -e "\n== Touching ready file '$@' ==\n"
-touch .ready
-
 echo -e "\n== Executing original command '$@' ==\n"
 exec "$@"
 

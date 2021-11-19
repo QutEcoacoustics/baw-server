@@ -13,6 +13,32 @@ env:
   IMAGE_NAME: workbench-server
 
 jobs:
+  # blocked by https://github.com/docker/build-push-action/issues/493
+  # # Build the image and cache it for later use
+  # build: 
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #       with:
+  #         lfs: true
+
+  #     - name: Ensure buildkit is used
+  #       uses: docker/setup-buildx-action@v1
+  #       id: buildx
+  #       with:
+  #         install: true
+      
+  #     - name: Build and cache
+  #       uses: docker/build-push-action@v2
+  #       with:
+  #         context: .
+  #         push: false
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
+      
+
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
@@ -28,13 +54,6 @@ jobs:
         with:
           install: true
 
-
-      # https://docs.docker.com/compose/cli-command/#install-on-linux
-      - name: Install docker-compose v2
-        run: |
-          mkdir -p ~/.docker/cli-plugins/
-          curl -SL https://github.com/docker/compose-cli/releases/download/v2.0.0-rc.1/docker-compose-linux-amd64 -o ~/.docker/cli-plugins/docker-compose
-          chmod +x ~/.docker/cli-plugins/docker-compose
 
       # by default the user on GH seems to have the UID 1001
       # however our docker container expects a uid of 1000.
@@ -55,18 +74,9 @@ jobs:
         run: docker compose build
         env:
           DOCKER_BUILDKIT: 1
-      # there appears to be a race condition between entrypoint script (which does a migration)
-      # and the following prepare database step
-      - name: Start docker compose
-        run: docker compose up -d
 
-      - name: Wait for ready
-        run: |
-          while [ ! -f .ready ]; do
-            echo "waiting for .ready"
-            docker compose ps
-            sleep 1
-          done
+      - name: Start docker compose
+        run: docker compose up --detach --wait
 
       - name: prepare test database
         run: docker compose run web echo 'database created'
