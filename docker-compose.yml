@@ -131,7 +131,7 @@ services:
     # I'm thinking this might be a better default command. Currently the compose
     # file is only used for devleopment and we usually don't want a web server
     # just starting - particularly in CI where we need the port for tests
-    command: touch .ready && sleep infinity
+    command: bash -c 'touch .ready && sleep infinity'
     healthcheck:
       test: test -f .ready
       interval: 5s

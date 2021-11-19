@@ -76,7 +76,7 @@ jobs:
           DOCKER_BUILDKIT: 1
 
       - name: Start docker compose
-        run: docker compose up --detach --wait
+        run: docker compose up --detach --wait --timeout 60
 
       - name: prepare test database
         run: docker compose run web echo 'database created'

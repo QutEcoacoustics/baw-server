@@ -38,7 +38,7 @@ services:
     # security_opt:
     #   - seccomp:unconfined
     # Overrides default command so things don't shut down after the process ends.
-    command: touch .ready && sleep infinity
+    command: bash -c 'touch .ready && sleep infinity'
 volumes:
   baw-server-vscode-extensions:
   baw-server-vscode-bash-history:
