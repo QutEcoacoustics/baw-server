@@ -72,11 +72,19 @@ jobs:
       - name: Build image
         #run: docker build .
         run: docker compose build
-        env:
-          DOCKER_BUILDKIT: 1
+        # env:
+        #   DOCKER_BUILDKIT: 1
+
 
       - name: Start docker compose
         run: docker compose up --detach --wait --timeout 60
+
+      - name: Debugging
+        run: |
+          ls -la
+          docker compose ps
+          docker ps
+        if: ${{ always() }}
 
       - name: prepare test database
         run: docker compose run web echo 'database created'
