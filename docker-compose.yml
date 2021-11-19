@@ -133,7 +133,7 @@ services:
     # just starting - particularly in CI where we need the port for tests
     command: touch .ready && sleep infinity
     healthcheck:
-      test: [ "test", "-f", ".ready" ]
+      test: test -f .ready
       interval: 5s
       timeout: 3s
       retries: 12
