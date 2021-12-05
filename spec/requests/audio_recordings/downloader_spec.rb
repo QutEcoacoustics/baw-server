@@ -17,6 +17,8 @@ describe '/audio_recordings/downloader' do
     )
   end
 
+  core_projection = '"projection":{"include":["id","recorded_date","sites.name","site_id","canonical_file_name"]}'
+
   describe 'the script is templated when downloaded' do
     it 'contains the logged in user\'s name' do
       get '/audio_recordings/downloader', headers: api_request_headers(reader_token)
@@ -46,7 +48,7 @@ describe '/audio_recordings/downloader' do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},"projection":{"include":["id","recorded_date","site_id","original_file_name"]}}
+        {"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},#{core_projection}}
         '@
       POWERSHELL
     end
@@ -58,7 +60,7 @@ describe '/audio_recordings/downloader' do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"filter":{"or":{"media_type":{"contains":"mp3"},"status":{"contains":"mp3"},"original_file_name":{"contains":"mp3"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":5},"projection":{"include":["id","recorded_date","site_id","original_file_name"]}}
+        {"filter":{"or":{"media_type":{"contains":"mp3"},"status":{"contains":"mp3"},"original_file_name":{"contains":"mp3"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":5},#{core_projection}}
         '@
       POWERSHELL
     end
@@ -84,7 +86,7 @@ describe '/audio_recordings/downloader' do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"filter":{"id":{"gt":2},"duration_seconds":{"range":{"interval":"[1800, 3600]"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":10},"projection":{"include":["id","recorded_date","site_id","original_file_name"]}}
+        {"filter":{"id":{"gt":2},"duration_seconds":{"range":{"interval":"[1800, 3600]"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":10},#{core_projection}}
         '@
       POWERSHELL
     end
@@ -133,7 +135,7 @@ describe '/audio_recordings/downloader' do
           prepare_audio_file audio_recording
         end
 
-        Dir.mkdir(BawApp.tmp_dir / 'downloader_test')
+        Dir.mkdir(BawApp.tmp_dir / 'downloader_test', 0o777)
       end
 
       after do

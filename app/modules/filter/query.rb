@@ -12,9 +12,10 @@ module Filter
     include Custom
 
     attr_reader :key_prefix, :max_items, :initial_query, :table,
-                :valid_fields, :text_fields, :filter_settings,
-                :parameters, :filter, :projection, :qsp_text_filter,
-                :qsp_generic_filters, :paging, :sorting, :build
+      :valid_fields, :text_fields, :filter_settings,
+      :parameters, :filter, :projection, :qsp_text_filter,
+      :qsp_generic_filters, :paging, :sorting, :build,
+      :custom_fields2
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -35,12 +36,10 @@ module Filter
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       # the check for an active record relation above can lead to some subtle
       # bugs when you pass some non-nil query like thing.
-      # temporarily throwing here to see what breaks. If it is nothing too severe
-      # then we'll make the check below a validation that always rungs
-      unless Rails.env.production?
-        unless query.is_a?(ActiveRecord::Relation)
-          raise ArgumentError, "query was not an ActiveRecord::Relation. Query: #{query}"
-        end
+      # temporarily throwing here to see what breaks. All tests pass so
+      # we'll make the check below a validation that always runs
+      unless query.is_a?(ActiveRecord::Relation)
+        raise ArgumentError, "query was not an ActiveRecord::Relation. Query: #{query}"
       end
 
       validate_filter_settings(filter_settings)
@@ -50,6 +49,7 @@ module Filter
       @filter_settings = filter_settings
       @default_sort_order = filter_settings[:defaults][:order_by]
       @default_sort_direction = filter_settings[:defaults][:direction]
+      @custom_fields2 = filter_settings[:custom_fields2] || {}
 
       @build = Build.new(@table, filter_settings)
 
@@ -148,14 +148,6 @@ module Filter
       else
         query_projection_default(query)
       end
-    end
-
-    # Add projections to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Array<Symbol>] filter_projection
-    # @return [ActiveRecord::Relation] query
-    def query_projection_custom(query, filter_projection)
-      apply_projections(query, @build.projections({ include: filter_projection }))
     end
 
     # Add default projections to a query.
@@ -319,14 +311,12 @@ module Filter
 
       sort_field_by = if sort_field.is_a? String
                         sort_field
-                      else
+                      elsif direction == :desc
 
-                        if direction == :desc
-                          Arel::Nodes::Descending.new(sort_field)
-                        else
-                          #direction == :asc
-                          Arel::Nodes::Ascending.new(sort_field)
-                                        end
+                        Arel::Nodes::Descending.new(sort_field)
+                      else
+                        #direction == :asc
+                        Arel::Nodes::Ascending.new(sort_field)
 
                       end
 
@@ -362,6 +352,18 @@ module Filter
     def apply_projection(query, projection)
       validate_query(query)
       validate_projection(projection)
+
+      if projection.is_a?(Hash)
+        expression = projection[:base_table]
+        projection[:joins].each do |join|
+          expression = expression.join(join[:arel_table], join[:type]).on(join[:on])
+        end
+        query = query.joins(expression.join_sources)
+        query = query.select(projection[:projection])
+
+        return query
+      end
+
       query.select(projection)
     end
   end

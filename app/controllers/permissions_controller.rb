@@ -55,7 +55,7 @@ class PermissionsController < ApplicationController
     do_authorize_instance
 
     respond_to do |format|
-      format.json { respond_show }
+      format.json { respond_new }
     end
   end
 

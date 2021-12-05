@@ -35,7 +35,7 @@ class AudioRecordingsController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    respond_show
+    respond_new
   end
 
   # this is used by the harvester, do not change!

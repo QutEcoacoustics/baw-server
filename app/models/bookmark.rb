@@ -45,16 +45,27 @@ class Bookmark < ApplicationRecord
   # attribute validations
   validates :offset_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :audio_recording_id, presence: true
-  validates :name, presence: true, uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
+  validates :name, presence: true,
+uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
 
   # Define filter api settings
   def self.filter_settings
     {
-      valid_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at, :creator_id, :updater_id, :updated_at],
-      render_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at, :creator_id, :updater_id, :updated_at],
+      valid_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at,
+                     :creator_id, :updater_id, :updated_at],
+      render_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at,
+                      :creator_id, :updater_id, :updated_at],
       text_fields: [:name, :description, :category],
       custom_fields: lambda { |item, _user|
         [item, item.render_markdown_for_api_for(:description)]
+      },
+      new_spec_fields: lambda { |_user|
+        {
+          name: nil,
+          category: nil,
+          description: nil,
+          offset_seconds: nil
+        }
       },
       controller: :bookmarks,
       action: :filter,

@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-
 require 'rspec/mocks'
 
 def question_url(question_id = nil, study_id = nil)
   url = '/questions'
-  url = url + '/' + question_id.to_s if question_id
+  url = "#{url}/#{question_id}" if question_id
   url = "/studies/#{study_id}" + url if study_id
   url
 end
@@ -25,7 +24,7 @@ describe 'Questions' do
     { text: 'updated question text' }
   }
 
-  before(:each) do
+  before do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
     @env['CONTENT_TYPE'] = 'application/json'
@@ -35,7 +34,7 @@ describe 'Questions' do
     describe 'index' do
       it 'finds all (1) questions as admin' do
         get question_url, params: nil, headers: @env
-        expect(response).to have_http_status(200)
+        expect(response).to have_http_status(:ok)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
@@ -43,7 +42,7 @@ describe 'Questions' do
 
       it 'finds all (1) questions for the given study as admin' do
         get question_url(nil, study.id), params: nil, headers: @env
-        expect(response).to have_http_status(200)
+        expect(response).to have_http_status(:ok)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
@@ -56,20 +55,24 @@ describe 'Questions' do
         get question_url(nil, study_id), params: nil, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][0].question_ids.count)
-        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][0].question_ids.sort)
+        expect((parsed_response['data'].map { |q|
+                  q['id']
+                }).sort).to eq(available_records[:studies][0].question_ids.sort)
 
         study_id = available_records[:studies][1].id
         get question_url(nil, study_id), params: nil, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][1].question_ids.count)
-        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][1].question_ids.sort)
+        expect((parsed_response['data'].map { |q|
+                  q['id']
+                }).sort).to eq(available_records[:studies][1].question_ids.sort)
       end
     end
 
     describe 'filter' do
       it 'finds all (1) questions as admin' do
-        get question_url + '/filter', params: nil, headers: @env
-        expect(response).to have_http_status(200)
+        get "#{question_url}/filter", params: nil, headers: @env
+        expect(response).to have_http_status(:ok)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
@@ -78,7 +81,7 @@ describe 'Questions' do
       it 'finds the correct questions for the given study as admin' do
         available_records = many_studies
 
-        url = question_url + '/filter'
+        url = "#{question_url}/filter"
 
         study = available_records[:studies][0]
         # there might be a more efficient way to do this query, without
@@ -87,16 +90,18 @@ describe 'Questions' do
         post url, params: filter_params.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][0].question_ids.count)
-        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][0].question_ids.sort)
+        expect((parsed_response['data'].map { |q|
+                  q['id']
+                }).sort).to eq(available_records[:studies][0].question_ids.sort)
       end
     end
 
     describe 'show' do
       it 'show question as admin' do
         get question_url(question.id), params: nil, headers: @env
-        expect(response).to have_http_status(200)
+        expect(response).to have_http_status(:ok)
         parsed_response = JSON.parse(response.body)
-        expect(parsed_response['data'].to_json).to eq(question.to_json)
+        expect(parsed_response['data']).to match(question.as_json)
       end
     end
   end
@@ -108,9 +113,11 @@ describe 'Questions' do
         params[:question][:study_ids] = [study.id]
         post question_url, params: params.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(201)
-        expect(parsed_response['data'].symbolize_keys.slice(:text, :data)).to eq(question_attributes.slice(:text, :data))
-        expect(parsed_response['data'].keys.sort).to eq(['id', 'creator_id', 'updater_id', 'text', 'data', 'created_at', 'updated_at'].sort)
+        expect(response).to have_http_status(:created)
+        expect(parsed_response['data'].symbolize_keys.slice(:text,
+          :data)).to eq(question_attributes.slice(:text, :data))
+        expect(parsed_response['data'].keys.sort).to eq(['id', 'creator_id', 'updater_id', 'text', 'data',
+                                                         'created_at', 'updated_at'].sort)
         expect(Question.all.count).to eq(2)
         # check that the newly created question is associated with exactly one study
         # and that the associated study has the correct id
@@ -122,7 +129,7 @@ describe 'Questions' do
       it 'can not create an orphan question' do
         post question_url, params: question_attributes.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(422)
+        expect(response).to have_http_status(:unprocessable_entity)
         expect(Question.all.count).to eq(1)
         expect(parsed_response['meta']['error']['info']['studies']).to eq(["can't be blank"])
       end
@@ -133,7 +140,7 @@ describe 'Questions' do
         params = { question: { text: 'modified question text' } }.to_json
         put question_url(question.id), params: params, headers: @env
         parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(200)
+        expect(response).to have_http_status(:ok)
         expect(parsed_response['data']['text']).to eq('modified question text')
       end
 
@@ -156,7 +163,7 @@ describe 'Questions' do
 
         put question_url(existing_question.id), params: params, headers: @env
         #parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(200)
+        expect(response).to have_http_status(:ok)
         expect(Question.find(existing_question.id).study_ids.sort).to eq(study_ids.sort)
       end
 
@@ -165,7 +172,7 @@ describe 'Questions' do
         params = { question: { study_ids: [] } }.to_json
         put question_url(question.id), params: params, headers: @env
         parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(422)
+        expect(response).to have_http_status(:unprocessable_entity)
         expect(Question.find(question.id).study_ids).to eq(current_study_ids)
       end
     end
@@ -174,7 +181,7 @@ describe 'Questions' do
   describe 'delete' do
     it 'deletes a question and child responses' do
       delete question_url(question.id), params: nil, headers: @env
-      expect(response).to have_http_status(204)
+      expect(response).to have_http_status(:no_content)
       expect(Question.all.count).to eq(0)
       expect(Response.all.count).to eq(0)
     end

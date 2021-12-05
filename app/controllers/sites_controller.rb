@@ -32,7 +32,7 @@ class SitesController < ApplicationController
     do_authorize_instance
 
     respond_to do |format|
-      format.html { @site.update_location_obfuscated(current_user) }
+      format.html { @site }
       format.json { respond_show }
     end
   end
@@ -50,7 +50,7 @@ class SitesController < ApplicationController
     @site.latitude = -27
     respond_to do |format|
       format.html
-      format.json { respond_show }
+      format.json { respond_new }
     end
   end
 

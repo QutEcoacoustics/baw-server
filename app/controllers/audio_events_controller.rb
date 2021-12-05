@@ -42,7 +42,7 @@ class AudioEventsController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    respond_show
+    respond_new
   end
 
   # POST /audio_recordings/:audio_recording_id/audio_events
@@ -171,7 +171,7 @@ class AudioEventsController < ApplicationController
 
     unless is_authorized
       raise CustomErrors::RoutingArgumentError,
-            'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
+        'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
     end
 
     # create file name

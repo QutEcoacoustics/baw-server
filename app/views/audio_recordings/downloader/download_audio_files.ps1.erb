@@ -43,6 +43,7 @@ param(
 )
 
 $InformationPreference = 'Continue'
+$ErrorActionPreference = 'Stop'
 
 Write-Information "Acoustic Workbench downloader script version <%= @model.app_version %>"
 
@@ -140,22 +141,14 @@ function Get-NextPage() {
 }
 
 $sites = @{}
-function Get-SiteName($id) {
-  if ($sites.ContainsKey($id)) {
-    return $sites[$id]
+function Get-SiteName($raw_name) {
+  if ($sites.ContainsKey($raw_name)) {
+    return $sites[$raw_name]
   }
 
-  $response = Invoke-RestMethod -Uri "$workbench_url/sites/$id"  -Headers $headers -StatusCodeVariable "site_status_code"
-  if ($site_status_code -ne 200) {
-    Write-Warning ("Failed to get site name for site id $site_id ")
-    return $id
-  }
-
-
-  $name = $response.data.name
   # Safe folder names
-  $name = $name -replace '[^-_A-Za-z0-9]',''
-  $sites[$id] = $name
+  $name = $raw_name -replace '[^-_A-Za-z0-9]',''
+  $sites[$raw_name] = $name
   return $name
 }
 
@@ -167,23 +160,21 @@ while ($null -ne ($recordings = Get-NextPage )) {
     Write-Information "Downloading recording $($recording.id)"
     $recording | write-output
 
-    $date = (Get-Date $recording.recorded_date).ToString("yyyyMMddTHHmmssZ")
-    $site_id = $recording.site_id
     $audio_recording_id = $recording.id
-    $extension = [System.IO.Path]::GetExtension($recording.original_file_name)
-
     $site_id = $recording.site_id
-    $safe_site_name = Get-SiteName $site_id
+    $name = $recording.canonical_file_name
+
+    $safe_site_name = Get-SiteName $recording.'sites.name'
+
     $sub_folder = Join-Path $target "${site_id}_$safe_site_name"
     New-Item -ItemType Directory -Path $sub_folder -Force | Out-Null
 
-    $path = Join-Path $sub_folder "${date}_${site_id}_${audio_recording_id}${extension}"
+    $path = Join-Path $sub_folder $name
 
     Invoke-RestMethod -Uri "$workbench_url/audio_recordings/$audio_recording_id/original" `
-      -Method GET -Headers $headers -StatusCodeVariable "download_status_code" -OutFile $path `
-      -Resume
+      -Method GET -Headers $headers -StatusCodeVariable "download_status_code" -OutFile $path
 
-      Write-Information "Downloaded recording $audio_recording_id to $path"
+    Write-Information "Downloaded recording $audio_recording_id to $path"
   }
 }
 

@@ -274,6 +274,8 @@ module RequestSpecHelpers
         return body.split(/-{10,}.*\r\n"/).map { |x| "#{x.split("\r\n\r\n").first}\n<...snip...>" }.join("\n")
       end
 
+      return body if mime&.start_with?('application/json')
+
       return '<binary payload>' if MIME::Types[mime]&.first&.binary?
 
       body.truncate(5_000)

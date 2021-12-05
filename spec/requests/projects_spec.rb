@@ -121,7 +121,6 @@ describe 'Projects' do
       expect(response).to have_http_status(:success)
       expect_at_least_one_item
       expect_has_projection({ include: ['id', 'name'] })
-      expect(api_result[:data]).to include((hash_including(site_ids: all(be_an(Integer)))))
     end
 
     example 'filter partial match' do

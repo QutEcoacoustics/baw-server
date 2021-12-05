@@ -26,6 +26,7 @@ module Filter
       @base_association = filter_settings[:base_association]
       @valid_associations = filter_settings[:valid_associations]
       @field_mappings = filter_settings[:field_mappings]
+      @custom_fields2 = filter_settings[:custom_fields2] || {}
 
       @valid_conditions = [
         # comparison
@@ -102,9 +103,14 @@ module Filter
       end
 
       # create projection that includes each column
+
       columns.map { |item|
-        project_column(@table, item, @render_fields)
-      }
+        project_column(@table, item, allowed_fields)
+      }.flatten.compact
+    end
+
+    def allowed_fields
+      (@render_fields + @custom_fields2.keys).uniq
     end
 
     # Combine two conditions.
@@ -494,9 +500,7 @@ module Filter
       validate_table(table)
       raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
 
-      field_s = field.to_s
-
-      if field_s.include?('.')
+      if association_field?(field)
         parse_other_table_field(table, field)
       else
 
@@ -512,6 +516,10 @@ module Filter
           filter_settings: @filter_settings
         }
       end
+    end
+
+    def association_field?(name)
+      name.to_s.include?('.')
     end
 
     # Build other table field from field symbol.

@@ -53,7 +53,7 @@ class TaggingsController < ApplicationController
     get_audio_event
     do_authorize_instance
 
-    respond_show
+    respond_new
   end
 
   # POST /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/

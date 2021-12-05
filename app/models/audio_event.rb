@@ -118,6 +118,7 @@ class AudioEvent < ApplicationRecord
 
                        [item, audio_event_hash]
                      },
+
       controller: :audio_events,
       action: :filter,
       defaults: {
@@ -190,7 +191,7 @@ class AudioEvent < ApplicationRecord
     timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
     field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset.utc_offset)
     field_suffix = "#{timezone_offset.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
-                                                                                         '')}".parameterize.underscore
+      '')}".parameterize.underscore
 
     timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
     format_offset = timezone_offset.utc_offset.zero? ? 'Z' : field_suffix_offset
@@ -270,30 +271,30 @@ class AudioEvent < ApplicationRecord
         audio_recordings[:id].as('audio_recording_id'),
         audio_recordings[:uuid].as('audio_recording_uuid'),
         function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-                                   format_date).as("audio_recording_start_date_#{field_suffix}"),
+          format_date).as("audio_recording_start_date_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-                                   format_time).as("audio_recording_start_time_#{field_suffix}"),
+          format_time).as("audio_recording_start_time_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-                                   format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
+          format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-                                   format_date).as("event_created_at_date_#{field_suffix}"),
+          format_date).as("event_created_at_date_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-                                   format_time).as("event_created_at_time_#{field_suffix}"),
+          format_time).as("event_created_at_time_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-                                   format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
+          format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
         projects_aggregate.as('projects'),
         sites[:id].as('site_id'),
         sites[:name].as('site_name'),
         function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-                                   format_date).as("event_start_date_#{field_suffix}"),
+          format_date).as("event_start_date_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-                                   format_time).as("event_start_time_#{field_suffix}"),
+          format_time).as("event_start_time_#{field_suffix}"),
         function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-                                   format_iso8601).as("event_start_datetime_#{field_suffix}"),
+          format_iso8601).as("event_start_datetime_#{field_suffix}"),
         audio_events[:start_time_seconds].as('event_start_seconds'),
         audio_events[:end_time_seconds].as('event_end_seconds'),
         infix_operation(:-, audio_events[:end_time_seconds],
-                        audio_events[:start_time_seconds]).as('event_duration_seconds'),
+          audio_events[:start_time_seconds]).as('event_duration_seconds'),
         audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
         audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
         audio_events[:is_reference].as('is_reference'),

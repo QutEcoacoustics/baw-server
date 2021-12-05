@@ -72,8 +72,8 @@ module Api
         }
       end
 
-      def timezone_information
-        { '$ref' => '#/components/schemas/timezone_information' }
+      def timezone_information(read_only: false)
+        { '$ref' => '#/components/schemas/timezone_information', readOnly: read_only }
       end
 
       def image_urls

@@ -80,6 +80,15 @@ module Api
       render json: built_response, status: :ok, layout: false
     end
 
+    def respond_new
+      item_resource = get_resource
+
+      item = Settings.api_response.prepare_new(item_resource, current_user)
+
+      built_response = Settings.api_response.build(:ok, item)
+      render json: built_response, status: :ok, layout: false
+    end
+
     def respond_create_success(location = nil)
       item_resource = get_resource
 

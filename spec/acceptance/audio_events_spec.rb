@@ -63,69 +63,69 @@ resource 'AudioEvents' do
     get_index_params
     let(:authentication_token) { admin_token }
     standard_request_options(:get, 'LIST (as admin)', :ok,
-                             { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
+      { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { owner_token }
     standard_request_options(:get, 'LIST (as owner)', :ok,
-                             { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
+      { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'LIST (as writer)', :ok,
-                             { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
+      { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST (as reader)', :ok,
-                             { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
+      { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST (as reader with shallow path)', :ok,
-                             { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
+      { expected_json_path: 'data/0/start_time_seconds', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST (as reader with shallow path testing quoted numbers)', :ok,
-                             {
-                               data_item_count: 1,
-                               expected_json_path: 'data/0/start_time_seconds',
-                               response_body_content: ['"start_time_seconds":5.2,',
-                                                       '"end_time_seconds":5.8,',
-                                                       '"low_frequency_hertz":400.0,',
-                                                       '"high_frequency_hertz":6000.0']
-                             })
+      {
+        data_item_count: 1,
+        expected_json_path: 'data/0/start_time_seconds',
+        response_body_content: ['"start_time_seconds":5.2,',
+                                '"end_time_seconds":5.8,',
+                                '"low_frequency_hertz":400.0,',
+                                '"high_frequency_hertz":6000.0']
+      })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'LIST (as no access user)', :ok,
-                             { response_body_content: '200', data_item_count: 0 })
+      { response_body_content: '200', data_item_count: 0 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'LIST (with invalid token)', :unauthorized,
-                             { expected_json_path: get_json_error_path(:sign_in) })
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
     get_index_params
     standard_request_options(:get, 'LIST (as anonymous user)', :ok,
-                             { remove_auth: true, response_body_content: '200', data_item_count: 0 })
+      { remove_auth: true, response_body_content: '200', data_item_count: 0 })
   end
 
   ################################
@@ -160,7 +160,7 @@ resource 'AudioEvents' do
     get_route_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'SHOW (as reader with shallow path)', :ok,
-                             { expected_json_path: 'data/start_time_seconds' })
+      { expected_json_path: 'data/start_time_seconds' })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -176,7 +176,7 @@ resource 'AudioEvents' do
     end
 
     standard_request_options(:get, 'SHOW (as reader with shallow path for reference audio event with no access to audio recording)',
-                             :ok, { expected_json_path: 'data/start_time_seconds' })
+      :ok, { expected_json_path: 'data/start_time_seconds' })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -184,33 +184,33 @@ resource 'AudioEvents' do
     let(:authentication_token) { reader_token }
 
     standard_request_options(:get, 'SHOW (as reader with shallow path testing quoted numbers)', :ok,
-                             {
-                               expected_json_path: 'data/start_time_seconds',
-                               response_body_content: ['"start_time_seconds":5.2,',
-                                                       '"end_time_seconds":5.8,',
-                                                       '"high_frequency_hertz":6000.0,',
-                                                       '"low_frequency_hertz":400.0']
-                             })
+      {
+        expected_json_path: 'data/start_time_seconds',
+        response_body_content: ['"start_time_seconds":5.2,',
+                                '"end_time_seconds":5.8,',
+                                '"high_frequency_hertz":6000.0,',
+                                '"low_frequency_hertz":400.0']
+      })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'SHOW (as no access user)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized,
-                             { expected_json_path: get_json_error_path(:sign_in) })
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     standard_request_options(:get, 'SHOW (as anonymous user', :unauthorized,
-                             { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -246,7 +246,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'CREATE (as reader)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   # AT 2021: disabled. Nested associations are extremely complex,
@@ -332,7 +332,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { no_access_token }
     standard_request_options(:post, 'CREATE (as no access user)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
@@ -341,7 +341,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { invalid_token }
     standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized,
-                             { expected_json_path: get_json_error_path(:sign_in) })
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
@@ -349,7 +349,7 @@ resource 'AudioEvents' do
     get_modify_params
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized,
-                             { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -386,7 +386,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { writer_token }
     standard_request_options(:put, 'UPDATE (as writer with shallow path)', :ok,
-                             { expected_json_path: 'data/taggings/0/audio_event_id' })
+      { expected_json_path: 'data/taggings/0/audio_event_id' })
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -395,7 +395,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -404,7 +404,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:put, 'UPDATE (as no access user)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -413,7 +413,7 @@ resource 'AudioEvents' do
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     let(:authentication_token) { invalid_token }
     standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized,
-                             { expected_json_path: get_json_error_path(:sign_in) })
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -421,7 +421,7 @@ resource 'AudioEvents' do
     get_modify_params
     let(:raw_post) { { 'audio_event' => post_attributes }.to_json }
     standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized,
-                             { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -432,48 +432,48 @@ resource 'AudioEvents' do
     get_route_params
     let(:authentication_token) { admin_token }
     standard_request_options(:delete, 'DELETE (as admin user)', :no_content,
-                             { expected_response_has_content: false, expected_response_content_type: nil })
+      { expected_response_has_content: false, expected_response_content_type: nil })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { owner_token }
     standard_request_options(:delete, 'DELETE (as owner)', :no_content,
-                             { expected_response_has_content: false, expected_response_content_type: nil })
+      { expected_response_has_content: false, expected_response_content_type: nil })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { writer_token }
     standard_request_options(:delete, 'DELETE (as writer user)', :no_content,
-                             { expected_response_has_content: false, expected_response_content_type: nil })
+      { expected_response_has_content: false, expected_response_content_type: nil })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { reader_token }
     standard_request_options(:delete, 'DELETE (as reader user)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { no_access_token }
     standard_request_options(:delete, 'DELETE (as other user)', :forbidden,
-                             { expected_json_path: get_json_error_path(:permissions) })
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     let(:authentication_token) { invalid_token }
     standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized,
-                             { expected_json_path: get_json_error_path(:sign_up) })
+      { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
     get_route_params
     standard_request_options(:delete, 'DELETE (as anonymous user)', :unauthorized,
-                             { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
   end
 
   #####################
@@ -495,13 +495,13 @@ resource 'AudioEvents' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as reader)', :ok,
-                             {
-                               expected_json_path: 'data/0/start_time_seconds',
-                               data_item_count: 1,
-                               regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
-                               response_body_content: '"start_time_seconds":',
-                               invalid_content: '"project_ids":[{"id":'
-                             })
+      {
+        expected_json_path: 'data/0/start_time_seconds',
+        data_item_count: 1,
+        regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
+        response_body_content: '"start_time_seconds":',
+        invalid_content: '"project_ids":[{"id":'
+      })
   end
 
   post '/audio_events/filter' do
@@ -519,19 +519,19 @@ resource 'AudioEvents' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as reader)', :ok,
-                             {
-                               expected_json_path: 'data/0/start_time_seconds',
-                               data_item_count: 1,
-                               regex_match: [
-                                 /"taggings":\[\{"id":\d+,"audio_event_id":\d+,/,
-                                 /"created_at":"[^"]+"/,
-                                 /"updated_at":"[^"]+"/,
-                                 /"creator_id":\d+/,
-                                 /"updater_id":null/
-                               ],
-                               response_body_content: '"taggings":[{"',
-                               invalid_content: '"taggings":["'
-                             })
+      {
+        expected_json_path: 'data/0/start_time_seconds',
+        data_item_count: 1,
+        regex_match: [
+          /"taggings":\[\{"id":\d+,"audio_event_id":\d+,/,
+          /"created_at":"[^"]+"/,
+          /"updated_at":"[^"]+"/,
+          /"creator_id":\d+/,
+          /"updater_id":null/
+        ],
+        response_body_content: '"taggings":[{"',
+        invalid_content: '"taggings":["'
+      })
   end
 
   post '/audio_events/filter' do
@@ -546,13 +546,13 @@ resource 'AudioEvents' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (no projection, as reader)', :ok,
-                             {
-                               expected_json_path: 'data/0/high_frequency_hertz',
-                               data_item_count: 1,
-                               regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
-                               response_body_content: '"low_frequency_hertz":400.0',
-                               invalid_content: '"project_ids":[{"id":'
-                             })
+      {
+        expected_json_path: 'data/0/high_frequency_hertz',
+        data_item_count: 1,
+        regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
+        response_body_content: '"low_frequency_hertz":400.0',
+        invalid_content: '"project_ids":[{"id":'
+      })
   end
 
   post '/audio_events/filter' do
@@ -561,13 +561,13 @@ resource 'AudioEvents' do
       '{"filter":{"start_time_seconds":{"in":["5.2", "7", "100", "4"]}},"paging":{"items":10,"page":1},"sorting":{"orderBy":"durationSeconds","direction":"desc"}}'
     }
     standard_request_options(:post, 'FILTER (sort by custom field, as reader)', :ok,
-                             {
-                               expected_json_path: 'meta/sorting/order_by',
-                               data_item_count: 1,
-                               regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
-                               response_body_content: ['"low_frequency_hertz":400.0', '"order_by":"duration_seconds"'],
-                               invalid_content: '"project_ids":[{"id":'
-                             })
+      {
+        expected_json_path: 'meta/sorting/order_by',
+        data_item_count: 1,
+        regex_match: /"in":\["5.2","7","100","[0-9]+"\]/,
+        response_body_content: ['"low_frequency_hertz":400.0', '"order_by":"duration_seconds"'],
+        invalid_content: '"project_ids":[{"id":'
+      })
   end
 
   post '/audio_events/filter' do
@@ -588,28 +588,28 @@ resource 'AudioEvents' do
     before do
       #won't be included
       @ar_1 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 0, end_time_seconds: 1)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 0, end_time_seconds: 1)
       #won't be included
       @ar_2 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 2.5, end_time_seconds: 5)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 2.5, end_time_seconds: 5)
       #will be included
       @ar_3 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 0, end_time_seconds: 2)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 0, end_time_seconds: 2)
       #will be included
       @ar_4 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 2, end_time_seconds: 4)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 2, end_time_seconds: 4)
       #will be included
       @ar_5 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 1, end_time_seconds: 2.5)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 1, end_time_seconds: 2.5)
       #will be included
       @ar_6 = FactoryBot.create(:audio_event,
-                                audio_recording: writer_permission.project.sites[0].audio_recordings[0],
-                                start_time_seconds: 1.5, end_time_seconds: 2)
+        audio_recording: writer_permission.project.sites[0].audio_recordings[0],
+        start_time_seconds: 1.5, end_time_seconds: 2)
     end
 
     example 'FILTER (overlapping start and end filter)', document: true do
@@ -648,14 +648,14 @@ resource 'AudioEvents' do
         { 'filter' => { 'is_reference' => { 'eq' => true } }, 'paging' => { 'items' => 10, 'page' => 2 } }.to_json
       }
       standard_request_options(:post, 'FILTER (as reader, page 2 showing 10 items', :ok,
-                               {
-                                 expected_json_path: 'data/0/is_reference',
-                                 data_item_count: 10,
-                                 response_body_content: [
-                                   '"paging":{"page":2,"items":10,"total":30,"max_page":3',
-                                   '"previous":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1"'
-                                 ]
-                               })
+        {
+          expected_json_path: 'data/0/is_reference',
+          data_item_count: 10,
+          response_body_content: [
+            '"paging":{"page":2,"items":10,"total":30,"max_page":3',
+            '"previous":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1"'
+          ]
+        })
     end
   end
 
@@ -671,11 +671,11 @@ resource 'AudioEvents' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as reader, for associated table with mismatching name)', :ok,
-                             {
-                               expected_json_path: 'data/0/taggings/0/audio_event_id',
-                               data_item_count: 1,
-                               response_body_content: '"filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1"'
-                             })
+      {
+        expected_json_path: 'data/0/taggings/0/audio_event_id',
+        data_item_count: 1,
+        response_body_content: '"filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1"'
+      })
   end
 
   post '/audio_events/filter' do

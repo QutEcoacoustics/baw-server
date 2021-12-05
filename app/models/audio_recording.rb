@@ -219,11 +219,13 @@ class AudioRecording < ApplicationRecord
     audio_original.file_name_utc(modify_parameters)
   end
 
-  # gets a filename that looks nice enough to provide to a user
+  # gets a filename that looks nice enough to provide to a user for a file download
   def friendly_name
+    return nil if site.nil?
+
     name = site.safe_name
     if site.timezone.blank?
-      recorded_date.utc.strftime('%Y%m%dT%H%M%SZ')
+      recorded_date&.utc&.strftime('%Y%m%dT%H%M%SZ')
     else
       timezone = TimeZoneHelper.tzinfo_class(site.tzinfo_tz)
       recorded_date.in_time_zone(timezone).strftime('%Y%m%dT%H%M%S%z')
@@ -304,24 +306,37 @@ class AudioRecording < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [
-        :id, :uuid, :recorded_date, :site_id, :duration_seconds,
+        :id, :uuid, :recorded_date, :site_id,
+        :duration_seconds,
         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
         :data_length_bytes, :status, :created_at, :updated_at,
         :recorded_end_date, :file_hash, :uploader_id, :original_file_name
+
         #, :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at,
       ],
-      render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
+      render_fields: [:id, :uuid, :recorded_date, :site_id,
+                      :duration_seconds,
                       :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
                       :data_length_bytes, :status, :created_at, :creator_id,
                       :deleted_at, :deleter_id, :updated_at, :updater_id,
-                      :notes, :file_hash, :uploader_id, :original_file_name],
+                      :notes, :file_hash, :uploader_id, :original_file_name,
+                      :canonical_file_name, :recorded_date_timezone],
       text_fields: [:media_type, :status, :original_file_name],
-      custom_fields: lambda { |item, _user|
-        custom_fields = {
-          recorded_date_timezone: item&.site&.timezone&.dig(:identifier)
+      custom_fields: ->(item, _user) { [item, {}] },
+      # a better designed custom field
+      # can be included in a projection!
+      # dirty hack: but there's not much point innovating here - the whole mess
+      # needs a rewrite.
+      custom_fields2: {
+        canonical_file_name: {
+          query_attributes: [:id, :site_id, :recorded_date, :media_type],
+          transform: ->(item) { item&.friendly_name }
+        },
+        recorded_date_timezone: {
+          query_attributes: [:site_id],
+          transform: ->(item) { item&.site&.timezone&.dig(:identifier) }
         }
-        [item, custom_fields]
       },
       new_spec_fields: lambda { |_user|
                          {
@@ -377,6 +392,11 @@ class AudioRecording < ApplicationRecord
           available: true,
           associations: [
             {
+              join: Region,
+              on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
+              available: true
+            },
+            {
               join: Arel::Table.new(:projects_sites),
               on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
               available: false,
@@ -421,7 +441,8 @@ class AudioRecording < ApplicationRecord
         notes: { type: 'object' },
         recorded_date_timezone: { type: ['null', 'string'] },
         uploader_id: Api::Schema.id(nullable: true, read_only: false),
-        original_file_name: { type: 'string' }
+        original_file_name: { type: 'string' },
+        canonical_file_name: { type: 'string', read_only: true }
       },
       required: [
         :id,
@@ -444,7 +465,8 @@ class AudioRecording < ApplicationRecord
         :file_hash,
         :notes,
         :uploader_id,
-        :original_file_name
+        :original_file_name,
+        :canonical_file_name
       ]
     }.freeze
   end

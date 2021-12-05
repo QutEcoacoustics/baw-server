@@ -208,6 +208,7 @@ end
 group :development do
   # allow debugging
   #gem 'debase', '>= 0.2.5.beta2'
+  gem 'debug', ">= 1.0.0"
   gem 'readapt'
   #gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'

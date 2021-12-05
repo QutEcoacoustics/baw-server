@@ -93,7 +93,8 @@ RSpec.configure do |config|
   #config.include FactoryBot::Syntax::Methods
 
   # redirect puts into a text file
-  if defined?(Debugger) || defined?(Readapt)
+  # in order: debase, readapt, rdbg
+  if defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__)
     puts '$stdout and $stderr will NOT be redirected'
   else
     original_stderr = $stderr
@@ -134,4 +135,6 @@ RSpec.configure do |config|
   # test failures related to randomization by passing the same `--seed` value
   # as the one that triggered the failure.
   Kernel.srand config.seed
+
+  RSpec::Matchers.define_negated_matcher :not_eq, :eq
 end

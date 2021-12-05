@@ -77,8 +77,8 @@ class Tag < ApplicationRecord
   def taxonomic_enforced
     if type_of_tag == 'common_name' || type_of_tag == 'species_name'
       errors.add(:is_taxonomic, "must be true for #{type_of_tag}") unless is_taxonomic
-    else
-      errors.add(:is_taxonomic, "must be false for #{type_of_tag}") if is_taxonomic
+    elsif is_taxonomic
+      errors.add(:is_taxonomic, "must be false for #{type_of_tag}")
     end
   end
 
@@ -122,10 +122,19 @@ class Tag < ApplicationRecord
         :creator_id, :created_at, :updater_id, :updated_at
       ],
       render_fields: [
-        :id, :text, :is_taxonomic, :type_of_tag, :retired, :creator_id,
-        :updater_id, :created_at, :updated_at, :notes
+        :id, :text, :is_taxonomic, :type_of_tag, :retired, :notes, :creator_id,
+        :updater_id, :created_at, :updated_at
       ],
       text_fields: [:text, :type_of_tag, :notes],
+      new_spec_fields: lambda { |_user|
+        {
+          text: nil,
+          is_taxonomic: false,
+          type_of_tag: nil,
+          retired: false,
+          notes: nil
+        }
+      },
       controller: :tags,
       action: :filter,
       defaults: {

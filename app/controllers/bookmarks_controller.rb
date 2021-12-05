@@ -30,7 +30,7 @@ class BookmarksController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    respond_show
+    respond_new
   end
 
   # POST /bookmarks

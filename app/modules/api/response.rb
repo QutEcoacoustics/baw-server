@@ -26,12 +26,12 @@ module Api
       Rack::Utils::HTTP_STATUS_CODES[status_code(status_symbol)]
     end
 
-    # Add custom fields to an item.
+    # Formats an item for a #new response.
     # @param [Object] item A single item from the response.
     # @param [Object] user current_user
     # @param [Hash] opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare(item, user, opts = {})
+    def prepare_new(item, user, _opts = {})
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
@@ -47,25 +47,72 @@ module Api
         new_spec_fields_hash = new_spec_fields.call(user)
       end
 
+      new_spec_fields_hash
+    end
+
+    # Add custom fields to an item.
+    # @param [Object] item A single item from the response.
+    # @param [Object] user current_user
+    # @param [Hash] opts the options for additional information.
+    # @return [Hash] prepared item
+    def prepare(item, user, opts = {})
+      unless item.is_a?(ActiveRecord::Base)
+        raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
+      end
+
+      filter_settings = item.class.filter_settings
+      item_new = item
+
       # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
       custom_fields_is_lambda = !custom_fields.blank? && custom_fields.lambda?
       custom_fields_hash = {}
       if custom_fields_is_lambda && !item_new.nil? && !item_new.id.nil?
         item_new, custom_fields_hash = custom_fields.call(item, user)
+        custom_fields_hash.transform_keys!(&:to_s)
       end
+      custom_fields_keys = custom_fields_hash.keys
 
-      # project using filter projection (already in query for items) or default fields
-      has_projection = opts[:projection]
-      item_new = {} if item_new.nil?
-      if has_projection
-        base_json = item_new.as_json
+      # get newer sort of custom fields, and keep only string keys and transforms
+      custom_fields_hash2 = filter_settings
+                            .fetch(:custom_fields2, {})
+                            .transform_values { |value| value[:transform] }
+                            .transform_keys(&:to_s)
+
+      hashed_item = {}.merge(
+        item_new&.as_json,
+        custom_fields_hash,
+        custom_fields_hash2
+      )
+
+      # project using filter projection or default fields
+      # Note: most queries with a projection already only return required fields
+      # but some don't... currently those using custom_filter_2
+      projection = opts[:projection]
+      if projection
+        if projection[:include]
+          # backwards compatible hack: custom fields always used to be included,
+          # no matter the projection
+          hashed_item.slice(*(projection[:include] + custom_fields_keys))
+        else
+          hashed_item.except(*projection[:exclude])
+        end => hashed_item
       else
-        default_fields = filter_settings[:render_fields]
-        base_json = item_new.as_json(only: default_fields)
+        default_fields = filter_settings[:render_fields] + custom_fields_keys
+        hashed_item = hashed_item.slice(*default_fields.map(&:to_s))
       end
 
-      base_json.merge(new_spec_fields_hash).merge(custom_fields_hash)
+      # Now that the projection is applied, transform any remaining
+      # custom values.
+      # We don't want to do this earlier because calculating a custom field
+      # before the projection could result in unneeded custom fields being
+      # included which apart from being slow may also fail due to missing select
+      # data
+      hashed_item.transform_values { |value|
+        next value unless value.is_a?(Proc)
+
+        value.call(item)
+      }
     end
 
     # Build an api response hash.
@@ -146,7 +193,7 @@ module Api
         items = opts[:items].to_f
         total = opts[:total].to_f
         # prevent divide by 0 error
-        max_page = items > 0 ? (total / items).ceil : 1
+        max_page = items.positive? ? (total / items).ceil : 1
         opts[:max_page] = max_page
         result[:meta][:paging][:max_page] = max_page
       end
@@ -343,7 +390,7 @@ module Api
     def to_f_or_i_or_s(v)
       # http://stackoverflow.com/questions/8071533/convert-input-value-to-integer-or-float-as-appropriate-using-ruby
 
-      ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float)
+      ((float = Float(v)) && (float % 1.0).zero? ? float.to_i : float)
     rescue StandardError
       v
     end
@@ -388,7 +435,7 @@ module Api
 
       unless filter_generic_keys.blank?
         filter_generic_keys.each do |key, value|
-          link_params[('filter_' + key.to_s).to_sym] = value
+          link_params["filter_#{key}".to_sym] = value
         end
       end
 

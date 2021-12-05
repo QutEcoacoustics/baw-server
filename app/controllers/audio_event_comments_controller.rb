@@ -34,7 +34,7 @@ class AudioEventCommentsController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    respond_show
+    respond_new
   end
 
   # POST /audio_events/:audio_event_id/comments

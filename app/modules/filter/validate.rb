@@ -154,9 +154,20 @@ module Filter
     # @raise [FilterArgumentError] if projection is not an Arel::Attributes::Attribute
     # @return [void]
     def validate_projection(projection)
-      unless projection.is_a?(Arel::Attributes::Attribute)
-        raise CustomErrors::FilterArgumentError, "Condition must be Arel::Attributes::Attribute, got #{projection}"
+      if projection.is_a?(Hash)
+        validate_hash_key(projection, :projection, [Arel::Nodes::Node, Arel::Attributes::Attribute])
+        validate_hash_key(projection, :joins, Array)
+        validate_table(projection[:base_table])
+        projection[:joins].each do |join|
+          validate_hash(join)
+          validate_table(join[:arel_table])
+          validate_hash_key(join, :type, Arel::Nodes::Join)
+          validate_hash_key(join, :on, Arel::Nodes::Equality)
+        end
+        return
       end
+
+      validate_node_or_attribute(projection)
     end
 
     def validate_node_or_attribute(value)
@@ -176,6 +187,8 @@ module Filter
       raise CustomErrors::FilterArgumentError, "Name must not be null, got #{name}" if name.blank?
       raise CustomErrors::FilterArgumentError, "Name must be a symbol, got #{name}" unless name.is_a?(Symbol)
       raise CustomErrors::FilterArgumentError, "Allowed must be an Array, got #{allowed}" unless allowed.is_a?(Array)
+
+      binding.break unless allowed.include?(name)
       raise CustomErrors::FilterArgumentError, "Name must be in #{allowed}, got #{name}" unless allowed.include?(name)
     end
 
@@ -194,7 +207,7 @@ module Filter
     # @raise [FilterArgumentError] if value is not a valid Array.
     # @return [void]
     def validate_array(value)
-      raise CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
+      raise CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.nil?
       unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
         raise CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value.class}"
       end
@@ -403,6 +416,16 @@ module Filter
       end
 
       validate_closure(value[:custom_fields], [:item, :user]) if value.include?(:custom_fields)
+
+      if value.include?(:custom_fields2)
+        validate_hash(value[:custom_fields2])
+        value[:custom_fields2].each_value do |custom_definition|
+          validate_hash(custom_definition)
+          validate_array(custom_definition[:query_attributes])
+          validate_closure(custom_definition[:transform], [:item])
+        end
+      end
+
       validate_closure(value[:new_spec_fields], [:user]) if value.include?(:new_spec_fields)
 
       validate_hash_key(value, :base_association, ActiveRecord::Relation) if value.include?(:base_association)

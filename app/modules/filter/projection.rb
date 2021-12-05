@@ -14,10 +14,47 @@ module Filter
     # @param [Arel::Table] table
     # @param [Symbol] column_name
     # @param [Array<Symbol>] allowed
-    # @return [Arel::Nodes::Node] projection
+    # @return [Arel::Nodes::Node,Hash,nil] projection
     def project_column(table, column_name, allowed)
+      return project_association(table, column_name) if association_field?(column_name)
+
+      # allow a custom field to be used in a projection,
+      return project_custom_field(table, column_name) if @custom_fields2.key?(column_name)
+
+      # allow field mappings to appear in a projection
+      field = build_custom_field(column_name)
+      return field unless field.blank?
+
       validate_table_column(table, column_name, allowed)
       table[column_name]
+    end
+
+    # allow a custom field to be used in a projection,
+    # use a hint from the field for what additional columns to select
+    def project_custom_field(table, column_name)
+      @custom_fields2.dig(column_name, :query_attributes).map do |hint|
+        # implicitly allow the hint here - the hint is
+        # provided by filter settings and not user so
+        # we assume it is secure
+        validate_table_column(table, hint, [hint])
+        table[hint]
+      end
+    end
+
+    def project_association(base_table, column_name)
+      parse_table_field(base_table, column_name) => {table_name:, field_name:, arel_table:, model:, filter_settings:}
+      joins, match = build_joins(model, @valid_associations)
+      raise CustomErrors::FilterArgumentError, "Association is not matched for #{column_name}" unless match
+
+      projection = arel_table[field_name].as(column_name.to_s)
+      joins = joins.map { |j|
+        table = j[:join]
+        # assume this is an arel_table if it doesn't respond to .arel_table
+        arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
+        { arel_table: arel_table, type: Arel::Nodes::OuterJoin, on: j[:on] }
+      }
+
+      { projection: projection, joins: joins, base_table: base_table }
     end
 
     #

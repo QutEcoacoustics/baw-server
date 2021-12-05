@@ -42,7 +42,7 @@ class ResponsesController < ApplicationController
     do_new_resource
     do_set_attributes
     do_authorize_instance
-    respond_show
+    respond_new
   end
 
   # POST /responses

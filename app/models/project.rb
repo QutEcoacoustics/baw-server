@@ -126,6 +126,14 @@ class Project < ApplicationRecord
                        project_hash[:access_level] = Project.access_level(item, user)
                        [item, project_hash]
                      },
+      new_spec_fields: lambda { |_user|
+                         {
+                           name: nil,
+                           description: nil,
+                           allow_original_download: false,
+                           notes: nil
+                         }
+                       },
       controller: :projects,
       action: :filter,
       defaults: {

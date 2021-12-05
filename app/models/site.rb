@@ -44,8 +44,6 @@ class Site < ApplicationRecord
   # ensures timezones are handled consistently
   include TimeZoneAttribute
 
-  attr_accessor :custom_latitude, :custom_longitude, :location_obfuscated
-
   # relations
   has_and_belongs_to_many :projects, -> { distinct }
   has_many :audio_recordings, inverse_of: :site
@@ -57,14 +55,14 @@ class Site < ApplicationRecord
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites, optional: true
 
   has_attached_file :image,
-                    styles: {
-                      span4: '300x300#',
-                      span3: '220x220#',
-                      span2: '140x140#',
-                      span1: '60x60#',
-                      spanhalf: '30x30#'
-                    },
-                    default_url: '/images/site/site_:style.png'
+    styles: {
+      span4: '300x300#',
+      span3: '220x220#',
+      span2: '140x140#',
+      span1: '60x60#',
+      spanhalf: '30x30#'
+    },
+    default_url: '/images/site/site_:style.png'
 
   LATITUDE_MIN = -90
   LATITUDE_MAX = 90
@@ -102,8 +100,8 @@ class Site < ApplicationRecord
   }, allow_nil: true
 
   validates_attachment_content_type :image,
-                                    content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
-                                    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+    content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
+    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
@@ -146,40 +144,51 @@ class Site < ApplicationRecord
     end
   end
 
-  # overrides getting, does not change setting
-  def latitude
+  renders_markdown_for :description
+
+  def custom_latitude
     value = read_attribute(:latitude)
     if location_obfuscated && !value.blank?
+      Rails.logger.warn('custom_latitude:with_jitter', value: value)
+
       Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX)
     else
+      Rails.logger.warn('custom_latitude:withOUT_jitter', value: value)
+
       value
     end
   end
 
-  # overrides getting, does not change setting
-  def longitude
+  def custom_longitude
     value = read_attribute(:longitude)
     if location_obfuscated && !value.blank?
+      Rails.logger.warn('custom_longitude:with_jitter', value: value)
       Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)
     else
+      Rails.logger.warn('custom_longitude:withOUT_jitter', value: value)
+
       value
     end
   end
 
-  def update_location_obfuscated(current_user)
+  def location_obfuscated
+    return @location_obfuscated if defined?(@location_obfuscated)
+
     if projects.empty?
+      Rails.logger.warn('location_obfuscated:projects_empty', projects: projects, model: self)
+
       @location_obfuscated = true
-      return
+      return @location_obfuscated
     end
 
     Access::Core.check_orphan_site!(self)
-    is_owner = Access::Core.can_any?(current_user, :owner, projects)
+    is_owner = Access::Core.can_any?(Current.user, :owner, projects)
 
     # obfuscate if level is less than owner
     @location_obfuscated = !is_owner
-  end
 
-  renders_markdown_for :description
+    @location_obfuscated
+  end
 
   def self.add_location_jitter(value, min, max)
     # multiply by 10,000 to get to ~10m accuracy
@@ -232,21 +241,18 @@ class Site < ApplicationRecord
       valid_fields: [:id, :name, :description, :notes, :creator_id,
                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id],
       render_fields: [:id, :name, :description, :notes, :creator_id,
-                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id],
+                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at,
+                      :region_id, :custom_latitude, :custom_longitude, :location_obfuscated],
       text_fields: [:description, :name],
-      custom_fields: lambda { |item, user|
+      custom_fields: lambda { |item, _user|
                        # item can be nil or a new record
                        is_new_record = item.nil? || item.new_record?
                        fresh_site = is_new_record ? nil : Site.find(item.id)
                        site_hash = {}
 
                        unless fresh_site.nil?
-                         fresh_site.update_location_obfuscated(user)
                          site_hash = {
                            project_ids: fresh_site.projects.pluck(:id).flatten,
-                           location_obfuscated: fresh_site.location_obfuscated,
-                           custom_latitude: fresh_site.latitude,
-                           custom_longitude: fresh_site.longitude,
                            timezone_information: fresh_site.timezone,
                            image_urls: Api::Image.image_urls(fresh_site.image),
                            **item.render_markdown_for_api_for(:description)
@@ -255,6 +261,20 @@ class Site < ApplicationRecord
 
                        [item, site_hash]
                      },
+      custom_fields2: {
+        custom_latitude: {
+          query_attributes: [:latitude, :id],
+          transform: ->(item) { item&.custom_latitude }
+        },
+        custom_longitude: {
+          query_attributes: [:longitude, :id],
+          transform: ->(item) { item&.custom_longitude }
+        },
+        location_obfuscated: {
+          query_attributes: [:id],
+          transform: ->(item) { item&.location_obfuscated }
+        }
+      },
       new_spec_fields: lambda { |user| # rubocop:disable Lint/UnusedBlockArgument
                          {
                            longitude: nil,

@@ -1,4 +1,4 @@
-
+# frozen_string_literal: true
 
 describe 'Sites' do
   create_entire_hierarchy
@@ -11,7 +11,8 @@ describe 'Sites' do
           tzinfo_tz: 'Australia/Sydney'
         }
       }
-      post "/projects/#{project.id}/sites", params: body, headers: api_request_headers(owner_token, send_body: true), as: :json
+      post "/projects/#{project.id}/sites", params: body, headers: api_request_headers(owner_token, send_body: true),
+as: :json
       expect(response).to have_http_status(:success)
       expect(api_result).to include(data: hash_including({
         timezone_information: hash_including({
@@ -73,6 +74,48 @@ describe 'Sites' do
           })
         })
       end
+    end
+  end
+
+  context 'with filter queries' do
+    it 'can project lat and long' do
+      body = {
+        projection: { include: [:name, :custom_latitude, :custom_longitude, :location_obfuscated] },
+        filter: { id: { eq: site.id } }
+      }
+
+      post '/sites/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+
+      expect(api_data).to match([a_hash_including(
+        name: site.name,
+        custom_latitude: be_within(1).of(site.latitude).and(not_eq(site.latitude)),
+        custom_longitude: be_within(1).of(site.longitude).and(not_eq(site.longitude)),
+        location_obfuscated: true
+      )])
+    end
+
+    it 'can project lat and long (does not obfuscate for owner)' do
+      body = {
+        projection: { include: [:name, :custom_latitude, :custom_longitude, :location_obfuscated] },
+        filter: { id: { eq: site.id } }
+      }
+
+      expect(site.projects).not_to be_empty
+
+      post '/sites/filter', params: body, **api_with_body_headers(owner_token)
+
+      expect_success
+      expect_number_of_items(1)
+
+      expect(api_data).to match([a_hash_including(
+        name: site.name,
+        custom_latitude: site.latitude.to_f,
+        custom_longitude: site.longitude.to_f,
+        location_obfuscated: false
+      )])
     end
   end
 end

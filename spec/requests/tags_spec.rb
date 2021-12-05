@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require 'rspec/mocks'
 
 describe 'Tags' do
@@ -11,7 +10,7 @@ describe 'Tags' do
     FactoryBot.attributes_for(:tag, default_attributes.merge(attributes))
   end
 
-  before(:each) do
+  before do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
     @env['CONTENT_TYPE'] = 'application/json'
@@ -23,7 +22,7 @@ describe 'Tags' do
   describe 'index' do
     it 'finds all (1) tag as admin' do
       get @tag_url, params: nil, headers: @env
-      expect(response).to have_http_status(200)
+      expect(response).to have_http_status(:ok)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['data'].count).to eq(1)
       expect(parsed_response['data'][0]['text']).to eq(tag['text'])
@@ -33,7 +32,7 @@ describe 'Tags' do
   describe 'filter' do
     it 'finds all (1) tag as admin' do
       get "#{@tag_url}/filter", params: nil, headers: @env
-      expect(response).to have_http_status(200)
+      expect(response).to have_http_status(:ok)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['data'].count).to eq(1)
       expect(parsed_response['data'][0]['text']).to eq(tag['text'])
@@ -43,9 +42,9 @@ describe 'Tags' do
   describe 'show' do
     it 'show tag as admin' do
       get @tag_url_with_id, params: nil, headers: @env
-      expect(response).to have_http_status(200)
+      expect(response).to have_http_status(:ok)
       parsed_response = JSON.parse(response.body)
-      expect(parsed_response['data'].to_json).to eq(tag.to_json)
+      expect(parsed_response['data']).to match(tag.as_json)
     end
   end
 
@@ -53,29 +52,29 @@ describe 'Tags' do
     it 'creates a tag' do
       post @tag_url, params: create.to_json, headers: @env
       parsed_response = JSON.parse(response.body)
-      expect(response).to have_http_status(201)
+      expect(response).to have_http_status(:created)
       expect(parsed_response['data']['text']).to eq 'test tag'
     end
 
     it 'creates a taxonomic tag' do
-      post @tag_url, params: create('is_taxonomic': true, 'type_of_tag': 'common_name').to_json, headers: @env
+      post @tag_url, params: create(is_taxonomic: true, type_of_tag: 'common_name').to_json, headers: @env
       parsed_response = JSON.parse(response.body)
-      expect(response).to have_http_status(201)
+      expect(response).to have_http_status(:created)
       expect(parsed_response['data']['is_taxonomic']).to be true
       expect(parsed_response['data']['type_of_tag']).to eq 'common_name'
     end
 
     it 'creates a retired tag' do
-      post @tag_url, params: create('retired': true).to_json, headers: @env
+      post @tag_url, params: create(retired: true).to_json, headers: @env
       parsed_response = JSON.parse(response.body)
-      expect(response).to have_http_status(201)
+      expect(response).to have_http_status(:created)
       expect(parsed_response['data']['retired']).to be true
     end
 
     it 'creates a tag with notes' do
-      post @tag_url, params: create('notes': { 'testing': 'value' }).to_json, headers: @env
+      post @tag_url, params: create(notes: { testing: 'value' }).to_json, headers: @env
       parsed_response = JSON.parse(response.body)
-      expect(response).to have_http_status(201)
+      expect(response).to have_http_status(:created)
       expect(parsed_response['data']['notes']).to eq('testing' => 'value')
     end
   end

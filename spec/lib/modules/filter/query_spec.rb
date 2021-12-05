@@ -360,6 +360,110 @@ describe Filter::Query do
       compare_filter_sql(request_body_obj, complex_result)
     end
 
+    it 'can include custom fields' do
+      body = {
+        projection: { include: [:canonical_file_name] },
+        filter: { id: { eq: audio_recording.id } }
+      }
+
+      # TODO: improve on wildcard query
+      complex_result = <<~SQL
+        SELECT "audio_recordings"."site_id", "audio_recordings"."recorded_date", "audio_recordings"."media_type"
+        FROM "audio_recordings"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."id" = #{audio_recording.id})
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25 OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
+
+    it 'can include fields mappings' do
+      body = {
+        projection: { include: [:recorded_end_date] },
+        filter: { id: { eq: audio_recording.id } }
+      }
+
+      complex_result = <<~SQL
+        SELECT "audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)
+        FROM "audio_recordings"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."id" = #{audio_recording.id})
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25 OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
+
+    it 'can include fields from associations' do
+      body = {
+        projection: { include: [:'sites.name', :'projects.name'] },
+        filter: { id: { eq: audio_recording.id } }
+      }
+
+      complex_result = <<~SQL
+        SELECT "sites"."name"
+        AS "sites.name", "projects"."name"
+        AS "projects.name"
+        FROM "audio_recordings"
+        LEFT
+        OUTER
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
+        LEFT
+        OUTER
+        JOIN "projects_sites"
+        ON "sites"."id" = "projects_sites"."site_id"
+        LEFT
+        OUTER
+        JOIN "projects"
+        ON "projects_sites"."project_id" = "projects"."id"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."id" = #{audio_recording.id})
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25 OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
+
+    it 'can include fields from associations and adds a join' do
+      body = {
+        projection: { include: [:'regions.name'] },
+        filter: { id: { eq: audio_recording.id } }
+      }
+
+      complex_result = <<~SQL
+        SELECT "regions"."name"
+        AS "regions.name"
+        FROM "audio_recordings"
+        LEFT
+        OUTER
+        JOIN "sites"
+        ON "audio_recordings"."site_id" = "sites"."id"
+        LEFT
+        OUTER
+        JOIN "regions"
+        ON  "sites"."region_id" = "regions"."id"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."id" = #{audio_recording.id})
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25 OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
+
+    it 'does not allows including fields not in an api definition' do
+      body = {
+        projection: { include: [:'sites.rails_tz'] },
+        filter: { id: { eq: audio_recording.id } }
+      }
+
+      expect {
+        create_filter(body).query_full
+      }.to raise_error(CustomErrors::FilterArgumentError, /, got rails_tz/)
+    end
+
     it 'using exclude' do
       request_body_obj = {
         projection: {
@@ -404,11 +508,11 @@ describe Filter::Query do
     #       }
     #       complex_result =
     #           "SELECT \
-    # EXTRACT (month,\"audio_recordings\".\"recorded_date\"), \
-    # sum(\"audio_recordings\".\"site_id\"), \
-    #           \"audio_recordings\".\"site_id\" \
-    # FROM\"audio_recordings\" \
-    # GROUPBY\"audio_recordings\".\"status\""
+    # EXTRACT (month,"audio_recordings"."recorded_date"), \
+    # sum("audio_recordings"."site_id"), \
+    #           "audio_recordings"."site_id" \
+    # FROM"audio_recordings" \
+    # GROUPBY"audio_recordings"."status""
     #       compare_filter_sql(request_body_obj, complex_result)
     #     end
   end
@@ -684,7 +788,7 @@ describe Filter::Query do
         WHERE "sites"."id" = 5))
         OR ("audio_recordings"."status"
         ILIKE '%testing\\_testing%')
-        OR ("audio_recordings"."original_file_name\"
+        OR ("audio_recordings"."original_file_name"
         ILIKE '%testing\\_testing%'))
         AND (NOT ("audio_recordings"."duration_seconds" != 140.0))
         AND (NOT ("audio_recordings"."id"IN (

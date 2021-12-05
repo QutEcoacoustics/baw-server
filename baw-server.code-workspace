@@ -131,6 +131,7 @@
       "strftime",
       "Struct",
       "structs",
+      "subquery",
       "symlink",
       "symlinks",
       "taggings",
@@ -267,7 +268,8 @@
       "castwide.ruby-debug",
       "pavlitsky.yard",
       "ms-azuretools.vscode-docker",
-      "github.copilot"
+      "github.copilot",
+      "KoichiSasada.vscode-rdbg"
     ]
   }
 }
