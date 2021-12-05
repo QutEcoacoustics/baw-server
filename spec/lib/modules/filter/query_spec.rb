@@ -366,9 +366,8 @@ describe Filter::Query do
         filter: { id: { eq: audio_recording.id } }
       }
 
-      # TODO: improve on wildcard query
       complex_result = <<~SQL
-        SELECT "audio_recordings"."site_id", "audio_recordings"."recorded_date", "audio_recordings"."media_type"
+        SELECT  "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."recorded_date", "audio_recordings"."media_type"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
         AND ("audio_recordings"."id" = #{audio_recording.id})
@@ -472,7 +471,7 @@ describe Filter::Query do
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
             :data_length_bytes, :status, :created_at, :updated_at,
             :creator_id, :deleted_at, :deleter_id, :updater_id,
-            :notes, :file_hash, :uploader_id, :original_file_name
+            :notes, :file_hash, :uploader_id, :original_file_name, :canonical_file_name, :recorded_date_timezone
           ]
         },
         filter: {

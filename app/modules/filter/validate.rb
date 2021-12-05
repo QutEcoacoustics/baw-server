@@ -187,8 +187,6 @@ module Filter
       raise CustomErrors::FilterArgumentError, "Name must not be null, got #{name}" if name.blank?
       raise CustomErrors::FilterArgumentError, "Name must be a symbol, got #{name}" unless name.is_a?(Symbol)
       raise CustomErrors::FilterArgumentError, "Allowed must be an Array, got #{allowed}" unless allowed.is_a?(Array)
-
-      binding.break unless allowed.include?(name)
       raise CustomErrors::FilterArgumentError, "Name must be in #{allowed}, got #{name}" unless allowed.include?(name)
     end
 
