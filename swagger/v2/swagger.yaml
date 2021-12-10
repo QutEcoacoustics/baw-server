@@ -2588,8 +2588,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 41
-                  custom_latitude: -58.800399
-                  custom_longitude: -105.25982
+                  custom_latitude: 84.710449
+                  custom_longitude: 29.079889
                   location_obfuscated: false
                   project_ids:
                   - 44
@@ -2672,8 +2672,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 42
-                  custom_latitude: -81.25144
-                  custom_longitude: 179.016037
+                  custom_latitude: -14.842749
+                  custom_longitude: -84.341464
                   location_obfuscated: false
                   project_ids:
                   - 45
@@ -2794,7 +2794,7 @@ paths:
                   message: Created
                 data:
                   id: 44
-                  uuid: 1290bdb5-cee1-4b3b-b63f-b2905b13aab5
+                  uuid: 3fb2905b-13aa-45c9-ac89-0b2b78adbb28
                   recorded_date: '2012-05-09T07:06:59.000Z'
                   site_id: 44
                   duration_seconds: 60000.0
@@ -2812,7 +2812,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 44
-                  file_hash: SHA256::44uhiaijkovp9n9ngw1reb1c1qlj92r3fwgylwhapa62qimj6mjgg3yvip0mpzki
+                  file_hash: SHA256::44jkovp9n9ngw1reb1c1qlj92r3fwgylwhapa62qimj6mjgg3yvip0mpzki73bp5
                   uploader_id: 1
                   original_file_name: original name 44.mp3
                   canonical_file_name: 20120509T070659Z_site-name-46_44.mp3
