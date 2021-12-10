@@ -93,9 +93,9 @@ module Api
         if projection[:include]
           # backwards compatible hack: custom fields always used to be included,
           # no matter the projection
-          hashed_item.slice(*(projection[:include] + custom_fields_keys))
+          hashed_item.slice(*(projection[:include].map(&:to_s) + custom_fields_keys))
         else
-          hashed_item.except(*projection[:exclude])
+          hashed_item.except(*projection[:exclude].map(&:to_s))
         end => hashed_item
       else
         default_fields = filter_settings[:render_fields] + custom_fields_keys

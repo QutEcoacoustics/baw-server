@@ -57,7 +57,7 @@ module Filter
       validate_hash(@parameters)
 
       @filter = @parameters.include?(:filter) && !@parameters[:filter].blank? ? @parameters[:filter] : {}
-      @projection = @parameters.include?(:projection) && !@parameters[:projection].blank? ? @parameters[:projection] : nil
+      @projection = parse_projection(@parameters)
 
       # remove key_partial_match key from parameters hash
       parameters_for_generic = @parameters.dup

@@ -92,14 +92,14 @@ module Filter
       when :include
         raise CustomErrors::FilterArgumentError, 'Include must contain at least one field.' if value.blank?
 
-        columns = value.map { |x| CleanParams.clean(x) }
+        columns = value
       when :exclude
         raise CustomErrors::FilterArgumentError, 'Exclude must contain at least one field.' if value.blank?
 
-        columns = @render_fields.reject { |item| value.include?(item) }.map { |x| CleanParams.clean(x) }
+        columns = @render_fields.reject { |item| value.include?(item) }
         raise CustomErrors::FilterArgumentError, 'Exclude must contain at least one field.' if columns.blank?
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognised projection key #{key}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized projection key #{key}."
       end
 
       # create projection that includes each column

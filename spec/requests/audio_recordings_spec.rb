@@ -100,4 +100,46 @@ describe '/audio_recordings' do
       'regions.name': audio_recording.site.region.name
     }])
   end
+
+  example 'it can retrieve recent audio recordings' do
+    body = {
+      projection: { include: [:id, :siteId, :durationSeconds, :recordedDate, :createdAt] },
+      sorting: { orderBy: 'createdAt', direction: 'desc' }
+    }
+
+    post '/audio_recordings/filter', params: body, **api_with_body_headers(reader_token)
+
+    expect_success
+    expect_number_of_items(AudioRecording.count)
+
+    expect(api_data).to match([{
+      id: audio_recording.id,
+      site_id: audio_recording.site_id,
+      duration_seconds: audio_recording.duration_seconds,
+      recorded_date: audio_recording.recorded_date,
+      created_at: audio_recording.created_at.iso8601(3)
+    }])
+  end
+
+  example 'it can retrieve audio recordings entries for visualize' do
+    body = {
+      filter: { siteId: { in: [audio_recording.site_id] } },
+      paging: { disablePaging: true },
+      projection: { include: ['id', 'uuid', 'siteId', 'durationSeconds', 'recordedDate'] },
+      sorting: { orderBy: 'id', direction: 'asc' }
+    }
+
+    post '/audio_recordings/filter', params: body, **api_with_body_headers(reader_token)
+
+    expect_success
+    expect_number_of_items(AudioRecording.count)
+
+    expect(api_data).to match([{
+      id: audio_recording.id,
+      uuid: audio_recording.uuid,
+      site_id: audio_recording.site_id,
+      duration_seconds: audio_recording.duration_seconds,
+      recorded_date: audio_recording.recorded_date
+    }])
+  end
 end

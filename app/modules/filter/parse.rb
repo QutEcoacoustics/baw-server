@@ -54,15 +54,12 @@ module Filter
 
       # ensure items is always less than max_items
       if items > max_items
-        raise CustomErrors::UnprocessableEntityError, "Number of items per page requested #{items} exceeded maximum #{max_items}."
+        raise CustomErrors::UnprocessableEntityError,
+          "Number of items per page requested #{items} exceeded maximum #{max_items}."
       end
 
       # parse disable paging settings
-      disable_paging = if disable_paging == 'true' || disable_paging == true
-                         true
-                       else
-                         false
-                       end
+      disable_paging = ['true', true].include?(disable_paging)
 
       # calculate offset and limit
       offset = (page - 1) * items
@@ -97,6 +94,21 @@ module Filter
       { order_by: order_by, direction: direction }
     end
 
+    def parse_projection(params)
+      return nil unless params.include?(:projection) && !params[:projection].blank?
+
+      projection = params[:projection]
+      case projection
+      in include: Array => i
+        { include: i.map { |x| CleanParams.clean(x) } }
+      in exclude: Array => e
+        { exclude: e.map { |x| CleanParams.clean(x) } }
+      else
+        # further validation done is #projections - we're just normalizing values here
+        projection
+      end
+    end
+
     # Parse text from parameters.
     # Any query string parameter will override filters already present.
     # @param [Hash] params
@@ -124,9 +136,10 @@ module Filter
     # @param [Hash] found
     # @return [Hash] matching entries
     def parse_qsp(obj, value, key_prefix, found = {})
-      if value.is_a?(Hash)
+      case value
+      when Hash
         found = parse_qsp_hash(value, key_prefix, found)
-      elsif value.is_a?(Array)
+      when Array
         found = parse_qsp_array(obj, value, key_prefix, found)
       else
         key_s = obj.blank? ? '' : obj.to_s
