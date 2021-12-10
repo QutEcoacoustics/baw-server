@@ -153,8 +153,10 @@ They are based on `config/settings/default.yml`.
 
 Debugging:
 
-  docker-compose run --service-ports    --use-aliases  workers bash
-  ../bin/bundle exec rdebug-ide --host 0.0.0.0 --port 1234 ../bin/rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
+```shell
+(host) > docker compose exec web bash
+(container) > RAILS_ENV='test' rdbg --command -- /home/baw_web/baw-server/bin/rspec /home/baw_web/baw-server/spec/lib/modules/filter/query_spec.rb -e association
+```
 
 ### Tests
 

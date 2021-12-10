@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# @!parse
+#   Settings = BawWorkers::Settings
+
 # settings loaded in config/initializers/config.rb
 # Accessible through Settings.xxx
 # Environment specific settings expected in config/settings/{environment_name}.yml
