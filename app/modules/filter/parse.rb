@@ -98,15 +98,12 @@ module Filter
       return nil unless params.include?(:projection) && !params[:projection].blank?
 
       projection = params[:projection]
-      case projection
-      in include: Array => i
-        { include: i.map { |x| CleanParams.clean(x) } }
-      in exclude: Array => e
-        { exclude: e.map { |x| CleanParams.clean(x) } }
-      else
-        # further validation done is #projections - we're just normalizing values here
-        projection
-      end
+      projection[:include].map! { |x| CleanParams.clean(x) } if projection in {include: Array}
+
+      projection[:exclude].map! { |x| CleanParams.clean(x) } if projection in {exclude: Array}
+
+      # further validation done is #projections - we're just normalizing values here
+      projection
     end
 
     # Parse text from parameters.
