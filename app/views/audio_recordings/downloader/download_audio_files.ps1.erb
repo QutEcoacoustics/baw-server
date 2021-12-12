@@ -44,6 +44,8 @@ param(
 
 $InformationPreference = 'Continue'
 $ErrorActionPreference = 'Stop'
+# https://github.com/PowerShell/PowerShell/issues/14348
+$ProgressPreference = 'SilentlyContinue'
 
 Write-Information "Acoustic Workbench downloader script version <%= @model.app_version %>"
 
