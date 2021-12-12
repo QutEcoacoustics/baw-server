@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -26,10 +25,10 @@ resource 'Datasets' do
   # Create post parameters from factory
   let(:post_attributes) { FactoryBot.attributes_for(:dataset, name: 'New Dataset name') }
 
-  # note about harvester
+  # NOTE: about harvester
   # Harvester can access filter and index, but nothing else
   # This is because no permissions have been blacklisted in by_permission.rb
-  # and no permissions have been whitelisted for harvester in ability.rb
+  # and no permissions have been allowed for harvester in ability.rb
 
   ################################
   # INDEX
@@ -43,7 +42,8 @@ resource 'Datasets' do
       :get,
       'INDEX (as admin)',
       :ok,
-      { response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name', data_item_count: 2 }
+      { response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name',
+        data_item_count: 2 }
     )
   end
 
@@ -55,7 +55,8 @@ resource 'Datasets' do
       :get,
       'INDEX (as reader user)',
       :ok,
-      { response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name', data_item_count: 2 }
+      { response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name',
+        data_item_count: 2 }
     )
   end
 

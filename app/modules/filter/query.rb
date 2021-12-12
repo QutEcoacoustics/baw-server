@@ -15,7 +15,7 @@ module Filter
       :valid_fields, :text_fields, :filter_settings,
       :parameters, :filter, :projection, :qsp_text_filter,
       :qsp_generic_filters, :paging, :sorting, :build,
-      :custom_fields2
+      :custom_fields2, :capabilities
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -50,6 +50,7 @@ module Filter
       @default_sort_order = filter_settings[:defaults][:order_by]
       @default_sort_direction = filter_settings[:defaults][:direction]
       @custom_fields2 = filter_settings[:custom_fields2] || {}
+      @capabilities = filter_settings[:capabilities] || {}
 
       @build = Build.new(@table, filter_settings)
 

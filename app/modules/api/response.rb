@@ -121,6 +121,7 @@ module Api
     # @param [Hash] opts the options for additional information.
     # @option opts [Hash] :filter (nil) Filter that produced data.
     # @option opts [Hash] :projection (nil) Projection.
+    # @option opts [Hash] :capabilities (nil) Capabilities build by add_capabilities!.
     # @option opts [Array<Symbol>] :error_links ([]) Error links.
     # @option opts [String] :error_details (nil) Error details.
     # @option opts [Symbol] :order_by (nil) Model property data is ordered by.
@@ -210,6 +211,11 @@ module Api
 
       end
 
+      # render capabilities
+      # TODO: optionally render capabilities based on request headers
+      capabilities = opts.fetch(:capabilities, nil)
+      result[:meta][:capabilities] = capabilities unless capabilities.blank?
+
       result
     end
 
@@ -280,6 +286,30 @@ module Api
       }
     end
 
+    # Format the capabilities hash for the response. Mutates opts.
+    # @param [Hash] opts the current response opts hash
+    # @param [Class] klass the class of the current resource
+    # @param [Nil,Array<ActiveRecord::Base>,ActiveRecord::Base] item an instance of the current resource
+    # @return [Hash<Symbol,Hash>] mutated opts with capabilities
+    def add_capabilities!(opts, klass, item = nil)
+      raise ArgumentError, 'klass must be a class' unless klass.is_a?(Class)
+      raise ArgumentError, 'opts must be a hash' unless opts.is_a?(Hash)
+
+      filter_settings = klass&.try(:filter_settings)
+
+      # check we can get filter settings and that capabilities are defined for this class
+      unless filter_settings in {capabilities: Hash}
+        opts[:capabilities] = nil
+        return
+      end
+
+      capabilities = filter_settings[:capabilities]
+
+      opts[:capabilities] = capabilities.transform_values { |capability|
+        evaluate_capability(item, klass, capability)
+      }
+    end
+
     private
 
     # Create and execute a query based on a filter request.
@@ -305,6 +335,7 @@ module Api
       # build complete api response
       opts[:filter] = filter_query.filter unless filter_query.filter.blank?
       opts[:projection] = filter_query.projection unless filter_query.projection.blank?
+      opts[:capabilities] = filter_query.capabilities unless filter_query.capabilities.blank?
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,
         :filter, :projection,
@@ -385,6 +416,25 @@ module Api
       else
         value
       end
+    end
+
+    # Determines the capability either for a list of items
+    # or for specific item.
+    # When determining for a list of items, the item parameter should be nil.
+    # @param [Nil,ActiveRecord::Base] item
+    # @param [Class] klass
+    # @param [Hash] capability
+    # @return [Hash]
+    def evaluate_capability(item, klass, capability)
+      if item.nil?
+        capability[:can_list]&.call(item)
+      else
+        capability[:can_item]&.call(item)
+      end => can
+
+      details = capability[:details]&.call(can, item, klass)
+
+      { can: can, details: details }
     end
 
     def to_f_or_i_or_s(v)

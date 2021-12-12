@@ -193,10 +193,24 @@ module RequestSpecHelpers
       }))
     end
 
-    def expect_has_filter(_filter)
+    def expect_has_filter(filter)
       expect(api_result).to include(meta: hash_including({
-        filter: projection
+        filter: filter
       }))
+    end
+
+    def expect_has_capability(name, can, details = nil)
+      { can: can, details: details } => expected
+
+      expect(api_result).to include(
+        meta: hash_including(
+          {
+            capabilities: hash_including(
+              name => expected
+            )
+          }
+        )
+      )
     end
 
     def expect_success

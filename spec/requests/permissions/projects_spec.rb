@@ -1,4 +1,4 @@
-
+# frozen_string_literal: true
 
 describe 'Project permissions' do
   create_entire_hierarchy
@@ -32,8 +32,8 @@ describe 'Project permissions' do
   the_user :invalid, can_do: nothing, and_cannot_do: everything, fails_with: :unauthorized
 
   context 'with public project creation disabled' do
-    before(:each) do
-      allow(Settings.permissions).to receive(:any_user_can_create_projects) { false }
+    before do
+      allow(Settings.permissions).to receive(:any_user_can_create_projects).and_return(false)
     end
 
     ensures :owner, :writer, :reader, :harvester, cannot: [:create]

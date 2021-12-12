@@ -413,6 +413,20 @@ module Filter
         end
       end
 
+      if value.include?(:capabilities)
+        validate_hash(value[:capabilities])
+        value[:capabilities].values do |capability|
+          validate_hash(capability)
+          validate_hash_key(capability, :can_list, [NilClass, Proc])
+          validate_hash_key(capability, :can_item, [NilClass, Proc])
+          validate_closure(capability[:can_list], [:klass]) if capability[:can_list]
+          validate_closure(capability[:can_item], [:item]) if capability[:can_list]
+
+          validate_hash_key(capability, :details, [Proc])
+          validate_closure(capability[:details], [:can, item, klass]) if capability[:details]
+        end
+      end
+
       validate_closure(value[:custom_fields], [:item, :user]) if value.include?(:custom_fields)
 
       if value.include?(:custom_fields2)
