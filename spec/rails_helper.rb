@@ -214,12 +214,17 @@ RSpec.configure do |config|
   config.extend PermissionsHelpers::ExampleGroup, {
     file_path: Regexp.new('/spec/requests/permissions')
   }
+  require_relative 'helpers/capabilities_helper'
+  config.extend CapabilitiesHelper::ExampleGroup, {
+    file_path: Regexp.new('/spec/requests/capabilities')
+  }
 
   require_relative 'helpers/image_helpers'
   require_relative 'helpers/sql_helpers'
 
   require_relative 'helpers/shared_examples/a_route_that_stores_images'
   require_relative 'helpers/shared_examples/permissions_for'
+  require_relative 'helpers/shared_examples/capabilities_for'
   require_relative 'helpers/shared_examples/a_stats_bucket'
 
   require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"

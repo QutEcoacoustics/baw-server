@@ -23,6 +23,7 @@ RSpec.describe '', skip: true do
   extend ApiSpecHelpers::ExampleGroup
 
   extend PermissionsHelpers::ExampleGroup
+  extend CapabilitiesHelper::ExampleGroup
 
   include FactoryBotHelpers::Example
 

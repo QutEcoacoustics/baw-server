@@ -365,6 +365,17 @@ class AudioRecording < ApplicationRecord
           value: arel_recorded_end_date
         }
       ],
+      capabilities: {
+        original_download: {
+          #can_list: ->(klass) { Current.ability.can?(:original, klass) },
+          can_item: ->(item) { Current.ability.can?(:original, item) },
+          details: lambda { |can, _item, _klass|
+                     unless can
+                       'You do not have permission to download the original audio recording. Check your access level or the original download settings for this project'
+                     end
+                   }
+        }
+      },
       valid_associations: [
         {
           join: AudioEvent,

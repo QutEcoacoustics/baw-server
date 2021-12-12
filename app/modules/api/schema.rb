@@ -107,6 +107,25 @@ module Api
               enum: ['Owner', 'Writer', 'Reader', nil]
             },
             meta: {
+              properties: {
+                capabilities: {
+                  type: 'object',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      can: {
+                        type: ['null', 'boolean']
+                      },
+                      details: {
+                        type: 'string'
+                      }
+                    },
+                    required: [
+                      'can'
+                    ]
+                  }
+                }
+              },
               type: 'object'
             },
             meta_error: {

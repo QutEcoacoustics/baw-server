@@ -66,6 +66,9 @@ module Api
       items = get_resource_plural.map { |item|
         Settings.api_response.prepare(item, current_user, opts)
       }
+
+      Settings.api_response.add_capabilities!(opts, resource_class)
+
       built_response = Settings.api_response.build(:ok, items, opts)
       render json: built_response, status: :ok, layout: false
     end
@@ -76,7 +79,10 @@ module Api
 
       item = Settings.api_response.prepare(item_resource, current_user)
 
-      built_response = Settings.api_response.build(:ok, item)
+      opts = {}
+      Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
+
+      built_response = Settings.api_response.build(:ok, item, opts)
       render json: built_response, status: :ok, layout: false
     end
 
@@ -85,7 +91,11 @@ module Api
 
       item = Settings.api_response.prepare_new(item_resource, current_user)
 
-      built_response = Settings.api_response.build(:ok, item)
+      opts = {}
+      # Can't think of a valid context for this currently
+      #Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
+
+      built_response = Settings.api_response.build(:ok, item, opts)
       render json: built_response, status: :ok, layout: false
     end
 
@@ -94,7 +104,11 @@ module Api
 
       item = Settings.api_response.prepare(item_resource, current_user)
 
-      built_response = Settings.api_response.build(:created, item)
+      opts = {}
+
+      Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
+
+      built_response = Settings.api_response.build(:created, item, opts)
       render json: built_response, status: :created, location: location.blank? ? item_resource : location, layout: false
     end
 
@@ -131,6 +145,8 @@ module Api
         Settings.api_response.prepare(item, current_user, opts)
       }
 
+      Settings.api_response.add_capabilities!(opts, resource_class)
+
       built_response = Settings.api_response.build(:ok, items, opts)
       render json: built_response, status: :ok, content_type: 'application/json', layout: false
     end
@@ -150,7 +166,7 @@ module Api
 
       # choose a subset of response to format as a request filter
       # data is discarded here
-      filter = filter_response[:meta].except(:status, :message, :paging)
+      filter = filter_response[:meta].except(:status, :message, :paging, :capabilities)
       if !opts[:page].blank? && !opts[:items].blank?
         filter[:paging] = {
           items: opts[:items]

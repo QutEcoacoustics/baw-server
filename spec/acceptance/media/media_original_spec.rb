@@ -44,9 +44,6 @@ resource 'Media/original' do
   # ORIGINAL
   ################################
   describe 'original audio download' do
-    let(:start_offset) { nil }
-    let(:end_offset) { nil }
-
     before do
       # the standard media route only allows short recordings, purposely mock a long duration to make sure long
       # original recordings succeed.
@@ -79,7 +76,7 @@ resource 'Media/original' do
       let(:authentication_token) { reader_token }
 
       standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden,
-                               { expected_json_path: get_json_error_path(:permissions) })
+        { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -88,7 +85,7 @@ resource 'Media/original' do
       let(:authentication_token) { writer_token }
 
       standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden,
-                               { expected_json_path: get_json_error_path(:permissions) })
+        { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -97,7 +94,7 @@ resource 'Media/original' do
       let(:authentication_token) { no_access_token }
 
       standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden,
-                               { expected_json_path: get_json_error_path(:permissions) })
+        { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -106,7 +103,7 @@ resource 'Media/original' do
       let(:authentication_token) { invalid_token }
 
       standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized,
-                               { expected_json_path: get_json_error_path(:sign_in) })
+        { expected_json_path: get_json_error_path(:sign_in) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -115,7 +112,7 @@ resource 'Media/original' do
       let(:authentication_token) { owner_token }
 
       standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden,
-                               { expected_json_path: get_json_error_path(:permissions) })
+        { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do

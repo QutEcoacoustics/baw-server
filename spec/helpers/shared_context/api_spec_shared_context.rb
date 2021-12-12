@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require "securerandom"
+
+require 'securerandom'
 
 RSpec.shared_context 'with api shared context' do
   # ensure uuid generation is stable
@@ -12,7 +13,7 @@ RSpec.shared_context 'with api shared context' do
     Zonebie.backend.zone = ::ActiveSupport::TimeZone['UTC']
     Timecop.freeze(Time.local(2020, 1, 2, 3, 4, 5.678))
     SecureRandom.singleton_class.send(:alias_method, :old_gen_random, :gen_random)
-    SecureRandom.send(:define_singleton_method,:gen_random) do |n|
+    SecureRandom.send(:define_singleton_method, :gen_random) do |n|
       n = n ? n.to_int : 16
       Array.new(n) { Kernel.rand(256) }.pack('C*')
     end
@@ -56,6 +57,8 @@ RSpec.shared_context 'with api shared context' do
       spec_example.metadata[:response][:content] = json_example
     when %r{text/plain}
       spec_example.metadata[:response][:content] = raw_example
+    when nil
+      logger.warn("Empty response; can't determine content type for example")
     else
       # add no example
       logger.debug("Not adding response example for #{response.content_type}")
