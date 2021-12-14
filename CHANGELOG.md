@@ -1,16 +1,29 @@
 # Changelog
 
-## [4.9.1](https://github.com/QutEcoacoustics/baw-server/tree/4.9.1) (2021-12-10)
+## [5.0.0](https://github.com/QutEcoacoustics/baw-server/tree/5.0.0) (2021-12-14)
 
-[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.8.7...4.9.1)
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.9.1...5.0.0)
 
 **Implemented enhancements:**
 
-- Allow include/exclude of custom\_fields \(Expose site location in filter projection\) [\#495](https://github.com/QutEcoacoustics/baw-server/issues/495)
+- Original download capability [\#551](https://github.com/QutEcoacoustics/baw-server/issues/551)
+- Adds original download capability [\#552](https://github.com/QutEcoacoustics/baw-server/pull/552) ([atruskie](https://github.com/atruskie))
+
+## [4.9.1](https://github.com/QutEcoacoustics/baw-server/tree/4.9.1) (2021-12-10)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.9.0...4.9.1)
 
 **Fixed bugs:**
 
 - Filter queries are failing when projections are camelCased [\#550](https://github.com/QutEcoacoustics/baw-server/issues/550)
+
+## [4.9.0](https://github.com/QutEcoacoustics/baw-server/tree/4.9.0) (2021-12-05)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.8.7...4.9.0)
+
+**Implemented enhancements:**
+
+- Allow include/exclude of custom\_fields \(Expose site location in filter projection\) [\#495](https://github.com/QutEcoacoustics/baw-server/issues/495)
 
 ## [4.8.7](https://github.com/QutEcoacoustics/baw-server/tree/4.8.7) (2021-11-19)
 
