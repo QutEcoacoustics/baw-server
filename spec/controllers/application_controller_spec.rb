@@ -246,7 +246,7 @@ describe ApplicationController, type: :controller do
       response = get :index_ability
       expect(Current.ability).to be_an_instance_of(Ability)
 
-      # if you're signed in you cannot download an original recording
+      # if you're not signed in you cannot download an original recording
       expect(Current.ability.can?(:original, audio_recording)).to eq false
 
       expect(response.body).to eq('Ability')
