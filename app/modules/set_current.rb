@@ -16,6 +16,6 @@ module SetCurrent
   end
 
   def set_current_ability
-    Current.ability = current_ability unless current_user.nil?
+    Current.ability = current_ability
   end
 end

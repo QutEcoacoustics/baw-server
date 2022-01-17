@@ -188,4 +188,68 @@ describe ApplicationController, type: :controller do
       it_behaves_like 'sanitization', :nested
     end
   end
+
+  describe 'Current' do
+    create_entire_hierarchy
+
+    controller(ApplicationController) do
+      skip_authorization_check
+
+      def index_ability
+        render plain: Current.ability&.class&.name
+      end
+
+      def index_user
+        render(plain: Current.user&.user_name)
+      end
+    end
+
+    before do
+      routes.draw do
+        get 'index_user' => 'anonymous#index_user'
+        get 'index_ability' => 'anonymous#index_ability'
+      end
+
+      project.allow_original_download = :reader
+      project.save!
+    end
+
+    it 'inherits from the application controller' do
+      expect(controller).to be_a_kind_of(ApplicationController)
+    end
+
+    it 'sets Current.user when a user session is supplied' do
+      request.env['HTTP_AUTHORIZATION'] = reader_token
+      response = get :index_user
+      expect(Current.user).to eq reader_user
+      expect(response.body).to eq(reader_user.user_name)
+    end
+
+    it 'sets Current.user to nil when there is no user session' do
+      response = get :index_user
+      expect(Current.user).to be_nil
+      expect(response.body).to eq('')
+    end
+
+    it 'sets Current.ability when a user session is supplied' do
+      request.env['HTTP_AUTHORIZATION'] = reader_token
+      response = get :index_ability
+      expect(Current.ability).to be_an_instance_of(Ability)
+
+      # if you're signed in you can download an original recording
+      expect(Current.ability.can?(:original, audio_recording)).to eq true
+
+      expect(response.body).to eq('Ability')
+    end
+
+    it 'sets Current.ability even when a user session is not supplied' do
+      response = get :index_ability
+      expect(Current.ability).to be_an_instance_of(Ability)
+
+      # if you're not signed in you cannot download an original recording
+      expect(Current.ability.can?(:original, audio_recording)).to eq false
+
+      expect(response.body).to eq('Ability')
+    end
+  end
 end

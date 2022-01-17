@@ -15,6 +15,12 @@ class SessionsController < Devise::SessionsController
   # remove Devise's default destroy response
   skip_before_action :verify_signed_out_user
 
+  # skip caching current_ability in Current.ability
+  # Not sure what he issue here is, but I think the set_current_ability callback
+  # happens before the rest of the callbacks in this controller. Once current_ability
+  # is called it's value is cached and the callbacks in this controller fail
+  skip_before_action :set_current_ability
+
   # don't check auth for new and create (since this is how to sign in to the api)
   check_authorization except: [:new, :create]
 
@@ -114,7 +120,8 @@ class SessionsController < Devise::SessionsController
   private
 
   def response_wrapper(status_symbol, data, error_details = nil, error_links = [])
-    built_response = Settings.api_response.build(status_symbol, data, { error_details: error_details, error_links: error_links })
+    built_response = Settings.api_response.build(status_symbol, data,
+      { error_details: error_details, error_links: error_links })
     render json: built_response, status: status_symbol, layout: false
   end
 end
