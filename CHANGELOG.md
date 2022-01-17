@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.1.0](https://github.com/QutEcoacoustics/baw-server/tree/5.1.0) (2022-01-17)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/5.0.0...5.1.0)
+
+**Fixed bugs:**
+
+- Unhandled error in AudioRecording model API response [\#553](https://github.com/QutEcoacoustics/baw-server/issues/553)
+- Fixes Current.ability [\#554](https://github.com/QutEcoacoustics/baw-server/pull/554) ([atruskie](https://github.com/atruskie))
+
 ## [5.0.0](https://github.com/QutEcoacoustics/baw-server/tree/5.0.0) (2021-12-14)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/4.9.1...5.0.0)
