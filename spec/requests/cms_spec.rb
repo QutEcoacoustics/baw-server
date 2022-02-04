@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-
-
 describe 'CMS' do
   create_standard_cms_pages
   prepare_users
 
   # assets should always be available
-  context 'allows users with no credentials to fetch assets' do
+  context 'when users have no credntials, the can fetch assets' do
     let(:page) {
       Comfy::Cms::Page.where(slug: 'index').first
     }
@@ -41,11 +39,11 @@ describe 'CMS' do
     end
   end
 
-  context 'admin can access the backend' do
+  context 'when a user is an admin they can access the backend' do
     example 'access admin/cms' do
       get '/admin/cms', headers: api_request_headers(admin_token)
 
-      expect(response).to have_http_status(302)
+      expect(response).to have_http_status(:found)
     end
   end
 end

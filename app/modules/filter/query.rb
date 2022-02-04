@@ -57,6 +57,8 @@ module Filter
       @parameters = CleanParams.perform(parameters)
       validate_hash(@parameters)
 
+      @parameters = decode_payload(@parameters)
+
       @filter = @parameters.include?(:filter) && !@parameters[:filter].blank? ? @parameters[:filter] : {}
       @projection = parse_projection(@parameters)
 
@@ -216,6 +218,35 @@ module Filter
     end
 
     private
+
+    def decode_payload(parameters)
+      return parameters unless parameters.include?(:filter_encoded)
+
+      parameters.extract!(:filter_encoded) => {filter_encoded: value}
+
+      return parameters if value.blank?
+
+      json = begin
+        Base64.urlsafe_decode64(value)
+      rescue StandardError
+        raise CustomErrors::FilterArgumentError, 'filter_encoded was not a valid RFC 4648 base64url string'
+      end
+
+      hash = begin
+        JSON.parse(json)
+      rescue StandardError => e
+        message = e.message.gsub(/\d+: /, '')
+        raise CustomErrors::FilterArgumentError, "filter_encoded was not a valid JSON payload: #{message}"
+      end
+
+      # parameters has already been cleaned, but hash has just been deserialized!
+      # so clean and normalize names here too
+      hash = CleanParams.perform(hash)
+
+      parameters.deep_merge!(hash)
+
+      parameters
+    end
 
     # Add qsp spec to filter
     # @param [Hash] filter
