@@ -123,7 +123,7 @@ group :server do
 
   # extensions to arel https://github.com/Faveod/arel-extensions
   # in particular, we use `cast`, and `coalesce`
-  gem 'arel_extensions'
+  gem 'arel_extensions', '>= 2.1.0'
 
   # as the name says
   gem 'composite_primary_keys', COMPOSITE_PRIMARY_KEYS_VERSION

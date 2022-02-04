@@ -151,7 +151,7 @@ GEM
     annotate (2.6.5)
       activerecord (>= 2.3.0)
       rake (>= 0.8.7)
-    arel_extensions (2.0.24)
+    arel_extensions (2.1.0)
       activerecord (>= 6.0)
     ast (2.4.2)
     async-container (0.16.12)
@@ -793,7 +793,7 @@ DEPENDENCIES
   addressable
   amazing_print
   annotate
-  arel_extensions
+  arel_extensions (>= 2.1.0)
   async!
   async-http!
   bcrypt (~> 3.1.9)
