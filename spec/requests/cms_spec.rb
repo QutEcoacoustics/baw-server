@@ -5,7 +5,7 @@ describe 'CMS' do
   prepare_users
 
   # assets should always be available
-  context 'when users have no credntials, the can fetch assets' do
+context 'when users have no credentials, they can fetch assets' do
     let(:page) {
       Comfy::Cms::Page.where(slug: 'index').first
     }
