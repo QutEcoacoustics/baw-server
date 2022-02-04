@@ -235,8 +235,12 @@ module Filter
       hash = begin
         JSON.parse(json)
       rescue StandardError => e
+        # JSON parser returns line where the error occurred in the C source code...
+        # so basically useless. Remove it.
         message = e.message.gsub(/\d+: /, '')
-        raise CustomErrors::FilterArgumentError, "filter_encoded was not a valid JSON payload: #{message}"
+        error = "filter_encoded was not a valid JSON payload: #{message}." \
+                "Check the filter is valid JSON and it was not truncated. We received value of size #{value.length}."
+        raise CustomErrors::FilterArgumentError, error
       end
 
       # parameters has already been cleaned, but hash has just been deserialized!

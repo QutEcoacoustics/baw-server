@@ -83,5 +83,23 @@ describe 'Common behaviour', { type: :request } do
         id: { gt: 0 }
       })
     end
+
+    it 'can correctly parse complex utf-8 string' do
+      # rubocop:disable
+      test = 'hello À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï ܐ ܑ ܒ ܓ ܔ ܕ ܖ ܗ ܘ ܙ ܚ ܛ ܜ ܝ ܞ ܟ'
+      # rubocop:enable
+
+      filter = JSON.dump({ filter: { name: { eq: test } } })
+      encoded = Base64.urlsafe_encode64(filter)
+
+      get "/sites?filter_encoded=#{encoded}", **api_headers(reader_token)
+
+      expect_success
+      expect_json_response
+      expect_number_of_items(0)
+      expect_has_filter({
+        name: { eq: test }
+      })
+    end
   end
 end
