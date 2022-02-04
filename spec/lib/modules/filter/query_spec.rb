@@ -21,7 +21,7 @@ describe Filter::Query do
   end
 
   # none_relation, direction asc
-  # unrecognised filter
+  # Unrecognized filter
   # and, or, not, other (error)
   # range errors (missing from/to, interval), interval outside range?
   context 'error' do
@@ -38,7 +38,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognised combiner or field name: not_a_real_filter.')
+      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognized combiner or field name: not_a_real_filter.')
     end
 
     it 'occurs when or has only 1 entry' do
@@ -135,7 +135,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognised combiner or field name: not_a_valid_combiner/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name: not_a_valid_combiner/)
     end
 
     it "occurs when a range is missing 'from'" do
@@ -1448,9 +1448,9 @@ describe Filter::Query do
       site = project.sites.first
 
       project1 = project
-      project2 = FactoryBot.create(:project, creator: user, sites: [site])
+      project2 = create(:project, creator: user, sites: [site])
 
-      project3 = FactoryBot.create(:project, creator: user, sites: [site])
+      project3 = create(:project, creator: user, sites: [site])
 
       request_body_obj = {
         projection: {
@@ -1476,9 +1476,9 @@ describe Filter::Query do
       site = project.sites.first
 
       project1 = project
-      project2 = FactoryBot.create(:project, creator: user, sites: [site])
+      project2 = create(:project, creator: user, sites: [site])
 
-      project3 = FactoryBot.create(:project, creator: user, sites: [site])
+      project3 = create(:project, creator: user, sites: [site])
 
       request_body_obj = {
         projection: {
@@ -1502,7 +1502,7 @@ describe Filter::Query do
   context 'gets projects' do
     it 'inaccessible' do
       the_user = owner_user
-      project_no_access = FactoryBot.create(:project, creator: no_access_user)
+      project_no_access = create(:project, creator: no_access_user)
 
       request_body_obj = {
         projection: {
@@ -1525,8 +1525,8 @@ describe Filter::Query do
       the_user = owner_user
 
       project_access = project
-      project_no_access = FactoryBot.create(:project)
-      access_via_created = FactoryBot.create(:project, creator: the_user)
+      project_no_access = create(:project)
+      access_via_created = create(:project, creator: the_user)
 
       request_body_obj = {
         projection: {
@@ -1550,8 +1550,8 @@ describe Filter::Query do
     it 'restricts sites to project' do
       the_user = owner_user
 
-      project_new = FactoryBot.create(:project, creator: the_user)
-      site2 = FactoryBot.create(:site, creator: the_user)
+      project_new = create(:project, creator: the_user)
+      site2 = create(:site, creator: the_user)
       project_new.sites << site2
       project_new.save!
 
@@ -1576,13 +1576,13 @@ describe Filter::Query do
     it 'restricts sites to those in projects that cannot be accessed' do
       the_user = owner_user
 
-      project2 = FactoryBot.create(:project, creator: the_user)
-      site2 = FactoryBot.create(:site, creator: the_user)
+      project2 = create(:project, creator: the_user)
+      site2 = create(:site, creator: the_user)
       project2.sites << site2
       project2.save!
 
-      project3 = FactoryBot.create(:project, creator: no_access_user)
-      site3 = FactoryBot.create(:site, creator: no_access_user)
+      project3 = create(:project, creator: no_access_user)
+      site3 = create(:site, creator: no_access_user)
       project3.sites << site3
       project3.save!
 
@@ -1605,9 +1605,9 @@ describe Filter::Query do
     end
 
     it 'restricts permissions to project' do
-      the_user = FactoryBot.create(:user)
-      permission1 = FactoryBot.create(:read_permission, creator: the_user, user: the_user)
-      permission2 = FactoryBot.create(:read_permission, creator: the_user, user: the_user)
+      the_user = create(:user)
+      permission1 = create(:read_permission, creator: the_user, user: the_user)
+      permission2 = create(:read_permission, creator: the_user, user: the_user)
       project2 = permission2.project
 
       request_body_obj = {
@@ -1709,13 +1709,13 @@ describe Filter::Query do
 
     it 'restricts comments to audio events in projects that can not be accessed' do
       the_user = owner_user
-      comment1 = FactoryBot.create(:audio_event_comment, creator: the_user)
+      comment1 = create(:audio_event_comment, creator: the_user)
       site1 = comment1.audio_event.audio_recording.site
       site1.projects << project
       site1.save!
 
-      comment2 = FactoryBot.create(:audio_event_comment)
-      project2 = FactoryBot.create(:project, creator: no_access_user)
+      comment2 = create(:audio_event_comment)
+      project2 = create(:project, creator: no_access_user)
       site2 = comment2.audio_event.audio_recording.site
       site2.projects << project2
       site2.save!
@@ -1733,7 +1733,7 @@ describe Filter::Query do
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
         Access::ByPermission.audio_event_comments(the_user, levels: Access::Core.levels_none,
-                                                            audio_event: audio_event2),
+          audio_event: audio_event2),
         AudioEventComment,
         AudioEventComment.filter_settings
       )
@@ -1754,13 +1754,13 @@ describe Filter::Query do
       )
       expect {
         filter.build.parse(filter.filter)
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognised combiner or field name: this_is_not_a_field.')
+      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognized combiner or field name: this_is_not_a_field.')
     end
 
     it 'allows mapped fields as a generic equality field' do
-      audio_event = FactoryBot.create(
+      audio_event = create(
         :audio_event,
-        audio_recording: audio_recording,
+        audio_recording:,
         start_time_seconds: 10,
         end_time_seconds: 88
       )
@@ -1770,7 +1770,7 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter_start_time_seconds: 10, filter_end_time_seconds: 88 },
-        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording:),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1783,9 +1783,9 @@ describe Filter::Query do
     end
 
     it 'allows generic equality fields' do
-      audio_event = FactoryBot.create(
+      audio_event = create(
         :audio_event,
-        audio_recording: audio_recording,
+        audio_recording:,
         start_time_seconds: 10,
         end_time_seconds: 88
       )
@@ -1795,7 +1795,7 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter_duration_seconds: 78 },
-        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording:),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1825,9 +1825,9 @@ describe Filter::Query do
     end
 
     it 'overrides filter parameters that match generic equality fields' do
-      audio_event = FactoryBot.create(
+      audio_event = create(
         :audio_event,
-        audio_recording: audio_recording,
+        audio_recording:,
         start_time_seconds: 10,
         end_time_seconds: 88
       )
@@ -1837,7 +1837,7 @@ describe Filter::Query do
           duration_seconds: { eq: 78 }, start_time_seconds: { eq: 20 }
         },
           filter_start_time_seconds: 10, filter_end_time_seconds: 88 },
-        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording:),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1854,7 +1854,7 @@ describe Filter::Query do
     it 'overrides filter parameters that match text partial match field for admin' do
       # audio_recording needs a site, otherwise it won't be found
       # in by_permission#permission_sites
-      audio_recording = FactoryBot.create(
+      audio_recording = create(
         :audio_recording,
         site: Site.first,
         media_type: 'audio/mp3',
@@ -1889,7 +1889,7 @@ describe Filter::Query do
     it 'overrides filter parameters that match text partial match field for writer' do
       # audio_recording needs a site, otherwise it won't be found
       # in by_permission#permission_sites
-      audio_recording = FactoryBot.create(
+      audio_recording = create(
         :audio_recording,
         site: Site.first,
         media_type: 'audio/mp3',
@@ -2001,7 +2001,7 @@ describe Filter::Query do
   context 'project with no sites' do
     it 'returns no sites for admin' do
       filter_hash = { filter: {} }
-      project_id = FactoryBot.create(:project, creator: admin_user).id
+      project_id = create(:project, creator: admin_user).id
       filter_query = Access::ByPermission.sites(admin_user, project_ids: project_id)
       filter = Filter::Query.new(
         filter_hash,
@@ -2018,7 +2018,7 @@ describe Filter::Query do
 
     it 'returns no sites for regular user' do
       filter_hash = { filter: {} }
-      project_id = FactoryBot.create(:project, creator: writer_user).id
+      project_id = create(:project, creator: writer_user).id
       filter_query = Access::ByPermission.sites(writer_user, project_ids: project_id)
       filter = Filter::Query.new(
         filter_hash,

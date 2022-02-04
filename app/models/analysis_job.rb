@@ -75,14 +75,14 @@ class AnalysisJob < ApplicationRecord
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
   validates :overall_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :overall_duration_seconds, presence: true,
-                                       numericality: { only_integer: false, greater_than_or_equal_to: 0 }
+    numericality: { only_integer: false, greater_than_or_equal_to: 0 }
   validates :overall_status_modified_at, :overall_progress_modified_at,
-            presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
-  validates :started_at, allow_blank: true, allow_nil: true, timeliness: { on_or_before: lambda {
-                                                                                           Time.zone.now
-                                                                                         }, type: :datetime }
+    presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
+  validates :started_at, allow_blank: true, allow_nil: true, timeliness: {
+    on_or_before: -> { Time.zone.now }, type: :datetime
+  }
   validates :overall_data_length_bytes, presence: true,
-                                        numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+    numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   renders_markdown_for :description
 
@@ -293,7 +293,7 @@ class AnalysisJob < ApplicationRecord
     # retry just the failures
     event :retry do
       transitions from: :completed, to: :processing,
-                  guard: :are_any_job_items_failed?, after: [:retry_job, :send_retry_email]
+        guard: :are_any_job_items_failed?, after: [:retry_job, :send_retry_email]
     end
 
     after_all_transitions :update_status_timestamp
@@ -303,7 +303,7 @@ class AnalysisJob < ApplicationRecord
   AVAILABLE_JOB_STATUS_SYMBOLS = aasm.states.map(&:name)
   AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map(&:to_s)
 
-  AVAILABLE_JOB_STATUS_DISPLAY = aasm.states.map { |x| [x.name, x.display_name] }.to_h
+  AVAILABLE_JOB_STATUS_DISPLAY = aasm.states.to_h { |x| [x.name, x.display_name] }
 
   # hook active record callbacks into state machine
   before_validation(on: :create) do
@@ -456,7 +456,7 @@ class AnalysisJob < ApplicationRecord
     self.overall_progress = statuses
     self.overall_progress_modified_at = Time.zone.now
 
-    { overall_progress: overall_progress, overall_progress_modified_at: overall_progress_modified_at }
+    { overall_progress:, overall_progress_modified_at: }
   end
 
   #

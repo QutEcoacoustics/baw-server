@@ -20,12 +20,6 @@ module BawWorkers
       # Class method extensions for ActiveJob
       module ClassMethods
         include ::Dry::Monads[:result]
-
-        # TODO: when Rails 7 is released, these methods may be able to change
-        #   to be simpler wrappers because perform_later now accepts a block
-        #   that is always invoked.
-        #   See: https://github.com/rails/rails/blob/main/activejob/lib/active_job/enqueuing.rb
-
         # (see #perform_later)
         # The same as #perform_later except will raise if job was not successfully enqueued.
         # It also supports a block callback on failure to enqueue - which is missing in
@@ -33,22 +27,11 @@ module BawWorkers
         # @raise [StandardError] when the job fails to enqueue
         # @return [void]
         def perform_later!(...)
-          job = job_or_instantiate(...)
-
-          result = job.enqueue
-
-          yield job if block_given?
+          result = perform_later(...)
 
           raise EnqueueError, "job with id #{job.job_id} failed to enqueue" if result == false
 
           result
-        end
-
-        def perform_later(...)
-          logger.warn 'Perform later is tricky to use; it has a variant return type and will not surface errors as we expect'
-          raise 'perform_later does not support blocks' if ::Rails::VERSION::MAJOR < 7 && block_given?
-
-          super(...)
         end
 
         # (see #perform_later)
@@ -78,5 +61,3 @@ module BawWorkers
     end
   end
 end
-
-raise 'Fix the rails patches in BawWorkers::ActiveJob::Extensions' if ::Rails::VERSION::MAJOR >= 7

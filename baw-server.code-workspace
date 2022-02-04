@@ -269,7 +269,8 @@
       "pavlitsky.yard",
       "ms-azuretools.vscode-docker",
       "github.copilot",
-      "KoichiSasada.vscode-rdbg"
+      "koichisasada.vscode-rdbg",
+      "mame.ruby-typeprof"
     ]
   }
 }
