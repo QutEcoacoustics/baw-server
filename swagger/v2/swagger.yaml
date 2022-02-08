@@ -960,7 +960,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 5.1.0 from http://localhost:3000.
+                  Version 6.1.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -997,7 +997,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 5.1.0"
+                Write-Information "Acoustic Workbench downloader script version 6.1.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1163,7 +1163,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 5.1.0 from http://localhost:3000.
+                  Version 6.1.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1200,7 +1200,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 5.1.0"
+                Write-Information "Acoustic Workbench downloader script version 6.1.0"
 
                 if ($null -eq $target) {
                   $target = $pwd

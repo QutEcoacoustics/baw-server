@@ -19,6 +19,8 @@ function script:exec {
         return;
     }
 
+    Write-Information "Executing `"$cmd`""
+
     & $cmd
     if ($LASTEXITCODE -ne 0) {
         throw ("Error ($LASTEXITCODE) executing command: {0}" -f $cmd) + ($errorMessage ?? "")
@@ -26,6 +28,7 @@ function script:exec {
 }
 
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 $env:NEXT_VERSION = $next_version
 
 if ($null -eq $env:CHANGELOG_GITHUB_TOKEN) {
