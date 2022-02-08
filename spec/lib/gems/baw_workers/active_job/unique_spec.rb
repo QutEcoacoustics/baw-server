@@ -75,14 +75,6 @@ describe BawWorkers::ActiveJob::Unique do
       expect(second_job.unique?).to eq false
     end
 
-    it 'perform_later with a block is not allowed in application jobs' do
-      expect {
-        Fixtures::BasicJob.perform_later do
-          puts 'i\'m a block and i\'m ok'
-        end
-      }.to raise_error(RuntimeError, 'perform_later does not support blocks')
-    end
-
     it 'fails to enqueue a job with same id (perform_later)' do
       result = Fixtures::BasicJob.perform_later('first_id')
       expect(result).to eq false

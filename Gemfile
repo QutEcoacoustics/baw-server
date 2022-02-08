@@ -182,7 +182,7 @@ group :workers, :server do
 
   # logging
   gem 'amazing_print'
-  gem 'rails_semantic_logger'
+  gem 'rails_semantic_logger', '>= 4.10.0'
 
   # SETTINGS
   # -------------------------------------

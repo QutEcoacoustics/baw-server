@@ -27,7 +27,12 @@ module BawWorkers
         # @raise [StandardError] when the job fails to enqueue
         # @return [void]
         def perform_later!(...)
-          result = perform_later(...)
+          # mirrors the definition of
+          # https://github.com/rails/rails/blob/main/activejob/lib/active_job/enqueuing.rb
+          job = job_or_instantiate(...)
+          result = job.enqueue
+
+          yield job if block_given?
 
           raise EnqueueError, "job with id #{job.job_id} failed to enqueue" if result == false
 

@@ -132,8 +132,8 @@ describe BawAudioTools::AudioBase, '#integrity_check' do
         expect(result[:errors]).to be_blank
         expect(result[:warnings].size).to be > 0
 
-        expect(result[:warnings][0][:id]).to eq('Vorbis parser')
-        expect(result[:warnings][0][:description]).to eq('Invalid Setup header')
+        expect(result[:warnings][0][:id]).to eq('ogg')
+        expect(result[:warnings][0][:description]).to eq('CRC mismatch!')
 
         if result[:warnings].size > 1
           expect(result[:warnings][1][:id]).to eq('ogg')

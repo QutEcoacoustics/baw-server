@@ -29,7 +29,7 @@
 #  bookmarks_updater_id_fk          (updater_id => users.id)
 #
 describe Bookmark, type: :model do
-  subject { FactoryBot.build(:bookmark) }
+  subject { build(:bookmark) }
 
   it 'has a valid factory' do
     expect(create(:bookmark)).to be_valid
@@ -48,29 +48,32 @@ describe Bookmark, type: :model do
 
   it { is_expected.to validate_presence_of(:offset_seconds) }
   it { is_expected.to validate_numericality_of(:offset_seconds).is_greater_than_or_equal_to(0) }
+
   it 'is invalid without offset_seconds specified' do
     expect(build(:bookmark, offset_seconds: nil)).not_to be_valid
   end
+
   it 'is invalid with offset_seconds set to less than zero' do
     expect(build(:bookmark, offset_seconds: -1)).not_to be_valid
   end
 
-  it { is_expected.to validate_uniqueness_of(:name).case_insensitive.scoped_to(:creator_id).with_message('should be unique per user') }
+  it {
+    is_expected.to validate_uniqueness_of(:name).case_insensitive.scoped_to(:creator_id).with_message('should be unique per user')
+  }
 
-  it 'should not allow duplicate names for the same user (case-insensitive)' do
+  it 'does not allow duplicate names for the same user (case-insensitive)' do
     user = create(:user)
     create(:bookmark, { creator: user, name: 'I love the smell of napalm in the morning.' })
     ss = build(:bookmark, { creator: user, name: 'I LOVE the smell of napalm in the morning.' })
     expect(ss).not_to be_valid
-    expect(ss.valid?).to be_falsey
-    expect(ss.errors[:name].size).to eq(1)
+    expect(ss).not_to be_valid
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save
     expect(ss).to be_valid
   end
 
-  it 'should allow duplicate names for different users (case-insensitive)' do
+  it 'allows duplicate names for different users (case-insensitive)' do
     user1 = create(:user)
     user2 = create(:user)
     user3 = create(:user)

@@ -67,7 +67,7 @@ if BawApp.test?
           case should_dequeue
           when TEST_PERFORM_PAUSED
             # Do not dequeue. Wait for next round. This is the pause.
-            logger.info('did not execute job because work is paused', test_perform: should_dequeue)
+            logger.debug('did not execute job because work is paused', test_perform: should_dequeue)
             false
           when TEST_PERFORM_UNLOCKED, nil
             # Act like this plugin is not activated. Do nothing.

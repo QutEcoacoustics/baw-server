@@ -1,16 +1,18 @@
 # frozen_string_literal: true
 
 module AudioRecordings
+  # Controller for creating downloader scripts
   class DownloaderController < ApplicationController
     include Api::ControllerHelper
 
+    VIEW_NAME = 'audio_recordings/downloader/download_audio_files_ps1'
     SCRIPT_NAME = 'download_audio_files.ps1'
 
     # GET|POST /audio_recordings/downloader
     # Returns a script that can be used to download media segments or files.
     # Accepts an audio_recordings filter object via POST body to filter results.
     def index
-      do_authorize_class
+      do_authorize_class(:index, :downloader)
 
       # we're not actually doing a query, discard it
       query, opts = Settings.api_response.response_advanced(
@@ -27,16 +29,12 @@ module AudioRecordings
       @model = OpenStruct.new({
         app_version: Settings.version_string,
         user_name: current_user&.user_name || '',
-        filter: filter,
+        filter:,
         workbench_url: root_url.chop
       })
 
-      script = render_to_string SCRIPT_NAME, layout: false
+      script = render_to_string VIEW_NAME, layout: false
       send_data script, type: 'text/plain', filename: SCRIPT_NAME, disposition: 'attachment'
-    end
-
-    def resource_class
-      :downloader
     end
   end
 end

@@ -1130,7 +1130,7 @@ describe Filter::Query do
           JOIN "audio_recordings" "tmp_audio_recordings_generator"
           ON "tmp_audio_recordings_generator"."id"
             IS
-            NULL) analysis_jobs_items
+            NULL) "analysis_jobs_items"
           INNER
           JOIN "audio_recordings"
             ON ("audio_recordings"."deleted_at"
@@ -1178,13 +1178,13 @@ describe Filter::Query do
                     JOIN "audio_recordings" "tmp_audio_recordings_generator"
                       ON "tmp_audio_recordings_generator"."id"
                       IS
-                      NULL) analysis_jobs_items
+                      NULL) "analysis_jobs_items"
                     INNER
                     JOIN "audio_recordings"
                       ON  ("audio_recordings"."deleted_at"
                       IS
                       NULL)
-                        AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")) analysis_jobs_items
+                        AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")) "analysis_jobs_items"
                   LEFT
                   OUTER
                   JOIN "audio_recordings"

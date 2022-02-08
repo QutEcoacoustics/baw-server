@@ -288,6 +288,8 @@ RSpec.configure do |config|
   end
 
   config.before type: :request do
+    # If this is not set, when the controllers do redirects they will now throw unsafe redirect errors
+    host! "#{Settings.host.name}:#{Settings.host.port}"
   end
 
   config.after type: :request do

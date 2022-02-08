@@ -26,7 +26,7 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
         example.call
 
         raise 'Timeout did not trigger, this should not happen'
-      rescue Timeout::Error => e
+      rescue Async::TimeoutError => e
         logger.info('suppressing expected timeout', exception: e)
         true
       end

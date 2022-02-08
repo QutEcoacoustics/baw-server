@@ -26,6 +26,7 @@ module TimeZoneAttribute
       else
         value
       end
+
     # store the actual IANA identifier
     write_attribute(:tzinfo_tz, normalized)
     write_attribute(:rails_tz, TimeZoneHelper.tz_identifier_to_ruby(normalized))
@@ -63,6 +64,6 @@ module TimeZoneAttribute
     suggestions = TimeZoneHelper.tzinfo_friendly_did_you_mean(tzinfo_identifier)[0..2]
     msg1 = "is not a recognized timezone ('#{tzinfo_identifier}'"
     msg2 = suggestions.any? ? " - did you mean '#{suggestions.join("', '")}'?)" : ')'
-    errors[:tzinfo_tz] << msg1 + msg2
+    errors.add(:tzinfo_tz, msg1 + msg2)
   end
 end

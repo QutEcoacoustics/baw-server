@@ -195,11 +195,15 @@ describe ApplicationController, type: :controller do
     controller(ApplicationController) do
       skip_authorization_check
 
+      attr_accessor :ability, :user
+
       def index_ability
+        @ability = Current.ability
         render plain: Current.ability&.class&.name
       end
 
       def index_user
+        @user = Current.user
         render(plain: Current.user&.user_name)
       end
     end
@@ -221,33 +225,34 @@ describe ApplicationController, type: :controller do
     it 'sets Current.user when a user session is supplied' do
       request.env['HTTP_AUTHORIZATION'] = reader_token
       response = get :index_user
-      expect(Current.user).to eq reader_user
+
+      expect(controller.user).to eq reader_user
       expect(response.body).to eq(reader_user.user_name)
     end
 
     it 'sets Current.user to nil when there is no user session' do
       response = get :index_user
-      expect(Current.user).to be_nil
+      expect(controller.user).to be_nil
       expect(response.body).to eq('')
     end
 
     it 'sets Current.ability when a user session is supplied' do
       request.env['HTTP_AUTHORIZATION'] = reader_token
       response = get :index_ability
-      expect(Current.ability).to be_an_instance_of(Ability)
+      expect(controller.ability).to be_an_instance_of(Ability)
 
       # if you're signed in you can download an original recording
-      expect(Current.ability.can?(:original, audio_recording)).to eq true
+      expect(controller.ability.can?(:original, audio_recording)).to eq true
 
       expect(response.body).to eq('Ability')
     end
 
     it 'sets Current.ability even when a user session is not supplied' do
       response = get :index_ability
-      expect(Current.ability).to be_an_instance_of(Ability)
+      expect(controller.ability).to be_an_instance_of(Ability)
 
       # if you're not signed in you cannot download an original recording
-      expect(Current.ability.can?(:original, audio_recording)).to eq false
+      expect(controller.ability.can?(:original, audio_recording)).to eq false
 
       expect(response.body).to eq('Ability')
     end

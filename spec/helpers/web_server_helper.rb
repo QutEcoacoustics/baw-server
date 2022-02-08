@@ -30,12 +30,14 @@ module WebServerHelper
             task.print_hierarchy(buffer)
 
             # Raise an error so it is logged:
-            raise TimeoutError, "Run time exceeded timeout #{timeout}s:\n#{buffer.string}"
+            raise Async::TimeoutError, "Run time exceeded timeout #{timeout}s:\n#{buffer.string}"
           }
           serve_task = inner.async { |inner|
             endpoint = Async::HTTP::Endpoint.parse(host_url)
             server = Falcon::Server.new(
-              Falcon::Server.middleware(Rails.application, verbose: true, cache: false),
+              # falcon logging to stderr leads to the following bug:
+              # https://github.com/socketry/async/issues/138
+              Falcon::Server.middleware(Rails.application, verbose: false, cache: false),
               endpoint
             )
             server.run
