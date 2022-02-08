@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.1.0](https://github.com/QutEcoacoustics/baw-server/tree/6.1.0) (2022-02-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/5.1.0...6.1.0)
+
+**Implemented enhancements:**
+
+- add `filter` QSP to API requests that accepts a base64 encoded filter payload [\#555](https://github.com/QutEcoacoustics/baw-server/issues/555)
+- Adds support for encoded filters for API use [\#556](https://github.com/QutEcoacoustics/baw-server/pull/556) ([atruskie](https://github.com/atruskie))
+
 ## [5.1.0](https://github.com/QutEcoacoustics/baw-server/tree/5.1.0) (2022-01-17)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/5.0.0...5.1.0)

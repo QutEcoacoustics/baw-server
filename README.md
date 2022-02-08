@@ -207,19 +207,11 @@ A basic redis setup is included with the docker-compose file.
 ## Creating a release
 
 1. `git switch master && git pull`
-2. Determine the next tag name and set it to an environment variable:
-    - `export NEXT_VERSION=x.x.x`
-3. Set the GitHub auth token for docs generation:
+2. Set the GitHub auth token for docs generation:
     - `export CHANGELOG_GITHUB_TOKEN=xxx`
-4. Generate the release notes:
-    - `docker compose run web rake changelog`
-5. Update the version in the `VERSION` file
-    - `echo "$NEXT_VERSION" > VERSION`
-6. Commit the changed files
-    - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"`
-7. Tag the release and push
-    - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"`
-    - `git push --follow-tags`
+3. Determine the next version name. Check the ./VERSION file for the current version.
+4. Run the `docker_build_and_push.ps1` script with the next version as the first argument:
+    - e.g. ` ./docker_build_and_push.ps1 6.1.0`
 
 ## Architecture
 
@@ -229,7 +221,8 @@ A basic redis setup is included with the docker-compose file.
 - docker compose is used to run
   - postgresql
   - redis
-  - a single worker
+  - a single worker (for test and dev environments)
+  -
 
 ## Credits
 
