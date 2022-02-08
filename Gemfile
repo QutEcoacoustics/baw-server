@@ -25,8 +25,8 @@ gem 'bootsnap', require: false
 # standardised way to validate objects
 gem 'dry-monads'
 gem 'dry-struct'
-gem 'dry-validation'
 gem 'dry-transformer'
+gem 'dry-validation'
 
 # Async/promises/futures
 gem 'concurrent-ruby', '~> 1', require: 'concurrent'
@@ -37,8 +37,8 @@ gem 'faraday'
 gem 'faraday_middleware'
 
 # api docs
-gem 'rswag-api'
-gem 'rswag-ui'
+gem 'rswag-api', github: 'rswag/rswag', glob: 'rswag-api/*.gemspec'
+gem 'rswag-ui', github: 'rswag/rswag', glob: 'rswag-ui/*.gemspec'
 
 # uri parsing and generation
 gem 'addressable'
@@ -50,8 +50,8 @@ gem 'deep_sort'
 
 # DO NOT change rails version without also changing composite_primary_keys version
 # https://github.com/composite-primary-keys/composite_primary_keys
-RAILS_VERSION = '~> 6.1.4'
-COMPOSITE_PRIMARY_KEYS_VERSION = '~> 13'
+RAILS_VERSION = '~> 7.0.1'
+COMPOSITE_PRIMARY_KEYS_VERSION = '~> 14'
 
 group :server do
   # RAILS
@@ -59,7 +59,6 @@ group :server do
   # -------------------------------------
   gem 'rack-cors', '~> 1.1.1', require: 'rack/cors'
   gem 'rails', RAILS_VERSION
-  gem 'responders', '~> 3.0.1'
 
   # deal with chrome and same site cookies
   gem 'rails_same_site_cookie'
@@ -107,7 +106,7 @@ group :server do
   # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
   # http://joanswork.com/devise-3-1-update/
   gem 'cancancan', '> 3'
-  gem 'devise', '~> 4.7.0'
+  gem 'devise', '~> 4.8.1'
   gem 'devise-i18n'
   gem 'role_model', '~> 0.8.1'
   # Use ActiveModel has_secure_password
@@ -124,7 +123,7 @@ group :server do
 
   # extensions to arel https://github.com/Faveod/arel-extensions
   # in particular, we use `cast`, and `coalesce`
-  gem 'arel_extensions'
+  gem 'arel_extensions', '>= 2.1.0'
 
   # as the name says
   gem 'composite_primary_keys', COMPOSITE_PRIMARY_KEYS_VERSION
@@ -183,7 +182,7 @@ group :workers, :server do
 
   # logging
   gem 'amazing_print'
-  gem 'rails_semantic_logger'
+  gem 'rails_semantic_logger', '>= 4.10.0'
 
   # SETTINGS
   # -------------------------------------
@@ -208,7 +207,7 @@ end
 group :development do
   # allow debugging
   #gem 'debase', '>= 0.2.5.beta2'
-  gem 'debug', ">= 1.0.0"
+  gem 'debug', '>= 1.0.0'
   gem 'readapt'
   #gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'
@@ -216,6 +215,10 @@ group :development do
   # a ruby language server
   gem 'solargraph'
   gem 'solargraph-rails', '>= 0.2.2.pre.2'
+
+  # official ruby typing support
+  gem 'typeprof'
+
   # needed by bundler/soalrgraph for language server?
   gem 'actionview', RAILS_VERSION
 
@@ -285,7 +288,7 @@ group :test do
   gem 'zonebie'
 
   # api docs
-  gem 'rswag-specs'
+  gem 'rswag-specs', github: 'rswag/rswag', glob: 'rswag-specs/*.gemspec'
 
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'

@@ -27,7 +27,7 @@ describe BawAudioTools::AudioBase, '#info' do
     it 'gives correct error for corrupt file' do
       expect {
         audio_base.info(audio_file_corrupt)
-      }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /string=Unknown error occurred/)
+      }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /string=Invalid data found when processing input/)
     end
 
     it 'returns all required information' do

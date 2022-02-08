@@ -19,7 +19,7 @@ describe BawWorkers::RedisCommunicator do
     it 'wraps keys in a namespace' do
       communicator.set('abc', 123)
 
-      expect(unwrapped_redis.exists('baw-workers:abc')).to eq(true)
+      expect(unwrapped_redis.exists?('baw-workers:abc')).to eq(true)
     end
 
     it 'allows the key namespace to be configurable' do
@@ -31,7 +31,7 @@ describe BawWorkers::RedisCommunicator do
 
       communicator.set('123', 'abc')
 
-      expect(unwrapped_redis.exists('boogey-monster:123')).to eq(true)
+      expect(unwrapped_redis.exists?('boogey-monster:123')).to eq(true)
     end
 
     it 'wraps the SET command' do
@@ -93,7 +93,7 @@ describe BawWorkers::RedisCommunicator do
       unwrapped_redis.set('baw-workers:my_object', '{"test":{"nested_hash":123},"string":"test"}')
 
       expect(communicator.delete('my_object')).to eq(true)
-      expect(unwrapped_redis.exists('baw-workers:my_object')).to eq(false)
+      expect(unwrapped_redis.exists?('baw-workers:my_object')).to eq(false)
     end
 
     it 'wraps the EXISTS command' do

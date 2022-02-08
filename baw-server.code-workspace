@@ -23,6 +23,7 @@
       "bootsnap",
       "Bootsnap",
       "bowra",
+      "cancancan",
       "chown",
       "cleanpath",
       "completionist",
@@ -149,6 +150,7 @@
       "uploader",
       "uploaders",
       "upsert",
+      "urlsafe",
       "uuid",
       "wavpack",
       "webdav",
@@ -269,7 +271,8 @@
       "pavlitsky.yard",
       "ms-azuretools.vscode-docker",
       "github.copilot",
-      "KoichiSasada.vscode-rdbg"
+      "koichisasada.vscode-rdbg",
+      "mame.ruby-typeprof"
     ]
   }
 }

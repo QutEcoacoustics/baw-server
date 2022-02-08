@@ -33,23 +33,23 @@
 #  audio_events_updater_id_fk          (updater_id => users.id)
 #
 describe AudioEvent, type: :model do
-  subject { FactoryBot.build(:audio_event) }
+  subject { build(:audio_event) }
 
   it 'has a valid factory' do
-    expect(FactoryBot.create(:audio_event)).to be_valid
+    expect(create(:audio_event)).to be_valid
   end
 
   it 'can have a blank end time' do
-    ae = FactoryBot.build(:audio_event, end_time_seconds: nil)
+    ae = build(:audio_event, end_time_seconds: nil)
     expect(ae).to be_valid
   end
 
   it 'can have a blank high frequency' do
-    expect(FactoryBot.build(:audio_event, high_frequency_hertz: nil)).to be_valid
+    expect(build(:audio_event, high_frequency_hertz: nil)).to be_valid
   end
 
-  it 'can have a blank end time and  a blank high frequency' do
-    expect(FactoryBot.build(:audio_event, { end_time_seconds: nil, high_frequency_hertz: nil })).to be_valid
+  it 'can have a blank end time and a blank high frequency' do
+    expect(build(:audio_event, { end_time_seconds: nil, high_frequency_hertz: nil })).to be_valid
   end
 
   it { is_expected.to belong_to(:audio_recording) }
@@ -84,7 +84,7 @@ describe AudioEvent, type: :model do
   end
 
   it 'has a recent scope' do
-    FactoryBot.create_list(:audio_event, 20)
+    create_list(:audio_event, 20)
 
     events = AudioEvent.most_recent(5).to_a
     expect(events).to have(5).items
@@ -92,7 +92,7 @@ describe AudioEvent, type: :model do
   end
 
   it 'has a total duration scope' do
-    FactoryBot.create_list(:audio_event, 10) do |item|
+    create_list(:audio_event, 10) do |item|
       item.start_time_seconds = 0
       item.end_time_seconds = 60
       item.save!
@@ -104,7 +104,7 @@ describe AudioEvent, type: :model do
   end
 
   it 'has a recent_within scope' do
-    old = FactoryBot.create(:audio_event, created_at: 2.months.ago)
+    old = create(:audio_event, created_at: 2.months.ago)
 
     actual = AudioEvent.created_within(1.month.ago)
     expect(actual.count).to eq(AudioEvent.count - 1)
@@ -140,7 +140,7 @@ describe AudioEvent, type: :model do
       WHERE "projects"."deleted_at"
       IS
       NULL
-      AND "projects_sites"."site_id" = "sites"."id") projects, "sites"."id"
+      AND "projects_sites"."site_id" = "sites"."id") "projects", "sites"."id"
       AS "site_id", "sites"."name"
       AS "site_name",to_char("audio_recordings"."recorded_date" +
       CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
@@ -167,7 +167,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') common_name_tags,(
+      AND "tags"."type_of_tag" = 'common_name') "common_name_tags",(
         SELECT string_agg(
           CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -175,7 +175,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') common_name_tag_ids,(
+      AND "tags"."type_of_tag" = 'common_name') "common_name_tag_ids",(
         SELECT string_agg(
           CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
       FROM "tags"
@@ -183,7 +183,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') species_name_tags,(
+      AND "tags"."type_of_tag" = 'species_name') "species_name_tags",(
         SELECT string_agg(
           CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -191,7 +191,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') species_name_tag_ids,(
+      AND "tags"."type_of_tag" = 'species_name') "species_name_tag_ids",(
         SELECT string_agg(
           CAST("tags"."id" as varchar) || ':' || "tags"."text" || ':' || "tags"."type_of_tag", '|')
       FROM "tags"
@@ -201,7 +201,7 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) other_tags,(
+      IN ('species_name', 'common_name'))) "other_tags",(
         SELECT string_agg(
           CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -211,7 +211,7 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) other_tag_ids,'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids",'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
       AS "listen_url",'http://localhost/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
@@ -287,7 +287,7 @@ describe AudioEvent, type: :model do
       WHERE "projects"."deleted_at"
       IS
       NULL
-      AND "projects_sites"."site_id" = "sites"."id") projects, "sites"."id"
+      AND "projects_sites"."site_id" = "sites"."id") "projects", "sites"."id"
       AS "site_id", "sites"."name"
       AS "site_name",to_char("audio_recordings"."recorded_date" +
       CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
@@ -314,7 +314,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') common_name_tags,(
+      AND "tags"."type_of_tag" = 'common_name') "common_name_tags",(
         SELECT string_agg(
           CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -322,7 +322,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') common_name_tag_ids,(
+      AND "tags"."type_of_tag" = 'common_name') "common_name_tag_ids",(
         SELECT string_agg(
           CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
       FROM "tags"
@@ -330,7 +330,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') species_name_tags,(
+      AND "tags"."type_of_tag" = 'species_name') "species_name_tags",(
              SELECT string_agg(
                CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -338,7 +338,7 @@ describe AudioEvent, type: :model do
       JOIN "audio_events_tags"
       ON "audio_events_tags"."tag_id" = "tags"."id"
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') species_name_tag_ids,(
+      AND "tags"."type_of_tag" = 'species_name') "species_name_tag_ids",(
         SELECT string_agg(
           CAST("tags"."id" as varchar) || ':' || "tags"."text" || ':' || "tags"."type_of_tag", '|')
       FROM "tags"
@@ -348,7 +348,7 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) other_tags,(
+      IN ('species_name', 'common_name'))) "other_tags",(
         SELECT string_agg(
           CAST("tags"."id" as varchar), '|')
       FROM "tags"
@@ -358,7 +358,7 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) other_tag_ids,'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids",'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
       AS "listen_url",'http://localhost/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
@@ -403,27 +403,27 @@ describe AudioEvent, type: :model do
   end
 
   it 'excludes deleted projects, sites, audio_recordings, and audio_events from annotation download' do
-    user = FactoryBot.create(:user, user_name: 'owner user checking excluding deleted items in annotation download')
+    user = create(:user, user_name: 'owner user checking excluding deleted items in annotation download')
 
     # create combinations of deleted and not deleted for project, site, audio_recording, audio_event
     expected_audio_recording = nil
     (0..1).each do |project_n|
-      project = FactoryBot.create(:project, creator: user)
+      project = create(:project, creator: user)
       project.destroy if project_n == 1
 
       (0..1).each do |site_n|
-        site = FactoryBot.create(:site, :with_lat_long, creator: user)
+        site = create(:site, :with_lat_long, creator: user)
         site.projects << project
         site.save!
         site.destroy if site_n == 1
 
         (0..1).each do |audio_recording_n|
-          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user,
-                                                                               site: site)
+          audio_recording = create(:audio_recording, :status_ready, creator: user, uploader: user,
+            site:)
           audio_recording.destroy if audio_recording_n == 1
 
           (0..1).each do |audio_event_n|
-            audio_event = FactoryBot.create(:audio_event, creator: user, audio_recording: audio_recording)
+            audio_event = create(:audio_event, creator: user, audio_recording:)
             audio_event.destroy if audio_event_n == 1
             if project_n == 0 && site_n == 0 && audio_recording_n == 0 && audio_event_n == 0
               expected_audio_recording = audio_event
@@ -461,22 +461,22 @@ describe AudioEvent, type: :model do
   end
 
   it 'ensures only one instance of each audio event in annotation download' do
-    user = FactoryBot.create(:user, user_name: 'owner user checking audio event uniqueness in annotation download')
+    user = create(:user, user_name: 'owner user checking audio event uniqueness in annotation download')
 
     # create 2 of everything for project, site, audio_recording, audio_event
     2.times do
-      project = FactoryBot.create(:project, creator: user)
+      project = create(:project, creator: user)
 
       2.times do
-        site = FactoryBot.create(:site, :with_lat_long, creator: user)
+        site = create(:site, :with_lat_long, creator: user)
         site.projects << project
         site.save!
 
         2.times do
-          audio_recording = FactoryBot.create(:audio_recording, :status_ready, creator: user, uploader: user,
-                                                                               site: site)
+          audio_recording = create(:audio_recording, :status_ready, creator: user, uploader: user,
+            site:)
 
-          FactoryBot.create_list(:audio_event, 2, creator: user, audio_recording: audio_recording)
+          create_list(:audio_event, 2, creator: user, audio_recording:)
         end
       end
     end

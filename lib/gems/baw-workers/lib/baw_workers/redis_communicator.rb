@@ -68,7 +68,7 @@ module BawWorkers
     def exists(key, opts = {})
       key = add_namespace(key) unless opts[:no_namespace]
 
-      @redis.exists?(key)
+      boolify(@redis.exists?(key))
     end
 
     # @param [String] key
@@ -77,7 +77,7 @@ module BawWorkers
     def exists?(key, opts = {})
       key = add_namespace(key) unless opts[:no_namespace]
 
-      @redis.exists?(key)
+      boolify(@redis.exists?(key))
     end
 
     # @param [String] key
@@ -117,7 +117,7 @@ module BawWorkers
       key = safe_file_name(key)
       key = add_namespace(key)
 
-      result = logger.measure_debug('storing large binary key', payload: { key: key, size: path.size }) {
+      result = logger.measure_debug('storing large binary key', payload: { key:, size: path.size }) {
         @redis.set(
           key.force_encoding(BINARY_ENCODING),
           File.binread(path),
@@ -135,7 +135,7 @@ module BawWorkers
       key = safe_file_name(key)
       key = add_namespace(key)
 
-      redis.exists?(key)
+      boolify(redis.exists?(key))
     end
 
     def delete_file(key)
@@ -167,7 +167,7 @@ module BawWorkers
       end
 
       begin
-        result = logger.measure_debug('fetching large binary key', payload: { key: key, dest: dest.to_s }) {
+        result = logger.measure_debug('fetching large binary key', payload: { key:, dest: dest.to_s }) {
           # i say binary response, but it's just a string
           binary_response = @redis.get(key.force_encoding(BINARY_ENCODING))
           return nil if binary_response.nil?
@@ -240,7 +240,14 @@ module BawWorkers
     end
 
     def boolify(value)
-      value.is_a?(String) && value == 'OK'
+      case value
+      when String
+        value == 'OK'
+      when Integer
+        value.positive?
+      else
+        value
+      end
     end
   end
 end

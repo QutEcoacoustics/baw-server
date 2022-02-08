@@ -24,7 +24,7 @@ describe 'Projects' do
   prepare_region
 
   let(:project_attributes) {
-    FactoryBot.attributes_for(:project)
+    attributes_for(:project)
   }
 
   let(:update_project_attributes) {
@@ -32,7 +32,7 @@ describe 'Projects' do
   }
 
   let(:form_project_data) {
-    project_attributes = FactoryBot.attributes_for(:project)
+    project_attributes = attributes_for(:project)
     form_data(project_attributes, form_boundary)
   }
 

@@ -63,14 +63,14 @@ module Filter
     def projections(hash)
       if hash.blank? || hash.size != 1
         raise CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.",
-          { hash: hash })
+          { hash: })
       end
 
       result = []
       hash.each do |key, value|
         unless [:include, :exclude].include?(key)
           raise CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}",
-            { hash: hash })
+            { hash: })
         end
 
         result = projection(key, value)
@@ -80,9 +80,15 @@ module Filter
 
     # Build projection to include or exclude.
     # @param [Symbol] key
-    # @param [Hash<Symbol>] value
+    # @param [Array<Symbol>] value
     # @return [Array<Arel::Attributes::Attribute>] projections
     def projection(key, value)
+      unless value.is_a?(Array)
+        raise CustomErrors::FilterArgumentError.new(
+          "Projection field list must be an array but instead got #{value.class}", { key.to_s => value }
+        )
+      end
+
       if !value.blank? && value.uniq.length != value.length
         raise CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', { key.to_s => value })
       end
@@ -125,7 +131,7 @@ module Filter
       when :or
         compose_or(condition1, condition2)
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognised filter combiner #{combiner}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized filter combiner #{combiner}."
       end
     end
 
@@ -327,10 +333,10 @@ module Filter
           end
 
         else
-          raise CustomErrors::FilterArgumentError, "Unrecognised combiner or field name: #{primary}."
+          raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name: #{primary}."
         end
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognised filter component: #{primary}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized filter component: #{primary}."
       end
     end
 
@@ -394,7 +400,7 @@ module Filter
 
         # unknown
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognised filter #{filter_name}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized filter #{filter_name}."
       end
     end
 
@@ -456,7 +462,7 @@ module Filter
 
         # unknown
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognised filter #{filter_name}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized filter #{filter_name}."
       end
     end
 
@@ -512,7 +518,7 @@ module Filter
           table_name: table.name,
           field_name: field,
           arel_table: table,
-          model: model,
+          model:,
           filter_settings: @filter_settings
         }
       end
@@ -552,8 +558,8 @@ module Filter
       {
         table_name: parsed_table,
         field_name: parsed_field,
-        arel_table: arel_table,
-        model: model,
+        arel_table:,
+        model:,
         filter_settings: model_filter_settings
       }
     end
@@ -614,8 +620,8 @@ module Filter
         if available
           associations.push(
             {
-              join: join,
-              on: on
+              join:,
+              on:
             }
           )
         end

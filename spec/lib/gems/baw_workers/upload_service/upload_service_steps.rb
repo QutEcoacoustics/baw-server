@@ -46,7 +46,7 @@ module UploadServiceSteps
 
   step 'the users:' do |table|
     @users = table.rows.map { |(username, password)|
-      BawWorkers::Config.upload_communicator.create_upload_user(username: username, password: password)
+      BawWorkers::Config.upload_communicator.create_upload_user(username:, password:)
     }
   end
 
@@ -71,13 +71,13 @@ module UploadServiceSteps
     @username = username
     @password = password
     @user = BawWorkers::Config.upload_communicator.create_upload_user(
-      username: username,
-      password: password
+      username:,
+      password:
     )
   end
 
   step 'I :on_off the user' do |enabled|
-    result = BawWorkers::Config.upload_communicator.set_user_status(@user, enabled: enabled)
+    result = BawWorkers::Config.upload_communicator.set_user_status(@user, enabled:)
 
     expect(result).to eq(SftpgoClient::ApiResponse.new(message: 'User updated'))
   end
@@ -89,7 +89,12 @@ module UploadServiceSteps
   def run_curl(command, should_work:)
     # upload with curl since container doesn't have scp/sftp installed and it is
     # not worth adding the tools for one test
-    output = `#{command} -v 2>&1`
+    #
+    # libssh2 (which curl uses) has some kind of bug that results in a connection
+    # hanging indefinitely if the server closes the connection abruptly (e.g
+    # in the case where auth fails).
+    # Use the unix timeout command to force a shutdown.
+    output = `timeout 6 #{command} -v 2>&1`
 
     message = lambda {
       "Expected exit code 0, got #{$CHILD_STATUS.exitstatus}.\nCommand: #{command}\nOutput & errpr:\n#{output}"
@@ -105,7 +110,7 @@ module UploadServiceSteps
     @upload_path = Fixtures.send(file.to_sym)
 
     run_curl(
-      %(curl --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://#{@upload_host}:2022"),
+      %(curl --insecure --user "#{@username}:#{@password}" -T #{@upload_path} -k "sftp://#{@upload_host}:2022"),
       should_work: should
     )
   end

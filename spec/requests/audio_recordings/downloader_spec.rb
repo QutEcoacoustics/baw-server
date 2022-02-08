@@ -130,7 +130,7 @@ describe '/audio_recordings/downloader' do
         prepare_audio_file audio_recording
 
         (1..10).each do |_i|
-          audio_recording = FactoryBot.create(:audio_recording, status: 'ready', site: site)
+          audio_recording = create(:audio_recording, status: 'ready', site:)
 
           prepare_audio_file audio_recording
         end
@@ -158,7 +158,7 @@ describe '/audio_recordings/downloader' do
             'curl -JO localhost:3000/audio_recordings/downloader?items=2',
             chdir: BawApp.tmp_dir
           )
-          logger.info(out_and_err, status: status)
+          logger.info(out_and_err, status:)
         end
 
         script.chmod(0o764)
@@ -178,7 +178,7 @@ describe '/audio_recordings/downloader' do
                 "pwsh download_audio_files.ps1 -target downloader_test -auth_token #{auth_token}",
                 chdir: BawApp.tmp_dir
               )
-              logger.info(script_output, status: status)
+              logger.info(script_output, status:)
             }.run.wait!
           end
         end

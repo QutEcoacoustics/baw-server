@@ -72,9 +72,9 @@ class AudioRecording < ApplicationRecord
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings,
-                       optional: true
+    optional: true
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings,
-                       optional: true
+    optional: true
   belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
@@ -111,7 +111,7 @@ class AudioRecording < ApplicationRecord
   validates :uuid, presence: true, length: { is: 36 }, uniqueness: { case_sensitive: false }
   validates :recorded_date, presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
   validates :duration_seconds, presence: true,
-                               numericality: { greater_than_or_equal_to: Settings.audio_recording_min_duration_sec }
+    numericality: { greater_than_or_equal_to: Settings.audio_recording_min_duration_sec }
   validates :sample_rate_hertz, presence: true, numericality: { only_integer: true, greater_than: 0 }
 
   # the channels field encodes our special version of a bit flag. 0 (no bits flipped) represents
@@ -123,12 +123,12 @@ class AudioRecording < ApplicationRecord
   # file hash validations
   # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
   validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
-                        format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
-                        on: :create
+    format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
+    on: :create
   # on update would usually be the same, but for the audio check this needs to ignore
   validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
-                        format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
-                        on: :update, unless: :missing_hash_value?
+    format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
+    on: :update, unless: :missing_hash_value?
 
   after_initialize :set_uuid
 
@@ -195,7 +195,7 @@ class AudioRecording < ApplicationRecord
     source_existing_paths = []
     unless original_format.blank?
       modify_parameters = {
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: recorded_date,
         original_format: original_format_calculated
       }
@@ -210,7 +210,7 @@ class AudioRecording < ApplicationRecord
   # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
   def canonical_filename
     modify_parameters = {
-      uuid: uuid,
+      uuid:,
       datetime_with_offset: recorded_date,
       original_format: original_format_calculated
     }

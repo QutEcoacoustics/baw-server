@@ -80,7 +80,7 @@ module BawWorkers
       when :patch
         request = Net::HTTP::Patch.new(endpoint)
       else
-        raise ArgumentError, "Unrecognised HTTP method #{method}."
+        raise ArgumentError, "Unrecognized HTTP method #{method}."
       end
 
       request['Content-Type'] = 'application/json'
@@ -151,7 +151,7 @@ module BawWorkers
     # @return [Hash]
     def request_login
       login_response = send_request('Login request', :post, host, port, endpoint_login, nil,
-                                    { email: user, password: password })
+        { email: user, password: })
 
       # get cookies
       # from http://stackoverflow.com/a/9320190/31567
@@ -175,7 +175,7 @@ module BawWorkers
 
         {
           auth_token: json_resp['data']['auth_token'],
-          cookies: cookies
+          cookies:
         }
       else
         @logger.error(@class_name) do
@@ -184,7 +184,7 @@ module BawWorkers
 
         {
           auth_token: nil,
-          cookies: cookies
+          cookies:
         }
       end
     end
@@ -193,7 +193,7 @@ module BawWorkers
     def update_audio_recording_details(description, file_to_process, audio_recording_id, update_hash, security_info)
       endpoint = endpoint_audio_recording.gsub(':id', audio_recording_id.to_s)
       response = send_request("Update audio recording metadata - #{description}", :put, host, port, endpoint,
-                              security_info, update_hash)
+        security_info, update_hash)
       msg = "Code #{response.code}, Id: #{audio_recording_id}, Hash: '#{update_hash}', File: '#{file_to_process}'"
 
       if response.code.to_i == 200 || response.code.to_i == 204
@@ -272,12 +272,12 @@ module BawWorkers
         @logger.info(@class_name) do
           "[HTTP] Created new audio recording. Id: #{response_json.dig('data', 'id')}, #{msg}"
         end
-        { response: response, response_json: response_json }
+        { response:, response_json: }
       else
         @logger.error(@class_name) do
           "[HTTP] Problem creating new audio recording. #{msg}"
         end
-        { response: response, response_json: nil }
+        { response:, response_json: nil }
       end
     end
 
@@ -291,7 +291,7 @@ module BawWorkers
     def update_audio_recording_status(description, file_to_process, audio_recording_id, update_hash, security_info)
       endpoint = endpoint_audio_recording_update_status.gsub(':id', audio_recording_id.to_s)
       response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint,
-                              security_info, update_hash)
+        security_info, update_hash)
       msg = "'#{description}'. Code #{response.code}, File: '#{file_to_process}', Id: #{audio_recording_id}, Hash: '#{update_hash}'"
       if response.code.to_i == 200 || response.code.to_i == 204
         @logger.info(@class_name) do
@@ -332,12 +332,12 @@ module BawWorkers
         @logger.info(@class_name) do
           "[HTTP] Retrieved status for analysis job item: #{status}, #{msg}"
         end
-        { response: response, failed: false, response_json: response_json, status: status }
+        { response:, failed: false, response_json:, status: }
       else
         @logger.error(@class_name) do
           "[HTTP] Problem retrieving status for analysis job item: #{msg}"
         end
-        { response: response, failed: true, response_json: nil, status: nil }
+        { response:, failed: true, response_json: nil, status: nil }
       end
     end
 
@@ -363,7 +363,7 @@ module BawWorkers
         endpoint,
         security_info,
         {
-          status: status
+          status:
         }
       )
 
@@ -376,16 +376,16 @@ module BawWorkers
           "[HTTP] Audio recording status updated for #{msg}"
         end
         {
-          response: response,
+          response:,
           failed: false,
-          response_json: response_json,
+          response_json:,
           status: response_json.nil? ? nil : response_json['data']['status']
         }
       else
         @logger.error(@class_name) do
           "[HTTP] Problem updating audio recording status for #{msg}"
         end
-        { response: response, failed: true, response_json: nil, status: nil }
+        { response:, failed: true, response_json: nil, status: nil }
       end
     end
   end

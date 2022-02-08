@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe 'rendering markdown' do
   let(:markdown_fixture) {
     <<~MARKDOWN
@@ -50,15 +48,15 @@ describe 'rendering markdown' do
   it 'converts markdown (inline: true), strips block tags' do
     html = CustomRender.render_markdown(markdown_fixture, inline: true)
 
-    expect(html).to_not match '<h1>Testy <strong>test</strong>!</h1>'
+    expect(html).not_to match '<h1>Testy <strong>test</strong>!</h1>'
     expect(html).to match 'Testy <strong>test</strong>!'
-    expect(html).to_not match(%r{<li>a list</li>})
+    expect(html).not_to match(%r{<li>a list</li>})
     expect(html).to match 'a list'
-    expect(html).to_not match(%r{<pre><code>.*some code\n</code></pre>})
+    expect(html).not_to match(%r{<pre><code>.*some code\n</code></pre>})
     expect(html).to match 'some code'
-    expect(html).to_not match(%r{<table>[\S\s]*<td>WAVE</td>[\S\s]*</table>})
+    expect(html).not_to match(%r{<table>[\S\s]*<td>WAVE</td>[\S\s]*</table>})
     expect(html).to match(/WAVE\s*.wav/)
-    expect(html).to_not match(%r{<img src="/images/user/user_spanhalf\.png"})
+    expect(html).not_to match(%r{<img src="/images/user/user_spanhalf\.png"})
     expect(html).to match 'an image'
   end
 

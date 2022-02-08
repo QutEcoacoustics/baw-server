@@ -63,22 +63,24 @@ longitudes = [
 
 describe Site, type: :model do
   it 'has a valid factory' do
-    expect(FactoryBot.create(:site)).to be_valid
+    expect(create(:site)).to be_valid
   end
+
   it 'is invalid without a name' do
-    expect(FactoryBot.build(:site, name: nil)).not_to be_valid
+    expect(build(:site, name: nil)).not_to be_valid
   end
+
   it 'requires a name with at least two characters' do
-    s = FactoryBot.build(:site, name: 's')
+    s = build(:site, name: 's')
     expect(s).not_to be_valid
-    expect(s.valid?).to be_falsey
+    expect(s).not_to be_valid
     expect(s.errors[:name].size).to eq(1)
   end
 
-  it 'should obfuscate lat/longs properly' do
+  it 'obfuscates lat/longs properly' do
     original_lat = -23.0
     original_lng = 127.0
-    s = FactoryBot.build(:site, :with_lat_long)
+    s = build(:site, :with_lat_long)
 
     jitter_range = Site::JITTER_RANGE
     jitter_exclude_range = Site::JITTER_RANGE * 0.1
@@ -96,15 +98,15 @@ describe Site, type: :model do
       jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max)
 
       expect(jit_lat).to be_within(jitter_range).of(s.latitude)
-      expect(jit_lat).to_not be_within(jitter_exclude_range).of(s.latitude)
+      expect(jit_lat).not_to be_within(jitter_exclude_range).of(s.latitude)
 
       expect(jit_lng).to be_within(jitter_range).of(s.longitude)
-      expect(jit_lng).to_not be_within(jitter_exclude_range).of(s.longitude)
+      expect(jit_lng).not_to be_within(jitter_exclude_range).of(s.longitude)
     }
   end
 
   it 'latitude should be within the range [-90, 90]' do
-    site = FactoryBot.build(:site)
+    site = build(:site)
 
     latitudes.each { |value, pass|
       site.latitude = value
@@ -115,8 +117,9 @@ describe Site, type: :model do
       end
     }
   end
+
   it 'longitudes should be within the range [-180, 180]' do
-    site = FactoryBot.build(:site)
+    site = build(:site)
 
     longitudes.each { |value, pass|
       site.longitude = value
@@ -127,15 +130,16 @@ describe Site, type: :model do
       end
     }
   end
+
   it { is_expected.to have_and_belong_to_many :projects }
   it { is_expected.to belong_to(:region).optional }
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
-  it 'should error on checking orphaned site if site is orphaned' do
+  it 'errors on checking orphaned site if site is orphaned' do
     # depends on factory not automatically associating a site with any projects
-    site = FactoryBot.create(:site)
+    site = create(:site)
     expect {
       Access::Core.check_orphan_site!(site)
     }.to raise_error(CustomErrors::OrphanedSiteError)
@@ -144,23 +148,32 @@ describe Site, type: :model do
   it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
     html = "<h1 id=\"header\">Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
-    site_html = FactoryBot.create(:site, description: md)
+    site_html = create(:site, description: md)
 
     expect(site_html.description).to eq(md)
     expect(site_html.description_html).to eq(html)
   end
 
-  it 'should error on invalid timezone' do
+  it 'is invalid with an invalid timezone' do
+    site = build(:site, tzinfo_tz: 'blah')
+    expect(site).not_to be_valid
+  end
+
+  it 'errors on invalid timezone' do
+    site = create(:site)
+    expect(site).to be_valid
+
+    site.tzinfo_tz = 'blah'
     expect {
-      FactoryBot.create(:site, tzinfo_tz: 'blah')
+      site.save!
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognized timezone ('blah')")
   end
 
-  it 'should be valid for a valid timezone' do
-    expect(FactoryBot.create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+  it 'is valid for a valid timezone' do
+    expect(create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
-  it 'should include TimeZoneAttribute' do
+  it 'includes TimeZoneAttribute' do
     expect(Site.new).to be_a_kind_of(TimeZoneAttribute)
   end
 
@@ -170,7 +183,7 @@ describe Site, type: :model do
   #                 rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
 
   it 'has a safe_name function' do
-    site = FactoryBot.build(:site, name: "!aNT\'s fully s!ck site 1337 ;;\n../\\")
+    site = build(:site, name: "!aNT\'s fully s!ck site 1337 ;;\n../\\")
     expect(site.safe_name).to eq('aNTs-fully-s-ck-site-1337')
   end
 end
