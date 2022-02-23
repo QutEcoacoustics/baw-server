@@ -1618,7 +1618,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.permissions(project2),
+        Access::ByPermission.permissions(the_user, project_id: project2.id),
         Permission,
         Permission.filter_settings
       )

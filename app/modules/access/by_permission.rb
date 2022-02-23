@@ -33,12 +33,24 @@ module Access
         end
       end
 
+
       # Get permissions for this project.
-      # @param [Project] project
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels - defaults to checking owner only
+      # @param [Integer] project_id
       # @return [ActiveRecord::Relation] permissions
-      def permissions(project)
-        project = Access::Validate.project(project)
-        Permission.where(project_id: project.id)
+      def permissions(user, levels: [:owner], project_id: nil)
+
+        query = Permission.all
+        query = query.where(project_id: project_id)
+        is_admin, query = permission_admin(user, levels, query)
+
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.joins(:project).where(permissions)
+        end
       end
 
       # Get all regions for which this user has these access levels.

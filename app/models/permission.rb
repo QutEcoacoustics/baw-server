@@ -96,8 +96,17 @@ class Permission < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :creator_id, :created_at],
-      render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in],
+      render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :updated_at, :updater_id, :created_at, :creator_id],
       text_fields: [:level],
+      new_spec_fields: lambda { |_user|
+        {
+          project_id: nil,
+          user_id: nil,
+          level: nil,
+          allow_anonymous: false,
+          allow_logged_in: false
+        }
+      },
       controller: :permissions,
       action: :filter,
       defaults: {
@@ -112,6 +121,34 @@ class Permission < ApplicationRecord
         }
       ]
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: Api::Schema.id,
+        **Api::Schema.updater_and_creator_user_stamps,
+        project_id: Api::Schema.id(read_only: false),
+        level: Api::Schema.permission_levels,
+        user_id: Api::Schema.id(nullable: true, read_only: false),
+        allow_logged_in: { type: 'boolean' },
+        allow_anonymous: { type: 'boolean' }
+      },
+      required: [
+        :id,
+        :project_id,
+        :creator_id,
+        :created_at,
+        :updater_id,
+        :updated_at,
+        :level,
+        :user_id,
+        :allow_anonymous,
+        :allow_logged_in
+      ]
+    }.freeze
   end
 
   private

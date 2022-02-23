@@ -29,12 +29,13 @@ module PermissionsHelpers
       self.route_params = route_params
     end
 
-    def using_the_factory(factory, model_name: factory, factory_args: nil)
+    def using_the_factory(factory, traits: [], model_name: factory, factory_args: nil)
       (self.request_body_options ||= {}).merge!({
         create: proc {
           [
             body_attributes_for(
               model_name,
+              traits: traits,
               factory: factory,
               factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
             ),
@@ -46,6 +47,7 @@ module PermissionsHelpers
             body_attributes_for(
               model_name,
               factory: factory,
+              traits: traits,
               subset: update_attrs_subset,
               factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
             ),

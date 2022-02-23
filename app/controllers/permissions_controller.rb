@@ -7,18 +7,19 @@ class PermissionsController < ApplicationController
   def index
     do_authorize_class
     get_project
-    do_authorize_instance(:update_permissions, @project)
-
-    result = update_permissions
-
-    if result === true
-      flash[:success] = 'Permissions successfully updated.'
-    elsif result === false
-      flash[:error] = 'There was an error updating permissions. Please try again or contact us.'
-    end
-
     respond_to do |format|
       format.html do
+        do_authorize_instance(:update_permissions, @project)
+
+        result = update_permissions
+
+        if result === true
+          flash[:success] = 'Permissions successfully updated.'
+        elsif result === false
+          flash[:error] = 'There was an error updating permissions. Please try again or contact us.'
+        end
+
+
         params[:page] ||= 'a-b'
         redirect_to project_permissions_path(@project, page: params[:page]) unless result.nil?
         @permissions = Permission.where(project: @project)
@@ -75,6 +76,19 @@ class PermissionsController < ApplicationController
     end
   end
 
+  # PUT|PATCH /projects/:project_id/permissions/:id
+  def update
+    do_load_resource #      @permission = Permission.find(params[:id])
+    get_project #           @project = Project.find(params[:project_id])
+    do_authorize_instance # authorize! :update @permission
+
+    if @permission.update(permission_params)
+      respond_show
+    else
+      respond_change_fail
+    end
+  end
+
   # DELETE /projects/:project_id/permissions/:id
   def destroy
     do_load_resource
@@ -88,6 +102,19 @@ class PermissionsController < ApplicationController
     end
   end
 
+  # GET|POST /projects/:project_id/permissions/filter
+  def filter
+    do_authorize_class
+    get_project
+    filter_response, opts = Settings.api_response.response_advanced(
+      api_filter_params,
+      Access::ByPermission.permissions(current_user, project_id: @project.id),
+      Permission,
+      Permission.filter_settings
+    )
+    respond_filter(filter_response, opts)
+  end
+
   private
 
   def get_project
@@ -97,7 +124,7 @@ class PermissionsController < ApplicationController
   end
 
   def permission_params
-    params.require(:permission).permit(:level, :project_id, :user_id)
+    params.require(:permission).permit(:level, :project_id, :user_id, :allow_logged_in, :allow_anonymous)
   end
 
   def update_permissions_params

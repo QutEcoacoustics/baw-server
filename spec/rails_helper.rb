@@ -212,7 +212,7 @@ RSpec.configure do |config|
 
   require_relative 'helpers/permissions_helper'
   config.extend PermissionsHelpers::ExampleGroup, {
-    file_path: Regexp.new('/spec/requests/permissions')
+    file_path: Regexp.new('/spec/requests/permissions/')
   }
   require_relative 'helpers/capabilities_helper'
   config.extend CapabilitiesHelper::ExampleGroup, {

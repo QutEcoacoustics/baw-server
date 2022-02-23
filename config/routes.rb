@@ -529,6 +529,7 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'projects/:project_id/permissions/filter' => 'permissions#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'projects/:project_id/regions/filter' => 'regions#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'projects/:project_id/sites/filter' => 'sites#filter', via: [:get, :post], defaults: { format: 'json' }
 
@@ -545,7 +546,7 @@ Rails.application.routes.draw do
     end
     # project permissions
     resources :permissions, only: [:index]
-    resources :permissions, except: [:edit, :update, :index], defaults: { format: 'json' }
+    resources :permissions, except: [:edit, :index], defaults: { format: 'json' }
     # HTML project site item
     resources :sites, except: [:index] do
       member do
