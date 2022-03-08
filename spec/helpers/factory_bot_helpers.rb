@@ -8,6 +8,7 @@ module FactoryBotHelpers
     # and also having a schema method defined on it's class if the
     # schema parameter is not provided.
     # The schema parameter must be a hash of a json-schema-style structure.
+    # @param traits - any traits to pass to the factory
     # @param factory - the name of a factory to use instead of model_name
     # @param subset - an array of properties to keep, further filtering on the schema's writeable properties
     def body_attributes_for(model_name, traits: [], factory: nil, subset: nil, factory_args: {})

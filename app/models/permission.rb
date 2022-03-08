@@ -52,9 +52,10 @@ class Permission < ApplicationRecord
   }
 
   # association validations
-  validates_associated :project
-  validates_associated :creator
-  validates_associated :user
+  # these validations are now redundant i think
+  #validates_associated :project
+  #validates_associated :creator
+  #validates_associated :user
 
   # attribute validations
   validates :level, presence: true
@@ -96,7 +97,8 @@ class Permission < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :creator_id, :created_at],
-      render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :updated_at, :updater_id, :created_at, :creator_id],
+      render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :updated_at, :updater_id,
+                      :created_at, :creator_id],
       text_fields: [:level],
       new_spec_fields: lambda { |_user|
         {
@@ -156,8 +158,8 @@ class Permission < ApplicationRecord
   # must have only one set
   def exclusive_attributes
     has_user = user.blank? ? 0 : 1
-    allows_logged_in = allow_logged_in === true ? 1 : 0
-    allows_anon = allow_anonymous === true ? 1 : 0
+    allows_logged_in = allow_logged_in == true ? 1 : 0
+    allows_anon = allow_anonymous == true ? 1 : 0
     exclusive_set = has_user + allows_logged_in + allows_anon
 
     if exclusive_set != 1
@@ -167,10 +169,9 @@ class Permission < ApplicationRecord
       error_msg += 'anonymous users is true, ' if allows_anon == 1
       error_msg += 'nothing was set' if exclusive_set < 1
 
-      errors.add(:user_id, error_msg)
-      errors.add(:user, error_msg)
-      errors.add(:allow_logged_in, error_msg)
-      errors.add(:allow_anonymous, error_msg)
+      errors.add(:user_id, error_msg) if has_user == 1
+      errors.add(:allow_logged_in, error_msg) if allow_logged_in
+      errors.add(:allow_anonymous, error_msg) if allow_anonymous
     end
   end
 
@@ -179,6 +180,7 @@ class Permission < ApplicationRecord
       errors.add(:level, "must be reader for anonymous user, but was '#{level}'")
       errors.add(:allow_anonymous, "level must be reader, but was '#{level}'")
     end
+
     if allow_logged_in && !['reader', 'writer'].include?(level.to_s)
       errors.add(:level, "must be reader or writer for logged in user, but was '#{level}'")
       errors.add(:allow_logged_in, "level must be reader or writer, but was '#{level}'")

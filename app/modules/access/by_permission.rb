@@ -33,16 +33,14 @@ module Access
         end
       end
 
-
       # Get permissions for this project.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels - defaults to checking owner only
       # @param [Integer] project_id
-      # @return [ActiveRecord::Relation] permissions
+      # @return [::ActiveRecord::Relation] permissions
       def permissions(user, levels: [:owner], project_id: nil)
-
         query = Permission.all
-        query = query.where(project_id: project_id)
+        query = query.where(project_id:)
         is_admin, query = permission_admin(user, levels, query)
 
         if is_admin
@@ -61,7 +59,7 @@ module Access
       def regions(user, levels: Access::Core.levels, project_id: nil)
         # project can be nil
         query = Region.all
-        query = query.where(project_id: project_id) unless project_id.nil?
+        query = query.where(project_id:) unless project_id.nil?
         is_admin, query = permission_admin(user, levels, query)
 
         if is_admin
@@ -80,7 +78,7 @@ module Access
       def sites(user, levels: Access::Core.levels, project_ids: nil)
         # project can be nil
         query = Site.all
-        permission_sites(user, levels, query, project_ids: project_ids)
+        permission_sites(user, levels, query, project_ids:)
       end
 
       # Get all audio recordings for which this user has these access levels.
@@ -104,7 +102,7 @@ module Access
         if audio_recording
           query = query.where(audio_recording_id: audio_recording.id)
           project_ids = audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids: project_ids)
+          permission_sites(user, levels, query, project_ids:)
         else
           permission_sites(user, levels, query)
         end
@@ -122,7 +120,7 @@ module Access
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids: project_ids)
+          permission_sites(user, levels, query, project_ids:)
         else
           permission_sites(user, levels, query)
         end
@@ -140,7 +138,7 @@ module Access
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids: project_ids)
+          permission_sites(user, levels, query, project_ids:)
         else
           permission_sites(user, levels, query)
         end
@@ -239,7 +237,7 @@ module Access
 
         is_admin, query = permission_admin(user, levels, query)
 
-        query = query.where(study_id: study_id) if study_id
+        query = query.where(study_id:) if study_id
 
         query = query.where(creator_id: user.id) unless is_admin
 
@@ -367,7 +365,7 @@ module Access
         #     )
         # include reference audio_events when query is for audio_events or audio_event_comments
         model_name = query.model.model_name.name
-        check_reference_audio_events = model_name == 'AudioEvent' || model_name == 'AudioEventComment'
+        check_reference_audio_events = ['AudioEvent', 'AudioEventComment'].include?(model_name)
 
         if check_reference_audio_events
           ae_refs = Arel::Table.new(:audio_events)

@@ -265,7 +265,8 @@ module Api
             script: Script.schema,
             site: Site.schema,
             region: Region.schema,
-            audio_recording: AudioRecording.schema
+            audio_recording: AudioRecording.schema,
+            permission: Permission.schema
           }
         }
       }

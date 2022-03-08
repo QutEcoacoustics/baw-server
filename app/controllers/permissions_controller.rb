@@ -13,12 +13,12 @@ class PermissionsController < ApplicationController
 
         result = update_permissions
 
-        if result === true
+        case result
+        when true
           flash[:success] = 'Permissions successfully updated.'
-        elsif result === false
+        when false
           flash[:error] = 'There was an error updating permissions. Please try again or contact us.'
         end
-
 
         params[:page] ||= 'a-b'
         redirect_to project_permissions_path(@project, page: params[:page]) unless result.nil?
@@ -28,7 +28,7 @@ class PermissionsController < ApplicationController
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
           api_filter_params,
-          Access::ByPermission.permissions(@project),
+          Access::ByPermission.permissions(Current.user, project_id: @project.id),
           Permission,
           Permission.filter_settings
         )
@@ -64,8 +64,12 @@ class PermissionsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(permission_params)
+    Rails.logger.info('create', permission: @permission)
     get_project
+    Rails.logger.info('create2', permission: @permission, project: @project)
+
     do_authorize_instance
+    Rails.logger.info('create3', permission: @permission, project: @project)
 
     respond_to do |format|
       if @permission.save
@@ -120,7 +124,10 @@ class PermissionsController < ApplicationController
   def get_project
     @project = Project.find(params[:project_id])
 
-    @permission.project = @project if defined?(@permission) && @permission.project.blank?
+    return unless defined?(@permission)
+
+    @permission.project = @project
+    @permission.project_id = @project.id
   end
 
   def permission_params
@@ -128,7 +135,8 @@ class PermissionsController < ApplicationController
   end
 
   def update_permissions_params
-    params.slice(:project_wide, :per_user).permit(project_wide: [:logged_in, :anonymous], per_user: [:none, :reader, :writer, :owner])
+    params.slice(:project_wide, :per_user).permit(project_wide: [:logged_in, :anonymous],
+      per_user: [:none, :reader, :writer, :owner])
   end
 
   def update_permissions
@@ -150,9 +158,10 @@ class PermissionsController < ApplicationController
       new_level = request_params[:project_wide][:anonymous].to_s
     elsif request_params.include?(:per_user)
       user_id = request_params[:per_user].values.first.to_i
-      permission = Permission.where(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false).first
+      permission = Permission.where(project: @project, user_id:, allow_logged_in: false,
+        allow_anonymous: false).first
       if permission.blank?
-        permission = Permission.new(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false)
+        permission = Permission.new(project: @project, user_id:, allow_logged_in: false, allow_anonymous: false)
       end
       new_level = request_params[:per_user].keys.first.to_s
     else

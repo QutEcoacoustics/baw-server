@@ -226,16 +226,16 @@ class Ability
     # GET    /projects/:project_id/permissions/:id permissions#show {:format=>"json"}
     # DELETE /projects/:project_id/permissions/:id permissions#destroy {:format=>"json"}
 
-
-    # only owners can list, change, or remove permissions
+    # only owners can show, change, or remove permissions
     can [:show, :create, :update, :destroy], Permission do |permission|
       check_model(permission)
       Access::Core.can?(user, :owner, permission.project)
     end
 
-     # available to any user, including guest
-     can [:index, :filter, :new], Permission
+    # available to any user, including guest
+    can [:index, :filter, :new], Permission
   end
+
   def to_region(user, _is_guest)
     # POST      /projects/:project_id/regions                         regions#create
     # GET       /projects/:project_id/regions/new                     regions#new
