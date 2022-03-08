@@ -6,8 +6,8 @@ x-gh_actions:
   # trial addtion for github actions
   &gh_actions
   group_add:
-    - '116'
-    - '1001'
+    - "116"
+    - "1001"
 
 services:
   redis:
@@ -36,8 +36,7 @@ services:
   # `rails baw:truncate_sftpgo_tables`.
   # Error from logs:
   #   Unable to initialize/update the data provider: pq: relation "sftpgo_schema_version" already exists
-  upload:
-    &upload
+  upload: &upload
     <<: *gh_actions
     # Default command is `sftpgo serve`
     #command: sftpgo serve
@@ -88,8 +87,7 @@ services:
         source: ./tmp/_test_harvester_to_do_path
         target: /srv/sftpgo/data
 
-  workers:
-    &worker
+  workers: &worker
     <<: *gh_actions
     build:
       context: .
@@ -169,9 +167,7 @@ services:
     networks:
       - baw_network
 networks:
-  baw_network:
-
-    null
+  baw_network: null
 volumes:
   # We're using a volume mount for tmp because it offers better performance
   # than a bind mount. It also does not seem to suffer from cache/metadata
