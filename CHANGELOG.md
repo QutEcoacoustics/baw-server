@@ -1,5 +1,21 @@
 # Changelog
 
+## [7.0.0](https://github.com/QutEcoacoustics/baw-server/tree/7.0.0) (2022-03-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/6.1.1...7.0.0)
+
+**Implemented enhancements:**
+
+- Permissions endpoint [\#559](https://github.com/QutEcoacoustics/baw-server/pull/559) ([yupengKenny](https://github.com/yupengKenny))
+
+**Closed issues:**
+
+- Missing project individual user permissions route [\#432](https://github.com/QutEcoacoustics/baw-server/issues/432)
+
+## [6.1.1](https://github.com/QutEcoacoustics/baw-server/tree/6.1.1) (2022-02-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/6.1.0...6.1.1)
+
 ## [6.1.0](https://github.com/QutEcoacoustics/baw-server/tree/6.1.0) (2022-02-08)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/5.1.0...6.1.0)
