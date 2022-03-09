@@ -167,7 +167,14 @@ class Permission < ApplicationRecord
       error_msg += 'user is set, ' if has_user == 1
       error_msg += 'logged in users is true, ' if allows_logged_in == 1
       error_msg += 'anonymous users is true, ' if allows_anon == 1
-      error_msg += 'nothing was set' if exclusive_set < 1
+
+      if exclusive_set < 1
+        error_msg = 'nothing was set, at least one is required'
+        errors.add(:user_id, error_msg)
+        errors.add(:allow_logged_in, error_msg)
+        errors.add(:allow_anonymous, error_msg)
+        return
+      end
 
       errors.add(:user_id, error_msg) if has_user == 1
       errors.add(:allow_logged_in, error_msg) if allow_logged_in

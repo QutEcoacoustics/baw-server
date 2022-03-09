@@ -1525,7 +1525,7 @@ describe Filter::Query do
       the_user = owner_user
 
       project_access = project
-      project_no_access = create(:project)
+      _project_no_access = create(:project)
       access_via_created = create(:project, creator: the_user)
 
       request_body_obj = {
@@ -1546,7 +1546,7 @@ describe Filter::Query do
     end
   end
 
-  context 'nested indexes properly filtered' do
+  context 'with nested indexes properly filtered' do
     it 'restricts sites to project' do
       the_user = owner_user
 
@@ -1606,7 +1606,7 @@ describe Filter::Query do
 
     it 'restricts permissions to project' do
       the_user = create(:user)
-      permission1 = create(:read_permission, creator: the_user, user: the_user)
+      _permission1 = create(:read_permission, creator: the_user, user: the_user)
       permission2 = create(:read_permission, creator: the_user, user: the_user)
       project2 = permission2.project
 
@@ -1618,7 +1618,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.permissions(the_user, project_id: project2.id),
+        Access::ByPermission.permissions(project2.owners.first, project_id: project2.id),
         Permission,
         Permission.filter_settings
       )

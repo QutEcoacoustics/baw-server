@@ -103,8 +103,9 @@ module Api
               }
             },
             permission_levels: {
-              type: ['string', 'null'],
-              enum: ['owner', 'writer', 'reader']
+              type: 'string',
+              nullable: true,
+              enum: ['owner', 'writer', 'reader', nil]
             },
             meta: {
               properties: {

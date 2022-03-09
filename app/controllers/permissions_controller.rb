@@ -64,12 +64,8 @@ class PermissionsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(permission_params)
-    Rails.logger.info('create', permission: @permission)
     get_project
-    Rails.logger.info('create2', permission: @permission, project: @project)
-
     do_authorize_instance
-    Rails.logger.info('create3', permission: @permission, project: @project)
 
     respond_to do |format|
       if @permission.save

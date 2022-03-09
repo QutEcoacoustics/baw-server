@@ -20,7 +20,6 @@ describe '/projects/{project_id}/permissions' do
     )
 
     # Post to the server # some random token 1
-    Rails.logger.info("owner token is #{owner_token}, #{owner_user.authentication_token}")
     post "/projects/#{project.id}/permissions", params: body, **api_with_body_headers(owner_token)
 
     # Assert the correct error is returned

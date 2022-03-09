@@ -130,7 +130,7 @@ class Project < ApplicationRecord
                          {
                            name: nil,
                            description: nil,
-                           allow_original_download: false,
+                           allow_original_download: nil,
                            notes: nil
                          }
                        },
@@ -218,8 +218,7 @@ class Project < ApplicationRecord
 
   def self.access_level(project, user)
     levels = Access::Core.user_levels(user, project)
-    level = Access::Core.highest(levels)
-    level.blank? ? nil : Access::Core.get_level_name(level)
+    Access::Core.highest(levels)
   end
 
   private

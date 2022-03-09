@@ -31,7 +31,7 @@ module Access
       end
 
       # Get value indicating no access level.
-      # @return [NilClass]
+      # @return [nil]
       def levels_none
         nil
       end
@@ -67,7 +67,7 @@ module Access
 
       # Get level display name.
       # @param [Symbol] key
-      # @return [string] name
+      # @return [String] name
       def get_level_name(key)
         key = Access::Validate.level(key)
         get_hash_value(Access::Core.levels_hash, key, :name)
@@ -75,7 +75,7 @@ module Access
 
       # Get level action word.
       # @param [Symbol] key
-      # @return [string] action word
+      # @return [String] action word
       def get_level_action(key)
         key = Access::Validate.level(key)
         get_hash_value(Access::Core.levels_hash, key, :action)
@@ -83,7 +83,7 @@ module Access
 
       # Get role display name.
       # @param [Symbol] key
-      # @return [string] name
+      # @return [String] name
       def get_role_name(key)
         key = Access::Validate.role(key)
         get_hash_value(Access::Core.roles_hash, key, :name)
@@ -91,7 +91,7 @@ module Access
 
       # Get role action word.
       # @param [Symbol] key
-      # @return [string] action word
+      # @return [String] action word
       def get_role_action(key)
         key = Access::Validate.role(key)
         get_hash_value(Access::Core.roles_hash, key, :action)
@@ -101,14 +101,14 @@ module Access
       # @param [Hash] hash
       # @param [Symbol] key
       # @param [Symbol] attribute
-      # @return [string] value
+      # @return [String] value
       def get_hash_value(hash, key, attribute)
         hash[key][attribute]
       end
 
-      # Normalise a level identifier.
+      # Normalize a level identifier.
       # @param [Object] level
-      # @return [Symbol, nil] normalised level or nil
+      # @return [Symbol, nil] normalized level or nil
       def normalise_level(level)
         return nil if level.blank?
 
@@ -121,6 +121,7 @@ module Access
           :owner
         end
       end
+      alias normalize_level normalise_level
 
       # Validate access level.
       # @param [Object] level
