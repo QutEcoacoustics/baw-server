@@ -28,7 +28,7 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
     end
 
     it 'allows other records to have the same bucket' do
-      second_parent = FactoryBot.create(parent_factory)
+      second_parent = create(parent_factory)
       second = model.create!(
         other_key => second_parent.id
       ).reload
@@ -37,18 +37,18 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
     end
 
     it 'allows other records to have overlapping buckets' do
-      second_parent = FactoryBot.create(parent_factory)
+      second_parent = create(parent_factory)
       bucket = ((Date.today.to_datetime + 0.5.day)...(Date.today.to_datetime + 1.day + 0.5.day))
       second = model.create!(
         other_key => second_parent.id,
-        bucket: bucket
+        bucket:
       )
       expect(second.bucket).to eq(bucket)
     end
 
     it 'allows a custom bucket to be set' do
       # April 5th 2063, Zefram Cochrane made fist contact with the Vulcans
-      second_parent = FactoryBot.create(parent_factory)
+      second_parent = create(parent_factory)
       second = model.create!(
         other_key => second_parent.id,
         bucket: (Date.new(2063, 4, 5)...Date.new(2063, 4, 6))
@@ -97,7 +97,7 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
         ActiveRecord::Base.connection.execute(insert.to_sql)
       }.to raise_error(
         ActiveRecord::NotNullViolation,
-        /null value in column "bucket" violates not-null constraint/
+        /null value in column "bucket" of relation ".*" violates not-null constraint/
       )
     end
 

@@ -92,7 +92,7 @@ describe BawWorkers::UploadService::Communicator do
       status: 404,
       headers: an_instance_of(Hash),
       body: an_object_having_attributes(
-        error: 'not found: sql: no rows in result set',
+        error: 'Not Found',
         message: ''
       )
     }))
