@@ -153,10 +153,16 @@ They are based on `config/settings/default.yml`.
 
 Debugging:
 
+Insert a `debugger` statement where you would like the debugger to stop. Alternatively you can enter
+a break point after the debugger starts.
+
+
 ```shell
 (host) > docker compose exec web bash
 (container) > RAILS_ENV='test' rdbg --command -- /home/baw_web/baw-server/bin/rspec /home/baw_web/baw-server/spec/lib/modules/filter/query_spec.rb -e association
 ```
+
+More information here: https://github.com/ruby/debug
 
 ### Tests
 
