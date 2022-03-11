@@ -37,8 +37,8 @@ gem 'faraday'
 gem 'faraday_middleware'
 
 # api docs
-gem 'rswag-api', github: 'rswag/rswag', glob: 'rswag-api/*.gemspec'
-gem 'rswag-ui', github: 'rswag/rswag', glob: 'rswag-ui/*.gemspec'
+gem 'rswag-api'
+gem 'rswag-ui'
 
 # uri parsing and generation
 gem 'addressable'
@@ -288,7 +288,7 @@ group :test do
   gem 'zonebie'
 
   # api docs
-  gem 'rswag-specs', github: 'rswag/rswag', glob: 'rswag-specs/*.gemspec'
+  gem 'rswag-specs'
 
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
