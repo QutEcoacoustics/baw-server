@@ -6,6 +6,7 @@
 #
 
 set -e
+rm --force .ready
 
 echo -e "\n== Debug container permissions  ==\n"
 ls -la
@@ -40,6 +41,9 @@ then
 else
     echo -e "\n== GENERATE_ASSETS is '$GENERATE_ASSETS' (not 'true'), skipping generation =="
 fi
+
+echo -e "\n== Writing .ready ==\n"
+touch .ready
 
 echo -e "\n== Executing original command '$@' ==\n"
 exec "$@"

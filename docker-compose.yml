@@ -36,7 +36,8 @@ services:
   # `rails baw:truncate_sftpgo_tables`.
   # Error from logs:
   #   Unable to initialize/update the data provider: pq: relation "sftpgo_schema_version" already exists
-  upload: &upload
+  upload:
+    &upload
     <<: *gh_actions
     # Default command is `sftpgo serve`
     #command: sftpgo serve
@@ -87,7 +88,8 @@ services:
         source: ./tmp/_test_harvester_to_do_path
         target: /srv/sftpgo/data
 
-  workers: &worker
+  workers:
+    &worker
     <<: *gh_actions
     build:
       context: .
@@ -132,7 +134,7 @@ services:
     # I'm thinking this might be a better default command. Currently the compose
     # file is only used for devleopment and we usually don't want a web server
     # just starting - particularly in CI where we need the port for tests
-    command: bash -c 'touch .ready && sleep infinity'
+    command: sleep infinity
     healthcheck:
       test: test -f .ready
       interval: 5s
