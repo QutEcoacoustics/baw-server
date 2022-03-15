@@ -94,7 +94,7 @@ RSpec.configure do |config|
 
   # redirect puts into a text file
   # in order: debase, readapt, rdbg
-  if defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__)
+  if defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__) || defined?(debugger)
     puts '$stdout and $stderr will NOT be redirected'
   else
     original_stderr = $stderr

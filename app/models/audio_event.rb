@@ -118,19 +118,20 @@ class AudioEvent < ApplicationRecord
 
                        [item, audio_event_hash]
                      },
-
+      custom_fields2: {
+        duration_seconds: {
+          query_attributes: [],
+          transform: ->(item) { item },
+          arel: AudioEvent.duration_seconds,
+          type: :decimal
+        }
+      },
       controller: :audio_events,
       action: :filter,
       defaults: {
         order_by: :created_at,
         direction: :desc
       },
-      field_mappings: [
-        {
-          name: :duration_seconds,
-          value: AudioEvent.duration_seconds
-        }
-      ],
       valid_associations: [
         {
           join: AudioRecording,

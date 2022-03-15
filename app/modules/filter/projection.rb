@@ -21,24 +21,30 @@ module Filter
       # allow a custom field to be used in a projection,
       return project_custom_field(table, column_name) if @custom_fields2.key?(column_name)
 
-      # allow field mappings to appear in a projection
-      field = build_custom_field(column_name)
-      return field unless field.blank?
-
       validate_table_column(table, column_name, allowed)
       table[column_name]
     end
 
     # allow a custom field to be used in a projection,
-    # use a hint from the field for what additional columns to select
-    def project_custom_field(table, column_name)
-      @custom_fields2.dig(column_name, :query_attributes).map do |hint|
-        # implicitly allow the hint here - the hint is
-        # provided by filter settings and not user so
-        # we assume it is secure
-        validate_table_column(table, hint, [hint])
-        table[hint]
-      end
+    # Can either:
+    # - inject custom arel for a calculated field
+    # - or use a hint from the field for what additional columns to select for a virtual field
+    def project_custom_field(_table, column_name)
+      # two scenarios:
+      field_type = custom_field_type(column_name)
+
+      #   1. this is a calculated column that can be calculated in query
+      #     - then we supply the arel directly here
+      return build_custom_calculated_field(column_name)[:arel] if field_type == :calculated
+
+      #   2. this is a virtual column who's result will be calculated post-query in rails and we're just fetching source columns
+      #     - then we use query_attributes and apply transform after the fact
+      return build_custom_virtual_field(column_name) if field_type == :virtual
+
+      # if nil, this is not a custom field
+      raise "unknown field type #{field_type}" unless field_type.nil?
+
+      nil
     end
 
     def project_association(base_table, column_name)
@@ -51,10 +57,10 @@ module Filter
         table = j[:join]
         # assume this is an arel_table if it doesn't respond to .arel_table
         arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
-        { arel_table: arel_table, type: Arel::Nodes::OuterJoin, on: j[:on] }
+        { arel_table:, type: Arel::Nodes::OuterJoin, on: j[:on] }
       }
 
-      { projection: projection, joins: joins, base_table: base_table }
+      { projection:, joins:, base_table: }
     end
 
     #

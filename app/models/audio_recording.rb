@@ -177,6 +177,12 @@ class AudioRecording < ApplicationRecord
   scope :total_data_bytes, -> { sum(arel_table[:data_length_bytes].cast('bigint')) }
   scope :total_duration_seconds, -> { sum(arel_table[:duration_seconds].cast('bigint')) }
 
+  # Allows this model to infer its timezone when included with larger queries
+  # constructed by filter args.
+  def self.with_timezone(query)
+    query.left_outer_joins(:site)
+  end
+
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
     !original_file_paths.empty?
@@ -331,11 +337,21 @@ class AudioRecording < ApplicationRecord
       custom_fields2: {
         canonical_file_name: {
           query_attributes: [:id, :site_id, :recorded_date, :media_type],
-          transform: ->(item) { item&.friendly_name }
+          transform: ->(item) { item&.friendly_name },
+          arel: nil,
+          type: :string
         },
         recorded_date_timezone: {
           query_attributes: [:site_id],
-          transform: ->(item) { item&.site&.timezone&.dig(:identifier) }
+          transform: ->(item) { item&.site&.timezone&.dig(:identifier) },
+          arel: nil,
+          type: :string
+        },
+        recorded_end_date: {
+          query_attributes: [],
+          transform: ->(item) { item },
+          arel: arel_recorded_end_date,
+          type: :datetime
         }
       },
       new_spec_fields: lambda { |_user|
@@ -359,12 +375,6 @@ class AudioRecording < ApplicationRecord
         order_by: :recorded_date,
         direction: :desc
       },
-      field_mappings: [
-        {
-          name: :recorded_end_date,
-          value: arel_recorded_end_date
-        }
-      ],
       capabilities: {
         original_download: {
           #can_list: ->(klass) { Current.ability.can?(:original, klass) },
@@ -503,12 +513,16 @@ class AudioRecording < ApplicationRecord
   end
 
   # Results in:
-  # ("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || 'seconds' as interval)
+  # ("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || 'seconds' as interval))
   def self.arel_recorded_end_date
     seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
     infix_op_string_join = Arel::Nodes::InfixOperation.new(:'||', AudioRecording.arel_table[:duration_seconds],
       seconds_as_interval)
     function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
-    Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
+
+    # Don't omit the grouping or else we run into order of operation issues in compound expressions
+    Arel::Nodes::Grouping.new(
+      Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
+    )
   end
 end

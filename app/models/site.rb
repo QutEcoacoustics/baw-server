@@ -149,12 +149,8 @@ class Site < ApplicationRecord
   def custom_latitude
     value = read_attribute(:latitude)
     if location_obfuscated && !value.blank?
-      Rails.logger.warn('custom_latitude:with_jitter', value: value)
-
       Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX)
     else
-      Rails.logger.warn('custom_latitude:withOUT_jitter', value: value)
-
       value
     end
   end
@@ -162,11 +158,8 @@ class Site < ApplicationRecord
   def custom_longitude
     value = read_attribute(:longitude)
     if location_obfuscated && !value.blank?
-      Rails.logger.warn('custom_longitude:with_jitter', value: value)
       Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)
     else
-      Rails.logger.warn('custom_longitude:withOUT_jitter', value: value)
-
       value
     end
   end
@@ -175,8 +168,6 @@ class Site < ApplicationRecord
     return @location_obfuscated if defined?(@location_obfuscated)
 
     if projects.empty?
-      Rails.logger.warn('location_obfuscated:projects_empty', projects: projects, model: self)
-
       @location_obfuscated = true
       return @location_obfuscated
     end
@@ -264,15 +255,21 @@ class Site < ApplicationRecord
       custom_fields2: {
         custom_latitude: {
           query_attributes: [:latitude, :id],
-          transform: ->(item) { item&.custom_latitude }
+          transform: ->(item) { item&.custom_latitude },
+          arel: nil,
+          type: nil
         },
         custom_longitude: {
           query_attributes: [:longitude, :id],
-          transform: ->(item) { item&.custom_longitude }
+          transform: ->(item) { item&.custom_longitude },
+          arel: nil,
+          type: nil
         },
         location_obfuscated: {
           query_attributes: [:id],
-          transform: ->(item) { item&.location_obfuscated }
+          transform: ->(item) { item&.location_obfuscated },
+          arel: nil,
+          type: nil
         }
       },
       new_spec_fields: lambda { |user| # rubocop:disable Lint/UnusedBlockArgument

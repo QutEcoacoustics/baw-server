@@ -57,6 +57,7 @@
       "FLAC",
       "fmap",
       "Gemfile",
+      "getlocal",
       "gitkeep",
       "gsub",
       "gteq",
@@ -74,6 +75,7 @@
       "lindex",
       "ljust",
       "Loggable",
+      "lteq",
       "ltrim",
       "magick",
       "memsize",
@@ -212,7 +214,7 @@
     "editor.formatOnSave": true,
     "ruby.useBundler": true, //run non-lint commands with bundle exec
     "ruby.useLanguageServer": false, // use the internal language server (see below)
-    "ruby.intellisense": "rubyLocate",
+    "ruby.intellisense": false,
     "ruby.lint": {
       "rubocop": {
         "useBundler": true, // enable rubocop via bundler,

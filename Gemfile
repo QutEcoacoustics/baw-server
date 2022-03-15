@@ -128,6 +128,9 @@ group :server do
   # as the name says
   gem 'composite_primary_keys', COMPOSITE_PRIMARY_KEYS_VERSION
 
+  # allows for adding common table expressions to queries
+  gem "activerecord-cte"
+
   # MODELS
   # -------------------------------------
   gem 'validates_timeliness', '~> 6.0.0.alpha1'

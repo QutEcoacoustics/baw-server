@@ -43,7 +43,7 @@ class Script < ApplicationRecord
   validates :analysis_action_params, json: { message: 'Must be valid JSON' }
 
   validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type,
-            presence: true, length: { minimum: 2 }
+    presence: true, length: { minimum: 2 }
   validate :check_version_increase, on: :create
 
   # for the first script in a group, make sure group_id is set to the script's id
@@ -55,14 +55,14 @@ class Script < ApplicationRecord
 
   def latest_version
     Script
-      .where(group_id: group_id)
+      .where(group_id:)
       .order(version: :desc)
       .first
   end
 
   def earliest_version
     Script
-      .where(group_id: group_id)
+      .where(group_id:)
       .order(version: :asc)
       .first
   end
@@ -70,7 +70,7 @@ class Script < ApplicationRecord
   def last_version
     if !@last_version && !has_attribute?(:last_version)
       @last_version = Script
-                      .where(group_id: group_id)
+                      .where(group_id:)
                       .maximum(:version)
     end
 
@@ -85,7 +85,7 @@ class Script < ApplicationRecord
   def first_version
     if !@first_version && !has_attribute?(:first_version)
       @first_version = Script
-                       .where(group_id: group_id)
+                       .where(group_id:)
                        .minimum(:version)
     end
 
@@ -114,7 +114,7 @@ class Script < ApplicationRecord
   @script_group = Arel::Table.new('s2')
 
   def all_versions
-    Script.where(group_id: group_id).order(created_at: :desc)
+    Script.where(group_id:).order(created_at: :desc)
   end
 
   def self.filter_settings
@@ -123,7 +123,8 @@ class Script < ApplicationRecord
                      :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
                       :executable_settings_media_type, :version, :created_at, :creator_id, :analysis_action_params],
-      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type, :analysis_action_params],
+      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
+                    :analysis_action_params],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
                          is_last_version: item.is_last_version?,
@@ -132,28 +133,32 @@ class Script < ApplicationRecord
                        }
                        [item, virtual_fields]
                      },
-      field_mappings: [
-        {
-          name: :is_last_version,
-          value: Arel::Nodes::Grouping.new(
+      custom_fields2: {
+        is_last_version: {
+          query_attributes: [],
+          transform: ->(item) { item },
+          arel: Arel::Nodes::Grouping.new(
             Arel::Nodes::InfixOperation.new(
-              '='.to_sym,
+              :'=',
               @script_group[:last_version],
               Script.arel_table[:version]
             )
-          )
+          ),
+          type: :boolean
         },
-        {
-          name: :is_first_version,
-          value: Arel::Nodes::Grouping.new(
+        is_first_version: {
+          query_attributes: [],
+          transform: ->(item) { item },
+          arel: Arel::Nodes::Grouping.new(
             Arel::Nodes::InfixOperation.new(
-              '='.to_sym,
+              :'=',
               @script_group[:first_version],
               Script.arel_table[:version]
             )
-          )
+          ),
+          type: :boolean
         }
-      ],
+      },
       controller: :scripts,
       action: :filter,
       defaults: {
@@ -194,10 +199,11 @@ class Script < ApplicationRecord
     matching_or_higher_versions =
       Script
       .unscoped
-      .where(group_id: group_id)
+      .where(group_id:)
       .where('version >= ?', version)
-    if matching_or_higher_versions.count > 0
-      errors.add(:version, "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})")
+    if matching_or_higher_versions.count.positive?
+      errors.add(:version,
+        "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})")
     end
   end
 

@@ -66,6 +66,16 @@ module Baw
 
           visit o.expression, collector
         end
+
+        def visit_Baw_Arel_Nodes_AsTimeZone(o, collector)
+          collector << '('
+          o.expressions.each_with_index do |e, i|
+            collector << ' ' if i != 0
+            collector = visit e, collector
+          end
+          collector << ')'
+          collector
+        end
       end
 
       # rubocop:enable Naming/MethodName, Naming/MethodParameterName

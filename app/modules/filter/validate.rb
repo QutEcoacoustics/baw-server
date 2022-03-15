@@ -294,7 +294,7 @@ module Filter
     # @param [String] value
     # @return [String] sanitized value
     def sanitize_projection_alias(value)
-      value.gsub(/[^0-9a-zA-Z_]/) { |x| }
+      value.gsub(/[^0-9a-zA-Z_]/)
     end
 
     # Check that value is a float.
@@ -361,13 +361,13 @@ module Filter
         raise CustomErrors::FilterArgumentError, "Value must be a lambda or proc, got #{value.class}."
       end
 
-      parameters_normalised = value
+      parameters_normalized = value
                               .parameters
                               .map(&:last)
                               .map { |name| name.to_s.ltrim('_').to_sym }
-      unless parameters_normalised == parameters
+      unless parameters_normalized == parameters
         raise CustomErrors::FilterArgumentError,
-          "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalised}."
+          "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalized}."
       end
     end
 
@@ -402,16 +402,7 @@ module Filter
 
       # advanced filter settings
 
-      if value.include?(:field_mappings)
-        validate_array(value[:field_mappings])
-
-        # each field_mapping must be a hash with a :name and :value
-        value[:field_mappings].each do |field_mapping_hash|
-          validate_hash(field_mapping_hash)
-          validate_hash_key(field_mapping_hash, :name, Symbol)
-          validate_hash_key(field_mapping_hash, :value, [Arel::Nodes::Node, String])
-        end
-      end
+      raise 'Filters using `field_mappings` are deprecated' if value.include?(:field_mappings)
 
       if value.include?(:capabilities)
         validate_hash(value[:capabilities])
@@ -435,6 +426,9 @@ module Filter
           validate_hash(custom_definition)
           validate_array(custom_definition[:query_attributes])
           validate_closure(custom_definition[:transform], [:item])
+
+          validate_hash_key(custom_definition, :arel, [NilClass, Arel::Nodes::Node])
+          validate_hash_key(custom_definition, :type, [Symbol]) unless custom_definition[:arel].nil?
         end
       end
 

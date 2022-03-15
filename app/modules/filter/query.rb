@@ -169,15 +169,6 @@ module Filter
       apply_sort(query, @table, @sorting[:order_by], @valid_fields, @sorting[:direction])
     end
 
-    # Add sorting to query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Symbol, String] order_by
-    # @param [Symbol, String] direction
-    # @return [ActiveRecord::Relation] query
-    def query_sort_custom(query, order_by, direction)
-      apply_sort(query, @table, order_by, @valid_fields, direction)
-    end
-
     # Add paging to query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
@@ -189,7 +180,7 @@ module Filter
     end
 
     # Add paging to query.
-    # @param [ActiveRecord::Relation] query
+    # @param [::ActiveRecord::Relation] query
     # @param [Integer] offset
     # @param [Integer] limit
     # @return [ActiveRecord::Relation] query
@@ -294,8 +285,13 @@ module Filter
     # @param [Array<Arel::Nodes::Node>] conditions
     # @return [ActiveRecord::Relation] the modified query
     def apply_conditions(query, conditions)
-      conditions.each do |condition|
-        query = apply_condition(query, condition)
+      conditions.each do |condition_or_hash|
+        case condition_or_hash
+        in {transforms:, node:}
+          apply_condition(apply_transforms(query, transforms), node)
+        in ::Arel::Nodes::Node => condition
+          apply_condition(query, condition)
+        end => query
       end
       query
     end
@@ -308,6 +304,13 @@ module Filter
       validate_query(query)
       validate_condition(condition)
       query.where(condition)
+    end
+
+    # Apply a series of transforms to the current query
+    def apply_transforms(query, transforms)
+      transforms.reduce(query) do |q, transform|
+        transform.call(q)
+      end
     end
 
     # Add joins to a query.
@@ -342,7 +345,7 @@ module Filter
       validate_sorting(column_name, allowed, direction)
 
       # allow sorting by field mappings
-      sort_field = @build.build_custom_field(column_name)
+      sort_field = @build.build_custom_calculated_field(column_name)&.fetch(:arel)
       sort_field = table[column_name] if sort_field.blank?
 
       sort_field_by = if sort_field.is_a? String

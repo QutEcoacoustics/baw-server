@@ -104,11 +104,13 @@ class DatasetItem < ApplicationRecord
                                    priority_algorithm
                                  end
 
-      result[:field_mappings] = [] unless result.key(:field_mappings)
+      result[:custom_fields2] = {} unless result.key(:custom_fields2)
 
-      result[:field_mappings] << {
-        name: :priority,
-        value: priority_algorithm_value
+      result[:custom_fields2][:priority] = {
+        query_attributes: [],
+        transform: ->(item) { item },
+        arel: priority_algorithm_value,
+        type: :string
       }
 
     end
@@ -161,8 +163,6 @@ class DatasetItem < ApplicationRecord
     # sort by id
     order_by_clauses.push 'dataset_items.order ASC'
     order_by_clauses.push 'dataset_items.id ASC'
-    priority_algorithm = order_by_clauses.join(', ')
-
-    priority_algorithm
+    order_by_clauses.join(', ')
   end
 end

@@ -9,6 +9,7 @@ module Filter
     include Projection
     include Subset
     include Validate
+    include Expressions
 
     # Create an instance of Build.
     # @param [Arel::Table] table
@@ -25,7 +26,6 @@ module Filter
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
       @base_association = filter_settings[:base_association]
       @valid_associations = filter_settings[:valid_associations]
-      @field_mappings = filter_settings[:field_mappings]
       @custom_fields2 = filter_settings[:custom_fields2] || {}
 
       @valid_conditions = [
@@ -119,22 +119,6 @@ module Filter
       (@render_fields + @custom_fields2.keys).uniq
     end
 
-    # Combine two conditions.
-    # @param [Symbol] combiner
-    # @param [Arel::Nodes::Node] condition1
-    # @param [Arel::Nodes::Node] condition2
-    # @return [Arel::Nodes::Node] condition
-    def combiner_two(combiner, condition1, condition2)
-      case combiner
-      when :and
-        compose_and(condition1, condition2)
-      when :or
-        compose_or(condition1, condition2)
-      else
-        raise CustomErrors::FilterArgumentError, "Unrecognized filter combiner #{combiner}."
-      end
-    end
-
     # Combine conditions.
     # @param [Symbol] combiner
     # @param [Array<Arel::Nodes::Node>] conditions
@@ -145,35 +129,88 @@ module Filter
           "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}."
       end
 
-      combined_conditions = nil
+      transforms_collection = []
 
-      conditions.each do |condition|
-        combined_conditions = if combined_conditions.blank?
-                                condition
-                              else
-                                combiner_two(combiner, combined_conditions, condition)
-                              end
-      end
+      conditions.reduce(nil) do |previous, condition|
+        if condition in {transforms:, node:}
+          transforms_collection.push(*transforms)
+          condition = node
+        end
 
-      combined_conditions
+        next condition if previous.nil?
+
+        case combiner
+        when :and
+          compose_and(previous, condition)
+        when :or
+          compose_or(previous, condition)
+        else
+          raise CustomErrors::FilterArgumentError, "Unrecognized filter combiner #{combiner}."
+        end
+      end => combined_conditions
+
+      { transforms: transforms_collection, node: combined_conditions }
     end
 
     # Parse a filter.
     # @param [Hash] filter_hash
-    # @return [Hash]
+    # @return [Array]
     def parse(filter_hash)
       parse_filter(filter_hash)
     end
 
-    # Build a custom field.
-    # @param [Symbol] column_name
-    # @return [Hash] field mapping
-    def build_custom_field(column_name)
-      mappings = {}
-      @field_mappings.each { |m| mappings[m[:name]] = m[:value] } unless @field_mappings.blank?
+    # Get the type of this custom field, either :calculated or :virtual
+    # @param [Symbol] column_name - the name of the custom field (it's not really a column)
+    # @return [Symbol, nil] nil if the field cannot be found, or the appropriate symbol
+    def custom_field_type(column_name)
+      return unless @custom_fields2.key?(column_name)
 
-      value = mappings[column_name]
-      value if mappings.keys.include?(column_name) && !value.blank?
+      @custom_fields2[column_name] => {arel:, query_attributes:}
+      if !arel.nil?
+        :calculated
+      elsif !query_attributes.blank?
+        :virtual
+      else
+        raise "Bad custom_field2 definition for #{column_name}"
+      end
+    end
+
+    # Use a custom field 2 definition in a filter query (for filtering or projection of a calculated column)
+    # @param [Symbol] column_name - the name of the custom field (it's not really a column)
+    # @return [Hash, nil] a hash with the columns stated type and an arel expression to use in a filter.
+    #   If no such column exists, will return nil.
+    def build_custom_calculated_field(column_name)
+      return unless @custom_fields2.key?(column_name)
+
+      @custom_fields2[column_name] => {arel:, type:}
+
+      if arel.nil?
+        raise CustomErrors::FilterArgumentError,
+          "Custom field #{column_name} is not supported for filtering or ordering"
+      end
+      raise NotImplementedError, "Custom field #{column_name} does not specify it's type" if type.nil?
+
+      { type:, arel: }
+    end
+
+    # Use a custom field 2 definition in a filter query (for projection of a virtual column)
+    # @param [Symbol] column_name - the name of the custom field (it's not really a column)
+    # @return [Array<::Arel::Attributes::Attribute>, nil] a hash with the columns stated type and an arel expression to use in a filter.
+    #   If no such column exists, will return nil.
+    def build_custom_virtual_field(column_name)
+      return unless @custom_fields2.key?(column_name)
+
+      @custom_fields2[column_name] => {query_attributes:}
+
+      raise "query_attributes cannot be empty for #{column_name}" if query_attributes.blank?
+
+      query_attributes.map do |hint|
+        # implicitly allow the hint here - the hint is
+        # provided by filter settings and not user so
+        # we assume it is secure
+        validate_table_column(@table, hint, [hint])
+        @table[hint]
+      end
     end
 
     # Build an exists query for a many to many join.
@@ -295,11 +332,7 @@ module Filter
           #combiner = primary
           filter_hash = secondary
 
-          #fail CustomErrors::FilterArgumentError.new("'Not' must have a single combiner or field name, got #{filter_hash.size}", {hash: filter_hash}) if filter_hash.size != 1
-
           result = parse_filter(filter_hash)
-
-          #fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {hash: filter_hash}) if result.size != 1
 
           if result.respond_to?(:map)
             result.map { |c| compose_not(c) }
@@ -307,7 +340,7 @@ module Filter
             [compose_not(result)]
           end
 
-        when *@valid_fields.dup.push(/\./)
+        when *@valid_fields, /\./
           field = primary
           field_conditions = secondary
           info = parse_table_field(@table, field)
@@ -320,87 +353,50 @@ module Filter
           filter_value = secondary
           info = extra
 
+          if info.blank?
+            raise CustomErrors::FilterArgumentError,
+              "Attribute is a child of the operator. The attribute should be the parent of `#{primary}`."
+          end
+
           table = info[:arel_table]
           column_name = info[:field_name]
           valid_fields = info[:filter_settings][:valid_fields]
+          model = info[:model]
 
-          custom_field = build_custom_field(column_name)
+          # check if this is a custom field
+          custom_field = build_custom_calculated_field(column_name)
+          if custom_field.nil?
+            # if not, pull column out of active record information
+            validate_table_column(table, column_name, valid_fields)
 
-          if custom_field.blank?
-            condition(filter_name, table, column_name, valid_fields, filter_value)
+            field_node = table[column_name]
+            node_type = model.columns_hash[column_name.to_s].type
           else
-            condition_node(filter_name, custom_field, filter_value)
+            # if a custom field use information supplied
+            custom_field => {type: node_type, arel: field_node}
           end
 
+          if expression?(filter_value)
+            transforms, field_node, filter_value = compose_expression(
+              filter_value,
+              model:,
+              column_name:,
+              column_node: field_node,
+              column_type: node_type
+            )
+
+            return {
+              transforms:,
+              node: condition_node(filter_name, field_node, filter_value)
+            }
+          end
+
+          condition_node(filter_name, field_node, filter_value)
         else
           raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name: #{primary}."
         end
       else
         raise CustomErrors::FilterArgumentError, "Unrecognized filter component: #{primary}."
-      end
-    end
-
-    # Build a condition.
-    # @param [Symbol] filter_name
-    # @param [Arel::Table] table
-    # @param [Symbol] column_name
-    # @param [Array<symbol>] valid_fields
-    # @param [Object] filter_value
-    # @return [Arel::Nodes::Node] condition
-    def condition(filter_name, table, column_name, valid_fields, filter_value)
-      case filter_name
-
-        # comparisons
-      when :eq, :equal
-        compose_eq(table, column_name, valid_fields, filter_value)
-      when :not_eq, :not_equal
-        compose_not_eq(table, column_name, valid_fields, filter_value)
-      when :lt, :less_than
-        compose_lt(table, column_name, valid_fields, filter_value)
-      when :not_lt, :not_less_than
-        compose_not_lt(table, column_name, valid_fields, filter_value)
-      when :gt, :greater_than
-        compose_gt(table, column_name, valid_fields, filter_value)
-      when :not_gt, :not_greater_than
-        compose_not_gt(table, column_name, valid_fields, filter_value)
-      when :lteq, :less_than_or_equal
-        compose_lteq(table, column_name, valid_fields, filter_value)
-      when :not_lteq, :not_less_than_or_equal
-        compose_not_lteq(table, column_name, valid_fields, filter_value)
-      when :gteq, :greater_than_or_equal
-        compose_gteq(table, column_name, valid_fields, filter_value)
-      when :not_gteq, :not_greater_than_or_equal
-        compose_not_gteq(table, column_name, valid_fields, filter_value)
-
-        # subsets
-      when :range, :in_range
-        compose_range_options(table, column_name, valid_fields, filter_value)
-      when :not_range, :not_in_range
-        compose_not_range_options(table, column_name, valid_fields, filter_value)
-      when :in
-        compose_in(table, column_name, valid_fields, filter_value)
-      when :not_in
-        compose_not_in(table, column_name, valid_fields, filter_value)
-      when :contains, :contain
-        compose_contains(table, column_name, valid_fields, filter_value)
-      when :not_contains, :not_contain, :does_not_contain
-        compose_not_contains(table, column_name, valid_fields, filter_value)
-      when :starts_with, :start_with
-        compose_starts_with(table, column_name, valid_fields, filter_value)
-      when :not_starts_with, :not_start_with, :does_not_start_with
-        compose_not_starts_with(table, column_name, valid_fields, filter_value)
-      when :ends_with, :end_with
-        compose_ends_with(table, column_name, valid_fields, filter_value)
-      when :not_ends_with, :not_end_with, :does_not_end_with
-        compose_not_ends_with(table, column_name, valid_fields, filter_value)
-      when :regex, :regex_match, :matches
-        compose_regex(table, column_name, valid_fields, filter_value)
-      when :not_regex, :not_regex_match, :does_not_match, :not_match
-        compose_not_regex(table, column_name, valid_fields, filter_value)
-
-        # unknown
-      else
-        raise CustomErrors::FilterArgumentError, "Unrecognized filter #{filter_name}."
       end
     end
 
@@ -545,7 +541,7 @@ module Filter
 
       validate_name(parsed_table, table_names)
 
-      model = to_model(parsed_table.to_s)
+      model = to_model(parsed_table)
 
       validate_association(model, models)
 
@@ -568,7 +564,12 @@ module Filter
       model.table_name
     end
 
+    # @param [Symbol,::Arel::Table]
     def to_model(table_name)
+      table_name = table_name.name.to_sym if table_name.is_a?(::Arel::Table)
+
+      raise "A symbol was required, got a #{table_name.class}" unless table_name.is_a?(Symbol)
+
       # first try to just find the model from the table
       matching_model = table_name.to_s.classify.safe_constantize
 

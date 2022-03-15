@@ -103,6 +103,8 @@ GEM
     activerecord (7.0.2.3)
       activemodel (= 7.0.2.3)
       activesupport (= 7.0.2.3)
+    activerecord-cte (0.2.0)
+      activerecord
     activestorage (7.0.2.3)
       actionpack (= 7.0.2.3)
       activejob (= 7.0.2.3)
@@ -769,6 +771,7 @@ DEPENDENCIES
   actionview (~> 7.0.1)
   active_storage_validations
   activejob (~> 7.0.1)
+  activerecord-cte
   activestorage (~> 7.0.1)
   activesupport (~> 7.0.1)
   acts_as_paranoid

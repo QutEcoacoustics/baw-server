@@ -384,8 +384,8 @@ describe Filter::Query do
       }
 
       complex_result = <<~SQL
-        SELECT "audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)
+        SELECT ("audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval))
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
         AND ("audio_recordings"."id" = #{audio_recording.id})
@@ -1424,11 +1424,11 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =
         TRUE)))))
-        AND ("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval) < '2016-03-01
+        AND (("audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) < '2016-03-01
         T02:00:00')
-        AND ("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval) > '2016-03-01
+        AND (("audio_recordings"."recorded_date" +
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) > '2016-03-01
         T01:50:00')
         ORDER
         BY "audio_recordings"."recorded_date"
