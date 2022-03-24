@@ -1401,7 +1401,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.0.0 from http://localhost:3000.
+                  Version 7.0.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1438,7 +1438,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.0.0"
+                Write-Information "Acoustic Workbench downloader script version 7.0.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1604,7 +1604,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.0.0 from http://localhost:3000.
+                  Version 7.0.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1641,7 +1641,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.0.0"
+                Write-Information "Acoustic Workbench downloader script version 7.0.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3057,8 +3057,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 49
-                  custom_latitude: 64.815561
-                  custom_longitude: 140.309677
+                  custom_latitude: -81.848818
+                  custom_longitude: -149.904771
                   location_obfuscated: false
                   project_ids:
                   - 55
@@ -3141,8 +3141,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 50
-                  custom_latitude: -67.428157
-                  custom_longitude: -17.759975
+                  custom_latitude: -62.227967
+                  custom_longitude: -138.485918
                   location_obfuscated: false
                   project_ids:
                   - 56
@@ -3267,7 +3267,7 @@ paths:
                       details: 
                 data:
                   id: 52
-                  uuid: bc874a61-7532-4869-8d5e-049337e1947c
+                  uuid: f0fb4386-cabb-45f8-96d1-ccfe7c0147bc
                   recorded_date: '2012-05-17T07:06:59.000Z'
                   site_id: 52
                   duration_seconds: 60000.0
@@ -3285,7 +3285,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 52
-                  file_hash: SHA256::52np4uqeqp3rafmjbq8z2q0bpbhbn42n6lu90bmu4w621lfn3yz5vq3upsxb3uzu
+                  file_hash: SHA256::52y9nfybl9binp4uqeqp3rafmjbq8z2q0bpbhbn42n6lu90bmu4w621lfn3yz5vq
                   uploader_id: 1
                   original_file_name: original name 52.mp3
                   canonical_file_name: 20120517T070659Z_site-name-54_52.mp3

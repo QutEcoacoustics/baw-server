@@ -1,5 +1,21 @@
 # Changelog
 
+## [7.1.0](https://github.com/QutEcoacoustics/baw-server/tree/7.1.0) (2022-03-24)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.0.1...7.1.0)
+
+**Implemented enhancements:**
+
+- Filter recordings by time of day [\#562](https://github.com/QutEcoacoustics/baw-server/issues/562)
+
+**Merged pull requests:**
+
+- Time of day feature [\#563](https://github.com/QutEcoacoustics/baw-server/pull/563) ([atruskie](https://github.com/atruskie))
+
+## [7.0.1](https://github.com/QutEcoacoustics/baw-server/tree/7.0.1) (2022-03-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.0.0...7.0.1)
+
 ## [7.0.0](https://github.com/QutEcoacoustics/baw-server/tree/7.0.0) (2022-03-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/6.1.1...7.0.0)
