@@ -121,7 +121,7 @@ class AudioEvent < ApplicationRecord
       custom_fields2: {
         duration_seconds: {
           query_attributes: [],
-          transform: ->(item) { item },
+          transform: nil,
           arel: AudioEvent.duration_seconds,
           type: :decimal
         }

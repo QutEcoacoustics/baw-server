@@ -35,7 +35,11 @@ module Filter
 
       #   1. this is a calculated column that can be calculated in query
       #     - then we supply the arel directly here
-      return build_custom_calculated_field(column_name)[:arel] if field_type == :calculated
+      if field_type == :calculated
+        calculated = build_custom_calculated_field(column_name)[:arel]
+        # `as` is needed to name the column so it can deserialize into active model
+        return calculated.as(column_name.to_s) unless calculated.nil?
+      end
 
       #   2. this is a virtual column who's result will be calculated post-query in rails and we're just fetching source columns
       #     - then we use query_attributes and apply transform after the fact

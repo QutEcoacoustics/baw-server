@@ -34,8 +34,6 @@ module Filter
           # if our query already has our lookup cte then we can skip adding it again
           return query if query.with_values.any? { |node| node&.left == UTC_OFFSET_TABLE }
 
-          #debugger
-
           tz_column = get_tz_node(model)
 
           # add a CTE to generate a table of offsets

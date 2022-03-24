@@ -13,7 +13,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       media_type: audio_file_bar_lt_metadata[:format],
       original_file_name: Fixtures.bar_lt_file.basename,
       status: :ready,
-      site: site
+      site:
     )
   }
 
@@ -40,7 +40,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
   context 'without fast cache', :slow do
     before do
       Settings.actions.media.cache_to_redis = false
-      expect(Settings.actions.media.cache_to_redis).to eq false
+      expect(Settings.actions.media.cache_to_redis).to be false
     end
 
     after do
@@ -57,11 +57,11 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.content_length).to be_within(100).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.5).of(2.9)
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.5).of(2.9)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.6).of(2.7)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.6).of(2.7)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.0)
 
-      expect(response.headers['X-Error-Message']).to be nil
+      expect(response.headers['X-Error-Message']).to be_nil
     end
 
     example 'pre-generated media requests via disk cache are very quick' do
@@ -81,7 +81,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0).of(0)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0)
 
-      expect(response.headers['X-Error-Message']).to be nil
+      expect(response.headers['X-Error-Message']).to be_nil
     end
 
     example 'generated media requests via disk cache are quick, even near the end of the file' do
@@ -98,7 +98,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(1).of(3.25)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.0)
 
-      expect(response.headers['X-Error-Message']).to be nil
+      expect(response.headers['X-Error-Message']).to be_nil
     end
   end
 
@@ -108,7 +108,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
     end
 
     it 'expects fast cache to be enabled' do
-      expect(Settings.actions.media.cache_to_redis).to eq true
+      expect(Settings.actions.media.cache_to_redis).to be true
     end
 
     example 'generated media requests can be fetched from the fast cache' do
@@ -125,7 +125,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.5).of(2.8)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.01)
 
-      expect(response.headers['X-Error-Message']).to be nil
+      expect(response.headers['X-Error-Message']).to be_nil
     end
   end
 end

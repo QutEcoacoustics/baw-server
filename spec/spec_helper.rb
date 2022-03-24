@@ -94,6 +94,7 @@ RSpec.configure do |config|
 
   # redirect puts into a text file
   # in order: debase, readapt, rdbg
+  # rubocop:disable Lint/Debugger
   if defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__) || defined?(debugger)
     puts '$stdout and $stderr will NOT be redirected'
   else
@@ -112,6 +113,7 @@ RSpec.configure do |config|
       $stdout = original_stdout
     end
   end
+  # rubocop:enable Lint/Debugger
 
   # These two settings work together to allow you to limit a spec run
   # to individual examples or groups you care about by tagging them with

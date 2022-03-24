@@ -425,7 +425,10 @@ module Filter
         value[:custom_fields2].each_value do |custom_definition|
           validate_hash(custom_definition)
           validate_array(custom_definition[:query_attributes])
-          validate_closure(custom_definition[:transform], [:item])
+
+          if custom_definition[:query_attributes].length.positive?
+            validate_closure(custom_definition[:transform], [:item])
+          end
 
           validate_hash_key(custom_definition, :arel, [NilClass, Arel::Nodes::Node])
           validate_hash_key(custom_definition, :type, [Symbol]) unless custom_definition[:arel].nil?

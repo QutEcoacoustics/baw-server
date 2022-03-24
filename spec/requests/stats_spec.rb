@@ -10,7 +10,7 @@ describe '/stats' do
   prepare_audio_events_tags
   prepare_dataset
   create_anon_hierarchy
-  let!(:reference_event) { FactoryBot.create(:audio_event, is_reference: true) }
+  let!(:reference_event) { create(:audio_event, is_reference: true) }
 
   it 'can fetch stats' do
     # anonymous request
@@ -19,7 +19,8 @@ describe '/stats' do
     expect_success
     expect(api_data).to match({
       summary: {
-        users_online: 0,
+        # test randomness sometimes means we don't know how many people are 'online'
+        users_online: an_instance_of(Integer),
         users_total: User.count,
         online_window_start: an_instance_of(String),
         projects_total: 2,

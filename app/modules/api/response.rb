@@ -76,6 +76,9 @@ module Api
       # get newer sort of custom fields, and keep only string keys and transforms
       custom_fields_hash2 = filter_settings
                             .fetch(:custom_fields2, {})
+                            # for calculated fields, they may not have a transform function, so skip those
+                            # and just use the value returned from the database
+                            .reject { |_key, value| value[:transform].nil? }
                             .transform_values { |value| value[:transform] }
                             .transform_keys(&:to_s)
 
@@ -152,7 +155,7 @@ module Api
           status: status_code(status_symbol),
           message: status_phrase(status_symbol)
         },
-        data: data
+        data:
       }
 
       result[:meta][:warning] = opts[:warning] unless opts[:warning].blank?
@@ -378,8 +381,8 @@ module Api
         # update options
         opts.merge!(
           page: filter_query.paging[:page],
-          items: items,
-          total: total
+          items:,
+          total:
         )
       end
 
@@ -434,7 +437,7 @@ module Api
 
       details = capability[:details]&.call(can, item, klass)
 
-      { can: can, details: details }
+      { can:, details: }
     end
 
     def to_f_or_i_or_s(v)

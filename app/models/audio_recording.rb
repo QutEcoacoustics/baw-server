@@ -349,7 +349,7 @@ class AudioRecording < ApplicationRecord
         },
         recorded_end_date: {
           query_attributes: [],
-          transform: ->(item) { item },
+          transform: nil,
           arel: arel_recorded_end_date,
           type: :datetime
         }

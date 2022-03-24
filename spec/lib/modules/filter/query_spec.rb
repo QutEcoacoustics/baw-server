@@ -377,7 +377,7 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
-    it 'can include fields mappings' do
+    it 'can include calculated fields' do
       body = {
         projection: { include: [:recorded_end_date] },
         filter: { id: { eq: audio_recording.id } }
@@ -386,6 +386,7 @@ describe Filter::Query do
       complex_result = <<~SQL
         SELECT ("audio_recordings"."recorded_date" +
         CAST("audio_recordings"."duration_seconds" || ' seconds' as interval))
+        AS "recorded_end_date"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
         AND ("audio_recordings"."id" = #{audio_recording.id})

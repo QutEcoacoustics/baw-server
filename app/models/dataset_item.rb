@@ -108,7 +108,7 @@ class DatasetItem < ApplicationRecord
 
       result[:custom_fields2][:priority] = {
         query_attributes: [],
-        transform: ->(item) { item },
+        transform: nil,
         arel: priority_algorithm_value,
         type: :string
       }

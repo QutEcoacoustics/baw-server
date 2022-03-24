@@ -120,15 +120,15 @@ class Script < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
-                     :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params],
+                     :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params,
+                     :is_last_version, :is_first_version],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
-                      :executable_settings_media_type, :version, :created_at, :creator_id, :analysis_action_params],
+                      :executable_settings_media_type, :version, :created_at, :creator_id, :analysis_action_params,
+                      :is_last_version, :is_first_version],
       text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
                     :analysis_action_params],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
-                         is_last_version: item.is_last_version?,
-                         is_first_version: item.is_first_version?,
                          **item.render_markdown_for_api_for(:description)
                        }
                        [item, virtual_fields]
@@ -136,7 +136,10 @@ class Script < ApplicationRecord
       custom_fields2: {
         is_last_version: {
           query_attributes: [],
-          transform: ->(item) { item },
+          # HACK: calculate the definition virtually as well because calculated
+          # fields are not yet returned in single object responses
+          # https://github.com/QutEcoacoustics/baw-server/issues/565
+          transform: ->(item) { item.is_last_version? },
           arel: Arel::Nodes::Grouping.new(
             Arel::Nodes::InfixOperation.new(
               :'=',
@@ -148,7 +151,10 @@ class Script < ApplicationRecord
         },
         is_first_version: {
           query_attributes: [],
-          transform: ->(item) { item },
+          # HACK: calculate the definition virtually as well because calculated
+          # fields are not yet returned in single object responses
+          # https://github.com/QutEcoacoustics/baw-server/issues/565
+          transform: ->(item) { item.is_first_version? },
           arel: Arel::Nodes::Grouping.new(
             Arel::Nodes::InfixOperation.new(
               :'=',
