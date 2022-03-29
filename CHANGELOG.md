@@ -1,5 +1,17 @@
 # Changelog
 
+## [7.2.1](https://github.com/QutEcoacoustics/baw-server/tree/7.2.1) (2022-03-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.1.0...7.2.1)
+
+**Implemented enhancements:**
+
+- Support arrays for filter conditions in combiner nodes [\#567](https://github.com/QutEcoacoustics/baw-server/issues/567)
+
+**Fixed bugs:**
+
+- Ambiguous column reference for tzinfo\_tz in expressions query [\#566](https://github.com/QutEcoacoustics/baw-server/issues/566)
+
 ## [7.1.0](https://github.com/QutEcoacoustics/baw-server/tree/7.1.0) (2022-03-24)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.0.1...7.1.0)
