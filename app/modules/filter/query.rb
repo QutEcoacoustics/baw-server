@@ -68,11 +68,11 @@ module Filter
 
       # merge filters from qsp partial text match into POST body filter
       partial_match_filters = parse_qsp_partial_match_text(@parameters, key_partial_match, @text_fields)
-      add_qsp_to_filter(@filter, partial_match_filters, :or)
+      @filter = add_qsp_to_filter(@filter, partial_match_filters, :or)
 
       # merge filters from qsp generic equality match into POST body filter
       qsp_generic_filters = parse_qsp(nil, parameters_for_generic, key_prefix)
-      add_qsp_to_filter(@filter, qsp_generic_filters, :and)
+      @filter = add_qsp_to_filter(@filter, qsp_generic_filters, :and)
 
       # populate properties with qsp filter spec
       @qsp_text_filter = @parameters[key_partial_match]
@@ -244,14 +244,28 @@ module Filter
     end
 
     # Add qsp spec to filter
-    # @param [Hash] filter
+    # @param [Hash,Array] filter
     # @param [Hash] additional
     # @param [Symbol] combiner
-    # @return [void]
+    # @return [Hash,Array]
     def add_qsp_to_filter(filter, additional, combiner)
       raise 'Additional filter items must be a hash.' unless additional.is_a?(Hash)
-      raise 'Filter must be a hash.' unless filter.is_a?(Hash)
-      raise 'Combiner be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
+      raise 'Filter must be a hash or array.' unless filter.is_a?(Hash) || filter.is_a?(Array)
+      raise 'Combiner should not be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
+
+      # don't do anything unless we need to
+      #return filter if additional.size.zero?
+
+      # normalize a root filter array
+      filter = { and: filter } if filter.is_a?(Array)
+
+      # return a merge of existing filter and qsp filters
+      # {
+      #   combiner => [
+      #     filter,
+      #     additional
+      #   ]
+      # }
 
       more_than_one = additional.size > 1
       combiner_present = filter.include?(combiner)
@@ -278,6 +292,8 @@ module Filter
           raise 'Problem adding additional filter items.'
         end
       end
+
+      filter
     end
 
     # Add conditions to a query.

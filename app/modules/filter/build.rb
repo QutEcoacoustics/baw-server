@@ -149,6 +149,13 @@ module Filter
         end
       end => combined_conditions
 
+      # wrap this set of expressions in brackets so we don't leak conditions
+      # e.g chaining `x AND y OR z` can be very different from `x AND (y OR z)`
+      # this produces a lot of brackets...
+      unless combined_conditions.is_a?(::Arel::Nodes::Grouping)
+        combined_conditions = Arel::Nodes::Grouping.new(combined_conditions)
+      end
+
       { transforms: transforms_collection, node: combined_conditions }
     end
 
@@ -290,7 +297,7 @@ module Filter
 
     private
 
-    # Parse a filter hash.
+    # Recursively parse a filter hash.
     # @param [Hash, Symbol] primary
     # @param [Hash, Object] secondary
     # @param [nil, Hash] extra
@@ -307,19 +314,20 @@ module Filter
             { hash: primary })
         end
 
-        conditions = []
-
-        primary.each do |key, value|
-          result = parse_filter(key, value, secondary)
-          if result.is_a?(Array)
-            conditions.push(*result)
-          else
-            conditions.push(result)
-          end
+        primary.flat_map do |key, value|
+          parse_filter(key, value, secondary)
         end
+      when Array
+        raise CustomErrors::FilterArgumentError, 'Filter arrays must not be empty' if primary.empty?
 
-        conditions
+        primary.flat_map do |value|
+          unless value.is_a?(Hash)
+            raise CustomErrors::FilterArgumentError,
+              "Filter arrays can only contain other hashes; `#{value}` is not valid"
+          end
 
+          parse_filter(value)
+        end
       when Symbol
 
         case primary

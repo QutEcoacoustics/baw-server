@@ -270,8 +270,8 @@ describe Filter::Query do
           INNER JOIN "offset_table"
           ON "tzinfo_tz" = "offset_table"."name"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
-          AND ((CAST(((("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) >= CAST('03:00' AS time))
-          OR (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) <= CAST('05:00' AS time)))
+          AND (((CAST(((("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) >= CAST('03:00' AS time))
+          OR (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) <= CAST('05:00' AS time))))
           ORDER BY "audio_recordings"."recorded_date" DESC
           LIMIT 25 OFFSET 0
         SQL

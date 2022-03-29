@@ -283,53 +283,67 @@ describe '/audio_recordings' do
         site_id: {
           eq: sydney.id
         },
-        or: {
-          recorded_end_date: {
-            gt: { expressions: ['local_tz', 'time_of_day'], value: '22:00' },
-            lteq: { expressions: ['local_tz', 'time_of_day'], value: '01:00' }
+        and: [
+          {
+            recorded_date: {
+              gteq: '2021-10-03'
+            }
           },
-          recorded_date: {
-            lteq: { expressions: ['local_tz', 'time_of_day'], value: '01:00' }
+          {
+            recorded_date: {
+              lt: '2021-10-04'
+            }
+          },
+          {
+            or: [
+              {
+                recorded_end_date:
+                {
+                  gteq: { expressions: ['local_tz', 'time_of_day'], value: '22:00' }
+                }
+              },
+              {
+                recorded_date: {
+                  lteq: { expressions: ['local_tz', 'time_of_day'], value: '01:00' }
+                }
+              },
+              {
+                recorded_end_date:
+                {
+                  lteq: { expressions: ['local_tz', 'time_of_day'], value: '01:00' }
+                }
+              },
+              {
+                recorded_date: {
+                  lt: { expressions: ['local_tz', 'time_of_day'], value: '01:00' }
+                }
+              }
+            ]
           }
-        }
+
+        ]
       })
 
       # rubocop:disable Layout/LineLength
       # Day                : |----------------- 1--------------| |----------------- 2--------------| |--DD------------- 3--------------| |----------------- 4--------------| |----------------- 5--------------| |----------------- 6--------------|
+      # Hour (UTC)         : 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12
       # Hour (+10)         : 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22
       # Hour (+10/11)      : 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 03 05 07 09 11 13 15 17 19 21 23 01 03 05 07 09 11 13 15 17 19 21 23 01 03 05 07 09 11 13 15 17 19 21 23 01 03 05 07 09 11 13 15 17 19 21 23
       # Hour (+08)         : 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20 22 00 02 04 06 08 10 12 14 16 18 20
       # Rec (+10)          : -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
       #                                                                                                 DST honored in this query!
-      # Query Syd (+10/+11): -|                               |---|                               |---|                             |---|                               |---|                              |----|                              |---
+      # Query Syd (+10/+11):                                                                                        xxxxxxxxxxxxxxxx|---|xxxxxxxxxxxxxx
       # Query Perth (+8)   :
       # rubocop:enable Layout/LineLength
 
       expect(data).to match([
         # these are all +10:00 times
-        make_result(site_id: sydney.id, day: 1, hour: 0),
-
-        make_result(site_id: sydney.id, day: 1, hour: 22),
-        make_result(site_id: sydney.id, day: 2, hour: 0),
-
-        make_result(site_id: sydney.id, day: 2, hour: 22),
-        make_result(site_id: sydney.id, day: 3, hour: 0),
 
         # DST cross-over is honored - the hour shift moves the the edge of 1am which is the next recording
         make_result(site_id: sydney.id, day: 3, hour: 20),
         make_result(site_id: sydney.id, day: 3, hour: 22),
-        make_result(site_id: sydney.id, day: 4, hour: 0),
+        make_result(site_id: sydney.id, day: 4, hour: 0)
 
-        make_result(site_id: sydney.id, day: 4, hour: 20),
-        make_result(site_id: sydney.id, day: 4, hour: 22),
-        make_result(site_id: sydney.id, day: 5, hour: 0),
-
-        make_result(site_id: sydney.id, day: 5, hour: 20),
-        make_result(site_id: sydney.id, day: 5, hour: 22),
-        make_result(site_id: sydney.id, day: 6, hour: 0),
-
-        make_result(site_id: sydney.id, day: 6, hour: 20),
-        make_result(site_id: sydney.id, day: 6, hour: 22)
       ])
     end
 

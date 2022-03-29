@@ -739,7 +739,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        AND ("audio_recordings"."site_id" < 123456)
+        AND ((("audio_recordings"."site_id" < 123456)
         AND ("audio_recordings"."site_id" > 9876)
         AND ("audio_recordings"."site_id"
         IN (1, 2, 3))
@@ -758,9 +758,9 @@ describe Filter::Query do
         AND ("audio_recordings"."duration_seconds"
         IN (4.0, 5.0, 6.0))
         AND ("audio_recordings"."duration_seconds" = 123.0)
-        AND (("audio_recordings"."duration_seconds" != 40.0)
+        AND ((("audio_recordings"."duration_seconds" != 40.0)
         OR (
-        NOT ("audio_recordings"."channels" <= 9999)))
+        NOT ("audio_recordings"."channels" <= 9999))))))
         AND ("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
@@ -769,7 +769,7 @@ describe Filter::Query do
         ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
         WHERE "audio_events"."is_reference" =
         TRUE))
-        AND (("audio_recordings"."recorded_date" = '2016-04-24 12:00:00')
+        AND ((("audio_recordings"."recorded_date" = '2016-04-24 12:00:00')
         OR ("audio_recordings"."media_type"
           ILIKE '%world')
         OR ("audio_recordings"."media_type"
@@ -789,7 +789,7 @@ describe Filter::Query do
         OR ("audio_recordings"."status"
         ILIKE '%testing\\_testing%')
         OR ("audio_recordings"."original_file_name"
-        ILIKE '%testing\\_testing%'))
+        ILIKE '%testing\\_testing%')))
         AND (NOT ("audio_recordings"."duration_seconds" != 140.0))
         AND (NOT ("audio_recordings"."id"IN (
         SELECT "audio_recordings"."id"
@@ -1003,7 +1003,7 @@ describe Filter::Query do
         WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
-        AND ("audio_recordings"."id"
+        AND ((("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
         FROM "audio_recordings"
@@ -1020,7 +1020,7 @@ describe Filter::Query do
         JOIN "projects"
         ON "projects_sites"."project_id" = "projects"."id"
         WHERE "projects"."id" < 123456))
-        AND ("audio_recordings"."duration_seconds" != 40.0)
+        AND ("audio_recordings"."duration_seconds" != 40.0)))
         ORDER
         BY "audio_recordings"."recorded_date"
         DESC
@@ -1066,7 +1066,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
-        AND ("audio_recordings"."id"
+        AND ((("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
         FROM "audio_recordings"
@@ -1083,7 +1083,7 @@ describe Filter::Query do
         JOIN "projects"
         ON "projects_sites"."project_id" = "projects"."id"
         WHERE "projects"."id" < 123456))
-        AND ("audio_recordings"."duration_seconds" != 40.0)
+        AND ("audio_recordings"."duration_seconds" != 40.0)))
         ORDER
         BY "audio_recordings"."recorded_date"
         DESC
@@ -1426,11 +1426,9 @@ describe Filter::Query do
         OR ("permissions"."allow_logged_in" =
         TRUE)))))
         AND (("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) < '2016-03-01
-        T02:00:00')
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) < '2016-03-01T02:00:00')
         AND (("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) > '2016-03-01
-        T01:50:00')
+        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) > '2016-03-01T01:50:00')
         ORDER
         BY "audio_recordings"."recorded_date"
         DESC
