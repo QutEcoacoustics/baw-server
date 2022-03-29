@@ -12,7 +12,7 @@ module Filter
             "Expression function `local_offset` or `local_tz` is not compatible with type `#{type}`"
         end
 
-        return if model_has_tz?(model) || model_has_tz_scope?(model)
+        return if model_has_tz_relation?(model)
 
         raise CustomErrors::FilterArgumentError,
           "Cannot use `local_offset` or `local_tz` with the `#{model.name}` model because it does have timezone information"
@@ -30,11 +30,11 @@ module Filter
         convert_to_local(node, get_tz_node(model))
       end
 
-      def transform_query(model, column_name)
-        return super(model, column_name) if model_has_tz?(model)
+      def transform_query(model, _column_name)
+        model.with_timezone => {association:}
 
         lambda { |query|
-          model.with_timezone(query)
+          query.left_outer_joins(association)
         }
       end
 
@@ -44,18 +44,15 @@ module Filter
 
       protected
 
-      def model_has_tz?(model)
-        model.columns_hash.key?('tzinfo_tz')
-      end
-
-      def model_has_tz_scope?(model)
+      def model_has_tz_relation?(model)
         model.respond_to?(:with_timezone)
       end
 
       def get_tz_node(model)
-        return model.arel_table['tzinfo_tz'] if model_has_tz?(model)
-
-        return ::Arel::Nodes::UnqualifiedColumn.new(:tzinfo_tz) if model_has_tz_scope?(model)
+        if model_has_tz_relation?(model)
+          model.with_timezone => { model: relation_model, column: relation_column }
+          return relation_model.arel_table[relation_column]
+        end
 
         raise 'Unhandled case'
       end

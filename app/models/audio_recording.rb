@@ -179,8 +179,12 @@ class AudioRecording < ApplicationRecord
 
   # Allows this model to infer its timezone when included with larger queries
   # constructed by filter args.
-  def self.with_timezone(query)
-    query.left_outer_joins(:site)
+  def self.with_timezone
+    {
+      model: Site,
+      association: :site,
+      column: :tzinfo_tz
+    }
   end
 
   # Check if the original file for this audio recording currently exists.

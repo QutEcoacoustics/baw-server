@@ -461,10 +461,41 @@ describe '/audio_recordings' do
       ])
     end
 
-    def post_filter(filter:)
+    it 'can filter for recordings and not produce column conflicts for tzinfo' do
+      # https://github.com/QutEcoacoustics/baw-server/issues/566
+      data = post_filter(filter: {
+        'projects.id': { eq: 1 },
+        recorded_end_date: {
+          greater_than_or_equal: { expressions: ['local_offset', 'time_of_day'], value: '07:00' }
+        },
+        recorded_date: {
+          less_than_or_equal: { expressions: ['local_offset', 'time_of_day'], value: '07:01' }
+        }
+      }, projection:  { include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name', 'recorded_date_timezone'] })
+
+      expect(data).to match([
+        # these are all +10:00 times
+        make_result(site_id: sydney.id, day: 1, hour: 6),
+        make_result(site_id: perth.id, day: 1, hour: 8),
+        make_result(site_id: sydney.id, day: 2, hour: 6),
+        make_result(site_id: perth.id, day: 2, hour: 8),
+
+        make_result(site_id: sydney.id, day: 3, hour: 6),
+        make_result(site_id: perth.id, day: 3, hour: 8),
+        make_result(site_id: sydney.id, day: 4, hour: 6),
+        make_result(site_id: perth.id, day: 4, hour: 8),
+        make_result(site_id: sydney.id, day: 5, hour: 6),
+        make_result(site_id: perth.id, day: 5, hour: 8),
+        make_result(site_id: sydney.id, day: 6, hour: 6),
+        make_result(site_id: perth.id, day: 6, hour: 8)
+      ])
+    end
+
+    def post_filter(filter:, projection: nil)
+      projection ||= { include: [:recorded_date_timezone, :recorded_date, :site_id] }
       body = {
         filter:,
-        projection: { include: [:recorded_date_timezone, :recorded_date, :site_id] },
+        projection:,
         sorting: { orderBy: 'recorded_date', direction: 'asc' }
       }
 

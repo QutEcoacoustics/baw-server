@@ -105,7 +105,7 @@ describe Filter::Query do
           ON ("sites"."deleted_at" IS NULL)
           AND ("sites"."id" = "audio_recordings"."site_id")
           WHERE ("audio_recordings"."deleted_at" IS NULL)
-          AND ((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "tzinfo_tz") = (('2022-02-02T22:22' AT TIME ZONE 'UTC') AT TIME ZONE "tzinfo_tz"))
+          AND ((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "sites"."tzinfo_tz") = (('2022-02-02T22:22' AT TIME ZONE 'UTC') AT TIME ZONE "sites"."tzinfo_tz"))
           ORDER BY "audio_recordings"."recorded_date" DESC
           LIMIT 25 OFFSET 0
         SQL
@@ -138,7 +138,7 @@ describe Filter::Query do
           LEFT OUTER JOIN "sites"
           ON ("sites"."deleted_at" IS NULL) AND ("sites"."id" = "audio_recordings"."site_id")
           INNER JOIN "offset_table"
-          ON "tzinfo_tz" = "offset_table"."name"
+          ON "sites"."tzinfo_tz" = "offset_table"."name"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
           AND ((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") = (('2022-02-02T22:22' AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset"))
           ORDER BY "audio_recordings"."recorded_date" DESC
@@ -168,7 +168,7 @@ describe Filter::Query do
           ON ("sites"."deleted_at" IS NULL)
           AND ("sites"."id" = "audio_recordings"."site_id")
           WHERE ("audio_recordings"."deleted_at" IS NULL)
-          AND (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "tzinfo_tz") AS time) = CAST('22:22' AS time))
+          AND (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "sites"."tzinfo_tz") AS time) = CAST('22:22' AS time))
           ORDER BY "audio_recordings"."recorded_date" DESC
           LIMIT 25 OFFSET 0
         SQL
@@ -201,7 +201,7 @@ describe Filter::Query do
           LEFT OUTER JOIN "sites"
           ON ("sites"."deleted_at" IS NULL) AND ("sites"."id" = "audio_recordings"."site_id")
           INNER JOIN "offset_table"
-          ON "tzinfo_tz" = "offset_table"."name"
+          ON "sites"."tzinfo_tz" = "offset_table"."name"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
           AND (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) = CAST('22:22' AS time))
           ORDER BY "audio_recordings"."recorded_date" DESC
@@ -268,7 +268,7 @@ describe Filter::Query do
           LEFT OUTER JOIN "sites"
           ON ("sites"."deleted_at" IS NULL) AND ("sites"."id" = "audio_recordings"."site_id")
           INNER JOIN "offset_table"
-          ON "tzinfo_tz" = "offset_table"."name"
+          ON "sites"."tzinfo_tz" = "offset_table"."name"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
           AND (((CAST(((("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) >= CAST('03:00' AS time))
           OR (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) <= CAST('05:00' AS time))))
