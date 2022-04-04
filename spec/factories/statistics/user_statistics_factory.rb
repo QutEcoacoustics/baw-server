@@ -8,7 +8,7 @@
 #  audio_original_download_count :bigint           default(0)
 #  audio_segment_download_count  :bigint           default(0)
 #  bucket                        :tsrange          not null, primary key
-#  user_id                       :bigint           primary key
+#  user_id                       :bigint           not null, primary key
 #
 # Indexes
 #
@@ -21,7 +21,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 FactoryBot.define do
-  factory :user_statistics do
+  factory :user_statistics, class: 'Statistics::UserStatistics' do
     audio_original_download_count { 0 }
     audio_segment_download_count { 0 }
     audio_download_duration { 0 }

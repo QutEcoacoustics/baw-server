@@ -101,8 +101,6 @@ module Filter
 
       # paging
       query_paging(query)
-
-      # result
     end
 
     # Get the query represented by the parameters sent in new. DOES NOT include paging or sorting.
@@ -115,8 +113,6 @@ module Filter
 
       #filter
       query_filter(query)
-
-      # result
     end
 
     # Get the query represented by the parameters sent in new. DOES NOT include advanced filtering, paging or sorting.
@@ -126,8 +122,6 @@ module Filter
 
       # restrict to select columns
       query_projection(query)
-
-      # result
     end
 
     # Add filtering to a query.
@@ -364,16 +358,14 @@ module Filter
       sort_field = @build.build_custom_calculated_field(column_name)&.fetch(:arel)
       sort_field = table[column_name] if sort_field.blank?
 
-      sort_field_by = if sort_field.is_a? String
-                        sort_field
-                      elsif direction == :desc
-
-                        Arel::Nodes::Descending.new(sort_field)
-                      else
-                        #direction == :asc
-                        Arel::Nodes::Ascending.new(sort_field)
-
-                      end
+      if sort_field.is_a? String
+        sort_field
+      elsif direction == :desc
+        Arel::Nodes::Descending.new(sort_field)
+      else
+        #direction == :asc
+        Arel::Nodes::Ascending.new(sort_field)
+      end => sort_field_by
 
       query.order(sort_field_by)
     end
@@ -386,40 +378,6 @@ module Filter
     def apply_paging(query, offset, limit)
       validate_paging(offset, limit)
       query.offset(offset).limit(limit)
-    end
-
-    # Add projections to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Array<Arel::Nodes::Node>] projections
-    # @return [ActiveRecord::Relation] the modified query
-    def apply_projections(query, projections)
-      new_query = query
-      projections.each do |projection|
-        new_query = apply_projection(new_query, projection)
-      end
-      new_query
-    end
-
-    # Add projection to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Arel::Nodes::Node] projection
-    # @return [ActiveRecord::Relation] the modified query
-    def apply_projection(query, projection)
-      validate_query(query)
-      validate_projection(projection)
-
-      if projection.is_a?(Hash)
-        expression = projection[:base_table]
-        projection[:joins].each do |join|
-          expression = expression.join(join[:arel_table], join[:type]).on(join[:on])
-        end
-        query = query.joins(expression.join_sources)
-        query = query.select(projection[:projection])
-
-        return query
-      end
-
-      query.select(projection)
     end
   end
 end

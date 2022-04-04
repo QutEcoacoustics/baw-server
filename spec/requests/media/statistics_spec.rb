@@ -5,14 +5,14 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
   create_audio_recordings_hierarchy
 
   let(:lt_recording) {
-    FactoryBot.create(
+    create(
       :audio_recording,
       recorded_date: Time.zone.parse('2019-09-13T00:00:01+1000 '),
       duration_seconds: audio_file_bar_lt_metadata[:duration_seconds],
       media_type: audio_file_bar_lt_metadata[:format],
       original_file_name: Fixtures.bar_lt_file.basename,
       status: :ready,
-      site: site
+      site:
     )
   }
 
@@ -53,9 +53,19 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       segment_download_duration: recording_segment_duration.nil? ? nil : a_value_within(0.001).of(recording_segment_duration.to_d)
     }
 
+    if user.nil?
+      expect(Statistics::UserStatistics.count).to eq 0
+
+      Statistics::AnonymousUserStatistics.totals
+    else
+      expect(Statistics::AnonymousUserStatistics.count).to eq 0
+
+      Statistics::UserStatistics.totals_for(user)
+    end => sum
+
     actual = {}.merge(
-      AudioRecordingStatistics.totals_for(lt_recording),
-      UserStatistics.totals_for(user)
+      Statistics::AudioRecordingStatistics.totals_for(lt_recording),
+      sum
     )
 
     expect(actual).to match a_hash_including(expected)
@@ -101,7 +111,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
         duration =  (audio_file_bar_lt_metadata[:duration_seconds] * 2) + 30 + 19.5 + 300
         expect_stats(3, 2, duration, 3, 2, 30 + 19.5 + 300)
-        expect(AudioRecordingStatistics.count).to eq 1
+        expect(Statistics::AudioRecordingStatistics.count).to eq 1
       end
 
       it 'does not count HEAD requests' do
@@ -109,7 +119,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
         expect_success
 
         expect_stats(nil, nil, nil, nil, nil, nil)
-        expect(AudioRecordingStatistics.count).to eq 0
+        expect(Statistics::AudioRecordingStatistics.count).to eq 0
       end
 
       it 'does not count json requests' do
@@ -117,7 +127,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
         expect_success
 
         expect_stats(nil, nil, nil, nil, nil, nil)
-        expect(AudioRecordingStatistics.count).to eq 0
+        expect(Statistics::AudioRecordingStatistics.count).to eq 0
       end
 
       it 'does not count spectrogram requests' do
@@ -125,7 +135,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
         expect_success
 
         expect_stats(nil, nil, nil, nil, nil, nil)
-        expect(AudioRecordingStatistics.count).to eq 0
+        expect(Statistics::AudioRecordingStatistics.count).to eq 0
       end
 
       it 'does not count failed requests' do
@@ -133,7 +143,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
         expect(response).to have_http_status(:unprocessable_entity)
 
         expect_stats(nil, nil, nil, nil, nil, nil)
-        expect(AudioRecordingStatistics.count).to eq 0
+        expect(Statistics::AudioRecordingStatistics.count).to eq 0
       end
     end
 
@@ -158,7 +168,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
         get media_url(5000, 5300), headers: headers
 
         expect_stats(3, 0, 30 + 19.5 + 300, 3, 0, 30 + 19.5 + 300)
-        expect(AudioRecordingStatistics.count).to eq 1
+        expect(Statistics::AudioRecordingStatistics.count).to eq 1
       end
     end
   end

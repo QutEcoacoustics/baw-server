@@ -15,7 +15,9 @@ module Baw
       # @param [Hash] attributes a hash of attributes to upsert
       # @return [void]
       def upsert_counter(attributes)
-        update_attrs = attributes.keys.reject { |key| primary_keys.include?(key.to_s) }
+        pks = _primary_keys
+
+        update_attrs = attributes.keys.reject { |key| pks.include?(key.to_s) }
         upsert_query(
           attributes,
           returning: nil,
@@ -43,15 +45,22 @@ module Baw
       #   unique indexes to be resolved.
       # @return [Array<Array<Object>,Object>] an array rows each including an array columns,
       #   if `returning` is not `nil`. If only one column is returned the columns array will be unwrapped.
+
       def upsert_query(attributes, on_conflict:, returning: [], conflict_target: nil, conflict_where: nil)
         Baw::Arel::UpsertManager.new(self).tap do |u|
           u.insert(attributes)
 
           u.on_conflict(on_conflict, conflict_target, conflict_where)
 
-          returning = primary_keys if !returning.nil? && returning.empty?
+          returning = _primary_keys if !returning.nil? && returning.empty?
           u.returning(returning)
         end
+      end
+
+      private
+
+      def _primary_keys
+        defined?(primary_keys) ? primary_keys : [primary_key]
       end
     end
   end

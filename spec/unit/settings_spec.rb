@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
-
-
 describe 'Settings' do
   subject {
     Settings
   }
 
-  it { should be_a(Config::Options) }
-  it { should be_a_kind_of(BawWeb::Settings) }
+  it { is_expected.to be_a(Config::Options) }
+  it { is_expected.to be_a_kind_of(BawWeb::Settings) }
 
-  it 'should include BawWeb::Settings' do
+  it 'includes BawWeb::Settings' do
     expect(subject.class.ancestors).to start_with(BawWeb::Settings, Config::Options)
   end
 
-  it 'should include special methods from BawWeb::Settings' do
+  it 'includes special methods from BawWeb::Settings' do
     expect(subject.methods).to include(
       :supported_media_types,
       :media_category,
@@ -28,7 +26,7 @@ describe 'Settings' do
     expect(Settings.supported_media_types[:text][0].to_str).to eq('application/json')
   end
 
-  its(:sources) { should eq(BawApp.config_files.map(&:to_s)) }
+  its(:sources) { is_expected.to eq(BawApp.config_files.map(&:to_s)) }
 
   describe 'versioning' do
     after(:all) do

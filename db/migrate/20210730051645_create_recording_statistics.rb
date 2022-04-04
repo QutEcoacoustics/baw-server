@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# Adds tables for tracking usage stats
-class CreateRecordingStatistics < ActiveRecord::Migration[6.1]
+module BucketHelper
   # a range of one day, at utc, example:
   # ["2021-08-02 00:00:00","2021-08-03 00:00:00")
   STATS_BUCKET_OPTIONS = {
@@ -19,36 +18,68 @@ class CreateRecordingStatistics < ActiveRecord::Migration[6.1]
     #   https://www.postgresql.org/docs/13/sql-insert.html
     # - and need the EXCLUSION constraint to ensure non-overlapping ranges
     # Ideally an exclusion constraint could be used as a uniqueness constraint
+    #
+    # UPDATE FROM THE FUTURE: exclusion constraints cant ever be used with upserts
+    # so although this migration still adds them (migrations must be immutable) a
+    # later migration removes the exclusion constraint
 
-    # SET UNLOGGED disables the write ahead log - that is writing to disk before finishing the transaction.
-    # Greatly improves write speed but at the risk of losing the most recent entries if the database crashes.
-    unique_name = "constraint_baw_#{table}_unique"
+    alter_exclude_constraint(table, column, with:, add:)
+    alter_unique_constraint(table, column, with:, add:)
+  end
+
+  def alter_exclude_constraint(table, column, with:, add: true)
     no_overlap_name = "constraint_baw_#{table}_non_overlapping"
+    with_gist = with.nil? ? '' : "#{with} WITH =, "
     if add
       <<~SQL
-        ALTER TABLE #{table} ADD CONSTRAINT #{no_overlap_name} EXCLUDE USING GIST (#{with} WITH =, #{column} WITH &&);
-        ALTER TABLE #{table} ADD CONSTRAINT #{unique_name} UNIQUE (#{with}, #{column});
-        ALTER TABLE #{table} SET UNLOGGED;
+        ALTER TABLE #{table} ADD CONSTRAINT #{no_overlap_name} EXCLUDE USING GIST (#{with_gist}#{column} WITH &&);
       SQL
     else
       <<~SQL
-        ALTER TABLE #{table} DROP CONSTRAINT IF EXISTS #{unique_name};
-        ALTER TABLE #{table} DROP CONSTRAINT IF EXISTS #{no_overlap_name};
-        ALTER TABLE #{table} SET LOGGED;
+        ALTER TABLE IF EXISTS  #{table} DROP CONSTRAINT IF EXISTS #{no_overlap_name};
       SQL
     end => query
 
     execute(query)
   end
 
+  def alter_unique_constraint(table, column, with:, add: true)
+    # SET UNLOGGED disables the write ahead log - that is writing to disk before finishing the transaction.
+    # Greatly improves write speed but at the risk of losing the most recent entries if the database crashes.
+    unique_name = "constraint_baw_#{table}_unique"
+    with_unique = with.nil? ? '' : "#{with}, "
+    if add
+
+      <<~SQL
+        ALTER TABLE #{table} ADD CONSTRAINT #{unique_name} UNIQUE (#{with_unique}#{column});
+        ALTER TABLE #{table} SET UNLOGGED;
+      SQL
+
+    else
+      <<~SQL
+        ALTER TABLE IF EXISTS  #{table} DROP CONSTRAINT IF EXISTS #{unique_name};
+        ALTER TABLE IF EXISTS  #{table} SET LOGGED;
+      SQL
+    end => query
+
+    execute(query)
+  end
+end
+
+# Adds tables for tracking usage stats
+class CreateRecordingStatistics < ActiveRecord::Migration[6.1]
+  include BucketHelper
+
   # No primary key is intentional, uniqueness enforced by constraints
+  # ‼️ Update from the future: this was a mistake, see db/migrate/20220331070014_add_pk_to_stats_table.rb
   # Fill factor ensures some space is left in pages so updates can occur efficiently.
   def change
     # user statistics
     create_table(
       :user_statistics, id: false, options: 'WITH (fillfactor = 90)'
     ) do |t|
-      # anonymous access is tracked with a nil user
+      # ~~anonymous access is tracked with a nil user~~
+      # UPDATE: this behaviour is overridden in a subsequent migration
       t.bigint :user_id, null: true
       t.tsrange :bucket, **STATS_BUCKET_OPTIONS
 

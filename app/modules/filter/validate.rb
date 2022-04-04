@@ -171,7 +171,7 @@ module Filter
     end
 
     def validate_node_or_attribute(value)
-      check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute)
+      check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute) || value.is_a?(::Arel::Nodes::SqlLiteral)
       unless check
         raise CustomErrors::FilterArgumentError,
           "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}"

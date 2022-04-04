@@ -226,6 +226,7 @@ RSpec.configure do |config|
   require_relative 'helpers/shared_examples/permissions_for'
   require_relative 'helpers/shared_examples/capabilities_for'
   require_relative 'helpers/shared_examples/a_stats_bucket'
+  require_relative 'helpers/shared_examples/a_stats_segment_incrementor'
 
   require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"
 
@@ -331,15 +332,16 @@ RSpec.configure do |config|
     }
   end
 
-  # enable options requests in feature tests
-  module ActionDispatch
-    module Integration
-      module RequestHelpers
-        # REVIEW: for rails 7: should exist
-        def options(path, **args)
-          process(:options, path, **args)
-        end
-      end
+  # n+1 query detection
+  # configuration in config/environments/test.rb
+  if Bullet.enable?
+    config.before do
+      Bullet.start_request
+    end
+
+    config.after do
+      Bullet.perform_out_of_channel_notifications if Bullet.notification?
+      Bullet.end_request
     end
   end
 end

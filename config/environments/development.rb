@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
@@ -64,15 +66,7 @@ Rails.application.configure do
   #config.middleware.insert 0, Rack::RequestProfiler, printer: ::RubyProf::CallTreePrinter
 
   config.after_initialize do
-    # detect n+1 queries
-    Bullet.enable = true
-    Bullet.bullet_logger = true
-    Bullet.console = true
-    Bullet.alert = false
-    Bullet.console = true
-    Bullet.rails_logger = true
-    Bullet.add_footer = true
-    Bullet.raise = false
+    # empty
   end
 
   # Use an evented file watcher to asynchronously detect changes in source code,

@@ -18,7 +18,7 @@ services:
       - baw_network
 
   db:
-    image: postgres
+    image: postgres:14
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:

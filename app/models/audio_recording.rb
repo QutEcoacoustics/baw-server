@@ -68,7 +68,7 @@ class AudioRecording < ApplicationRecord
   has_many :tags, through: :audio_events
   has_many :dataset_items, inverse_of: :audio_recording
 
-  has_one :statistics, class_name: AudioRecordingStatistics.name
+  has_one :statistics, class_name: Statistics::AudioRecordingStatistics.name
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings,
@@ -333,7 +333,9 @@ class AudioRecording < ApplicationRecord
                       :notes, :file_hash, :uploader_id, :original_file_name,
                       :canonical_file_name, :recorded_date_timezone],
       text_fields: [:media_type, :status, :original_file_name],
-      custom_fields: ->(item, _user) { [item, {}] },
+      custom_fields: lambda { |item, _user|
+                       [item, {}]
+                     },
       # a better designed custom field
       # can be included in a projection!
       # dirty hack: but there's not much point innovating here - the whole mess
@@ -346,9 +348,9 @@ class AudioRecording < ApplicationRecord
           type: :string
         },
         recorded_date_timezone: {
-          query_attributes: [:site_id],
-          transform: ->(item) { item&.site&.timezone&.dig(:identifier) },
-          arel: nil,
+          query_attributes: [],
+          transform: nil,
+          arel: arel_timezone,
           type: :string
         },
         recorded_end_date: {
@@ -528,5 +530,13 @@ class AudioRecording < ApplicationRecord
     Arel::Nodes::Grouping.new(
       Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
     )
+  end
+
+  # Results in:
+  # ((SELECT tzinfo_tz FROM "sites" WHERE "audio_recordings"."site_id" = "sites"."id"))
+  def self.arel_timezone
+    s = Site.arel_table
+    a = AudioRecording.arel_table
+    Arel.grouping(s.where(a[:site_id] == s[:id]).project(:tzinfo_tz))
   end
 end

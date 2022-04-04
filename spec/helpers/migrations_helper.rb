@@ -1,9 +1,60 @@
 # frozen_string_literal: true
 
-# ! version: 12.7.0-pre
 # ! author: GitLab B.V.
 # ! license MIT Expat https://gitlab.com/gitlab-org/gitlab/-/blob/f81fa6ab1dd788b70ef44b85aaba1f31ffafae7d/LICENSE
-# ! https://gitlab.com/gitlab-org/gitlab/-/blob/f81fa6ab1dd788b70ef44b85aaba1f31ffafae7d/spec/support/helpers/migrations_helpers.rb
+# ! https://gitlab.com/gitlab-org/gitlab/-/blob/7d6547ce36361ef056e76e02d21f409e4b728ba6/spec/support/helpers/migrations_helpers.rb
+
+require 'find'
+
+# https://gitlab.com/gitlab-org/gitlab/-/blob/7d6547ce36361ef056e76e02d21f409e4b728ba6/spec/support/helpers/require_migration.rb
+class RequireMigration
+  class AutoLoadError < RuntimeError
+    MESSAGE = "Can not find any migration file for `%{file_name}`!\n" \
+              'You can try to provide the migration file name manually.'
+
+    def initialize(file_name)
+      message = format(MESSAGE, file_name:)
+
+      super(message)
+    end
+  end
+
+  MIGRATION_FOLDERS = ['db/migrate'].freeze
+  SPEC_FILE_PATTERN = %r{.+/(?:\d+_)?(?<file_name>.+)_spec\.rb}
+
+  class << self
+    def require_migration!(file_name)
+      file_paths = search_migration_file(file_name)
+      raise AutoLoadError, file_name unless file_paths.first
+
+      require file_paths.first
+    end
+
+    def search_migration_file(file_name)
+      migration_file_pattern = /\A\d+_#{file_name}\.rb\z/
+
+      migration_folders.flat_map do |path|
+        migration_path = Rails.root.join(path).to_s
+
+        Find.find(migration_path).select { |m| migration_file_pattern.match? File.basename(m) }
+      end
+    end
+
+    private
+
+    def migration_folders
+      MIGRATION_FOLDERS
+    end
+  end
+end
+
+def require_migration!(file_name = nil)
+  location_info = caller_locations.first.path.match(RequireMigration::SPEC_FILE_PATTERN)
+  file_name ||= location_info[:file_name]
+
+  RequireMigration.require_migration!(file_name)
+end
+
 module MigrationsHelpers
   def active_record_base
     ActiveRecord::Base
@@ -17,11 +68,13 @@ module MigrationsHelpers
       def self.name
         table_name.singularize.camelcase
       end
+
+      yield self if block_given?
     end
   end
 
   def migrations_paths
-    ActiveRecord::Migrator.migrations_paths
+    active_record_base.connection.migrations_paths
   end
 
   def migration_context
@@ -39,7 +92,7 @@ module MigrationsHelpers
   end
 
   def foreign_key_exists?(source, target = nil, column: nil)
-    ActiveRecord::Base.connection.foreign_keys(source).any? do |key|
+    active_record_base.connection.foreign_keys(source).any? do |key|
       if column
         key.options[:column].to_s == column.to_s
       else
@@ -63,7 +116,7 @@ module MigrationsHelpers
     # attr_encrypted also expects ActiveRecord attribute methods to be
     # defined, or it will override the accessors:
     # https://gitlab.com/gitlab-org/gitlab/issues/8234#note_113976421
-    [ApplicationSetting, SystemHook].each(&:define_attribute_methods)
+    #[ApplicationSetting, SystemHook].each(&:define_attribute_methods)
   end
 
   def reset_column_information(klass)
@@ -82,13 +135,11 @@ module MigrationsHelpers
     allow(ActiveRecord::Base.connection)
       .to receive(:active?)
       .and_return(false)
-
-    stub_env('IN_MEMORY_APPLICATION_SETTINGS', 'false')
   end
 
-  def previous_migration
-    migrations.each_cons(2) do |previous, migration|
-      break previous if migration.name == described_class.name
+  def previous_migration(steps_back = 2)
+    migrations.each_cons(steps_back) do |cons|
+      break cons.first if cons.last.name == described_class.name
     end
   end
 
@@ -104,7 +155,9 @@ module MigrationsHelpers
 
   def schema_migrate_down!
     disable_migrations_output do
-      migration_context.down(migration_schema_version)
+      version = migration_schema_version
+      logger.info('migrating database down!', to_version: version)
+      migration_context.down(version)
     end
 
     reset_column_in_all_models
@@ -114,6 +167,7 @@ module MigrationsHelpers
     reset_column_in_all_models
 
     disable_migrations_output do
+      logger.info('migrating database up!')
       migration_context.up
     end
 
@@ -168,5 +222,34 @@ module MigrationsHelpers
     schema_migrate_down!
 
     tests.before_up.call
+  end
+end
+
+# https://gitlab.com/gitlab-org/gitlab/-/blob/7d6547ce36361ef056e76e02d21f409e4b728ba6/spec/support/migration.rb
+RSpec.configure do |config|
+  # The :each scope runs "inside" the example, so this hook ensures the DB is in the
+  # correct state before any examples' before hooks are called. This prevents a
+  # problem where `ScheduleIssuesClosedAtTypeChange` (or any migration that depends
+  # on background migrations being run inline during test setup) can be broken by
+  # altering Sidekiq behavior in an unrelated spec like so:
+  #
+  # around do |example|
+  #   Sidekiq::Testing.fake! do
+  #     example.run
+  #   end
+  # end
+  config.before(:context, :migration) do
+    schema_migrate_down!
+  end
+
+  # Each example may call `migrate!`, so we must ensure we are migrated down every time
+  config.before(:each, :migration) do
+    use_fake_application_settings
+
+    schema_migrate_down!
+  end
+
+  config.after(:context, :migration) do
+    schema_migrate_up!
   end
 end

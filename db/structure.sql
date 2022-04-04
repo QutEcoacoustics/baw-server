@@ -17,13 +17,6 @@ CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
-
-
---
 -- Name: is_json(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -229,6 +222,19 @@ CREATE SEQUENCE public.analysis_jobs_items_id_seq
 --
 
 ALTER SEQUENCE public.analysis_jobs_items_id_seq OWNED BY public.analysis_jobs_items.id;
+
+
+--
+-- Name: anonymous_user_statistics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE UNLOGGED TABLE public.anonymous_user_statistics (
+    bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
+    audio_segment_download_count bigint DEFAULT 0,
+    audio_original_download_count bigint DEFAULT 0,
+    audio_download_duration numeric DEFAULT 0.0
+)
+WITH (fillfactor='90');
 
 
 --
@@ -1399,7 +1405,7 @@ ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 --
 
 CREATE UNLOGGED TABLE public.user_statistics (
-    user_id bigint,
+    user_id bigint NOT NULL,
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     audio_segment_download_count bigint DEFAULT 0,
     audio_original_download_count bigint DEFAULT 0,
@@ -1792,6 +1798,14 @@ ALTER TABLE ONLY public.audio_events_tags
 
 
 --
+-- Name: audio_recording_statistics audio_recording_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_recording_statistics
+    ADD CONSTRAINT audio_recording_statistics_pkey PRIMARY KEY (audio_recording_id, bucket);
+
+
+--
 -- Name: audio_recordings audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1888,11 +1902,11 @@ ALTER TABLE ONLY public.comfy_cms_translations
 
 
 --
--- Name: audio_recording_statistics constraint_baw_audio_recording_statistics_non_overlapping; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: anonymous_user_statistics constraint_baw_anonymous_user_statistics_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.audio_recording_statistics
-    ADD CONSTRAINT constraint_baw_audio_recording_statistics_non_overlapping EXCLUDE USING gist (audio_recording_id WITH =, bucket WITH &&);
+ALTER TABLE ONLY public.anonymous_user_statistics
+    ADD CONSTRAINT constraint_baw_anonymous_user_statistics_unique UNIQUE (bucket);
 
 
 --
@@ -1901,14 +1915,6 @@ ALTER TABLE ONLY public.audio_recording_statistics
 
 ALTER TABLE ONLY public.audio_recording_statistics
     ADD CONSTRAINT constraint_baw_audio_recording_statistics_unique UNIQUE (audio_recording_id, bucket);
-
-
---
--- Name: user_statistics constraint_baw_user_statistics_non_overlapping; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.user_statistics
-    ADD CONSTRAINT constraint_baw_user_statistics_non_overlapping EXCLUDE USING gist (user_id WITH =, bucket WITH &&);
 
 
 --
@@ -2037,6 +2043,14 @@ ALTER TABLE ONLY public.tag_groups
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_statistics user_statistics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_statistics
+    ADD CONSTRAINT user_statistics_pkey PRIMARY KEY (user_id, bucket);
 
 
 --
@@ -3426,6 +3440,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210707050203'),
 ('20210707074343'),
 ('20210730051645'),
-('20211024235556');
+('20211024235556'),
+('20220331070014');
 
 

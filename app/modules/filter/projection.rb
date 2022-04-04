@@ -67,6 +67,40 @@ module Filter
       { projection:, joins:, base_table: }
     end
 
+    # Add projections to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Array<Arel::Nodes::Node>] projections
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_projections(query, projections)
+      new_query = query
+      projections.each do |projection|
+        new_query = apply_projection(new_query, projection)
+      end
+      new_query
+    end
+
+    # Add projection to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Arel::Nodes::Node] projection
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_projection(query, projection)
+      validate_query(query)
+      validate_projection(projection)
+
+      if projection.is_a?(Hash)
+        expression = projection[:base_table]
+        projection[:joins].each do |join|
+          expression = expression.join(join[:arel_table], join[:type]).on(join[:on])
+        end
+        query = query.joins(expression.join_sources)
+        query = query.select(projection[:projection])
+
+        return query
+      end
+
+      query.select(projection)
+    end
+
     #
     #     # this might be used later...
     #

@@ -21,7 +21,7 @@
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
 #
 FactoryBot.define do
-  factory :audio_recording_statistics do
+  factory :audio_recording_statistics, class: 'Statistics::AudioRecordingStatistics' do
     original_download_count { 0 }
     segment_download_count { 0 }
     segment_download_duration { 0 }
