@@ -176,6 +176,11 @@ module Api
       filter
     end
 
+    # Get filter settings for the current resource type.
+    def filter_settings
+      resource_class.filter_settings
+    end
+
     def api_filter_params
       # for filter api, all validation is done in modules rather than in strong parameters.
       params.permit!
@@ -205,11 +210,12 @@ module Api
     end
 
     def do_load_resource
-      set_resource(resource_class.find(params[:id]))
-    end
+      # we augment the query here to allow us to fetch information needed for custom fields
+      # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
+      query = Filter::Single.new(resource_class, filter_settings).query
 
-    def do_load_resources
-      set_resource_plural(resource_class.accessible_by(current_ability))
+      resource = query.find(params[:id])
+      set_resource(resource)
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)

@@ -51,8 +51,8 @@ class MediaController < ApplicationController
       category, defaults = Settings.media_category(requested_format)
 
       media_info = {
-        category: category,
-        defaults: defaults,
+        category:,
+        defaults:,
         format: requested_format,
         media_type: requested_media_type,
         timing_overall_start: overall_start
@@ -89,11 +89,21 @@ class MediaController < ApplicationController
     when :show
       return if audio_response_duration.nil?
 
-      AudioRecordingStatistics.increment_segment(@audio_recording, duration: audio_response_duration)
-      UserStatistics.increment_segment(current_user, duration: audio_response_duration)
+      Statistics::AudioRecordingStatistics.increment_segment(@audio_recording, duration: audio_response_duration)
+
+      if current_user.nil?
+        Statistics::AnonymousUserStatistics.increment_segment(duration: audio_response_duration)
+      else
+        Statistics::UserStatistics.increment_segment(current_user, duration: audio_response_duration)
+      end
     when :original
-      AudioRecordingStatistics.increment_original(@audio_recording)
-      UserStatistics.increment_original(current_user, @audio_recording)
+      Statistics::AudioRecordingStatistics.increment_original(@audio_recording)
+
+      if current_user.nil?
+        Statistics::AnonymousUserStatistics.increment_original(@audio_recording)
+      else
+        Statistics::UserStatistics.increment_original(current_user, @audio_recording)
+      end
     else
       raise "Unsupported action #{action_name} in update_statistics"
     end
@@ -211,7 +221,7 @@ class MediaController < ApplicationController
       existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_audio_info,
         generation_request)
       response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request,
-        time_start, time_waiting_start, in_memory_file: in_memory_file)
+        time_start, time_waiting_start, in_memory_file:)
     when :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
@@ -220,7 +230,7 @@ class MediaController < ApplicationController
       existing_files, time_waiting_start, in_memory_file = create_media(media_category, cached_spectrogram_info,
         generation_request)
       response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request,
-        time_start, time_waiting_start, in_memory_file: in_memory_file)
+        time_start, time_waiting_start, in_memory_file:)
     end
   end
 
@@ -264,7 +274,7 @@ class MediaController < ApplicationController
       recording_id: audio_recording.id,
       ext: Mime::Type.file_extension_of(audio_recording.media_type),
       # assume first file of returned files is correct
-      file_path: file_path,
+      file_path:,
       file_size: File.size(file_path),
       start_offset: 0,
       end_offset: audio_recording.duration_seconds,
@@ -369,7 +379,7 @@ class MediaController < ApplicationController
       logger.debug('Duplicate job debounced', job_id: job.job_id)
       job.job_id
     else
-      logger.error('unhandled job enqueue failure', job: job)
+      logger.error('unhandled job enqueue failure', job:)
       raise "Failed to enqueue job: #{job}"
     end => job_id
 
@@ -379,7 +389,7 @@ class MediaController < ApplicationController
       media_category,
       generation_request,
       Settings.audio_tools_timeout_sec,
-      job_id: job_id
+      job_id:
     )
     end_time = Time.now
 
@@ -422,7 +432,7 @@ class MediaController < ApplicationController
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if rails_request.head?
-      head_response_inline(:ok, { content_length: content_length }, options[:media_type], suggested_file_name, 'inline')
+      head_response_inline(:ok, { content_length: }, options[:media_type], suggested_file_name, 'inline')
     elsif !in_memory_file.nil?
       info = {
         response_suggested_file_name: suggested_file_name,
@@ -455,7 +465,7 @@ class MediaController < ApplicationController
       recording_duration: audio_recording.duration_seconds,
       recording_id: audio_recording.id,
       ext: generation_request[:format],
-      file_path: file_path,
+      file_path:,
       file_size: in_memory_file&.size || File.size(file_path),
       start_offset: generation_request[:start_offset],
       end_offset: generation_request[:end_offset]
@@ -571,7 +581,7 @@ class MediaController < ApplicationController
   def head_response_inline(response_code, response_headers, content_type, suggested_name, disposition_type)
     # return response code and headers with no content
     head_response response_code, response_headers.merge(
-      content_type: content_type,
+      content_type:,
       content_transfer_encoding: 'binary',
       content_disposition: "#{disposition_type}; filename=\"#{suggested_name}\"",
       filename: suggested_name

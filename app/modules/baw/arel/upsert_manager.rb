@@ -20,7 +20,7 @@ module Baw
       end
 
       def primary_keys
-        @primary_keys ||= model.primary_keys
+        @primary_keys ||= defined?(model.primary_keys) ? model.primary_keys : [model.primary_key]
       end
 
       def insert(attributes)

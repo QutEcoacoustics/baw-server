@@ -12,4 +12,4 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ $VERSION_CODENAME-pgdg main" 
 
 apt-get update
 
-apt-get install -y --no-install-recommends libpq-dev postgresql-client-12
+apt-get install -y --no-install-recommends libpq-dev postgresql-client-14

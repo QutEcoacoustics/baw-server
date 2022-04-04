@@ -1,4 +1,6 @@
-require_relative '../settings.rb'
+# frozen_string_literal: true
+
+require_relative '../settings'
 
 # patch the rubyconfig/config settings object with our custom class
 module Config

@@ -225,7 +225,6 @@ group :development do
   # needed by bundler/soalrgraph for language server?
   gem 'actionview', RAILS_VERSION
 
-  gem 'bullet'
   gem 'i18n-tasks', '~> 0.9.31'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
@@ -295,4 +294,7 @@ group :test do
 
   # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
+
+  # test for slow n+1 queries
+  gem 'bullet'
 end

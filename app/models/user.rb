@@ -55,8 +55,8 @@ class User < ApplicationRecord
   # Include default devise modules. Others available are:
   # and :omniauthable
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :trackable, :validatable,
-         :confirmable, :lockable, :timeoutable
+    :recoverable, :rememberable, :trackable, :validatable,
+    :confirmable, :lockable, :timeoutable
 
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
@@ -82,9 +82,9 @@ class User < ApplicationRecord
   roles :admin, :user, :harvester, :guest
 
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#',
-                              spanhalf: '30x30#' },
-                    default_url: '/images/user/user_:style.png'
+    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#',
+              spanhalf: '30x30#' },
+    default_url: '/images/user/user_:style.png'
 
   # relations
   # Don't include the catch-all association to permissions
@@ -99,13 +99,13 @@ class User < ApplicationRecord
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
 
   has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id,
-                                          inverse_of: :creator
+    inverse_of: :creator
   has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :updater_id,
-                                          inverse_of: :updater
+    inverse_of: :updater
   has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :deleter_id,
-                                          inverse_of: :deleter
+    inverse_of: :deleter
   has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :flagger_id,
-                                          inverse_of: :flagger
+    inverse_of: :flagger
 
   has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
@@ -163,31 +163,31 @@ class User < ApplicationRecord
   has_many :updated_studies, class_name: 'Study', foreign_key: :updater_id, inverse_of: :updater
   has_many :updated_questions, class_name: 'Question', foreign_key: :updater_id, inverse_of: :updater
 
-  has_one :statistics, class_name: UserStatistics.name
+  has_one :statistics, class_name: Statistics::UserStatistics.name
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
   scope :recently_seen,
-        lambda { |time|
-          where(
-            (arel_table[:last_seen_at] > time)
-            .or(arel_table[:current_sign_in_at] > time)
-            .or(arel_table[:last_sign_in_at] > time)
-          )
-        }
+    lambda { |time|
+      where(
+        (arel_table[:last_seen_at] > time)
+        .or(arel_table[:current_sign_in_at] > time)
+        .or(arel_table[:last_sign_in_at] > time)
+      )
+    }
 
   # store preferences as json in a text column
   serialize :preferences, JSON
 
   # validations
   validates :user_name,
-            presence: true,
-            uniqueness: { case_sensitive: false },
-            format: {
-              with: /\A[a-zA-Z0-9 _-]+\z/,
-              message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
-            },
-            if: proc { |user| user.user_name_changed? }
+    presence: true,
+    uniqueness: { case_sensitive: false },
+    format: {
+      with: /\A[a-zA-Z0-9 _-]+\z/,
+      message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
+    },
+    if: proc { |user| user.user_name_changed? }
 
   validate :excluded_login, on: :create
 
@@ -207,7 +207,7 @@ class User < ApplicationRecord
 
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
-                                            message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # before and after methods
   before_validation :ensure_user_role
@@ -277,7 +277,7 @@ class User < ApplicationRecord
 
   # @see http://stackoverflow.com/a/19071745/31567
   def self.find_by_authentication_token(authentication_token = nil)
-    where(authentication_token: authentication_token).first if authentication_token
+    where(authentication_token:).first if authentication_token
   end
 
   # Store the current_user id in the thread so it can be accessed by models
@@ -342,7 +342,7 @@ class User < ApplicationRecord
 
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
-    user_info_hash = { name: user_name, email: email }
+    user_info_hash = { name: user_name, email: }
     user_info = DataClass::NewUserInfo.new(user_info_hash)
     PublicMailer.new_user_message(self, user_info).deliver_now
   end

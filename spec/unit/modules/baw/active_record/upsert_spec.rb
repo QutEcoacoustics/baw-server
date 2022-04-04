@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 describe Baw::ActiveRecord::Upsert do
-  let(:model) { AudioRecordingStatistics }
-  let(:foreign_relation) { FactoryBot.create(:audio_recording) }
+  let(:model) { Statistics::AudioRecordingStatistics }
+  let(:foreign_relation) { create(:audio_recording) }
   let(:foreign_key) { foreign_relation.id }
   let(:attributes) {
     {

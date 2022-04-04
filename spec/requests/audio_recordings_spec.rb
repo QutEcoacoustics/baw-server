@@ -464,7 +464,7 @@ describe '/audio_recordings' do
     it 'can filter for recordings and not produce column conflicts for tzinfo' do
       # https://github.com/QutEcoacoustics/baw-server/issues/566
       data = post_filter(filter: {
-        'projects.id': { eq: 1 },
+        'projects.id': { eq: project.id },
         recorded_end_date: {
           greater_than_or_equal: { expressions: ['local_offset', 'time_of_day'], value: '07:00' }
         },

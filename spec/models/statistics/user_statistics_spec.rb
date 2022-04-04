@@ -8,7 +8,7 @@
 #  audio_original_download_count :bigint           default(0)
 #  audio_segment_download_count  :bigint           default(0)
 #  bucket                        :tsrange          not null, primary key
-#  user_id                       :bigint           primary key
+#  user_id                       :bigint           not null, primary key
 #
 # Indexes
 #
@@ -21,14 +21,14 @@
 #  fk_rails_...  (user_id => users.id)
 #
 
-RSpec.describe UserStatistics, type: :model do
-  subject { FactoryBot.build(:user_statistics) }
+RSpec.describe Statistics::UserStatistics, type: :model do
+  subject { build(:user_statistics) }
 
   it 'has a valid factory' do
-    expect(FactoryBot.create(:user_statistics)).to be_valid
+    expect(create(:user_statistics)).to be_valid
   end
 
-  it { is_expected.to belong_to(:user).optional(true) }
+  it { is_expected.to belong_to(:user) }
 
   its('class.primary_key') { is_expected.to eq(['user_id', 'bucket']) }
 
@@ -48,21 +48,28 @@ RSpec.describe UserStatistics, type: :model do
     create_audio_recordings_hierarchy
 
     it_behaves_like 'a model with a temporal stats bucket', {
-      model: UserStatistics,
+      model: Statistics::UserStatistics,
       parent_factory: :user,
       parent: :reader_user,
       other_key: :user_id
     }
 
+    it_behaves_like 'a stats segment incrementor', {
+      model: Statistics::UserStatistics,
+      increment: ->(duration) { Statistics::UserStatistics.increment_segment(reader_user, duration:) },
+      duration_key: :audio_download_duration,
+      count_key: :audio_segment_download_count
+    }
+
     context 'when inserting stats' do
       it 'can increment original download count' do
-        UserStatistics.increment_original(reader_user, audio_recording)
+        Statistics::UserStatistics.increment_original(reader_user, audio_recording)
 
-        stats = UserStatistics.first
+        stats = Statistics::UserStatistics.first
         expect(stats.audio_original_download_count).to eq 1
         expect(stats.audio_download_duration).to eq audio_recording.duration_seconds
 
-        UserStatistics.increment_original(reader_user, audio_recording)
+        Statistics::UserStatistics.increment_original(reader_user, audio_recording)
         stats.reload
         expect(stats.audio_original_download_count).to eq 2
         expect(stats.audio_download_duration).to eq(audio_recording.duration_seconds * 2)
@@ -74,13 +81,13 @@ RSpec.describe UserStatistics, type: :model do
       end
 
       it 'can increment segment download count' do
-        UserStatistics.increment_segment(reader_user, duration: 30)
+        Statistics::UserStatistics.increment_segment(reader_user, duration: 30)
 
-        stats = UserStatistics.first
+        stats = Statistics::UserStatistics.first
         expect(stats.audio_segment_download_count).to eq 1
         expect(stats.audio_download_duration).to eq 30.0
 
-        UserStatistics.increment_segment(reader_user, duration: 12.5)
+        Statistics::UserStatistics.increment_segment(reader_user, duration: 12.5)
 
         stats.reload
         expect(stats.audio_segment_download_count).to eq 2

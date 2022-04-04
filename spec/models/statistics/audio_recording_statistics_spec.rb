@@ -21,11 +21,11 @@
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
 #
 
-RSpec.describe AudioRecordingStatistics, type: :model do
-  subject { FactoryBot.build(:audio_recording_statistics) }
+RSpec.describe Statistics::AudioRecordingStatistics, type: :model do
+  subject { build(:audio_recording_statistics) }
 
   it 'has a valid factory' do
-    expect(FactoryBot.create(:audio_recording_statistics)).to be_valid
+    expect(create(:audio_recording_statistics)).to be_valid
   end
 
   it { is_expected.to belong_to(:audio_recording) }
@@ -39,20 +39,27 @@ RSpec.describe AudioRecordingStatistics, type: :model do
     create_audio_recordings_hierarchy
 
     it_behaves_like 'a model with a temporal stats bucket', {
-      model: AudioRecordingStatistics,
+      model: Statistics::AudioRecordingStatistics,
       parent_factory: :audio_recording,
       parent: :audio_recording,
       other_key: :audio_recording_id
     }
 
+    it_behaves_like 'a stats segment incrementor', {
+      model: Statistics::AudioRecordingStatistics,
+      increment: ->(duration) { Statistics::AudioRecordingStatistics.increment_segment(audio_recording, duration:) },
+      duration_key: :segment_download_duration,
+      count_key: :segment_download_count
+    }
+
     context 'when inserting stats' do
       it 'can increment original download count' do
-        AudioRecordingStatistics.increment_original(audio_recording)
+        Statistics::AudioRecordingStatistics.increment_original(audio_recording)
 
-        stats = AudioRecordingStatistics.first
+        stats = Statistics::AudioRecordingStatistics.first
         expect(stats.original_download_count).to eq 1
 
-        AudioRecordingStatistics.increment_original(audio_recording)
+        Statistics::AudioRecordingStatistics.increment_original(audio_recording)
 
         stats.reload
         expect(stats.original_download_count).to eq 2
@@ -63,13 +70,13 @@ RSpec.describe AudioRecordingStatistics, type: :model do
       end
 
       it 'can increment segment download count' do
-        AudioRecordingStatistics.increment_segment(audio_recording, duration: 30)
+        Statistics::AudioRecordingStatistics.increment_segment(audio_recording, duration: 30)
 
-        stats = AudioRecordingStatistics.first
+        stats = Statistics::AudioRecordingStatistics.first
         expect(stats.segment_download_count).to eq 1
         expect(stats.segment_download_duration).to eq 30.0
 
-        AudioRecordingStatistics.increment_segment(audio_recording, duration: 12.5)
+        Statistics::AudioRecordingStatistics.increment_segment(audio_recording, duration: 12.5)
 
         stats.reload
         expect(stats.segment_download_count).to eq 2

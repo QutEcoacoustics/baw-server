@@ -1210,7 +1210,7 @@ describe Filter::Query do
     end
   end
 
-  context 'calculated field' do
+  context 'with calculated fields' do
     it 'audio_event.duration_seconds in filter' do
       request_body_obj = {
         filter: {
@@ -1393,7 +1393,11 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL
-        SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."creator_id", "audio_recordings"."deleted_at",  "audio_recordings"."deleter_id",  "audio_recordings"."updated_at", "audio_recordings"."updater_id", "audio_recordings"."notes", "audio_recordings"."file_hash", "audio_recordings"."uploader_id", "audio_recordings"."original_file_name"
+        SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."creator_id", "audio_recordings"."deleted_at",  "audio_recordings"."deleter_id",  "audio_recordings"."updated_at", "audio_recordings"."updater_id", "audio_recordings"."notes", "audio_recordings"."file_hash", "audio_recordings"."uploader_id", "audio_recordings"."original_file_name", ((
+        SELECT tzinfo_tz
+        FROM "sites"
+        WHERE "audio_recordings"."site_id" = "sites"."id"))
+        AS "recorded_date_timezone"
         FROM "audio_recordings"
         INNER
         JOIN "sites"

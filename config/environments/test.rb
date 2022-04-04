@@ -65,6 +65,14 @@ Rails.application.configure do
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
   config.after_initialize do
+    # detect n+1 queries
+    Bullet.enable = true
+    Bullet.bullet_logger = true
+    # Bullet.console = true
+    # Bullet.alert = false
+    # Bullet.console = true
+    # Bullet.rails_logger = true
+    Bullet.raise = true
   end
   # config.i18n.raise_on_missing_translations = true
 end

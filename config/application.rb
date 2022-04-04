@@ -37,17 +37,17 @@ module Baw
       Pathname(Settings.logs.directory).expand_path / "#{log_name}#{tag}.#{Rails.env}.log"
     ]
 
-    config.semantic_logger.backtrace_level = :error
+    config.semantic_logger.backtrace_level = BawApp.dev_or_test? ? :debug : :error
     time_format = '%Y-%m-%dT%H:%M:%S.%#3N'
     if BawApp.dev_or_test?
       color_map = SemanticLogger::Formatters::Color::ColorMap.new(warn: SemanticLogger::AnsiColors::YELLOW)
       SemanticLogger::Formatters::Color.new(
         ap: { multiline: false, ruby19_syntax: true },
-        color_map: color_map,
-        time_format: time_format
+        color_map:,
+        time_format:
       )
     else
-      SemanticLogger::Formatters::Default.new(time_format: time_format)
+      SemanticLogger::Formatters::Default.new(time_format:)
     end => format
     config.rails_semantic_logger.format = format
 

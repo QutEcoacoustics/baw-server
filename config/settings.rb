@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-# @!parse
-#   Settings = BawWorkers::Settings
-
-# settings loaded in config/initializers/config.rb
-# Accessible through Settings.xxx
-# Environment specific settings expected in config/settings/{environment_name}.yml
 module BawWeb
+  # settings loaded in config/initializers/config.rb
+  # Accessible through Settings.xxx
+  # Environment specific settings expected in config/settings/{environment_name}.yml
   module Settings
     MEDIA_PROCESSOR_LOCAL = 'local'
     MEDIA_PROCESSOR_RESQUE = 'resque'
@@ -122,3 +119,10 @@ module BawWeb
     end
   end
 end
+
+# For go to definition support in IDE
+# @!parse
+#   class Settings
+#     include BawWeb::Settings
+#     extend BawWeb::Settings
+#   end
