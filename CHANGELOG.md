@@ -1,5 +1,18 @@
 # Changelog
 
+## [7.3.0](https://github.com/QutEcoacoustics/baw-server/tree/7.3.0) (2022-04-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.2.1...7.3.0)
+
+**Implemented enhancements:**
+
+- API: filter setting are not applied to single object response [\#565](https://github.com/QutEcoacoustics/baw-server/issues/565)
+
+**Fixed bugs:**
+
+- An ActiveRecord::StatementInvalid occurred in media\#show: [\#534](https://github.com/QutEcoacoustics/baw-server/issues/534)
+- Fixes deadlocks and constraint violation in statistics trackers [\#568](https://github.com/QutEcoacoustics/baw-server/pull/568) ([atruskie](https://github.com/atruskie))
+
 ## [7.2.1](https://github.com/QutEcoacoustics/baw-server/tree/7.2.1) (2022-03-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.1.0...7.2.1)
