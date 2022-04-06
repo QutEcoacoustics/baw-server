@@ -6,6 +6,7 @@
   ],
   "settings": {
     "cSpell.words": [
+      "AASM",
       "appender",
       "arel",
       "arity",
@@ -14,6 +15,7 @@
       "autoloaded",
       "autoloaders",
       "autoloads",
+      "autosave",
       "backtrace",
       "behaviour",
       "binmode",

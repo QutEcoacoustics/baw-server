@@ -11,6 +11,7 @@
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  audio_recording_id :integer
+#  harvest_id         :integer
 #  uploader_id        :integer          not null
 #
 # Indexes
@@ -20,6 +21,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (harvest_id => harvests.id)
 #  fk_rails_...  (uploader_id => users.id)
 #
 FactoryBot.define do

@@ -145,6 +145,7 @@ upload_service:
   port: 8080
   username: admin
   password: password
+  sftp_port: 2022
 harvester:
   email: harvester@example.com
   password: password

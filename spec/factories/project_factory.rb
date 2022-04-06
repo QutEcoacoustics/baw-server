@@ -5,6 +5,7 @@
 # Table name: projects
 #
 #  id                      :integer          not null, primary key
+#  allow_audio_upload      :boolean          default(FALSE)
 #  allow_original_download :string
 #  deleted_at              :datetime
 #  description             :text

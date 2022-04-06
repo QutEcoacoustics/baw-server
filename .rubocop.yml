@@ -75,6 +75,7 @@ Metrics/BlockLength:
     - factory
     - path
     - Async
+    - aasm
 Metrics/MethodLength:
   Max: 30
   IgnoredMethods:

@@ -895,7 +895,8 @@ CREATE TABLE public.harvest_items (
     audio_recording_id integer,
     uploader_id integer NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    harvest_id integer
 );
 
 
@@ -916,6 +917,44 @@ CREATE SEQUENCE public.harvest_items_id_seq
 --
 
 ALTER SEQUENCE public.harvest_items_id_seq OWNED BY public.harvest_items.id;
+
+
+--
+-- Name: harvests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.harvests (
+    id bigint NOT NULL,
+    streaming boolean,
+    state character varying,
+    upload_user character varying,
+    upload_password character varying,
+    project_id integer NOT NULL,
+    mappings jsonb,
+    creator_id integer,
+    updater_id integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: harvests_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.harvests_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: harvests_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.harvests_id_seq OWNED BY public.harvests.id;
 
 
 --
@@ -1008,7 +1047,8 @@ CREATE TABLE public.projects (
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    allow_original_download character varying
+    allow_original_download character varying,
+    allow_audio_upload boolean DEFAULT false
 );
 
 
@@ -1635,6 +1675,13 @@ ALTER TABLE ONLY public.harvest_items ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: harvests id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests ALTER COLUMN id SET DEFAULT nextval('public.harvests_id_seq'::regclass);
+
+
+--
 -- Name: permissions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1947,6 +1994,14 @@ ALTER TABLE ONLY public.datasets
 
 ALTER TABLE ONLY public.harvest_items
     ADD CONSTRAINT harvest_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: harvests harvests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT harvests_pkey PRIMARY KEY (id);
 
 
 --
@@ -2956,6 +3011,14 @@ ALTER TABLE ONLY public.bookmarks
 
 
 --
+-- Name: harvests fk_rails_08dae8d3d9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_08dae8d3d9 FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
 -- Name: progress_events fk_rails_15ea2f07e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3052,6 +3115,14 @@ ALTER TABLE ONLY public.questions_studies
 
 
 --
+-- Name: harvest_items fk_rails_6d8adad6a1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_6d8adad6a1 FOREIGN KEY (harvest_id) REFERENCES public.harvests(id);
+
+
+--
 -- Name: audio_recording_statistics fk_rails_6f222e0805; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3065,6 +3136,14 @@ ALTER TABLE ONLY public.audio_recording_statistics
 
 ALTER TABLE ONLY public.responses
     ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
+
+
+--
+-- Name: harvests fk_rails_7b0ec7081d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_7b0ec7081d FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
@@ -3185,6 +3264,14 @@ ALTER TABLE ONLY public.progress_events
 
 ALTER TABLE ONLY public.harvest_items
     ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+
+
+--
+-- Name: harvests fk_rails_e1f487fcb6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_e1f487fcb6 FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
@@ -3441,6 +3528,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210707074343'),
 ('20210730051645'),
 ('20211024235556'),
-('20220331070014');
+('20220331070014'),
+('20220405040355'),
+('20220406072625');
 
 

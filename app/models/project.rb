@@ -5,6 +5,7 @@
 # Table name: projects
 #
 #  id                      :integer          not null, primary key
+#  allow_audio_upload      :boolean          default(FALSE)
 #  allow_original_download :string
 #  deleted_at              :datetime
 #  description             :text
@@ -58,6 +59,7 @@ class Project < ApplicationRecord
                     }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
   has_many :regions, inverse_of: :project
+  has_many :harvests, inverse_of: :project
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
   has_many :analysis_jobs, through: :saved_searches
 
@@ -108,7 +110,8 @@ class Project < ApplicationRecord
                       :deleter_id,
                       :deleted_at,
                       :notes,
-                      :allow_original_download],
+                      :allow_original_download,
+                      :allow_audio_upload],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection
@@ -192,7 +195,8 @@ class Project < ApplicationRecord
         owner_ids: Api::Schema.ids(read_only: true),
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels,
-        allow_original_download: Api::Schema.permission_levels
+        allow_original_download: Api::Schema.permission_levels,
+        allow_audio_upload: { type: 'boolean' }
       },
       required: [
         :id,

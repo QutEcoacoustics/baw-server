@@ -64,7 +64,7 @@ group :server do
   gem 'rails_same_site_cookie'
 
   # bumping to latest RC because it has pre-compiled native binaries
-  gem 'nokogiri', '~> 1.11.0.rc3'
+  gem 'nokogiri', '~> 1.13.3'
 
   # cms
   gem 'comfortable_mexican_sofa', '~> 2.0.0'
@@ -129,7 +129,7 @@ group :server do
   gem 'composite_primary_keys', COMPOSITE_PRIMARY_KEYS_VERSION
 
   # allows for adding common table expressions to queries
-  gem "activerecord-cte"
+  gem 'activerecord-cte'
 
   # MODELS
   # -------------------------------------

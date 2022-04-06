@@ -11,6 +11,7 @@
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  audio_recording_id :integer
+#  harvest_id         :integer
 #  uploader_id        :integer          not null
 #
 # Indexes
@@ -20,14 +21,17 @@
 # Foreign Keys
 #
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (harvest_id => harvests.id)
 #  fk_rails_...  (uploader_id => users.id)
 #
 RSpec.describe HarvestItem, type: :model do
-  subject { FactoryBot.build(:harvest_item) }
+  subject { build(:harvest_item) }
 
   it 'has a valid factory' do
-    expect(FactoryBot.create(:harvest_item)).to be_valid
+    expect(create(:harvest_item)).to be_valid
   end
+
+  it { is_expected.to belong_to(:harvest).optional(true) }
 
   it { is_expected.to belong_to(:audio_recording).optional(true) }
   it { is_expected.to belong_to(:uploader).with_foreign_key(:uploader_id) }
@@ -39,7 +43,7 @@ RSpec.describe HarvestItem, type: :model do
   end
 
   it 'deserializes the info column as hash with indifferent access' do
-    item = FactoryBot.build(:harvest_item)
+    item = build(:harvest_item)
     item.info[:hello] = 123
     item.save!
 

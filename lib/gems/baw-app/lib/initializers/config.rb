@@ -14,6 +14,7 @@ class BawConfigContract < Dry::Validation::Contract
       required(:port).value(:integer, gt?: 0)
       required(:username).filled(:string)
       required(:password).filled(:string)
+      required(:sftp_port).filled(:integer, gt?: 0)
     end
 
     required(:actions).hash do

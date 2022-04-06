@@ -15,6 +15,7 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  audio_recording_id :integer
+#  harvest_id         :integer
 #  uploader_id        :integer          not null
 #
 # Indexes
@@ -24,12 +25,16 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 # Foreign Keys
 #
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (harvest_id => harvests.id)
 #  fk_rails_...  (uploader_id => users.id)
 #
 class HarvestItem < ApplicationRecord
   extend Enumerize
   # optional audio recording - when a harvested audio file is complete, it will match a recording
   belongs_to :audio_recording, optional: true
+
+  # harvests were introduced after harvest_items, hence the parent association is optional
+  belongs_to :harvest, optional: true
 
   belongs_to :uploader, class_name: User.name, foreign_key: :uploader_id
 
