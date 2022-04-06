@@ -1,5 +1,17 @@
 # Changelog
 
+## [7.3.1](https://github.com/QutEcoacoustics/baw-server/tree/7.3.1) (2022-04-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.3.0...7.3.1)
+
+**Implemented enhancements:**
+
+- Harvest instructions are out of date [\#317](https://github.com/QutEcoacoustics/baw-server/issues/317)
+
+**Fixed bugs:**
+
+- Bad tzinfo\_tz values in production databases [\#569](https://github.com/QutEcoacoustics/baw-server/issues/569)
+
 ## [7.3.0](https://github.com/QutEcoacoustics/baw-server/tree/7.3.0) (2022-04-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.2.1...7.3.0)
