@@ -193,6 +193,47 @@ describe '/audio_recordings/downloader' do
         expect(files.size).to eq(11)
         expect(files.map(&:to_s)).to all(end_with('.mp3'))
       end
+
+      it 'downloads the files (with username and password)', web_server_timeout: 30 do
+        logger.measure_info('downloading script') do
+          out_and_err, status = Open3.capture2e(
+            'curl -JO localhost:3000/audio_recordings/downloader?items=2',
+            chdir: BawApp.tmp_dir
+          )
+          logger.info(out_and_err, status:)
+        end
+
+        script.chmod(0o764)
+
+        script_output = ''
+
+        logger.measure_info('running download script') do
+          logger.tagged('download script output') do
+            # we need a promise here to force the process wait onto another thread
+            # without it, our async web server (from expose_app_as_web_server above) crashes with
+            # Errno::EBADF:
+            #    Bad file descriptor - epoll_ctl(process_wait)
+            Concurrent::Promises.future {
+              script_output, status = Open3.capture2e(
+                'pwsh download_audio_files.ps1 -target downloader_test -user_name admin -password password',
+                chdir: BawApp.tmp_dir,
+                stdin_data: "password\n"
+              )
+              logger.info(script_output, status:)
+            }.run.wait!
+          end
+        end
+
+        expect(script_output).to match(
+          "Downloading recordings\nGetting page 1\nGot page 1 of 6, 2 recordings in this page.\nDownloading recording"
+        )
+        expect(script_output).to match('Got page 6 of 6, 1 recordings in this page.')
+        expect(script_output).to match(%r{Downloaded recording \d+ to downloader_test/\d+_sitename\d+/.*.mp3})
+
+        files = (BawApp.tmp_dir / 'downloader_test').glob('**/*.mp3')
+        expect(files.size).to eq(11)
+        expect(files.map(&:to_s)).to all(end_with('.mp3'))
+      end
     end
   end
 end

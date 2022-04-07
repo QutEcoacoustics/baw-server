@@ -27,6 +27,25 @@ describe 'Common behaviour', { type: :request } do
     expect(response.headers).not_to have_key('X-Error-Message')
   end
 
+  it 'can handle malformed post requests' do
+    # a json value encoded in a string (malformed)
+    body = "{\r\n  \"password\": \"password\",\r\n  \"email\": \"SladeAA\"\r\n}"
+    post '/security', params: body,
+      headers: {
+        'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
+        'Accept' => 'application/json',
+        'CONTENT_LENGTH' => 56
+      }
+
+    expect(response).to have_http_status(:unsupported_media_type)
+    expect(response.headers).not_to have_key('X-Error-Message')
+    expect(response.content_type).to include('application/json')
+    parsed_response = JSON.parse(response.body)
+    expect(parsed_response['meta']['error']['details']).to eq(
+      'Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (application/x-www-form-urlencoded)'
+    )
+  end
+
   describe 'filtering tests' do
     create_entire_hierarchy
 

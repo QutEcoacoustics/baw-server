@@ -30,10 +30,13 @@ $ ./download_audio_files.ps1
 param(
   # Where to download the recordings. Defaults to the present working directory if not specified.
   $target = $null,
-  # The username to use to login to the workbench. This value's default value is templated when the script is generated.
-  $user_name = $null,
-  # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
+    # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
   $auth_token = $null,
+  # The username to use to login to the workbench. This value's default value is templated when the script is generated. This is not needed if you use an auth_token.
+  $user_name = $null,
+  # The poassword to use to login to the workbench. This is not needed if you use an auth_token.
+  $password = $null,
+
   # The filter to use to select audio recordings to download. This value's default value is templated when the script is generated.
   # See https://github.com/QutEcoacoustics/baw-server/wiki/API:-Filtering for details on valid filters. This argument
   # should be a valid JSON encoded string.
@@ -87,8 +90,24 @@ Write-Information "Workbench URL: $workbench_url"
 $headers = @{}
 
 if ($null -eq $auth_token) {
-  $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
-  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{ @{"email"=$_.UserName;"password"=$_.Password}} | ConvertTo-Json
+  if ($user_name -and $password) {
+    $User = $user_name
+    $PWord = ConvertTo-SecureString -String $password -AsPlainText -Force
+    $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+  }
+  else {
+    $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
+  }
+
+
+  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{
+      if ($_.UserName -like '*@*') {
+        @{"email"=$_.UserName;"password"=$_.Password}
+      }
+      else {
+        @{"login"=$_.UserName;"password"=$_.Password}
+      }
+  }
 
   Write-Information "Logging in to workbench $workbench"
 
