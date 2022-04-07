@@ -29,9 +29,6 @@
 #  bookmarks_updater_id_fk          (updater_id => users.id)
 #
 class Bookmark < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relations
   belongs_to :audio_recording, inverse_of: :bookmarks
 
@@ -46,7 +43,7 @@ class Bookmark < ApplicationRecord
   validates :offset_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :audio_recording_id, presence: true
   validates :name, presence: true,
-uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
+    uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
 
   # Define filter api settings
   def self.filter_settings

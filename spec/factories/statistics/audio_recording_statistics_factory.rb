@@ -12,9 +12,8 @@
 #
 # Indexes
 #
-#  constraint_baw_audio_recording_statistics_non_overlapping  (audio_recording_id,bucket) USING gist
-#  constraint_baw_audio_recording_statistics_unique           (audio_recording_id,bucket) UNIQUE
-#  index_audio_recording_statistics_on_audio_recording_id     (audio_recording_id)
+#  constraint_baw_audio_recording_statistics_unique        (audio_recording_id,bucket) UNIQUE
+#  index_audio_recording_statistics_on_audio_recording_id  (audio_recording_id)
 #
 # Foreign Keys
 #

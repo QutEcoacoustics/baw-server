@@ -36,14 +36,15 @@
 #
 class AudioEventComment < ApplicationRecord
   extend Enumerize
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
 
   belongs_to :audio_event, inverse_of: :comments
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_event_comments
-  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_event_comments, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_event_comments, optional: true
-  belongs_to :flagger, class_name: 'User', foreign_key: 'flagger_id', inverse_of: :flagged_audio_event_comments, optional: true
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_event_comments,
+    optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_event_comments,
+    optional: true
+  belongs_to :flagger, class_name: 'User', foreign_key: 'flagger_id', inverse_of: :flagged_audio_event_comments,
+    optional: true
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -69,7 +70,8 @@ class AudioEventComment < ApplicationRecord
   # Define filter api settings
   def self.filter_settings
     {
-      valid_fields: [:id, :audio_event_id, :comment, :flag, :flag_explain, :flagged_at, :created_at, :creator_id, :updated_at],
+      valid_fields: [:id, :audio_event_id, :comment, :flag, :flag_explain, :flagged_at, :created_at, :creator_id,
+                     :updated_at],
       render_fields: [:id, :audio_event_id, :comment, :flag, :creator_id, :updated_at, :created_at],
       text_fields: [:comment, :flag, :flag_explain],
       controller: :audio_event_comments,

@@ -16,7 +16,7 @@
 #  failed_attempts        :integer          default(0)
 #  image_content_type     :string
 #  image_file_name        :string
-#  image_file_size        :integer
+#  image_file_size        :bigint
 #  image_updated_at       :datetime
 #  invitation_token       :string
 #  last_seen_at           :datetime

@@ -55,9 +55,6 @@ require 'digest/md5'
 class AudioRecording < ApplicationRecord
   extend Enumerize
 
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   attr_reader :overlapping
 
   # relations

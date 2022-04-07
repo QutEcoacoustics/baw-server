@@ -6,7 +6,7 @@
 #
 #  id              :bigint           not null, primary key
 #  mappings        :jsonb
-#  state           :string
+#  status          :string
 #  streaming       :boolean
 #  upload_password :string
 #  upload_user     :string
@@ -26,7 +26,7 @@ FactoryBot.define do
   factory :harvest do
     streaming { false }
 
-    project
+    association :project, :with_uploads_enabled
     creator
   end
 end

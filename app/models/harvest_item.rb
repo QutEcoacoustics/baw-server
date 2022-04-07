@@ -20,6 +20,7 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 #
 # Indexes
 #
+#  index_harvest_items_on_path    (path)
 #  index_harvest_items_on_status  (status)
 #
 # Foreign Keys

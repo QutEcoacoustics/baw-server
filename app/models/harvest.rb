@@ -6,7 +6,7 @@
 #
 #  id              :bigint           not null, primary key
 #  mappings        :jsonb
-#  state           :string
+#  status          :string
 #  streaming       :boolean
 #  upload_password :string
 #  upload_user     :string
@@ -33,8 +33,20 @@ class Harvest < ApplicationRecord
   belongs_to :creator, class_name: User.name, foreign_key: :creator_id, inverse_of: :created_harvests
   belongs_to :updater, class_name: User.name, foreign_key: :updater_id, inverse_of: :updated_harvests, optional: true
 
+  validate :validate_uploads_enabled
+
+  def uploads_enabled?
+    project&.allow_audio_upload == true
+  end
+
+  def validate_uploads_enabled
+    return if uploads_enabled?
+
+    errors.add(:project, 'A harvest cannot be created unless its parent project has enabled audio upload')
+  end
+
   def upload_url
-    'todo'
+    "sftp://#{Settings.upload_service.host}:#{Settings.upload_service}"
   end
 
   def streaming_harvest?
@@ -106,7 +118,7 @@ class Harvest < ApplicationRecord
 
   # Define filter api settings
   def self.filter_settings
-    filterable_fields = [:id, :creator_id, :created_at, :updater_id, :updated_at, :streaming, :state, :project_id]
+    filterable_fields = [:id, :creator_id, :created_at, :updater_id, :updated_at, :streaming, :status, :project_id]
     {
       valid_fields: [*filterable_fields],
       render_fields: [
@@ -117,6 +129,16 @@ class Harvest < ApplicationRecord
         :mappings
       ],
       text_fields: [],
+      custom_fields2: {
+        upload_url: {
+          # we don't really need :id to calculate this custom field but if the array is empty
+          # the field gets ignored
+          query_attributes: [:id],
+          transform: ->(item) { item&.upload_url },
+          arel: nil,
+          type: :string
+        }
+      },
       new_spec_fields: lambda { |_user|
                          {
                            project_id: true,

@@ -35,8 +35,8 @@ module PermissionsHelpers
           [
             body_attributes_for(
               model_name,
-              traits: traits,
-              factory: factory,
+              traits:,
+              factory:,
               factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
             ),
             :json
@@ -46,8 +46,8 @@ module PermissionsHelpers
           [
             body_attributes_for(
               model_name,
-              factory: factory,
-              traits: traits,
+              factory:,
+              traits:,
               subset: update_attrs_subset,
               factory_args: factory_args.nil? ? {} : instance_exec(&factory_args)
             ),
@@ -97,9 +97,9 @@ module PermissionsHelpers
       can_do = Set.new(can_do)
       and_cannot_do = Set.new(and_cannot_do)
 
-      validate_tests_all(user, can_do: can_do, and_cannot_do: and_cannot_do)
+      validate_tests_all(user, can_do:, and_cannot_do:)
 
-      ensures(user, can: can_do, cannot: and_cannot_do, fails_with: fails_with)
+      ensures(user, can: can_do, cannot: and_cannot_do, fails_with:)
     end
 
     # Run permissions tests for users and actions.
@@ -119,13 +119,13 @@ module PermissionsHelpers
                   cannot.map { |x| normalize(x, route, fails_with, false) }
 
         it_behaves_like 'permissions for', {
-          route: route,
-          route_params: route_params,
-          user: user,
-          actions: actions,
-          request_body_options: request_body_options,
-          expected_list_items_callback: expected_list_items_callback,
-          update_attrs_subset: update_attrs_subset
+          route:,
+          route_params:,
+          user:,
+          actions:,
+          request_body_options:,
+          expected_list_items_callback:,
+          update_attrs_subset:
         }
 
         registered_users << user

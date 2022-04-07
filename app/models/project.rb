@@ -11,7 +11,7 @@
 #  description             :text
 #  image_content_type      :string
 #  image_file_name         :string
-#  image_file_size         :integer
+#  image_file_size         :bigint
 #  image_updated_at        :datetime
 #  name                    :string           not null
 #  notes                   :text
@@ -37,9 +37,6 @@
 #
 class Project < ApplicationRecord
   extend Enumerize
-
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects

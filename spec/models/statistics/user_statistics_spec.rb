@@ -12,9 +12,8 @@
 #
 # Indexes
 #
-#  constraint_baw_user_statistics_non_overlapping  (user_id,bucket) USING gist
-#  constraint_baw_user_statistics_unique           (user_id,bucket) UNIQUE
-#  index_user_statistics_on_user_id                (user_id)
+#  constraint_baw_user_statistics_unique  (user_id,bucket) UNIQUE
+#  index_user_statistics_on_user_id       (user_id)
 #
 # Foreign Keys
 #

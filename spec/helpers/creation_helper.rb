@@ -21,6 +21,8 @@ module Creation
       prepare_tag
       prepare_script
 
+      prepare_harvest
+
       prepare_region
       prepare_site
 
@@ -176,7 +178,7 @@ module Creation
       let!(alternate_name) { project_anon } if alternate_name
       let!(:permission_anon) {
         FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true,
-                                       level: 'reader')
+          level: 'reader')
       }
     end
 
@@ -187,7 +189,7 @@ module Creation
       let!(alternate_name) { project_logged_in } if alternate_name
       let!(:permission_logged_in) {
         FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true,
-                                       level: 'reader')
+          level: 'reader')
       }
     end
 
@@ -219,27 +221,31 @@ module Creation
       }
     end
 
+    def prepare_harvest
+      let!(:harvest) { Common.create_harvest(owner_user, project) }
+    end
+
     def prepare_region
       let!(:region) { Common.create_region(owner_user, project) }
     end
 
     def prepare_site
-      let!(:site) { Common.create_site(owner_user, project, region: region) }
+      let!(:site) { Common.create_site(owner_user, project, region:) }
     end
 
     def prepare_permission_owner
-      let!(:owner_permission) { Permission.where(user: owner_user, project: project, level: 'owner').first! }
+      let!(:owner_permission) { Permission.where(user: owner_user, project:, level: 'owner').first! }
     end
 
     def prepare_permission_writer
       let!(:writer_permission) {
-        FactoryBot.create(:write_permission, creator: owner_user, user: writer_user, project: project)
+        FactoryBot.create(:write_permission, creator: owner_user, user: writer_user, project:)
       }
     end
 
     def prepare_permission_reader
       let!(:reader_permission) {
-        FactoryBot.create(:read_permission, creator: owner_user, user: reader_user, project: project)
+        FactoryBot.create(:read_permission, creator: owner_user, user: reader_user, project:)
       }
     end
 
@@ -299,8 +305,8 @@ module Creation
 
     def prepare_progress_event
       let!(:default_dataset_item) {
-        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording,
-                                                 dataset: default_dataset)
+        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording:,
+          dataset: default_dataset)
       }
       let!(:progress_event) {
         Common.create_progress_event(admin_user, default_dataset_item)
@@ -350,15 +356,19 @@ module Creation
       end
 
       def create_project(creator)
-        FactoryBot.create(:project, creator: creator)
+        FactoryBot.create(:project, creator:, allow_audio_upload: true)
+      end
+
+      def create_harvest(creator, project)
+        FactoryBot.create(:harvest, creator:, project:)
       end
 
       def create_region(creator, project)
-        FactoryBot.create(:region, creator: creator, project: project)
+        FactoryBot.create(:region, creator:, project:)
       end
 
       def create_site(creator, project, region: nil)
-        site = FactoryBot.create(:site, :with_lat_long, creator: creator)
+        site = FactoryBot.create(:site, :with_lat_long, creator:)
         site.projects << project
         site.region = region unless region.nil?
         site.save!
@@ -366,45 +376,45 @@ module Creation
       end
 
       def create_tag(creator)
-        FactoryBot.create(:tag, creator: creator)
+        FactoryBot.create(:tag, creator:)
       end
 
       def create_script(creator)
-        FactoryBot.create(:script, creator: creator)
+        FactoryBot.create(:script, creator:)
       end
 
       def create_audio_recording(creator, uploader, site)
         FactoryBot.create(
           :audio_recording,
           :status_ready,
-          creator: creator,
-          uploader: uploader,
-          site: site,
+          creator:,
+          uploader:,
+          site:,
           sample_rate_hertz: 44_100
         )
       end
 
       def create_bookmark(creator, audio_recording)
-        FactoryBot.create(:bookmark, creator: creator, audio_recording: audio_recording)
+        FactoryBot.create(:bookmark, creator:, audio_recording:)
       end
 
       def create_audio_event(creator, audio_recording)
-        FactoryBot.create(:audio_event, creator: creator, audio_recording: audio_recording)
+        FactoryBot.create(:audio_event, creator:, audio_recording:)
       end
 
       def create_audio_event_tags(creator, audio_event, tag)
-        FactoryBot.create(:tagging, creator: creator, audio_event: audio_event, tag: tag)
+        FactoryBot.create(:tagging, creator:, audio_event:, tag:)
       end
 
       def create_audio_event_comment(creator, audio_event)
-        FactoryBot.create(:comment, creator: creator, audio_event: audio_event)
+        FactoryBot.create(:comment, creator:, audio_event:)
       end
 
       def create_saved_search(creator, project, stored_query = nil)
         saved_search = if stored_query.nil?
-                         FactoryBot.create(:saved_search, creator: creator)
+                         FactoryBot.create(:saved_search, creator:)
                        else
-                         FactoryBot.create(:saved_search, creator: creator, stored_query: stored_query)
+                         FactoryBot.create(:saved_search, creator:, stored_query:)
                        end
 
         saved_search.projects << project
@@ -413,42 +423,42 @@ module Creation
       end
 
       def create_analysis_job(creator, script, saved_search)
-        FactoryBot.create(:analysis_job, creator: creator, script: script, saved_search: saved_search)
+        FactoryBot.create(:analysis_job, creator:, script:, saved_search:)
       end
 
       def create_analysis_job_item(analysis_job, audio_recording)
-        FactoryBot.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
+        FactoryBot.create(:analysis_jobs_item, analysis_job:, audio_recording:)
       end
 
       def create_dataset(creator)
-        FactoryBot.create(:dataset, creator: creator)
+        FactoryBot.create(:dataset, creator:)
       end
 
       def create_dataset_item(creator, dataset, audio_recording)
-        FactoryBot.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
+        FactoryBot.create(:dataset_item, creator:, dataset:, audio_recording:)
       end
 
       def create_progress_event(creator, dataset_item)
-        FactoryBot.create(:progress_event, creator: creator, dataset_item: dataset_item)
+        FactoryBot.create(:progress_event, creator:, dataset_item:)
       end
 
       def create_progress_event_full(creator, dataset_item, activity)
-        FactoryBot.create(:progress_event, creator: creator, dataset_item: dataset_item, activity: activity)
+        FactoryBot.create(:progress_event, creator:, dataset_item:, activity:)
       end
 
       def create_study(creator, dataset)
-        FactoryBot.create(:study, creator: creator, dataset: dataset)
+        FactoryBot.create(:study, creator:, dataset:)
       end
 
       def create_question(creator, study)
-        question = FactoryBot.build(:question, creator: creator)
+        question = FactoryBot.build(:question, creator:)
         question.studies << study
         question.save!
         question
       end
 
       def create_user_response(creator, dataset_item, study, question)
-        FactoryBot.create(:response, creator: creator, dataset_item: dataset_item, study: study, question: question)
+        FactoryBot.create(:response, creator:, dataset_item:, study:, question:)
       end
     end
   end

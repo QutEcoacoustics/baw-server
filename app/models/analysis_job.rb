@@ -44,8 +44,6 @@
 #  analysis_jobs_updater_id_fk       (updater_id => users.id)
 #
 class AnalysisJob < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
 
   # allow a state machine to work with this class
   include AASM

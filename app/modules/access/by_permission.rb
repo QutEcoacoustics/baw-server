@@ -70,6 +70,25 @@ module Access
         end
       end
 
+      # Get all harvests for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @param [Integer] project_id
+      # @return [ActiveRecord::Relation] harvests
+      def harvests(user, levels: Access::Core.levels, project_id: nil)
+        # project can be nil
+        query = Harvest.all
+        query = query.where(project_id:) unless project_id.nil?
+        is_admin, query = permission_admin(user, levels, query)
+
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.joins(:project).where(permissions)
+        end
+      end
+
       # Get all sites for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels

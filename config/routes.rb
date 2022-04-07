@@ -566,7 +566,7 @@ Rails.application.routes.draw do
     resources :sites, only: [:index], defaults: { format: 'json' }
 
     # API only: regions
-    resources :regions, except: [:edit], defaults: { format: 'json' }
+    resources :regions, shallow: true, except: [:edit], defaults: { format: 'json' }
 
     # API only: harvests
     resources :harvests, except: [:edit], defaults: { format: 'json' }
@@ -670,7 +670,7 @@ Rails.application.routes.draw do
 
   # shallow harvests
   match 'harvests/filter' => 'harvests#filter', via: [:get, :post], defaults: { format: 'json' }
-  resources :harvests, except: [:edit], defaults: { format: 'json' }, as: 'shallow_harvest'
+  resources :harvests, except: [:edit], defaults: { format: 'json' }, as: 'harvest'
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' =>
     'progress_events#create_by_dataset_item_params',

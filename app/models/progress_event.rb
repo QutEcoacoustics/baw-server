@@ -16,9 +16,6 @@
 #  fk_rails_...  (dataset_item_id => dataset_items.id)
 #
 class ProgressEvent < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_progress_events
   belongs_to :dataset_item, inverse_of: :progress_events

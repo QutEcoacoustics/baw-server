@@ -49,6 +49,9 @@ class HarvestsController < ApplicationController
   # POST /projects/:project_id/harvests
   def create
     do_new_resource
+    parameters = harvest_params
+    sanitize_mappings(parameters[:mappings])
+
     do_set_attributes(harvest_params)
     get_project_if_exists
     do_authorize_instance
@@ -75,6 +78,7 @@ class HarvestsController < ApplicationController
     do_authorize_instance
 
     parameters = harvest_params(update: true)
+    sanitize_mappings(parameters[:mappings])
 
     # allow the API to transition this harvest to a new state
     status = parameters.delete(:status)
@@ -124,23 +128,23 @@ class HarvestsController < ApplicationController
   end
 
   def list_permissions
-    if @project.nil?
-      Access::ByPermission.harvests(current_user)
-    else
-      Access::ByPermission.harvests(current_user, project_id: @project.id)
-    end
+    Access::ByPermission.harvests(current_user, project_id: @project&.id)
+  end
+
+  def sanitize_mappings(mappings)
+    return if mappings.blank?
+
+    raise 'incomplete'
   end
 
   def harvest_params(update: false)
     harvest = params.require(:harvest)
 
-    # TODO: sanitize mappings object
-    raise 'incomplete' if harvest.key?(:mappings)
-
     other = []
     other << :project_id unless update
-    other << :status if upcase
+    other << :status if update
+    other << :streaming unless update
 
-    harvest.permit(:mappings, :state, *other)
+    harvest.permit(:mappings, *other)
   end
 end

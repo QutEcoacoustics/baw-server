@@ -85,6 +85,7 @@ require 'rspec/collection_matchers'
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 require 'rspec-benchmark'
+require 'rspec/mocks'
 require 'webmock/rspec'
 require 'paperclip/matchers'
 require 'database_cleaner/active_record'

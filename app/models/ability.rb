@@ -89,6 +89,7 @@ class Ability
 
       to_project(user, is_guest)
       to_permission(user)
+      to_harvest(user, is_guest)
       to_region(user, is_guest)
       to_site(user, is_guest)
       to_audio_recording(user, is_guest)
@@ -234,6 +235,26 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter, :new], Permission
+  end
+
+  def to_harvest(user, _is_guest)
+    # POST      /projects/:project_id/harvests                         harvests#create
+    # GET       /projects/:project_id/harvests/new                     harvests#new
+    # GET       /projects/:project_id/harvests/:id                     harvests#show
+    # PATCH|PUT /projects/:project_id/harvests/:id                     harvests#update
+    # DELETE    /projects/:project_id/harvests/:id                     harvests#destroy
+    # GET       /projects/:project_id/harvests                         harvests#index {:format=>"json"}
+    # GET|POST  /projects/:project_id/harvests/filter                                       harvests#filter {:format=>"json"}
+    # and all of the above again with the shallow route
+
+    # only owner can access these actions.
+    can [:create, :update, :destroy, :show], Harvest do |harvest|
+      check_model(harvest)
+      Access::Core.can_any?(user, :owner, harvest.project)
+    end
+
+    # available to any user, including guest
+    can [:index, :filter, :new], Harvest
   end
 
   def to_region(user, _is_guest)

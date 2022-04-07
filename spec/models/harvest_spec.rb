@@ -6,7 +6,7 @@
 #
 #  id              :bigint           not null, primary key
 #  mappings        :jsonb
-#  state           :string
+#  status          :string
 #  streaming       :boolean
 #  upload_password :string
 #  upload_user     :string
@@ -23,6 +23,9 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 RSpec.describe Harvest, type: :model do
+  prepare_users
+  prepare_project
+
   subject { build(:harvest) }
 
   it 'has a valid factory' do
@@ -39,5 +42,18 @@ RSpec.describe Harvest, type: :model do
 
   it 'can generate a upload url' do
     expect(subject.upload_url).to eq "sftp://#{Settings.upload_service.host}:#{Settings.upload_service}"
+  end
+
+  it 'will fail to create a harvest if uploading is not enabled for the project' do
+    project.allow_audio_upload = false
+    project.save!
+
+    harvest = Harvest.new(project:)
+
+    expect(harvest).not_to be_valid
+    expect(harvest).to have(1).error_on(:project)
+    expect(harvest.errors_on(:project)).to include(
+      'A harvest cannot be created unless a project has enabled audio upload'
+    )
   end
 end
