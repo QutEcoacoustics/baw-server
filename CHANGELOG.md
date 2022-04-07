@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.4.0](https://github.com/QutEcoacoustics/baw-server/tree/7.4.0) (2022-04-07)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.3.1...7.4.0)
+
+**Fixed bugs:**
+
+- Login with downloader script bugged when using username and password [\#570](https://github.com/QutEcoacoustics/baw-server/issues/570)
+
 ## [7.3.1](https://github.com/QutEcoacoustics/baw-server/tree/7.3.1) (2022-04-06)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.3.0...7.3.1)

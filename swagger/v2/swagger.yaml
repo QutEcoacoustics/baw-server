@@ -1401,7 +1401,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.3.0 from http://localhost:3000.
+                  Version 7.3.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1421,10 +1421,13 @@ paths:
                 param(
                   # Where to download the recordings. Defaults to the present working directory if not specified.
                   $target = $null,
-                  # The username to use to login to the workbench. This value's default value is templated when the script is generated.
-                  $user_name = $null,
-                  # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
+                    # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
                   $auth_token = $null,
+                  # The username to use to login to the workbench. This value's default value is templated when the script is generated. This is not needed if you use an auth_token.
+                  $user_name = $null,
+                  # The poassword to use to login to the workbench. This is not needed if you use an auth_token.
+                  $password = $null,
+
                   # The filter to use to select audio recordings to download. This value's default value is templated when the script is generated.
                   # See https://github.com/QutEcoacoustics/baw-server/wiki/API:-Filtering for details on valid filters. This argument
                   # should be a valid JSON encoded string.
@@ -1438,7 +1441,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.3.0"
+                Write-Information "Acoustic Workbench downloader script version 7.3.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1478,8 +1481,24 @@ paths:
                 $headers = @{}
 
                 if ($null -eq $auth_token) {
-                  $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
-                  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{ @{"email"=$_.UserName;"password"=$_.Password}} | ConvertTo-Json
+                  if ($user_name -and $password) {
+                    $User = $user_name
+                    $PWord = ConvertTo-SecureString -String $password -AsPlainText -Force
+                    $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+                  }
+                  else {
+                    $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
+                  }
+
+
+                  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{
+                      if ($_.UserName -like '*@*') {
+                        @{"email"=$_.UserName;"password"=$_.Password}
+                      }
+                      else {
+                        @{"login"=$_.UserName;"password"=$_.Password}
+                      }
+                  }
 
                   Write-Information "Logging in to workbench $workbench"
 
@@ -1604,7 +1623,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.3.0 from http://localhost:3000.
+                  Version 7.3.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1624,10 +1643,13 @@ paths:
                 param(
                   # Where to download the recordings. Defaults to the present working directory if not specified.
                   $target = $null,
-                  # The username to use to login to the workbench. This value's default value is templated when the script is generated.
-                  $user_name = $null,
-                  # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
+                    # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
                   $auth_token = $null,
+                  # The username to use to login to the workbench. This value's default value is templated when the script is generated. This is not needed if you use an auth_token.
+                  $user_name = $null,
+                  # The poassword to use to login to the workbench. This is not needed if you use an auth_token.
+                  $password = $null,
+
                   # The filter to use to select audio recordings to download. This value's default value is templated when the script is generated.
                   # See https://github.com/QutEcoacoustics/baw-server/wiki/API:-Filtering for details on valid filters. This argument
                   # should be a valid JSON encoded string.
@@ -1641,7 +1663,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.3.0"
+                Write-Information "Acoustic Workbench downloader script version 7.3.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1681,8 +1703,24 @@ paths:
                 $headers = @{}
 
                 if ($null -eq $auth_token) {
-                  $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
-                  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{ @{"email"=$_.UserName;"password"=$_.Password}} | ConvertTo-Json
+                  if ($user_name -and $password) {
+                    $User = $user_name
+                    $PWord = ConvertTo-SecureString -String $password -AsPlainText -Force
+                    $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+                  }
+                  else {
+                    $credentials = Get-Credential -Message "Provide credentials for logging into $workbench_url" -UserName $user_name
+                  }
+
+
+                  $json_credentials = $credentials.GetNetworkCredential() | ForEach-Object{
+                      if ($_.UserName -like '*@*') {
+                        @{"email"=$_.UserName;"password"=$_.Password}
+                      }
+                      else {
+                        @{"login"=$_.UserName;"password"=$_.Password}
+                      }
+                  }
 
                   Write-Information "Logging in to workbench $workbench"
 
@@ -3314,17 +3352,12 @@ paths:
           content:
             application/json:
               example:
-                status: bad
+                status: good
                 timed_out: false
                 database: true
                 redis: PONG
                 storage: 1 audio recording storage directory available.
-                upload: |-
-                  error: The server responded to `/api/v2/token` with status 401, and body:
-                  ```
-                  {:error=>"invalid credentials", :message=>"Unauthorized"}
-                  ```
-                  See .inspect for more detail.
+                upload: Alive
               schema:
                 type: object
                 properties:
