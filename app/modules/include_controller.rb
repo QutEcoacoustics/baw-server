@@ -256,8 +256,8 @@ module IncludeController
         error,
         env: request.env,
         data: {
-          method_name: method_name,
-          json_response: json_response
+          method_name:,
+          json_response:
         }
       )
     end
@@ -346,7 +346,9 @@ module IncludeController
     # json or form encoded with text/plain content type will have the form {}
     return unless request.POST.values.all?(&:blank?)
 
-    if request.body.string.blank?
+    # sometimes in prod body can be a PhusionPassenger::Utils::TeeInput which does not have a `string` method
+    body = request.body
+    if body.respond_to?(:string) && body.string.blank?
       message = 'Request body was empty'
       status = :bad_request
       # include link to 'new' endpoint if body was empty
