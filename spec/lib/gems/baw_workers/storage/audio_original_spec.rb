@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-
-require 'helpers/shared_test_helpers'
+require 'support/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioOriginal do
   include_context 'shared_test_helpers'
@@ -19,13 +18,13 @@ describe BawWorkers::Storage::AudioOriginal do
 
   let(:opts) {
     {
-      uuid: uuid,
+      uuid:,
       datetime_with_offset: datetime,
-      original_format: original_format
+      original_format:
     }
   }
 
-  before(:each) do
+  before do
     clear_original_audio
   end
 
@@ -123,7 +122,7 @@ describe BawWorkers::Storage::AudioOriginal do
     path_info = audio_original.parse_file_path(path[0])
 
     expect(path.size).to eq 1
-    expect(path.first).to eq(BawWorkers::Config.original_audio_helper.possible_dirs[0] + '/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_20120302-050537Z.mp3')
+    expect(path.first).to eq("#{BawWorkers::Config.original_audio_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_20120302-050537Z.mp3")
 
     expect(path_info[:uuid]).to eq uuid
     expect(path_info[:datetime_with_offset]).to eq datetime
@@ -136,7 +135,7 @@ describe BawWorkers::Storage::AudioOriginal do
     path_info = audio_original.parse_file_path(path[0])
 
     expect(path.size).to eq 1
-    expect(path.first).to eq(BawWorkers::Config.original_audio_helper.possible_dirs[0] + '/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_120302-1505.mp3')
+    expect(path.first).to eq("#{BawWorkers::Config.original_audio_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_120302-1505.mp3")
 
     expect(path_info.keys.size).to eq 3
     expect(path_info[:uuid]).to eq uuid
@@ -161,7 +160,7 @@ describe BawWorkers::Storage::AudioOriginal do
     files = []
     audio_original.existing_files do |file|
       info = audio_original.parse_file_path(file)
-      files.push(info.merge(file: file))
+      files.push(info.merge(file:))
     end
 
     expect(files.size).to eq(2)

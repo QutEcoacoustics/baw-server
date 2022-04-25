@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-
-require 'helpers/shared_test_helpers'
+require 'support/shared_test_helpers'
 
 xdescribe 'Website forms with user', type: :feature do
-  before(:each) do
-    @user = FactoryBot.create(:user)
+  before do
+    @user = create(:user)
     login_as @user, scope: :user
   end
 
@@ -14,12 +13,12 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit contact_us_path
-      expect(current_path).to eq(contact_us_path)
+      expect(page).to have_current_path(contact_us_path, ignore_query: true)
       fill_in 'data_class_contact_us[name]', with: 'name'
       fill_in 'data_class_contact_us[content]', with: 'testing testing'
       click_button 'Submit'
 
-      expect(current_path).to eq(contact_us_path)
+      expect(page).to have_current_path(contact_us_path, ignore_query: true)
       expect(page).to have_content('we need more information, we will be in touch with you shortly')
 
       expect(ActionMailer::Base.deliveries.size).to eq(1)
@@ -34,10 +33,10 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit contact_us_path
-      expect(current_path).to eq(contact_us_path)
+      expect(page).to have_current_path(contact_us_path, ignore_query: true)
       click_button 'Submit'
 
-      expect(current_path).to eq(contact_us_path)
+      expect(page).to have_current_path(contact_us_path, ignore_query: true)
       expect(page).to have_content('Please review the problems below')
       expect(page).to have_content("can't be blank")
 
@@ -50,12 +49,12 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit bug_report_path
-      expect(current_path).to eq(bug_report_path)
+      expect(page).to have_current_path(bug_report_path, ignore_query: true)
       fill_in 'data_class_bug_report[description]', with: 'description-1-1-1-1'
       fill_in 'data_class_bug_report[content]', with: 'testing testing'
       click_button 'Submit'
 
-      expect(current_path).to eq(bug_report_path)
+      expect(page).to have_current_path(bug_report_path, ignore_query: true)
       expect(page).to have_content('we will let you know if the problems you describe are resolved')
 
       expect(ActionMailer::Base.deliveries.size).to eq(1)
@@ -70,10 +69,10 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit bug_report_path
-      expect(current_path).to eq(bug_report_path)
+      expect(page).to have_current_path(bug_report_path, ignore_query: true)
       click_button 'Submit'
 
-      expect(current_path).to eq(bug_report_path)
+      expect(page).to have_current_path(bug_report_path, ignore_query: true)
       expect(page).to have_content('Please review the problems below')
       expect(page).to have_content("can't be blank")
 
@@ -86,14 +85,14 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit data_request_path
-      expect(current_path).to eq(data_request_path)
+      expect(page).to have_current_path(data_request_path, ignore_query: true)
       fill_in 'data_class_data_request[email]', with: 'email@email.com'
       fill_in 'data_class_data_request[group]', with: 'description-1-1-1-1'
       select 'Non profit', from: 'data_class_data_request[group_type]'
       fill_in 'data_class_data_request[content]', with: 'testing testing'
       click_button 'Submit'
 
-      expect(current_path).to eq(data_request_path)
+      expect(page).to have_current_path(data_request_path, ignore_query: true)
       expect(page).to have_content('Your request was successfully submitted. We will be in contact shortly.')
 
       expect(ActionMailer::Base.deliveries.size).to eq(1)
@@ -109,10 +108,10 @@ xdescribe 'Website forms with user', type: :feature do
       ActionMailer::Base.deliveries.clear
 
       visit data_request_path
-      expect(current_path).to eq(data_request_path)
+      expect(page).to have_current_path(data_request_path, ignore_query: true)
       click_button 'Submit'
 
-      expect(current_path).to eq(data_request_path)
+      expect(page).to have_current_path(data_request_path, ignore_query: true)
       expect(page).to have_content('Please review the problems below')
       expect(page).to have_content("can't be blank")
 
@@ -127,9 +126,9 @@ xdescribe 'Website forms with user', type: :feature do
 
     it 'shows the Statistics page' do
       # create project, permissions, site, audio_recording, audio_event, tag, comment, bookmark
-      FactoryBot.create(:permission, level: 'writer', creator: @user, user: @user)
+      create(:permission, level: 'writer', creator: @user, user: @user)
       visit website_status_path
-      expect(current_path).to eq(website_status_path)
+      expect(page).to have_current_path(website_status_path, ignore_query: true)
       expect(page).to have_content('Unique tags attached to annotations')
     end
 
@@ -137,7 +136,7 @@ xdescribe 'Website forms with user', type: :feature do
       clear_original_audio
 
       visit status_path
-      expect(current_path).to eq(status_path)
+      expect(page).to have_current_path(status_path, ignore_query: true)
       expect(page).to have_content('bad')
     end
 
@@ -145,7 +144,7 @@ xdescribe 'Website forms with user', type: :feature do
       make_original_audio
 
       visit status_path
-      expect(current_path).to eq(status_path)
+      expect(page).to have_current_path(status_path, ignore_query: true)
       expect(page).to have_content('good')
     end
   end
@@ -155,25 +154,25 @@ xdescribe 'public website forms', type: :feature do
   context 'static pages' do
     it 'shows the ethics_statement page' do
       visit ethics_statement_path
-      expect(current_path).to eq(ethics_statement_path)
+      expect(page).to have_current_path(ethics_statement_path, ignore_query: true)
       expect(page).to have_content('Ethics Statement')
     end
 
     it 'shows the credits page' do
       visit credits_path
-      expect(current_path).to eq(credits_path)
+      expect(page).to have_current_path(credits_path, ignore_query: true)
       expect(page).to have_content('Credits')
     end
 
     it 'shows the disclaimers page' do
       visit disclaimers_path
-      expect(current_path).to eq(disclaimers_path)
+      expect(page).to have_current_path(disclaimers_path, ignore_query: true)
       expect(page).to have_content('without express or implied warranty')
     end
 
     it 'shows the data_upload page' do
       visit data_upload_path
-      expect(current_path).to eq(data_upload_path)
+      expect(page).to have_current_path(data_upload_path, ignore_query: true)
       expect(page).to have_content(I18n.t('baw.shared.links.upload_audio.title'))
     end
   end
@@ -181,7 +180,7 @@ xdescribe 'public website forms', type: :feature do
   context 'website status' do
     it 'shows the Statistics page' do
       visit website_status_path
-      expect(current_path).to eq(website_status_path)
+      expect(page).to have_current_path(website_status_path, ignore_query: true)
       expect(page).to have_content('Unique tags attached to annotations')
     end
   end

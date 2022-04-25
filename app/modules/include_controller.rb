@@ -34,6 +34,7 @@ module IncludeController
     rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_response
     rescue_from NotImplementedError, with: :not_implemented_response
     rescue_from ActionController::UnknownFormat, with: :unknown_format_response
+    rescue_from ActionController::UnpermittedParameters, with: :unprocessable_entity_error_response
 
     # Custom errors - these use the message in the error
     # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -48,6 +49,7 @@ module IncludeController
     rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
     rescue_from CustomErrors::OrphanedSiteError, with: :orphan_site_error_response
     rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
+    rescue_from AasmHelpers::NoTransitionAvailable, with: :unprocessable_entity_error_response
 
     # Don't rescue this, it is the base for 406 and 415
     #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
@@ -482,7 +484,9 @@ module IncludeController
     # don't email when someone has sent us bad parameters
     options = { should_notify_error: false }
 
-    options[:error_info] = error.additional_details unless error.additional_details.nil?
+    if error.respond_to?(:additional_details) && !error.additional_details.nil?
+      options[:error_info] = error.additional_details
+    end
 
     render_error(
       :unprocessable_entity,
@@ -494,8 +498,6 @@ module IncludeController
   end
 
   def bad_request_response(error)
-    # render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
-
     render_error(
       :bad_request,
       'The request was not valid.',

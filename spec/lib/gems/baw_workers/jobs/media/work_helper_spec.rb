@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Media::WorkHelper do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -52,11 +52,11 @@ describe BawWorkers::Jobs::Media::WorkHelper do
       work_helper.create_audio_segment(
         uuid: '5498633d-89a7-4b65-8f4a-46aa0c09c619',
         datetime_with_offset: datetime,
-        original_format: original_format,
+        original_format:,
         start_offset: 0,
         end_offset: duration_seconds,
         channel: 0,
-        sample_rate: sample_rate,
+        sample_rate:,
         format: Settings.cached_audio_defaults.extension
       )
     }.to raise_error(BawAudioTools::Exceptions::AudioFileNotFoundError, /Could not find original audio in/)
@@ -65,9 +65,9 @@ describe BawWorkers::Jobs::Media::WorkHelper do
   context 'creates cached audio' do
     it 'has correct path and output with custom settings' do
       existing_paths = work_helper.create_audio_segment(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: datetime,
-        original_format: original_format,
+        original_format:,
         end_offset: 60,
         start_offset: 45,
         channel: 1,
@@ -87,9 +87,9 @@ describe BawWorkers::Jobs::Media::WorkHelper do
 
     it 'has correct path and output with default settings' do
       existing_paths = work_helper.create_audio_segment(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: datetime,
-        original_format: original_format,
+        original_format:,
         start_offset: 0,
         end_offset: Settings.cached_audio_defaults.min_duration_seconds,
         channel: Settings.cached_audio_defaults.channel,
@@ -112,9 +112,9 @@ describe BawWorkers::Jobs::Media::WorkHelper do
   context 'creates cached spectrogram' do
     it 'has correct path and output with custom settings' do
       existing_paths = work_helper.generate_spectrogram(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: datetime,
-        original_format: original_format,
+        original_format:,
         end_offset: 60,
         start_offset: 45,
         channel: 1,
@@ -136,9 +136,9 @@ describe BawWorkers::Jobs::Media::WorkHelper do
 
     it 'has correct path and output with default settings' do
       existing_paths = work_helper.generate_spectrogram(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: datetime,
-        original_format: original_format,
+        original_format:,
         start_offset: 0,
         end_offset: Settings.cached_spectrogram_defaults.min_duration_seconds,
         channel: Settings.cached_spectrogram_defaults.channel,

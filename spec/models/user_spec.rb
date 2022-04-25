@@ -113,4 +113,10 @@ describe User, type: :model do
   # it { should validate_attachment_content_type(:image)
   #                 .allowing('image/gif', 'image/jpeg', 'image/jpg','image/png', 'image/x-png', 'image/pjpeg')
   #                 .rejecting('text/xml', 'image_maybe/abc', 'some_image/png','text/plain') }
+
+  it 'has a safe_user_name function' do
+    user = build(:user, user_name: "!aNT\'s fully s!ck user name 1337;;\n)/\)\'")
+
+    expect(user.safe_user_name).to eq('aNTs-fully-s-ck-user-name-1337')
+  end
 end

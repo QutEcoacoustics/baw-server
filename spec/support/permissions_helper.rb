@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helpers/shared_examples/permissions_for'
+require 'support/shared_examples/permissions_for'
 
 # rubocop:disable Metrics/ModuleLength
 module PermissionsHelpers

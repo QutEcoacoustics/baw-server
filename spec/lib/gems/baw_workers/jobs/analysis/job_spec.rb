@@ -3,7 +3,7 @@
 require 'webmock/rspec'
 
 describe BawWorkers::Jobs::Analysis::Job do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
   extend WebServerHelper::ExampleGroup
 
   include_context 'shared_test_helpers'
@@ -31,7 +31,7 @@ describe BawWorkers::Jobs::Analysis::Job do
   }
 
   let(:analysis_query) {
-    { analysis_params: analysis_params }
+    { analysis_params: }
   }
 
   let(:analysis_params_id) { 'analysis_job:501867ef770106f87c7f38a951bd91a6' }
@@ -58,7 +58,7 @@ describe BawWorkers::Jobs::Analysis::Job do
       expect(job_id).not_to eq(''), 'enqueuing not successful'
 
       status = BawWorkers::ResqueApi.status_by_key(job_id)
-      logger.info(status: status)
+      logger.info(status:)
 
       expected = 'Analysis for: 123456, job=20'
       expect(status.name).to eq(expected)
@@ -70,7 +70,7 @@ describe BawWorkers::Jobs::Analysis::Job do
 
       job_id1 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect_queue_count(queue_name, 1)
-      expect(job_id1).to match /analysis_job:[a-f0-9]{32}/
+      expect(job_id1).to match(/analysis_job:[a-f0-9]{32}/)
 
       job_id2 = BawWorkers::Jobs::Analysis::Job.action_enqueue(analysis_params)
       expect_queue_count(queue_name, 1)
@@ -107,7 +107,7 @@ describe BawWorkers::Jobs::Analysis::Job do
       ]
 
       status = BawWorkers::ResqueApi.status_by_key(job_id)
-      expect(status).to have_attributes(status: 'queued', job_id: job_id)
+      expect(status).to have_attributes(status: 'queued', job_id:)
     end
   end
 
@@ -121,26 +121,26 @@ describe BawWorkers::Jobs::Analysis::Job do
 
       audio_recording_params =
         {
-          uuid: uuid,
+          uuid:,
           id: 123_456,
           datetime_with_offset: Time.zone.parse('2014-11-18T16:05:00Z'),
           original_format: 'ogg'
         }
 
-      audio_recording = FactoryBot.create(
+      audio_recording = create(
         :audio_recording,
         :status_ready,
         creator: writer_user,
         uploader: writer_user,
-        site: site,
+        site:,
         sample_rate_hertz: 44_100,
-        uuid: uuid,
+        uuid:,
         id: 123_456,
         recorded_date: Time.zone.parse('2014-11-18T16:05:00Z'),
         media_type: 'ogg'
       )
       saved_search = Creation::Common.create_saved_search(writer_user, project, site_id: { eq: site.id })
-      script = FactoryBot.create(
+      script = create(
         :script,
         creator: admin_user,
         executable_command: 'touch empty_file.txt; echo "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
@@ -153,14 +153,14 @@ describe BawWorkers::Jobs::Analysis::Job do
           sub_folders: []
         }
       )
-      analysis_job = FactoryBot.create(:analysis_job, creator: writer_user, script: script, saved_search: saved_search,
-                                                      id: 20)
-      analysis_job_item = FactoryBot.create(:analysis_jobs_item, analysis_job: analysis_job,
-                                                                 audio_recording: audio_recording)
+      analysis_job = create(:analysis_job, creator: writer_user, script:, saved_search:,
+        id: 20)
+      analysis_job_item = create(:analysis_jobs_item, analysis_job:,
+        audio_recording:)
 
       job_output_params =
         {
-          uuid: uuid,
+          uuid:,
           job_id: 20,
           sub_folders: [],
           file_name: 'empty_file.txt'
@@ -172,7 +172,7 @@ describe BawWorkers::Jobs::Analysis::Job do
       FileUtils.cp(audio_file_mono, target_file)
 
       # Run analysis - job enqueue done by state machine
-      expect(analysis_job_item.queue!).to eq true
+      expect(analysis_job_item.queue!).to be true
 
       perform_jobs(count: 1)
 

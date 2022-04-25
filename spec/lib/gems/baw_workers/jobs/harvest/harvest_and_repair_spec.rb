@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe 'harvesting a file that needs repairs' do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
   extend WebServerHelper::ExampleGroup
 
   include_context 'shared_test_helpers'
@@ -19,7 +19,7 @@ describe 'harvesting a file that needs repairs' do
     # generate a harvest.yml file
     harvest_yml_path = harvester_to_do_path / BawWorkers::Jobs::Harvest::Metadata.filename
     template = BawWorkers::Jobs::Harvest::Metadata.generate_yaml(project.id, site.id, owner_user, recursive: false,
-utc_offset: '+10')
+      utc_offset: '+10')
     harvest_yml_path.write(template)
 
     # copy in a file fixture to harvest

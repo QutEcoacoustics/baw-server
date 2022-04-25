@@ -6,9 +6,6 @@ action_cable:
 resque:
   connection:
     db: 1
-actions:
-  harvest:
-    to_do_path: ./tmp/_test_harvester_to_do_path
 devise:
   pepper: 128 char random pepper 128 char random pepper
   secret_key: 128 char random pepper 128 char random pepper

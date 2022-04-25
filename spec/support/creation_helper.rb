@@ -73,6 +73,7 @@ module Creation
     # creates an project with public (allow anon) permissions
     # as well as a site, audio recording and dataset item
     def create_anon_hierarchy
+      prepare_users
       prepare_project_anon
 
       let!(:site_anon) {
@@ -143,7 +144,7 @@ module Creation
       let!(:reader_user) { FactoryBot.create(:user, user_name: 'reader', skip_creation_email: true) }
       let!(:reader_token) { Common.create_user_token(reader_user) }
 
-      # explicitly not allowed access (rather than just does not explicitly have access)
+      # implicitly not allowed access (we don't encode explicit non-access in our permissions structure)
       let!(:no_access_user) { FactoryBot.create(:user, user_name: 'no_access', skip_creation_email: true) }
       let!(:no_access_token) { Common.create_user_token(no_access_user) }
 
@@ -171,15 +172,26 @@ module Creation
       let!(alternate_name) { project_anon } if alternate_name && alternate_name != :project
     end
 
+    def prepare_anonymous_access(project_name)
+      let!(:permission_anon) {
+        FactoryBot.create(:permission, creator: owner_user, user: nil, project: send(project_name), allow_anonymous: true,
+          level: 'reader')
+      }
+    end
+
+    def prepare_logged_in_access(project_name)
+      let!(:permission_logged_in) {
+        FactoryBot.create(:permission, creator: owner_user, user: nil, project: send(project_name), allow_logged_in: true,
+          level: 'reader')
+      }
+    end
+
     def prepare_project_anon(alternate_name = nil)
       let!(:project_anon) {
         FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
       }
       let!(alternate_name) { project_anon } if alternate_name
-      let!(:permission_anon) {
-        FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true,
-          level: 'reader')
-      }
+      prepare_anonymous_access(:project_anon)
     end
 
     def prepare_project_logged_in(alternate_name = nil)
@@ -187,10 +199,7 @@ module Creation
         FactoryBot.create(:project, creator: owner_user, name: 'Logged In Project')
       }
       let!(alternate_name) { project_logged_in } if alternate_name
-      let!(:permission_logged_in) {
-        FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true,
-          level: 'reader')
-      }
+      prepare_logged_in_access(:project_logged_in)
     end
 
     def prepare_project_anon_and_logged_in(alternate_name = nil)
@@ -198,27 +207,9 @@ module Creation
         FactoryBot.create(:project, creator: owner_user, name: 'Anon & Logged In Project')
       }
       let!(alternate_name) { project_anon_and_logged_in } if alternate_name
-      let!(:permission_anon) {
-        FactoryBot.create(
-          :permission,
-          creator: owner_user,
-          user: nil,
-          project: project_anon_and_logged_in,
-          allow_anonymous: true,
-          level: 'reader'
-        )
-      }
 
-      let!(:permission_logged_in) {
-        FactoryBot.create(
-          :permission,
-          creator: owner_user,
-          user: nil,
-          project: project_anon_and_logged_in,
-          allow_logged_in: true,
-          level: 'reader'
-        )
-      }
+      prepare_anonymous_access(:project_anon_and_logged_in)
+      prepare_logged_in_access(:project_anon_and_logged_in)
     end
 
     def prepare_harvest

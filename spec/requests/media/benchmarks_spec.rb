@@ -19,6 +19,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
   before do
     clear_audio_cache
+    expect_empty_directories(Settings.paths.cached_audios)
 
     # backfill our audio storage with a fixture
     @test_file = link_original_audio(
@@ -54,11 +55,11 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
       expect_success
       expect(response.content_type).to eq('audio/wav')
-      expect(response.content_length).to be_within(100).of(1_323_078)
+      expect(response.content_length).to be_within(0).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.6).of(2.7)
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.6).of(2.7)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.6).of(2.6)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.6).of(2.6)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.0)
 
       expect(response.headers['X-Error-Message']).to be_nil
@@ -74,7 +75,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
       expect_success
       expect(response.content_type).to eq('audio/wav')
-      expect(response.content_length).to be_within(100).of(1_323_078)
+      expect(response.content_length).to be_within(0).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_CACHE
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.1).of(0.01)
@@ -91,11 +92,11 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
       expect_success
       expect(response.content_type).to eq('audio/wav')
-      expect(response.content_length).to be_within(100).of(1_323_078)
+      expect(response.content_length).to be_within(0).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(1).of(3.25)
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(1).of(3.25)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(1).of(3.0)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(1).of(3.0)
       expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.0)
 
       expect(response.headers['X-Error-Message']).to be_nil
@@ -118,12 +119,12 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
 
       expect_success
       expect(response.content_type).to eq('audio/wav')
-      expect(response.content_length).to be_within(100).of(1_323_078)
+      expect(response.content_length).to be_within(0).of(1_323_078)
 
       expect(response.headers[MediaPoll::HEADER_KEY_RESPONSE_FROM]).to eq MediaPoll::HEADER_VALUE_RESPONSE_REMOTE_CACHE
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(0.5).of(2.9)
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(0.5).of(2.8)
-      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.1).of(0.01)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL].to_f).to be_within(1.0).of(2.4)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING].to_f).to be_within(1.0).of(2.3)
+      expect(response.headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING].to_f).to be_within(0.05).of(0.01)
 
       expect(response.headers['X-Error-Message']).to be_nil
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::AudioCheck::Action do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
   let(:queue_name) { Settings.actions.audio_check.queue }
@@ -58,7 +58,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
       job_id1 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
       expect_queue_count(queue_name, 1)
-      expect(job_id1).to match /analysis_job:[a-f0-9]{32}/
+      expect(job_id1).to match(/analysis_job:[a-f0-9]{32}/)
 
       job_id2 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
       expect_queue_count(queue_name, 1)

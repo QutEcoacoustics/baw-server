@@ -132,11 +132,12 @@ module ApiSpecHelpers
       }
     end
 
-    def send_model(&block)
+    # post or puts the hash as the payload body
+    def send_model(&)
       let((get_parent_param :baw_body_name)) do
-        body = instance_eval(&block)
-        unless body.is_a?(Hash) && body.key?(model_name)
-          raise 'Body must have one key with model name which then contains attributes'
+        body = instance_eval(&)
+        unless body.is_a?(Hash) && (body.key?(model_name) || body.key?(model_name.to_sym))
+          raise "Body must have one key with model name (#{model_name}) which then contains attributes. Received instead: #{body}"
         end
 
         body
@@ -148,7 +149,7 @@ module ApiSpecHelpers
     # from the hash, according to the given schema
     def auto_send_model(subset: nil)
       let((get_parent_param :baw_body_name)) do
-        body_attributes_for(model_name, factory: factory, subset: subset)
+        body_attributes_for(model_name, factory:, subset:)
       end
     end
 
@@ -192,10 +193,10 @@ module ApiSpecHelpers
       # out attr_accessor is possibly defined on every example group
       layers = parent_groups.map { |x| x.send(name) }
       # pick the first non-nil value
-      layers.reject(&:nil?).first
+      layers.compact.first
     end
 
-    def run_test!(&block)
+    def run_test!(&)
       # we're overriding run test because it is easier to insert our custom helper's
       # metadata in the right spots just before we invoke the test
 
@@ -230,28 +231,13 @@ module ApiSpecHelpers
       end
 
       it "returns a #{metadata[:response][:code]} response" do |example|
-        assert_response_matches_metadata(example.metadata, &block)
-        example.instance_exec(response, &block) if block_given?
+        assert_response_matches_metadata(example.metadata, &)
+        example.instance_exec(response, &) if block_given?
       end
 
-      after do |example|
-        unless example.exception.nil?
-          # I don't know of a good way to augment the original error with more
-          # information. Raising a new error with more information seems to work OK.
-          request&.body&.rewind
-          message = <<~API_RESULT
-            The API result that generated this failure is:
-            ```
-            #{api_result.nil? ? '<empty result>' : api_result}
-            ```
-            The request body was:
-            ```
-            #{request&.body&.nil? == false ? request.body.read : '<empty request body>'}
-            ```
-          API_RESULT
-          raise StandardError, message
-        end
-      end
+      # after do |example|
+      #   # noop
+      # end
     end
   end
 end

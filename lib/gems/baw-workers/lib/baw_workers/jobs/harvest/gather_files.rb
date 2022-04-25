@@ -49,7 +49,10 @@ module BawWorkers
                           item
                         end
 
-              results.push(*process(item, top_dir, recurse))
+              # we were splatting and pushing results here but that caused a SystemStackError
+              # when too many results were spreaf into arguments
+              process_results = process(item, top_dir, recurse))
+              results = results.concat(process_results)
             end
           end
 

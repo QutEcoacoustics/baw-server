@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'helpers/compare_spec_helper'
-require 'helpers/misc_helper'
+require 'support/compare_spec_helper'
+require 'support/misc_helper'
 
 def document_media_requests
   # this is here so rspec_api_documentation can be generated

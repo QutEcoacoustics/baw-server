@@ -117,7 +117,7 @@ module RequestSpecHelpers
 
     def expect_id_matches(expected)
       id = get_id(expected)
-      expect(api_result).to include({ data: hash_including({ id: id }) })
+      expect(api_result).to include({ data: hash_including({ id: }) })
     end
 
     def expect_has_ids(*expected)
@@ -168,14 +168,14 @@ module RequestSpecHelpers
 
     def expect_has_projection(projection)
       expect(api_result).to include(meta: hash_including({
-        projection: projection
+        projection:
       }))
     end
 
     def expect_has_paging(page: 0, items: 25, current: nil, total: nil)
       expected = {
-        items: items,
-        page: page
+        items:,
+        page:
       }
       expected[:current] = current unless current.nil?
       expected[:total] = total unless total.nil?
@@ -187,20 +187,20 @@ module RequestSpecHelpers
     def expect_has_sorting(order_by:, direction: 'asc')
       expect(api_result).to include(meta: hash_including({
         sorting: {
-          direction: direction,
-          order_by: order_by
+          direction:,
+          order_by:
         }
       }))
     end
 
     def expect_has_filter(filter)
       expect(api_result).to include(meta: hash_including({
-        filter: filter
+        filter:
       }))
     end
 
     def expect_has_capability(name, can, details = nil)
-      { can: can, details: details } => expected
+      { can:, details: } => expected
 
       expect(api_result).to include(
         meta: hash_including(
@@ -220,7 +220,7 @@ module RequestSpecHelpers
     def expect_error(status, details, info = nil)
       status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
 
-      raise "Status is not acceptable #{status}" unless status.is_a?(Integer)
+      raise "Status argument to expect_error is not acceptable: `#{status}`" unless status.is_a?(Integer)
 
       aggregate_failures 'error response' do
         expect(response).to have_http_status(status)
@@ -234,8 +234,8 @@ module RequestSpecHelpers
         error_hash[:info] = info unless info.nil?
         expect(api_result).to match({
           meta: hash_including({
-            status: status,
-            message: message,
+            status:,
+            message:,
             error: hash_including(error_hash)
           }),
           data: nil

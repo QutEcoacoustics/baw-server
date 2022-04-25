@@ -14,12 +14,14 @@ module WebServerHelper
     #   server and port binding.
     def expose_app_as_web_server
       around do |example|
+        current_example = RSpec.current_example
         host_url = "http://0.0.0.0:#{Settings.api.port}"
         timeout = example.metadata.fetch(:web_server_timeout, 30)
+        timeout = 3600 if DEBUGGING
 
         # start a web server
         task = Async { |inner|
-          ready = false
+          ready = Async::Condition.new
           timer_task = inner.async { |task|
             # Wait for the timeout, at any point this task might be cancelled if the user code completes:
             task.annotate("Timer task duration=#{timeout}.")
@@ -41,15 +43,21 @@ module WebServerHelper
               endpoint
             )
             server.run
-            logger.info('Test web server: running test')
-            ready = true
+            logger.info('Test web server: started web server')
+            ready.signal(true)
 
             inner.children.each(&:wait)
           }
 
           spec_task = inner.async {
-            sleep 0.1 until ready
+            logger.info('Test web server: waiting for web server')
+
+            ready.wait
+
             logger.measure_info('Test web server: running test') do
+              # This state seems to be lost across the thread boundary.
+              # The rest of Rspec.world seems to be fine though.
+              RSpec.current_example = current_example
               example.call
             end
 

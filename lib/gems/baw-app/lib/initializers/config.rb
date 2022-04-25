@@ -2,20 +2,10 @@
 
 require_relative '../custom_types'
 
+# The schema for our Settings files
 class BawConfigContract < Dry::Validation::Contract
-  # TODO: add more validation
-  # Note: ruby config does not make use of values that may have been coerced during validation
-  schema do
-    required(:audio_recording_max_overlap_sec).value(:float)
-    required(:audio_recording_min_duration_sec).value(:float)
-
-    required(:upload_service).hash do
-      required(:host).filled(:string)
-      required(:port).value(:integer, gt?: 0)
-      required(:username).filled(:string)
-      required(:password).filled(:string)
-      required(:sftp_port).filled(:integer, gt?: 0)
-    end
+  ActionsConfigSchema = Dry::Schema.define {
+    config.validate_keys = true
 
     required(:actions).hash do
       required(:active_storage).hash do
@@ -30,16 +20,64 @@ class BawConfigContract < Dry::Validation::Contract
         required(:queue).filled(:string)
         required(:cache_to_redis).filled(:bool)
       end
+
+      required(:harvest).hash do
+        required(:queue).filled(:string)
+        required(:to_do_path).filled(
+          Baw::CustomTypes::CreatedDirPathname
+        )
+        required(:config_file_name).filled(:string)
+      end
     end
+  }
+
+  SftpgoConfigSchema = Dry::Schema.define {
+    required(:upload_service).hash do
+      required(:host).filled(:string)
+      required(:port).value(:integer, gt?: 0)
+      required(:username).filled(:string)
+      required(:password).filled(:string)
+      required(:sftp_port).filled(:integer, gt?: 0)
+    end
+  }
+
+  InternalConfigSchema = Dry::Schema.define {
+    required(:internal).hash do
+      required(:allow_list).array(Baw::CustomTypes::IPAddr)
+    end
+  }
+
+  PathsConfigSchema = Dry::Schema.define {
+    required(:paths).hash do
+      required(:temp_dir).filled(:string)
+      required(:programs_dir).filled(:string)
+      required(:cached_spectrograms).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:cached_audios).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:analysis_scripts).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:cached_datasets).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:cached_analysis_jobs).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:worker_log_file).filled(:string)
+      required(:mailer_log_file).filled(:string)
+      required(:audio_tools_log_file).filled(:string)
+      required(:temp_dir).filled(:string)
+      required(:programs_dir).filled(:string)
+    end
+  }
+
+  # TODO: add more validation
+  # Note: ruby config does not make use of values that may have been coerced during validation
+  schema(
+    ActionsConfigSchema,
+    SftpgoConfigSchema,
+    InternalConfigSchema,
+    PathsConfigSchema
+  ) do
+    required(:audio_recording_max_overlap_sec).value(:float)
+    required(:audio_recording_min_duration_sec).value(:float)
 
     required(:logs).hash do
       required(:tag).maybe(:string)
       required(:directory).filled(:string)
-    end
-
-    required(:paths).hash do
-      required(:temp_dir).filled(:string)
-      required(:programs_dir).filled(:string)
     end
 
     required(:resque).hash do

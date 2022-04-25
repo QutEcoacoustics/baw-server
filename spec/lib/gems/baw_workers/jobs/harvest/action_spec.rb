@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Harvest::Action do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -51,7 +51,7 @@ describe BawWorkers::Jobs::Harvest::Action do
   end
 
   it 'can enqueue' do
-    item = FactoryBot.create(:harvest_item)
+    item = create(:harvest_item)
     job = BawWorkers::Jobs::Harvest::Action.perform_later!(item.id, item.path)
     expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::Action)
 
@@ -59,7 +59,7 @@ describe BawWorkers::Jobs::Harvest::Action do
   end
 
   it 'has a sensible name' do
-    item = FactoryBot.create(:harvest_item)
+    item = create(:harvest_item)
 
     job = BawWorkers::Jobs::Harvest::Action.new(item.id, item.path)
 

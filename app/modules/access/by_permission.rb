@@ -72,10 +72,10 @@ module Access
 
       # Get all harvests for which this user has these access levels.
       # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
+      # @param [Symbol, Array<Symbol>] levels  - defaults to checking owner only
       # @param [Integer] project_id
       # @return [ActiveRecord::Relation] harvests
-      def harvests(user, levels: Access::Core.levels, project_id: nil)
+      def harvests(user, levels: [:owner], project_id: nil)
         # project can be nil
         query = Harvest.all
         query = query.where(project_id:) unless project_id.nil?

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def id_params
   parameter :id, 'Question id in request url', required: true
@@ -37,16 +36,17 @@ resource 'Questions' do
   let(:post_attributes) { FactoryBot.attributes_for(:question, text: 'New Question text', study_ids: [study.id]) }
 
   # reader, writer and owner should all act the same, because questions don't derive permissions from projects
-  shared_examples_for 'Questions results' do |current_user|
+  shared_context 'Questions results' do |current_user|
     let(:current_user) { current_user }
 
     def token(target)
-      target.send((current_user.to_s + '_token').to_sym)
+      target.send("#{current_user}_token".to_sym)
     end
 
     # INDEX
     get '/questions' do
       let(:authentication_token) { token(self) }
+
       standard_request_options(
         :get,
         "Any user, including #{current_user}, can access",
@@ -60,6 +60,7 @@ resource 'Questions' do
       body_params
       let(:raw_post) { { 'question' => post_attributes }.to_json }
       let(:authentication_token) { token(self) }
+
       standard_request_options(
         :post,
         "Non-admin, including #{current_user}, cannot create",
@@ -71,6 +72,7 @@ resource 'Questions' do
     # NEW
     get '/questions/new' do
       let(:authentication_token) { token(self) }
+
       standard_request_options(
         :get,
         "Any user, including #{current_user}, can access",
@@ -84,6 +86,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { token(self) }
+
       standard_request_options(
         :get,
         "Any user, including #{current_user}, can access",
@@ -110,6 +113,7 @@ resource 'Questions' do
 
     post '/questions/filter' do
       let(:authentication_token) { token(self) }
+
       standard_request_options(
         :post,
         "Any user, including #{current_user}, can access",
@@ -126,6 +130,7 @@ resource 'Questions' do
   describe 'index' do
     get '/questions' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'INDEX (as admin)',
@@ -136,6 +141,7 @@ resource 'Questions' do
 
     get '/questions' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'INDEX (with invalid token)',
@@ -155,6 +161,7 @@ resource 'Questions' do
 
     get '/questions' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'INDEX (as harvester)',
@@ -173,6 +180,7 @@ resource 'Questions' do
       body_params
       let(:raw_post) { { 'question' => post_attributes }.to_json }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :post,
         'CREATE (as admin)',
@@ -186,6 +194,7 @@ resource 'Questions' do
       let(:raw_post) { { 'question' => post_attributes }.to_json }
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :post,
         'CREATE (as no access user)',
@@ -198,6 +207,7 @@ resource 'Questions' do
       body_params
       let(:raw_post) { { 'question' => post_attributes }.to_json }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :post,
         'CREATE (invalid token)',
@@ -209,6 +219,7 @@ resource 'Questions' do
     post '/questions' do
       body_params
       let(:raw_post) { { 'question' => post_attributes }.to_json }
+
       standard_request_options(
         :post,
         'CREATE (as anonymous user)',
@@ -221,6 +232,7 @@ resource 'Questions' do
       body_params
       let(:raw_post) { { 'question' => post_attributes }.to_json }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :post,
         'CREATE (as harvester user)',
@@ -237,6 +249,7 @@ resource 'Questions' do
   describe 'new' do
     get '/questions/new' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'NEW (as admin)',
@@ -247,6 +260,7 @@ resource 'Questions' do
 
     get '/questions/new' do
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :get,
         'NEW (as non admin user)',
@@ -257,6 +271,7 @@ resource 'Questions' do
 
     get '/questions/new' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'NEW (with invalid token)',
@@ -276,6 +291,7 @@ resource 'Questions' do
 
     get '/questions/new' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'NEW (as harvester user)',
@@ -294,6 +310,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'SHOW (as admin)',
@@ -306,6 +323,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :get,
         'SHOW (as no access user)',
@@ -318,6 +336,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'SHOW (with invalid token)',
@@ -329,6 +348,7 @@ resource 'Questions' do
     get '/questions/:id' do
       id_params
       let(:id) { question.id }
+
       standard_request_options(
         :get,
         'SHOW (as anonymous user)',
@@ -341,6 +361,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'SHOW (as harvester)',
@@ -429,6 +450,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as admin)',
@@ -441,6 +463,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as owner user)',
@@ -453,6 +476,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as reader user)',
@@ -465,6 +489,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as no access user)',
@@ -477,6 +502,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :delete,
         'DESTROY (with invalid token)',
@@ -489,6 +515,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:raw_post) { { question: post_attributes }.to_json }
+
       standard_request_options(
         :delete,
         'DESTROY (as anonymous user)',
@@ -501,6 +528,7 @@ resource 'Questions' do
       id_params
       let(:id) { question.id }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :delete,
         'DESTROY (with harvester token)',
@@ -517,16 +545,19 @@ resource 'Questions' do
   describe 'filter' do
     post '/questions/filter' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(:post, 'FILTER (as admin)', :ok, basic_filter_opts)
     end
 
     post '/questions/filter' do
       let(:authentication_token) { no_access_token }
+
       standard_request_options(:post, 'FILTER (as no access user)', :ok, basic_filter_opts)
     end
 
     post '/questions/filter' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :post,
         'FILTER (with invalid token)',
@@ -546,6 +577,7 @@ resource 'Questions' do
 
     post '/questions/filter' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :post,
         'FILTER (with harvester token)',
@@ -568,6 +600,7 @@ resource 'Questions' do
         }.to_json
       }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :post,
         'FILTER (with admin token: filter by name with projection)',
@@ -582,14 +615,14 @@ resource 'Questions' do
   end
 
   describe 'Owner user' do
-    it_should_behave_like 'Questions results', :owner
+    it_behaves_like 'Questions results', :owner
   end
 
   describe 'Writer user' do
-    it_should_behave_like 'Questions results', :writer
+    it_behaves_like 'Questions results', :writer
   end
 
   describe 'Reader user' do
-    it_should_behave_like 'Questions results', :reader
+    it_behaves_like 'Questions results', :reader
   end
 end

@@ -49,6 +49,7 @@ module Baw
     else
       SemanticLogger::Formatters::Default.new(time_format:)
     end => format
+
     config.rails_semantic_logger.format = format
 
     config.log_level = BawApp.log_level

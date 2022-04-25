@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def scripts_id_param
   parameter :id, 'Script id in request url', required: true
@@ -36,6 +36,7 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'INDEX (as admin)', :ok, {
       expected_json_path: 'data/0/analysis_identifier',
       data_item_count: 4
@@ -44,6 +45,7 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'INDEX (as writer)', :ok, {
       expected_json_path: 'data/0/analysis_identifier',
       data_item_count: 4
@@ -52,6 +54,7 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (as reader)', :ok, {
       expected_json_path: [
         'data/0/name',
@@ -71,8 +74,9 @@ resource 'Scripts' do
 
   get '/scripts/?filter_is_last_version=:filter_is_last_version' do
     let(:authentication_token) { reader_token }
-    parameter :filter_is_last_version, 'Only return the last version for each group'
     let(:filter_is_last_version) { true }
+
+    parameter :filter_is_last_version, 'Only return the last version for each group'
 
     standard_request_options(
       :get,
@@ -102,6 +106,7 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:get, 'INDEX (as no access)', :ok, {
       expected_json_path: 'data/0/analysis_identifier',
       data_item_count: 4
@@ -110,6 +115,7 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, {
       expected_json_path: get_json_error_path(:sign_in)
     })
@@ -131,6 +137,7 @@ resource 'Scripts' do
     scripts_id_param
     let(:id) { script.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'SHOW (as admin)', :ok, {
       expected_json_path: ['data/analysis_identifier', 'data/executable_settings']
     })
@@ -140,6 +147,7 @@ resource 'Scripts' do
     scripts_id_param
     let(:id) { script.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'SHOW (as writer)', :ok, {
       expected_json_path: ['data/analysis_identifier', 'data/executable_settings']
     })
@@ -149,6 +157,7 @@ resource 'Scripts' do
     scripts_id_param
     let(:id) { script.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'SHOW (as reader)', :ok, {
       expected_json_path: [
         'data/name',
@@ -169,6 +178,7 @@ resource 'Scripts' do
     scripts_id_param
     let(:id) { script.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:get, 'SHOW (as other)', :ok, {
       expected_json_path: ['data/analysis_identifier', 'data/executable_settings']
     })
@@ -178,6 +188,7 @@ resource 'Scripts' do
     scripts_id_param
     let(:id) { script.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {
       expected_json_path: get_json_error_path(:sign_in)
     })
@@ -186,6 +197,7 @@ resource 'Scripts' do
   get '/scripts/:id' do
     scripts_id_param
     let(:id) { script.id }
+
     standard_request_options(:get, 'SHOW (as anonymous user)', :unauthorized, {
       remove_auth: true,
       expected_json_path: get_json_error_path(:sign_in)
@@ -210,6 +222,7 @@ resource 'Scripts' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
       expected_json_path: [
         'meta/filter/analysis_identifier/contains',
@@ -237,6 +250,7 @@ resource 'Scripts' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader, filtering by is_last_version, is_first_version)', :ok, {
       expected_json_path: [
         'meta/filter/is_last_version/eq',

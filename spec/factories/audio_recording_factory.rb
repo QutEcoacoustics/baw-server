@@ -49,7 +49,7 @@
 #  audio_recordings_updater_id_fk   (updater_id => users.id)
 #  audio_recordings_uploader_id_fk  (uploader_id => users.id)
 #
-require "#{__dir__}/../helpers/misc_helper"
+require "#{__dir__}/../support/misc_helper"
 
 FactoryBot.define do
   factory :audio_recording do

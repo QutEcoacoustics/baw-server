@@ -43,7 +43,7 @@
 #  analysis_jobs_script_id_fk        (script_id => scripts.id)
 #  analysis_jobs_updater_id_fk       (updater_id => users.id)
 #
-require 'helpers/resque_helpers'
+require 'support/resque_helpers'
 require 'aasm/rspec'
 
 describe AnalysisJob, type: :model do
@@ -57,34 +57,38 @@ describe AnalysisJob, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to validate_presence_of(:name) }
+
   it 'is invalid without a name' do
     expect(build(:analysis_job, name: nil)).not_to be_valid
   end
-  it 'should ensure the name is no more than 255 characters' do
+
+  it 'ensures the name is no more than 255 characters' do
     test_string = 'a' * 256
     expect(build(:analysis_job, name: test_string)).not_to be_valid
     expect(build(:analysis_job, name: test_string[0..-2])).to be_valid
   end
-  it 'should ensure name is unique  (case-insensitive)' do
+
+  it 'ensures name is unique (case-insensitive)' do
     create(:analysis_job, name: 'There ain\'t room enough in this town for two of us sonny!')
     aj2 = build(:analysis_job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
 
     expect(aj2).not_to be_valid
-    expect(aj2.valid?).to be_falsey
+    expect(aj2).not_to be_valid
     expect(aj2.errors[:name].size).to eq(1)
   end
 
   it 'fails validation when script is nil' do
-    test_item = FactoryBot.build(:analysis_job)
+    test_item = build(:analysis_job)
     test_item.script = nil
 
-    expect(subject.valid?).to be_falsey
+    expect(subject).not_to be_valid
 
     expect(subject.errors[:script]).to have(1).items
     expect(subject.errors[:script].to_s).to match(/must exist/)
   end
 
   it { is_expected.to validate_presence_of(:custom_settings) }
+
   it 'is invalid without a custom_settings' do
     expect(build(:analysis_job, custom_settings: nil)).not_to be_valid
   end
@@ -115,7 +119,7 @@ describe AnalysisJob, type: :model do
 
       analysis_job.initialize_workflow
 
-      expect(analysis_job).to_not allow_event(:initialize_workflow)
+      expect(analysis_job).not_to allow_event(:initialize_workflow)
     end
 
     it 'calls initialize_workflow when created' do

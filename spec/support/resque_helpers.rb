@@ -127,7 +127,7 @@ module ResqueHelpers
           klass.disable_test_adapter if defined?(klass.disable_test_adapter)
         end
         ActiveJob::Base.queue_adapter = :resque
-
+        debugger if logger.nil?
         logger.info(trace_metadata(:pause_test_jobs))
         BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(get_pause_test_jobs)
       end
@@ -175,7 +175,7 @@ module ResqueHelpers
       of_class ||= klass
       statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS, klass: of_class)
 
-      expect(statuses).to be_a(Array).and(have_attributes(count: count))
+      expect(statuses).to be_a(Array).and(have_attributes(count:))
       statuses
     end
 
@@ -184,9 +184,9 @@ module ResqueHelpers
     # @param [Class] klass - of which class we expected failed jobs to be. Defaults to `nil` which matches any class.
     # @return [Array<Resque::Failure>]
     def expect_failed_jobs(count, klass: nil)
-      failures = BawWorkers::ResqueApi.failed(klass: klass)
+      failures = BawWorkers::ResqueApi.failed(klass:)
 
-      expect(failures).to be_a(Array).and(have_attributes(count: count))
+      expect(failures).to be_a(Array).and(have_attributes(count:))
 
       failures
     end
@@ -204,7 +204,7 @@ module ResqueHelpers
                end
 
       aggregate_failures do
-        expect(queued).to be_a(Array).and(have_attributes(count: count))
+        expect(queued).to be_a(Array).and(have_attributes(count:))
       end
       queued
     end
@@ -222,18 +222,18 @@ module ResqueHelpers
       of_class ||= klass
       actual_completed = BawWorkers::ResqueApi.statuses(
         statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
-        of_class: of_class
+        of_class:
       )
       actual_failed = BawWorkers::ResqueApi.statuses(
         statuses: [
           BawWorkers::ActiveJob::Status::STATUS_FAILED,
           BawWorkers::ActiveJob::Status::STATUS_ERRORED
         ],
-        of_class: of_class
+        of_class:
       )
       actual_enqueued = BawWorkers::ResqueApi.statuses(
         statuses: BawWorkers::ActiveJob::Status::STATUS_QUEUED,
-        of_class: of_class
+        of_class:
       )
       aggregate_failures do
         expect(actual_completed).to be_a(Array).and(have_attributes(count: completed))
@@ -310,7 +310,7 @@ module ResqueHelpers
     # Will NOT block for job completion!
     def perform_jobs_immediately(count:)
       total = BawWorkers::ResquePatch::PauseDequeueForTests.increment_perform_count(count)
-      logger.info('Allowing for test jobs to be performed', { new: count, total: total })
+      logger.info('Allowing for test jobs to be performed', { new: count, total: })
       expect(total).to be >= count
     end
 
@@ -393,10 +393,10 @@ module ResqueHelpers
       delayed = BawWorkers::ResqueApi.delayed_count
       statuses = BawWorkers::ResqueApi.statuses(statuses: PERFORMED_KEYS)
       {
-        enqueued: enqueued,
-        delayed: delayed,
+        enqueued:,
+        delayed:,
         total_pending: enqueued + delayed,
-        statuses: statuses,
+        statuses:,
         statuses_count: statuses.count,
         status_execution_count: statuses.sum { |s| (s&.options&.fetch(:executions, nil) || 0) + 1 }
       }
@@ -407,7 +407,7 @@ end
 class FakeJob
   def self.perform(*job_args)
     {
-      job_args: job_args,
+      job_args:,
       result: Time.now
     }
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe '/audio_recordings/downloader' do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
   extend WebServerHelper::ExampleGroup
 
   include_context 'shared_test_helpers'

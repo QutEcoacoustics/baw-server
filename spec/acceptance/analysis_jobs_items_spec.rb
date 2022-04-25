@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def analysis_jobs_id_param
   parameter :analysis_job_id, 'Analysis Job id in request url', required: true
@@ -65,6 +65,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { admin_token }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'INDEX (as admin)', :ok, {
       expected_json_path: [
         'data/0/analysis_job_id',
@@ -80,6 +81,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { writer_token }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'INDEX (as writer)', :ok, {
       expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
       data_item_count: 1
@@ -90,6 +92,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { reader_token }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'INDEX (as reader)', :ok, {
       expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
       data_item_count: 1
@@ -100,6 +103,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { no_access_token }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(
       :get,
       'INDEX (as other)',
@@ -124,6 +128,7 @@ resource 'AnalysisJobsItems' do
   get '/analysis_jobs/:analysis_job_id/audio_recordings' do
     analysis_jobs_id_param
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'INDEX (as anonymous user)', :ok, {
       remove_auth: true,
       data_item_count: 0,
@@ -135,6 +140,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { invalid_token }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, {
       expected_json_path: get_json_error_path(:sign_in)
     })
@@ -144,6 +150,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { admin_token }
     let(:analysis_job_id) { 'system' }
+
     standard_request_options(
       :get,
       'INDEX system (admin token)',
@@ -170,6 +177,7 @@ resource 'AnalysisJobsItems' do
     let(:analysis_job_id) { analysis_job.id }
 
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'SHOW (as admin)', :ok, {
       expected_json_path: ['data/analysis_job_id', 'data/audio_recording_id']
     })
@@ -180,6 +188,7 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'SHOW (as writer)', :ok, {
       expected_json_path: ['data/analysis_job_id', 'data/audio_recording_id']
     })
@@ -190,6 +199,7 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'SHOW (as reader)', :ok, {
       expected_json_path: ['data/analysis_job_id', 'data/audio_recording_id']
     })
@@ -200,6 +210,7 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:get, 'SHOW (as other)', :forbidden, {
       expected_json_path: get_json_error_path(:permissions)
     })
@@ -209,6 +220,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_items_id_param
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
+
     standard_request_options(:get, 'SHOW (as guest user)', :unauthorized,
       { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
@@ -218,6 +230,7 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(:get, 'SHOW (invalid token)', :unauthorized,
       { expected_json_path: get_json_error_path(:sign_in) })
   end
@@ -228,6 +241,7 @@ resource 'AnalysisJobsItems' do
     let(:analysis_job_id) { 'system' }
 
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'SHOW system (as admin)', :ok, {
       expected_json_path: ['data/analysis_job_id', 'data/audio_recording_id']
     })
@@ -359,6 +373,7 @@ resource 'AnalysisJobsItems' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
       expected_json_path: 'meta/filter/status',
       data_item_count: 1,
@@ -382,6 +397,7 @@ resource 'AnalysisJobsItems' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER system (as reader) - using nil-only properties', :ok, {
       expected_json_path: 'meta/filter/status',
       data_item_count: 0,
@@ -406,6 +422,7 @@ resource 'AnalysisJobsItems' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post,
       'FILTER system (as reader)',

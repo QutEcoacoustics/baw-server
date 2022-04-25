@@ -120,6 +120,9 @@ class Ability
       raise ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
     end
+
+    # internal takes permissions away from admin, it has to be after all of the above
+    for_internal(is_guest)
   end
 
   private
@@ -137,6 +140,22 @@ class Ability
 
     # anyone anytime can read cms blobs
     can [:read], 'Cms::Site'
+  end
+
+  def for_internal(is_guest)
+    # internal endpoints for hooks explicitly require no user information to have been set
+    [
+      # add more here
+      :internal_sftpgo
+    ].each do |subject|
+      if is_guest
+        can [:manage], subject do |_subject, remote_ip|
+          Settings.internal_allow_remote_ip?(remote_ip)
+        end
+      else
+        cannot [:manage], subject
+      end
+    end
   end
 
   def for_admin

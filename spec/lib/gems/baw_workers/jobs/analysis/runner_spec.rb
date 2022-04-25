@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Analysis::Runner do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -60,9 +60,9 @@ describe BawWorkers::Jobs::Analysis::Runner do
     result = runner.execute(prepared_opts, analysis_params)
 
     expected_1 = 'z/programs/echo \"analysis_type -source '
-    expected_2 = '/baw-server/tmp/_test_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
+    expected_2 = '/data/test/original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
     expected_3 = 'z/run.config -output '
-    expected_4 = '/baw-server/tmp/_test_analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
+    expected_4 = '/data/test/analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
     expected_5 = 'z/temp'
     expected_6 = '/runs/15_123456_'
 
@@ -121,7 +121,7 @@ describe BawWorkers::Jobs::Analysis::Runner do
 
     # check executable failure file exists
     executable_fail_file = File.join(prepared_opts[:dir_output],
-                                     BawWorkers::Jobs::Analysis::Runner::FILE_EXECUTABLE_FAILURE)
+      BawWorkers::Jobs::Analysis::Runner::FILE_EXECUTABLE_FAILURE)
     expect(File).to exist(executable_fail_file)
   end
 end

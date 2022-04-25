@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Analysis::Status do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
   extend WebServerHelper::ExampleGroup
   include_context 'shared_test_helpers'
 
@@ -17,7 +17,7 @@ describe BawWorkers::Jobs::Analysis::Status do
   let(:queue_name) { Settings.actions.analysis.queue }
 
   let!(:script) {
-    FactoryBot.create(
+    create(
       :script,
       creator: admin_user,
       executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
@@ -150,7 +150,7 @@ describe BawWorkers::Jobs::Analysis::Status do
 
       # enqueue
       analysis_job
-      analysis_job.transition_to_state(:suspended)
+      analysis_job.transition_to_state!(:suspended)
       analysis_job.save!
 
       # run

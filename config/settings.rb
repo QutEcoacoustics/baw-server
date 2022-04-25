@@ -25,6 +25,20 @@ module BawWeb
       @range_request ||= RangeRequest.new
     end
 
+    # Returns a list of IPs that we allows access to for internal endpoints
+    # @return [Array<IPAddr>]
+    def internal_allow_ips
+      @internal_allow_ips ||= internal.allow_list.map(&IPAddr.method(:new))
+    end
+
+    # Tests whether a remote IP falls within any range of our allow list of IPs
+    # for internal endpoints
+    # @param [String,IPAddr] remote_ip - the IP to test
+    # @return [Boolean] true if falls within any allowed range.
+    def internal_allow_remote_ip?(remote_ip)
+      internal_allow_ips.any? { |ip| ip.include?(remote_ip) }
+    end
+
     def version_info
       return @version_info unless @version_info.nil?
 

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def dataset_id_param
   parameter :dataset_id, 'Dataset id in request url', required: true
@@ -60,41 +59,41 @@ resource 'DatasetItems' do
   }
 
   let!(:another_dataset_item) {
-    FactoryBot.create(:dataset_item, creator: admin_user, dataset: another_dataset, audio_recording: audio_recording)
+    FactoryBot.create(:dataset_item, creator: admin_user, dataset: another_dataset, audio_recording:)
   }
 
   let!(:new_dataset_item) {
     FactoryBot.create(:dataset_item,
-                      creator: admin_user,
-                      dataset: dataset,
-                      audio_recording: audio_recording,
-                      start_time_seconds: 3,
-                      end_time_seconds: 4,
-                      order: 1).save!
+      creator: admin_user,
+      dataset:,
+      audio_recording:,
+      start_time_seconds: 3,
+      end_time_seconds: 4,
+      order: 1).save!
 
     FactoryBot.create(:dataset_item,
-                      creator: admin_user,
-                      dataset: dataset,
-                      audio_recording: audio_recording,
-                      start_time_seconds: 1,
-                      end_time_seconds: 2,
-                      order: 5).save!
+      creator: admin_user,
+      dataset:,
+      audio_recording:,
+      start_time_seconds: 1,
+      end_time_seconds: 2,
+      order: 5).save!
 
     FactoryBot.create(:dataset_item,
-                      creator: admin_user,
-                      dataset: dataset,
-                      audio_recording: audio_recording,
-                      start_time_seconds: 5,
-                      end_time_seconds: 6,
-                      order: 2).save!
+      creator: admin_user,
+      dataset:,
+      audio_recording:,
+      start_time_seconds: 5,
+      end_time_seconds: 6,
+      order: 2).save!
 
     FactoryBot.create(:dataset_item,
-                      creator: admin_user,
-                      dataset: dataset,
-                      audio_recording: audio_recording,
-                      start_time_seconds: 8,
-                      end_time_seconds: 80,
-                      order: 4).save!
+      creator: admin_user,
+      dataset:,
+      audio_recording:,
+      start_time_seconds: 8,
+      end_time_seconds: 80,
+      order: 4).save!
   }
 
   ################################
@@ -104,6 +103,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { admin_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'INDEX (as admin)',
@@ -118,24 +118,28 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(:get, 'INDEX (as owner)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(:get, 'INDEX (as writer)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(:get, 'INDEX (as reader)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { invalid_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'INDEX (with invalid token)',
@@ -146,6 +150,7 @@ resource 'DatasetItems' do
 
   get '/datasets/:dataset_id/items' do
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'INDEX (as anonymous user)',
@@ -157,6 +162,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { harvester_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'INDEX (as harvester)',
@@ -179,6 +185,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { admin_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as admin)',
@@ -195,6 +202,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as owner)',
@@ -209,6 +217,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as writer)',
@@ -223,6 +232,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as reader)',
@@ -237,6 +247,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { invalid_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (invalid token)',
@@ -250,6 +261,7 @@ resource 'DatasetItems' do
     let(:raw_post) { { 'dataset_item' => post_attributes }.to_json }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as anonymous user)',
@@ -264,6 +276,7 @@ resource 'DatasetItems' do
     let(:authentication_token) { harvester_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
+
     standard_request_options(
       :post,
       'CREATE (as harvester)',
@@ -279,6 +292,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { admin_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as admin)',
@@ -290,6 +304,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as owner)',
@@ -301,6 +316,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as writer)',
@@ -312,6 +328,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as reader)',
@@ -323,6 +340,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { invalid_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (with invalid token)',
@@ -333,6 +351,7 @@ resource 'DatasetItems' do
 
   get '/datasets/:dataset_id/items/new' do
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as anonymous user)',
@@ -344,6 +363,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/new' do
     let(:authentication_token) { harvester_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'NEW (as harvester)',
@@ -361,6 +381,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { admin_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as admin)',
@@ -373,6 +394,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as owner)',
@@ -385,6 +407,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as reader)',
@@ -397,6 +420,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as writer)',
@@ -409,6 +433,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { no_access_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as no access user)',
@@ -421,6 +446,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { invalid_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (with invalid token)',
@@ -432,6 +458,7 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items/:id' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (an anonymous user)',
@@ -444,6 +471,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:authentication_token) { harvester_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (as harvester user)',
@@ -577,6 +605,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :delete,
       'DELETE (as admin user)',
@@ -591,6 +620,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(
       :delete,
       'DELETE (as owner)',
@@ -605,6 +635,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(
       :delete,
       'DELETE (as writer)',
@@ -619,6 +650,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :delete,
       'DELETE (as reader)',
@@ -633,6 +665,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :delete,
       'DELETE (as no access user)',
@@ -647,6 +680,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :delete,
       'DELETE (as invalid token)',
@@ -660,6 +694,7 @@ resource 'DatasetItems' do
     dataset_item_id_param
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :delete,
       'DELETE (as not logged in)',
@@ -674,6 +709,7 @@ resource 'DatasetItems' do
     let(:id) { dataset_item.id }
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :delete,
       'DELETE (as harvester)',
@@ -690,6 +726,7 @@ resource 'DatasetItems' do
   # admin finds all 8 items
   post '/dataset_items/filter' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :post,
       'FILTER (as admin)',
@@ -708,6 +745,7 @@ resource 'DatasetItems' do
     dataset_id_param
     let(:dataset_id) { dataset.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :post,
       'FILTER (as admin)',
@@ -731,16 +769,19 @@ resource 'DatasetItems' do
 
   post '/dataset_items/filter' do
     let(:authentication_token) { owner_token }
+
     standard_request_options(:post, 'FILTER (as owner)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(:post, 'FILTER (as writer)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader)', :ok, regular_user_opts)
   end
 
@@ -749,6 +790,7 @@ resource 'DatasetItems' do
   post '/datasets/:dataset_id/dataset_items/filter' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
+
     standard_request_options(
       :post,
       'FILTER (as reader)',
@@ -763,6 +805,7 @@ resource 'DatasetItems' do
 
   post '/dataset_items/filter' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :post,
       'FILTER (as no access)',
@@ -773,6 +816,7 @@ resource 'DatasetItems' do
 
   post '/dataset_items/filter' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :post,
       'FILTER (as invalid token)',
@@ -793,6 +837,7 @@ resource 'DatasetItems' do
 
   get '/datasets/filter' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'FILTER (as harvester)',
@@ -817,6 +862,7 @@ resource 'DatasetItems' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post,
       'FILTER (as reader)',
@@ -845,6 +891,7 @@ resource 'DatasetItems' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post,
       'FILTER (as reader) filtered by start time with projection',
@@ -902,6 +949,7 @@ resource 'DatasetItems' do
       dataset_id_param
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as admin)',
@@ -927,6 +975,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as owner)',
@@ -938,6 +987,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as writer)',
@@ -949,6 +999,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as reader)',
@@ -960,6 +1011,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as no access)',
@@ -971,6 +1023,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as invalid token)',
@@ -982,6 +1035,7 @@ resource 'DatasetItems' do
     # not logged in users can filter dataset items, but they won't get any items that they don't have permission for
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as not logged in)',
@@ -993,6 +1047,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       create_anon_hierarchy
       let(:dataset_id) { dataset.id }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as not logged in) with public project',
@@ -1004,6 +1059,7 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'NEXT FOR ME (as harvester)',

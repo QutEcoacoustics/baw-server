@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
 module SftpgoClient
+  # Allows a struct to be serialized into JSON by first converting it to a hash
   class SerializableStruct < Dry::Struct
-    # Allows a struct to be serialized into JSON by first converting it to a hash
-    def to_json(*a)
-      to_h.to_json(*a)
+    # https://dry-rb.org/gems/dry-struct/1.0/recipes/
+    # allow transforming keys to symbols
+    transform_keys(&:to_sym)
+
+    def to_json(...)
+      to_h.to_json(...)
     end
   end
 end

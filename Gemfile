@@ -252,7 +252,7 @@ group :development, :test do
 
   # rspec helpers for rails
   # allows factory generators to be used when in development group as well as test
-  gem 'rspec-rails'
+  gem 'rspec-rails', '~> 6.0.0.rc1'
 
   # we're using falcon and these async primitives in web_server_helper for tests
   gem 'async', git: 'https://github.com/socketry/async'
@@ -278,8 +278,7 @@ group :test do
   # better diffs
   # 0.8.0 causes ifinite hangs during some specs (spec/requests/media/edge_cases_spec.rb)
   gem 'super_diff', '0.7.0'
-  # for multi-step specs
-  gem 'turnip'
+
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false
   gem 'shoulda-matchers', '~> 4', require: false

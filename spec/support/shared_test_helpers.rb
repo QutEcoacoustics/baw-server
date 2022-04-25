@@ -71,7 +71,6 @@ shared_context 'shared_test_helpers' do
   let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
   let(:analysis_cache) { BawWorkers::Config.analysis_cache_helper }
 
-  let(:logger) { BawWorkers::Config.logger_worker }
   let(:file_info) { BawWorkers::Config.file_info }
   let(:api) { BawWorkers::Config.api_communicator }
 
@@ -110,9 +109,9 @@ shared_context 'shared_test_helpers' do
     end
 
     original_possible_paths = audio_original.possible_paths({
-      uuid: uuid,
-      datetime_with_offset: datetime_with_offset,
-      original_format: original_format
+      uuid:,
+      datetime_with_offset:,
+      original_format:
     })
 
     path = Pathname(original_possible_paths.last)
@@ -122,9 +121,10 @@ shared_context 'shared_test_helpers' do
 
     logger.info(
       "Linking #{target} to #{path}",
-      uuid: uuid,
-      datetime_with_offset: datetime_with_offset,
-      original_format: original_format)
+      uuid:,
+      datetime_with_offset:,
+      original_format:
+    )
 
     path.make_symlink(target)
     path
@@ -156,10 +156,10 @@ shared_context 'shared_test_helpers' do
 
   def clear_harvester_to_do
     paths = [harvest_to_do_path]
-    clear_directories(paths, '/tmp/_test_harvester_to_do_path')
+    clear_directories(paths, '/data/test/harvester_to_do')
   end
 
-  def clear_directories(directories, sanity_check = '_test_')
+  def clear_directories(directories, sanity_check = 'test')
     directories.each do |path|
       raise "Will not delete #{path} because it does not contain '#{sanity_check}'" unless path =~ /#{sanity_check}/
 
@@ -177,6 +177,7 @@ shared_context 'shared_test_helpers' do
   end
 
   def expect_empty_directories(directories)
+    directories = Array(directories)
     aggregate_failures do
       directories.each do |path|
         path = Pathname(path)
@@ -260,8 +261,8 @@ shared_context 'shared_test_helpers' do
         message: 'OK'
       },
       data: {
-        auth_token: auth_token,
-        user_name: user_name,
+        auth_token:,
+        user_name:,
         message: 'Signed in successfully.'
       }
     }
@@ -269,8 +270,8 @@ shared_context 'shared_test_helpers' do
 
   def get_api_security_request(email, password)
     {
-      email: email,
-      password: password
+      email:,
+      password:
     }
   end
 

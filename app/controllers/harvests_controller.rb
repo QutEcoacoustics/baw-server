@@ -31,6 +31,11 @@ class HarvestsController < ApplicationController
     get_project_if_exists
     do_authorize_instance
 
+    # pump the state machine if one of the processing states is active
+    # not technically idempotent but we need some method to advance the state machine
+    # TODO: should do this in the harvest process too!
+    @harvest.transition_from_computing_to_review_if_needed!
+
     respond_show
   end
 
@@ -60,11 +65,7 @@ class HarvestsController < ApplicationController
 
       @harvest.open_upload!
 
-      if @project.nil?
-        respond_create_success(shallow_region_path(@harvest))
-      else
-        respond_create_success(project_region_path(@project, @harvest))
-      end
+      respond_create_success(project_harvest_path(@harvest.project, @harvest))
     else
       respond_change_fail
     end
@@ -77,12 +78,20 @@ class HarvestsController < ApplicationController
     get_project_if_exists
     do_authorize_instance
 
+    # disallow any update if we're in a processing state
+    unless @harvest.update_allowed?
+      raise CustomErrors::MethodNotAllowedError.new(
+        "Cannot update a harvest while it is #{@harvest.status}",
+        [:post, :put, :patch, :delete]
+      )
+    end
+
     parameters = harvest_params(update: true)
     sanitize_mappings(parameters[:mappings])
 
     # allow the API to transition this harvest to a new state
     status = parameters.delete(:status)
-    @harvest.transition_to_state(status.to_sym) unless status.nil?
+    @harvest.transition_to_state!(status.to_sym) unless status.nil?
 
     if @harvest.update(parameters)
       respond_show

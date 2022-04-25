@@ -509,6 +509,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Internal routes
+  post '/internal/sftpgo/hook' => 'internal/sftpgo#hook', defaults: { format: 'json' }
+
   # Resource Routes
   # ===============
 

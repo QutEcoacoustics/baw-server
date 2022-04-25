@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'helpers/shared_examples/capabilities_for'
-require 'helpers/permissions_helper'
+require 'support/shared_examples/capabilities_for'
+require 'support/permissions_helper'
 
 module CapabilitiesHelper
   module ExampleGroup
@@ -38,8 +38,8 @@ module CapabilitiesHelper
         it_behaves_like 'capabilities for', {
           route: spec[:route],
           route_params: spec[:route_params],
-          user: user,
-          name: name,
+          user:,
+          name:,
           expected_can: can,
           actions: [
             { verb: :get, path: '' },
@@ -66,8 +66,8 @@ module CapabilitiesHelper
         it_behaves_like 'capabilities for', {
           route: spec[:route],
           route_params: spec[:route_params],
-          user: user,
-          name: name,
+          user:,
+          name:,
           expected_can: can,
           actions: [
             { verb: :get, path: '{id}' }
@@ -105,8 +105,8 @@ module CapabilitiesHelper
       cannot = Set.new(cannot)
       unsure = Set.new(unsure)
 
-      validate_no_overlap(name, can: can, cannot: cannot, unsure: unsure, unauthorized: unauthorized)
-      validate_all_users(name, can: can, cannot: cannot, unsure: unsure, unauthorized: unauthorized)
+      validate_no_overlap(name, can:, cannot:, unsure:, unauthorized:)
+      validate_all_users(name, can:, cannot:, unsure:, unauthorized:)
 
       [
         *can.map { |u| [u, true] },

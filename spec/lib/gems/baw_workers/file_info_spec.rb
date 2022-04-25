@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 def expect_invalid_file_name(file_name)
   it file_name do |example|
     file_name = example.metadata[:description]
@@ -42,7 +40,7 @@ def expect_correct_file_name(file_name, expected_hash)
 end
 
 describe BawWorkers::FileInfo do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 

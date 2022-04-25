@@ -14,6 +14,10 @@ common:
   #proxy_protocol:
   #proxy_allowed:
   #post_connect_hook:
+  actions:
+    execute_on: [upload, delete, rename]
+    hook: http://web:3000/internal/sftpgo/hook
+
 sftpd:
   bind_port: 2022
   bind_address: ""
@@ -53,7 +57,8 @@ data_provider:
   track_quota: 0
   #pool_size:
   update_mode: 0
-  users_base_dir: /srv/sftpgo/data
+  # essentially a dummy directory
+  users_base_dir: /data/users
   #actions:
   #external_auth_hook:
   #external_auth_scope:

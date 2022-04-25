@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-
-require 'helpers/shared_test_helpers'
+require 'support/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioCache do
   include_context 'shared_test_helpers'
@@ -19,19 +18,21 @@ describe BawWorkers::Storage::AudioCache do
 
   let(:opts) {
     {
-      uuid: uuid,
-      start_offset: start_offset,
-      end_offset: end_offset,
-      channel: channel,
-      sample_rate: sample_rate,
+      uuid:,
+      start_offset:,
+      end_offset:,
+      channel:,
+      sample_rate:,
       format: format_audio
     }
   }
 
   let(:cached_audio_file_name_defaults) { "#{uuid}_0.0_#{end_offset}_0_22050.mp3" }
-  let(:cached_audio_file_name_given_parameters) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}" }
+  let(:cached_audio_file_name_given_parameters) {
+    "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}"
+  }
 
-  before(:each) do
+  before do
     clear_audio_cache
   end
 
@@ -52,15 +53,17 @@ describe BawWorkers::Storage::AudioCache do
   context 'checking validation of sample rate' do
     let(:non_standard_sample_rate) { 12_345 }
     # file name with non-standard sample rate
-    let(:cached_audio_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}.#{format_audio}" }
+    let(:cached_audio_file_name_given_parameters_nssr) {
+      "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}.#{format_audio}"
+    }
 
     it 'creates the correct name with non standard original sample rate' do
       expect(
         audio_cache.file_name(
-          uuid: uuid,
-          start_offset: start_offset,
-          end_offset: end_offset,
-          channel: channel,
+          uuid:,
+          start_offset:,
+          end_offset:,
+          channel:,
           sample_rate: non_standard_sample_rate,
           original_sample_rate: non_standard_sample_rate,
           format: format_audio
@@ -71,11 +74,11 @@ describe BawWorkers::Storage::AudioCache do
     it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
       expect(
         audio_cache.file_name(
-          uuid: uuid,
-          start_offset: start_offset,
-          end_offset: end_offset,
-          channel: channel,
-          sample_rate: sample_rate,
+          uuid:,
+          start_offset:,
+          end_offset:,
+          channel:,
+          sample_rate:,
           original_sample_rate: non_standard_sample_rate,
           format: format_audio
         )
@@ -85,10 +88,10 @@ describe BawWorkers::Storage::AudioCache do
     it 'fails validation with invalid sample rate' do
       expect {
         audio_cache.file_name(
-          uuid: uuid,
-          start_offset: start_offset,
-          end_offset: end_offset,
-          channel: channel,
+          uuid:,
+          start_offset:,
+          end_offset:,
+          channel:,
           sample_rate: 75_757,
           original_sample_rate: non_standard_sample_rate,
           format: format_audio
@@ -99,10 +102,10 @@ describe BawWorkers::Storage::AudioCache do
     it 'fails validation with non standard sample rate and original sample rate not supplied' do
       expect {
         audio_cache.file_name(
-          uuid: uuid,
-          start_offset: start_offset,
-          end_offset: end_offset,
-          channel: channel,
+          uuid:,
+          start_offset:,
+          end_offset:,
+          channel:,
           sample_rate: non_standard_sample_rate,
           format: format_audio
         )
@@ -112,10 +115,10 @@ describe BawWorkers::Storage::AudioCache do
     it 'fails validation with a sample rate not supported by the format (mp3)' do
       expect {
         audio_cache.file_name(
-          uuid: uuid,
-          start_offset: start_offset,
-          end_offset: end_offset,
-          channel: channel,
+          uuid:,
+          start_offset:,
+          end_offset:,
+          channel:,
           sample_rate: non_standard_sample_rate,
           original_sample_rate: non_standard_sample_rate,
           format: 'mp3'
@@ -144,7 +147,7 @@ describe BawWorkers::Storage::AudioCache do
     path_info = audio_cache.parse_file_path(path[0])
 
     expect(path.size).to eq 1
-    expect(path.first).to eq(BawWorkers::Config.audio_cache_helper.possible_dirs[0] + '/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050.wav')
+    expect(path.first).to eq("#{BawWorkers::Config.audio_cache_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050.wav")
 
     expect(path_info.keys.size).to eq 6
     expect(path_info[:uuid]).to eq uuid

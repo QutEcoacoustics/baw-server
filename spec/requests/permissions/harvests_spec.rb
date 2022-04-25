@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 describe 'Harvest permissions' do
-  create_entire_hierarchy
+  # private projects are tested in the project tests, so we'll test
+  # the more complex case where an anonymous user has access to a
+  # project
+  create_audio_recordings_hierarchy
+  prepare_anonymous_access(:project)
+  prepare_logged_in_access(:project)
+  prepare_harvest
 
   given_the_route '/projects/{project_id}/harvests' do
     {
@@ -43,7 +49,13 @@ describe 'Harvest permissions' do
 end
 
 describe 'Harvest permissions (shallow)' do
-  create_entire_hierarchy
+  # private projects are tested in the project tests, so we'll test
+  # the more complex case where an anonymous user has access to a
+  # project
+  create_audio_recordings_hierarchy
+  prepare_anonymous_access(:project)
+  prepare_logged_in_access(:project)
+  prepare_harvest
 
   given_the_route '/harvests' do
     {

@@ -22,10 +22,24 @@ module BawWorkers
       # Basically the user has permission to access anything in the root dir.
       # This is ok because each account is chrooted to its home directory, and
       # further, the docker container is isolated to the upload directory.
+      # Also we set `setstat_mode` to 1 in the sftpgo config which silently
+      # ignores any attempts to change the permissions/ownership of files.
       STANDARD_PERMISSIONS =
         {
-          '/' => [SftpgoClient::Permission::ALL]
+          '/' => [SftpgoClient::Permission::ALL].freeze
         }.freeze
+
+      # Returns a permissions hash used for making a new user.
+      # Most permissions are allowed, but in this scenario
+      # we disallow modifying directories because we expect
+      # that they're set up in a certain format.
+      NO_DIRECTORY_CHANGES_PERMISSIONS = {
+        '/' => SftpgoClient::Permission::PERMISSIONS
+                                         .values
+                                         .reject { |x| x == SftpgoClient::Permission::ALL }
+                                         .grep_v(/dirs/)
+                                         .freeze
+      }.freeze
 
       STANDARD_FILESYSTEM = SftpgoClient::FilesystemConfig.new({
         provider: FILESYSTEM_LOCAL

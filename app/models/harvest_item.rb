@@ -42,12 +42,37 @@ class HarvestItem < ApplicationRecord
   validates :path, presence: true, length: { minimum: 2 }
 
   STATUS_NEW = :new
+  STATUS_METADATA_GATHERED = :metadata_gathered
   STATUS_FAILED = :failed
   STATUS_COMPLETED = :completed
   STATUS_ERRORED = :errored
-  STATUSES = [STATUS_NEW, STATUS_FAILED, STATUS_COMPLETED, STATUS_ERRORED].freeze
+  STATUSES = [STATUS_NEW, STATUS_METADATA_GATHERED, STATUS_FAILED, STATUS_COMPLETED, STATUS_ERRORED].freeze
 
   enumerize :status, in: STATUSES, default: :new
 
   serialize :info, ::HashSerializer
+
+  def new?
+    status == STATUS_NEW
+  end
+
+  def metadata_gathered?
+    status == STATUS_METADATA_GATHERED
+  end
+
+  def failed?
+    status == STATUS_FAILED
+  end
+
+  def completed?
+    status == STATUS_COMPLETED
+  end
+
+  def errored?
+    status == STATUS_ERRORED
+  end
+
+  def terminal_status?
+    completed? || failed? || errored?
+  end
 end

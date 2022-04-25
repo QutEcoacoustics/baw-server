@@ -217,6 +217,16 @@ class User < ApplicationRecord
 
   after_create :special_after_create_actions
 
+  # get's a file system safe ([-A-Za-z0-9_]) version of the user name
+  # @return [String]
+  def safe_user_name
+    user_name
+      .gsub("'", '')
+      .gsub(/[^-_A-Za-z0-9]+/, '-')
+      .delete_prefix('-')
+      .delete_suffix('-')
+  end
+
   # Get the last time this user was seen.
   # @return [DateTime] Date this user was last seen
   def get_last_seen

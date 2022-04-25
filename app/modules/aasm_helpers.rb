@@ -1,25 +1,42 @@
 # frozen_string_literal: true
 
-# TODO: I'm pretty sure there is a better way to do this?
+# Extensions for AASM.
+# https://github.com/aasm/aasm#inspection
 module AasmHelpers
   def may_transition_to_state(state)
-    events = events_for_transition_to_state(state)
+    state = state.to_sym unless state.is_a?(Symbol)
 
-    events.size == 1
+    aasm.states(permitted: true).map(&:name).include?(state)
   end
 
-  def transition_to_state(state)
-    events = events_for_transition_to_state(state)
+  def transition_to_state!(state)
+    state = state.to_sym unless state.is_a?(Symbol)
 
-    raise "Cannot transition to next state (#{events.size} possible events found)" if events.size != 1
+    events = aasm.permitted_transitions.select { |pair|
+      pair in { state: ^state }
+    }
 
-    public_send(events[0].name, state)
+    raise NoTransitionAvailable.new(self, state, events.size) if events.size != 1
+
+    events => [ { event: target_event } ]
+    Rails.logger.debug(
+      'Transitioning state machine', new_state: state, target_event:, self: self
+    )
+
+    public_send(target_event, state)
   end
 
-  def events_for_transition_to_state(state)
-    # find the event in the state machine to fire
-    aasm.events.find_all do |event|
-      event.transitions_to_state?(state)
+  # Represents a failure to find a unique event that can be used to transition from one state to another.
+  class NoTransitionAvailable < RuntimeError
+    attr_reader :object, :target_state, :current_state, :events_found
+
+    def initialize(object, target_state, events_found)
+      @object = object
+      @target_state = target_state
+      @current_state = object.aasm.current_state
+      @events_found = events_found
+
+      super("Cannot transition from #{current_state} to #{target_state}, #{events_found} allowed transitions found")
     end
   end
 end

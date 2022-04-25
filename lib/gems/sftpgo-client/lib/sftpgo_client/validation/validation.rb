@@ -30,7 +30,7 @@ module SftpgoClient
       validated_value = validation.nil? ? Success(value) : validation.call(value)
       raise ArgumentError, "#{name} was not valid: #{valid.failure}" unless validated_value.success?
 
-      hash[:name] = validated_value.value!
+      hash[name] = validated_value.value!
     end
   end
 end

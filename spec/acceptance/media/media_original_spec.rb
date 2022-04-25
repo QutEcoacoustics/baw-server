@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
-require 'helpers/resque_helpers'
+require 'support/acceptance_spec_helper'
+require 'support/resque_helpers'
 require 'fixtures/fixtures'
 
 # https://github.com/zipmark/rspec_api_documentation

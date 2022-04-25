@@ -36,12 +36,14 @@ RSpec.describe Harvest, type: :model do
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional(true) }
 
+  it { is_expected.to validate_presence_of(:project) }
+
   it 'encodes the mappings column as jsonb' do
     expect(Harvest.columns_hash['mappings'].type).to eq(:jsonb)
   end
 
   it 'can generate a upload url' do
-    expect(subject.upload_url).to eq "sftp://#{Settings.upload_service.host}:#{Settings.upload_service}"
+    expect(subject.upload_url).to eq "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
   end
 
   it 'will fail to create a harvest if uploading is not enabled for the project' do
@@ -53,7 +55,18 @@ RSpec.describe Harvest, type: :model do
     expect(harvest).not_to be_valid
     expect(harvest).to have(1).error_on(:project)
     expect(harvest.errors_on(:project)).to include(
-      'A harvest cannot be created unless a project has enabled audio upload'
+      'A harvest cannot be created unless its parent project has enabled audio upload'
+    )
+  end
+
+  it 'has a upload directory name' do
+    expect(subject.upload_directory_name).to eq subject.id.to_s
+  end
+
+  it 'has a upload directory path' do
+    root =  Pathname('/data/test/harvester_to_do/')
+    expect(subject.upload_directory).to eq(
+      root / subject.upload_directory_name
     )
   end
 end
