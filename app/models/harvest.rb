@@ -25,6 +25,8 @@
 class Harvest < ApplicationRecord
   include AASM
   include AasmHelpers
+  HARVEST_FOLDER_PREFIX = 'harvest_'
+  HARVEST_ID_FROM_FOLDER_REGEX = %r{/#{HARVEST_FOLDER_PREFIX}(\d+)/}
 
   has_many :harvest_items, inverse_of: :harvest
 
@@ -35,6 +37,12 @@ class Harvest < ApplicationRecord
 
   validates :project, presence: true
   validate :validate_uploads_enabled
+
+  # @!attribute [rw] mappings
+  #   @return [Array<BawWorkers::Jobs::Harvest::Mapping>]
+  attribute :mappings, ::BawWorkers::ActiveRecord::Type::ArrayOfDomainModelAsJson.new(
+    target_class: ::BawWorkers::Jobs::Harvest::Mapping
+  )
 
   # @return [Boolean]
   def uploads_enabled?
@@ -62,14 +70,79 @@ class Harvest < ApplicationRecord
     !streaming
   end
 
+  # The fragment of the path used to store files related to this harvest.
+  # @see #upload_directory
   # @return [String]
   def upload_directory_name
-    id.to_s
+    HARVEST_FOLDER_PREFIX + id.to_s
   end
 
+  # The absolute path to the directory used to store files related to this harvest.
   # @return [Pathname]
   def upload_directory
     BawWorkers::Jobs::Harvest::Enqueue.root_to_do_path / upload_directory_name
+  end
+
+  # Joins a virtual path (scoped to within the harvest directory)
+  # to the upload_directory_name to create a path relative
+  # to the harvester_to_do directory.
+  # @return [String]
+  def harvester_relative_path(virtual_path)
+    File.join(upload_directory, virtual_path)
+  end
+
+  # Given a path (such as reported by the sftp go web hook)
+  # to a file, determine if it is a harvest directory and if it is
+  # extract the id and load the Harvest object
+  # @param path [String] an **absolute** path to an uploaded file
+  # @return [nil,Harvest]
+  def self.fetch_harvest_from_absolute_path(path)
+    # path: "/data/test/harvester_to_do/harvest_1/test-audio-mono.ogg"
+    # virtual path: "/test-audio-mono.ogg"
+    return nil if path.blank?
+
+    return nil unless path.include?(HARVEST_FOLDER_PREFIX)
+
+    result = path.match(HARVEST_ID_FROM_FOLDER_REGEX)
+    return nil if result.nil?
+
+    id = result[1]
+
+    Harvest.find_by(id:)
+  end
+
+  # @param path [String] assumed to be relative to the harvester_to_do directory
+  #     e.g. harvest_1/a/12.mp
+  # Note: leading slash should be omitted, and we expect a file path
+  # @return [Boolean,nil]
+  def path_within_harvest_dir(path)
+    raise ArgumentError, 'path cannot be a root path' if path.start_with?('/')
+
+    root = "#{upload_directory_name}/"
+    path.start_with?(root)
+  end
+
+  # Queries mapping for any information about a path
+  # @param path [String] assumed to be relative to the harvester_to_do directory
+  #     e.g. harvest_1/a/12.mp
+  # Note: leading slash should be omitted, and we expect a file path
+  # @return [BawWorkers::Jobs::Harvest::Mapping,nil]
+  def find_mapping_for_path(path)
+    raise "Path #{path} does not belong to this harvest #{root}" unless path_within_harvest_dir(path)
+
+    # trim the path
+    path = File.dirname(path).to_s
+
+    # remove the leading harvest direcotry
+    path = path.delete_prefix(upload_directory_name)
+
+    # it may or may not have a leading slash, try deleting for consistency
+    path = path.delete_prefix('/')
+
+    mappings
+      .select { |mapping| mapping.match(path) }
+      # choose the path that matched with the most depth
+      .max_by { |m| m.path.size }
   end
 
   # We have two methods of uploads:
@@ -98,6 +171,7 @@ class Harvest < ApplicationRecord
     state :metadata_review
     state :processing
     state :review
+    # @!method complete?
     state :complete
 
     event :open_upload do
@@ -133,7 +207,7 @@ class Harvest < ApplicationRecord
   end
 
   def open_upload_slot
-    self.upload_user = creator.safe_user_name
+    self.upload_user = "#{creator.safe_user_name}_#{id}"
     self.upload_password = User.generate_unique_secure_token
     BawWorkers::Config.upload_communicator.create_upload_user(
       username: upload_user,

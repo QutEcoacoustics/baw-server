@@ -43,15 +43,47 @@ RSpec.describe HarvestItem, type: :model do
     expect(HarvestItem.columns_hash['info'].type).to eq(:jsonb)
   end
 
-  it 'deserializes the info column as hash with indifferent access' do
+  it 'deserializes the info column as an Info object' do
     item = build(:harvest_item)
-    item.info[:hello] = 123
+    item.info = ::BawWorkers::Jobs::Harvest::Info.new(error: 'hello')
     item.save!
 
     item = HarvestItem.find(item.id)
 
-    expect(item.info).to be_an_instance_of(HashWithIndifferentAccess)
-    expect(item.info['hello']).to eq 123
-    expect(item.info[:hello]).to eq 123
+    expect(item.info).to be_an_instance_of(::BawWorkers::Jobs::Harvest::Info)
+    expect(item.info.error).to eq 'hello'
+    expect(item.info[:error]).to eq 'hello'
+  end
+
+  it 'can find other records that overlap with it' do
+    # 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+    # aaaaa
+    #       bbbbb-
+    #    ccccc
+    # dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+    #             eeeee
+    a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200)
+    b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205)
+    c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200)
+    d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400)
+    e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200)
+
+    expect(a.overlaps_with).to match_array([c])
+    expect(b.overlaps_with).to match_array([c, e])
+    expect(c.overlaps_with).to match_array([a, b])
+
+    expect(d.overlaps_with).to match_array([])
+    expect(e.overlaps_with).to match_array([b])
+  end
+
+  def create_with_durations(path, site_id, recorded_date, duration_seconds)
+    info = ::BawWorkers::Jobs::Harvest::Info.new(
+      file_info: {
+        duration_seconds:,
+        recorded_date:,
+        site_id:
+      }
+    )
+    create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
   end
 end

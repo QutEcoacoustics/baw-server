@@ -4,12 +4,12 @@
 
 # attempting to prevent trivial mistakes
 #ENV['RAILS_ENV'] ||= 'test'
-if ENV['RAILS_ENV'] != 'test'
+if ENV.fetch('RAILS_ENV', nil) != 'test'
   puts \
     <<~MESSAGE
       ***
       Tests must be run in the test environment.
-      The current environment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      The current environment `#{ENV.fetch('RAILS_ENV', nil)}` has been changed to `test`.
       See #{__FILE__} to disable this check
       ***
     MESSAGE
@@ -36,7 +36,7 @@ TestProf.configure do |config|
   config.color = true
 end
 
-if ENV['CI'] || ENV['COVERAGE']
+if ENV.fetch('CI', nil) || ENV.fetch('COVERAGE', nil)
   require 'simplecov'
 
   if ENV['GITHUB_WORKFLOW']
@@ -77,9 +77,9 @@ rescue StandardError => e
 end
 
 # Prevent accidental non-tests database access!
-abort('The Rails environment is running in production mode!') if Rails.env.production?
-abort('The Rails environment is running in staging mode!') if Rails.env.staging?
-abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
+Kernel.abort('The Rails environment is running in production mode!') if Rails.env.production?
+Kernel.abort('The Rails environment is running in staging mode!') if Rails.env.staging?
+Kernel.abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
 require 'rspec/collection_matchers'
 require 'rspec/rails'
@@ -231,6 +231,7 @@ RSpec.configure do |config|
   require_relative 'support/shared_examples/capabilities_for'
   require_relative 'support/shared_examples/a_stats_bucket'
   require_relative 'support/shared_examples/a_stats_segment_incrementor'
+  require_relative 'support/shared_test_helpers'
 
   require "#{RSPEC_ROOT}/support/shared_context/baw_audio_tools_shared"
 

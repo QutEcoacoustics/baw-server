@@ -39,7 +39,11 @@ class HarvestItem < ApplicationRecord
 
   belongs_to :uploader, class_name: User.name, foreign_key: :uploader_id
 
-  validates :path, presence: true, length: { minimum: 2 }
+  validates :path, presence: true, length: { minimum: 2 }, format: {
+    # don't allow paths that start with a `/`
+    # \A matches the start of a string in a non-multiline regex
+    with: %r{\A(?!/).*}
+  }
 
   STATUS_NEW = :new
   STATUS_METADATA_GATHERED = :metadata_gathered
@@ -50,7 +54,12 @@ class HarvestItem < ApplicationRecord
 
   enumerize :status, in: STATUSES, default: :new
 
-  serialize :info, ::HashSerializer
+  # override default attribute so we can use our struct as the default converter
+  # @!attribute [rw] info
+  # @return [::BawWorkers::Jobs::Harvest::Info]
+  attribute :info, ::BawWorkers::ActiveRecord::Type::DomainModelAsJson.new(
+      target_class: ::BawWorkers::Jobs::Harvest::Info
+    )
 
   def new?
     status == STATUS_NEW
@@ -74,5 +83,64 @@ class HarvestItem < ApplicationRecord
 
   def terminal_status?
     completed? || failed? || errored?
+  end
+
+  def self.find_by_path_and_harvest(path, harvest)
+    find_by path:, harvest_id: harvest.id
+  end
+
+  # @return [Pathname]
+  def absolute_path
+    ::BawWorkers::Jobs::Harvest::Enqueue.root_to_do_path / path
+  end
+
+  # Changes the file extension of the file this harvest_item represents.
+  # Touches the file on disk and updates the database!
+  def change_file_extension!(new_extension)
+    rel_path = Pathname(path)
+    new_rel_path = rel_path.sub_ext(
+      "#{rel_path.extname}.#{new_extension.delete_prefix('.')}"
+    )
+
+    logger.info('Changing file extension', path: rel_path, new_path: new_rel_path)
+
+    old_path = absolute_path
+    self.path = new_rel_path
+    new_path = absolute_path
+
+    old_path.rename(new_path)
+
+    save!
+  end
+
+  def add_to_error(message)
+    self.info = info.new(error: "#{info.error}#{message}\n")
+  end
+
+  # Queries the database to see if any other items overlaps with this harvest item
+  # By default only returns first 10 items.
+  # @return [Array<HarvestItem>]
+  def overlaps_with
+    recorded_date = info.file_info[:recorded_date]
+    duration_seconds = info.file_info[:duration_seconds]
+    site_id = info.file_info[:site_id]
+
+    #debugger
+    [:recorded_date, :duration_seconds, :site_id].each do |key|
+      raise ArgumentError, "#{key} cannot be blank" if binding.local_variable_get(key).blank?
+    end
+
+    other_recorded_date = "(info->'file_info'->>'recorded_date')::timestamptz"
+    other_duration_seconds = "(info->'file_info'->>'duration_seconds')::numeric"
+    other_site_id = "(info->'file_info'->>'site_id')::numeric"
+
+    this_term = "('#{recorded_date}'::timestamptz, (#{duration_seconds} * '1 second'::interval))"
+    other_term = "(#{other_recorded_date}, (#{other_duration_seconds} * '1 second'::interval))"
+
+    HarvestItem.where(HarvestItem.arel_table[:id] != id)
+               .where("#{site_id} = #{other_site_id}")
+               .where("#{this_term} OVERLAPS #{other_term}")
+               .limit(10)
+               .to_a
   end
 end

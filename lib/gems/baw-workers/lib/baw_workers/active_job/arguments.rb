@@ -19,7 +19,7 @@ module BawWorkers
         # @return [void]
         #
         def perform_expects(*types)
-          types.each do |type|
+          types.flatten.each do |type|
             raise ArgumentError, "The value `#{type}` is not a class" unless type.is_a?(Class)
           end
 
@@ -61,7 +61,9 @@ module BawWorkers
         # logger.debug("validating#{parameter}")
         signature = self.class.perform_signature
         arg_type, name = parameter
-        type = signature[index]
+        # wrap single items in an array, keep arrays as is
+        # arrays are our ad-hoc polymorphism concession
+        types = Array(signature[index])
 
         case arg_type
         when :req then arguments[index]
@@ -69,7 +71,7 @@ module BawWorkers
         else raise "Unexpected argument type for job arguments: `#{arg_type}``, named: `#{name}`"
         end => arg
 
-        return if arg.nil? || arg.instance_of?(type)
+        return if arg.nil? || types.any? { |t| arg.instance_of?(t) }
 
         raise TypeError, "Argument (`#{arg.class}`) for parameter `#{name}` does not have expected type `#{type}`"
       end

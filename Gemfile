@@ -277,7 +277,7 @@ group :test do
   gem 'timecop'
   # better diffs
   # 0.8.0 causes ifinite hangs during some specs (spec/requests/media/edge_cases_spec.rb)
-  gem 'super_diff', '0.7.0'
+  gem 'super_diff'
 
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false

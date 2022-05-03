@@ -265,11 +265,7 @@ module BawWorkers
             folder_settings = {
               project_id: config['project_id'],
               site_id: config['site_id'],
-              uploader_id: config['uploader_id'],
-              utc_offset: config['utc_offset'],
-              metadata: config['metadata'],
-              recursive: config['recursive']
-            }
+              uploader_id: config['uploader_id'],t
 
             if @file_info_helper.numeric?(folder_settings[:project_id]) &&
                @file_info_helper.numeric?(folder_settings[:site_id]) &&

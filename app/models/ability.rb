@@ -267,7 +267,8 @@ class Ability
     # and all of the above again with the shallow route
 
     # only owner can access these actions.
-    can [:create, :update, :destroy, :show], Harvest do |harvest|
+    # Special action :harvest_audio used as validation in the harvester job
+    can [:create, :update, :destroy, :show, :harvest_audio], Harvest do |harvest|
       check_model(harvest)
       Access::Core.can_any?(user, :owner, harvest.project)
     end
@@ -708,7 +709,7 @@ class Ability
     can [:route_error, :uncaught_error, :test_exceptions, :show], :error
 
     # only available in Rails test env
-    can [:test_exceptions], :error if ENV['RAILS_ENV'] == 'test'
+    can [:test_exceptions], :error if ENV.fetch('RAILS_ENV', nil) == 'test'
   end
 
   def to_public(_user, _is_guest)

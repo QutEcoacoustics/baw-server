@@ -25,7 +25,22 @@ module Baw
     module ExampleGroup
       attr_accessor :steps, :step_count
 
+      # @!method stepwise(name, &example_group)
+      # @!method stepwise(name, **metadata, &example_group)
+      #   (see StepwiseDefinition)
+      #   Defines new series of steps. Supports the same arguments as {RSpec.describe}.
+      #   An alias for an example group that allows steps to be defined in side.
+      #   A stepwise block can contain only `step` definitions - each of which
+      #   is executed sequentially as one example. Before and after blocks
+      #   are only executed once and state is not reset between steps.
+      #   It is like and is in fact implemented as just one example that
+      #   is split into smaller steps for easier debugging and reporting.
+      #   Defining any example within a stepwise block is an error.
+
       def self.extended(other)
+        # don't do anything for non-stepwise example groups
+        return unless other.metadata[:stepwise]
+
         other.steps = []
         other.step_count = 0
         other.class_eval do
@@ -55,8 +70,8 @@ module Baw
       end
 
       # Defines new step in a series.
-      # @param [String] name - the name of the step
-      # @param
+      # @param name [String] the name of the step
+      # @yield the step definition
       def step(name, &)
         location = caller_locations(1, 1).first
         @step_count += 1
@@ -299,28 +314,21 @@ if defined?(::RSpec::Core)
 end
 
 RSpec.configure do |config|
-  # Defines new series of steps. Supports the same arguments as `RSpec.describe`.
-  # @see RSpec.describe
+  # @!group StepwiseDefinition
   config.alias_example_group_to :stepwise, {
     order: :defined,
     stepwise: true
   }
+  # @!endgroup
   config.extend Baw::Stepwise::ExampleGroup, stepwise: true
   config.include Baw::Stepwise::Example, stepwise: true
 end
 
+RSpec::Core::ExampleGroup.stepwise
+
 # type hints for solargraph - these are never executed
 # rubocop:disable RSpec/EmptyExampleGroup, RSpec/FilePath, RSpec/DescribeClass
 RSpec.describe '', skip: true do
-  # An alias for an example group that allows steps to be defined in side.
-  # A stepwise block can contain only `step` definitions - each of which
-  # is executed sequentially as one example. Before and after blocks
-  # are only executed once and state is not reset between steps.
-  # It is like and is in fact implemented as just one example that
-  # is split into smaller steps for easier debugging and reporting.
-  # Defining any example within a stepwise block is an error.
-  def stepwise; end
-
   extend Baw::Stepwise::ExampleGroup
   include Baw::Stepwise::Example
 end

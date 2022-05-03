@@ -1,4 +1,5 @@
 --dir 'lib'
+--dir 'app'
 --dir 'spec/fixtures'
 --pattern '**/*.{rb,rake}'
 --name "baw-workers"

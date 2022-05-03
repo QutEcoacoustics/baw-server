@@ -24,13 +24,13 @@ module BawWorkers
         @is_baw_workers_entry
       end
 
-      # @return [BawWorkers::MultiLogger]
+      # @return [::SemanticsLogger::Logger]
       attr_reader :logger_worker
 
-      # @return [BawWorkers::MultiLogger]
+      # @return [::SemanticsLogger::Logger]
       attr_reader :logger_mailer
 
-      # @return [BawWorkers::MultiLogger]
+      # @return [::SemanticsLogger::Logger]
       attr_reader :logger_audio_tools
 
       # @return [Pathname]
@@ -192,27 +192,6 @@ module BawWorkers
         unless BawWorkers::Mail::Mailer.logger == BawWorkers::Config.logger_mailer
           raise 'BawWorkers::Mail::Mailer logger incorrect'
         end
-
-        # ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
-        # ActionMailer::Base.raise_delivery_errors = true
-        # ActionMailer::Base.perform_deliveries = true
-        # ActionMailer::Base.view_paths = [
-        #     File.expand_path(File.join(File.dirname(__FILE__), 'mail'))
-        # ]
-
-        # if BawApp.development?
-        #   ActionMailer::Base.delivery_method = :file
-        #   ActionMailer::Base.file_settings =
-        #     {
-        #       location: File.join(BawWorkers::Config.temp_dir, 'mail')
-        #     }
-        # elsif BawApp.test?
-        #   ActionMailer::Base.delivery_method = :test
-        #   ActionMailer::Base.smtp_settings = nil
-        # else
-        #   ActionMailer::Base.delivery_method = :smtp
-        #   ActionMailer::Base.smtp_settings = settings.mailer.smtp.to_h
-        # end
       end
 
       def configure_audio_helper(settings)

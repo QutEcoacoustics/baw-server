@@ -56,12 +56,16 @@ module UploadServiceSteps
   def run_curl(command, should_work:)
     # upload with curl since container doesn't have scp/sftp installed and it is
     # not worth adding the tools for one test
-    #
-    # libssh2 (which curl uses) has some kind of bug that results in a connection
-    # hanging indefinitely if the server closes the connection abruptly (e.g
-    # in the case where auth fails).
-    # Use the unix timeout command to force a shutdown.
+
     logger.measure_info('Executing timeout with curl', command:) do
+      # libssh2 (which curl uses) has some kind of bug that results in a connection
+      # hanging indefinitely if the server closes the connection abruptly (e.g
+      # in the case where auth fails).
+      # Use the unix timeout command to force a shutdown.
+
+      # need to use Open3 here; using Kernel.`` will throw errors when web_server_helper is also
+      # used in specs. See spec/unit/spec/support/web_server_helper_spec.rb for examples
+      # of things that do and do not work.
       Open3.capture2e("/usr/bin/timeout 6 #{command} -v")
     rescue StandardError => e
       logger.error('error whilst running curl', e)

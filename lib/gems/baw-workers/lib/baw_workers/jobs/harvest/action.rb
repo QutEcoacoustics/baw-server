@@ -11,11 +11,11 @@ module BawWorkers
         perform_expects Integer, String
 
         # Perform work. Used by Resque.
-        # @param [Integer] harvest_id
+        # @param [Integer] harvest_item_id
         # @param [String] harvest_path
         # @return [Array<Hash>] array of hashes representing operations performed
-        def perform(harvest_id, rel_path)
-          item = HarvestItem.find(harvest_id)
+        def perform(harvest_item_id, rel_path)
+          item = HarvestItem.find(harvest_item_id)
 
           action_run(item, rel_path)
         end
@@ -51,7 +51,7 @@ module BawWorkers
             failed!(e.message)
           end
 
-          logger.info('Completed harvest', result: result)
+          logger.info('Completed harvest', result:)
           item.info[:error] = nil
           item.status = HarvestItem::STATUS_COMPLETED
           item.save
@@ -71,7 +71,7 @@ module BawWorkers
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def self.action_enqueue(harvest_params)
-          result = BawWorkers::Jobs::Harvest::Action.create(harvest_params: harvest_params)
+          result = BawWorkers::Jobs::Harvest::Action.create(harvest_params:)
           BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using #{harvest_params}."
           end

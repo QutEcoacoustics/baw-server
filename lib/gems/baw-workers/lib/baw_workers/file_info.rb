@@ -3,6 +3,9 @@
 module BawWorkers
   # Helpers to get info from files.
   class FileInfo
+    # Note a leading plus or minus is required!
+    UTC_OFFSET_REGEX = /^(\+|-)\d{1,2}(:?\d{2})?$/
+
     def initialize(audio_base)
       @audio = audio_base
     end
@@ -89,11 +92,11 @@ module BawWorkers
     # @param [String] source
     # @param [String] utc_offset
     # @return [Hash] file properties
-    def advanced(source, utc_offset = nil)
+    def advanced(source, utc_offset = nil, throw: true)
       file_name = File.basename(source)
 
       info = file_name_all(file_name)
-      info = file_name_datetime(file_name, utc_offset) if info.empty?
+      info = file_name_datetime(file_name, utc_offset, throw:) if info.empty?
 
       info
     end
@@ -129,7 +132,7 @@ module BawWorkers
     # @param [string] value
     # @return [Boolean]
     def time_offset?(value)
-      !value.blank? && ((value =~ /^(\+|-)\d{1,2}(:?\d{2})?$/) != nil)
+      !value.blank? && value =~ UTC_OFFSET_REGEX
     end
 
     # Get info from upload dir file name.
@@ -140,9 +143,9 @@ module BawWorkers
       regex = /^p(\d+)_s(\d+)_u(\d+)_d(\d{4})(\d{2})(\d{2})_t(\d{2})(\d{2})(\d{2})Z\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |project_id, site_id, uploader_id, year, month, day, hour, min, sec, extension|
         result[:raw] = {
-          project_id: project_id, site_id: site_id, uploader_id: uploader_id,
-          year: year, month: month, day: day,
-          hour: hour, min: min, sec: sec,
+          project_id:, site_id:, uploader_id:,
+          year:, month:, day:,
+          hour:, min:, sec:,
           offset: 'Z', ext: extension
         }
 
@@ -151,8 +154,10 @@ module BawWorkers
         result[:uploader_id] = uploader_id.to_i
 
         result[:utc_offset] = 'Z'
+        result[:recorded_date_local] =
+          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, nil).iso8601(3)
         result[:recorded_date] =
-          DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, 'Z').iso8601(3)
+          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, 'Z').iso8601(3)
         result[:prefix] = ''
         result[:separator] = '_'
         result[:suffix] = ''
@@ -165,26 +170,34 @@ module BawWorkers
     # @param [String] file_name
     # @param [String] utc_offset
     # @return [Hash] info from file name
-    def file_name_datetime(file_name, utc_offset = nil)
+    def file_name_datetime(file_name, utc_offset = nil, throw: true)
       result = {}
       regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
         result[:raw] = {
-          year: year, month: month, day: day,
-          hour: hour, min: minute, sec: second,
+          year:, month:, day:,
+          hour:, min: minute, sec: second,
           offset: offset.blank? ? '' : offset,
           ext: extension
         }
         available_offset = offset || utc_offset
-        if available_offset.blank?
+        if available_offset.blank? && throw
           raise BawWorkers::Exceptions::HarvesterConfigurationError,
-                'No UTC offset provided and file name did not contain a utc offset.'
+            'No UTC offset provided and file name did not contain a utc offset.'
         end
 
         result[:utc_offset] = available_offset
-        result[:recorded_date] =
-          DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i,
-                       result[:utc_offset]).iso8601(3)
+
+        result[:recorded_date_local] =
+          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, nil)
+
+        if available_offset.blank?
+          nil
+        else
+          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset])
+        end => recorded_date
+        result[:recorded_date] = recorded_date
+
         result[:prefix] = prefix.blank? ? '' : prefix
         result[:separator] = separator.blank? ? '' : separator
         result[:suffix] = suffix.blank? ? '' : suffix

@@ -51,6 +51,8 @@ module HarvestSpecCommon
 
     post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
 
+    logger.debug(response_body)
+
     @harvest_id = (api_result[:data][:id]) if response.response_code == 201
   end
 
@@ -103,7 +105,7 @@ module HarvestSpecCommon
     get_harvest
     expect_success
     expect(api_data).to match(a_hash_including(
-      upload_user: @harvest.creator.safe_user_name,
+      upload_user: "#{harvest.creator.safe_user_name}_#{@harvest.id}",
       upload_password: an_instance_of(String).and(match(/\w{24}/)),
       upload_url: "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
     ))

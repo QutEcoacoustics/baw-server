@@ -60,7 +60,7 @@ RSpec.describe Harvest, type: :model do
   end
 
   it 'has a upload directory name' do
-    expect(subject.upload_directory_name).to eq subject.id.to_s
+    expect(subject.upload_directory_name).to eq "harvest_#{subject.id}"
   end
 
   it 'has a upload directory path' do
@@ -68,5 +68,176 @@ RSpec.describe Harvest, type: :model do
     expect(subject.upload_directory).to eq(
       root / subject.upload_directory_name
     )
+  end
+
+  context 'when translating a path to a harvest' do
+    before do
+      subject.save!
+    end
+
+    it 'can find a harvest by a path' do
+      path = "/data/test/harvester_to_do/harvest_#{subject.id}/test-audio-mono.ogg"
+
+      actual = Harvest.fetch_harvest_from_absolute_path(path)
+      expect(actual).to eq subject
+    end
+
+    it 'will return nil with a bad argument (bad path)' do
+      path = "/data/test/harvester_to_do/#{subject.id}/test-audio-mono.ogg"
+
+      actual = Harvest.fetch_harvest_from_absolute_path(path)
+      expect(actual).to be_nil
+    end
+
+    it 'will return nil with a bad argument (nil)' do
+      path = nil
+
+      actual = Harvest.fetch_harvest_from_absolute_path(path)
+      expect(actual).to be_nil
+    end
+
+    it 'will return nil with a bad argument (missing harvest id)' do
+      path = '/data/test/harvester_to_do/9999/test-audio-mono.ogg'
+
+      actual = Harvest.fetch_harvest_from_absolute_path(path)
+      expect(actual).to be_nil
+    end
+  end
+
+  context 'when checking if a path is in the harvest directory' do
+    it 'works for files' do
+      path = "harvest_#{subject.id}/test-audio-mono.ogg"
+
+      expect(subject.path_within_harvest_dir(path)).to be true
+    end
+
+    it 'works for directories' do
+      path = "harvest_#{subject.id}/a"
+
+      expect(subject.path_within_harvest_dir(path)).to be true
+    end
+
+    it 'throws if we try a absolute path' do
+      path = "/data/test/harvester_to_do/harvest_#{subject.id}/a"
+
+      expect {
+        subject.path_within_harvest_dir(path)
+      }.to raise_error(ArgumentError, 'path cannot be a root path')
+    end
+
+    it 'returns false for incorrect paths' do
+      path = 'harvest_123/test-audio-mono.ogg'
+
+      expect(subject.path_within_harvest_dir(path)).to be false
+    end
+
+    it 'returns false for incorrect paths (root file)' do
+      path = 'test-audio-mono.ogg'
+
+      expect(subject.path_within_harvest_dir(path)).to be false
+    end
+
+    it 'returns false for incorrect paths (empty)' do
+      path = ''
+
+      expect(subject.path_within_harvest_dir(path)).to be false
+    end
+  end
+
+  context 'when mapping a path to a mapping of metadata' do
+    before do
+      subject.save!
+    end
+
+    let(:file_a) {
+      "harvest_#{subject.id}/a/123.wav"
+    }
+    let(:file_b) {
+      "harvest_#{subject.id}/456.mp3"
+    }
+    let(:file_c) {
+      "harvest_#{subject.id}/a/b/c/789.ogg"
+    }
+
+    let(:files) {
+      [file_a, file_b, file_c]
+    }
+
+    let(:args) {
+      {
+        site_id: 1,
+        utc_offset: '+10:00'
+      }
+    }
+
+    it 'will map everything with a root recursive mapping' do
+      mapping = BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
+
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([mapping])
+
+      expect(subject.find_mapping_for_path(file_a)).to eq mapping
+      expect(subject.find_mapping_for_path(file_b)).to eq mapping
+      expect(subject.find_mapping_for_path(file_c)).to eq mapping
+    end
+
+    it 'will only map the current directory without recurse' do
+      mapping = BawWorkers::Jobs::Harvest::Mapping.new(
+        path: '/',
+        recursive: false,
+        **args
+      )
+
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([mapping])
+
+      expect(subject.find_mapping_for_path(file_a)).to be_nil
+      expect(subject.find_mapping_for_path(file_b)).to eq mapping
+      expect(subject.find_mapping_for_path(file_c)).to be_nil
+    end
+
+    it 'will not map without any mappings' do
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([])
+
+      expect(subject.find_mapping_for_path(file_a)).to be_nil
+      expect(subject.find_mapping_for_path(file_b)).to be_nil
+      expect(subject.find_mapping_for_path(file_c)).to be_nil
+    end
+
+    it 'will not map without any matching mappings' do
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+        BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/z', recursive: true, **args),
+        BawWorkers::Jobs::Harvest::Mapping.new(path: '/donkey', recursive: true, **args)
+      ])
+
+      expect(subject.find_mapping_for_path(file_a)).to be_nil
+      expect(subject.find_mapping_for_path(file_b)).to be_nil
+      expect(subject.find_mapping_for_path(file_c)).to be_nil
+    end
+
+    it 'will map with specific mappings' do
+      mapping1 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a', recursive: false, **args)
+      mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: false, **args)
+      mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b/c', recursive: false, **args)
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+        mapping1, mapping2, mapping3
+      ])
+
+      expect(subject.find_mapping_for_path(file_a)).to eq mapping1
+      expect(subject.find_mapping_for_path(file_b)).to eq mapping2
+      expect(subject.find_mapping_for_path(file_c)).to eq mapping3
+    end
+
+    it 'will map with correctly with overlapping mappings - more specific takes priority' do
+      mapping1 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a', recursive: false, **args)
+      mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
+      mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b', recursive: true, **args)
+      mapping4 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b/c', recursive: false, **args)
+      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+        mapping1, mapping2, mapping3, mapping4
+      ])
+
+      expect(subject.find_mapping_for_path(file_a)).to eq mapping1
+      expect(subject.find_mapping_for_path(file_b)).to eq mapping2
+      expect(subject.find_mapping_for_path(file_c)).to eq mapping4
+    end
   end
 end

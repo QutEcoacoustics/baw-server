@@ -100,12 +100,19 @@ class AudioRecordingOverlap
       result
     end
 
-    private
-
     # Get the overlapping audio recordings in the same site.
     # @param [AudioRecording] audio_recording
     # @return [ActiveRecord::Relation] overlap query
     def overlap_query(audio_recording)
+      overlap_query_simple(
+        id: audio_recording.id,
+        recorded_date: audio_recording.recorded_date,
+        duration_seconds: audio_recording.duration_seconds,
+        site_id: audio_recording.site_id
+      )
+    end
+
+    def overlap_query_simple(id:, recorded_date:, duration_seconds:, site_id:)
       # audio recordings overlap if:
       #  - end B > start A and
       #  - start B < end A
@@ -121,15 +128,15 @@ class AudioRecordingOverlap
       audio_recordings_arel = Arel::Table.new(:audio_recordings)
       end_literal = Arel::Nodes::SqlLiteral.new('recorded_date + CAST(duration_seconds || \' seconds\' as interval)')
 
-      end_b_gt_start_a = end_literal.gt(audio_recording.recorded_date)
-      start_b_lt_end_a = audio_recordings_arel[:recorded_date].lt(get_end_date(audio_recording))
+      end_b_gt_start_a = end_literal.gt(recorded_date)
+      start_b_lt_end_a = audio_recordings_arel[:recorded_date].lt(get_end_date_simple(recorded_date, duration_seconds))
 
       query = AudioRecording
-              .where(site_id: audio_recording.site_id)
+              .where(site_id:)
               .where(end_b_gt_start_a)
               .where(start_b_lt_end_a)
 
-      query = query.where(audio_recordings_arel[:id].not_eq(audio_recording.id)) unless audio_recording.id.blank?
+      query = query.where(audio_recordings_arel[:id].not_eq(id)) unless id.blank?
 
       query
     end
@@ -177,9 +184,9 @@ class AudioRecordingOverlap
         recorded_date: recording_existing_start,
         duration: existing_recording.duration_seconds,
         end_date: recording_existing_end,
-        overlap_amount: overlap_amount,
-        overlap_location: overlap_location,
-        can_fix: can_fix,
+        overlap_amount:,
+        overlap_location:,
+        can_fix:,
         fixed: false
       }
     end
@@ -240,21 +247,21 @@ class AudioRecordingOverlap
 
       {
         fixed: save_result,
-        save_errors: save_errors
+        save_errors:
       }
     end
 
     # Construct overlap notes.
     # @param [Numeric] overlap_amount
-    # @param [string] other_uuid
-    # @return [String]
+    # @param [String] other_uuid
+    # @return [Hash]
     def create_overlap_notes(overlap_amount, current_duration, new_duration, other_uuid)
       {
         changed_at: Time.zone.now.utc.iso8601,
-        overlap_amount: overlap_amount,
+        overlap_amount:,
         old_duration: current_duration,
-        new_duration: new_duration,
-        other_uuid: other_uuid
+        new_duration:,
+        other_uuid:
       }
     end
 
@@ -263,6 +270,18 @@ class AudioRecordingOverlap
     # @return [ActiveSupport::TimeWithZone] end date
     def get_end_date(audio_recording)
       audio_recording.recorded_date.dup.advance(seconds: audio_recording.duration_seconds)
+    end
+
+    # Get the end date for an audio recording.
+    # @param [AudioRecording] audio_recording
+    # @return [ActiveSupport::TimeWithZone] end date
+    def get_end_date_simple(recorded_date, duration_seconds)
+      unless recorded_date.is_a?(Time)
+        raise ArgumentError,
+          "recorded_date class is #{recorded_date.class} instad of Time"
+      end
+
+      recorded_date + duration_seconds
     end
   end
 end

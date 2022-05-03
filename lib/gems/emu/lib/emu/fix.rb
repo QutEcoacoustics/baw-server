@@ -49,8 +49,9 @@ module Emu
 
     # @param [Pathname] path the path to operate on
     # @param fix [String] the fix id for the fix operation to apply
+    # @return [ExecuteResult] The result from executing the emu command.
     def fix_if_needed(path, fix)
-      logger.tagged(fix: fix, path: path) do
+      logger.tagged(fix:, path:) do
         raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
 
         check_result = nil
