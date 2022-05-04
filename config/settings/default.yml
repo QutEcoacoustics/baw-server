@@ -51,6 +51,7 @@ actions:
     queue: harvest_<%= BawApp.env %>
     to_do_path: /data/<%= BawApp.env %>/harvester_to_do
     config_file_name: harvest.yml
+    delete_after: 
   media:
     queue: media_<%= BawApp.env %>
     dry_run: false

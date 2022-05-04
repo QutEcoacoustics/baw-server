@@ -20,7 +20,7 @@ module BawWorkers
       # Create a file name. This file name is by convention always in utc offset +1000.
       # @deprecated
       # @param [Hash] opts
-      # @return [string] file name
+      # @return [String] file name
       def file_name_10(opts)
         validate_uuid(opts)
         validate_datetime(opts)
@@ -35,24 +35,33 @@ module BawWorkers
 
       # Create a file name. This filename is always explicitly in UTC.
       # @param [Hash] opts
-      # @return [string] file name
+      # @return [String] file name
       def file_name_utc(opts)
         validate_uuid(opts)
         validate_datetime(opts)
         validate_original_format(opts)
 
-        result = opts[:uuid].to_s.downcase + @separator +
-                 opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase + 'Z' +
-                 @extension_indicator + opts[:original_format].trim('.', '').to_s.downcase
+        "#{opts[:uuid].to_s.downcase}#{@separator}#{opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase}Z#{@extension_indicator}#{opts[:original_format].trim(
+          '.', ''
+        ).to_s.downcase}"
+      end
 
-        result
+      # Create a file name. This file name uses the uuid only.
+      # Removing the date from the name makes re-dating audio much easier in the database
+      # since we don't have to physically move the file.
+      def file_name_uuid(opts)
+        validate_uuid(opts)
+        validate_original_format(opts)
+
+        opts[:uuid].to_s.downcase + @separator + @extension_indicator + opts[:original_format].trim('.',
+          '').to_s.downcase
       end
 
       # Get file names.
       # @param [Hash] opts
       # @return [Array<String>]
       def file_names(opts)
-        [file_name_10(opts), file_name_utc(opts)]
+        [file_name_uuid(opts), file_name_10(opts), file_name_utc(opts)]
       end
 
       # Construct the partial path to an original audio file.
@@ -73,7 +82,8 @@ module BawWorkers
 
         datetime_with_offset, original_format = file_name_split[1].split('.')
 
-        if datetime_with_offset.length == 11
+        case datetime_with_offset.length
+        when 11
           # 120302-1505
           date = Time.utc(
             "20#{datetime_with_offset[0..1]}",
@@ -82,7 +92,7 @@ module BawWorkers
             datetime_with_offset[7..8],
             datetime_with_offset[9..10]
           ).advance(hours: -10).in_time_zone
-        elsif datetime_with_offset.length == 16
+        when 16
           # 20120302-050537Z
           date = Time.utc(
             datetime_with_offset[0..3],
@@ -100,7 +110,7 @@ module BawWorkers
         opts = {
           uuid: file_name_split[0],
           datetime_with_offset: date,
-          original_format: original_format
+          original_format:
         }
 
         validate_uuid(opts)

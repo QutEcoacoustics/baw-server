@@ -6,7 +6,6 @@ module BawWorkers
       # Represents the a validation for a harest item
       class ValidationResult < ::BawWorkers::Dry::SerializedStrictStruct
         STATUS_FIXABLE = 'fixable'
-        STATUS_AUTO_FIXABLE = 'auto_fixable'
         STATUS_NOT_FIXABLE = 'not_fixable'
 
         # @!attribute [r] code
@@ -23,6 +22,14 @@ module BawWorkers
         # @!attribute [r] messaage
         #   @return [String]
         attribute :message, ::BawWorkers::Dry::Types::String.optional
+
+        def fixable?
+          status == STATUS_FIXABLE
+        end
+
+        def not_fixable?
+          status == STATUS_NOT_FIXABLE
+        end
       end
     end
   end

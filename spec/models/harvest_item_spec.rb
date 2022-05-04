@@ -5,6 +5,7 @@
 # Table name: harvest_items
 #
 #  id                 :bigint           not null, primary key
+#  deleted            :boolean          default(FALSE)
 #  info               :jsonb
 #  path               :string
 #  status             :string

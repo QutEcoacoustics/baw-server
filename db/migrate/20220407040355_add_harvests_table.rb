@@ -40,6 +40,7 @@ class AddHarvestsTable < ActiveRecord::Migration[7.0]
     # link harvest items to harvests
     change_table :harvest_items do |t|
       t.integer :harvest_id, null: true
+      t.boolean :deleted, default: false
     end
 
     add_foreign_key :harvests, :projects

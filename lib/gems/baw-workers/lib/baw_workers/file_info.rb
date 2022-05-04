@@ -73,6 +73,39 @@ module BawWorkers
       end
     end
 
+    # copy a source file to a destination.
+    # The first successful copy to a target will be used.
+    # Will try subsequent targets if the first fails.
+    # @param [Pathname] source
+    # @param [Array<Pathname>] targets
+    # @return [Pathname] the first successful target
+    def copy_to_any(source, targets)
+      raise "File not found: #{source}" unless source.exist?
+      raise 'No targets provided' if targets.empty?
+
+      # try each target
+      targets.each do |target|
+        raise "Target is not a Pathname: #{target}" unless target.is_a?(Pathname)
+
+        targets.dirname.mkpath
+
+        FileUtils.copy(source, target)
+
+        exist = target.exist?
+        size = target.size
+        unless exist && size == source.size
+          raise "Failed to copy #{source} to #{target}, exists?:#{exist}, size:#{size}, source_size:#{source.size}"
+        end
+
+        return target
+      rescue StandardError => e
+        BawWorkers::Config.logger_worker.warn "Failed to move #{source} to #{target}: #{e}"
+      end
+
+      # if we get here, all targets failed
+      raise "Failed to move #{source} to any of #{targets}"
+    end
+
     # Get basic file info.
     # @param [string] source
     # @return [Hash]

@@ -27,6 +27,7 @@ class BawConfigContract < Dry::Validation::Contract
           Baw::CustomTypes::CreatedDirPathname
         )
         required(:config_file_name).filled(:string)
+        required(:delete_after).filled(:int)
       end
     end
   }

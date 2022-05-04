@@ -905,7 +905,8 @@ CREATE TABLE public.harvest_items (
     uploader_id integer NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    harvest_id integer
+    harvest_id integer,
+    deleted boolean DEFAULT false
 );
 
 

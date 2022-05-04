@@ -5,6 +5,9 @@ module BawWorkers
     module Harvest
       # gathers metadata about a file for and then harvests it
       class HarvestJob < BawWorkers::Jobs::ApplicationJob
+        queue_as Settings.actions.harvest.queue
+        perform_expects Integer, [TrueClass, FalseClass]
+
         class << self
           # Schedule a harvest job for a harvest item
           # @param harvest [Harvest] the parent harvest
@@ -51,9 +54,6 @@ module BawWorkers
           end
         end
 
-        queue_as Settings.actions.harvest.queue
-        perform_expects Integer, [TrueClass, FalseClass]
-
         include SemanticLogger::Loggable
 
         [
@@ -78,6 +78,9 @@ module BawWorkers
 
         # @return [Harvest] The database record for the current harvest
         attr_reader :harvest
+
+        # @return [AudioRecording] the audio recording for this harvest item
+        attr_reader :audio_recording
 
         # Gather metadata about a file and potentially harvest it
         # @param harvest_item_id [Integer]
@@ -111,12 +114,9 @@ module BawWorkers
           simple_validations
 
           # All of the simple validations are basic requiments for processing a file.
-          # Does it exist? Does it have more than 0 bytes? Is it a target extensions?
+          # Does it exist? Does it have more than 0 bytes? Is it a file included in our target extensions?
           # No point advancing if these conditions are not met.
-          unless valid?
-            move_to_failed
-            return
-          end
+          return move_to_failed unless valid?
 
           # I didn't want to mutate files in the information gathering stage.
           # However, unless fixes are applied it is really hard to gather
@@ -134,14 +134,15 @@ module BawWorkers
           # stop here if we're only gathering metadata
           return unless should_harvest
 
+          # we're trying to do an actual harvest but there are still validation errors; fail time
+          return move_to_failed unless valid?
+
           # fix any errors or manipulate the files before harvest
-          # any files we know we can't harvest should be removed from consideration in this step
           pre_process
 
-          # we're trying to do an actual harvest but there are still validation errors; fail time
-          move_to_failed unless valid?
-
-          harvest_file
+          # harvest the file (create the record, move the file on disk)
+          success = harvest_file
+          return move_to_failed unless success
 
           post_process
 
@@ -149,10 +150,16 @@ module BawWorkers
         rescue StandardError => e
           move_to_error(e)
 
-          # only raise on true exceptions rather than our logical errors
+          # Two cases here:
+          # 1. Truly exceptional behaviour, such as a bug in the code. Raise and send an error notification.
+          # 2. Some kind of domain/logical/transient error. Timeouts are a good example.
+          #    - Do not send a notification.
+          #    - Maybe it can be retried?
+
+          # raise will mark the job tracker as :errored
           raise unless one_of_our_exceptions(e)
 
-          # mark this job as failed in our job-status tracker as well
+          # otherwise, set the job-tracker to :failed indicating retry is possible
           failed!(e.message)
         ensure
           save_state
@@ -169,9 +176,9 @@ module BawWorkers
         end
 
         def move_to_error(exception)
-          logger.error(name, exception:)
+          logger.error('Harvest failed', message: exception.message)
           mark_status(HarvestItem::STATUS_ERRORED)
-          harvest_item.info = harvest_item.info.new(error: exception.message)
+          harvest_item.add_to_error(exception.message)
         end
 
         def save_state
@@ -227,7 +234,9 @@ module BawWorkers
             .to_h
             .merge({
               uploader_id: harvest.creator_id,
-              notes: {}
+              notes: {
+                relative_path: harvest_item.path
+              }
             })
             .merge(basic_info)
             .merge(advanced_info)
@@ -250,16 +259,46 @@ module BawWorkers
           harvest_item.info.validations.empty?
         end
 
-        def preprocess
-          log.debug('No pre-process step currently defined, skipping')
+        def pre_process
+          logger.debug('No pre-process step currently defined, skipping')
+          # TODO: wac processing? Flac conversion?
         end
 
         def harvest_file
-          # TODO
+          catch(:halt) do
+            audio_recording = create_draft_audio_recording
+            audio_recording.set_uuid
+            fix_overlaps(audio_recording)
+
+            raise 'Record should not saved yet' unless audio_recording.new?
+
+            # save the result
+            audio_recording.status = AudioRecording::STATUS_NEW
+
+            # check we have a valid record
+            unless audio_recording.validate
+              error = "Audio recording is not valid#{audio_recording.errors.map(&:full_message).join(', ')}"
+              harvest_item.add_to_error(error)
+              throw :halt
+            end
+
+            # save the record
+            audio_recording.save!
+
+            harvest_item.audio_recording_id = audio_recording.id
+
+            # start moving the file
+            cop_file(audio_recording)
+
+            # sanity check
+            raise 'Cant find file after moving' unless audio_recording.original_file_exists?
+
+            return true
+          end
         end
 
         def post_process
-          log.debug('No post-process step currently defined, skipping')
+          DeleteHarvestItemFileJob.delete_later(harvest_item)
         end
 
         def one_of_our_exceptions(error)
@@ -268,6 +307,77 @@ module BawWorkers
 
           # more to come
           false
+        end
+
+        def create_draft_audio_recording
+          file_info = harvest_item.info.file_info
+          @audio_recording = AudioRecording.new(
+            uploader_id: harvest.creator_id,
+            recorded_date: ensure_time(file_info[:recorded_date]),
+            site_id: file_info[:site_id],
+            duration_seconds: file_info[:duration_seconds],
+            sample_rate_hertz: file_info[:sample_rate_hertz],
+            channels: file_info[:channels],
+            bit_rate_bps: file_info[:bit_rate_bps],
+            media_type: file_info[:media_type],
+            data_length_bytes: file_info[:data_length_bytes],
+            file_hash: file_info[:file_hash],
+            notes: file_info[:notes],
+            creator_id: harvest.creator_id,
+            original_file_name: file_info[:file_name],
+            recorded_utc_offset: file_info[:recorded_utc_offset]
+          )
+        end
+
+        # @param time_string [Time,String,nil]
+        # @return [Time, nil]
+        def ensure_time(time_or_string)
+          return nil if time_or_string.blank?
+
+          retrun time_or_string if time_or_string.is_a?(Time)
+
+          Time.parse(time_or_string)
+        end
+
+        # @param [AudioRecording] audio_recording
+        # @return [Pathname] the new location of the file
+        def copy_file(audio_recording)
+          audio_recording.status = AudioRecording::STATUS_UPLOADING
+          audio_recording.save!
+          helper = BawWorkers::Config.original_audio_helper
+
+          options = {
+            uuid: audio_recording.uuid,
+            original_format: harvest_item.info.file_info[:extension]
+          }
+          final_name = helper.file_name_uuid(options)
+          possible_paths = helper.possible_paths_file(opts, final_name).map(&Pathname)
+
+          old_path = harvest_item.absolute_path
+          logger.measure_info('Copy file to', old_path:, new_path:) {
+            file_info_service.copy_to_any(old_path, possible_paths)
+          }
+        end
+
+        # @param [AudioRecording] audio_recording
+        def fix_overlaps(audio_recording)
+          # check for overlaps and attempt to fix
+          overlap_result = audio_recording.fix_overlaps(save: false)
+
+          too_many = overlap_result ? overlap_result[:overlap][:too_many] : false
+          not_fixed = overlap_result ? overlap_result[:overlap][:items].any? { |info| !info[:fixed] } : false
+
+          logger.debug('overlap fix', overlap_result:)
+
+          if too_many
+            harvest_item.add_to_error("Too many overlapping recordings#{{ error_info: overlap_result }.to_json}")
+          end
+
+          if not_fixed
+            harvest_item.add_to_error("Some overlaps could not be fixed#{{ error_info: overlap_result }.to_json}")
+          end
+
+          throw :halt if too_many || not_fixed
         end
 
         # @return [BawWorkers::FileInfo]

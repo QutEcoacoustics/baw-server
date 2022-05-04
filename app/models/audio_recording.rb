@@ -254,14 +254,14 @@ class AudioRecording < ApplicationRecord
   # this method runs validations.
   # this method depends on a number of attributes being valid.
   # @return [Boolean, Hash] false if not valid, otherwise hash of overlap info
-  def fix_overlaps
+  def fix_overlaps(save: true)
     # only run if the record is valid
     return false if invalid?
 
     max_overlap_sec = Settings.audio_recording_max_overlap_sec
 
     # correct any overlaps
-    AudioRecordingOverlap.fix(self, max_overlap_sec)
+    AudioRecordingOverlap.fix(self, max_overlap_sec, save:)
   end
 
   def self.build_by_file_hash(recording_params)

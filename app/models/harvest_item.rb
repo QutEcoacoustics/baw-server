@@ -9,6 +9,7 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 # Table name: harvest_items
 #
 #  id                 :bigint           not null, primary key
+#  deleted            :boolean          default(FALSE)
 #  info               :jsonb
 #  path               :string
 #  status             :string
@@ -85,6 +86,22 @@ class HarvestItem < ApplicationRecord
     completed? || failed? || errored?
   end
 
+  def file_deleted?
+    deleted
+  end
+
+  # Deletes the file located at the path this harvest_item represents.
+  # Use this after a successful harvest.
+
+  def delete_file!(completed_only: true)
+    return if deleted?
+
+    return unless completed? || !completed_only
+
+    absolute_path.delete if absolute_path.exist?
+    self.deleted = true
+  end
+
   def self.find_by_path_and_harvest(path, harvest)
     find_by path:, harvest_id: harvest.id
   end
@@ -114,7 +131,7 @@ class HarvestItem < ApplicationRecord
   end
 
   def add_to_error(message)
-    self.info = info.new(error: "#{info.error}#{message}\n")
+    self.info = info.new(error: "#{info.error}\n#{message}")
   end
 
   # Queries the database to see if any other items overlaps with this harvest item

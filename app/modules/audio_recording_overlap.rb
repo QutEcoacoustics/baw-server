@@ -60,7 +60,7 @@ class AudioRecordingOverlap
     # @param [AudioRecording] audio_recording
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Hash, nil] overlap info, nil if audio_recording has errors
-    def fix(audio_recording, max_overlap_seconds)
+    def fix(audio_recording, max_overlap_seconds, save: true)
       query = overlap_query(audio_recording)
       result_count = query.count
 
@@ -87,7 +87,7 @@ class AudioRecordingOverlap
         query.each do |existing_recording|
           overlap_info = get_overlap_info(audio_recording, existing_recording)
 
-          fix_result = fix_overlap(audio_recording, existing_recording, overlap_info, max_overlap_seconds)
+          fix_result = fix_overlap(audio_recording, existing_recording, overlap_info, max_overlap_seconds, save:)
 
           overlap_info[:fixed] = fix_result[:fixed]
           overlap_info[:errors] = fix_result[:save_errors] unless fix_result[:save_errors].empty?
@@ -197,7 +197,7 @@ class AudioRecordingOverlap
     # @param [Hash] overlap_info
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Boolean] true if fix succeeded, otherwise false
-    def fix_overlap(a, b, overlap_info, max_overlap_seconds)
+    def fix_overlap(a, b, overlap_info, max_overlap_seconds, save: true)
       # don't assume that either audio_recording is saved
       # so, can't use id.
       # assume both recordings have been validated.
@@ -220,13 +220,13 @@ class AudioRecordingOverlap
 
       if overlap_amount <= max_overlap_seconds && overlap_info[:can_fix]
         # correct the overlap by modifying the duration of the earlier recording
-        result = modify_duration(earlier, later, overlap_amount)
+        result = modify_duration(earlier, later, overlap_amount, save:)
       end
 
       result
     end
 
-    def modify_duration(modified, other, overlap_amount)
+    def modify_duration(modified, other, overlap_amount, save:)
       new_duration = modified.duration_seconds - overlap_amount
       current_duration = modified.duration_seconds
       modified.duration_seconds = new_duration
@@ -242,7 +242,7 @@ class AudioRecordingOverlap
       modified.notes['duration_adjustment_for_overlap'].push(new_overlap_info)
 
       # provide access to model save result and errors
-      save_result = modified.save
+      save_result = save ? modified.save : modified.validate
       save_errors = modified.errors.dup
 
       {

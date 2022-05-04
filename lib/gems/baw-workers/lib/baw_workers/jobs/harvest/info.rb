@@ -18,7 +18,7 @@ module BawWorkers
         # @!attribute [r] file_info
         #   @return [Hash]
         attribute :file_info, ::BawWorkers::Dry::Types::DeeplySymbolizedHash
-          .default(->(_type) { {}.freeze })
+          .default(->(_type) { {}.freeze }.freeze)
 
         # @!attribute [r] validations
         #   @return [Array<Hash>]

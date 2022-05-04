@@ -277,23 +277,13 @@ module BawWorkers
         code :overlapping_files
 
         def validate(harvest_item)
-          recorded_date = harvest_item.info.file_info[:recorded_date]
-          duration_seconds = harvest_item.info.file_info[:duration_seconds]
-          site_id = harvest_item.info.file_info[:site_id]
+          recording = fake_recording(harvest_item)
 
-          # if any of the above a blank, then we can't check for overlap
-          # prior validations should have caught this so we'll skip this
+          # If we don't have enough information, then we can't check for overlap.
+          # Prior validations should have caught this so we'll skip this
           # check until next time
-          return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
+          return unless recording
 
-          fake_recording = AudioRecording.new({
-            recorded_date:,
-            duration_seconds:,
-            site_id:
-          })
-          BawWorkers::Config.logger_worker.warn('fake recording', fake_recording:, recorded_date:, harvest_item:)
-
-          max_overlap = Settings.audio_recording_max_overlap_sec
           result = AudioRecordingOverlap.get(fake_recording, max_overlap)
 
           return if result[:overlap][:items].empty?
@@ -303,9 +293,29 @@ module BawWorkers
           MSG
 
           fixable = result[:overlap][:items].all? { |item| item[:can_fix] }
-          return fixable(msg) if fixable
+          # we're not reurning a fixable validation here because it's not something
+          # user can fix. We will fix it automatically though.
+          return nil if fixable
 
           not_fixable(msg)
+        end
+
+        def max_overlap
+          Settings.audio_recording_max_overlap_sec
+        end
+
+        def fake_recording(harvest_item)
+          recorded_date = harvest_item.info.file_info[:recorded_date]
+          duration_seconds = harvest_item.info.file_info[:duration_seconds]
+          site_id = harvest_item.info.file_info[:site_id]
+
+          return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
+
+          fake_recording = AudioRecording.new({
+            recorded_date:,
+            duration_seconds:,
+            site_id:
+          })
         end
       end
 
@@ -354,7 +364,9 @@ module BawWorkers
             An overlap was detected:\n #{msg_lines.join("\n")}}}
           MSG
 
-          return fixable(final_msg) if fixable
+          # we're not reurning a fixable validation here because it's not something
+          # user can fix. We will fix it automatically though.
+          return if fixable
 
           not_fixable(final_msg)
         end

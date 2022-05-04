@@ -68,9 +68,9 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         fixes: [
 
           a_hash_including({
-            problems: a_hash_including({
-              FL010: a_hash_including({
-                status: ::Emu::Fix::CHECK_STATUS_UNAFFECTED
+            'problems' => a_hash_including({
+              'FL010' => a_hash_including({
+                'status' => ::Emu::Fix::CHECK_STATUS_UNAFFECTED
               })
             })
           })
@@ -150,6 +150,57 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           expect(item).to be_metadata_gathered
           expect(item.info.to_h).to match(a_hash_including(info))
         end
+      end
+    end
+
+    context 'when doing a full harvest' do
+      it 'works' do
+        enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+          harvest,
+          rel_path,
+          should_harvest: true
+        )
+
+        expect(enqueued).to be true
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+        perform_jobs(count: 1)
+        expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+        # should have harvested
+        expect(AudioRecording.count).to eq 1
+        audio_recording = AudioRecording.first
+
+        # @type [HarvestItem]
+        item = HarvestItem.first
+        aggregate_failures do
+          expect(item.audio_recording_id).to audio_recording.id
+          expect(item).to be_completed
+          expect(item.info.to_h).to match(a_hash_including(info))
+        end
+
+        # check the audio recording
+        expect(audio_recording).to have_attribtues(
+          id: be_an_instance_of(Integer),
+          uuid: be_an_instance_of(String),
+          uploader_id: harvest.creator_id,
+          recorded_date: Time.parse('2022-10-12T13:24:57.000+10:00'),
+          site_id: site.id,
+          duration_seconds: 70.0,
+          sample_rate_hertz: 4100,
+          channels: 1,
+          bit_rate_bps: 239_920,
+          media_type: 'audio/ogg',
+          data_length_bytes: 822_281,
+          file_hash: 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
+          status: :ready,
+          notes: {},
+          creator_id: harvest.creator_id,
+          updater_id: nil,
+          deleter_id: nil,
+          original_file_name: '20221012T132457_label.ogg',
+          recorded_utc_offset: '+10:00'
+        )
       end
     end
   end
