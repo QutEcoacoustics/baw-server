@@ -160,4 +160,14 @@ class HarvestItem < ApplicationRecord
                .limit(10)
                .to_a
   end
+
+  def duplicate_hash_of
+    file_hash = info.file_info[:file_hash]
+
+    HarvestItem
+      .where(HarvestItem.arel_table[:id] != id)
+      .where(harvest_id:)
+      .where("info->'file_info'->>'file_hash' = '#{file_hash}'")
+      .limit(10)
+  end
 end

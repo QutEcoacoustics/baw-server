@@ -9,8 +9,8 @@ module BawWorkers
         queue_as Settings.actions.harvest.queue
         perform_expects Integer
 
-        def delete_after
-          Settings.actions.harvest.delete_after
+        def self.delete_after
+          Settings.actions.harvest.delete_after.seconds
         end
 
         def self.delete_later(harvest_item, wait: nil)
@@ -20,7 +20,7 @@ module BawWorkers
 
         def perform(harvest_item_id)
           harvest_item = HarvestItem.find(harvest_item_id)
-          logger.info('Deleting harvest item file', harvest_item:)
+          logger.info('Preparing to delete harvest item file', harvest_item_id:, path: harvest_item.path)
 
           if harvest_item.file_deleted?
             logger.info('Harvest item already deleted', harvest_item:)
@@ -33,6 +33,7 @@ module BawWorkers
           end
 
           harvest_item.delete_file!
+          logger.info('Harvest item file deleted', path: harvest_item.path)
         rescue StandardError => e
           harvest_item&.add_to_error(e.message)
           raise
@@ -42,6 +43,10 @@ module BawWorkers
 
         def create_job_id
           ::BawWorkers::ActiveJob::Identity::Generators.generate_uuid(self)
+        end
+
+        def name
+          "DeleteHarvestItemFileJob:#{arguments.first}"
         end
       end
     end

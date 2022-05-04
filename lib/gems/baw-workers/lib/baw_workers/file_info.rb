@@ -29,7 +29,7 @@ module BawWorkers
         errors: integrity_check[:errors],
         file_hash: generated_file_hash,
         media_type: info[:media_type],
-        sample_rate_hertz: info[:sample_rate],
+        sample_rate_hertz: info[:sample_rate].to_i,
         duration_seconds: info[:duration_seconds].to_f.round(3),
         bit_rate_bps: info[:bit_rate_bps],
         data_length_bytes: info[:data_length_bytes],
@@ -87,7 +87,7 @@ module BawWorkers
       targets.each do |target|
         raise "Target is not a Pathname: #{target}" unless target.is_a?(Pathname)
 
-        targets.dirname.mkpath
+        target.dirname.mkpath
 
         FileUtils.copy(source, target)
 

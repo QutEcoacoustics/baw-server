@@ -15,7 +15,10 @@ module BawWorkers
           # @param should_harvest [Boolean] whether or not to actually process the file
           # @return [Boolean] status of job enqueue, true if successful
           def enqueue_file(harvest, rel_path, should_harvest:)
-            item = new_harvest_item(harvest, rel_path)
+            # try and find an existing record
+            item = existing_harvest_item(harvest, rel_path)
+            # otherwise create a new one
+            item = new_harvest_item(harvest, rel_path) if item.nil?
 
             result = perform_later!(item.id, should_harvest)
             success = result != false
@@ -51,6 +54,14 @@ module BawWorkers
             logger.debug('harvest item created', harvest_item_id: item.id)
 
             item
+          end
+
+          def existing_harvest_item(harvest, rel_path)
+            result = HarvestItem.find_by(harvest_id: harvest.id, path: rel_path)
+
+            logger.info('found existing harvest item', harvest_item_id: result.id) unless result.nil?
+
+            result
           end
         end
 
@@ -140,9 +151,11 @@ module BawWorkers
           # fix any errors or manipulate the files before harvest
           pre_process
 
-          # harvest the file (create the record, move the file on disk)
-          success = harvest_file
-          return move_to_failed unless success
+          # create the audio recording in the database
+          return move_to_failed unless create_audio_recording
+
+          # harvest the file ( move the file on disk)
+          return move_to_failed unless harvest_file
 
           post_process
 
@@ -264,36 +277,72 @@ module BawWorkers
           # TODO: wac processing? Flac conversion?
         end
 
-        def harvest_file
-          catch(:halt) do
-            audio_recording = create_draft_audio_recording
-            audio_recording.set_uuid
-            fix_overlaps(audio_recording)
+        # @return [Boolean]
+        def create_audio_recording
+          result = catch(:halt) {
+            # if we're retrying this harvest the audio recording might already exist
+            if harvest_item.audio_recording_id
+              logger.debug('Audio recording already exists, fetching',
+                audio_recording_id: harvest_item.audio_recording_id)
 
-            raise 'Record should not saved yet' unless audio_recording.new?
-
-            # save the result
-            audio_recording.status = AudioRecording::STATUS_NEW
-
-            # check we have a valid record
-            unless audio_recording.validate
-              error = "Audio recording is not valid#{audio_recording.errors.map(&:full_message).join(', ')}"
-              harvest_item.add_to_error(error)
-              throw :halt
+              @audio_recording = AudioRecording.find(harvest_item.audio_recording_id)
+              return true
             end
 
-            # save the record
+            # use the transaction to ensure that if the recording is created
+            # then the associated harvest item is updated too
+            # and also that any other records modified by the overlap fix are reverted on failure.
+            create_draft_audio_recording
+            audio_recording.set_uuid
+            ::ActiveRecord::Base.transaction do
+              fix_overlaps(audio_recording)
+
+              raise 'Record should not saved yet' unless audio_recording.new?
+
+              # save the result
+              audio_recording.status = AudioRecording::STATUS_NEW
+
+              # check we have a valid record
+              unless audio_recording.validate
+                error = "Audio recording is not valid: #{audio_recording.errors.map(&:full_message).join(', ')}"
+                harvest_item.add_to_error(error)
+                throw :halt
+              end
+
+              # save the record
+              audio_recording.save!
+              harvest_item.audio_recording_id = audio_recording.id
+            end
+
+            return true
+          }
+
+          result == true
+        end
+
+        # @return [Boolean] true if the operation succeeded
+        def harvest_file
+          # sanity checks
+          raise 'Audio recording was nil' if audio_recording.nil?
+          raise 'Audio recording has not yet been saved' if audio_recording.new_record?
+
+          begin
+            audio_recording.status = AudioRecording::STATUS_UPLOADING
             audio_recording.save!
 
-            harvest_item.audio_recording_id = audio_recording.id
-
             # start moving the file
-            cop_file(audio_recording)
+            copy_file(audio_recording)
 
             # sanity check
             raise 'Cant find file after moving' unless audio_recording.original_file_exists?
 
-            return true
+            # mark the record as complete
+            audio_recording.status = AudioRecording::STATUS_READY
+          rescue StandardError
+            audio_recording.status = AudioRecording::STATUS_ABORTED
+            raise
+          ensure
+            audio_recording&.save
           end
         end
 
@@ -325,7 +374,7 @@ module BawWorkers
             notes: file_info[:notes],
             creator_id: harvest.creator_id,
             original_file_name: file_info[:file_name],
-            recorded_utc_offset: file_info[:recorded_utc_offset]
+            recorded_utc_offset: file_info[:utc_offset]
           )
         end
 
@@ -342,8 +391,6 @@ module BawWorkers
         # @param [AudioRecording] audio_recording
         # @return [Pathname] the new location of the file
         def copy_file(audio_recording)
-          audio_recording.status = AudioRecording::STATUS_UPLOADING
-          audio_recording.save!
           helper = BawWorkers::Config.original_audio_helper
 
           options = {
@@ -351,12 +398,18 @@ module BawWorkers
             original_format: harvest_item.info.file_info[:extension]
           }
           final_name = helper.file_name_uuid(options)
-          possible_paths = helper.possible_paths_file(opts, final_name).map(&Pathname)
+
+          helper
+            .possible_paths_file(options, final_name)
+            .map { |path| Pathname.new(path) } => possible_paths
 
           old_path = harvest_item.absolute_path
-          logger.measure_info('Copy file to', old_path:, new_path:) {
+          new_path = logger.measure_info('Copying file') {
             file_info_service.copy_to_any(old_path, possible_paths)
           }
+
+          logger.info('Copied file', old_path:, new_path:)
+          new_path
         end
 
         # @param [AudioRecording] audio_recording

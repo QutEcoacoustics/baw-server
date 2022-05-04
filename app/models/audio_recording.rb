@@ -82,12 +82,17 @@ class AudioRecording < ApplicationRecord
 
   # Enums for audio recording status
   # new - record created and passes validation
+  STATUS_NEW = :new
   # uploading - file being copied from source to dest
+  STATUS_UPLOADING = :uploading
   # to_check - uploading is complete - file hash should be compared to hash stored in db
   # ready - audio recording all ready for use on website
+  STATUS_READY = :ready
   # corrupt - file hash check failed, audio recording will not be available
   # aborted - a problem occurred during harvesting or checking, the file needs to be harvested again
-  AVAILABLE_STATUSES_SYMBOLS = [:new, :uploading, :to_check, :ready, :corrupt, :aborted].freeze
+  STATUS_ABORTED = :aborted
+
+  AVAILABLE_STATUSES_SYMBOLS = [STATUS_NEW, STATUS_UPLOADING, :to_check, STATUS_READY, :corrupt, :aborted].freeze
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map(&:to_s)
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
@@ -96,12 +101,16 @@ class AudioRecording < ApplicationRecord
   HASH_TOKEN = '::'
 
   # TODO: clean notes column in db
-  serialize :notes, JSON
+  serialize :notes, JsonTextSerializer
 
   # association validations
-  validates_associated :site
-  validates_associated :uploader
-  validates_associated :creator
+  # AT: disabled... we don't really want to check those models are valid
+  #   I'm pretty sure the intention was to validate the association was set.
+  #   The actual result here is a lot of "x is invalid" messages when associated
+  #   records fail validation even when they haven't been modified.
+  #validates_associated :site
+  #validates_associated :uploader
+  #validates_associated :creator
 
   # attribute validations
   validates :status, inclusion: { in: AVAILABLE_STATUSES }, presence: true

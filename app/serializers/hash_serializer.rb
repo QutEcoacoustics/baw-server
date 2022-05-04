@@ -6,6 +6,6 @@ class HashSerializer
   end
 
   def self.load(hash)
-    (hash || {}).with_indifferent_access
+    (hash || {}).deep_symbolize_keys.with_indifferent_access
   end
 end

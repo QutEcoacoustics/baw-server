@@ -129,7 +129,12 @@ module BawWorkers
 
           def validate(harvest_item)
             recorded_date = harvest_item.info.file_info[:recorded_date]
-            return unless recorded_date.present? && recorded_date <= Time.now
+
+            # If there's not date no point doing this validation (halt)
+            # (prior valiations should have already caught this)
+            return if recorded_date.blank?
+
+            return if recorded_date <= Time.now
 
             fixable('This file has a recorded date in the future')
           end
@@ -174,7 +179,7 @@ module BawWorkers
 
           def validate(harvest_item)
             sample_rate = harvest_item.info.file_info[:sample_rate_hertz]
-            return if sample_rate.present? && sample_rate.is_a?(Numeric) && sample_rate.positive?
+            return if sample_rate.present? && sample_rate.is_a?(Integer) && sample_rate.positive?
 
             not_fixable("The sample rate is invalid (#{sample_rate})")
           end
@@ -227,10 +232,7 @@ module BawWorkers
 
             # check if the file hash is already in the database for this harvest
             # if it is, then we can't add it again
-            duplicates_in_this_job = HarvestItem
-                                     .where(harvest_id: harvest_item.harvest_id)
-                                     .where("info->'file_info'->>'file_hash' = '#{file_hash}'")
-                                     .limit(10)
+            duplicates_in_this_job = harvest_item.duplicate_hash_of
 
             return if duplicates_in_this_job.empty?
 
@@ -284,7 +286,7 @@ module BawWorkers
           # check until next time
           return unless recording
 
-          result = AudioRecordingOverlap.get(fake_recording, max_overlap)
+          result = AudioRecordingOverlap.get(recording, max_overlap)
 
           return if result[:overlap][:items].empty?
 
@@ -311,7 +313,7 @@ module BawWorkers
 
           return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
 
-          fake_recording = AudioRecording.new({
+          AudioRecording.new({
             recorded_date:,
             duration_seconds:,
             site_id:

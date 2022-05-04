@@ -77,14 +77,16 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         ],
         file_info: {
           path: '',
-          notes: {},
+          notes: {
+            relative_path: "harvest_#{harvest.id}/20211012T132457_label.ogg"
+          },
           prefix: '',
           suffix: '_label',
           site_id: site.id,
           channels: 1,
           extension: 'ogg',
           file_hash: 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
-          file_name: '20221012T132457_label.ogg',
+          file_name: '20211012T132457_label.ogg',
           recursive: false,
           media_type: 'audio/ogg',
           utc_offset: '+10:00',
@@ -93,11 +95,11 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           uploader_id: harvest.creator_id,
           bit_rate_bps: 239_920,
           modified_time: be_an_instance_of(String),
-          recorded_date: '2022-10-12T13:24:57.000+10:00',
+          recorded_date: '2021-10-12T13:24:57.000+10:00',
           duration_seconds: 70.0,
           data_length_bytes: 822_281,
           sample_rate_hertz: 44_100.0,
-          recorded_date_local: '2022-10-12T13:24:57.000+00:00'
+          recorded_date_local: '2021-10-12T13:24:57.000+00:00'
         },
         validations: []
       }
@@ -117,7 +119,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
       h
     }
 
-    let!(:rel_path) { "#{harvest.upload_directory_name}/20221012T132457_label.ogg" }
+    let!(:rel_path) { "#{harvest.upload_directory_name}/20211012T132457_label.ogg" }
     let!(:target) { harvester_to_do_path / rel_path }
 
     before do
@@ -126,19 +128,23 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
       FileUtils.copy(Fixtures.audio_file_mono, target)
     end
 
+    def enqueue_and_perform(should_harvest:, completed: 1)
+      enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+        harvest,
+        rel_path,
+        should_harvest:
+      )
+
+      expect(enqueued).to be true
+      expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+      perform_jobs(count: 1)
+      expect_jobs_to_be completed:, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+    end
+
     context 'when getting metadata from a file' do
       it 'works' do
-        enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
-          harvest,
-          rel_path,
-          should_harvest: false
-        )
-
-        expect(enqueued).to be true
-        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
-
-        perform_jobs(count: 1)
-        expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+        enqueue_and_perform(should_harvest: false)
 
         # should not have harvested
         expect(AudioRecording.count).to be_zero
@@ -149,58 +155,146 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           expect(item.audio_recording_id).to be_nil
           expect(item).to be_metadata_gathered
           expect(item.info.to_h).to match(a_hash_including(info))
+          expect(item.file_deleted?).to be false
+          expect(item.absolute_path.exist?).to be true
         end
       end
     end
 
     context 'when doing a full harvest' do
       it 'works' do
-        enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
-          harvest,
-          rel_path,
-          should_harvest: true
-        )
-
-        expect(enqueued).to be true
-        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
-
-        perform_jobs(count: 1)
-        expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
-
-        # should have harvested
-        expect(AudioRecording.count).to eq 1
-        audio_recording = AudioRecording.first
+        enqueue_and_perform(should_harvest: true)
 
         # @type [HarvestItem]
         item = HarvestItem.first
         aggregate_failures do
-          expect(item.audio_recording_id).to audio_recording.id
           expect(item).to be_completed
           expect(item.info.to_h).to match(a_hash_including(info))
+          expect(item.file_deleted?).to be false
+          expect(item.absolute_path.exist?).to be true
         end
 
+        # should have harvested
+        expect(AudioRecording.count).to eq 1
+        audio_recording = AudioRecording.first
+        expect(item.audio_recording_id).to eq audio_recording.id
+
         # check the audio recording
-        expect(audio_recording).to have_attribtues(
+        attributes = {
           id: be_an_instance_of(Integer),
           uuid: be_an_instance_of(String),
           uploader_id: harvest.creator_id,
-          recorded_date: Time.parse('2022-10-12T13:24:57.000+10:00'),
+          recorded_date: Time.parse('2021-10-12T13:24:57.000+10:00'),
           site_id: site.id,
           duration_seconds: 70.0,
-          sample_rate_hertz: 4100,
+          sample_rate_hertz: 44_100,
           channels: 1,
           bit_rate_bps: 239_920,
           media_type: 'audio/ogg',
           data_length_bytes: 822_281,
           file_hash: 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
-          status: :ready,
-          notes: {},
+          status: 'ready',
+          notes: {
+            relative_path: "harvest_#{harvest.id}/20211012T132457_label.ogg"
+          },
           creator_id: harvest.creator_id,
           updater_id: nil,
           deleter_id: nil,
-          original_file_name: '20221012T132457_label.ogg',
+          original_file_name: '20211012T132457_label.ogg',
           recorded_utc_offset: '+10:00'
+        }
+        aggregate_failures do
+          attributes.each do |key, value|
+            expect(audio_recording.send(key)).to match value
+          end
+        end
+
+        expect(audio_recording).to be_original_file_exists
+
+        dir = audio_original.possible_paths_dir({ uuid: audio_recording.uuid }).first
+        filename = audio_original.file_name_uuid({ uuid: audio_recording.uuid, original_format: 'ogg' })
+        v3_name_path = "#{dir}/#{filename}"
+        expect(audio_recording.original_file_paths).to eq [v3_name_path]
+
+        # this is the job that deletes the file from harvester_to_do
+        expect_delayed_jobs(1)
+      end
+
+      it 'will delete the harvest file after a period of time' do
+        enqueue_and_perform(should_harvest: true)
+
+        # @type [HarvestItem]
+        item = HarvestItem.first
+        aggregate_failures do
+          expect(item).to be_completed
+          expect(item.info.to_h).to match(a_hash_including(info))
+          expect(item.file_deleted?).to be false
+          expect(item.absolute_path.exist?).to be true
+        end
+
+        # should have harvested
+        expect(AudioRecording.count).to eq 1
+
+        # this is the job that deletes the file from harvester_to_do
+        expect_delayed_jobs(1)
+        BawWorkers::ResqueApi.enqueue_delayed_jobs
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob
+
+        item.reload
+        expect(item.file_deleted?).to be true
+        expect(item.absolute_path.exist?).to be false
+      end
+
+      it 'can be attempted again if a validation fails' do
+        # make it invalid
+        harvest.mappings = nil
+        harvest.save!
+
+        enqueue_and_perform(should_harvest: false)
+
+        # @type [HarvestItem]
+        item = HarvestItem.first
+        aggregate_failures do
+          expect(item).to be_metadata_gathered
+          expect(item.info.to_h[:validations]).to eq [
+            {
+              code: :ambiguous_date_time,
+              status: 'fixable',
+              message: 'Only a local date/time was found, supply an UTC offset'
+            },
+            {
+              code: :no_site_id,
+              status: 'fixable',
+              message: 'No site id found. Update the harvest mappings.'
+            }
+          ]
+        end
+
+        # now provide a mapping and attempt again
+        harvest.mappings << ::BawWorkers::Jobs::Harvest::Mapping.new(
+          path: '',
+          site_id: site.id,
+          utc_offset: '+10:00',
+          recursive: false
         )
+        harvest.save!
+
+        # this is the second job we've completed this test
+        enqueue_and_perform(should_harvest: true, completed: 2)
+
+        # should have been enqueued again,
+        # and a duplicate extra harvest item should not have been made
+        expect(HarvestItem.count).to eq 1
+
+        # should have harvested
+        item.reload
+        aggregate_failures do
+          expect(item).to be_completed
+          expect(item.info.to_h[:validations]).to eq []
+          expect(AudioRecording.count).to eq 1
+        end
       end
     end
   end
