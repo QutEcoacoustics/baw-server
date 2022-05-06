@@ -33,7 +33,7 @@ jobs:
   #         install: true
       
   #     - name: Build and cache
-  #       uses: docker/build-push-action@v2
+  #       uses: docker/build-push-action@v3
   #       with:
   #         context: .
   #         push: false
@@ -168,7 +168,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           build-args: |
             trimmed=true
@@ -180,7 +180,7 @@ jobs:
              version:${{steps.tagger.outputs.tag}}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v1.1.0
+        uses: docker/build-push-action@v3
         with:
           # Username used to log in to a Docker registry. If not set then no login will occur
           username: atruskie
