@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module TempFileHelpers
-  module ExampleGroup
+  module Example
     #
-    # Generate a temp file that id automatically cleaned up after a test.
+    # Generate a temp file that is automatically cleaned up after a test.
     # Does not create the file.
     #
     # @param [String] stem the basename for the temp file's name. If nil a random name will be used.
@@ -16,29 +16,33 @@ module TempFileHelpers
       extension =
         if extension.blank? then ''
         elsif extension.start_with?('.') then extension
-        else ".#{extension}"
+        else
+          ".#{extension}"
         end
 
       path = temp_dir / "#{stem}#{extension}"
 
-      @temp_files << path
+      set_temp_files(get_temp_files + [path])
 
       path
     end
 
     def self.included(example_group)
+      example_group.define_metadata_state :temp_files, default: []
       example_group.let(:temp_dir) { Pathname(Settings.paths.temp_dir) }
 
-      example_group.before(:all) do
-        @temp_files = []
-      end
-
       example_group.before do
-        @temp_files.filter(&:exist?).each(&:delete)
+        logger.info('before: deleting temp files', temp_files: get_temp_files)
+        get_temp_files.each do |file|
+          FileUtils.remove_file(file, force: true)
+        end
       end
 
       example_group.after do
-        @temp_files.filter(&:exist?).each(&:delete)
+        logger.info('after: deleting temp files', temp_files: get_temp_files)
+        get_temp_files.each do |file|
+          FileUtils.remove_file(file, force: true)
+        end
       end
     end
   end

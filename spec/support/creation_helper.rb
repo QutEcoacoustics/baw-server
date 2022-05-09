@@ -213,7 +213,21 @@ module Creation
     end
 
     def prepare_harvest
-      let!(:harvest) { Common.create_harvest(owner_user, project) }
+      prepare_harvest_with_mappings
+    end
+
+    def prepare_harvest_with_mappings(&block)
+      let!(:harvest) {
+        h = Common.create_harvest(owner_user, project)
+        unless block.nil?
+          h.mappings = instance_eval(&block).map { |hash|
+            ::BawWorkers::Jobs::Harvest::Mapping.new(hash)
+          }
+
+          h.save!
+        end
+        h
+      }
     end
 
     def prepare_region

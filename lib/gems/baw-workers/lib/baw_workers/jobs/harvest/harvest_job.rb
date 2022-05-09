@@ -11,10 +11,13 @@ module BawWorkers
         class << self
           # Schedule a harvest job for a harvest item
           # @param harvest [Harvest] the parent harvest
-          # @param rel_path [String] the path within harvester_to_do to process
+          # @param rel_path [String,Pathname] the path within harvester_to_do to process
+          #    (a path relative to the harvester_to_do directory)
           # @param should_harvest [Boolean] whether or not to actually process the file
           # @return [Boolean] status of job enqueue, true if successful
           def enqueue_file(harvest, rel_path, should_harvest:)
+            rel_path = rel_path.to_s if rel_path.is_a?(Pathname)
+
             # try and find an existing record
             item = existing_harvest_item(harvest, rel_path)
             # otherwise create a new one
@@ -295,8 +298,6 @@ module BawWorkers
             create_draft_audio_recording
             audio_recording.set_uuid
             ::ActiveRecord::Base.transaction do
-              fix_overlaps(audio_recording)
-
               raise 'Record should not saved yet' unless audio_recording.new?
 
               # save the result
@@ -312,12 +313,19 @@ module BawWorkers
               # save the record
               audio_recording.save!
               harvest_item.audio_recording_id = audio_recording.id
+
+              fix_overlaps(audio_recording)
             end
 
             return true
           }
 
           result == true
+        ensure
+          # the harvest item gets saved with exception information
+          # if we fail to unset this we'd violate a foreign key constraint when the harevest item is saved
+          # because the audio recording does not exist
+          harvest_item.audio_recording_id = nil if result != true
         end
 
         # @return [Boolean] true if the operation succeeded
@@ -383,7 +391,7 @@ module BawWorkers
         def ensure_time(time_or_string)
           return nil if time_or_string.blank?
 
-          retrun time_or_string if time_or_string.is_a?(Time)
+          return time_or_string if time_or_string.is_a?(Time)
 
           Time.parse(time_or_string)
         end
@@ -395,7 +403,7 @@ module BawWorkers
 
           options = {
             uuid: audio_recording.uuid,
-            original_format: harvest_item.info.file_info[:extension]
+            original_format: Mime::Type.file_extension_of(audio_recording.media_type)
           }
           final_name = helper.file_name_uuid(options)
 
@@ -415,7 +423,7 @@ module BawWorkers
         # @param [AudioRecording] audio_recording
         def fix_overlaps(audio_recording)
           # check for overlaps and attempt to fix
-          overlap_result = audio_recording.fix_overlaps(save: false)
+          overlap_result = audio_recording.fix_overlaps
 
           too_many = overlap_result ? overlap_result[:overlap][:too_many] : false
           not_fixed = overlap_result ? overlap_result[:overlap][:items].any? { |info| !info[:fixed] } : false

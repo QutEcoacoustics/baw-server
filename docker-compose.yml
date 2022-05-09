@@ -75,9 +75,9 @@ services:
         source: ./provision/upload/config
         target: /var/lib/sftpgo
         # mount the harvester to do directory - this is where we want to allow uploads
-      # the rails app knows about this directory from config (actions/harvest/to_do_path)
+        # the rails app knows about this directory from config (actions/harvest/to_do_path)
       - <<: *data_mount_dev
-      
+
   upload_test:
     <<: *upload
     environment:
@@ -123,7 +123,6 @@ services:
       - <<: *data_mount_dev
     working_dir: /home/baw_web/baw-server
 
-
   workers_test:
     <<: *worker
     volumes:
@@ -154,7 +153,9 @@ services:
     # I'm thinking this might be a better default command. Currently the compose
     # file is only used for devleopment and we usually don't want a web server
     # just starting - particularly in CI where we need the port for tests
+    # TODO: this seems to ignore signals and takes 10 seconds (the default timeout) to stop whenever docker stop is issues
     command: sleep infinity
+    init: true
     healthcheck:
       test: test -f .ready
       interval: 5s

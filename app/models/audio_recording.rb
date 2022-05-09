@@ -200,31 +200,6 @@ class AudioRecording < ApplicationRecord
 
   # Get the existing paths for the audio recording file.
   def original_file_paths
-    original_format = '.wv' # pick something
-
-    if !original_file_name.blank?
-      original_format = File.extname(original_file_name)
-    elsif !media_type.blank?
-      original_format = Mime::Type.file_extension_of(media_type)
-    end
-
-    source_existing_paths = []
-    unless original_format.blank?
-      modify_parameters = {
-        uuid:,
-        datetime_with_offset: recorded_date,
-        original_format: original_format_calculated
-      }
-
-      audio_original = BawWorkers::Config.original_audio_helper
-      source_existing_paths = audio_original.existing_paths(modify_parameters)
-    end
-
-    source_existing_paths
-  end
-
-  # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
-  def canonical_filename
     modify_parameters = {
       uuid:,
       datetime_with_offset: recorded_date,
@@ -232,7 +207,22 @@ class AudioRecording < ApplicationRecord
     }
 
     audio_original = BawWorkers::Config.original_audio_helper
-    audio_original.file_name_utc(modify_parameters)
+    Rails.logger.warn('original path dx', possible_dirs: audio_original.possible_dirs, opts: modify_parameters)
+    source_existing_paths = audio_original.existing_paths(modify_parameters)
+
+    Rails.logger.warn('heeeererererrer', paths: source_existing_paths)
+    source_existing_paths
+  end
+
+  # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
+  def canonical_filename
+    modify_parameters = {
+      uuid:,
+      original_format: original_format_calculated
+    }
+
+    audio_original = BawWorkers::Config.original_audio_helper
+    audio_original.file_name_uuid(modify_parameters)
   end
 
   # gets a filename that looks nice enough to provide to a user for a file download
@@ -263,14 +253,14 @@ class AudioRecording < ApplicationRecord
   # this method runs validations.
   # this method depends on a number of attributes being valid.
   # @return [Boolean, Hash] false if not valid, otherwise hash of overlap info
-  def fix_overlaps(save: true)
+  def fix_overlaps
     # only run if the record is valid
     return false if invalid?
 
     max_overlap_sec = Settings.audio_recording_max_overlap_sec
 
     # correct any overlaps
-    AudioRecordingOverlap.fix(self, max_overlap_sec, save:)
+    AudioRecordingOverlap.fix(self, max_overlap_sec)
   end
 
   def self.build_by_file_hash(recording_params)

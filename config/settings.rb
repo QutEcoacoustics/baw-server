@@ -131,6 +131,12 @@ module BawWeb
     def queue_to_process_includes?(name)
       queue_names.include?(name) || queue_names.include?('*')
     end
+
+    # Gets the path to the to do harvester directory.
+    # @return [Pathname]
+    def root_to_do_path
+      @root_to_do_path ||= Pathname(actions.harvest.to_do_path).realpath
+    end
   end
 end
 

@@ -124,7 +124,7 @@ module BawWorkers
 
         # @return [Pathname]
         def root_to_do_path
-          @root_to_do_path ||= Pathname(Settings.actions.harvest.to_do_path).realpath
+          Settings.root_to_do_path
         end
 
         def validate_to_do_dir(path)

@@ -34,7 +34,7 @@ class AudioRecordingOverlap
         result[:overlap][:too_many] = true
       else
         query.each do |existing_recording|
-          overlap_info = get_overlap_info(audio_recording, existing_recording)
+          overlap_info = get_overlap_info(audio_recording, existing_recording, max_overlap_seconds)
           result[:overlap][:items].push(overlap_info)
         end
       end
@@ -60,7 +60,7 @@ class AudioRecordingOverlap
     # @param [AudioRecording] audio_recording
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Hash, nil] overlap info, nil if audio_recording has errors
-    def fix(audio_recording, max_overlap_seconds, save: true)
+    def fix(audio_recording, max_overlap_seconds)
       query = overlap_query(audio_recording)
       result_count = query.count
 
@@ -85,9 +85,9 @@ class AudioRecordingOverlap
       else
 
         query.each do |existing_recording|
-          overlap_info = get_overlap_info(audio_recording, existing_recording)
+          overlap_info = get_overlap_info(audio_recording, existing_recording, max_overlap_seconds)
 
-          fix_result = fix_overlap(audio_recording, existing_recording, overlap_info, max_overlap_seconds, save:)
+          fix_result = fix_overlap(audio_recording, existing_recording, overlap_info, max_overlap_seconds)
 
           overlap_info[:fixed] = fix_result[:fixed]
           overlap_info[:errors] = fix_result[:save_errors] unless fix_result[:save_errors].empty?
@@ -145,7 +145,7 @@ class AudioRecordingOverlap
     # @param [AudioRecording] new_recording
     # @param [AudioRecording] existing_recording
     # @return [Hash] overlap info
-    def get_overlap_info(new_recording, existing_recording)
+    def get_overlap_info(new_recording, existing_recording, max_overlap_amount)
       recording_new_start = new_recording.recorded_date
       recording_new_end = get_end_date(new_recording)
 
@@ -178,6 +178,8 @@ class AudioRecordingOverlap
         can_fix = false
       end
 
+      can_fix &&= overlap_amount <= max_overlap_amount
+
       {
         uuid: existing_recording.uuid,
         id: existing_recording.id,
@@ -197,7 +199,7 @@ class AudioRecordingOverlap
     # @param [Hash] overlap_info
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Boolean] true if fix succeeded, otherwise false
-    def fix_overlap(a, b, overlap_info, max_overlap_seconds, save: true)
+    def fix_overlap(a, b, overlap_info, max_overlap_seconds)
       # don't assume that either audio_recording is saved
       # so, can't use id.
       # assume both recordings have been validated.
@@ -220,29 +222,29 @@ class AudioRecordingOverlap
 
       if overlap_amount <= max_overlap_seconds && overlap_info[:can_fix]
         # correct the overlap by modifying the duration of the earlier recording
-        result = modify_duration(earlier, later, overlap_amount, save:)
+        result = modify_duration(earlier, later, overlap_amount)
       end
 
       result
     end
 
-    def modify_duration(modified, other, overlap_amount, save:)
+    def modify_duration(modified, other, overlap_amount)
       new_duration = modified.duration_seconds - overlap_amount
       current_duration = modified.duration_seconds
       modified.duration_seconds = new_duration
 
       # make sure notes has the duration_adjustment_for_overlap array
       modified.notes = {} if modified.notes.blank?
-      unless modified.notes.include?('duration_adjustment_for_overlap')
-        modified.notes['duration_adjustment_for_overlap'] = []
+      unless modified.notes.include?(:duration_adjustment_for_overlap)
+        modified.notes[:duration_adjustment_for_overlap] = []
       end
 
       # add new overlap info to the duration_adjustment_for_overlap array
       new_overlap_info = create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid)
-      modified.notes['duration_adjustment_for_overlap'].push(new_overlap_info)
+      modified.notes[:duration_adjustment_for_overlap].push(new_overlap_info)
 
       # provide access to model save result and errors
-      save_result = save ? modified.save : modified.validate
+      save_result = modified.save
       save_errors = modified.errors.dup
 
       {

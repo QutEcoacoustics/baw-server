@@ -104,7 +104,6 @@ describe BawWorkers::RedisCommunicator do
   end
 
   describe 'can store a file' do
-    include TempFileHelpers::ExampleGroup
 
     let(:path) { Fixtures.audio_file_mono29 }
     let(:hash) { BawWorkers::Config.file_info.generate_hash(path).hexdigest }

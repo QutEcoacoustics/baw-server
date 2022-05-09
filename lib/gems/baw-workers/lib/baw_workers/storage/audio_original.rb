@@ -45,10 +45,11 @@ module BawWorkers
         validate_uuid(opts)
         validate_datetime(opts)
         validate_original_format(opts)
+        uuid = opts[:uuid].to_s.downcase
+        date = opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase
+        ext = opts[:original_format].trim('.', '').to_s.downcase
 
-        "#{opts[:uuid].to_s.downcase}#{@separator}#{opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase}Z#{@extension_indicator}#{opts[:original_format].trim(
-          '.', ''
-        ).to_s.downcase}"
+        "#{uuid}#{@separator}#{date}Z#{@extension_indicator}#{ext}"
       end
 
       # Create a file name. This file name uses the uuid only.
@@ -59,8 +60,10 @@ module BawWorkers
         validate_uuid(opts)
         validate_original_format(opts)
 
-        opts[:uuid].to_s.downcase + @extension_indicator + opts[:original_format].trim('.',
-          '').to_s.downcase
+        uuid = opts[:uuid].to_s.downcase
+        extension = opts[:original_format].trim('.', '').to_s.downcase
+
+        uuid + @extension_indicator + extension
       end
 
       # Get file names.

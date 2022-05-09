@@ -324,8 +324,6 @@ RSpec.configure do |config|
   config.include Baw::Stepwise::Example, stepwise: true
 end
 
-RSpec::Core::ExampleGroup.stepwise
-
 # type hints for solargraph - these are never executed
 # rubocop:disable RSpec/EmptyExampleGroup, RSpec/FilePath, RSpec/DescribeClass
 RSpec.describe '', skip: true do

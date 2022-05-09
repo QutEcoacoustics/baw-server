@@ -80,7 +80,7 @@ class Harvest < ApplicationRecord
   # The absolute path to the directory used to store files related to this harvest.
   # @return [Pathname]
   def upload_directory
-    BawWorkers::Jobs::Harvest::Enqueue.root_to_do_path / upload_directory_name
+    Settings.root_to_do_path / upload_directory_name
   end
 
   # Joins a virtual path (scoped to within the harvest directory)

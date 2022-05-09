@@ -231,7 +231,7 @@ module BawAudioTools
         window_function_param = window_function.to_s
         unless AudioSox.window_function_options.map { |wf| wf }.include? window_function_param
           raise ArgumentError,
-                "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
+            "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
         end
 
         cmd_arg = "-w #{window_function_param}"
@@ -270,7 +270,7 @@ module BawAudioTools
       # option affects the width of the spectrogram; otherwise, it affects the duration of the
       # spectrogram. num can be from 1 (low time resolution) to 5000 (high time resolution) and
       # need not be an integer. SoX may make a slight adjustment to the given number for
-      # processing quantisation reasons; if so, SoX will report the actual number used
+      # processing quantization reasons; if so, SoX will report the actual number used
       # (viewable when the SoX global option −V is in effect). See also −x and −d.
       cmd_arg = ''
       if !sample_rate.blank? && !window_size.blank?

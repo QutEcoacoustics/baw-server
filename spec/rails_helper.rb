@@ -94,7 +94,7 @@ require 'database_cleaner/redis'
 require 'super_diff/rspec-rails'
 
 require 'support/misc_helper'
-require 'support/temp_file_helper'
+
 require 'fixtures/fixtures'
 
 WEBMOCK_DISABLE_ARGS = { allow_localhost: true, allow: [
@@ -161,12 +161,15 @@ RSpec.configure do |config|
   Zonebie.set_random_timezone
   puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
+  require_relative 'support/metadata_state'
+  config.include MetadataState
+
+  require 'support/temp_file_helper'
+  config.include TempFileHelpers::Example
+
   require_relative 'support/logger_helper'
   config.extend LoggerHelpers::ExampleGroup
   config.include LoggerHelpers::Example
-
-  require_relative 'support/metadata_state'
-  config.include MetadataState
 
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::ControllerHelpers, type: :view
@@ -181,6 +184,9 @@ RSpec.configure do |config|
   config.include ActiveStorageValidations::Matchers, { type: :model }
 
   config.include RSpec::Benchmark::Matchers
+
+  require_relative 'support/audio_helper'
+  config.include AudioHelper::Example
 
   require_relative 'support/migrations_helper'
   config.include MigrationsHelpers, :migration

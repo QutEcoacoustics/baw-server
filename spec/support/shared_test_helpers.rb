@@ -241,6 +241,48 @@ shared_context 'shared_test_helpers' do
     settings_file_dest
   end
 
+  # @param path [Pathname]
+  # @param harvest [Harvest]
+  # @param target_name [String] The basename of the file to create. If nil the basename of the path will be used.
+  # @param sub_directories [Array<String>]
+  # @return [HarvestPathsHelper]
+  def copy_fixture_to_harvest_directory(path, harvest, target_name: nil, sub_directories: [].freeze)
+    raise unless path.is_a?(Pathname)
+    raise unless harvest.is_a?(Harvest)
+    raise unless path.absolute? && path.exist?
+
+    target_directory = harvest.upload_directory.join(*sub_directories)
+    target_directory.mkpath
+    target_name ||= path.basename.to_s
+    target = target_directory.join(target_name)
+    FileUtils.copy_file(path, target)
+
+    HarvestPathsHelper.new(
+      target,
+      target.relative_path_from(Settings.root_to_do_path),
+      target.relative_path_from(harvest.upload_directory),
+      target_name
+    )
+  end
+
+  class HarvestPathsHelper
+    # @return [Pathname]
+    attr_reader :absolute_path
+    # @return [Pathname]
+    attr_reader :harvester_relative_path
+    # @return [Pathname]
+    attr_reader :harvest_relative_path
+    # @return [String]
+    attr_reader :filename
+
+    def initialize(absolute_path, harvester_relative_path, harvest_relative_path, filename)
+      @absolute_path = absolute_path
+      @harvester_relative_path = harvester_relative_path
+      @harvest_relative_path = harvest_relative_path
+      @filename = filename
+    end
+  end
+
   def run_rake_task(task_name, args)
     the_task = Rake::Task[task_name]
 

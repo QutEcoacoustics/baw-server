@@ -75,31 +75,4 @@ shared_context 'temp media files' do
   let(:temp_media_file_2) { temp_file(stem: 'temp-media-2', extension: '') }
   let(:temp_media_file_3) { temp_file(stem: 'temp-media-3', extension: '') }
   let(:temp_media_file_4) { temp_file(stem: 'temp-media-4', extension: '') }
-
-  let(:temp_dir) { Pathname(Settings.paths.temp_dir) }
-
-  before(:all) do
-    @temp_files = []
-  end
-
-  def temp_file(stem: nil, extension: '.tmp')
-    stem = ::SecureRandom.hex(7) if stem.blank?
-    extension =
-      if extension.blank? then ''
-      elsif extension.start_with?('.') then extension
-      else ".#{extension}"
-      end
-    path = temp_dir / "#{stem}#{extension}"
-    @temp_files << path
-
-    path
-  end
-
-  before do
-    @temp_files.filter(&:exist?).each(&:delete)
-  end
-
-  after do
-    @temp_files.filter(&:exist?).each(&:delete)
-  end
 end

@@ -8,6 +8,7 @@ module BawWorkers
         module_function
 
         def simple_validations
+          # order is important in this list!
           [
             FileExists,
             IsAfile,
@@ -18,6 +19,7 @@ module BawWorkers
         end
 
         def after_extract_metadata_validations
+          # order is important in this list!
           [
             RecordedDate,
             AmbiguousDateTime,
@@ -32,8 +34,8 @@ module BawWorkers
             NotADuplicateForHarvest,
             HasAnUploader,
             BelongsToASite,
-            NotOverlapping,
-            NotOverlappingForHarvest
+            NotOverlappingForHarvest,
+            NotOverlapping
           ]
         end
 
@@ -275,52 +277,6 @@ module BawWorkers
         end
       end
 
-      class NotOverlapping < Validation
-        code :overlapping_files
-
-        def validate(harvest_item)
-          recording = fake_recording(harvest_item)
-
-          # If we don't have enough information, then we can't check for overlap.
-          # Prior validations should have caught this so we'll skip this
-          # check until next time
-          return unless recording
-
-          result = AudioRecordingOverlap.get(recording, max_overlap)
-
-          return if result[:overlap][:items].empty?
-
-          msg = <<~MSG
-            The file #{harvest_item.rel_path} overlaps with the following audio recordings: #{result[:overlap][:items].join(', ')}}}
-          MSG
-
-          fixable = result[:overlap][:items].all? { |item| item[:can_fix] }
-          # we're not reurning a fixable validation here because it's not something
-          # user can fix. We will fix it automatically though.
-          return nil if fixable
-
-          not_fixable(msg)
-        end
-
-        def max_overlap
-          Settings.audio_recording_max_overlap_sec
-        end
-
-        def fake_recording(harvest_item)
-          recorded_date = harvest_item.info.file_info[:recorded_date]
-          duration_seconds = harvest_item.info.file_info[:duration_seconds]
-          site_id = harvest_item.info.file_info[:site_id]
-
-          return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
-
-          AudioRecording.new({
-            recorded_date:,
-            duration_seconds:,
-            site_id:
-          })
-        end
-      end
-
       class NotOverlappingForHarvest < Validation
         code :overlapping_files_in_harvest
 
@@ -351,14 +307,13 @@ module BawWorkers
               duration_seconds: item.info.file_info[:duration_seconds]
             })
 
-            report = AudioRecordingOverlap.get_overlap_info(fake_recording, other)
+            report = AudioRecordingOverlap.get_overlap_info(fake_recording, other, max_overlap)
             overlap_amount = report[:overlap_amount]
             can_fix = report[:can_fix]
 
-            can_fix &&= overlap_amount <= max_overlap
             fixable &&= can_fix
 
-            msg = "#{item.path} overlaps with #{other.path} by #{overlap_amount} seconds. This is #{can_fix ? 'fixable' : 'not fixable'}"
+            msg = "#{harvest_item.path} overlaps with #{item.path} by #{overlap_amount} seconds. This is #{can_fix ? 'fixable' : 'not fixable'}"
             msg_lines << msg
           end
 
@@ -366,11 +321,60 @@ module BawWorkers
             An overlap was detected:\n #{msg_lines.join("\n")}}}
           MSG
 
-          # we're not reurning a fixable validation here because it's not something
+          # we're not returning a fixable validation here because it's not something
           # user can fix. We will fix it automatically though.
           return if fixable
 
           not_fixable(final_msg)
+        end
+      end
+
+      class NotOverlapping < Validation
+        code :overlapping_files
+
+        def validate(harvest_item)
+          recording = fake_recording(harvest_item)
+          BawWorkers::Config.logger_worker.error('overlap dummy recording', recording:)
+
+          # If we don't have enough information, then we can't check for overlap.
+          # Prior validations should have caught this so we'll skip this
+          # check until next time
+          return unless recording
+
+          result = AudioRecordingOverlap.get(recording, max_overlap)
+
+          BawWorkers::Config.logger_worker.error('overlap result', result:)
+
+          return if result[:overlap][:items].empty?
+
+          msg = <<~MSG
+            The file #{harvest_item.path} overlaps with the following audio recordings: #{result[:overlap][:items].join(', ')}}}
+          MSG
+
+          fixable = result[:overlap][:items].all? { |item| item[:can_fix] }
+          # we're not returning a fixable validation here because it's not something
+          # user can fix. We will fix it automatically though.
+          return nil if fixable
+
+          not_fixable(msg)
+        end
+
+        def max_overlap
+          Settings.audio_recording_max_overlap_sec
+        end
+
+        def fake_recording(harvest_item)
+          recorded_date = harvest_item.info.file_info[:recorded_date]
+          duration_seconds = harvest_item.info.file_info[:duration_seconds]
+          site_id = harvest_item.info.file_info[:site_id]
+
+          return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
+
+          AudioRecording.new({
+            recorded_date:,
+            duration_seconds:,
+            site_id:
+          })
         end
       end
     end

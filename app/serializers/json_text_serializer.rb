@@ -10,6 +10,6 @@ class JsonTextSerializer
   def self.load(json)
     return if json.blank?
 
-    ActiveSupport::JSON.decode(json).symbolize_keys
+    ActiveSupport::JSON.decode(json).deep_symbolize_keys
   end
 end

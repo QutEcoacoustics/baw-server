@@ -97,6 +97,10 @@ module MetadataState
         define_method "get_#{name}".to_sym do
           self.class.metadata[name].state
         end
+
+        define_method "set_#{name}".to_sym do |new_value, location = nil|
+          self.class.set_metadata_state(name, new_value, location)
+        end
       end
 
       # assign default and yeet

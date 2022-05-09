@@ -104,34 +104,34 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         validations: []
       }
     }
+
     # while our harvest model is very strict about what states it can be in
     # it should not actually care or reject successful harvest jobs
     # this lets us avoid all those tricky distributed systems things that can be a pain
-    let(:harvest) {
-      h = build(:harvest)
-      h.mappings << ::BawWorkers::Jobs::Harvest::Mapping.new(
-        path: '',
-        site_id: site.id,
-        utc_offset: '+10:00',
-        recursive: false
-      )
-      h.save!
-      h
-    }
-
-    let!(:rel_path) { "#{harvest.upload_directory_name}/20211012T132457_label.ogg" }
-    let!(:target) { harvester_to_do_path / rel_path }
+    prepare_harvest_with_mappings do
+      [
+        ::BawWorkers::Jobs::Harvest::Mapping.new(
+          path: '',
+          site_id: site.id,
+          utc_offset: '+10:00',
+          recursive: false
+        )
+      ]
+    end
 
     before do
       # copy in a file fixture to harvest
-      target.dirname.mkpath
-      FileUtils.copy(Fixtures.audio_file_mono, target)
+      @paths = copy_fixture_to_harvest_directory(
+        Fixtures.audio_file_mono,
+        harvest,
+        target_name: '20211012T132457_label.ogg'
+      )
     end
 
     def enqueue_and_perform(should_harvest:, completed: 1)
       enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
         harvest,
-        rel_path,
+        @paths.harvester_relative_path,
         should_harvest:
       )
 

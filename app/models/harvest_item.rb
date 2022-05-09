@@ -108,7 +108,7 @@ class HarvestItem < ApplicationRecord
 
   # @return [Pathname]
   def absolute_path
-    ::BawWorkers::Jobs::Harvest::Enqueue.root_to_do_path / path
+    Settings.root_to_do_path / path
   end
 
   # Changes the file extension of the file this harvest_item represents.
