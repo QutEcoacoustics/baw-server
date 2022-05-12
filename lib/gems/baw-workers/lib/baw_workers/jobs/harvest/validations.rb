@@ -11,7 +11,7 @@ module BawWorkers
           # order is important in this list!
           [
             FileExists,
-            IsAfile,
+            IsAFile,
             FileEmpty,
             TargetType
 
@@ -72,7 +72,7 @@ module BawWorkers
           end
         end
 
-        class IsAfile < Validation
+        class IsAFile < Validation
           code :not_a_file
 
           def validate(harvest_item)
@@ -118,9 +118,13 @@ module BawWorkers
 
           def validate(harvest_item)
             utc_offset = harvest_item.info.file_info[:utc_offset]
-            recorded_date = harvest_item.info.file_info[:recorded_date]
 
-            return unless recorded_date.nil? || utc_offset.blank?
+            recorded_date_local = harvest_item.info.file_info[:recorded_date_local]
+
+            # if there's no date at all there's no point in checking this
+            return if recorded_date_local.blank?
+
+            return unless utc_offset.blank?
 
             fixable('Only a local date/time was found, supply an UTC offset')
           end
@@ -273,7 +277,7 @@ module BawWorkers
 
         def validate(harvest_item)
           site_id = harvest_item.info.file_info[:site_id]
-          fixable('No site id found. Update the harvest mappings.') if site_id.blank? || Site.find(site_id).nil?
+          fixable('No site id found. Update the harvest mappings.') if site_id.blank? || Site.find_by(id: site_id).nil?
         end
       end
 
@@ -334,7 +338,6 @@ module BawWorkers
 
         def validate(harvest_item)
           recording = fake_recording(harvest_item)
-          BawWorkers::Config.logger_worker.error('overlap dummy recording', recording:)
 
           # If we don't have enough information, then we can't check for overlap.
           # Prior validations should have caught this so we'll skip this
@@ -342,8 +345,6 @@ module BawWorkers
           return unless recording
 
           result = AudioRecordingOverlap.get(recording, max_overlap)
-
-          BawWorkers::Config.logger_worker.error('overlap result', result:)
 
           return if result[:overlap][:items].empty?
 

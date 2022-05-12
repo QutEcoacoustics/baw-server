@@ -86,9 +86,10 @@ class Harvest < ApplicationRecord
   # Joins a virtual path (scoped to within the harvest directory)
   # to the upload_directory_name to create a path relative
   # to the harvester_to_do directory.
+  # e.g. a/123.mp3 --> /harvest_1/a/123.mp3
   # @return [String]
   def harvester_relative_path(virtual_path)
-    File.join(upload_directory, virtual_path)
+    File.join(upload_directory_name, virtual_path)
   end
 
   # Given a path (such as reported by the sftp go web hook)
@@ -112,11 +113,12 @@ class Harvest < ApplicationRecord
   end
 
   # @param path [String] assumed to be relative to the harvester_to_do directory
-  #     e.g. harvest_1/a/12.mp
+  #     e.g. harvest_1/a/12.mp3
   # Note: leading slash should be omitted, and we expect a file path
   # @return [Boolean,nil]
   def path_within_harvest_dir(path)
-    raise ArgumentError, 'path cannot be a root path' if path.start_with?('/')
+    #raise ArgumentError, 'path cannot be a root path' if path.start_with?('/')
+    path = path.delete_prefix('/')
 
     root = "#{upload_directory_name}/"
     path.start_with?(root)
@@ -157,31 +159,30 @@ class Harvest < ApplicationRecord
   # and :completed.
   #
   # State transition map:
-  #                     |-------------------------------(streaming only)------------------------------|
-  #                     ↑                                                                             ↓
-  # :new_harvest → :uploading → :metadata_extraction → :metadata_review → :processing → :review → :complete
-  #                     ↑                                       ↓                          ↓
-  #                     |------------------------------------------------------------------|
+  #                     |-------------------------------(streaming only)-------------------|
+  #                     ↑                                                                  ↓
+  # :new_harvest → :uploading → :metadata_extraction → :metadata_review → :processing → :complete
+  #                     ↑                ↑                      ↓
+  #                     |---------------------------------------|
   #
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true do
     state :new_harvest, initial: true
 
-    state :uploading, enter: :open_upload_slot
+    state :uploading, enter: [:open_upload_slot, :create_default_mappings]
     state :metadata_extraction
     state :metadata_review
     state :processing
-    state :review
     # @!method complete?
-    state :complete
+    state :complete, enter: [:close_upload_slot]
 
     event :open_upload do
       transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?
-      transitions from: :review, to: :uploading, guard: :batch_harvest?
       transitions from: :new_harvest, to: :uploading
     end
 
     event :extract do
       transitions from: :uploading, to: :metadata_extraction
+      transitions from: :metadata_review, to: :metadata_extraction
     end
 
     event :metadata_review do
@@ -192,12 +193,8 @@ class Harvest < ApplicationRecord
       transitions from: :metadata_review, to: :processing
     end
 
-    event :review do
-      transitions from: :processing, to: [:review], guard: :processing_complete?
-    end
-
     event :finish do
-      transitions from: :review, to: :complete, guard: :batch_harvest?
+      transitions from: :processing, to: :complete, guard: :processing_complete?
       transitions from: :streaming, to: :complete
     end
 
@@ -209,12 +206,55 @@ class Harvest < ApplicationRecord
   def open_upload_slot
     self.upload_user = "#{creator.safe_user_name}_#{id}"
     self.upload_password = User.generate_unique_secure_token
+
+    if streaming_harvest?
+      BawWorkers::UploadService::Communicator::NO_DIRECTORY_CHANGES_PERMISSIONS
+    else
+      BawWorkers::UploadService::Communicator::STANDARD_PERMISSIONS
+    end => permissions
+
+    if streaming_harvest?
+      # never expires
+      Time.at(0)
+    else
+      # use default (7 days)
+      nil
+    end => expiry
+
     BawWorkers::Config.upload_communicator.create_upload_user(
       username: upload_user,
       password: upload_password,
       home_dir: upload_directory,
-      permissions: BawWorkers::UploadService::Communicator::STANDARD_PERMISSIONS
+      permissions:,
+      expiry:
     )
+  end
+
+  def close_upload_slot
+    BawWorkers::Config.upload_communicator.delete_upload_user(username: upload_user)
+
+    self.upload_user = nil
+    self.upload_password = nil
+  end
+
+  def create_default_mappings
+    # create a default mapping and folders for each site in this project
+    project.sites.each do |site|
+      # we expect streaming uploads to be long term - we really don't want to disable uploads
+      # on a site rename so we'll use site.id.
+      # For batch uploads we expect user interaction; in that case a site name is much friendlier.
+      site_name = streaming_harvest? ? site.id.to_s : site.safe_name
+      real_path = upload_directory / site_name
+
+      real_path.mkpath
+
+      mappings << BawWorkers::Jobs::Harvest::Mapping.new(
+        path: site_name,
+        site_id: site.id,
+        utc_offset: nil,
+        recursive: true
+      )
+    end
   end
 
   def update_allowed?
@@ -243,6 +283,25 @@ class Harvest < ApplicationRecord
     harvest_items.all?(&:terminal_status?)
   end
 
+  # Generates summary statistics for this harvest
+  def generate_report
+    last_update = harvest_items.order(updated_at: :desc)&.first&.updated_at
+    run_time = last_update.nil? ? nil : last_update - created_at
+
+    {
+      items_count: harvest_items.count,
+      items_size: harvest_items.sum(HarvestItem.size_arel),
+      items_duration: harvest_items.sum(HarvestItem.duration_arel),
+      items_statuses: HarvestItem.counts_by_status(harvest_items),
+      invalid_items: {
+        fixable: 0, # harvest_items.count(HarvestItem.invalid_fixable_arel),
+        not_fixable: 0 #harvest_items.count(HarvestItem.invalid_not_fixable_arel)
+      },
+      latest_activity: last_update,
+      run_time:
+    }
+  end
+
   # Define filter api settings
   def self.filter_settings
     filterable_fields = [:id, :creator_id, :created_at, :updater_id, :updated_at, :streaming, :status, :project_id]
@@ -267,9 +326,8 @@ class Harvest < ApplicationRecord
           type: :string
         },
         report: {
-          # TODO: incomplete
           query_attributes: [:id],
-          transform: ->(_item) { {} }, #placeholder
+          transform: ->(item) { item.generate_report },
           arel: nil,
           type: :array
         }

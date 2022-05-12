@@ -11,6 +11,8 @@ module HarvestSpecCommon
   def self.included(other)
     other.prepare_users
     other.prepare_project
+    other.prepare_region
+    other.prepare_site
 
     other.include_context 'shared_test_helpers'
     other.include UploadServiceSteps
@@ -29,7 +31,7 @@ module HarvestSpecCommon
     @harvest ||= Harvest.find(@harvest_id)
   end
 
-  def connnection
+  def connection
     {
       username: harvest&.upload_user,
       password: harvest&.upload_password,
@@ -63,17 +65,43 @@ module HarvestSpecCommon
       }
     }
 
-    patch "/projects/#{project.id}/harvests/#{@harvest.id}", params: body, **api_with_body_headers(owner_token)
+    patch "/projects/#{project.id}/harvests/#{harvest.id}", params: body, **api_with_body_headers(owner_token)
 
-    @harvest.reload
+    harvest.reload
+  end
+
+  def add_mapping(mapping)
+    body = {
+      harvest: {
+        mappings: harvest.mappings + [mapping]
+      }
+    }
+
+    patch "/projects/#{project.id}/harvests/#{harvest.id}", params: body, **api_with_body_headers(owner_token)
+
+    harvest.reload
   end
 
   def get_harvest
-    get "/projects/#{project.id}/harvests/#{@harvest.id}", **api_headers(owner_token)
+    get "/projects/#{project.id}/harvests/#{harvest.id}", **api_headers(owner_token)
 
     expect_success
 
-    @harvest.reload
+    harvest.reload
+  end
+
+  def get_audio_recordings_for_harvest
+    filter = {
+      filter: {
+        'harvests.id': { eq: harvest.id }
+      }
+    }
+
+    post '/audio_recordings/filter', params: filter, **api_with_body_headers(owner_token)
+
+    expect_success
+
+    api_data
   end
 
   def expect_transition_error(new_status)
@@ -93,21 +121,112 @@ module HarvestSpecCommon
   end
 
   def expect_upload_slot_enabled
-    name = @harvest.upload_user
+    name = harvest.upload_user
     user = upload_communicator.get_user(name)
     expect(user).not_to be_nil
     expect(user.username).to eq(name)
     expect(user.status).to eq SftpgoClient::User::USER_STATUS_ENABLED
-    expect(user.home_dir).to eq @harvest.upload_directory.to_s
+    expect(user.home_dir).to eq harvest.upload_directory.to_s
+  end
+
+  def expect_upload_slot_disabled
+    name = harvest.upload_user
+    user = upload_communicator.get_user(name)
+    expect(user).not_to be_nil
+    expect(user.username).to eq(name)
+    expect(user.status).to eq SftpgoClient::User::USER_STATUS_DISABLED
+    expect(user.home_dir).to eq harvest.upload_directory.to_s
+  end
+
+  def expect_upload_slot_deleted
+    # we can't check for a username that no longer exists
+    # but in these tests we're only working with one user at a time
+    # so this test works
+    expect(upload_communicator.get_all_users).to be_empty
   end
 
   def expect_filled_in_sftp_login_details
     get_harvest
-    expect_success
     expect(api_data).to match(a_hash_including(
-      upload_user: "#{harvest.creator.safe_user_name}_#{@harvest.id}",
+      upload_user: "#{harvest.creator.safe_user_name}_#{harvest.id}",
       upload_password: an_instance_of(String).and(match(/\w{24}/)),
       upload_url: "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
     ))
+  end
+
+  def expect_empty_sftp_login_details
+    get_harvest
+    expect(api_data).to match(a_hash_including(
+      upload_user: nil,
+      upload_password: nil,
+      upload_url: "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
+    ))
+  end
+
+  def expect_pre_filled_mappings
+    get_harvest
+    expected_dir_name = harvest.streaming_harvest? ? site.id.to_s : site.safe_name
+
+    expect(api_data).to match(a_hash_including({
+      mappings: [
+        {
+          path: expected_dir_name,
+          site_id: site.id,
+          utc_offset: nil,
+          recursive: true
+        }
+      ]
+    }))
+
+    expect(harvest.upload_directory / expected_dir_name).to be_exist
+  end
+
+  def expect_report_stats(
+    count:,
+    size:,
+    duration:,
+    new: 0,
+    metadata_gathered: 0,
+    completed: 0,
+    failed: 0,
+    errored: 0
+  )
+    report = api_data[:report]
+
+    aggregate_failures do
+      expect(report).to match(a_hash_including(
+        items_count: count,
+        items_size: size,
+        items_duration: duration,
+        items_statuses: {
+          new:,
+          metadata_gathered:,
+          completed:,
+          failed:,
+          errored:
+        }
+      ))
+
+      # seconds
+      expected_speed = 30
+      last_update = Time.parse(report[:latest_activity])
+      expect(last_update).to be_within(expected_speed.seconds).of(Time.now)
+
+      expect(report[:run_time]).to an_instance_of(Float).and(be < expected_speed)
+    end
+  end
+
+  # hooks are asynchronous processes that are external to our system.
+  # we can just execute tests in linear time and expect everything to keep up
+  def wait_for_webhook
+    key = Internal::SftpgoController::REDIS_DEBUG_KEY
+    30.times do |i|
+      sleep 0.2
+      value = BawWorkers::Config.redis_communicator.get(key)
+      logger.debug("Waiting for #{key} to be set", count: i, value:)
+      return true if value
+    end
+
+    raise 'Redis debug key never found'
   end
 end

@@ -11,7 +11,12 @@ module TempFileHelpers
     #
     # @return [Pathname] The path to the temp file.
     #
-    def temp_file(stem: nil, extension: '.tmp')
+    def temp_file(basename: nil, stem: nil, extension: '.tmp')
+      unless basename.nil?
+        extension = File.extname(basename)
+        stem = File.basename(basename, extension)
+      end
+
       stem = ::SecureRandom.hex(7) if stem.blank?
       extension =
         if extension.blank? then ''
@@ -25,6 +30,11 @@ module TempFileHelpers
       set_temp_files(get_temp_files + [path])
 
       path
+    end
+
+    # Generates a path segment with between 0 and depth segments long.
+    def generate_random_sub_directories(depth: 4)
+      Random.rand(depth - 1).times.reduce('') { |previous, _| "#{previous}#{::SecureRandom.hex(4)}/" }
     end
 
     def self.included(example_group)

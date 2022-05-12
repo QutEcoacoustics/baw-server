@@ -121,10 +121,16 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
 
     before do
       # copy in a file fixture to harvest
+      name = generate_recording_name(
+        Time.new(2021, 10, 12, 13, 24, 57, 'Z'),
+        suffix: 'label',
+        ambiguous: true,
+        extension: '.ogg'
+      )
       @paths = copy_fixture_to_harvest_directory(
         Fixtures.audio_file_mono,
         harvest,
-        target_name: '20211012T132457_label.ogg'
+        target_name: name
       )
     end
 

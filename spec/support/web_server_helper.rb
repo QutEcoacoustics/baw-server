@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'English'
 module WebServerHelper
   # config.extend allows these methods to be used in describe/context groups
   module ExampleGroup
@@ -34,19 +35,24 @@ module WebServerHelper
             # Raise an error so it is logged:
             raise Async::TimeoutError, "Run time exceeded timeout #{timeout}s:\n#{buffer.string}"
           }
-          serve_task = inner.async { |inner|
+          serve_task = inner.async { |_inner|
             endpoint = Async::HTTP::Endpoint.parse(host_url)
             server = Falcon::Server.new(
               # falcon logging to stderr leads to the following bug:
               # https://github.com/socketry/async/issues/138
-              Falcon::Server.middleware(Rails.application, verbose: false, cache: false),
+              Falcon::Server.middleware(
+                Rails.application,
+                verbose: false,
+                cache: false
+              ),
               endpoint
             )
-            server.run
+            reactor = server.run
             logger.info('Test web server: started web server')
             ready.signal(true)
+            reactor.each(&:wait)
 
-            inner.children.each(&:wait)
+            #inner.children.each(&:wait)
           }
 
           spec_task = inner.async {
@@ -57,8 +63,13 @@ module WebServerHelper
             logger.measure_info('Test web server: running test') do
               # This state seems to be lost across the thread boundary.
               # The rest of Rspec.world seems to be fine though.
+
               RSpec.current_example = current_example
-              example.call
+              #logger.info('Test web server: before example')
+
+              result = example.call
+              #logger.info('Test web server: after example', result:)
+              result
             end
 
             timer_task.stop
@@ -66,7 +77,14 @@ module WebServerHelper
 
           begin
             timer_task.wait
+            #logger.info('Test web server: timer finished server')
             spec_task.wait
+            #logger.info('Test web server: spec finished')
+          rescue StandardError, Async::Stop => e
+            # sometimes error's happen in the ensure block
+            # which mask the true errors... so log it again here just in case
+            logger.error('Test web server: error during test', exception: e)
+            raise
           ensure
             logger.info('Test web server: closing down')
             serve_task.stop
@@ -74,7 +92,7 @@ module WebServerHelper
         }
 
         logger.info('Test web server: ending hook')
-        task.stop
+        #task.stop
         task.wait
       end
     end

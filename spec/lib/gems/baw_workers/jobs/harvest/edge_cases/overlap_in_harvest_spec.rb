@@ -33,8 +33,8 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
   let(:duration) { 30 }
 
   def prepare_file(date, frequency)
-    temp = temp_file(stem: date.strftime('%Y%m%d-%H%M%S%z').to_s, extension: '.wav')
-    temp = generate_audio(temp, sine_frequency: frequency, duration:)
+    name = generate_recording_name(date)
+    temp = generate_audio(name, sine_frequency: frequency, duration:)
 
     copy_fixture_to_harvest_directory(temp, harvest)
   end

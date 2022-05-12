@@ -1,15 +1,15 @@
 GIT
   remote: https://github.com/socketry/async
-  revision: d6c0404b2a55d7e59850b54a2bfe0c5dc686044e
+  revision: 426c42ec8c8d39984f696a436b3c901f306d3981
   specs:
-    async (2.0.1)
+    async (2.0.2)
       console (~> 1.10)
       io-event (~> 1.0.0)
       timers (~> 4.1)
 
 GIT
   remote: https://github.com/socketry/async-http
-  revision: 759522cac9bccf7d217a40a40a4516233e9bc35a
+  revision: 629eb726370980aaadc354962e4ae01f171684e4
   specs:
     async-http (0.56.5)
       async (>= 1.25)
@@ -22,7 +22,7 @@ GIT
 
 GIT
   remote: https://github.com/socketry/falcon
-  revision: 676475da61f2ad8534902c73208d5683e4180496
+  revision: badbc5065284127b62344bf125ea79493fec8f1a
   specs:
     falcon (0.39.2)
       async
@@ -139,7 +139,7 @@ GEM
       faraday
     async-io (1.33.0)
       async
-    async-pool (0.3.9)
+    async-pool (0.3.10)
       async (>= 1.25)
     attr_extras (6.2.5)
     autoprefixer-rails (10.4.2.0)
@@ -360,7 +360,7 @@ GEM
       mini_magick (>= 4.9.5, < 5)
       ruby-vips (>= 2.0.17, < 3)
     io-console (0.5.11)
-    io-event (1.0.7)
+    io-event (1.0.9)
     irb (1.4.1)
       reline (>= 0.3.0)
     jaro_winkler (1.5.4)

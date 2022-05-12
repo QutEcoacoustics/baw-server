@@ -207,11 +207,8 @@ class AudioRecording < ApplicationRecord
     }
 
     audio_original = BawWorkers::Config.original_audio_helper
-    Rails.logger.warn('original path dx', possible_dirs: audio_original.possible_dirs, opts: modify_parameters)
-    source_existing_paths = audio_original.existing_paths(modify_parameters)
 
-    Rails.logger.warn('heeeererererrer', paths: source_existing_paths)
-    source_existing_paths
+    audio_original.existing_paths(modify_parameters)
   end
 
   # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
@@ -438,6 +435,18 @@ class AudioRecording < ApplicationRecord
           join: Bookmark,
           on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
           available: true
+        },
+        {
+          join: HarvestItem,
+          on: AudioRecording.arel_table[:id].eq(HarvestItem.arel_table[:audio_recording_id]),
+          available: true,
+          associations: [
+            {
+              join: Harvest,
+              on: HarvestItem.arel_table[:harvest_id].eq(Harvest.arel_table[:id]),
+              available: true
+            }
+          ]
         }
       ]
     }

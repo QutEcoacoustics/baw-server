@@ -42,20 +42,30 @@ module BawWorkers
       # @param [String] home_dir - the home directory for the user, will default to mount/username, e.g. /data/harvest_1
       #        if omitted
       # @param [Array<String>] permissions - the permissions for the user, will default to standard permissions
+      # @param [Time] expiry - the expiry date for the user, will default to 7 days from now
       # @return [SftpgoClient::User]
-      def create_upload_user(username:, password:, home_dir: nil, permissions: STANDARD_PERMISSIONS)
+      def create_upload_user(username:, password:, home_dir: nil, permissions: STANDARD_PERMISSIONS, expiry: nil)
+        expiry ||= Time.now + 7.days
+        raise ArgumentError, 'expiry must be a Time object' unless expiry.is_a?(Time)
+
         user = SftpgoClient::User.new({
           username:,
           password:,
           public_keys: nil,
           home_dir: home_dir&.to_s,
           status: SftpgoClient::User::USER_STATUS_ENABLED,
-          expiration_date: time_to_unix_epoch_milliseconds(Time.now + 7.days),
+          expiration_date: time_to_unix_epoch_milliseconds(expiry),
           permissions:,
           filesystem: STANDARD_FILESYSTEM
         })
 
         ensure_successful_response(client.create_user(user))
+      end
+
+      # Delete a user in the upload service
+      # @param username [String] the name of the user to delete
+      def delete_upload_user(username:)
+        ensure_successful_response(client.delete_user(user_name: username))
       end
 
       # Updates a user's status (enabled or disabled)

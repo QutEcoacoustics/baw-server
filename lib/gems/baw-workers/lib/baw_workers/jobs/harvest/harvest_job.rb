@@ -60,7 +60,7 @@ module BawWorkers
           end
 
           def existing_harvest_item(harvest, rel_path)
-            result = HarvestItem.find_by(harvest_id: harvest.id, path: rel_path)
+            result = HarvestItem.find_by_path_and_harvest(rel_path, harvest)
 
             logger.info('found existing harvest item', harvest_item_id: result.id) unless result.nil?
 
@@ -72,13 +72,14 @@ module BawWorkers
 
         [
           [:process_steps, 'processing steps finished'],
-          [:simple_validations, 'basic validating'],
-          [:apply_fixes, 'applying fixes'],
-          [:extract_metadata, 'extrating metadata'],
-          [:validate, 'validate file'],
-          [:pre_process, 'pre process file'],
-          [:harvest_file, 'harvest file'],
-          [:post_process, 'post process file']
+          [:simple_validations, 'basic validating completed'],
+          [:apply_fixes, 'applied fixes'],
+          [:extract_metadata, 'extracting metadata'],
+          [:validate, 'validated file'],
+          [:pre_process, 'pre-processed file'],
+          [:create_audio_recording, 'created audio recording'],
+          [:harvest_file, 'harvested file'],
+          [:post_process, 'post-processed file']
         ].each do |name, message|
           logger_measure_method(name, level: :debug, message:, log_exception: :none)
         end
@@ -289,6 +290,7 @@ module BawWorkers
                 audio_recording_id: harvest_item.audio_recording_id)
 
               @audio_recording = AudioRecording.find(harvest_item.audio_recording_id)
+              harvest_item.audio_recording_id = audio_recording.id
               return true
             end
 
@@ -320,12 +322,15 @@ module BawWorkers
             return true
           }
 
-          result == true
-        ensure
-          # the harvest item gets saved with exception information
-          # if we fail to unset this we'd violate a foreign key constraint when the harevest item is saved
-          # because the audio recording does not exist
           harvest_item.audio_recording_id = nil if result != true
+
+          result == true
+        rescue StandardError
+          # the harvest item gets saved with exception information
+          # if we fail to unset this we'd violate a foreign key constraint when the harvest item is saved
+          # because the audio recording does not exist
+          harvest_item.audio_recording_id = nil
+          raise
         end
 
         # @return [Boolean] true if the operation succeeded

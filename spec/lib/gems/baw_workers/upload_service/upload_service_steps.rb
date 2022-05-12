@@ -57,6 +57,8 @@ module UploadServiceSteps
     # upload with curl since container doesn't have scp/sftp installed and it is
     # not worth adding the tools for one test
 
+    output_and_error = nil
+    status = nil
     logger.measure_info('Executing timeout with curl', command:) do
       # libssh2 (which curl uses) has some kind of bug that results in a connection
       # hanging indefinitely if the server closes the connection abruptly (e.g
@@ -66,29 +68,41 @@ module UploadServiceSteps
       # need to use Open3 here; using Kernel.`` will throw errors when web_server_helper is also
       # used in specs. See spec/unit/spec/support/web_server_helper_spec.rb for examples
       # of things that do and do not work.
-      Open3.capture2e("/usr/bin/timeout 6 #{command} -v")
+      output_and_error, status = Open3.capture2e("/usr/bin/timeout 6 #{command} -v")
     rescue StandardError => e
       logger.error('error whilst running curl', e)
       raise
-    end => output_and_error, status
+    end
 
     message = lambda {
       not_equal = should_work ? '' : 'not equal to '
-      "Expected exit code #{not_equal}0, got #{status.exitstatus}.\nCommand: #{command}\nOutput & errpr:\n#{output}"
+      "Expected exit code #{not_equal}0, got #{status.exitstatus}.\nCommand: #{command}\nOutput & error:\n#{output_and_error}"
     }
     if should_work
       expect(status.exitstatus).to be_zero, message
     else
       expect(status.exitstatus).not_to be_zero, message
     end
+
+    output_and_error
   end
 
   def upload_file(connection, source, to: nil, should_work: true)
     connection => {url:, username:, password:}
+
+    raise 'to must start with a slash' unless to.nil? || to.start_with?('/')
+
     run_curl(
       %(curl --insecure --user "#{username}:#{password}" -T #{source} -k "#{url}#{to}" --ftp-create-dirs),
       should_work:
     )
+  end
+
+  def create_remote_directory(connection, remote_path, should_work: true)
+    connection => {url:, username:, password:}
+
+    command = %(curl --user "#{username}:#{password}" -Q '-MKDIR "#{remote_path}"' "#{url}" --insecure)
+    run_curl(command, should_work:)
   end
 
   def delete_remote_file(connection, remote_path)

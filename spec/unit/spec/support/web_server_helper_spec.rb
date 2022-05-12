@@ -16,9 +16,9 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
 
   context 'when starting a web server,' do
     around do |example|
-      expect(port_open?).to eq false
+      expect(port_open?).to be false
       example.call
-      expect(port_open?).to eq false
+      expect(port_open?).to be false
     end
 
     context 'when times out' do
@@ -44,7 +44,7 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
       expose_app_as_web_server
 
       it 'checks the port is open' do
-        expect(port_open?).to eq true
+        expect(port_open?).to be true
       end
 
       it 'via net::HTTP' do
@@ -86,7 +86,22 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
   end
 
   it 'has stopped the server' do
-    expect(port_open?).to eq false
+    expect(port_open?).to be false
+  end
+
+  context 'when processing multiple requests, it works' do
+    expose_app_as_web_server
+
+    it 'via faraday' do
+      response = Faraday.get(url)
+      expect(response.status).to eq 200
+
+      response = Faraday.get(url)
+      expect(response.status).to eq 200
+
+      response = Faraday.get(url)
+      expect(response.status).to eq 200
+    end
   end
 
   context 'when accessing test state' do

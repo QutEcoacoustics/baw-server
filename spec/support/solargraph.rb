@@ -32,7 +32,8 @@ RSpec.describe '', skip: true do
 
   extend CitizenScienceCreation::ExampleGroup
 
-  extend AudioHelper::ExampleGroup
+  include AudioHelper::Example
+  include TempFileHelpers::Example
 end
 
 RSpec.shared_examples 'nothing' do

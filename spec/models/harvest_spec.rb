@@ -117,12 +117,16 @@ RSpec.describe Harvest, type: :model do
       expect(subject.path_within_harvest_dir(path)).to be true
     end
 
-    it 'throws if we try a absolute path' do
+    it 'accepts an absolute path and treats it as a path contained withing the harvest dir' do
       path = "/data/test/harvester_to_do/harvest_#{subject.id}/a"
 
-      expect {
-        subject.path_within_harvest_dir(path)
-      }.to raise_error(ArgumentError, 'path cannot be a root path')
+      expect(subject.path_within_harvest_dir(path)).to be false
+    end
+
+    it 'accepts path with a leading slash and treats it as a path contained withing the harvest dir' do
+      path = "/harvest_#{subject.id}/test-audio-mono.ogg"
+
+      expect(subject.path_within_harvest_dir(path)).to be true
     end
 
     it 'returns false for incorrect paths' do
@@ -173,7 +177,7 @@ RSpec.describe Harvest, type: :model do
     it 'will map everything with a root recursive mapping' do
       mapping = BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
 
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([mapping])
+      subject.mappings = [mapping]
 
       expect(subject.find_mapping_for_path(file_a)).to eq mapping
       expect(subject.find_mapping_for_path(file_b)).to eq mapping
@@ -187,7 +191,7 @@ RSpec.describe Harvest, type: :model do
         **args
       )
 
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([mapping])
+      subject.mappings = [mapping]
 
       expect(subject.find_mapping_for_path(file_a)).to be_nil
       expect(subject.find_mapping_for_path(file_b)).to eq mapping
@@ -195,7 +199,7 @@ RSpec.describe Harvest, type: :model do
     end
 
     it 'will not map without any mappings' do
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([])
+      subject.mappings = []
 
       expect(subject.find_mapping_for_path(file_a)).to be_nil
       expect(subject.find_mapping_for_path(file_b)).to be_nil
@@ -203,10 +207,10 @@ RSpec.describe Harvest, type: :model do
     end
 
     it 'will not map without any matching mappings' do
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+      subject.mappings = [
         BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/z', recursive: true, **args),
         BawWorkers::Jobs::Harvest::Mapping.new(path: '/donkey', recursive: true, **args)
-      ])
+      ]
 
       expect(subject.find_mapping_for_path(file_a)).to be_nil
       expect(subject.find_mapping_for_path(file_b)).to be_nil
@@ -217,9 +221,9 @@ RSpec.describe Harvest, type: :model do
       mapping1 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a', recursive: false, **args)
       mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: false, **args)
       mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b/c', recursive: false, **args)
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+      subject.mappings = [
         mapping1, mapping2, mapping3
-      ])
+      ]
 
       expect(subject.find_mapping_for_path(file_a)).to eq mapping1
       expect(subject.find_mapping_for_path(file_b)).to eq mapping2
@@ -231,9 +235,9 @@ RSpec.describe Harvest, type: :model do
       mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
       mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b', recursive: true, **args)
       mapping4 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b/c', recursive: false, **args)
-      subject.mappings = BawWorkers::Jobs::Harvest::Mappings.new([
+      subject.mappings = [
         mapping1, mapping2, mapping3, mapping4
-      ])
+      ]
 
       expect(subject.find_mapping_for_path(file_a)).to eq mapping1
       expect(subject.find_mapping_for_path(file_b)).to eq mapping2

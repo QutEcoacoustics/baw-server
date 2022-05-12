@@ -15,7 +15,7 @@ module ResqueHelpers
 
     # from https://github.com/resque/resque/blob/1-x-stable/test/test_helper.rb
     def without_forking
-      orig_fork_per_job = ENV['FORK_PER_JOB']
+      orig_fork_per_job = ENV.fetch('FORK_PER_JOB', nil)
       begin
         ENV['FORK_PER_JOB'] = 'false'
         yield
@@ -323,11 +323,13 @@ module ResqueHelpers
         now = Time.now
         elapsed = now - started
 
-        count = BawWorkers::ResqueApi.statuses(
+        statuses = BawWorkers::ResqueApi.statuses(
           statuses: [BawWorkers::ActiveJob::Status::STATUS_QUEUED, BawWorkers::ActiveJob::Status::STATUS_WORKING]
-        ).count
+        )
 
-        logger.info('Waiting for test jobs to be performed', { remaining: count })
+        count = statuses.count - BawWorkers::ResqueApi.delayed_count
+
+        logger.info('Waiting for test jobs to be performed', remaining: count)
         break if count <= 0
 
         sleep 0.5

@@ -87,4 +87,38 @@ RSpec.describe HarvestItem, type: :model do
     )
     create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
   end
+
+  it 'can query based on validation state' do
+    create_with_validations
+    create_with_validations(fixable: 3, not_fixable: 1)
+    create_with_validations(fixable: 0, not_fixable: 1)
+    create_with_validations(fixable: 1, not_fixable: 0)
+
+    aggregate_failures do
+      expect(Harvest_items.count(HarvestItem.invalid_fixable_arel)).to eq(1)
+      expect(Harvest_items.count(HarvestItem.invalid_not_fixable_arel)).to eq(2)
+      expect(HarvestItem.count).to eq 4
+    end
+  end
+
+  def create_with_validations(fixable: 0, not_fixable: 0)
+    validations = []
+    fixable.times do
+      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+        status: :fixable,
+        code: :wascally_wabbit
+      )
+    end
+    not_fixable.times do
+      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+        status: :not_fixable,
+        code: :kiww_the_wabbit
+      )
+    end
+
+    info = ::BawWorkers::Jobs::Harvest::Info.new(
+      validations:
+    )
+    create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+  end
 end

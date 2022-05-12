@@ -3,7 +3,7 @@
 module BawWorkers
   module Jobs
     module Harvest
-      # Represents the a validation for a harest item
+      # Represents the a validation for a harvest item
       class ValidationResult < ::BawWorkers::Dry::SerializedStrictStruct
         STATUS_FIXABLE = 'fixable'
         STATUS_NOT_FIXABLE = 'not_fixable'
@@ -19,7 +19,7 @@ module BawWorkers
           BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
         )
 
-        # @!attribute [r] messaage
+        # @!attribute [r] message
         #   @return [String]
         attribute :message, ::BawWorkers::Dry::Types::String.optional
 

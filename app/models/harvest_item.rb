@@ -46,9 +46,15 @@ class HarvestItem < ApplicationRecord
     with: %r{\A(?!/).*}
   }
 
+  # we know there's a file on disk we have to deal with
   STATUS_NEW = :new
+  # we've analyzed the file, gotten the metadata, and validated.
+  # If the file has fixable mistakes they can be changed by the user here
+  # (e.g. missing utc offset / site_id for a folder)
   STATUS_METADATA_GATHERED = :metadata_gathered
+  # he file is not valid for some reason we now about (missing utc offset which the user didn't fix)
   STATUS_FAILED = :failed
+  # successfully harvested the file, there will be an audio_recording that is available now
   STATUS_COMPLETED = :completed
   STATUS_ERRORED = :errored
   STATUSES = [STATUS_NEW, STATUS_METADATA_GATHERED, STATUS_FAILED, STATUS_COMPLETED, STATUS_ERRORED].freeze
@@ -169,5 +175,41 @@ class HarvestItem < ApplicationRecord
       .where(harvest_id:)
       .where("info->'file_info'->>'file_hash' = '#{file_hash}'")
       .limit(10)
+  end
+
+  def self.size_arel
+    Arel.sql("(info->'file_info'->>'data_length_bytes')::bigint")
+  end
+
+  def self.duration_arel
+    Arel.sql("(info->'file_info'->>'duration_seconds')::numeric")
+  end
+
+  def self.invalid_not_fixable_arel
+    Arel.sql(
+      <<~SQL
+        (
+          SELECT COUNT(*) > 0
+          FROM jsonb_array_elements(info->'validations') v
+          WHERE v->>'status' = #{BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE}
+        )
+      SQL
+    )
+  end
+
+  def self.invalid_fixable_arel
+    Arel.sql(
+      <<~SQL
+        (
+          SELECT COUNT(*)
+          FROM jsonb_array_elements(info->'validations') v
+        )
+      SQL
+    )
+  end
+
+  DEFAULT_COUNTS_BY_STATUS = STATUSES.product([0]).to_h
+  def self.counts_by_status(relation)
+    DEFAULT_COUNTS_BY_STATUS.merge(relation.group(:status).count)
   end
 end
