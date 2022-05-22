@@ -89,14 +89,19 @@ RSpec.describe HarvestItem, type: :model do
   end
 
   it 'can query based on validation state' do
+    # valid
     create_with_validations
+    # invalid: not fixable
     create_with_validations(fixable: 3, not_fixable: 1)
+    # invalid: not fixable
     create_with_validations(fixable: 0, not_fixable: 1)
+    # invalid: fixable
     create_with_validations(fixable: 1, not_fixable: 0)
 
     aggregate_failures do
-      expect(Harvest_items.count(HarvestItem.invalid_fixable_arel)).to eq(1)
-      expect(Harvest_items.count(HarvestItem.invalid_not_fixable_arel)).to eq(2)
+      expect(HarvestItem.sum(HarvestItem.valid_arel)).to eq 1
+      expect(HarvestItem.sum(HarvestItem.invalid_fixable_arel)).to eq 1
+      expect(HarvestItem.sum(HarvestItem.invalid_not_fixable_arel)).to eq 2
       expect(HarvestItem.count).to eq 4
     end
   end
@@ -106,19 +111,21 @@ RSpec.describe HarvestItem, type: :model do
     fixable.times do
       validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
         status: :fixable,
-        code: :wascally_wabbit
+        name: :wascally_wabbit,
+        message: nil
       )
     end
     not_fixable.times do
       validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
         status: :not_fixable,
-        code: :kiww_the_wabbit
+        name: :kiww_the_wabbit,
+        message: nil
       )
     end
 
     info = ::BawWorkers::Jobs::Harvest::Info.new(
       validations:
     )
-    create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+    create(:harvest_item, path: generate_recording_name(Time.now), status: HarvestItem::STATUS_METADATA_GATHERED, info:)
   end
 end

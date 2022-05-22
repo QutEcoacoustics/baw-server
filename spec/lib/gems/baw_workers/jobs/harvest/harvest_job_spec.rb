@@ -266,13 +266,13 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           expect(item).to be_metadata_gathered
           expect(item.info.to_h[:validations]).to eq [
             {
-              code: :ambiguous_date_time,
-              status: 'fixable',
+              name: :ambiguous_date_time,
+              status: :fixable,
               message: 'Only a local date/time was found, supply an UTC offset'
             },
             {
-              code: :no_site_id,
-              status: 'fixable',
+              name: :no_site_id,
+              status: :fixable,
               message: 'No site id found. Update the harvest mappings.'
             }
           ]

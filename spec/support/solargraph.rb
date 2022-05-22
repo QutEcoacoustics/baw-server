@@ -16,6 +16,8 @@ RSpec.describe '', skip: true do
 
   extend RequestSpecHelpers::ExampleGroup
   include RequestSpecHelpers::Example
+  extend ControllerWatcher::ExampleGroup
+  include ControllerWatcher::Example
 
   extend MailerHelpers::ExampleGroup
   include MailerHelpers::Example

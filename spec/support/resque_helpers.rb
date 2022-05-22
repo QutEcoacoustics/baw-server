@@ -204,7 +204,8 @@ module ResqueHelpers
                end
 
       aggregate_failures do
-        expect(queued).to be_a(Array).and(have_attributes(count:))
+        expect(queued).to be_a(Array)
+        expect(queued.size).to eq count
       end
       queued
     end
@@ -236,9 +237,16 @@ module ResqueHelpers
         of_class:
       )
       aggregate_failures do
+        # when the assertion fails due to count the error is unreadable
+        # so we add a specific length assertion afterwards as well
         expect(actual_completed).to be_a(Array).and(have_attributes(count: completed))
+        expect(actual_completed).to have(completed).items
+
         expect(actual_failed).to be_a(Array).and(have_attributes(count: failed))
+        expect(actual_failed).to have(failed).items
+
         expect(actual_enqueued).to be_a(Array).and(have_attributes(count: enqueued))
+        expect(actual_enqueued).to have(enqueued).items
       end
     end
 

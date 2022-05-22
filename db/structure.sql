@@ -937,6 +937,7 @@ CREATE TABLE public.harvests (
     id bigint NOT NULL,
     streaming boolean,
     status character varying,
+    last_upload_date timestamp(6) without time zone,
     upload_user character varying,
     upload_password character varying,
     project_id integer NOT NULL,

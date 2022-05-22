@@ -49,7 +49,7 @@ module BawWorkers
           catch(:halt) do
             validations.each do |validation|
               result = validation.instance.validate(harvest_item)
-              BawWorkers::Config.logger_worker.debug('validation run', name: validation.code, status: result&.status)
+              BawWorkers::Config.logger_worker.debug('validation run', name: validation.name, status: result&.status)
 
               results << result
 
@@ -62,7 +62,7 @@ module BawWorkers
         end
 
         class FileExists < Validation
-          code :does_not_exist
+          validation_name :does_not_exist
 
           def validate(harvest_item)
             path = harvest_item.absolute_path
@@ -73,7 +73,7 @@ module BawWorkers
         end
 
         class IsAFile < Validation
-          code :not_a_file
+          validation_name :not_a_file
 
           def validate(harvest_item)
             not_fixable('is not a file') unless harvest_item.absolute_path.file?
@@ -81,7 +81,7 @@ module BawWorkers
         end
 
         class FileEmpty < Validation
-          code :file_empty
+          validation_name :file_empty
 
           def validate(harvest_item)
             size = harvest_item.absolute_path.size
@@ -90,7 +90,7 @@ module BawWorkers
         end
 
         class TargetType < Validation
-          code :invalid_extension
+          validation_name :invalid_extension
 
           def validate(harvest_item)
             path = harvest_item.absolute_path
@@ -103,7 +103,7 @@ module BawWorkers
         end
 
         class RecordedDate < Validation
-          code :missing_date
+          validation_name :missing_date
 
           def validate(harvest_item)
             recorded_date = harvest_item.info.file_info[:recorded_date_local]
@@ -114,7 +114,7 @@ module BawWorkers
         end
 
         class AmbiguousDateTime < Validation
-          code :ambiguous_date_time
+          validation_name :ambiguous_date_time
 
           def validate(harvest_item)
             utc_offset = harvest_item.info.file_info[:utc_offset]
@@ -131,7 +131,7 @@ module BawWorkers
         end
 
         class FutureDates < Validation
-          code :future_date
+          validation_name :future_date
 
           def validate(harvest_item)
             recorded_date = harvest_item.info.file_info[:recorded_date]
@@ -147,7 +147,7 @@ module BawWorkers
         end
 
         class NoDuration < Validation
-          code :no_duration
+          validation_name :no_duration
 
           def validate(harvest_item)
             duration = harvest_item.info.file_info[:duration_seconds]
@@ -158,7 +158,7 @@ module BawWorkers
         end
 
         class MinimumDuration < Validation
-          code :too_short
+          validation_name :too_short
 
           def validate(harvest_item)
             duration = harvest_item.info.file_info[:duration_seconds]
@@ -169,7 +169,7 @@ module BawWorkers
         end
 
         class ChannelCount < Validation
-          code :channel_count
+          validation_name :channel_count
 
           def validate(harvest_item)
             channels = harvest_item.info.file_info[:channels]
@@ -181,7 +181,7 @@ module BawWorkers
         end
 
         class SampleRate < Validation
-          code :sample_rate
+          validation_name :sample_rate
 
           def validate(harvest_item)
             sample_rate = harvest_item.info.file_info[:sample_rate_hertz]
@@ -192,7 +192,7 @@ module BawWorkers
         end
 
         class BitRate < Validation
-          code :bit_rate
+          validation_name :bit_rate
 
           def validate(harvest_item)
             bit_rate = harvest_item.info.file_info[:bit_rate_bps]
@@ -203,7 +203,7 @@ module BawWorkers
         end
 
         class MediaType < Validation
-          code :media_type
+          validation_name :media_type
 
           def validate(harvest_item)
             media_type = harvest_item.info.file_info[:media_type]
@@ -214,7 +214,7 @@ module BawWorkers
         end
 
         class NotADuplicate < Validation
-          code :duplicate_file
+          validation_name :duplicate_file
 
           def validate(harvest_item)
             file_hash = harvest_item.info.file_info[:file_hash]
@@ -230,7 +230,7 @@ module BawWorkers
         end
 
         class NotADuplicateForHarvest < Validation
-          code :duplicate_file_in_harvest
+          validation_name :duplicate_file_in_harvest
 
           def validate(harvest_item)
             file_hash = harvest_item.info.file_info[:file_hash]
@@ -251,7 +251,7 @@ module BawWorkers
       end
 
       class HasAnUploader < Validation
-        code :missing_uploader
+        validation_name :missing_uploader
 
         def validate(harvest_item)
           uploader_id = harvest_item.info.file_info[:uploader_id]
@@ -261,7 +261,7 @@ module BawWorkers
       end
 
       class UploaderAllowed < Validation
-        code :not_allowed_to_upload
+        validation_name :not_allowed_to_upload
 
         def validate(harvest_item)
           uploader_id = harvest_item.info.file_info[:uploader_id]
@@ -273,7 +273,7 @@ module BawWorkers
       end
 
       class BelongsToASite < Validation
-        code :no_site_id
+        validation_name :no_site_id
 
         def validate(harvest_item)
           site_id = harvest_item.info.file_info[:site_id]
@@ -282,16 +282,17 @@ module BawWorkers
       end
 
       class NotOverlappingForHarvest < Validation
-        code :overlapping_files_in_harvest
+        validation_name :overlapping_files_in_harvest
 
         def validate(harvest_item)
           recorded_date = harvest_item.info.file_info[:recorded_date]
           duration_seconds = harvest_item.info.file_info[:duration_seconds]
+          site_id = harvest_item.info.file_info[:site_id]
 
           # if any of the above a blank, then we can't check for overlap
           # prior validations should have caught this so we'll skip this
           # check until next time
-          return if recorded_date.blank? || duration_seconds.blank?
+          return if recorded_date.blank? || duration_seconds.blank? || site_id.blank?
 
           overlaps_in_this_job = harvest_item.overlaps_with
           return if overlaps_in_this_job.empty?
@@ -334,7 +335,7 @@ module BawWorkers
       end
 
       class NotOverlapping < Validation
-        code :overlapping_files
+        validation_name :overlapping_files
 
         def validate(harvest_item)
           recording = fake_recording(harvest_item)

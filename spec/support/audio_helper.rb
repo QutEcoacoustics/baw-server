@@ -2,12 +2,12 @@
 
 module AudioHelper
   module Example
-    def generate_audio(name, sine_frequency:, duration: 30, sample_rate: 11_025)
+    def generate_audio(name, sine_frequency:, directory: nil, duration: 30, sample_rate: 11_025)
       raise if name.blank?
 
-      destination = temp_file(basename: name)
+      destination =  directory.nil? ? temp_file(basename: name) : (directory / name)
 
-      raise 'invalid extension' unless ['.mp3', '.wav', '.flac'].include?(destination.extname)
+      raise 'invalid extension' unless ['.mp3', '.wav', '.flac', '.ogg'].include?(destination.extname)
 
       command = "sox -n -r #{sample_rate} #{destination} synth #{duration} sine #{sine_frequency}"
 

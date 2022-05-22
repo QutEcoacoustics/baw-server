@@ -5,16 +5,17 @@ module BawWorkers
     module Harvest
       # Represents the a validation for a harvest item
       class ValidationResult < ::BawWorkers::Dry::SerializedStrictStruct
-        STATUS_FIXABLE = 'fixable'
-        STATUS_NOT_FIXABLE = 'not_fixable'
+        STATUS_FIXABLE = :fixable
+        STATUS_NOT_FIXABLE = :not_fixable
 
-        # @!attribute [r] code
+        # @!attribute [r] name
+        #   A unique name for this type of validation
         #   @return [Symbol]
-        attribute :code, ::BawWorkers::Dry::Types::Coercible::Symbol
+        attribute :name, ::BawWorkers::Dry::Types::Coercible::Symbol
 
         # @!attribute [r] status
         #   @return [String]
-        attribute :status, ::BawWorkers::Dry::Types::String.enum(
+        attribute :status, ::BawWorkers::Dry::Types::Coercible::Symbol.enum(
           BawWorkers::Jobs::Harvest::ValidationResult::STATUS_FIXABLE,
           BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
         )

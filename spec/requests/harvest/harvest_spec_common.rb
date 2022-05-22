@@ -16,6 +16,7 @@ module HarvestSpecCommon
 
     other.include_context 'shared_test_helpers'
     other.include UploadServiceSteps
+    other.watch_controller(Internal::SftpgoController)
 
     other.before do
       BawWorkers::Config.upload_communicator.delete_all_users
@@ -52,8 +53,6 @@ module HarvestSpecCommon
     }
 
     post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
-
-    logger.debug(response_body)
 
     @harvest_id = (api_result[:data][:id]) if response.response_code == 201
   end
@@ -182,51 +181,50 @@ module HarvestSpecCommon
   end
 
   def expect_report_stats(
-    count:,
-    size:,
-    duration:,
-    new: 0,
-    metadata_gathered: 0,
-    completed: 0,
-    failed: 0,
-    errored: 0
+    items_total: 0,
+    items_size_bytes: 0,
+    items_duration_seconds: 0,
+    items_new: 0,
+    items_metadata_gathered: 0,
+    items_completed: 0,
+    items_failed: 0,
+    items_errored: 0,
+    items_invalid_fixable: 0,
+    items_invalid_not_fixable: 0
   )
     report = api_data[:report]
 
+    report[:latest_activity] = Time.parse(report[:latest_activity])
+
+    # seconds
+    expected_speed = 60
+
     aggregate_failures do
       expect(report).to match(a_hash_including(
-        items_count: count,
-        items_size: size,
-        items_duration: duration,
-        items_statuses: {
-          new:,
-          metadata_gathered:,
-          completed:,
-          failed:,
-          errored:
-        }
+        items_total:,
+        items_size_bytes:,
+        items_duration_seconds:,
+        items_new:,
+        items_metadata_gathered:,
+        items_completed:,
+        items_failed:,
+        items_errored:,
+        items_invalid_fixable:,
+        items_invalid_not_fixable:,
+        latest_activity: be_within(expected_speed.seconds).of(Time.now),
+        run_time_seconds: an_instance_of(Float).and(be < expected_speed)
       ))
-
-      # seconds
-      expected_speed = 30
-      last_update = Time.parse(report[:latest_activity])
-      expect(last_update).to be_within(expected_speed.seconds).of(Time.now)
-
-      expect(report[:run_time]).to an_instance_of(Float).and(be < expected_speed)
     end
   end
 
   # hooks are asynchronous processes that are external to our system.
-  # we can just execute tests in linear time and expect everything to keep up
-  def wait_for_webhook
-    key = Internal::SftpgoController::REDIS_DEBUG_KEY
-    30.times do |i|
-      sleep 0.2
-      value = BawWorkers::Config.redis_communicator.get(key)
-      logger.debug("Waiting for #{key} to be set", count: i, value:)
-      return true if value
-    end
+  # we can't just execute tests in sequentially and expect everything to keep up,
+  # we have to wait for external services to complete their API calls to us
+  def wait_for_webhook(goal: 1)
+    wait_for_action_invocation(Internal::SftpgoController, :hook, goal:)
+  end
 
-    raise 'Redis debug key never found'
+  def reset_webhook_count
+    reset_controller_invocation_count(Internal::SftpgoController, :hook)
   end
 end

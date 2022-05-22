@@ -55,7 +55,7 @@ class HarvestsController < ApplicationController
   def create
     do_new_resource
     parameters = harvest_params
-    sanitize_mappings(parameters[:mappings])
+    sanitize_mappings(parameters)
 
     do_set_attributes(harvest_params)
     get_project_if_exists
@@ -87,7 +87,7 @@ class HarvestsController < ApplicationController
     end
 
     parameters = harvest_params(update: true)
-    sanitize_mappings(parameters[:mappings])
+    sanitize_mappings(parameters)
 
     # allow the API to transition this harvest to a new state
     status = parameters.delete(:status)
@@ -140,20 +140,33 @@ class HarvestsController < ApplicationController
     Access::ByPermission.harvests(current_user, project_id: @project&.id)
   end
 
-  def sanitize_mappings(mappings)
-    return if mappings.blank?
+  def sanitize_mappings(parameters)
+    mappings = parameters[:mappings]
 
-    raise 'incomplete'
+    return parameters if mappings.blank?
+
+    parameters[:mappings] = mappings.map { |mapping|
+      BawWorkers::Jobs::Harvest::Mapping.new(mapping)
+    }
+
+    parameters
+  rescue ::Dry::Struct::Error => e
+    raise CustomErrors::UnprocessableEntityError, "Invalid mapping: #{e.message}"
   end
 
   def harvest_params(update: false)
     harvest = params.require(:harvest)
 
-    other = []
-    other << :project_id unless update
-    other << :status if update
-    other << :streaming unless update
+    permitted = []
+    permitted << :project_id unless update
+    permitted << :status if update
+    permitted << :streaming unless update
 
-    harvest.permit(:mappings, *other)
+    permitted << ({
+      # allow an array
+      # of object which have primitive scalar values with keys that equal attribute names
+      mappings: [BawWorkers::Jobs::Harvest::Mapping.attribute_names]
+    })
+    harvest.permit(*permitted)
   end
 end

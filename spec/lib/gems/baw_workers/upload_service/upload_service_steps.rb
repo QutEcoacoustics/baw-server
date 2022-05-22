@@ -98,6 +98,13 @@ module UploadServiceSteps
     )
   end
 
+  def rename_remote_file(connection, from:, to:, should_work: true)
+    connection => {url:, username:, password:}
+
+    command = %(curl --user "#{username}:#{password}" -Q '-RENAME "#{from}" "#{to}"' "#{url}" --insecure)
+    run_curl(command, should_work:)
+  end
+
   def create_remote_directory(connection, remote_path, should_work: true)
     connection => {url:, username:, password:}
 

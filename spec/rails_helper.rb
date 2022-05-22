@@ -205,6 +205,10 @@ RSpec.configure do |config|
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
+  require_relative 'support/instrumentation/controller_watcher'
+  config.extend ControllerWatcher::ExampleGroup, { type: :request }
+  config.include ControllerWatcher::Example, { type: :request }
+
   require_relative 'support/request_spec_helpers'
   config.extend RequestSpecHelpers::ExampleGroup, { type: :request }
   config.include RequestSpecHelpers::Example, { type: :request }

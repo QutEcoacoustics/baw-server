@@ -12,10 +12,10 @@ module BawWorkers
           raise NotImplementedError('abstract method needs implementation')
         end
 
-        def self.code(new_code = nil)
-          @code = new_code if new_code.present?
+        def self.validation_name(new_name = nil)
+          @validation_name = new_name if new_name.present?
 
-          return @code if defined?(@code)
+          return @validation_name if defined?(@validation_name)
 
           raise NotImplementedError('abstract method needs implementation')
         end
@@ -23,13 +23,13 @@ module BawWorkers
         protected
 
         def fixable(message)
-          code = self.class.code
-          ValidationResult.new(code:, status: ValidationResult::STATUS_FIXABLE, message:)
+          name = self.class.validation_name
+          ValidationResult.new(name:, status: ValidationResult::STATUS_FIXABLE, message:)
         end
 
         def not_fixable(message)
-          code = self.class.code
-          ValidationResult.new(code:, status: ValidationResult::STATUS_NOT_FIXABLE, message:)
+          name = self.class.validation_name
+          ValidationResult.new(name:, status: ValidationResult::STATUS_NOT_FIXABLE, message:)
         end
       end
     end

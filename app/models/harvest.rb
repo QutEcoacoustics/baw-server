@@ -4,17 +4,18 @@
 #
 # Table name: harvests
 #
-#  id              :bigint           not null, primary key
-#  mappings        :jsonb
-#  status          :string
-#  streaming       :boolean
-#  upload_password :string
-#  upload_user     :string
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :integer
-#  project_id      :integer          not null
-#  updater_id      :integer
+#  id               :bigint           not null, primary key
+#  last_upload_date :datetime
+#  mappings         :jsonb
+#  status           :string
+#  streaming        :boolean
+#  upload_password  :string
+#  upload_user      :string
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  creator_id       :integer
+#  project_id       :integer          not null
+#  updater_id       :integer
 #
 # Foreign Keys
 #
@@ -37,6 +38,8 @@ class Harvest < ApplicationRecord
 
   validates :project, presence: true
   validate :validate_uploads_enabled
+  validate :validate_site_mappings_exist
+  validate :validate_mapping_path_uniqueness
 
   # @!attribute [rw] mappings
   #   @return [Array<BawWorkers::Jobs::Harvest::Mapping>]
@@ -53,6 +56,28 @@ class Harvest < ApplicationRecord
     return if uploads_enabled?
 
     errors.add(:project, 'A harvest cannot be created unless its parent project has enabled audio upload')
+  end
+
+  def validate_site_mappings_exist
+    return if mappings.blank?
+
+    mappings.each do |mapping|
+      next unless mapping.site_id.present?
+
+      next if Site.exists?(mapping.site_id)
+
+      errors.add(:mappings, "Site '#{mapping.site_id}' does not exist for mapping '#{mapping.path}'")
+    end
+  end
+
+  def validate_mapping_path_uniqueness
+    return if mappings.blank?
+
+    duplicates = mappings.group_by(&:path).select { |_, v| v.size > 1 }
+
+    duplicates.each do |path, _mappings|
+      errors.add(:mappings, "Duplicate path in mappings: '#{path}'")
+    end
   end
 
   # @return [String]
@@ -159,16 +184,17 @@ class Harvest < ApplicationRecord
   # and :completed.
   #
   # State transition map:
-  #                     |-------------------------------(streaming only)-------------------|
-  #                     ↑                                                                  ↓
-  # :new_harvest → :uploading → :metadata_extraction → :metadata_review → :processing → :complete
-  #                     ↑                ↑                      ↓
-  #                     |---------------------------------------|
+  #                     |-------------------------------(streaming only)--------------------------------|
+  #                     ↑                                                                               ↓
+  # :new_harvest → :uploading → :scanning → :metadata_extraction → :metadata_review → :processing → :complete
+  #                     ↑                            ↑                      ↓
+  #                     |---------------------------------------------------|
   #
-  aasm column: :status, no_direct_assignment: true, whiny_persistence: true do
+  aasm column: :status, no_direct_assignment: true, whiny_persistence: true, logger: SemanticLogger[Harvest] do
     state :new_harvest, initial: true
 
-    state :uploading, enter: [:open_upload_slot, :create_default_mappings]
+    state :uploading, enter: [:mark_last_upload_date]
+    state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
     state :metadata_review
     state :processing
@@ -176,13 +202,19 @@ class Harvest < ApplicationRecord
     state :complete, enter: [:close_upload_slot]
 
     event :open_upload do
-      transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?
-      transitions from: :new_harvest, to: :uploading
+      transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?, after: [:enable_upload_slot]
+      transitions from: :new_harvest, to: :uploading, after: [:open_upload_slot, :create_default_mappings]
+    end
+
+    event :scan, guard: :batch_harvest? do
+      transitions from: :uploading, to: :scanning
     end
 
     event :extract do
-      transitions from: :uploading, to: :metadata_extraction
-      transitions from: :metadata_review, to: :metadata_extraction
+      transitions from: :scanning, to: :metadata_extraction
+      transitions from: :metadata_review, to: :metadata_extraction, after: [
+        :reenqueue_all_harvest_items_for_metadata_extraction
+      ]
     end
 
     event :metadata_review do
@@ -190,7 +222,9 @@ class Harvest < ApplicationRecord
     end
 
     event :process do
-      transitions from: :metadata_review, to: :processing
+      transitions from: :metadata_review, to: :processing, after: [
+        :reenqueue_all_harvest_items_for_processing
+      ]
     end
 
     event :finish do
@@ -213,13 +247,8 @@ class Harvest < ApplicationRecord
       BawWorkers::UploadService::Communicator::STANDARD_PERMISSIONS
     end => permissions
 
-    if streaming_harvest?
-      # never expires
-      Time.at(0)
-    else
-      # use default (7 days)
-      nil
-    end => expiry
+    # either ? never expires : use default (7 days)
+    expiry = streaming_harvest? ? Time.at(0) : nil
 
     BawWorkers::Config.upload_communicator.create_upload_user(
       username: upload_user,
@@ -235,6 +264,18 @@ class Harvest < ApplicationRecord
 
     self.upload_user = nil
     self.upload_password = nil
+  end
+
+  def disable_upload_slot
+    BawWorkers::Config.upload_communicator.set_user_status(upload_user, enabled: false)
+  end
+
+  def enable_upload_slot
+    BawWorkers::Config.upload_communicator.set_user_status(upload_user, enabled: true)
+  end
+
+  def mark_last_upload_date
+    self.last_upload_date = Time.now
   end
 
   def create_default_mappings
@@ -257,10 +298,34 @@ class Harvest < ApplicationRecord
     end
   end
 
+  def scan_upload_directory
+    BawWorkers::Jobs::Harvest::ScanJob.perform_later!(id)
+  end
+
+  def reenqueue_all_harvest_items_for_metadata_extraction
+    # re-enqueue all items
+    logger.measure_info('Re-enqueue all harvest items for metadata extraction') do
+      # potentially large query, don't pull back the file info column which could be huge
+      harvest_items.select(:id, :status, :path).each do |item|
+        BawWorkers::Jobs::Harvest::HarvestJob.enqueue(item, should_harvest: false)
+      end
+    end
+  end
+
+  def reenqueue_all_harvest_items_for_processing
+    # re-enqueue all items
+    logger.measure_info('Re-enqueue all harvest items for processing') do
+      # potentially large query, don't pull back the file info column which could be huge
+      harvest_items.select(:id, :status, :path).each do |item|
+        BawWorkers::Jobs::Harvest::HarvestJob.enqueue(item, should_harvest: true)
+      end
+    end
+  end
+
   def update_allowed?
     # if we're in a state where we are waiting for a computation to finish, we can't
     # allow a client to transition us to a different state
-    !(metadata_extraction? || processing?)
+    !(scanning? || metadata_extraction? || processing?)
   end
 
   # transitions from either metadata_extraction or processing
@@ -270,35 +335,35 @@ class Harvest < ApplicationRecord
 
     return metadata_review! if may_metadata_review?
 
-    return review! if may_review?
+    return finish! if may_finish?
   end
 
   def metadata_extraction_complete?
     # have we gathered all the metadata for each item?
-    harvest_items.all?(&:metadata_gathered?)
+    harvest_items.select(:status).distinct.all?(&:metadata_gathered?)
   end
 
   def processing_complete?
     # have we processed all the items?
-    harvest_items.all?(&:terminal_status?)
+    harvest_items.select(:status).distinct.all?(&:terminal_status?)
   end
 
   # Generates summary statistics for this harvest
   def generate_report
-    last_update = harvest_items.order(updated_at: :desc)&.first&.updated_at
-    run_time = last_update.nil? ? nil : last_update - created_at
+    last_update = harvest_items.order(updated_at: :desc).select(:updated_at)&.first&.updated_at
+    run_time_seconds = last_update.nil? ? nil : last_update - created_at
 
     {
-      items_count: harvest_items.count,
-      items_size: harvest_items.sum(HarvestItem.size_arel),
-      items_duration: harvest_items.sum(HarvestItem.duration_arel),
-      items_statuses: HarvestItem.counts_by_status(harvest_items),
-      invalid_items: {
-        fixable: 0, # harvest_items.count(HarvestItem.invalid_fixable_arel),
-        not_fixable: 0 #harvest_items.count(HarvestItem.invalid_not_fixable_arel)
-      },
+      items_total: harvest_items.count,
+      items_size_bytes: harvest_items.sum(HarvestItem.size_arel),
+      items_duration_seconds: harvest_items.sum(HarvestItem.duration_arel),
+      **HarvestItem.counts_by_status(harvest_items).transform_keys { |k| "items_#{k}" },
+
+      items_invalid_fixable: harvest_items.sum(HarvestItem.invalid_fixable_arel),
+      items_invalid_not_fixable: harvest_items.sum(HarvestItem.invalid_not_fixable_arel),
+
       latest_activity: last_update,
-      run_time:
+      run_time_seconds:
     }
   end
 

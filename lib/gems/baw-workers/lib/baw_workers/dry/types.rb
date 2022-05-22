@@ -16,6 +16,8 @@ module BawWorkers
         item.ends_with?('/') ? item : "#{item}/"
       }
       TrimmedDirectoryString = Strict::String.constructor { |item|
+        next item if item.nil?
+
         item = item.ends_with?('/') ? item.slice(..-2) : item.to_s
         item.start_with?('/') ? item.slice(1..) : item
       }

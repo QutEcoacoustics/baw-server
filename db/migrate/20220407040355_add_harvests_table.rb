@@ -14,8 +14,12 @@ class AddHarvestsTable < ActiveRecord::Migration[7.0]
       t.boolean :streaming
 
       #         :streaming
-      # :new -> :uploading -> :metadata_extraction -> :metadata_review -> :processing -> :review -> :complete
+      # :new -> :uploading -> -> :scanning -> :metadata_extraction -> :metadata_review -> :processing -> :complete
       t.string :status
+
+      # the lat time the upload status was in effect
+      # used for selectively enqueuing more metadata extraction jobs that haven't been caught by webhooks
+      t.datetime :last_upload_date
 
       # credentials will exist in :uploading, :processing, and :review stages
       # and they will be deleted on :complete

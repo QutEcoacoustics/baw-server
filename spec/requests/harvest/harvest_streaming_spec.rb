@@ -30,7 +30,7 @@ describe 'Harvesting streaming files' do
         expect(harvest).to be_uploading
       end
 
-      [:new_harvest, :metadata_review, :processing, :review].each do |status|
+      [:new_harvest, :scanning, :metadata_extraction, :metadata_review, :processing].each do |status|
         step "cannot transition from uploading->#{status}" do
           transition_harvest(status)
           expect_transition_error(status)
@@ -116,10 +116,10 @@ describe 'Harvesting streaming files' do
         expect(harvest).to be_uploading
 
         expect_report_stats(
-          count: 1,
-          size: Fixtures.audio_file_mono.size,
-          duration: audio_file_mono_duration_seconds,
-          completed: 1
+          items_total: 1,
+          items_size_bytes: Fixtures.audio_file_mono.size,
+          items_duration_seconds: audio_file_mono_duration_seconds,
+          items_completed: 1
         )
       end
 
@@ -194,7 +194,7 @@ describe 'Harvesting streaming files' do
             error: nil,
             validations: [
               a_hash_including(
-                code: :missing_date
+                name: :missing_date
               )
             ]
           ))
@@ -204,13 +204,14 @@ describe 'Harvesting streaming files' do
       step 'our report has useful statistics' do
         get_harvest
         expect(harvest).to be_uploading
-        debugger
         expect_report_stats(
-          count: 4,
-          size: @size,
-          duration: 70 + (30 * 3),
-          completed: 3,
-          failed: 1
+          items_total: 4,
+          items_size_bytes: @size,
+          items_duration_seconds: 70 + (30 * 3),
+          items_completed: 3,
+          items_failed: 1,
+          items_invalid_fixable: 1,
+          items_invalid_not_fixable: 0
         )
       end
     end
@@ -262,10 +263,10 @@ describe 'Harvesting streaming files' do
         expect(harvest).to be_complete
 
         expect_report_stats(
-          count: 1,
-          size: @size,
-          duration: 30,
-          completed: 1
+          items_total: 1,
+          items_size_bytes: @size,
+          items_duration_seconds: 30,
+          items_completed: 1
         )
       end
     end

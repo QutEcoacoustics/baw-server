@@ -138,8 +138,8 @@ describe 'HarvestJob can deal with overlaps', :clean_by_truncation do
     expect(item.info.error).to be_nil
     expect(item.info.to_h[:validations]).to match [
       {
-        code: :overlapping_files,
-        status: 'not_fixable',
+        name: :overlapping_files,
+        status: :not_fixable,
         message: /overlaps with the following audio recordings/
       }
     ]

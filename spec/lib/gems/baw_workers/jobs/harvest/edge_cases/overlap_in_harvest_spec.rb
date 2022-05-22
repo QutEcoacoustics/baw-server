@@ -141,15 +141,15 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
       expect(item1.info.to_h[:validations]).to match []
       expect(item2.info.to_h[:validations]).to match [
         {
-          code: :overlapping_files_in_harvest,
-          status: 'not_fixable',
+          name: :overlapping_files_in_harvest,
+          status: :not_fixable,
           message: /An overlap was detected.* overlaps with.*/m
         }
       ]
       expect(item3.info.to_h[:validations]).to match [
         {
-          code: :overlapping_files_in_harvest,
-          status: 'not_fixable',
+          name: :overlapping_files_in_harvest,
+          status: :not_fixable,
           message: /An overlap was detected.* overlaps with.*/m
         }
       ]

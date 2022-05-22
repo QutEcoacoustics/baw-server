@@ -4,17 +4,18 @@
 #
 # Table name: harvests
 #
-#  id              :bigint           not null, primary key
-#  mappings        :jsonb
-#  status          :string
-#  streaming       :boolean
-#  upload_password :string
-#  upload_user     :string
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :integer
-#  project_id      :integer          not null
-#  updater_id      :integer
+#  id               :bigint           not null, primary key
+#  last_upload_date :datetime
+#  mappings         :jsonb
+#  status           :string
+#  streaming        :boolean
+#  upload_password  :string
+#  upload_user      :string
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  creator_id       :integer
+#  project_id       :integer          not null
+#  updater_id       :integer
 #
 # Foreign Keys
 #
@@ -242,6 +243,128 @@ RSpec.describe Harvest, type: :model do
       expect(subject.find_mapping_for_path(file_a)).to eq mapping1
       expect(subject.find_mapping_for_path(file_b)).to eq mapping2
       expect(subject.find_mapping_for_path(file_c)).to eq mapping4
+    end
+  end
+
+  context 'when transitioning' do
+    let(:upload_communicator) {
+      BawWorkers::Config.upload_communicator
+    }
+
+    ignore_pending_jobs
+
+    before do
+      BawWorkers::Config.upload_communicator.delete_all_users
+    end
+
+    it 'will renable the sftpgo user if it already exists' do
+      subject.save!
+      subject.open_upload!
+
+      name = subject.upload_user
+      user = upload_communicator.get_user(name)
+      expect(user.username).to eq(name)
+      expect(user.status).to eq SftpgoClient::User::USER_STATUS_ENABLED
+
+      subject.scan!
+
+      user = upload_communicator.get_user(name)
+      expect(user.username).to eq(name)
+      expect(user.status).to eq SftpgoClient::User::USER_STATUS_DISABLED
+
+      subject.extract!
+      subject.metadata_review!
+      expect(subject).to be_metadata_review
+
+      subject.open_upload!
+
+      user = upload_communicator.get_user(name)
+      expect(user.username).to eq(name)
+      expect(user.status).to eq SftpgoClient::User::USER_STATUS_ENABLED
+    end
+
+    it 'when entering :uploading state it sets the last upload date' do
+      expect(subject.last_upload_date).to be_nil
+      subject.open_upload!
+      expect(subject.last_upload_date).to be_within(0.01.seconds).of(Time.now)
+
+      subject.scan!
+      subject.extract!
+      subject.metadata_review!
+
+      expect(subject).to be_metadata_review
+      sleep 1
+
+      subject.open_upload!
+      expect(subject.last_upload_date).to be_within(0.01.seconds).of(Time.now)
+    end
+
+    it 'when opening uploads, stores user information' do
+      subject.save!
+      subject.open_upload!
+
+      subject.reload
+
+      expect(subject.upload_user).to eq "#{subject.creator.safe_user_name}_#{subject.id}"
+      expect(subject.upload_password).to be_present
+    end
+
+    it 'when re-entering metadata extraction it re-enqueues all harvest items' do
+      subject.save!
+      subject.open_upload!
+      subject.scan!
+      subject.extract!
+      subject.metadata_review!
+
+      expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      3.times do |i|
+        item = HarvestItem.new(
+          path: "banana#{i}",
+          status: HarvestItem::STATUS_METADATA_GATHERED,
+          uploader_id: subject.creator_id,
+          info: {},
+          harvest: subject
+        )
+        item.save!
+      end
+
+      subject.extract!
+
+      jobs = expect_enqueued_jobs(3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      expect(jobs.map { |j| j.dig('args', 0, 'arguments') }).to all(match(
+        [an_instance_of(Integer), false]
+      ))
+
+      expect(HarvestItem.all).to all(be_new)
+    end
+
+    it 'when entering process it re-enqueues all harvest items' do
+      subject.save!
+      subject.open_upload!
+      subject.scan!
+      subject.extract!
+      subject.metadata_review!
+
+      expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      3.times do |i|
+        item = HarvestItem.new(
+          path: "donkey#{i}",
+          status: HarvestItem::STATUS_METADATA_GATHERED,
+          uploader_id: subject.creator_id,
+          info: {},
+          harvest: subject
+        )
+        item.save!
+      end
+
+      subject.process!
+
+      jobs = expect_enqueued_jobs(3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      expect(jobs.map { |j| j.dig('args', 0, 'arguments') }).to all(match(
+        [an_instance_of(Integer), true]
+      ))
+
+      expect(HarvestItem.all).to all(be_new)
     end
   end
 end

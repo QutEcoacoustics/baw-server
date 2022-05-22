@@ -56,6 +56,7 @@ class HarvestItem < ApplicationRecord
   STATUS_FAILED = :failed
   # successfully harvested the file, there will be an audio_recording that is available now
   STATUS_COMPLETED = :completed
+  # there was an unexpected error or bug encountered while harvesting
   STATUS_ERRORED = :errored
   STATUSES = [STATUS_NEW, STATUS_METADATA_GATHERED, STATUS_FAILED, STATUS_COMPLETED, STATUS_ERRORED].freeze
 
@@ -185,25 +186,49 @@ class HarvestItem < ApplicationRecord
     Arel.sql("(info->'file_info'->>'duration_seconds')::numeric")
   end
 
+  # Arel for returning whether or not this harvest item is not fixable
+  # SQL values returned are:
+  #   - 1: this harvest item has non-fixable validations
+  #   - 0: this harvest item has fixable validations or no validations
+  # @return [Arel::Nodes::Grouping]
   def self.invalid_not_fixable_arel
+    n = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
     Arel.sql(
       <<~SQL
         (
-          SELECT COUNT(*) > 0
-          FROM jsonb_array_elements(info->'validations') v
-          WHERE v->>'status' = #{BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE}
-        )
+          SELECT bool_or(status = '#{n}')
+          FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
+        )::integer
       SQL
     )
   end
 
+  # Arel for returning whether or not this harvest item is fixable
+  # SQL values returned are:
+  #   - 1: this harvest item has fixable validations
+  #   - 0: this harvest item has non-fixable validations or no validations
+  # @return [Arel::Nodes::Grouping]
   def self.invalid_fixable_arel
+    f = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_FIXABLE
     Arel.sql(
       <<~SQL
         (
-          SELECT COUNT(*)
-          FROM jsonb_array_elements(info->'validations') v
-        )
+          SELECT every(status = '#{f}')
+          FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
+        )::integer
+      SQL
+    )
+  end
+
+  # Arel for returning whether or not this harvest item is valid
+  # SQL values returned are:
+  #   - 1: this harvest item has no validation errors
+  #   - 0: this harvest item has some validation errors
+  # @return [Arel::Nodes::Grouping]
+  def self.valid_arel
+    Arel.sql(
+      <<~SQL
+        (jsonb_array_length(info->'validations') = 0)::integer
       SQL
     )
   end

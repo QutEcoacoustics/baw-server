@@ -14,18 +14,54 @@ module BawWorkers
           # @param rel_path [String,Pathname] the path within harvester_to_do to process
           #    (a path relative to the harvester_to_do directory)
           # @param should_harvest [Boolean] whether or not to actually process the file
+          # @param debounce_on_recent_metadata_extraction [Boolean]
+          #    IFF:
+          #      - param is true
+          #      - and {should_harvest} is false
+          #      - a current harvest items exists
+          #      - and the item is in the state of metadata_gathered
+          #      -  it was last updated after the current harvest entered an upload stat
+          #    then this job will not be enqueued.
           # @return [Boolean] status of job enqueue, true if successful
-          def enqueue_file(harvest, rel_path, should_harvest:)
+          def enqueue_file(harvest, rel_path, should_harvest:, debounce_on_recent_metadata_extraction: false)
             rel_path = rel_path.to_s if rel_path.is_a?(Pathname)
 
             # try and find an existing record
             item = existing_harvest_item(harvest, rel_path)
+
+            if recently_had_metadata_gathered?(harvest, item, should_harvest:, debounce_on_recent_metadata_extraction:)
+              logger.debug('Not enqueuing job; recently had metadata gathered')
+              return false
+            end
+
             # otherwise create a new one
             item = new_harvest_item(harvest, rel_path) if item.nil?
 
-            result = perform_later!(item.id, should_harvest)
-            success = result != false
-            logger.debug('enqueued file', path: rel_path, id: item.id, success:, job_id: (result || nil)&.job_id)
+            enqueue(item, should_harvest:)
+          end
+
+          def enqueue(item, should_harvest:)
+            # we never want to harvest a completed item again
+            if is_completed?(item)
+              logger.warn('Not enqueuing job; item is already completed', item_id: item.id, path: item.path)
+              return false
+            end
+
+            success = false
+            ::ActiveRecord::Base.transaction do
+              result = perform_later(item.id, should_harvest) { |job|
+                next if job.successfully_enqueued?
+                # if the enqueue fails because the job is already in the queue then we don't care
+                # otherwise throw an error
+                raise "Failed to enqueue file #{item.path} for harvest #{harvest.id}" if job.unique?
+              }
+              success = result != false
+              logger.debug('enqueued file', path: item.path, id: item.id, success:, job_id: (result || nil)&.job_id)
+
+              # whenever a harvest job is enqueued we should reset the status of  the harvest item.
+              # potential race condition here with the harvest job setting the status if it runs really quickly?
+              item.update_attribute(:status, HarvestItem::STATUS_NEW) if success
+            end
 
             success
           end
@@ -62,9 +98,30 @@ module BawWorkers
           def existing_harvest_item(harvest, rel_path)
             result = HarvestItem.find_by_path_and_harvest(rel_path, harvest)
 
-            logger.info('found existing harvest item', harvest_item_id: result.id) unless result.nil?
+            logger.debug('found existing harvest item', harvest_item_id: result.id) unless result.nil?
 
             result
+          end
+
+          # @param harvest [Harvest]
+          # @param harvest_item [HarvestItem]
+          # @param should_harvest [Boolean]
+          # @param debounce_on_recent_metadata_extraction [Boolean]
+          # @return [Boolean]
+          def recently_had_metadata_gathered?(harvest, harvest_item, should_harvest:, debounce_on_recent_metadata_extraction:)
+            return false unless debounce_on_recent_metadata_extraction
+
+            return false if should_harvest
+
+            return false if harvest_item.nil?
+
+            return false unless harvest_item.metadata_gathered?
+
+            harvest_item.updated_at > harvest.last_upload_date
+          end
+
+          def is_completed?(harvest_item)
+            harvest_item&.completed?
           end
         end
 
@@ -103,9 +160,7 @@ module BawWorkers
         def perform(harvest_item_id, should_harvest)
           load_records(harvest_item_id)
 
-          SemanticLogger.tagged(harvest_item_id:) do
-            process_steps(should_harvest)
-          end
+          process_steps(should_harvest)
         end
 
         # Produces a sensible name for this payload.
@@ -118,7 +173,10 @@ module BawWorkers
 
         def create_job_id
           # duplicate jobs should be detected
-          ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'harvest_job')
+          ::BawWorkers::ActiveJob::Identity::Generators.generate_keyed_id(self, {
+            item: arguments[0],
+            should_harvest: arguments[1]
+          }, 'harvest_job')
         end
 
         private
@@ -128,7 +186,7 @@ module BawWorkers
         def process_steps(should_harvest)
           simple_validations
 
-          # All of the simple validations are basic requiments for processing a file.
+          # All of the simple validations are basic requirements for processing a file.
           # Does it exist? Does it have more than 0 bytes? Is it a file included in our target extensions?
           # No point advancing if these conditions are not met.
           return move_to_failed unless valid?
@@ -204,14 +262,20 @@ module BawWorkers
         end
 
         def load_records(harvest_item_id)
-          # TODO: special case failure here? the item could be deleted?
-          @harvest_item = HarvestItem.find(harvest_item_id)
+          begin
+            @harvest_item = HarvestItem.find(harvest_item_id)
+          rescue ::ActiveRecord::RecordNotFound => e
+            logger.error('Harvest item not found', id: harvest_item_id)
+            # failed throws here and halts execution
+            failed!("Harvest item #{harvest_item_id} not found", e.message)
+          end
 
-          logger.info('Loaded harvest item', status: harvest_item.status, id: harvest_item.id)
+          logger.debug('Loaded harvest item', status: harvest_item.status, id: harvest_item.id)
 
           # only harvest items made with new code should be executing this job,
           # so harvest should always be non-null
           @harvest = harvest_item.harvest
+          logger.debug('Loaded harvest', harvest:)
           raise 'No harvest record found' if harvest.nil?
         end
 
