@@ -162,7 +162,7 @@ describe 'Settings' do
   end
 
   example 'it reads IP in allow_list as an IPAddr class' do
-    expect(Settings.internal.allow_list).to all(
+    expect(Settings.internal_allow_ips).to all(
       be_an_instance_of(IPAddr)
     )
   end

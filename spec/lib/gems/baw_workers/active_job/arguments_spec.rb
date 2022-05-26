@@ -136,19 +136,22 @@ describe BawWorkers::ActiveJob::Arguments do
     it 'checks args are the correct type (simple)' do
       expect {
         job_class.perform_later(demo_param, 'hello', str: 'world')
-      }.to raise_error(TypeError, 'Argument (`String`) for parameter `num` does not have expected type `Integer`')
+      }.to raise_error(TypeError,
+        'Argument (`String`) for parameter `num` does not have any of expected types [Integer]')
     end
 
     it 'checks args are the correct type (complex)' do
       expect {
         job_class.perform_later('hello', 123, str: 'world')
-      }.to raise_error(TypeError, 'Argument (`String`) for parameter `struct` does not have expected type `DemoStruct`')
+      }.to raise_error(TypeError,
+        'Argument (`String`) for parameter `struct` does not have any of expected types [DemoStruct]')
     end
 
     it 'checks args are the correct type (keyword)' do
       expect {
         job_class.perform_later(demo_param, 123, str: 456)
-      }.to raise_error(TypeError, 'Argument (`Integer`) for parameter `str` does not have expected type `String`')
+      }.to raise_error(TypeError,
+        'Argument (`Integer`) for parameter `str` does not have any of expected types [String]')
     end
   end
 end

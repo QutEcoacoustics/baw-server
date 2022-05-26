@@ -73,7 +73,8 @@ module BawWorkers
 
         return if arg.nil? || types.any? { |t| arg.instance_of?(t) }
 
-        raise TypeError, "Argument (`#{arg.class}`) for parameter `#{name}` does not have expected type `#{type}`"
+        raise TypeError,
+          "Argument (`#{arg.class}`) for parameter `#{name}` does not have any of expected types #{types}"
       end
     end
   end

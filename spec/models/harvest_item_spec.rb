@@ -88,44 +88,165 @@ RSpec.describe HarvestItem, type: :model do
     create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
   end
 
-  it 'can query based on validation state' do
-    # valid
-    create_with_validations
-    # invalid: not fixable
-    create_with_validations(fixable: 3, not_fixable: 1)
-    # invalid: not fixable
-    create_with_validations(fixable: 0, not_fixable: 1)
-    # invalid: fixable
-    create_with_validations(fixable: 1, not_fixable: 0)
+  context 'with other models' do
+    prepare_users
+    prepare_project
+    prepare_region
+    prepare_site
+    prepare_harvest
 
-    aggregate_failures do
-      expect(HarvestItem.sum(HarvestItem.valid_arel)).to eq 1
-      expect(HarvestItem.sum(HarvestItem.invalid_fixable_arel)).to eq 1
-      expect(HarvestItem.sum(HarvestItem.invalid_not_fixable_arel)).to eq 2
-      expect(HarvestItem.count).to eq 4
+    it 'can query based on validation state' do
+      # valid
+      create_with_validations
+      # invalid: not fixable
+      create_with_validations(fixable: 3, not_fixable: 1)
+      # invalid: not fixable
+      create_with_validations(fixable: 0, not_fixable: 1)
+      # invalid: fixable
+      create_with_validations(fixable: 1, not_fixable: 0)
+
+      aggregate_failures do
+        expect(HarvestItem.sum(HarvestItem.valid_arel)).to eq 1
+        expect(HarvestItem.sum(HarvestItem.invalid_fixable_arel)).to eq 1
+        expect(HarvestItem.sum(HarvestItem.invalid_not_fixable_arel)).to eq 2
+        expect(HarvestItem.count).to eq 4
+      end
     end
-  end
 
-  def create_with_validations(fixable: 0, not_fixable: 0)
-    validations = []
-    fixable.times do
-      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
-        status: :fixable,
-        name: :wascally_wabbit,
-        message: nil
+    context 'when querying based on path to return a pseudo directory listing' do
+      before do
+        @hi1 = create_with_validations(fixable: 3, not_fixable: 1)
+        @hi2 = create_with_validations(fixable: 0, not_fixable: 1)
+        @hi3 = create_with_validations(fixable: 1, not_fixable: 0)
+        @hi4 = create_with_validations(fixable: 0, not_fixable: 1, sub_directories: 'a/b/c')
+        @hi5 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/c')
+        @hi6 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/d')
+        @hi7 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b')
+        @hi8 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b')
+        @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b')
+      end
+
+      it 'can query the root path for directories' do
+        results = HarvestItem.project_directory_listing(HarvestItem, '').as_json
+
+        expect(results).to eq [
+          {
+            'id' => nil,
+            'harvest_id' => harvest.id,
+
+            'path' => 'a'
+          },
+          {
+            'id' => nil,
+            'harvest_id' => harvest.id,
+            'path' => 'z'
+          }
+        ]
+      end
+
+      it 'can query the root path for files' do
+        results = HarvestItem.project_file_listing(HarvestItem, '')
+
+        expect(results).to eq [
+          @hi1,
+          @hi2,
+          @hi3
+        ]
+      end
+
+      it 'can query a sub directory "a" for directories' do
+        results = HarvestItem.project_directory_listing(HarvestItem, 'a').as_json
+
+        expect(results).to eq [
+          {
+            'id' => nil,
+            'harvest_id' => harvest.id,
+            'path' => 'a/b'
+          }
+        ]
+      end
+
+      it 'can query a sub directory "a" for files' do
+        results = HarvestItem.project_file_listing(HarvestItem, 'a')
+
+        expect(results).to eq []
+      end
+
+      it 'can query a sub directory "a/b" for directories' do
+        results = HarvestItem.project_directory_listing(HarvestItem, 'a/b').as_json
+
+        expect(results).to eq [
+          {
+            'id' => nil,
+            'harvest_id' => harvest.id,
+            'path' => 'a/b/c'
+          },
+          {
+            'id' => nil,
+            'harvest_id' => harvest.id,
+            'path' => 'a/b/d'
+          }
+        ]
+      end
+
+      it 'can query a sub directory "a/b" for files' do
+        results = HarvestItem.project_file_listing(HarvestItem, 'a/b')
+
+        expect(results).to eq [
+          @hi7,
+          @hi8
+        ]
+      end
+
+      it 'can query a deep directory "a/b/c" for directories' do
+        results = HarvestItem.project_directory_listing(HarvestItem, 'a/b/c').as_json
+
+        expect(results).to eq []
+      end
+
+      it 'can query a deep directory "a/b/c" for files' do
+        results = HarvestItem.project_file_listing(HarvestItem, 'a/b/c')
+
+        expect(results).to eq [
+          @hi4,
+          @hi5
+        ]
+      end
+
+      it 'we are not vulnerable to sql injection' do
+        results = HarvestItem
+                  .project_directory_listing(HarvestItem, "a' or 1=1 --")
+                  .as_json
+
+        expect(results).to eq []
+      end
+    end
+
+    def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)
+      validations = []
+      fixable.times do
+        validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+          status: :fixable,
+          name: :wascally_wabbit,
+          message: nil
+        )
+      end
+      not_fixable.times do
+        validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+          status: :not_fixable,
+          name: :kiww_the_wabbit,
+          message: nil
+        )
+      end
+
+      info = ::BawWorkers::Jobs::Harvest::Info.new(
+        validations:
       )
-    end
-    not_fixable.times do
-      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
-        status: :not_fixable,
-        name: :kiww_the_wabbit,
-        message: nil
-      )
-    end
 
-    info = ::BawWorkers::Jobs::Harvest::Info.new(
-      validations:
-    )
-    create(:harvest_item, path: generate_recording_name(Time.now), status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+      path = generate_recording_name(Time.now)
+      path = File.join(sub_directories, path) if sub_directories.present?
+
+      create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:, harvest:)
+    end
   end
 end

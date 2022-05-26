@@ -28,11 +28,13 @@
 #
 FactoryBot.define do
   factory :harvest_item do
-    path { 'some/relative/path.mp3' }
+    path { "#{harvest.upload_directory_name}/some/relative/path.mp3" }
+
     info { {} }
     status { :new }
 
     audio_recording
     uploader
+    harvest
   end
 end

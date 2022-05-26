@@ -118,23 +118,13 @@ class HarvestItem < ApplicationRecord
     Settings.root_to_do_path / path
   end
 
-  # Changes the file extension of the file this harvest_item represents.
-  # Touches the file on disk and updates the database!
-  def change_file_extension!(new_extension)
-    rel_path = Pathname(path)
-    new_rel_path = rel_path.sub_ext(
-      "#{rel_path.extname}.#{new_extension.delete_prefix('.')}"
-    )
+  # @return [String, nil]
+  def path_relative_to_harvest
+    Rails.logger.warn('harvestItem', item: as_json)
+    return if harvest.nil?
 
-    logger.info('Changing file extension', path: rel_path, new_path: new_rel_path)
-
-    old_path = absolute_path
-    self.path = new_rel_path
-    new_path = absolute_path
-
-    old_path.rename(new_path)
-
-    save!
+    harvest_prefix = "#{harvest.upload_directory_name}/"
+    path.delete_prefix(harvest_prefix)
   end
 
   def add_to_error(message)
@@ -149,7 +139,6 @@ class HarvestItem < ApplicationRecord
     duration_seconds = info.file_info[:duration_seconds]
     site_id = info.file_info[:site_id]
 
-    #debugger
     [:recorded_date, :duration_seconds, :site_id].each do |key|
       raise ArgumentError, "#{key} cannot be blank" if binding.local_variable_get(key).blank?
     end
@@ -184,6 +173,10 @@ class HarvestItem < ApplicationRecord
 
   def self.duration_arel
     Arel.sql("(info->'file_info'->>'duration_seconds')::numeric")
+  end
+
+  def self.validations_arel
+    Arel.sql("(info->'validations')::jsonb")
   end
 
   # Arel for returning whether or not this harvest item is not fixable
@@ -236,5 +229,170 @@ class HarvestItem < ApplicationRecord
   DEFAULT_COUNTS_BY_STATUS = STATUSES.product([0]).to_h
   def self.counts_by_status(relation)
     DEFAULT_COUNTS_BY_STATUS.merge(relation.group(:status).count)
+  end
+
+  # @param query [ActiveRecord::Relation] the current HarvestItem query
+  # @param path [String] the path to filter by
+  # @return [Array<Hash>]
+  def self.project_directory_listing(query, path)
+    path = path.trim('/')
+    path += '/' unless path.blank?
+
+    slash_count = path.count('/')
+    dir_path = 'dir_path'
+
+    table = HarvestItem.arel_table
+    path_col = table[:path]
+
+    dir_count = \
+      query
+      # match 'directories' only in current 'directory' -
+      # that is there is at least two more slashes after our prefix path
+      # e.g. {path}/dir/file.ext
+      .where(path_col =~ "^#{path}[^/]+/.+$")
+      .order(path_col.asc)
+      # transform path into only those immediate sub-directories of our prefix path
+      .select(
+        Arel.sql(
+          "array_to_string((string_to_array(path, '/'))[1:#{slash_count + 1}],'/')"
+        ).as(dir_path),
+        'harvest_id as harvest_id_unambiguous'
+      )
+
+    HarvestItem
+      .from(dir_count, 'dir_subquery')
+      # group by the immediate directories in the path
+      .group(dir_path)
+      .select(
+        Arel.sql("MAX(#{dir_path})").as(path_col.name),
+        Arel.sql('MAX(dir_subquery.harvest_id_unambiguous)').as('harvest_id')
+      )
+  end
+
+  # When we return fake harvest items that are directories, the id is nil
+  def pseudo_directory?
+    id.nil?
+  end
+
+  # @param query [ActiveRecord::Relation] the current HarvestItem query
+  # @param path [String] the path to filter by
+  # @return [ActiveRecord::Relation]
+  def self.project_file_listing(query, path)
+    path = path.trim('/')
+    path += '/' unless path.blank?
+
+    table = HarvestItem.arel_table
+    path_col = table[:path]
+
+    query
+      # match files only in current 'directory' - that is the path is the
+      # whole prefix before the last '/'
+      .where(path_col =~ "^#{path}[^/]+$")
+      .order(path: :asc)
+  end
+
+  def self.filter_settings
+    filterable_fields = [
+      :id, :deleted, :path, :status, :created_at,
+      :updated_at, :audio_recording_id, :uploader_id
+    ]
+    {
+      valid_fields: [*filterable_fields],
+      render_fields: [
+        *filterable_fields,
+        :validations
+      ],
+      text_fields: [],
+      custom_fields2: {
+        validations: {
+          query_attributes: [],
+          transform: ->(item) { item.pseudo_directory? ? nil : item.validations },
+          arel: HarvestItem.validations_arel,
+          type: :array
+        },
+        path: {
+          query_attributes: [:path, :harvest_id],
+          transform: ->(item) { item.path_relative_to_harvest },
+          arel: nil,
+          type: :string
+        }
+      },
+      new_spec_fields: ->(_user) { {} },
+      controller: :harvest_items,
+      action: :filter,
+      defaults: {
+        order_by: :id,
+        direction: :asc
+      },
+      valid_associations: [
+        {
+          join: Harvest,
+          on: HarvestItem.arel_table[:harvest_id].eq(Harvest.arel_table[:id]),
+          available: true
+        }
+      ]
+    }
+  end
+
+  def self.schema
+    {
+      type: :object,
+      additionalProperties: false,
+      properties: {
+        id: Api::Schema.id,
+        deleted: { type: 'boolean', readOnly: true },
+        path: { type: 'string', readOnly: true },
+        status: { type: 'string', enum: STATUSES, readOnly: true },
+        created_at: Api::Schema.date(read_only: true),
+        updated_at: Api::Schema.date(read_only: true),
+        audio_recording_id: Api::Schema.id(nullable: true),
+        uploader_id: Api::Schema.id(nullable: true),
+        validations: {
+          type: 'array',
+          readOnly: true,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              status: {
+                type: 'string',
+                readOnly: true,
+                enum: [
+                  BawWorkers::Jobs::Harvest::ValidationResult::STATUS_FIXABLE,
+                  BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
+                ]
+              },
+              message: { type: 'string', readOnly: true },
+              name: { type: 'string', readOnly: true }
+            }
+          }
+        }
+      }
+    }
+  end
+
+  def self.directory_schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        path: { type: 'string', readOnly: true },
+        id: { type: 'null', readOnly: true }
+      }
+    }
+  end
+
+  def self.directory_list_schema
+    {
+      type: 'array',
+      readOnly: true,
+      items: {
+        oneOf: [
+          HarvestItem.schema,
+          HarvestItem.directory_schema
+
+        ]
+      }
+    }
   end
 end

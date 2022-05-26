@@ -230,6 +230,10 @@ module Creation
       }
     end
 
+    def prepare_harvest_item
+      let(:harvest_item) { Common.create_harvest_item(harvest) }
+    end
+
     def prepare_region
       let!(:region) { Common.create_region(owner_user, project) }
     end
@@ -366,6 +370,10 @@ module Creation
 
       def create_harvest(creator, project)
         FactoryBot.create(:harvest, creator:, project:)
+      end
+
+      def create_harvest_item(harvest)
+        FactoryBot.create(:harvest_item, harvest:)
       end
 
       def create_region(creator, project)

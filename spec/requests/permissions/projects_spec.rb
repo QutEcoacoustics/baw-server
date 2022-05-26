@@ -20,6 +20,13 @@ describe 'Project permissions' do
     end
   end
 
+  before do
+    # i don't know why but this was true here. maybe a shared state bug with the
+    # the other example groups in this file?
+    project.allow_audio_upload = false
+    project.save!
+  end
+
   the_users :admin, :owner, can_do: everything
   the_users :writer, :reader, can_do: (reading + creation), and_cannot_do: (writing - creation)
 

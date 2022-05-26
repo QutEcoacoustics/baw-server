@@ -9,15 +9,15 @@ shared_context 'common' do
 end
 
 shared_context 'audio base' do
-  let(:temp_dir) { Settings.paths.temp_dir }
+  # let(:temp_dir) { Settings.paths.temp_dir }
 
   let(:audio_dir) { Fixtures::FILES_PATH }
 
-  let(:logger) {
-    logger = Logger.new(BawApp.root / 'log' / 'audio_tools.test.log')
-    logger.level = Logger::INFO
-    logger
-  }
+  # let(:logger) {
+  #   logger = Logger.new(BawApp.root / 'log' / 'audio_tools.test.log')
+  #   logger.level = Logger::INFO
+  #   logger
+  # }
 
   let(:audio_base) {
     audio_tools = Settings.audio_tools

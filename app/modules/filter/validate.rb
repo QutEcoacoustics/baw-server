@@ -430,7 +430,7 @@ module Filter
             validate_closure(custom_definition[:transform], [:item])
           end
 
-          validate_hash_key(custom_definition, :arel, [NilClass, Arel::Nodes::Node])
+          validate_hash_key(custom_definition, :arel, [NilClass, Arel::Nodes::Node, Arel::Nodes::SqlLiteral])
           validate_hash_key(custom_definition, :type, [Symbol]) unless custom_definition[:arel].nil?
         end
       end

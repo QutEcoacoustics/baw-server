@@ -3,7 +3,7 @@
 describe Internal::SftpgoController do
   let(:payload) {
     <<~JSON
-      {"action":"upload","username":"user","path":"/srv/sftpgo/data/user/test.R","virtual_path":"/test.R","fs_provider":0,"status":1,"protocol":"SFTP","ip":"172.18.0.1","session_id":"SFTP_e854785960bc21d240cd50b8f94c1452e185d5182aecd08f3b99a64d6876395a_1","timestamp":1649845689143321984}
+      {"action":"download","username":"user","path":"/srv/sftpgo/data/user/test.R","virtual_path":"/test.R","fs_provider":0,"status":1,"protocol":"SFTP","ip":"172.18.0.1","session_id":"SFTP_e854785960bc21d240cd50b8f94c1452e185d5182aecd08f3b99a64d6876395a_1","timestamp":1649845689143321984}
     JSON
   }
 

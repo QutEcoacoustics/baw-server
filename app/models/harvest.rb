@@ -433,7 +433,7 @@ class Harvest < ApplicationRecord
         **Api::Schema.updater_and_creator_user_stamps,
         project_id: Api::Schema.id,
         streaming: { type: 'boolean' },
-        status: { type: 'string' },
+        status: { type: 'string', enum: Harvest.aasm.states.map(&:name) },
         upload_user: { type: ['null', 'string'], readOnly: true },
         upload_password: { type: ['null', 'string'], readOnly: true },
         upload_url: { type: ['null', 'string'], format: 'url', readOnly: true },

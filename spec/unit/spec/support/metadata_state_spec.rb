@@ -16,7 +16,7 @@ describe 'MetadataState Tests' do
 
   context 'when metadata flows into children (1)' do
     it 'sees the unchanged value' do
-      expect(get_my_flag).to eq nil
+      expect(get_my_flag).to be_nil
     end
 
     it 'can show us a trace of metadata' do
@@ -34,7 +34,7 @@ describe 'MetadataState Tests' do
 
     context 'when metadata flows into children (2)' do
       it 'sees the unchanged value' do
-        expect(get_my_flag).to eq nil
+        expect(get_my_flag).to be_nil
       end
 
       it 'can show us a trace of metadata' do
@@ -59,11 +59,11 @@ describe 'MetadataState Tests' do
     let(:captured) { get_my_flag }
 
     it 'sees the updated value' do
-      expect(get_my_flag).to eq true
+      expect(get_my_flag).to be true
     end
 
     it 'gets the updated value from let bindings' do
-      expect(captured).to eq true
+      expect(captured).to be true
     end
 
     it 'can show us a trace of metadata' do
@@ -79,11 +79,13 @@ describe 'MetadataState Tests' do
       ])
     end
   end
+end
 
-  it 'checks we cannot mutate state in an example' do
-    expect {
-      set_my_flag(333)
-    }.to raise_error(RuntimeError, 'Cannot change metadata state from within an example')
+context 'changing state in an example' do
+  define_metadata_state(:my_flag)
+  it 'checks we can mutate state in an example' do
+    set_my_flag(333)
+    expect(get_my_flag).to eq 333
   end
 end
 
@@ -104,18 +106,6 @@ describe 'MetadataState Tests (mutate root, and in contexts)' do
   define_metadata_state(:my_flag, default: 1)
 
   set_my_flag(get_my_flag + 1)
-
-  before(:all) do
-    expect {
-      set_my_flag(get_my_flag + 1)
-    }.to raise_error(RuntimeError, 'Cannot change metadata state from within an example')
-  end
-
-  before do
-    expect {
-      set_my_flag(get_my_flag + 1)
-    }.to raise_error(RuntimeError, 'Cannot change metadata state from within an example')
-  end
 
   it 'has access to the updated value' do
     expect(get_my_flag).to eq 2
@@ -155,7 +145,7 @@ describe 'MetadataState Tests (mutate root, and in contexts)' do
       expect(get_my_flag).to eq 3
     end
 
-    context 'with nested and mutation  (2)' do
+    context 'with nested and mutation (2)' do
       set_my_flag(get_my_flag + 1)
       it 'has access to the updated value' do
         expect(get_my_flag).to eq 4

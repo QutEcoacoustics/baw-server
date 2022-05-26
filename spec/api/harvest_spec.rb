@@ -3,6 +3,10 @@
 require 'swagger_helper'
 
 describe 'harvests', type: :request do
+  before do
+    BawWorkers::Config.upload_communicator.delete_all_users
+  end
+
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)
@@ -72,7 +76,7 @@ describe 'harvests', type: :request do
       response(200, 'successful') do
         schema_for_single
         send_model do
-          { harvest: { mappings: nil } }
+          { harvest: { mappings: [] } }
         end
         run_test! do
           expect_id_matches(harvest)
@@ -85,7 +89,7 @@ describe 'harvests', type: :request do
       response(200, 'successful') do
         schema_for_single
         send_model do
-          { harvest: { mappings: nil } }
+          { harvest: { mappings: [] } }
         end
         run_test! do
           expect_id_matches(harvest)
@@ -105,6 +109,10 @@ describe 'harvests', type: :request do
 end
 
 describe 'harvests (nested)', type: :request do
+  before do
+    BawWorkers::Config.upload_communicator.delete_all_users
+  end
+
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)
@@ -179,7 +187,7 @@ describe 'harvests (nested)', type: :request do
       response(200, 'successful') do
         schema_for_single
         send_model do
-          { harvest: { mappings: nil } }
+          { harvest: { mappings: [] } }
         end
         run_test! do
           expect_id_matches(harvest)
@@ -192,7 +200,7 @@ describe 'harvests (nested)', type: :request do
       response(200, 'successful') do
         schema_for_single
         send_model do
-          { harvest: { mappings: nil } }
+          { harvest: { mappings: [] } }
         end
         run_test! do
           expect_id_matches(harvest)

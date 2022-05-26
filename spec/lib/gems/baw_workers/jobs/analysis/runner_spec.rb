@@ -47,7 +47,7 @@ describe BawWorkers::Jobs::Analysis::Runner do
     possible_path_params = analysis_params.dup
     possible_path_params[:datetime_with_offset] = Time.zone.parse(possible_path_params[:datetime_with_offset])
 
-    target_file = audio_original.possible_paths(possible_path_params)[1]
+    target_file = audio_original.possible_paths(possible_path_params)[2]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
 
@@ -77,7 +77,7 @@ describe BawWorkers::Jobs::Analysis::Runner do
     expect(result).not_to be_blank
 
     result_json = result.to_json
-    expect(result_json).to include('_analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
+    expect(result_json).to include('analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
     expect(result_json).to include('z/temp')
     expect(result_json).to include('analysis_type -source \\u003c{file_source}\\u003e -config \\u003c{file_config}\\u003e -output \\u003c{dir_output}\\u003e -tempdir \\u003c{dir_temp}\\u003e')
     expect(result_json).to include(analysis_params[:original_format])

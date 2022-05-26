@@ -91,7 +91,7 @@ describe BawWorkers::Jobs::Media::AudioJob do
         BawWorkers::Jobs::Media::AudioJob.perform_now({ media_type: :audio })
       }.to raise_error(
         TypeError,
-        'Argument (`Hash`) for parameter `payload` does not have expected type `BawWorkers::Models::AudioRequest`'
+        'Argument (`Hash`) for parameter `payload` does not have any of expected types [BawWorkers::Models::AudioRequest]'
       )
 
       expect(ActionMailer::Base.deliveries.count).to eq(1)
@@ -117,7 +117,7 @@ describe BawWorkers::Jobs::Media::AudioJob do
         BawWorkers::Jobs::Media::AudioJob.perform_now(payload)
       }.to raise_error(
         TypeError,
-        'Argument (`BawWorkers::Models::SpectrogramRequest`) for parameter `payload` does not have expected type `BawWorkers::Models::AudioRequest`'
+        'Argument (`BawWorkers::Models::SpectrogramRequest`) for parameter `payload` does not have any of expected types [BawWorkers::Models::AudioRequest]'
       )
 
       expect(ActionMailer::Base.deliveries.count).to eq(1)

@@ -68,7 +68,7 @@ module BawWorkers
 
           # apply any fixes that are needed
           fix_log = apply_fixes(file_path)
-          harvest_item.info[:fixes] = fix_log
+          harvest_item.info = harvest_item.info.new(fixes: fix_log)
           harvest_item.save!
 
           # update file info after fixes

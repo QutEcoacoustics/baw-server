@@ -537,7 +537,7 @@ resource 'AudioRecordings' do
     data_length_bytes = 9999
     media_type = 'audio/mp3'
     duration_seconds = 45.0
-    notes = { 'test' => ['something'] }
+    notes = { test: ['something'] }
 
     let(:ar_attributes) {
       FactoryBot.attributes_for(:audio_recording,

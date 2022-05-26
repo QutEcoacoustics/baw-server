@@ -90,8 +90,8 @@ shared_context 'shared_test_helpers' do
 
     original_possible_paths = audio_original.possible_paths(options)
 
-    file_to_make = new_name_style ? original_possible_paths.second : original_possible_paths.first
-    file_to_delete = new_name_style ? original_possible_paths.first : original_possible_paths.second
+    file_to_make = new_name_style ? original_possible_paths.first : original_possible_paths.second
+    file_to_delete = new_name_style ? original_possible_paths.second : original_possible_paths.first
 
     File.delete(file_to_delete) if delete_other && File.exist?(file_to_delete)
     FileUtils.mkpath File.dirname(file_to_make)

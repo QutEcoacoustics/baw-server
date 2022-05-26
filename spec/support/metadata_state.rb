@@ -92,12 +92,13 @@ module MetadataState
         set_metadata_state(name, new_value, location)
       end
 
-      # example getter
       module_exec do
+        # example getter
         define_method "get_#{name}".to_sym do
           self.class.metadata[name].state
         end
 
+        # example setter
         define_method "set_#{name}".to_sym do |new_value, location = nil|
           self.class.set_metadata_state(name, new_value, location)
         end

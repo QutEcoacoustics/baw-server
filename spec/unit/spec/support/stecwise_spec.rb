@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-describe 'stepwise spec' do
+# ignored: not part of standard testing suite because it has intentional failures
+xdescribe 'stepwise spec' do
   before(:all) do
     puts 'before :all'
   end

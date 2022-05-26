@@ -19,7 +19,7 @@ describe 'Harvest permissions' do
   # not using  the factory because there are many tricky params that can only
   # be sent for some of update or delete, easier to hand craft
   send_update_body do
-    [{ harvest: { mappings: nil } }, :json]
+    [{ harvest: { mappings: [] } }, :json]
   end
 
   send_create_body do
@@ -66,7 +66,7 @@ describe 'Harvest permissions (shallow)' do
   # not using  the factory because there are many tricky params that can only
   # be sent for some of update or delete, easier to hand craft
   send_update_body do
-    [{ harvest: { mappings: nil } }, :json]
+    [{ harvest: { mappings: [] } }, :json]
   end
 
   send_create_body do

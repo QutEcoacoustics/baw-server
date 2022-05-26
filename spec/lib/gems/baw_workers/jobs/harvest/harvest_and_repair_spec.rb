@@ -50,7 +50,7 @@ describe 'harvesting a file that needs repairs' do
         'problems' => {
           'FL010' => {
             'status' => 'Fixed',
-            'check_result' => an_instance_of(HashWithIndifferentAccess),
+            'check_result' => an_instance_of(Hash),
             'message' => 'Old total samples was 317292544, new total samples is: 158646272'
           }
         }

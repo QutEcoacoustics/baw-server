@@ -2,7 +2,7 @@
 
 require_relative 'harvest_spec_common'
 
-describe 'Harvesting a batch of files' do
+describe 'Harvesting files' do
   include HarvestSpecCommon
 
   it 'will not allow a harvest to be created if the project does not allow uploads' do
@@ -50,6 +50,20 @@ describe 'Harvesting a batch of files' do
           recursive: true
         )
       ))
+    end
+
+    it 'can empty mappings' do
+      body = {
+        harvest: {
+          mappings: []
+        }
+      }
+
+      patch "/projects/#{project.id}/harvests/#{harvest.id}", params: body, **api_with_body_headers(owner_token)
+
+      harvest.reload
+
+      expect(harvest.mappings).to match([])
     end
 
     it 'rejects mappings with invalid site ids' do

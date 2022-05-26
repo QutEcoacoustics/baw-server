@@ -90,6 +90,7 @@ class Ability
       to_project(user, is_guest)
       to_permission(user)
       to_harvest(user, is_guest)
+      to_harvest_item(user, is_guest)
       to_region(user, is_guest)
       to_site(user, is_guest)
       to_audio_recording(user, is_guest)
@@ -275,6 +276,11 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter, :new], Harvest
+  end
+
+  def to_harvest_item(_user, _is_guest)
+    # available to any user, including guest
+    can [:index, :filter], HarvestItem
   end
 
   def to_region(user, _is_guest)
