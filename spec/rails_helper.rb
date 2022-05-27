@@ -4,12 +4,12 @@
 
 # attempting to prevent trivial mistakes
 #ENV['RAILS_ENV'] ||= 'test'
-if ENV['RAILS_ENV'] != 'test'
+if ENV.fetch('RAILS_ENV', nil) != 'test'
   puts \
     <<~MESSAGE
       ***
       Tests must be run in the test environment.
-      The current environment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      The current environment `#{ENV.fetch('RAILS_ENV', nil)}` has been changed to `test`.
       See #{__FILE__} to disable this check
       ***
     MESSAGE
@@ -36,7 +36,7 @@ TestProf.configure do |config|
   config.color = true
 end
 
-if ENV['CI'] || ENV['COVERAGE']
+if ENV.fetch('CI', nil) || ENV.fetch('COVERAGE', nil)
   require 'simplecov'
 
   if ENV['GITHUB_WORKFLOW']
@@ -77,14 +77,15 @@ rescue StandardError => e
 end
 
 # Prevent accidental non-tests database access!
-abort('The Rails environment is running in production mode!') if Rails.env.production?
-abort('The Rails environment is running in staging mode!') if Rails.env.staging?
-abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
+Kernel.abort('The Rails environment is running in production mode!') if Rails.env.production?
+Kernel.abort('The Rails environment is running in staging mode!') if Rails.env.staging?
+Kernel.abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
 require 'rspec/collection_matchers'
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 require 'rspec-benchmark'
+require 'rspec/mocks'
 require 'webmock/rspec'
 require 'paperclip/matchers'
 require 'database_cleaner/active_record'
@@ -92,8 +93,8 @@ require 'database_cleaner/redis'
 
 require 'super_diff/rspec-rails'
 
-require 'helpers/misc_helper'
-require 'helpers/temp_file_helper'
+require 'support/misc_helper'
+
 require 'fixtures/fixtures'
 
 WEBMOCK_DISABLE_ARGS = { allow_localhost: true, allow: [
@@ -127,6 +128,9 @@ Warden.test_mode!
 # If you are not using ActiveRecord, you can remove this line.
 ActiveRecord::Migration.maintain_test_schema!
 
+# allow for step based specs
+require("#{RSPEC_ROOT}/support/stepwise/stepwise")
+
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   #config.fixture_path = "#{::Rails.root}/spec/fixtures"
@@ -157,19 +161,22 @@ RSpec.configure do |config|
   Zonebie.set_random_timezone
   puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
-  require_relative 'helpers/logger_helper'
+  require_relative 'support/metadata_state'
+  config.include MetadataState
+
+  require 'support/temp_file_helper'
+  config.include TempFileHelpers::Example
+
+  require_relative 'support/logger_helper'
   config.extend LoggerHelpers::ExampleGroup
   config.include LoggerHelpers::Example
-
-  require_relative 'helpers/metadata_state'
-  config.include MetadataState
 
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::ControllerHelpers, type: :view
   config.include Devise::Test::ControllerHelpers, type: :helper
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryBot::Syntax::Methods
-  require_relative 'helpers/factory_bot_helpers'
+  require_relative 'support/factory_bot_helpers'
   config.include FactoryBotHelpers::Example
 
   require 'active_storage_validations/matchers'
@@ -178,57 +185,65 @@ RSpec.configure do |config|
 
   config.include RSpec::Benchmark::Matchers
 
-  require_relative 'helpers/migrations_helper'
+  require_relative 'support/audio_helper'
+  config.include AudioHelper::Example
+
+  require_relative 'support/migrations_helper'
   config.include MigrationsHelpers, :migration
 
-  require_relative 'helpers/creation_helper'
+  require_relative 'support/creation_helper'
   config.extend Creation::ExampleGroup
   config.include Creation::Example
 
-  require_relative 'helpers/mailer_helpers'
+  require_relative 'support/mailer_helpers'
   config.extend MailerHelpers::ExampleGroup
   config.include MailerHelpers::Example
 
-  require_relative 'helpers/citizen_science_creation_helper'
+  require_relative 'support/citizen_science_creation_helper'
   config.extend CitizenScienceCreation::ExampleGroup
 
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
-  require_relative 'helpers/request_spec_helpers'
+  require_relative 'support/instrumentation/controller_watcher'
+  config.extend ControllerWatcher::ExampleGroup, { type: :request }
+  config.include ControllerWatcher::Example, { type: :request }
+
+  require_relative 'support/request_spec_helpers'
   config.extend RequestSpecHelpers::ExampleGroup, { type: :request }
   config.include RequestSpecHelpers::Example, { type: :request }
 
-  require_relative 'helpers/web_server_helper'
+  require_relative 'support/web_server_helper'
 
-  require_relative 'helpers/resque_helpers'
+  require_relative 'support/resque_helpers'
   config.extend ResqueHelpers::ExampleGroup
   config.include ResqueHelpers::Example
 
-  require_relative 'helpers/api_spec_helpers'
+  require_relative 'support/api_spec_helpers'
   config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
-  require_relative 'helpers/shared_context/api_spec_shared_context'
+  require_relative 'support/shared_context/api_spec_shared_context'
   config.include_context 'with api shared context', { file_path: Regexp.new('/spec/api/') }
 
-  require_relative 'helpers/permissions_helper'
+  require_relative 'support/permissions_helper'
   config.extend PermissionsHelpers::ExampleGroup, {
     file_path: Regexp.new('/spec/requests/permissions/')
   }
-  require_relative 'helpers/capabilities_helper'
+  require_relative 'support/capabilities_helper'
   config.extend CapabilitiesHelper::ExampleGroup, {
     file_path: Regexp.new('/spec/requests/capabilities')
   }
 
-  require_relative 'helpers/image_helpers'
-  require_relative 'helpers/sql_helpers'
+  require_relative 'support/image_helpers'
+  require_relative 'support/sql_helpers'
 
-  require_relative 'helpers/shared_examples/a_route_that_stores_images'
-  require_relative 'helpers/shared_examples/permissions_for'
-  require_relative 'helpers/shared_examples/capabilities_for'
-  require_relative 'helpers/shared_examples/a_stats_bucket'
-  require_relative 'helpers/shared_examples/a_stats_segment_incrementor'
+  require_relative 'support/shared_examples/a_route_that_stores_images'
+  require_relative 'support/shared_examples/permissions_for'
+  require_relative 'support/shared_examples/capabilities_for'
+  require_relative 'support/shared_examples/a_stats_bucket'
+  require_relative 'support/shared_examples/a_stats_segment_incrementor'
+  require_relative 'support/shared_test_helpers'
 
-  require "#{RSPEC_ROOT}/helpers/shared_context/baw_audio_tools_shared"
+  require "#{RSPEC_ROOT}/support/shared_context/baw_audio_tools_shared"
 
   # Ensure we actually perform jobs with resque.
   # We don't want to run jobs inline, it produces unrealistic tests.
@@ -351,41 +366,5 @@ Shoulda::Matchers.configure do |config|
   config.integrate do |with|
     with.test_framework :rspec
     with.library :rails
-  end
-end
-
-# load so-called "global" spec steps
-Dir.glob(File.expand_path('helpers/steps/**/*steps.rb', __dir__)).each { |f| require f }
-# load any step file that is next to a feature file of the same name.
-# based on: https://github.com/jnicklas/turnip/pull/96#issuecomment-39579471
-RSpec.configure do |config|
-  require 'helpers/shared_test_helpers'
-  config.include_context 'shared_test_helpers', turnip: true
-  config.on_example_group_definition do |group|
-    next unless group.metadata.key?(:turnip)
-
-    feature_file = group.file_path
-
-    feature_path = Pathname.new(feature_file)
-    feature_directory = feature_path.dirname
-    conventional_step_file = feature_directory / "#{feature_path.basename('.*')}_steps.rb"
-
-    if File.exist?(conventional_step_file)
-      require conventional_step_file
-
-      conventional_module = conventional_step_file.basename('.*').to_s.split('_').each(&:capitalize!).join
-      unless Module.const_defined?(conventional_module)
-        raise NameError, "Expected module named `#{conventional_module}` to be defined in #{conventional_step_file}," \
-                         ' but it has not been loaded. Is it defined?'
-      end
-
-      group.include Module.const_get(conventional_module)
-    else
-      message = ::RSpec::Core::Formatters::ConsoleCodes.wrap(
-        "Warning: Did not find conventional step file #{conventional_step_file.basename} for #{feature_path}",
-        :yellow
-      )
-      config.reporter.message(message)
-    end
   end
 end

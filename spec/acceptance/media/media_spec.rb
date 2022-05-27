@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
-require 'helpers/resque_helpers'
+require 'support/acceptance_spec_helper'
+require 'support/resque_helpers'
 require 'fixtures/fixtures'
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -44,6 +44,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
+
     standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader)', :not_acceptable,
       { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
   end
@@ -53,6 +54,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'zjfyrdnd' }
     # can't respond with the format requested
+
     standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader)', :not_acceptable,
       { expected_json_path: 'meta/error/info/available_formats' })
   end
@@ -572,9 +574,11 @@ resource 'Media' do
     get '/audio_recordings/:audio_recording_id/media.:format' do
       standard_media_parameters
       let(:authentication_token) { reader_token }
-      let(:format) { 'json' }
-      parameter :sample_rate
       let(:sample_rate) { '1234' }
+      let(:format) { 'json' }
+
+      parameter :sample_rate
+
       standard_request_options(
         :get,
         'MEDIA (json), as reader with non-standard non-original sample rate)',
@@ -756,8 +760,8 @@ resource 'Media' do
     let(:end_offset) { 7 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5,
-                                                    end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 5,
+        end_time_seconds: 6, is_reference: true)
     end
 
     standard_request_options(:get,
@@ -779,8 +783,8 @@ resource 'Media' do
     }
 
     let(:audio_event_id) {
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5,
-                                                    end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 5,
+        end_time_seconds: 6, is_reference: true)
       audio_event.id
     }
 
@@ -797,8 +801,8 @@ resource 'Media' do
     let(:end_offset) { 150 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0,
-                                                    end_time_seconds: 10, is_reference: true)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 0,
+        end_time_seconds: 10, is_reference: true)
     end
 
     standard_request_options(:get, 'MEDIA (as reader, invalid audio event request offsets)', :forbidden,
@@ -818,8 +822,8 @@ resource 'Media' do
       audio_recording.id
     }
     let(:audio_event_id) {
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 21,
-                                                    end_time_seconds: 22, is_reference: false)
+      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 21,
+        end_time_seconds: 22, is_reference: false)
       audio_event.id
     }
 
@@ -844,7 +848,7 @@ resource 'Media' do
     let(:audio_event_id) { audio_event.id }
     let!(:other_audio_event_id) { # so there is an additional audio event
       audio_event = FactoryBot.create(:audio_event,
-        audio_recording_id: audio_recording_id,
+        audio_recording_id:,
         start_time_seconds: 11, end_time_seconds: 12,
         is_reference: true)
       audio_event.id
@@ -863,6 +867,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:start_offset) { 'number' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid start_offset)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number' })
   end
@@ -872,6 +877,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:end_offset) { 'number' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid end_offset)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number' })
   end
@@ -881,6 +887,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:end_offset) { (audio_recording.duration_seconds + 1).to_s }
+
     standard_request_options(:get, 'MEDIA (as reader end_offset past original duration)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording' })
   end
@@ -890,6 +897,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:end_offset) { '0' }
+
     standard_request_options(:get, 'MEDIA (as reader end_offset too small)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.' })
   end
@@ -899,6 +907,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:start_offset) { audio_recording.duration_seconds.to_s }
+
     standard_request_options(:get, 'MEDIA (as reader start_offset past original duration)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording' })
   end
@@ -908,6 +917,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:start_offset) { '-1' }
+
     standard_request_options(:get, 'MEDIA (as reader start_offset smaller than 0)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0' })
   end
@@ -918,6 +928,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { '9' }
     let(:end_offset) { '8' }
+
     standard_request_options(:get, 'MEDIA (as reader start_offset larger than end_offset)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset' })
   end
@@ -927,6 +938,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:window_size) { 'number' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid window_size)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter' })
   end
@@ -936,6 +948,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:window_function) { 'number' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid window_function)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter' })
   end
@@ -945,6 +958,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:sample_rate) { '22' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid sample_rate)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'sample_rate parameter' })
   end
@@ -954,6 +968,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:channel) { (audio_recording.channels + 1).to_s }
+
     standard_request_options(:get, 'MEDIA (as reader invalid channel)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'channel parameter' })
   end
@@ -963,6 +978,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:colour) { 'z' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_entity,
       { expected_json_path: 'meta/error/details', response_body_content: 'colour parameter' })
   end
@@ -972,6 +988,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
       {
         expected_json_path: 'meta/error/details',
@@ -983,6 +1000,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_entity,
       {
         expected_json_path: 'meta/error/details',
@@ -994,6 +1012,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
+
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
       {
         expected_json_path: 'meta/error/details',

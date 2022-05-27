@@ -26,7 +26,7 @@
 #  fk_rails_...  (analysis_job_id => analysis_jobs.id)
 #  fk_rails_...  (audio_recording_id => audio_recordings.id)
 #
-require 'helpers/resque_helpers'
+require 'support/resque_helpers'
 require 'aasm/rspec'
 
 describe AnalysisJobsItem, type: :model do
@@ -44,12 +44,12 @@ describe AnalysisJobsItem, type: :model do
 
   it 'created_at should be set by rails' do
     item = create(:analysis_jobs_item)
-    expect(item.created_at).to_not be_blank
+    expect(item.created_at).not_to be_blank
     expect(item.valid?).to be true
 
     item.reload
 
-    expect(item.created_at).to_not be_blank
+    expect(item.created_at).not_to be_blank
     expect(item.valid?).to be true
   end
 
@@ -60,7 +60,7 @@ describe AnalysisJobsItem, type: :model do
   #
   # it { should validate_length_of(:status).is_at_least(2).is_at_most(255) }
 
-  it { should validate_uniqueness_of(:queue_id) }
+  it { is_expected.to validate_uniqueness_of(:queue_id) }
 
   it 'does not allow dates greater than now for created_at' do
     analysis_jobs_item.created_at = Time.zone.now + 1.day
@@ -153,7 +153,7 @@ describe AnalysisJobsItem, type: :model do
 
     it 'ensures users with access to all projects get all results' do
       # give the original user permissions to access the second project
-      permission = FactoryBot.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
+      permission = create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
 
       query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
@@ -190,15 +190,15 @@ describe AnalysisJobsItem, type: :model do
 
   describe 'system query' do
     it 'returns the same number of audio_recordings as exist in the db' do
-      ar = FactoryBot.create(:audio_recording)
-      ar1 = FactoryBot.create(:audio_recording)
+      ar = create(:audio_recording)
+      ar1 = create(:audio_recording)
 
       ar_count = AnalysisJobsItem.system_query.count
       expect(ar_count).to be 3
     end
 
     it 'does not return deleted audio_recordings' do
-      ar = FactoryBot.create(:audio_recording)
+      ar = create(:audio_recording)
 
       ar_count_unscoped = AudioRecording.unscoped.count
       expect(ar_count_unscoped).to be 2
@@ -216,8 +216,8 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'fakes the audio_recording_id field' do
-      ar = FactoryBot.create(:audio_recording)
-      ar1 = FactoryBot.create(:audio_recording)
+      ar = create(:audio_recording)
+      ar1 = create(:audio_recording)
 
       results = AnalysisJobsItem.system_query.all
 
@@ -226,7 +226,7 @@ describe AnalysisJobsItem, type: :model do
       valid_ids = [analysis_jobs_item.audio_recording_id, ar.id, ar1.id]
       results.each { |item|
         expect(item.audio_recording_id).not_to be_nil
-        expect(valid_ids.include?(item.audio_recording_id)).to be_truthy
+        expect(valid_ids).to include(item.audio_recording_id)
       }
     end
 
@@ -284,7 +284,7 @@ describe AnalysisJobsItem, type: :model do
       payload = AnalysisJobsItem.create_action_payload(aj, audio_recording_2)
 
       # ensure result is as expected
-      expect(payload.is_a?(Hash)).to be_truthy
+      expect(payload).to be_a(Hash)
       expect(payload[:command_format]).to eq(aj.script.executable_command)
       expect(payload[:uuid]).to eq(audio_recording_2.uuid)
       expect(payload[:id]).to eq(audio_recording_2.id)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::AudioCheck::CsvHelper do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -34,7 +34,7 @@ describe BawWorkers::Jobs::AudioCheck::CsvHelper do
       if excluded.nil?
         # add utc file name by convention
         expected_db_entries_without_file.push(File.basename(paths[1]).downcase)
-        excluded = opts.merge(paths: paths)
+        excluded = opts.merge(paths:)
         next
       end
 
@@ -55,9 +55,9 @@ describe BawWorkers::Jobs::AudioCheck::CsvHelper do
 
     # create one additional file
     additional_file = audio_original.possible_paths(
-      uuid: uuid,
+      uuid:,
       datetime_with_offset: BawWorkers::Validation.normalise_datetime(Time.zone.now),
-      original_format: original_format
+      original_format:
     )[1]
     FileUtils.mkpath(File.dirname(additional_file))
     FileUtils.touch(additional_file)

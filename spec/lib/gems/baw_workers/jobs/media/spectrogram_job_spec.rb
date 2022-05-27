@@ -54,11 +54,11 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
       expect(job.job_id).not_to be_nil
 
       job2 = BawWorkers::Jobs::Media::SpectrogramJob.new(test_payload)
-      expect(job2.enqueue).to eq false
+      expect(job2.enqueue).to be false
 
       expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Media::SpectrogramJob)
       expect(job2.job_id).to eq job.job_id
-      expect(job2.unique?).to eq false
+      expect(job2.unique?).to be false
 
       clear_pending_jobs
     end
@@ -72,7 +72,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
       expect(result).to be_an_instance_of(::Dry::Monads::Failure)
       job2 = result.failure
       expect(job2.job_id).to eq job1.job_id
-      expect(job2.unique?).to eq false
+      expect(job2.unique?).to be false
       expect(job2.status).to eq job1.status # structurally equal 😮
 
       expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Media::SpectrogramJob)
@@ -93,7 +93,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
         BawWorkers::Jobs::Media::SpectrogramJob.perform_now({ media_type: :audio })
       }.to raise_error(
         TypeError,
-        'Argument (`Hash`) for parameter `payload` does not have expected type `BawWorkers::Models::SpectrogramRequest`'
+        'Argument (`Hash`) for parameter `payload` does not have any of expected types [BawWorkers::Models::SpectrogramRequest]'
       )
 
       expect(ActionMailer::Base.deliveries.count).to eq(1)
@@ -116,7 +116,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
         BawWorkers::Jobs::Media::SpectrogramJob.perform_now(payload)
       }.to raise_error(
         TypeError,
-        'Argument (`BawWorkers::Models::AudioRequest`) for parameter `payload` does not have expected type `BawWorkers::Models::SpectrogramRequest`'
+        'Argument (`BawWorkers::Models::AudioRequest`) for parameter `payload` does not have any of expected types [BawWorkers::Models::SpectrogramRequest]'
       )
 
       expect(ActionMailer::Base.deliveries.count).to eq(1)
@@ -154,7 +154,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
       # expect file to be in redis
       expected_paths.each do |path|
         path = Pathname(path)
-        expect(BawWorkers::Config.redis_communicator.exists_file?(path.basename)).to eq true
+        expect(BawWorkers::Config.redis_communicator.exists_file?(path.basename)).to be true
       end
     end
   end

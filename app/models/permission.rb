@@ -35,9 +35,6 @@
 class Permission < ApplicationRecord
   extend Enumerize
 
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   belongs_to :project, inverse_of: :permissions
   belongs_to :user, inverse_of: :permissions, optional: true
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions

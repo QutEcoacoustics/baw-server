@@ -89,6 +89,8 @@ class Ability
 
       to_project(user, is_guest)
       to_permission(user)
+      to_harvest(user, is_guest)
+      to_harvest_item(user, is_guest)
       to_region(user, is_guest)
       to_site(user, is_guest)
       to_audio_recording(user, is_guest)
@@ -119,6 +121,9 @@ class Ability
       raise ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
     end
+
+    # internal takes permissions away from admin, it has to be after all of the above
+    for_internal(is_guest)
   end
 
   private
@@ -136,6 +141,22 @@ class Ability
 
     # anyone anytime can read cms blobs
     can [:read], 'Cms::Site'
+  end
+
+  def for_internal(is_guest)
+    # internal endpoints for hooks explicitly require no user information to have been set
+    [
+      # add more here
+      :internal_sftpgo
+    ].each do |subject|
+      if is_guest
+        can [:manage], subject do |_subject, remote_ip|
+          Settings.internal_allow_remote_ip?(remote_ip)
+        end
+      else
+        cannot [:manage], subject
+      end
+    end
   end
 
   def for_admin
@@ -234,6 +255,32 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter, :new], Permission
+  end
+
+  def to_harvest(user, _is_guest)
+    # POST      /projects/:project_id/harvests                         harvests#create
+    # GET       /projects/:project_id/harvests/new                     harvests#new
+    # GET       /projects/:project_id/harvests/:id                     harvests#show
+    # PATCH|PUT /projects/:project_id/harvests/:id                     harvests#update
+    # DELETE    /projects/:project_id/harvests/:id                     harvests#destroy
+    # GET       /projects/:project_id/harvests                         harvests#index {:format=>"json"}
+    # GET|POST  /projects/:project_id/harvests/filter                                       harvests#filter {:format=>"json"}
+    # and all of the above again with the shallow route
+
+    # only owner can access these actions.
+    # Special action :harvest_audio used as validation in the harvester job
+    can [:create, :update, :destroy, :show, :harvest_audio], Harvest do |harvest|
+      check_model(harvest)
+      Access::Core.can_any?(user, :owner, harvest.project)
+    end
+
+    # available to any user, including guest
+    can [:index, :filter, :new], Harvest
+  end
+
+  def to_harvest_item(_user, _is_guest)
+    # available to any user, including guest
+    can [:index, :filter], HarvestItem
   end
 
   def to_region(user, _is_guest)
@@ -668,7 +715,7 @@ class Ability
     can [:route_error, :uncaught_error, :test_exceptions, :show], :error
 
     # only available in Rails test env
-    can [:test_exceptions], :error if ENV['RAILS_ENV'] == 'test'
+    can [:test_exceptions], :error if ENV.fetch('RAILS_ENV', nil) == 'test'
   end
 
   def to_public(_user, _is_guest)

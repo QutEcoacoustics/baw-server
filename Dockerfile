@@ -41,6 +41,8 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   # https://github.com/moby/moby/issues/20437
   && mkdir -p /home/${app_user}/${app_name}/tmp \
   && chown -R 1000:1000 /home/${app_user} \
+  && mkdir /data \
+  && chown -R 1000:1000 /data \
   && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi)
 
 

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'ipaddr'
 require 'faraday'
 require 'faraday_middleware'
 require 'uri'

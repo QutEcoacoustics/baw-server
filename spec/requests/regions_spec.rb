@@ -11,17 +11,24 @@ describe '/regions' do
     factory_args: -> { { project_id: project.id } }
   }
 
-  it 'will not accept notes via form data' do
-    old_notes = region.notes
+  context 'with bad params' do
+    render_error_responses
 
-    expect {
+    it 'will not accept notes via form data' do
+      old_notes = region.notes
+
       put "/regions/#{region.id}", params: {
         'region[notes]' => { a: 3 }
       }, **form_multipart_headers(owner_token)
-    }.to raise_error(ActionController::UnpermittedParameters, 'found unpermitted parameter: :notes')
 
-    region.reload
+      expect_error(
+        :unprocessable_entity,
+        'The request could not be understood: found unpermitted parameter: :notes'
+      )
 
-    expect(region.notes).to eq old_notes
+      region.reload
+
+      expect(region.notes).to eq old_notes
+    end
   end
 end

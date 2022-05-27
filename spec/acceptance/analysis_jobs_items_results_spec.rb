@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 require 'fixtures/fixtures'
 
 #
@@ -31,7 +31,7 @@ def create_file(
 
   full_path = create_full_path(file)
   FileUtils.mkpath File.dirname(full_path)
-  File.open(full_path, 'w') { |f| f.write(content) }
+  File.write(full_path, content)
 end
 
 # We want to be able serve files out of an Sqlite3 file as if it were just a directory
@@ -493,13 +493,12 @@ resource 'AnalysisJobsItemsResults' do
       get test_url do
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
+        let(:page) { 2 }
+        let(:items) { 2 }
         let(:results_path) { 'TopDir' }
 
         parameter :page, 'The page of results', required: true
         parameter :items, 'The number of results per page', required: true
-
-        let(:page) { 2 }
-        let(:items) { 2 }
 
         # one
         # one1
@@ -661,7 +660,7 @@ resource 'AnalysisJobsItemsResults' do
 
     context 'escaping result dir is not not possible' do
       before do
-        File.open("#{Dir.home}/home-file.png", 'w') { |f| f.write('') }
+        File.write("#{Dir.home}/home-file.png", '')
         create_file('/../parent-file.png', '')
 
         path = create_full_path('../parent-file.png')
@@ -848,13 +847,12 @@ resource 'AnalysisJobsItemsResults' do
         get test_url do
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
+          let(:page) { 2 }
+          let(:items) { 1 }
           let(:results_path) { "#{SQLITE_FIXTURE}/sub_dir_1" }
 
           parameter :page, 'The page of results', required: true
           parameter :items, 'The number of results per page', required: true
-
-          let(:page) { 2 }
-          let(:items) { 1 }
 
           # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png`
           # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png` <-- this one

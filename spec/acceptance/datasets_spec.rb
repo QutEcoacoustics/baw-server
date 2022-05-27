@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def id_params
   parameter :id, 'Dataset id in request url', required: true
@@ -38,6 +38,7 @@ resource 'Datasets' do
 
   get '/datasets' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'INDEX (as admin)',
@@ -51,6 +52,7 @@ resource 'Datasets' do
 
   get '/datasets' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :get,
       'INDEX (as reader user)',
@@ -62,6 +64,7 @@ resource 'Datasets' do
 
   get '/datasets' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'INDEX (with invalid token)',
@@ -81,6 +84,7 @@ resource 'Datasets' do
 
   get '/datasets' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'INDEX (as harvester)',
@@ -98,6 +102,7 @@ resource 'Datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :post,
         'CREATE (as admin)',
@@ -110,6 +115,7 @@ resource 'Datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :post,
         'CREATE (as reader user)',
@@ -122,6 +128,7 @@ resource 'Datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :post,
         'CREATE (as no access user)',
@@ -134,6 +141,7 @@ resource 'Datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :post,
         'CREATE (invalid token)',
@@ -145,6 +153,7 @@ resource 'Datasets' do
     post '/datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
+
       standard_request_options(
         :post,
         'CREATE (as anonymous user)',
@@ -157,6 +166,7 @@ resource 'Datasets' do
       body_params
       let(:raw_post) { { 'dataset' => post_attributes }.to_json }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :post,
         'CREATE (as harvester user)',
@@ -172,6 +182,7 @@ resource 'Datasets' do
 
   get '/datasets/new' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'NEW (as admin)',
@@ -182,6 +193,7 @@ resource 'Datasets' do
 
   get '/datasets/new' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'NEW (as non admin user)',
@@ -192,6 +204,7 @@ resource 'Datasets' do
 
   get '/datasets/new' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'NEW (with invalid token)',
@@ -211,6 +224,7 @@ resource 'Datasets' do
 
   get '/datasets/new' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'NEW (as harvester user)',
@@ -227,6 +241,7 @@ resource 'Datasets' do
     id_params
     let(:id) { dataset.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'SHOW (as admin)',
@@ -239,6 +254,7 @@ resource 'Datasets' do
     id_params
     let(:id) { dataset.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'SHOW (as no access user)',
@@ -251,6 +267,7 @@ resource 'Datasets' do
     id_params
     let(:id) { dataset.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :get,
       'SHOW (as reader user)',
@@ -263,6 +280,7 @@ resource 'Datasets' do
     id_params
     let(:id) { dataset.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'SHOW (with invalid token)',
@@ -274,6 +292,7 @@ resource 'Datasets' do
   get '/datasets/:id' do
     id_params
     let(:id) { dataset.id }
+
     standard_request_options(
       :get,
       'SHOW (an anonymous user)',
@@ -389,6 +408,7 @@ resource 'Datasets' do
     body_params
     let(:id) { dataset.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :delete,
       'DESTROY (as admin)',
@@ -412,31 +432,37 @@ resource 'Datasets' do
 
   post '/datasets/filter' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(:post, 'FILTER (as admin)', :ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { owner_token }
+
     standard_request_options(:post, 'FILTER (as owner user)', :ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(:post, 'FILTER (as writer user)', :ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader user)', :ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:post, 'FILTER (as no access user)', :ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :post,
       'FILTER (with invalid token)',
@@ -451,6 +477,7 @@ resource 'Datasets' do
 
   post '/datasets/filter' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :post,
       'FILTER (with harvester token)',
@@ -473,6 +500,7 @@ resource 'Datasets' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :post,
       'FILTER (with admin token: filter by name with projection)',

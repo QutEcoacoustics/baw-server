@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def id_params
   parameter :id, 'Analysis Job id in request url', required: true
@@ -72,6 +72,7 @@ resource 'AnalysisJobs' do
       saved_search.save!
       saved_search
     }
+
     standard_request_options(:post, 'CREATE (as writer, testing projects error)', :created,
       { expected_json_path: 'data/saved_search_id' })
   end
@@ -211,6 +212,7 @@ resource 'AnalysisJobs' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
       expected_json_path: 'meta/filter/saved_searches.stored_query',
       data_item_count: 1,
@@ -230,6 +232,7 @@ resource 'AnalysisJobs' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as no access user)', :ok, {
       response_body_content: [
         '{"meta":{"status":200,"message":"OK","filter":{"name":{"contains":"name"}},',

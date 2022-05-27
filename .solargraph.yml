@@ -15,7 +15,7 @@ reporters:
   - update_errors
 require_paths:
   - spec/lib
-  - spec/helpers
+  - spec/support
   - spec
   - lib
 formatter:

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def test_overlap
   settings = [
@@ -255,7 +254,8 @@ def test_overlap
       parameter :recorded_date, '', scope: :audio_recording
       parameter :sample_rate_hertz, '', scope: :audio_recording, required: true
       parameter :original_file_name, '', scope: :audio_recording, required: true
-      parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
+      parameter :uploader_id,
+        'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
 
       # use index to know which one in settings array failed
       inputs = item[:inputs]
@@ -269,7 +269,7 @@ def test_overlap
           :audio_recording,
           recorded_date: input_post_item[:recorded_date],
           duration_seconds: input_post_item[:duration_seconds],
-          site_id: site_id,
+          site_id:,
           status: :ready,
           creator_id: writer_user.id,
           uploader_id: writer_user.id
@@ -289,7 +289,7 @@ def test_overlap
             :audio_recording,
             recorded_date: existing[:recorded_date],
             duration_seconds: existing[:duration_seconds],
-            site_id: site_id,
+            site_id:,
             status: :ready,
             creator: writer_user,
             uploader: writer_user
@@ -304,7 +304,8 @@ def test_overlap
         case status_code
         when 201
           expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-          expect(response_body).to have_json_path('data/bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+          expect(response_body).to have_json_path('data/bit_rate_bps'),
+            "could not find bit_rate_bps in #{response_body}"
 
           new_audio_recording_id = JSON.parse(response_body)['data']['id']
           new_recording = AudioRecording.where(id: new_audio_recording_id).first
@@ -372,7 +373,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options(:get, 'LIST (as reader)', :ok, { expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1 })
+    standard_request_options(:get, 'LIST (as reader)', :ok,
+      { expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1 })
   end
 
   get '/audio_recordings' do
@@ -381,7 +383,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options(:get, 'LIST (as writer)', :ok, { expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1 })
+    standard_request_options(:get, 'LIST (as writer)', :ok,
+      { expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1 })
   end
 
   get '/audio_recordings' do
@@ -389,7 +392,9 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { 'Token token="INVALID"' }
-    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
+
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized,
+      { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   ################################
@@ -420,7 +425,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+    standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden,
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:id' do
@@ -428,7 +434,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok, { expected_json_path: 'data/bit_rate_bps' })
+    standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok,
+      { expected_json_path: 'data/bit_rate_bps' })
   end
 
   get '/audio_recordings/:id' do
@@ -436,7 +443,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok, { expected_json_path: 'data/bit_rate_bps' })
+    standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok,
+      { expected_json_path: 'data/bit_rate_bps' })
   end
 
   get '/audio_recordings/:id' do
@@ -445,10 +453,10 @@ resource 'AudioRecordings' do
     let(:authentication_token) { writer_token }
 
     standard_request_options(:get, 'SHOW (as writer, with shallow path testing quoted numbers)', :ok,
-                             {
-                               expected_json_path: 'data/duration_seconds',
-                               response_body_content: 'duration_seconds":60000.0'
-                             })
+      {
+        expected_json_path: 'data/duration_seconds',
+        response_body_content: 'duration_seconds":60000.0'
+      })
   end
 
   ################################
@@ -483,9 +491,13 @@ resource 'AudioRecordings' do
     parameter :recorded_date, '', scope: :audio_recording
     parameter :sample_rate_hertz, '', scope: :audio_recording, required: true
     parameter :original_file_name, '', scope: :audio_recording, required: true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
+    parameter :uploader_id,
+      'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
 
-    let(:raw_post) { { 'audio_recording' => FactoryBot.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59', uploader_id: writer_user.id) }.to_json }
+    let(:raw_post) {
+      { 'audio_recording' => FactoryBot.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59',
+        uploader_id: writer_user.id) }.to_json
+    }
 
     let(:authentication_token) { harvester_token }
 
@@ -516,7 +528,8 @@ resource 'AudioRecordings' do
     parameter :recorded_date, '', scope: :audio_recording
     parameter :sample_rate_hertz, '', scope: :audio_recording, required: true
     parameter :original_file_name, '', scope: :audio_recording, required: true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
+    parameter :uploader_id,
+      'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
 
     file_hash = MiscHelper.new.create_sha_256_hash('c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891')
     original_file_name = 'testing.mp3'
@@ -524,19 +537,19 @@ resource 'AudioRecordings' do
     data_length_bytes = 9999
     media_type = 'audio/mp3'
     duration_seconds = 45.0
-    notes = { 'test' => ['something'] }
+    notes = { test: ['something'] }
 
     let(:ar_attributes) {
       FactoryBot.attributes_for(:audio_recording,
-                                original_file_name: original_file_name,
-                                file_hash: file_hash,
-                                recorded_date: recorded_date,
-                                data_length_bytes: data_length_bytes,
-                                media_type: media_type,
-                                duration_seconds: duration_seconds,
-                                notes: notes,
-                                site_id: site_id,
-                                uploader_id: writer_user.id)
+        original_file_name:,
+        file_hash:,
+        recorded_date:,
+        data_length_bytes:,
+        media_type:,
+        duration_seconds:,
+        notes:,
+        site_id:,
+        uploader_id: writer_user.id)
     }
 
     let(:raw_post) { { 'audio_recording' => ar_attributes }.to_json }
@@ -546,14 +559,14 @@ resource 'AudioRecordings' do
     # Execute request with ids defined in above let(:id) statements
     example 'CREATE (as harvester, resuming upload) - 201', document: true do
       FactoryBot.create(:audio_recording,
-                        original_file_name: original_file_name,
-                        file_hash: file_hash,
-                        recorded_date: recorded_date,
-                        data_length_bytes: data_length_bytes,
-                        media_type: media_type,
-                        duration_seconds: duration_seconds,
-                        site_id: site_id,
-                        status: :aborted)
+        original_file_name:,
+        file_hash:,
+        recorded_date:,
+        data_length_bytes:,
+        media_type:,
+        duration_seconds:,
+        site_id:,
+        status: :aborted)
 
       do_request
       expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
@@ -582,17 +595,18 @@ resource 'AudioRecordings' do
     parameter :recorded_date, '', scope: :audio_recording
     parameter :sample_rate_hertz, '', scope: :audio_recording, required: true
     parameter :original_file_name, '', scope: :audio_recording, required: true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
+    parameter :uploader_id,
+      'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
 
     let(:raw_post) { { 'audio_recording' => post_attributes.merge(duration_seconds: 2.0) }.to_json }
 
     let(:authentication_token) { harvester_token }
 
     standard_request_options(:post, 'CREATE (as harvester, short duration)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/info/duration_seconds/',
-                               respond_body_content: '"Record could not be saved"'
-                             })
+      {
+        expected_json_path: 'meta/error/info/duration_seconds/',
+        respond_body_content: '"Record could not be saved"'
+      })
   end
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
@@ -604,10 +618,10 @@ resource 'AudioRecordings' do
     let(:authentication_token) { writer_token }
 
     standard_request_options(:post, 'CREATE (as writer)', :forbidden,
-                             {
-                               expected_json_path: get_json_error_path(:permissions),
-                               respond_body_content: I18n.t('devise.failure.unauthorized')
-                             })
+      {
+        expected_json_path: get_json_error_path(:permissions),
+        respond_body_content: I18n.t('devise.failure.unauthorized')
+      })
   end
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
@@ -619,10 +633,10 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
 
     standard_request_options(:post, 'CREATE (as reader)', :forbidden,
-                             {
-                               expected_json_path: get_json_error_path(:permissions),
-                               respond_body_content: '"You do not have sufficient permissions to access this page."'
-                             })
+      {
+        expected_json_path: get_json_error_path(:permissions),
+        respond_body_content: '"You do not have sufficient permissions to access this page."'
+      })
   end
 
   ################################
@@ -647,7 +661,8 @@ resource 'AudioRecordings' do
     parameter :recorded_date, '', scope: :audio_recording
     parameter :sample_rate_hertz, '', scope: :audio_recording, required: true
     parameter :original_file_name, '', scope: :audio_recording, required: true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
+    parameter :uploader_id,
+      'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, required: true
 
     # define item to be posted
     let(:posted_item_attrs) {
@@ -677,7 +692,7 @@ resource 'AudioRecordings' do
         id: 262_791,
         recorded_date: '2015-01-01T22:48:00.000+10:00',
         duration_seconds: 7200.003,
-        site_id: site_id,
+        site_id:,
         status: :ready,
         creator: writer_user,
         uploader: writer_user
@@ -702,9 +717,10 @@ resource 'AudioRecordings' do
     let(:raw_post) { { 'audio_recording' => post_attributes }.to_json }
 
     let(:authentication_token) { harvester_token }
+
     standard_request_options(:get, 'CHECK_UPLOADER (as harvester checking writer)', :no_content,
-                             { expected_response_has_content: false,
-                               expected_response_content_type: nil })
+      { expected_response_has_content: false,
+        expected_response_content_type: nil })
   end
 
   get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
@@ -716,11 +732,12 @@ resource 'AudioRecordings' do
     let(:raw_post) { { 'audio_recording' => post_attributes }.to_json }
 
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'CHECK_UPLOADER (as writer checking writer)', :forbidden,
-                             {
-                               expected_json_path: 'meta/error/info/project_id',
-                               respond_body_content: ['only harvester can check uploader permissions']
-                             })
+      {
+        expected_json_path: 'meta/error/info/project_id',
+        respond_body_content: ['only harvester can check uploader permissions']
+      })
   end
 
   get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
@@ -732,11 +749,12 @@ resource 'AudioRecordings' do
     let(:raw_post) { { 'audio_recording' => post_attributes }.to_json }
 
     let(:authentication_token) { harvester_token }
+
     standard_request_options(:get, 'CHECK_UPLOADER (as harvester checking no access)', :forbidden,
-                             {
-                               expected_json_path: 'meta/error/info/user_id/',
-                               respond_body_content: ['uploader does not have access to this project']
-                             })
+      {
+        expected_json_path: 'meta/error/info/user_id/',
+        respond_body_content: ['uploader does not have access to this project']
+      })
   end
 
   ################################
@@ -759,8 +777,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE STATUS (as harvester)', :no_content,
-                             { expected_response_has_content: false,
-                               expected_response_content_type: nil })
+      { expected_response_has_content: false,
+        expected_response_content_type: nil })
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -778,10 +796,10 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect file hash)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/info/audio_recording/file_hash/request',
-                               response_body_info: 'Incorrect file hash'
-                             })
+      {
+        expected_json_path: 'meta/error/info/audio_recording/file_hash/request',
+        response_body_info: 'Incorrect file hash'
+      })
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -800,10 +818,10 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect uuid)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/info/audio_recording/uuid/stored',
-                               response_body_info: 'Incorrect uuid'
-                             })
+      {
+        expected_json_path: 'meta/error/info/audio_recording/uuid/stored',
+        response_body_info: 'Incorrect uuid'
+      })
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -823,10 +841,10 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect status)', :unprocessable_entity,
-                             {
-                               expected_json_path: 'meta/error/info/available_statuses',
-                               response_body_content: '"Status does_not_exist is not in available status list"'
-                             })
+      {
+        expected_json_path: 'meta/error/info/available_statuses',
+        response_body_content: '"Status does_not_exist is not in available status list"'
+      })
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -847,10 +865,10 @@ resource 'AudioRecordings' do
     let(:authentication_token) { writer_token }
 
     standard_request_options(:put, 'UPDATE STATUS (writer)', :forbidden,
-                             {
-                               expected_json_path: get_json_error_path(:permissions),
-                               respond_body_content: I18n.t('devise.failure.unauthorized')
-                             })
+      {
+        expected_json_path: get_json_error_path(:permissions),
+        respond_body_content: I18n.t('devise.failure.unauthorized')
+      })
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -870,10 +888,10 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
     standard_request_options(:put, 'UPDATE STATUS (as reader)', :forbidden,
-                             {
-                               expected_json_path: get_json_error_path(:permissions),
-                               respond_body_content: I18n.t('devise.failure.unauthorized')
-                             })
+      {
+        expected_json_path: get_json_error_path(:permissions),
+        respond_body_content: I18n.t('devise.failure.unauthorized')
+      })
   end
 
   ################################
@@ -906,7 +924,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE (as harvester) standard properties', :ok,
-                             { expected_json_path: 'data/duration_seconds', property_match: changed_details })
+      { expected_json_path: 'data/duration_seconds', property_match: changed_details })
   end
 
   put '/audio_recordings/:id/' do
@@ -930,7 +948,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(:put, 'UPDATE (as harvester) file hash only', :ok,
-                             { expected_json_path: 'data/duration_seconds' })
+      { expected_json_path: 'data/duration_seconds' })
   end
 
   # fails due to file_hash and other properties in same request
@@ -987,6 +1005,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader matching)', :ok, {
       expected_json_path: 'data/0/sample_rate_hertz',
       data_item_count: 1
@@ -1010,6 +1029,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader no match)', :ok, {
       expected_json_path: 'meta/message',
       data_item_count: 0
@@ -1036,6 +1056,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {
       expected_json_path: 'meta/paging/page',
       data_item_count: 0,
@@ -1063,6 +1084,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader with sorting)', :ok, {
       expected_json_path: 'meta/sorting/direction',
       data_item_count: 1,
@@ -1089,6 +1111,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader with projection)', :ok, {
       expected_json_path: 'meta/projection/include',
       data_item_count: 1,
@@ -1108,10 +1131,14 @@ resource 'AudioRecordings' do
         .to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader checking camel case)', :ok, {
       expected_json_path: 'meta/projection/include',
       data_item_count: 1,
-      invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i}\":" },
+      invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds,
+                                                                               :recorded_date, :created_at]).map { |i|
+                              "\"#{i}\":"
+                            },
       response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
     })
   end
@@ -1143,6 +1170,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader filtering by project id)', :ok, {
       response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://localhost:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1"',
       data_item_count: 1
@@ -1176,6 +1204,7 @@ resource 'AudioRecordings' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader filtering by project image_file_name)', :bad_request, {
       response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :creator_id, :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at], got image_file_name'
     })
@@ -1212,8 +1241,11 @@ resource 'AudioRecordings' do
     }
 
     let(:authentication_token) { reader_token }
+
     standard_request_options(:post, 'FILTER (as reader filtering by recorded_end_date)', :ok, {
-      response_body_content: "\"recorded_date\":\"#{Time.use_zone('Brisbane') { Time.zone.parse('2016-03-01 11:55:00') }.in_time_zone.iso8601(3).gsub(/\s+/, '')}\"",
+      response_body_content: "\"recorded_date\":\"#{Time.use_zone('Brisbane') {
+                                                      Time.zone.parse('2016-03-01 11:55:00')
+                                                    }.in_time_zone.iso8601(3).gsub(/\s+/, '')}\"",
       data_item_count: 1
     })
   end

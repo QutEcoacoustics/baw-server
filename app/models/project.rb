@@ -5,12 +5,13 @@
 # Table name: projects
 #
 #  id                      :integer          not null, primary key
+#  allow_audio_upload      :boolean          default(FALSE)
 #  allow_original_download :string
 #  deleted_at              :datetime
 #  description             :text
 #  image_content_type      :string
 #  image_file_name         :string
-#  image_file_size         :integer
+#  image_file_size         :bigint
 #  image_updated_at        :datetime
 #  name                    :string           not null
 #  notes                   :text
@@ -37,9 +38,6 @@
 class Project < ApplicationRecord
   extend Enumerize
 
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects, optional: true
@@ -58,6 +56,7 @@ class Project < ApplicationRecord
                     }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
   has_many :regions, inverse_of: :project
+  has_many :harvests, inverse_of: :project
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
   has_many :analysis_jobs, through: :saved_searches
 
@@ -108,7 +107,8 @@ class Project < ApplicationRecord
                       :deleter_id,
                       :deleted_at,
                       :notes,
-                      :allow_original_download],
+                      :allow_original_download,
+                      :allow_audio_upload],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection
@@ -192,7 +192,8 @@ class Project < ApplicationRecord
         owner_ids: Api::Schema.ids(read_only: true),
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels,
-        allow_original_download: Api::Schema.permission_levels
+        allow_original_download: Api::Schema.permission_levels,
+        allow_audio_upload: { type: 'boolean' }
       },
       required: [
         :id,

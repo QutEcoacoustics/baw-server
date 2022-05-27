@@ -68,7 +68,7 @@ module BawWorkers
 
           # apply any fixes that are needed
           fix_log = apply_fixes(file_path)
-          harvest_item.info[:fixes] = fix_log
+          harvest_item.info = harvest_item.info.new(fixes: fix_log)
           harvest_item.save!
 
           # update file info after fixes
@@ -97,7 +97,7 @@ module BawWorkers
           logger.debug(
             'harvest item associated with recording',
             id: harvest_item.id,
-            audio_recording_id: audio_recording_id,
+            audio_recording_id:,
             success: save_result
           )
 
@@ -227,7 +227,7 @@ module BawWorkers
         def create_audio_info_hash(file_info_hash, content_info_hash)
           info = {
             uploader_id: file_info_hash[:uploader_id].to_i,
-            recorded_date: file_info_hash[:recorded_date],
+            recorded_date: file_info_hash[:recorded_date].iso8601(3),
             site_id: file_info_hash[:site_id].to_i,
             duration_seconds: content_info_hash[:duration_seconds].to_f.round(3),
             sample_rate_hertz: content_info_hash[:sample_rate_hertz].to_i,
@@ -255,9 +255,9 @@ module BawWorkers
         # @return [Hash]
         def create_update_hash(uuid, file_hash, status)
           {
-            uuid: uuid,
-            file_hash: file_hash,
-            status: status
+            uuid:,
+            file_hash:,
+            status:
           }
         end
 
@@ -356,7 +356,7 @@ module BawWorkers
 
         def apply_fixes(file_path)
           FIXES.map do |fix_id|
-            logger.debug('Checking if fix needed', fix_id: fix_id)
+            logger.debug('Checking if fix needed', fix_id:)
             result = Emu::Fix.fix_if_needed(Pathname(file_path), fix_id)
             raise 'Failed running EMU, see logs' if result&.success? != true
 

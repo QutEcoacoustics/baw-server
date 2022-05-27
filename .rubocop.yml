@@ -11,18 +11,23 @@ AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
 # Bug in rubocop-rspec config merge: https://github.com/rubocop/rubocop-rspec/pull/1163
-# RSpec:
-#   inherit_mode:
-#     override:
-#       - Merge
-#   Language:
-#     ExampleGroups:
-#       # rswag example group aliases
-#       - path
-#       - get
-#       - push
-#       - post
-#       - delete
+RSpec:
+  Language:
+    ExampleGroups:
+      Regular:
+        # rswag example group aliases
+        - path
+        - get
+        - push
+        - post
+        - delete
+        - stepwise
+    Examples:
+      Regular:
+        # custom dsl for permissions tests
+        - the_users
+        - the_user
+        - step
 
 # Customized options
 Lint/DeprecatedOpenSSLConstant:
@@ -75,6 +80,8 @@ Metrics/BlockLength:
     - factory
     - path
     - Async
+    - aasm
+    - stepwise
 Metrics/MethodLength:
   Max: 30
   IgnoredMethods:

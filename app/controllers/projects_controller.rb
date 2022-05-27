@@ -187,7 +187,10 @@ ORDER BY project_count ASC, s.name ASC")
   private
 
   def project_params
-    params.require(:project).permit(:description, :image, :name, :notes, :urn, :allow_original_download)
+    check_for_allow_audio_upload(params.require(:project)).permit(
+      :description, :image, :name, :notes, :urn, :allow_original_download,
+      :allow_audio_upload
+    )
   end
 
   def access_request_params
@@ -195,10 +198,26 @@ ORDER BY project_count ASC, s.name ASC")
   end
 
   def update_params
-    params.require(:user_ids).permit!
+    check_for_allow_audio_upload(params.require(:user_ids)).permit(
+      :description, :image, :name, :notes, :urn, :allow_original_download,
+      :allow_audio_upload
+    )
   end
 
   def edit_sites_params
-    params.require(:project).permit!
+    params.require(:project).delete(:allow_audio_upload).permit!
+  end
+
+  def check_for_allow_audio_upload(params)
+    # no one is allowed to change allow_audio_upload except an admin
+    return params if Access::Core.is_admin?(Current.user)
+
+    allow_audio_upload = params[:allow_audio_upload]
+    return params if allow_audio_upload.nil?
+
+    # if the value is unmodified, remove it to stop unnecessary errors
+    return params.except(:allow_audio_upload) if allow_audio_upload == @project.allow_audio_upload
+
+    raise CanCan::AccessDenied.new('You are not permitted to modify allow_audio_upload', action_name, @project)
   end
 end

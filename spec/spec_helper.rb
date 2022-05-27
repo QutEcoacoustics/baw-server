@@ -22,6 +22,10 @@
 ENV['RUNNING_RSPEC'] = true.to_s
 RSPEC_ROOT = File.dirname __FILE__
 
+# in order: debase, readapt, ruby/debug, ruby/debug
+# rubocop:disable Lint/Debugger
+DEBUGGING =  defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__) || defined?(debugger)
+
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
@@ -93,9 +97,7 @@ RSpec.configure do |config|
   #config.include FactoryBot::Syntax::Methods
 
   # redirect puts into a text file
-  # in order: debase, readapt, rdbg
-  # rubocop:disable Lint/Debugger
-  if defined?(Debugger) || defined?(Readapt) || defined?(DEBUGGER__) || defined?(debugger)
+  if DEBUGGING
     puts '$stdout and $stderr will NOT be redirected'
   else
     original_stderr = $stderr

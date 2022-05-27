@@ -16,7 +16,7 @@ Goals of capabilities specs is to test capabilities only.
 - should test for various users
 
 
-The specs in this directory use a custom DSL defined by `helpers/capabilities_helper.rb`.
+The specs in this directory use a custom DSL defined by `support/capabilities_helper.rb`.
 
 
 ## Useful filters

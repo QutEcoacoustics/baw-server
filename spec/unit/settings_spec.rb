@@ -160,4 +160,10 @@ describe 'Settings' do
       }.to raise_error(Config::Validation::Error, /active_job_default.queue: must be filled/)
     end
   end
+
+  example 'it reads IP in allow_list as an IPAddr class' do
+    expect(Settings.internal_allow_ips).to all(
+      be_an_instance_of(IPAddr)
+    )
+  end
 end

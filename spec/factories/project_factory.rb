@@ -5,12 +5,13 @@
 # Table name: projects
 #
 #  id                      :integer          not null, primary key
+#  allow_audio_upload      :boolean          default(FALSE)
 #  allow_original_download :string
 #  deleted_at              :datetime
 #  description             :text
 #  image_content_type      :string
 #  image_file_name         :string
-#  image_file_size         :integer
+#  image_file_size         :bigint
 #  image_updated_at        :datetime
 #  name                    :string           not null
 #  notes                   :text
@@ -40,6 +41,7 @@ FactoryBot.define do
     sequence(:description) { |n| "project description #{n}" }
     sequence(:urn) { |n| "urn:project:example.org/project/#{n}" }
     sequence(:notes) { |n| "note number #{n}" }
+    allow_audio_upload { false }
 
     creator
 
@@ -73,7 +75,12 @@ FactoryBot.define do
       end
     end
 
+    trait :with_uploads_enabled do
+      allow_audio_upload { true }
+    end
+
     factory :project_with_sites, traits: [:with_sites]
     factory :project_with_sites_and_saved_searches, traits: [:with_sites, :with_saved_searches]
+    factory :project_with_uploads_enabled, traits: [:with_uploads_enabled]
   end
 end

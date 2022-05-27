@@ -24,9 +24,6 @@
 #  fk_rails_...  (dataset_id => datasets.id)
 #
 class DatasetItem < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relationships
   belongs_to :dataset, inverse_of: :dataset_items
   belongs_to :audio_recording, inverse_of: :dataset_items

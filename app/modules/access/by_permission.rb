@@ -70,6 +70,45 @@ module Access
         end
       end
 
+      # Get all harvests for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels  - defaults to checking owner only
+      # @param [Integer] project_id
+      # @return [ActiveRecord::Relation] harvests
+      def harvests(user, levels: [:owner], project_id: nil)
+        # project can be nil
+        query = Harvest.all
+        query = query.where(project_id:) unless project_id.nil?
+        is_admin, query = permission_admin(user, levels, query)
+
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.joins(:project).where(permissions)
+        end
+      end
+
+      # Get all harvest items for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels  - defaults to checking owner only
+      # @param [Integer] harvest_id
+      # @return [ActiveRecord::Relation] harvest items
+      def harvest_items(user, harvest_id:, levels: [:owner])
+        # project can be nil
+        query = HarvestItem.all
+        # scope to harvest items in the current harvest
+        query = query.where(harvest_id:)
+        is_admin, query = permission_admin(user, levels, query)
+
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.joins(harvest: [:project]).where(permissions)
+        end
+      end
+
       # Get all sites for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels

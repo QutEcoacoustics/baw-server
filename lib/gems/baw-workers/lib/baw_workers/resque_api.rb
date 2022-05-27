@@ -19,6 +19,11 @@ module BawWorkers
       Resque.delayed_queue_schedule_size
     end
 
+    # Deschedule all jobs from the resque scheduler delay queue and run them now.
+    def enqueue_delayed_jobs
+      Resque.enqueue_delayed_selection { |_job| true }
+    end
+
     # Get all currently queued jobs.
     # @return [Array<Hash>]
     def jobs_queued
@@ -72,7 +77,7 @@ module BawWorkers
     def pop(queue_name)
       # bypass our test pause dequeue module
       payload = Resque.respond_to?(:__pop) ? Resque.__pop(queue_name) : Resque.pop(queue_name)
-      Rails.logger.info(payload: payload)
+      Rails.logger.info(payload:)
       deserialize(payload)
     end
 
@@ -156,7 +161,7 @@ module BawWorkers
         BawWorkers::Config.logger_worker.info {
           worker_details = running_workers.map { |worker|
             host, pid, queues = worker.split(':')
-            { host: host, pid: pid, queues: queues }
+            { host:, pid:, queues: }
           }.join(',')
 
           "Resque worker details: #{worker_details}."

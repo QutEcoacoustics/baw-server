@@ -509,6 +509,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Internal routes
+  post '/internal/sftpgo/hook' => 'internal/sftpgo#hook', defaults: { format: 'json' }
+
   # Resource Routes
   # ===============
 
@@ -529,9 +532,13 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: { format: 'json' }
-  match 'projects/:project_id/permissions/filter' => 'permissions#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'projects/:project_id/permissions/filter' => 'permissions#filter', via: [:get, :post],
+    defaults: { format: 'json' }
   match 'projects/:project_id/regions/filter' => 'regions#filter', via: [:get, :post], defaults: { format: 'json' }
   match 'projects/:project_id/sites/filter' => 'sites#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'projects/:project_id/harvests/filter' => 'harvests#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'projects/:project_id/harvests/:harvest_id/items/filter' => 'harvest_items#filter', via: [:get, :post],
+    defaults: { format: 'json' }
 
   # routes for projects and nested resources
   resources :projects do
@@ -565,6 +572,11 @@ Rails.application.routes.draw do
 
     # API only: regions
     resources :regions, except: [:edit], defaults: { format: 'json' }
+
+    # API only: harvests
+    resources :harvests, except: [:edit], defaults: { format: 'json' } do
+      match 'items(/*path)' => 'harvest_items#index', via: [:get], defaults: { format: 'json' }, format: false
+    end
   end
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
@@ -584,7 +596,7 @@ Rails.application.routes.draw do
   # API only for analysis_jobs, analysis_jobs_items and saved_searches
   resources :analysis_jobs, except: [:edit], defaults: { format: 'json' } do
     resources 'audio_recordings', controller: 'analysis_jobs_items', only: [:show, :index, :update],
-                                  defaults: { format: 'json' }, param: :audio_recording_id
+      defaults: { format: 'json' }, param: :audio_recording_id
   end
   resources :saved_searches, except: [:edit, :update], defaults: { format: 'json' }
 
@@ -659,8 +671,16 @@ Rails.application.routes.draw do
 
   resources :sites, except: [:edit], defaults: { format: 'json' }, as: 'shallow_site'
 
+  # shallow regions
   match 'regions/filter' => 'regions#filter', via: [:get, :post], defaults: { format: 'json' }
   resources :regions, except: [:edit], defaults: { format: 'json' }, as: 'shallow_region'
+
+  # shallow harvests
+  match 'harvests/filter' => 'harvests#filter', via: [:get, :post], defaults: { format: 'json' }
+  match 'harvests/:harvest_id/items/filter' => 'harvest_items#filter', via: [:get, :post], defaults: { format: 'json' }
+  resources :harvests, except: [:edit], defaults: { format: 'json' }, as: 'harvest' do
+    match 'items(/*path)' => 'harvest_items#index', via: [:get], defaults: { format: 'json' }, format: false
+  end
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' =>
     'progress_events#create_by_dataset_item_params',
@@ -752,10 +772,10 @@ Rails.application.routes.draw do
   match '*requested_route', to: 'public#cors_preflight', via: :options
 
   # exceptions testing route - only available in test env
-  if ENV['RAILS_ENV'] == 'test'
+  if ENV.fetch('RAILS_ENV', nil) == 'test'
     # via: :all seems to not work any more >:(
     match '/test_exceptions', to: 'errors#test_exceptions',
-                              via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
+      via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
   comfy_route_cms_admin(path: '/admin/cms')

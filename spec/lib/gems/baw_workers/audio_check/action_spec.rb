@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::AudioCheck::Action do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
   let(:queue_name) { Settings.actions.audio_check.queue }
@@ -39,6 +39,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
   pause_all_jobs
 
+  before do
+    clear_original_audio
+  end
+
   context 'queues' do
     after do
       clear_pending_jobs
@@ -58,7 +62,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
 
       job_id1 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
       expect_queue_count(queue_name, 1)
-      expect(job_id1).to match /analysis_job:[a-f0-9]{32}/
+      expect(job_id1).to match(/analysis_job:[a-f0-9]{32}/)
 
       job_id2 = BawWorkers::Jobs::AudioCheck::Action.action_enqueue(test_params)
       expect_queue_count(queue_name, 1)
@@ -253,7 +257,7 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         original_params['recorded_date'] = '2010-02-23 20:42:00+10:00'
 
         # arrange
-        create_original_audio(media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true, true)
 
         # act
         expect {
@@ -285,12 +289,13 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         expect(result.size).to eq(1)
 
         original_possible_paths = audio_original.possible_paths(media_request_params)
-        expect(File.basename(original_possible_paths.first)).to eq('7bb0c719-143f-4373-a724-8138219006d9_100224-0642.ogg')
-        expect(File.basename(original_possible_paths.second)).to eq('7bb0c719-143f-4373-a724-8138219006d9_20100223-204200Z.ogg')
+        expect(File.basename(original_possible_paths.second)).to eq('7bb0c719-143f-4373-a724-8138219006d9_100224-0642.ogg')
+        expect(File.basename(original_possible_paths.third)).to eq('7bb0c719-143f-4373-a724-8138219006d9_20100223-204200Z.ogg')
 
-        expect(result[0][:moved_path]).to eq(File.expand_path(original_possible_paths.second))
+        expect(result[0][:moved_path]).to eq(File.expand_path(original_possible_paths.first))
 
-        expect(File).not_to exist(original_possible_paths.first)
+        expect(File).not_to exist(original_possible_paths.second)
+        expect(File).not_to exist(original_possible_paths.third)
 
         expect_no_sent_mail
       end
@@ -315,9 +320,10 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         expect(result.size).to eq(1)
 
         original_possible_paths = audio_original.possible_paths(media_request_params)
-        expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
+        expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
 
-        expect(File).not_to exist(original_possible_paths.first)
+        expect(File).not_to exist(original_possible_paths.second)
+        expect(File).not_to exist(original_possible_paths.third)
 
         expect_no_sent_mail
       end
@@ -411,9 +417,9 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         expect(result.size).to eq(1)
 
         original_possible_paths = audio_original.possible_paths(media_request_params)
-        expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
+        expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
 
-        expect(File).not_to exist(original_possible_paths.first)
+        expect(File).not_to exist(original_possible_paths.second)
 
         expect(result[0][:api_response]).to eq(:notrequired)
 
@@ -459,9 +465,9 @@ describe BawWorkers::Jobs::AudioCheck::Action do
         expect(result.size).to eq(1)
 
         original_possible_paths = audio_original.possible_paths(media_request_params)
-        expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
+        expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
 
-        expect(File).not_to exist(original_possible_paths.first)
+        expect(File).not_to exist(original_possible_paths.second)
 
         expect(result[0][:api_response]).to eq(:notrequired)
         expect_no_sent_mail
@@ -520,8 +526,8 @@ describe BawWorkers::Jobs::AudioCheck::Action do
           expect(result.size).to eq(1)
 
           original_possible_paths = audio_original.possible_paths(media_request_params)
-          expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
-          expect(File.exist?(original_possible_paths.second)).to be_falsey,
+          expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
+          expect(File.exist?(original_possible_paths.first)).to be_falsey,
             "File should not exist #{original_possible_paths.second}"
 
           expect(login_request).not_to have_been_requested

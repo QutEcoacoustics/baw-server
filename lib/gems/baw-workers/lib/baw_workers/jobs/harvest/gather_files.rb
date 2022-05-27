@@ -49,7 +49,10 @@ module BawWorkers
                           item
                         end
 
-              results.push(*process(item, top_dir, recurse))
+              # we were splatting and pushing results here but that caused a SystemStackError
+              # when too many results were spread into arguments
+              process_results = process(item, top_dir, recurse)
+              results.concat(process_results)
             end
           end
 
@@ -277,7 +280,7 @@ module BawWorkers
               if found_parent && folder_settings[:recursive] != true
                 @logger.warn(
                   'Parent harvest config file is not recursive, it cannot apply to this folder',
-                  parent: file, dir: dir
+                  parent: file, dir:
                 )
                 return {}
               end

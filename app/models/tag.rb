@@ -29,9 +29,6 @@
 class Tag < ApplicationRecord
   extend Enumerize
 
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relations
   has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings

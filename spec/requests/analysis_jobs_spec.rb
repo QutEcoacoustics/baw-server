@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'helpers/resque_helpers'
+require 'support/resque_helpers'
 require 'rspec/mocks'
 
 #
@@ -34,7 +34,7 @@ describe 'Analysis Jobs' do
   }
 
   let!(:script) {
-    FactoryBot.create(
+    create(
       :script,
       creator: admin_user,
       executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
@@ -132,7 +132,7 @@ describe 'Analysis Jobs' do
 
     put update_route, params: {
       analysis_job: {
-        overall_status: overall_status
+        overall_status:
       }
     }, **api_with_body_headers(writer_token)
 
@@ -203,7 +203,7 @@ describe 'Analysis Jobs' do
     # only the harvester user can update job items!
     put update_route, params: {
       analysis_jobs_item: {
-        status: status
+        status:
       }
     }, **api_with_body_headers(harvester_token)
 
@@ -1069,7 +1069,7 @@ describe 'Analysis Jobs' do
           }
         }, 6)
 
-        expect(analysis_job.deleted?).to eq(true)
+        expect(analysis_job.deleted?).to be(true)
       end
 
       it 'will let job items cancel (race conditions, message queue depletion)' do
@@ -1098,7 +1098,7 @@ describe 'Analysis Jobs' do
           }
         }, 6)
 
-        expect(analysis_job.deleted?).to eq(true)
+        expect(analysis_job.deleted?).to be(true)
       end
 
       it 'will let all job items complete (message queue depletion) - but it wont transition to :complete!' do
@@ -1126,7 +1126,7 @@ describe 'Analysis Jobs' do
         }, 6)
 
         expect(analysis_job).to be_suspended
-        expect(analysis_job.deleted?).to eq(true)
+        expect(analysis_job.deleted?).to be(true)
 
         mail = ActionMailer::Base.deliveries.last
         expect(mail['subject'].value).not_to include('Completed analysis job')
@@ -1151,7 +1151,7 @@ describe 'Analysis Jobs' do
 
         analysis_job.reload
 
-        expect(analysis_job.deleted?).to eq(true)
+        expect(analysis_job.deleted?).to be(true)
       end
 
       it 'is :completed when deleted' do

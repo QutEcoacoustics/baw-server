@@ -49,10 +49,10 @@ actions:
     queue: analysis_<%= BawApp.env %>
   harvest:
     queue: harvest_<%= BawApp.env %>
-    dry_run: false
-    to_do_path: <%= BawApp.root %>/tmp/_<%= BawApp.env %>_harvester_to_do_path
+    to_do_path: /data/<%= BawApp.env %>/harvester_to_do
     config_file_name: harvest.yml
-    progressive_upload_directory: ./tmp/_progressive-upload/
+     # 1 week in seconds
+    delete_after: 604800
   media:
     queue: media_<%= BawApp.env %>
     dry_run: false
@@ -104,19 +104,18 @@ devise:
 ##secret_token: some long secret token - at least 30 chars, all random
 ##secret_key_base: some long secret token - at least 30 chars, all random
 paths:
-  image_magick_dir: <%= BawApp.root %>/tmp/_image-magick
   original_audios:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_original_audio
+    - /data/<%= BawApp.env %>/original_audio
   cached_spectrograms:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_spectrogram
+    - /data/<%= BawApp.env %>/cached_spectrogram
   cached_audios:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_audio
+    - /data/<%= BawApp.env %>/cached_audio
   analysis_scripts:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_script
+    - /data/<%= BawApp.env %>/analysis_script
   cached_datasets:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_dataset
+    - /data/<%= BawApp.env %>/cached_dataset
   cached_analysis_jobs:
-    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_results
+    - /data/<%= BawApp.env %>/analysis_results
   worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
   mailer_log_file: <%= BawApp.root %>/log/mailer.<%= BawApp.env %>.log
   audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
@@ -145,6 +144,14 @@ upload_service:
   port: 8080
   username: admin
   password: password
+  sftp_port: 2022
+# Configuration for internal microservices
+internal:
+  # array of IPs that we'll accept connect[ions from
+  # can be any format that IPAddr.new supports
+  allow_list:
+    - 172.0.0.0/8
+
 harvester:
   email: harvester@example.com
   password: password

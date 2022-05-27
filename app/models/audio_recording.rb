@@ -55,9 +55,6 @@ require 'digest/md5'
 class AudioRecording < ApplicationRecord
   extend Enumerize
 
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   attr_reader :overlapping
 
   # relations
@@ -85,12 +82,17 @@ class AudioRecording < ApplicationRecord
 
   # Enums for audio recording status
   # new - record created and passes validation
+  STATUS_NEW = :new
   # uploading - file being copied from source to dest
+  STATUS_UPLOADING = :uploading
   # to_check - uploading is complete - file hash should be compared to hash stored in db
   # ready - audio recording all ready for use on website
+  STATUS_READY = :ready
   # corrupt - file hash check failed, audio recording will not be available
   # aborted - a problem occurred during harvesting or checking, the file needs to be harvested again
-  AVAILABLE_STATUSES_SYMBOLS = [:new, :uploading, :to_check, :ready, :corrupt, :aborted].freeze
+  STATUS_ABORTED = :aborted
+
+  AVAILABLE_STATUSES_SYMBOLS = [STATUS_NEW, STATUS_UPLOADING, :to_check, STATUS_READY, :corrupt, :aborted].freeze
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map(&:to_s)
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
@@ -99,12 +101,16 @@ class AudioRecording < ApplicationRecord
   HASH_TOKEN = '::'
 
   # TODO: clean notes column in db
-  serialize :notes, JSON
+  serialize :notes, JsonTextSerializer
 
   # association validations
-  validates_associated :site
-  validates_associated :uploader
-  validates_associated :creator
+  # AT: disabled... we don't really want to check those models are valid
+  #   I'm pretty sure the intention was to validate the association was set.
+  #   The actual result here is a lot of "x is invalid" messages when associated
+  #   records fail validation even when they haven't been modified.
+  #validates_associated :site
+  #validates_associated :uploader
+  #validates_associated :creator
 
   # attribute validations
   validates :status, inclusion: { in: AVAILABLE_STATUSES }, presence: true
@@ -194,31 +200,6 @@ class AudioRecording < ApplicationRecord
 
   # Get the existing paths for the audio recording file.
   def original_file_paths
-    original_format = '.wv' # pick something
-
-    if !original_file_name.blank?
-      original_format = File.extname(original_file_name)
-    elsif !media_type.blank?
-      original_format = Mime::Type.file_extension_of(media_type)
-    end
-
-    source_existing_paths = []
-    unless original_format.blank?
-      modify_parameters = {
-        uuid:,
-        datetime_with_offset: recorded_date,
-        original_format: original_format_calculated
-      }
-
-      audio_original = BawWorkers::Config.original_audio_helper
-      source_existing_paths = audio_original.existing_paths(modify_parameters)
-    end
-
-    source_existing_paths
-  end
-
-  # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
-  def canonical_filename
     modify_parameters = {
       uuid:,
       datetime_with_offset: recorded_date,
@@ -226,7 +207,19 @@ class AudioRecording < ApplicationRecord
     }
 
     audio_original = BawWorkers::Config.original_audio_helper
-    audio_original.file_name_utc(modify_parameters)
+
+    audio_original.existing_paths(modify_parameters)
+  end
+
+  # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
+  def canonical_filename
+    modify_parameters = {
+      uuid:,
+      original_format: original_format_calculated
+    }
+
+    audio_original = BawWorkers::Config.original_audio_helper
+    audio_original.file_name_uuid(modify_parameters)
   end
 
   # gets a filename that looks nice enough to provide to a user for a file download
@@ -442,6 +435,18 @@ class AudioRecording < ApplicationRecord
           join: Bookmark,
           on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
           available: true
+        },
+        {
+          join: HarvestItem,
+          on: AudioRecording.arel_table[:id].eq(HarvestItem.arel_table[:audio_recording_id]),
+          available: true,
+          associations: [
+            {
+              join: Harvest,
+              on: HarvestItem.arel_table[:harvest_id].eq(Harvest.arel_table[:id]),
+              available: true
+            }
+          ]
         }
       ]
     }

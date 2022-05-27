@@ -7,6 +7,8 @@ class ApplicationRecord < ActiveRecord::Base
   include AlphabeticalPaginatorQuery
   include RendersMarkdown
   include TimestampHelpers
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
 
   # Like `pick` except it accepts a hash of attributes and returns
   # picked values in a hash with the same keys.

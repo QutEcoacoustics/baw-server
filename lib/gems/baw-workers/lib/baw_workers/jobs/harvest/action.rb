@@ -11,11 +11,11 @@ module BawWorkers
         perform_expects Integer, String
 
         # Perform work. Used by Resque.
-        # @param [Integer] harvest_id
+        # @param [Integer] harvest_item_id
         # @param [String] harvest_path
         # @return [Array<Hash>] array of hashes representing operations performed
-        def perform(harvest_id, rel_path)
-          item = HarvestItem.find(harvest_id)
+        def perform(harvest_item_id, rel_path)
+          item = HarvestItem.find(harvest_item_id)
 
           action_run(item, rel_path)
         end
@@ -23,7 +23,6 @@ module BawWorkers
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_run(item, path)
           real_path = Enqueue.root_to_do_path / path
-          item.info ||= {}
 
           logger.info('Started harvest')
 
@@ -34,7 +33,7 @@ module BawWorkers
             # TODO: this will need to be fixed, root to do path allows a job to get harvest.ymls for files outside
             # of the scope for which it was enqueued
             file_info = gather_files.file(real_path, Enqueue.root_to_do_path, {})
-            item.info[:file_info] = file_info
+            item.info = item.info.new(file_info:)
 
             unless file_info.values_at(:project_id, :site_id, :uploader_id).all?
               raise BawWorkers::Exceptions::HarvesterError,
@@ -45,14 +44,13 @@ module BawWorkers
           rescue StandardError => e
             logger.error(name, exception: e)
 
-            item.info[:error] = e.message
+            item.add_to_error(e.message)
             item.status = one_of_our_exceptions(e) ? HarvestItem::STATUS_FAILED : HarvestItem::STATUS_ERRORED
             item.save!
             failed!(e.message)
           end
 
-          logger.info('Completed harvest', result: result)
-          item.info[:error] = nil
+          logger.info('Completed harvest', result:)
           item.status = HarvestItem::STATUS_COMPLETED
           item.save
           result
@@ -71,7 +69,7 @@ module BawWorkers
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def self.action_enqueue(harvest_params)
-          result = BawWorkers::Jobs::Harvest::Action.create(harvest_params: harvest_params)
+          result = BawWorkers::Jobs::Harvest::Action.create(harvest_params:)
           BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using #{harvest_params}."
           end

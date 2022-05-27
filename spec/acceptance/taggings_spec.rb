@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def audio_recording_params
   parameter :audio_recording_id, 'Accessed audio recording ID (in path/route)', required: true
@@ -47,7 +46,9 @@ resource 'Taggings' do
   # Create post parameters from factory
   let(:post_attributes) { { tag_id: existing_tag.id } }
   let(:post_nested_attributes) { { 'tag_attributes' => FactoryBot.attributes_for(:tag) } }
-  let(:post_invalid_nested_attributes) { { 'tag_attributes' => FactoryBot.attributes_for(:tag, type_of_tag: 'invalid value') } }
+  let(:post_invalid_nested_attributes) {
+    { 'tag_attributes' => FactoryBot.attributes_for(:tag, type_of_tag: 'invalid value') }
+  }
 
   ################################
   # LIST
@@ -56,36 +57,47 @@ resource 'Taggings' do
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
     audio_recording_params
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'LIST (as writer, with shallow path)', :ok, { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
+
+    standard_request_options(:get, 'LIST (as writer, with shallow path)', :ok,
+      { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
     audio_recording_params
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as reader, with shallow path)', :ok, { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
+
+    standard_request_options(:get, 'LIST (as reader, with shallow path)', :ok,
+      { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
     audio_recording_params
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'LIST (as no access user, with shallow path)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+
+    standard_request_options(:get, 'LIST (as no access user, with shallow path)', :forbidden,
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/user_accounts/:user_id/taggings' do
     user_params
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as reader, user taggings)', :ok, { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
+
+    standard_request_options(:get, 'LIST (as reader, user taggings)', :ok,
+      { expected_json_path: 'data/0/tag_id', data_item_count: 1 })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
     audio_recording_params
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'LIST (with invalid token, with shallow path)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
+
+    standard_request_options(:get, 'LIST (with invalid token, with shallow path)', :unauthorized,
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
     audio_recording_params
-    standard_request_options(:get, 'LIST (as anonymous user, with shallow path)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
+    standard_request_options(:get, 'LIST (as anonymous user, with shallow path)', :unauthorized,
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -95,30 +107,37 @@ resource 'Taggings' do
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     body_params
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok, { expected_json_path: 'data/tag_id' })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     body_params
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok, { expected_json_path: 'data/tag_id' })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     body_params
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (as no access user, with shallow path)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
+
+    standard_request_options(:get, 'SHOW (as no access user, with shallow path)', :forbidden,
+      { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     body_params
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (with invalid token, with shallow path)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
+
+    standard_request_options(:get, 'SHOW (with invalid token, with shallow path)', :unauthorized,
+      { expected_json_path: get_json_error_path(:sign_in) })
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     body_params
-    standard_request_options(:get, 'SHOW (as anonymous user, with shallow path)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
+    standard_request_options(:get, 'SHOW (as anonymous user, with shallow path)', :unauthorized,
+      { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -133,7 +152,9 @@ resource 'Taggings' do
     let(:raw_post) { { 'tagging' => post_attributes }.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (with tag_id as writer, with shallow path)', :created, { expected_json_path: 'data/tag_id' })
+
+    standard_request_options(:post, 'CREATE (with tag_id as writer, with shallow path)', :created,
+      { expected_json_path: 'data/tag_id' })
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -145,7 +166,9 @@ resource 'Taggings' do
     let(:raw_post) { { 'tagging' => post_nested_attributes }.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (with tag_attributes as writer, with shallow path)', :created, { expected_json_path: 'data/tag_id' })
+
+    standard_request_options(:post, 'CREATE (with tag_attributes as writer, with shallow path)', :created,
+      { expected_json_path: 'data/tag_id' })
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -158,8 +181,9 @@ resource 'Taggings' do
 
     let(:authentication_token) { writer_token }
     # 0 - index in array
+
     standard_request_options(:post, 'CREATE (invalid tag_attributes as writer, with shallow path)', :unprocessable_entity,
-                             { expected_json_path: 'type_of_tag', response_body_content: '"is not included in the list"' })
+      { expected_json_path: 'type_of_tag', response_body_content: '"is not included in the list"' })
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -168,7 +192,10 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:raw_post) { { tagging: { tag_attributes: { is_taxonomic: false, text: existing_tag.text, type_of_tag: 'looks like', retired: false } } }.to_json }
+    let(:raw_post) {
+      { tagging: { tag_attributes: { is_taxonomic: false, text: existing_tag.text, type_of_tag: 'looks like',
+                                     retired: false } } }.to_json
+    }
 
     let(:authentication_token) { writer_token }
 
@@ -183,7 +210,7 @@ resource 'Taggings' do
     #  response_body.should have_json_path('2/is_taxonomic')
     #end
     standard_request_options(:post, 'CREATE (with tag_attributes but existing tag text as writer, with shallow path)', :created,
-                             { expected_json_path: 'data/tag_id' })
+      { expected_json_path: 'data/tag_id' })
   end
 
   #####################
@@ -204,12 +231,13 @@ resource 'Taggings' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader, with projection)', :ok,
-                             {
-                               expected_json_path: 'data/0/audio_event_id',
-                               data_item_count: 1,
-                               response_body_content: '"filter":{"audio_event_id":{"gt":0}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
-                             })
+      {
+        expected_json_path: 'data/0/audio_event_id',
+        data_item_count: 1,
+        response_body_content: '"filter":{"audio_event_id":{"gt":0}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+      })
   end
 
   post '/taggings/filter' do
@@ -226,11 +254,12 @@ resource 'Taggings' do
         }
       }.to_json
     }
+
     standard_request_options(:post, 'FILTER (as reader, with projection for associated table)', :ok,
-                             {
-                               expected_json_path: 'data/0/audio_event_id',
-                               data_item_count: 1,
-                               response_body_content: '"filter":{"audio_events.is_reference":{"eq":false}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
-                             })
+      {
+        expected_json_path: 'data/0/audio_event_id',
+        data_item_count: 1,
+        response_body_content: '"filter":{"audio_events.is_reference":{"eq":false}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+      })
   end
 end

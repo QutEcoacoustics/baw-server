@@ -33,9 +33,6 @@
 #  audio_events_updater_id_fk          (updater_id => users.id)
 #
 class AudioEvent < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings, inverse_of: :audio_event, strict_loading: false

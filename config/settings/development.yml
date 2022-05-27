@@ -11,20 +11,20 @@ google_maps:
   api_key: ~
 paths:
   original_audios:
-    - tmp/_development_original_audio
-    - tmp/_test_original_audio
+    - /data/development/original_audio
+    - /data/test/original_audio
   cached_spectrograms:
-    - tmp/_development_cached_spectrogram
-    - tmp/_test_cached_spectrogram
+    - /data/development/cached_spectrogram
+    - /data/test/cached_spectrogram
   cached_audios:
-    - tmp/_development_cached_audio
-    - tmp/_test_cached_audio
+    - /data/development/cached_audio
+    - /data/test/cached_audio
   analysis_scripts:
-    - tmp/_development_analysis_script
-    - tmp/_test_analysis_script
+    - /data/development/analysis_script
+    - /data/test/analysis_script
   cached_datasets:
-    - tmp/_development_cached_dataset
-    - tmp/_test_cached_dataset
+    - /data/development/cached_dataset
+    - /data/test/cached_dataset
   cached_analysis_jobs:
-    - tmp/_development_analysis_results
-    - tmp/_test_analysis_results
+    - /data/development/analysis_results
+    - /data/test/analysis_results

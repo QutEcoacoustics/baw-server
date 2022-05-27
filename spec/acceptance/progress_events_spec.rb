@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def progress_event_id_param
   parameter :progress_event_id, 'Progress Event id in request url', required: true
@@ -57,6 +57,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'INDEX (as admin)',
@@ -70,21 +71,25 @@ resource 'ProgressEvents' do
 
   get '/progress_events' do
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'INDEX (as owner)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'INDEX (as writer)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (as reader)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'INDEX (as no access user)',
@@ -95,6 +100,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'INDEX (invalid token)',
@@ -118,6 +124,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'INDEX (as harvester)',
@@ -138,6 +145,7 @@ resource 'ProgressEvents' do
     body_params
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :post,
       'CREATE (as admin)',
@@ -151,6 +159,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { owner_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (as owner)',
@@ -164,6 +173,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { writer_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (as writer)',
@@ -177,6 +187,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { reader_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (as reader)',
@@ -190,6 +201,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { no_access_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (no access user)',
@@ -203,6 +215,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { invalid_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (invalid token)',
@@ -215,6 +228,7 @@ resource 'ProgressEvents' do
     body_params
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (as anonymous user)',
@@ -228,6 +242,7 @@ resource 'ProgressEvents' do
     let(:raw_post) { { 'progress_event' => post_attributes }.to_json }
     let(:authentication_token) { harvester_token }
     let(:dataset_item_id) { dataset_item.id }
+
     standard_request_options(
       :post,
       'CREATE (as harvester)',
@@ -255,12 +270,13 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { admin_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
 
       standard_request_options(
         :post,
@@ -272,12 +288,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { owner_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (as owner)',
@@ -288,12 +306,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { writer_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (as writer)',
@@ -304,12 +324,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { reader_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (as reader)',
@@ -320,12 +342,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { no_access_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (as no access user)',
@@ -336,12 +360,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { invalid_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (invalid token)',
@@ -357,6 +383,7 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
       standard_request_options(
         :post,
         'CREATE (anonymous user)',
@@ -367,12 +394,14 @@ resource 'ProgressEvents' do
 
     post create_by_dataset_item_params_url do
       let(:authentication_token) { harvester_token }
-      body_params_2
       let(:raw_post) { { 'progress_event' => post_attributes_2 }.to_json }
       let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
+
+      body_params_2
+
       standard_request_options(
         :post,
         'CREATE (as harvester)',
@@ -388,6 +417,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'NEW (as admin)',
@@ -398,6 +428,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { owner_token }
+
     standard_request_options(
       :get,
       'NEW (as owner)',
@@ -408,6 +439,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(
       :get,
       'NEW (as writer)',
@@ -418,6 +450,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :get,
       'NEW (as reader)',
@@ -428,6 +461,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'NEW (as reader)',
@@ -438,6 +472,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'NEW (with invalid token)',
@@ -457,6 +492,7 @@ resource 'ProgressEvents' do
 
   get '/progress_events/new' do
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'NEW (as harvester)',
@@ -475,6 +511,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :get,
       'SHOW (as admin)',
@@ -487,6 +524,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(
       :get,
       'SHOW (as owner)',
@@ -499,6 +537,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(
       :get,
       'SHOW (as writer)',
@@ -511,6 +550,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :get,
       'SHOW (as reader)',
@@ -523,6 +563,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'SHOW (as no access user)',
@@ -536,6 +577,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event_for_no_access_user.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :get,
       'SHOW (as no access user on progress event created by this user)',
@@ -548,6 +590,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { no_access_progress_event.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(
       :get,
       'SHOW (as no access user) 2',
@@ -560,6 +603,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :get,
       'SHOW (with invalid token)',
@@ -571,6 +615,7 @@ resource 'ProgressEvents' do
   get '/progress_events/:id' do
     progress_event_id_param
     let(:id) { progress_event.id }
+
     standard_request_options(
       :get,
       'SHOW (an anonymous user)',
@@ -583,6 +628,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :get,
       'SHOW (an anonymous user)',
@@ -735,6 +781,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     let(:id) { progress_event.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(
       :delete,
       'DELETE (as admin user)',
@@ -750,6 +797,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(
       :delete,
       'DELETE (as owner)',
@@ -762,6 +810,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(
       :delete,
       'DELETE (as writer)',
@@ -774,6 +823,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(
       :delete,
       'DELETE (as reader)',
@@ -787,6 +837,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :delete,
       'DELETE (as no access user)',
@@ -801,6 +852,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event_for_no_access_user.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(
       :delete,
       'DELETE (as no access user)',
@@ -814,6 +866,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(
       :delete,
       'DELETE (as invalid token)',
@@ -826,6 +879,7 @@ resource 'ProgressEvents' do
     progress_event_id_param
     body_params
     let(:id) { progress_event.id }
+
     standard_request_options(
       :delete,
       'DELETE (as not logged in)',
@@ -839,6 +893,7 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { harvester_token }
+
     standard_request_options(
       :delete,
       'DELETE (as harvester)',
@@ -862,6 +917,7 @@ resource 'ProgressEvents' do
     # admin finds all items (1 full page)
     post '/progress_events/filter' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :post,
         'FILTER (as admin)',
@@ -878,6 +934,7 @@ resource 'ProgressEvents' do
     post '/progress_events/filter' do
       let(:authentication_token) { admin_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(
         :post,
         'FILTER (as admin)',
@@ -902,18 +959,21 @@ resource 'ProgressEvents' do
     post '/progress_events/filter' do
       let(:authentication_token) { owner_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(:post, 'FILTER (as owner)', :ok, regular_user_opts)
     end
 
     post '/progress_events/filter' do
       let(:authentication_token) { writer_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(:post, 'FILTER (as writer)', :ok, regular_user_opts)
     end
 
     post '/progress_events/filter' do
       let(:authentication_token) { reader_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(:post, 'FILTER (as reader)', :ok, regular_user_opts)
     end
 
@@ -922,6 +982,7 @@ resource 'ProgressEvents' do
     # they are creator
     post '/progress_events/filter' do
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :post,
         'FILTER (as no access)',
@@ -933,6 +994,7 @@ resource 'ProgressEvents' do
     post '/progress_events/filter' do
       let(:authentication_token) { invalid_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(
         :post,
         'FILTER (as invalid token)',
@@ -944,6 +1006,7 @@ resource 'ProgressEvents' do
     # not logged in users can filter dataset items, but they won't get any items that they don't have permission for
     post '/progress_events/filter' do
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(
         :post,
         'FILTER (as not logged in)',
@@ -955,6 +1018,7 @@ resource 'ProgressEvents' do
     post '/progress_events/filter' do
       let(:authentication_token) { harvester_token }
       let(:raw_post) { { 'paging' => { 'items' => 100 } }.to_json }
+
       standard_request_options(
         :post,
         'FILTER (as harvester)',
@@ -979,6 +1043,7 @@ resource 'ProgressEvents' do
           }
         }.to_json
       }
+
       standard_request_options(
         :post,
         'FILTER (as reader) where activity is "viewed"',
@@ -1008,6 +1073,7 @@ resource 'ProgressEvents' do
           }
         }.to_json
       }
+
       standard_request_options(
         :post,
         'FILTER (as admin) where creator is owner or writer',
@@ -1032,6 +1098,7 @@ resource 'ProgressEvents' do
           }
         }.to_json
       }
+
       standard_request_options(
         :post,
         'FILTER (as reader) by dataset id',

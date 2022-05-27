@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe SitesController, type: :routing do
+describe RegionsController, type: :routing do
   describe :routing do
     it { expect(post('projects/1/regions')).to route_to('regions#create', project_id: '1', format: 'json') }
     it { expect(get('projects/1/regions/new')).to route_to('regions#new', project_id: '1', format: 'json') }

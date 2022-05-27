@@ -9,6 +9,21 @@ module BawWorkers
       #   include Dry::Types
       include ::Dry.Types
 
+      ID = Strict::Integer.constrained(gteq: 0)
+      NATURAL = Strict::Integer.constrained(gteq: 0)
+
+      DirectoryString = Strict::String.constructor { |item|
+        item.ends_with?('/') ? item : "#{item}/"
+      }
+      TrimmedDirectoryString = Strict::String.constructor { |item|
+        next item if item.nil?
+
+        item = item.ends_with?('/') ? item.slice(..-2) : item.to_s
+        item.start_with?('/') ? item.slice(1..) : item
+      }
+
+      UtcOffsetString = Strict::String.constrained(format: BawWorkers::FileInfo::UTC_OFFSET_REGEX)
+
       StrictSymbolizingHash = Types::Hash.schema({}).strict.with_key_transform(&:to_sym)
 
       Statuses = String.enum(
@@ -35,6 +50,12 @@ module BawWorkers
         gteq: 0,
         lt: 16
       )
+
+      DeeplySymbolizedHash = Types::Hash.constructor { |item|
+        raise ArgumentError, 'value must be a Hash' unless item.is_a?(::Hash)
+
+        item.deep_symbolize_keys
+      }
     end
   end
 end

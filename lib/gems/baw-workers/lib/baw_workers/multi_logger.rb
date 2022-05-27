@@ -40,7 +40,7 @@ module BawWorkers
     def attach(logger)
       unless logger.is_a?(::Logger) || logger.is_a?(SemanticLogger::Logger)
         raise ArgumentError,
-              "Must be a Logger, given #{logger.inspect}."
+          "Must be a Logger, given #{logger.inspect}."
       end
 
       logger.formatter = CustomFormatter.new if logger.respond_to?(:formatter=)
@@ -48,9 +48,9 @@ module BawWorkers
     end
 
     # Methods that write to logs just write to each contained logger in turn
-    def add(severity, message = nil, progname = nil, &block)
+    def add(severity, message = nil, progname = nil, &)
       @loggers.each do |logger|
-        logger.add(severity, message, progname, &block) if logger.respond_to?(:add)
+        logger.add(severity, message, progname, &) if logger.respond_to?(:add)
       end
     end
     alias log add
@@ -61,39 +61,39 @@ module BawWorkers
       end
     end
 
-    def debug(progname = nil, &block)
+    def debug(progname = nil, &)
       @loggers.each do |logger|
-        logger.debug(progname, &block) if logger.respond_to?(:debug)
+        logger.debug(progname, &) if logger.respond_to?(:debug)
       end
     end
 
-    def info(progname = nil, &block)
+    def info(progname = nil, &)
       @loggers.each do |logger|
-        logger.info(progname, &block) if logger.respond_to?(:info)
+        logger.info(progname, &) if logger.respond_to?(:info)
       end
     end
 
-    def warn(progname = nil, &block)
+    def warn(progname = nil, &)
       @loggers.each do |logger|
-        logger.warn(progname, &block) if logger.respond_to?(:warn)
+        logger.warn(progname, &) if logger.respond_to?(:warn)
       end
     end
 
-    def error(progname = nil, &block)
+    def error(progname = nil, &)
       @loggers.each do |logger|
-        logger.error(progname, &block) if logger.respond_to?(:error)
+        logger.error(progname, &) if logger.respond_to?(:error)
       end
     end
 
-    def fatal(progname = nil, &block)
+    def fatal(progname = nil, &)
       @loggers.each do |logger|
-        logger.fatal(progname, &block) if logger.respond_to?(:fatal)
+        logger.fatal(progname, &) if logger.respond_to?(:fatal)
       end
     end
 
-    def unknown(progname = nil, &block)
+    def unknown(progname = nil, &)
       @loggers.each do |logger|
-        logger.unknown(progname, &block) if logger.respond_to?(:unknown)
+        logger.unknown(progname, &) if logger.respond_to?(:unknown)
       end
     end
 
@@ -204,9 +204,9 @@ module BawWorkers
     end
 
     # Any method not defined on standard Logger class, just send it on to anyone who will listen
-    def method_missing(name, *args, &block)
+    def method_missing(name, *args, &)
       @loggers.each do |logger|
-        logger.send(name, args, &block) if logger.respond_to?(name)
+        logger.send(name, args, &) if logger.respond_to?(name)
       end
     end
 

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def sites_project_id_param
   parameter :project_id, 'Site project id in request url', required: true
@@ -62,43 +61,49 @@ resource 'Sites' do
 
   get '/sites' do
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'INDEX (shallow route, as admin)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/sites' do
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'INDEX (shallow route, as owner)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/sites' do
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'INDEX (shallow route, as writer)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/sites' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (shallow route, as reader)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/sites' do
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (shallow route, has parameters, as reader)', :ok,
-                             expected_json_path: expected_paths, data_item_count: 1)
+      expected_json_path: expected_paths, data_item_count: 1)
   end
 
   get '/sites' do
     let(:authentication_token) { invalid_token }
+
     standard_request_options(:get, 'INDEX (shallow route, invalid token)', :unauthorized,
-                             expected_json_path: get_json_error_path(:sign_in))
+      expected_json_path: get_json_error_path(:sign_in))
   end
 
   get '/sites' do
     standard_request_options(:get, 'INDEX (shallow route, as anonymous user)', :ok,
-                             remove_auth: true, response_body_content: '200', data_item_count: 0)
+      remove_auth: true, response_body_content: '200', data_item_count: 0)
   end
 
   ################################
@@ -109,63 +114,71 @@ resource 'Sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'INDEX (as admin)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'INDEX (as owner)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'INDEX (as writer)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (as reader)', :ok,
-                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+      expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'INDEX (has parameters, as reader)', :ok,
-                             expected_json_path: expected_paths, data_item_count: 1)
+      expected_json_path: expected_paths, data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:get, 'INDEX (as other)', :forbidden,
-                             expected_json_path: get_json_error_path(:permissions))
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
+
     standard_request_options(:get, 'INDEX (invalid token)', :unauthorized,
-                             expected_json_path: get_json_error_path(:sign_in))
+      expected_json_path: get_json_error_path(:sign_in))
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
+
     standard_request_options(:get, 'INDEX (as anonymous user)', :unauthorized,
-                             remove_auth: true, expected_json_path: get_json_error_path(:sign_in))
+      remove_auth: true, expected_json_path: get_json_error_path(:sign_in))
   end
 
   ################################
@@ -175,41 +188,49 @@ resource 'Sites' do
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'NEW (as admin)', :ok, expected_json_path: 'data/longitude')
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'NEW (as owner)', :ok, expected_json_path: 'data/longitude')
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'NEW (as writer)', :ok, expected_json_path: 'data/longitude')
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'NEW (as reader)', :ok, expected_json_path: 'data/longitude')
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
+
     standard_request_options(:get, 'NEW (as no access user)', :ok, expected_json_path: 'data/longitude')
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'NEW (invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:get, 'NEW (invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
+
     standard_request_options(:get, 'NEW (as anonymous user)', :ok, expected_json_path: 'data/longitude')
   end
 
@@ -222,6 +243,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { admin_token }
     let(:raw_post) { { site: post_attributes }.to_json }
+
     standard_request_options(:post, 'CREATE (as admin)', :created, expected_json_path: 'data/project_ids')
   end
 
@@ -231,6 +253,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { owner_token }
     let(:raw_post) { { site: post_attributes }.to_json }
+
     standard_request_options(:post, 'CREATE (as owner)', :created, expected_json_path: 'data/project_ids')
   end
 
@@ -240,7 +263,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:post, 'CREATE (as writer)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:post, 'CREATE (as writer)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   post '/projects/:project_id/sites' do
@@ -249,7 +274,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:post, 'CREATE (as reader)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:post, 'CREATE (as reader)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   post '/projects/:project_id/sites' do
@@ -258,7 +285,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:post, 'CREATE (as other)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:post, 'CREATE (as other)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   post '/projects/:project_id/sites' do
@@ -267,7 +296,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   post '/projects/:project_id/sites' do
@@ -276,7 +307,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:post, 'CREATE (as anonymous user', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:post, 'CREATE (as anonymous user', :unauthorized, remove_auth: true,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   ################################
@@ -288,6 +321,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'SHOW (nested route, as admin)', :ok, expected_json_path: 'data/location_obfuscated')
   end
 
@@ -297,6 +331,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'SHOW (nested route, as owner)', :ok, expected_json_path: 'data/location_obfuscated')
   end
 
@@ -306,7 +341,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'SHOW (nested route, as writer)', :ok, expected_json_path: 'data/location_obfuscated')
+
+    standard_request_options(:get, 'SHOW (nested route, as writer)', :ok,
+      expected_json_path: 'data/location_obfuscated')
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -315,7 +352,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (nested route, as reader)', :ok, expected_json_path: 'data/location_obfuscated')
+
+    standard_request_options(:get, 'SHOW (nested route, as reader)', :ok,
+      expected_json_path: 'data/location_obfuscated')
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -324,7 +363,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (nested route, as other)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:get, 'SHOW (nested route, as other)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -333,7 +374,9 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -341,7 +384,9 @@ resource 'Sites' do
     sites_id_param
     let(:project_id) { project.id }
     let(:id) { site.id }
-    standard_request_options(:get, 'SHOW (nested route, as anonymous user)', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:get, 'SHOW (nested route, as anonymous user)', :unauthorized, remove_auth: true,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   ################################
@@ -351,6 +396,7 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { admin_token }
+
     standard_request_options(:get, 'SHOW (shallow route, as admin)', :ok, expected_json_path: 'data/project_ids')
   end
 
@@ -358,6 +404,7 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { owner_token }
+
     standard_request_options(:get, 'SHOW (shallow route, as owner)', :ok, expected_json_path: 'data/project_ids')
   end
 
@@ -365,6 +412,7 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { writer_token }
+
     standard_request_options(:get, 'SHOW (shallow route, as writer)', :ok, expected_json_path: 'data/project_ids')
   end
 
@@ -372,6 +420,7 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { reader_token }
+
     standard_request_options(:get, 'SHOW (shallow route, as reader)', :ok, expected_json_path: 'data/custom_longitude')
   end
 
@@ -379,20 +428,26 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (shallow route, as reader)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:get, 'SHOW (shallow route, as reader)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   get '/sites/:id' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (shallow route, with invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:get, 'SHOW (shallow route, with invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   get '/sites/:id' do
     sites_id_param
     let(:id) { site.id }
-    standard_request_options(:get, 'SHOW (shallow route, as anonymous user)', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:get, 'SHOW (shallow route, as anonymous user)', :unauthorized, remove_auth: true,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   ################################
@@ -402,7 +457,9 @@ resource 'Sites' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { admin_token }
-    check_site_lat_long_response('SHOW (shallow, latitude and longitude should NOT be obfuscated, as admin)', 200, false)
+
+    check_site_lat_long_response('SHOW (shallow, latitude and longitude should NOT be obfuscated, as admin)', 200,
+      false)
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -411,13 +468,16 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:authentication_token) { writer_token }
-    check_site_lat_long_response('SHOW (nested, latitude and longitude should NOT be obfuscated, as writer)', 200, false)
+
+    check_site_lat_long_response('SHOW (nested, latitude and longitude should NOT be obfuscated, as writer)', 200,
+      false)
   end
 
   get '/sites/:id' do
     sites_id_param
     let(:id) { site.id }
     let(:authentication_token) { reader_token }
+
     check_site_lat_long_response('SHOW (shallow, latitude and longitude should be obfuscated, as reader)', 200, true)
   end
 
@@ -454,7 +514,8 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:raw_post) { { site: post_attributes }.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+    standard_request_options(:put, 'UPDATE (as writer)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -465,7 +526,8 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:raw_post) { { site: post_attributes }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -476,7 +538,8 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:raw_post) { { site: post_attributes }.to_json }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+    standard_request_options(:put, 'UPDATE (as other user)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -487,7 +550,8 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:raw_post) { { site: post_attributes }.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -497,7 +561,8 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:id) { site.id }
     let(:raw_post) { { site: post_attributes }.to_json }
-    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_up))
+    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, remove_auth: true,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   ################################
@@ -510,7 +575,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, expected_response_has_content: false, expected_response_content_type: nil)
+
+    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, expected_response_has_content: false,
+      expected_response_content_type: nil)
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -519,7 +586,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { owner_token }
-    standard_request_options(:delete, 'DESTROY (as owner)', :no_content, expected_response_has_content: false, expected_response_content_type: nil)
+
+    standard_request_options(:delete, 'DESTROY (as owner)', :no_content, expected_response_has_content: false,
+      expected_response_content_type: nil)
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -528,7 +597,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -537,7 +608,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -546,7 +619,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+
+    standard_request_options(:delete, 'DESTROY (as other)', :forbidden,
+      expected_json_path: get_json_error_path(:permissions))
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -555,7 +630,9 @@ resource 'Sites' do
     let(:id) { site.id }
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   delete '/projects/:project_id/sites/:id' do
@@ -563,7 +640,9 @@ resource 'Sites' do
     sites_project_id_param
     let(:id) { site.id }
     let(:project_id) { project.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user)', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_up))
+
+    standard_request_options(:delete, 'DESTROY (as anonymous user)', :unauthorized, remove_auth: true,
+      expected_json_path: get_json_error_path(:sign_up))
   end
 
   #####################
@@ -584,6 +663,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, as reader)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -608,6 +688,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -629,6 +710,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, project ids, as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -653,6 +735,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, audio recordings id, as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -678,6 +761,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, as writer checking for timezone info)', :ok,
       expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
@@ -701,6 +785,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, as writer ensuring site timezone is valid)', :ok,
       data_item_count: 2,
@@ -711,7 +796,8 @@ resource 'Sites' do
   post '/sites/filter' do
     let!(:create_anon_access_project_with_site) {
       project = FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
-      FactoryBot.create(:permission, creator: owner_user, user: nil, project: project, allow_anonymous: true, level: 'reader')
+      FactoryBot.create(:permission, creator: owner_user, user: nil, project:, allow_anonymous: true,
+        level: 'reader')
       site = FactoryBot.build(:site, creator: owner_user)
       site.id = 99_998_712
       site.projects << project
@@ -724,6 +810,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (shallow route, as anonymous user)', :ok,
       remove_auth: true,
@@ -753,6 +840,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (as reader)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -779,6 +867,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -802,6 +891,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (project ids, as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -828,6 +918,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (audio recordings id, as writer)', :ok,
       expected_json_path: 'data/0/project_ids/0',
@@ -855,6 +946,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (as writer checking for timezone info)', :ok,
       expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
@@ -880,6 +972,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (as writer ensuring site timezone is valid)', :ok,
       data_item_count: 2,
@@ -892,7 +985,8 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let!(:create_anon_access_project_with_site) {
       project = FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
-      FactoryBot.create(:permission, creator: owner_user, user: nil, project: project, allow_anonymous: true, level: 'reader')
+      FactoryBot.create(:permission, creator: owner_user, user: nil, project:, allow_anonymous: true,
+        level: 'reader')
       site = FactoryBot.build(:site, creator: owner_user)
       site.id = 99_998_712
       site.projects << project
@@ -905,6 +999,7 @@ resource 'Sites' do
         }
       }.to_json
     }
+
     standard_request_options(
       :post, 'FILTER (as anonymous user)', :unauthorized,
       expected_json_path: get_json_error_path(:sign_in)

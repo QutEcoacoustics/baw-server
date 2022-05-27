@@ -29,9 +29,6 @@
 #  scripts_group_id_fk    (group_id => scripts.id)
 #
 class Script < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
   has_many :analysis_jobs, inverse_of: :script

@@ -16,7 +16,7 @@
 #  failed_attempts        :integer          default(0)
 #  image_content_type     :string
 #  image_file_name        :string
-#  image_file_size        :integer
+#  image_file_size        :bigint
 #  image_updated_at       :datetime
 #  invitation_token       :string
 #  last_seen_at           :datetime
@@ -47,22 +47,22 @@
 describe User, type: :model do
   it 'errors on invalid timezone' do
     expect {
-      FactoryBot.create(:user, tzinfo_tz: 'blah')
+      create(:user, tzinfo_tz: 'blah')
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognized timezone ('blah')")
   end
 
   it 'is valid for a valid timezone' do
-    expect(FactoryBot.create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+    expect(create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
   it 'is valid for a nil tzinfo' do
-    expect(FactoryBot.create(:user, tzinfo_tz: nil)).to be_valid
+    expect(create(:user, tzinfo_tz: nil)).to be_valid
   end
 
   # see https://github.com/QutBioacoustics/baw-server/issues/270
   # We store friendly values
   it 'does not allow bad tz_info' do
-    user = FactoryBot.create(:user)
+    user = create(:user)
 
     user.tzinfo_tz = 'Australia/fsdjljfssl'
     user.rails_tz = 'Sydney'
@@ -79,11 +79,13 @@ describe User, type: :model do
   it { is_expected.to have_many(:created_regions) }
   it { is_expected.to have_many(:updated_regions) }
   it { is_expected.to have_many(:deleted_regions) }
+  it { is_expected.to have_many(:created_harvests) }
+  it { is_expected.to have_many(:updated_harvests) }
   it { is_expected.to have_one(:statistics) }
 
   context 'when using the recently seen scope' do
     KEYS = [:last_seen_at, :current_sign_in_at, :last_sign_in_at].freeze
-    subject(:user) { FactoryBot.create(:user) }
+    subject(:user) { create(:user) }
 
     before do
       old = 2.months.ago
@@ -111,4 +113,10 @@ describe User, type: :model do
   # it { should validate_attachment_content_type(:image)
   #                 .allowing('image/gif', 'image/jpeg', 'image/jpg','image/png', 'image/x-png', 'image/pjpeg')
   #                 .rejecting('text/xml', 'image_maybe/abc', 'some_image/png','text/plain') }
+
+  it 'has a safe_user_name function' do
+    user = build(:user, user_name: "!aNT\'s fully s!ck user name 1337;;\n)/\)\'")
+
+    expect(user.safe_user_name).to eq('aNTs-fully-s-ck-user-name-1337')
+  end
 end

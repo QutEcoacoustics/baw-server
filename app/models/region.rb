@@ -24,9 +24,6 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 class Region < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # relations
   has_many :sites, inverse_of: :region
 

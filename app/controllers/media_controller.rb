@@ -85,27 +85,32 @@ class MediaController < ApplicationController
     return if request.head?
     return unless response.successful?
 
-    case action_name.to_sym
-    when :show
-      return if audio_response_duration.nil?
+    # speculative fix for https://github.com/QutEcoacoustics/baw-server/issues/575
+    # we sometimes see "ActiveRecord::ConnectionNotEstablished connection is closed " errors
+    # in this function. Try wrapping in it's own connection
+    ActiveRecord::Base.connection_pool.with_connection do
+      case action_name.to_sym
+      when :show
+        return if audio_response_duration.nil?
 
-      Statistics::AudioRecordingStatistics.increment_segment(@audio_recording, duration: audio_response_duration)
+        Statistics::AudioRecordingStatistics.increment_segment(@audio_recording, duration: audio_response_duration)
 
-      if current_user.nil?
-        Statistics::AnonymousUserStatistics.increment_segment(duration: audio_response_duration)
+        if current_user.nil?
+          Statistics::AnonymousUserStatistics.increment_segment(duration: audio_response_duration)
+        else
+          Statistics::UserStatistics.increment_segment(current_user, duration: audio_response_duration)
+        end
+      when :original
+        Statistics::AudioRecordingStatistics.increment_original(@audio_recording)
+
+        if current_user.nil?
+          Statistics::AnonymousUserStatistics.increment_original(@audio_recording)
+        else
+          Statistics::UserStatistics.increment_original(current_user, @audio_recording)
+        end
       else
-        Statistics::UserStatistics.increment_segment(current_user, duration: audio_response_duration)
+        raise "Unsupported action #{action_name} in update_statistics"
       end
-    when :original
-      Statistics::AudioRecordingStatistics.increment_original(@audio_recording)
-
-      if current_user.nil?
-        Statistics::AnonymousUserStatistics.increment_original(@audio_recording)
-      else
-        Statistics::UserStatistics.increment_original(current_user, @audio_recording)
-      end
-    else
-      raise "Unsupported action #{action_name} in update_statistics"
     end
   end
 

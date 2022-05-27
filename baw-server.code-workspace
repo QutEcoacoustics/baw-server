@@ -6,6 +6,7 @@
   ],
   "settings": {
     "cSpell.words": [
+      "AASM",
       "appender",
       "arel",
       "arity",
@@ -14,6 +15,7 @@
       "autoloaded",
       "autoloaders",
       "autoloads",
+      "autosave",
       "backtrace",
       "behaviour",
       "binmode",
@@ -25,6 +27,7 @@
       "bowra",
       "cancancan",
       "chown",
+      "chtimes",
       "cleanpath",
       "completionist",
       "concat",
@@ -33,6 +36,7 @@
       "Cyclomatic",
       "datetime",
       "decr",
+      "deduplication",
       "deepsort",
       "deleter",
       "denormalize",
@@ -42,6 +46,7 @@
       "downcase",
       "ecoacoustic",
       "Ecoacoustics",
+      "endgroup",
       "enqueues",
       "entrypoint",
       "Enumerize",
@@ -65,6 +70,7 @@
       "ILIKE",
       "imagemagick",
       "incrby",
+      "ipaddr",
       "jsonb",
       "jsonl",
       "keyreq",
@@ -82,6 +88,7 @@
       "metadatas",
       "Metadatum",
       "mget",
+      "microservices",
       "middlewares",
       "mkdir",
       "mkpath",
@@ -90,6 +97,7 @@
       "organisation",
       "paginator",
       "Passengerfile",
+      "Phusion",
       "PIDFILE",
       "pids",
       "postgesql",
@@ -121,6 +129,7 @@
       "sendfile",
       "serializable",
       "Serializers",
+      "sfptgo",
       "sftpgo",
       "Sftpgo",
       "shntool",
@@ -259,7 +268,11 @@
     "remote.extensionKind": {
       "ms-azuretools.vscode-docker": "ui"
     },
-    "python.pythonPath": "/usr/bin/python3"
+    "python.pythonPath": "/usr/bin/python3",
+    "editor.rulers": [
+      80,
+      120
+    ]
   },
   "extensions": {
     "recommendations": [

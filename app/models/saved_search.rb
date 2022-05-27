@@ -25,9 +25,6 @@
 #  saved_searches_deleter_id_fk  (deleter_id => users.id)
 #
 class SavedSearch < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_saved_searches
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_saved_searches, optional: true
 
@@ -39,7 +36,7 @@ class SavedSearch < ApplicationRecord
   validates_as_paranoid
 
   validates :name, presence: true, length: { minimum: 2, maximum: 255 },
-                   uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
+    uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
   validates :stored_query, presence: true
 
   validate :projects?

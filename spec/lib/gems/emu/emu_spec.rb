@@ -8,7 +8,6 @@ describe Emu do
   end
 
   context 'when fixing' do
-    include TempFileHelpers::ExampleGroup
 
     let(:target) {
       path = temp_file

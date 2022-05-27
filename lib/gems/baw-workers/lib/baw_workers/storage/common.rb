@@ -36,7 +36,7 @@ module BawWorkers
       # @param [Hash] opts
       # @param [String] file_name
       # @return [Array<String>]
-      def possible_paths_file(opts = {}, file_name)
+      def possible_paths_file(opts, file_name)
         # partial_path is implemented in each store.
         @storage_paths.map { |path| File.join(path, partial_path(opts), file_name) }
       end
@@ -146,7 +146,7 @@ module BawWorkers
 
         if opts[:start_offset].to_f >= opts[:end_offset].to_f
           raise ArgumentError,
-                "end_offset (#{opts[:end_offset]}) must be greater than start_offset (#{opts[:start_offset]}). #{provided}"
+            "end_offset (#{opts[:end_offset]}) must be greater than start_offset (#{opts[:start_offset]}). #{provided}"
         end
       end
 
@@ -186,7 +186,7 @@ module BawWorkers
 
         unless BawAudioTools::AudioSox.window_options.include?(opts[:window].to_i)
           raise ArgumentError,
-                "window must be in #{BawAudioTools::AudioSox.window_options}: #{opts[:window]}. #{provided}"
+            "window must be in #{BawAudioTools::AudioSox.window_options}: #{opts[:window]}. #{provided}"
         end
       end
 
@@ -198,7 +198,7 @@ module BawWorkers
         return if opts[:colour].to_sym == :w
 
         raise ArgumentError,
-              "colour must be in #{BawAudioTools::AudioSox.colour_options.keys}: #{opts[:colour]}. #{provided}"
+          "colour must be in #{BawAudioTools::AudioSox.colour_options.keys}: #{opts[:colour]}. #{provided}"
       end
 
       def validate_window_function(opts)
@@ -207,7 +207,7 @@ module BawWorkers
 
         unless BawAudioTools::AudioSox.window_function_options.include?(opts[:window_function].to_s)
           raise ArgumentError,
-                "window_function must be in #{BawAudioTools::AudioSox.window_function_options}: #{opts[:window_function]}. #{provided}"
+            "window_function must be in #{BawAudioTools::AudioSox.window_function_options}: #{opts[:window_function]}. #{provided}"
         end
       end
 

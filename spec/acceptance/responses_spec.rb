@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-
 require 'rspec_api_documentation/dsl'
-require 'helpers/acceptance_spec_helper'
+require 'support/acceptance_spec_helper'
 
 def id_params
   parameter :id, 'Response id in request url', required: true
@@ -41,10 +40,10 @@ resource 'Responses' do
   # Create post parameters from factory
   let(:post_attributes) {
     FactoryBot.attributes_for(:response,
-                              data: { test_name: 'test value' }.to_json,
-                              study_id: study.id,
-                              question_id: question.id,
-                              dataset_item_id: dataset_item.id)
+      data: { test_name: 'test value' }.to_json,
+      study_id: study.id,
+      question_id: question.id,
+      dataset_item_id: dataset_item.id)
   }
 
   ################################
@@ -54,6 +53,7 @@ resource 'Responses' do
   describe 'index' do
     get '/responses' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'INDEX (as admin)',
@@ -67,6 +67,7 @@ resource 'Responses' do
 
     get '/responses' do
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :get,
         'INDEX (as non-responder (owner))',
@@ -77,6 +78,7 @@ resource 'Responses' do
 
     get '/responses' do
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :get,
         'INDEX (as non-responder (writer))',
@@ -87,6 +89,7 @@ resource 'Responses' do
 
     get '/responses' do
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :get,
         'INDEX (as responder (reader))',
@@ -97,6 +100,7 @@ resource 'Responses' do
 
     get '/responses' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'INDEX (with invalid token)',
@@ -116,6 +120,7 @@ resource 'Responses' do
 
     get '/responses' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'INDEX (as harvester)',
@@ -134,6 +139,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :post,
         'CREATE (as admin)',
@@ -149,6 +155,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :post,
         'CREATE (as owner of project via dataset item)',
@@ -161,6 +168,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :post,
         'CREATE (as writer of project via dataset item)',
@@ -173,6 +181,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :post,
         'CREATE (as reader of project via dataset item)',
@@ -186,6 +195,7 @@ resource 'Responses' do
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :post,
         'CREATE (as no access user)',
@@ -198,6 +208,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :post,
         'CREATE (invalid token)',
@@ -209,6 +220,7 @@ resource 'Responses' do
     post '/responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
+
       standard_request_options(
         :post,
         'CREATE (as anonymous user)',
@@ -221,6 +233,7 @@ resource 'Responses' do
       body_params
       let(:raw_post) { { 'response' => post_attributes }.to_json }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :post,
         'CREATE (as harvester user)',
@@ -237,6 +250,7 @@ resource 'Responses' do
   describe 'new' do
     get '/responses/new' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'NEW (as admin)',
@@ -247,6 +261,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :get,
         'NEW (as owner)',
@@ -257,6 +272,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :get,
         'NEW (as writer)',
@@ -267,6 +283,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :get,
         'NEW (as reader)',
@@ -277,6 +294,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :get,
         'NEW (as non admin user)',
@@ -287,6 +305,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'NEW (with invalid token)',
@@ -306,6 +325,7 @@ resource 'Responses' do
 
     get '/responses/new' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'NEW (as harvester user)',
@@ -324,11 +344,12 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :get,
         'SHOW (as admin)',
         :ok,
-        { expected_json_path: 'data/data', response_body_content: response_body_content }
+        { expected_json_path: 'data/data', response_body_content: }
       )
     end
 
@@ -339,6 +360,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :get,
         'INDEX (as non-responder (owner))',
@@ -351,6 +373,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :get,
         'INDEX (as non-responder (writer))',
@@ -363,11 +386,12 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :get,
         'INDEX (as responder (reader))',
         :ok,
-        { expected_json_path: 'data/data', response_body_content: response_body_content }
+        { expected_json_path: 'data/data', response_body_content: }
       )
     end
 
@@ -375,6 +399,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :get,
         'SHOW (as no access user)',
@@ -387,6 +412,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :get,
         'SHOW (with invalid token)',
@@ -398,6 +424,7 @@ resource 'Responses' do
     get '/responses/:id' do
       id_params
       let(:id) { user_response.id }
+
       standard_request_options(
         :get,
         'SHOW (as anonymous user)',
@@ -410,6 +437,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :get,
         'SHOW (as harvester)',
@@ -539,6 +567,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { admin_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as admin)',
@@ -551,6 +580,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as owner user)',
@@ -563,6 +593,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { reader_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as reader user)',
@@ -575,6 +606,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :delete,
         'DESTROY (as no access user)',
@@ -587,6 +619,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :delete,
         'DESTROY (with invalid token)',
@@ -599,6 +632,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:raw_post) { { response: post_attributes }.to_json }
+
       standard_request_options(
         :delete,
         'DESTROY (as anonymous user)',
@@ -611,6 +645,7 @@ resource 'Responses' do
       id_params
       let(:id) { user_response.id }
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :delete,
         'DESTROY (with harvester token)',
@@ -627,11 +662,13 @@ resource 'Responses' do
   describe 'filter' do
     post '/responses/filter' do
       let(:authentication_token) { admin_token }
+
       standard_request_options(:post, 'FILTER (as admin)', :ok, basic_filter_opts)
     end
 
     post '/responses/filter' do
       let(:authentication_token) { owner_token }
+
       standard_request_options(
         :post,
         'FILTER (as owner user)',
@@ -642,6 +679,7 @@ resource 'Responses' do
 
     post '/responses/filter' do
       let(:authentication_token) { writer_token }
+
       standard_request_options(
         :post,
         'FILTER (as no writer user)',
@@ -652,11 +690,13 @@ resource 'Responses' do
 
     post '/responses/filter' do
       let(:authentication_token) { reader_token }
+
       standard_request_options(:post, 'FILTER (as no access user)', :ok, basic_filter_opts)
     end
 
     post '/responses/filter' do
       let(:authentication_token) { no_access_token }
+
       standard_request_options(
         :post,
         'FILTER (as no access user)',
@@ -667,6 +707,7 @@ resource 'Responses' do
 
     post '/responses/filter' do
       let(:authentication_token) { invalid_token }
+
       standard_request_options(
         :post,
         'FILTER (with invalid token)',
@@ -686,6 +727,7 @@ resource 'Responses' do
 
     post '/responses/filter' do
       let(:authentication_token) { harvester_token }
+
       standard_request_options(
         :post,
         'FILTER (with harvester token)',
@@ -709,6 +751,7 @@ resource 'Responses' do
           }.to_json
         }
         let(:authentication_token) { reader_token }
+
         standard_request_options(
           :post,
           'FILTER (with admin token: filter by name with projection)',

@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-
-
 def expect_invalid_file_name(file_name)
   it file_name do |example|
     file_name = example.metadata[:description]
     result = nil
     expect {
       result = file_info.file_name_datetime(file_name, '+00:00')
-    }.to raise_error(ArgumentError, 'invalid date'), "Expected error for #{file_name}, got #{result}."
+    }.to raise_error(ArgumentError, /out of range/)
   end
 end
 
@@ -42,7 +40,7 @@ def expect_correct_file_name(file_name, expected_hash)
 end
 
 describe BawWorkers::FileInfo do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -62,7 +60,8 @@ describe BawWorkers::FileInfo do
              },
           project_id: 1, site_id: 2, uploader_id: 3,
           utc_offset: 'Z',
-          recorded_date: '2014-01-01T23:59:59.000+00:00',
+          recorded_date_local: '2014-01-01T23:59:59.000+00:00',
+          recorded_date: '2014-01-01T23:59:59.000Z',
           prefix: '', separator: '_', suffix: '',
           extension: 'mp3' }
 
@@ -82,7 +81,8 @@ describe BawWorkers::FileInfo do
              },
           project_id: 1, site_id: 1, uploader_id: 1,
           utc_offset: 'Z',
-          recorded_date: '2014-03-01T00:00:00.000+00:00',
+          recorded_date_local: '2014-03-01T00:00:00.000+00:00',
+          recorded_date: '2014-03-01T00:00:00.000Z',
           prefix: '', separator: '_', suffix: '',
           extension: 'ext' }
 
@@ -102,7 +102,8 @@ describe BawWorkers::FileInfo do
              },
           project_id: 745, site_id: 2745, uploader_id: 951_108,
           utc_offset: 'Z',
-          recorded_date: '2014-02-28T23:59:59.000+00:00',
+          recorded_date_local: '2014-02-28T23:59:59.000+00:00',
+          recorded_date: '2014-02-28T23:59:59.000Z',
           prefix: '', separator: '_', suffix: '',
           extension: 'ext' }
 
@@ -113,14 +114,14 @@ describe BawWorkers::FileInfo do
       file_name = example.metadata[:description]
       expect {
         file_info.file_name_all(file_name)
-      }.to raise_error(ArgumentError, 'invalid date')
+      }.to raise_error(ArgumentError, /out of range/)
     end
 
     it 'p9999_s9_u9999999_d99999999_t999999Z.dnsb48364JSFDSD' do |example|
       file_name = example.metadata[:description]
       expect {
         file_info.file_name_all(file_name)
-      }.to raise_error(ArgumentError, 'invalid date')
+      }.to raise_error(ArgumentError, /out of range/)
     end
   end
 
@@ -175,7 +176,8 @@ describe BawWorkers::FileInfo do
               offset: '+06:30', ext: 'mp3'
             },
               utc_offset: '+06:30',
-              recorded_date: '2014-03-01T08:50:31.000+06:30',
+              recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
+              recorded_date: Time.parse('2014-03-01T08:50:31.000+06:30'),
               prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
               extension: 'mp3' },
         'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3' =>
@@ -185,19 +187,22 @@ describe BawWorkers::FileInfo do
                 offset: '-0630', ext: 'mp3'
               },
                 utc_offset: '-0630',
-                recorded_date: '2014-03-01T08:50:31.000-06:30',
+                recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
+                recorded_date: Time.parse('2014-03-01T08:50:31.000-06:30'),
                 prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
                 extension: 'mp3' },
-        'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext' =>
-              { raw: {
-                year: '2014', month: '03', day: '01',
-                hour: '08', min: '50', sec: '31',
-                offset: '-7', ext: 'ext'
-              },
-                utc_offset: '-7',
-                recorded_date: '2014-03-01T08:50:31.000-07:00',
-                prefix: 'blah_T-suffix', separator: '-', suffix: 's:dncv*_-T&^%34jd',
-                extension: 'ext' },
+        # AT 2022: no longer supporting the short utc offset format
+        # 'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext' =>
+        #       { raw: {
+        #         year: '2014', month: '03', day: '01',
+        #         hour: '08', min: '50', sec: '31',
+        #         offset: '-7', ext: 'ext'
+        #       },
+        #         utc_offset: '-7',
+        #         recorded_date_local: '2014-03-01T08:50:31.000-07:00',
+        #         recorded_date: '2014-03-01T08:50:31.000-07:00',
+        #         prefix: 'blah_T-suffix', separator: '-', suffix: 's:dncv*_-T&^%34jd',
+        #         extension: 'ext' },
         '20150727133138.wav' =>
               { raw: {
                 year: '2015', month: '07', day: '27',
@@ -205,6 +210,7 @@ describe BawWorkers::FileInfo do
                 offset: '', ext: 'wav'
               },
                 utc_offset: '+00:00',
+                recorded_date_local: '2015-07-27T13:31:38.000+00:00',
                 recorded_date: '2015-07-27T13:31:38.000+00:00',
                 prefix: '', separator: '', suffix: '',
                 extension: 'wav' },
@@ -215,6 +221,7 @@ describe BawWorkers::FileInfo do
                 offset: '', ext: 'ext'
               },
                 utc_offset: '+00:00',
+                recorded_date_local: '2014-03-01T08:50:31.000+00:00',
                 recorded_date: '2014-03-01T08:50:31.000+00:00',
                 prefix: 'blah_T-suffix', separator: '', suffix: ':dncv*_-T&^%34jd',
                 extension: 'ext' },
@@ -225,6 +232,7 @@ describe BawWorkers::FileInfo do
                 offset: '', ext: 'wav'
               },
                 utc_offset: '+00:00',
+                recorded_date_local: '2013-03-14T00:00:21.000+00:00',
                 recorded_date: '2013-03-14T00:00:21.000+00:00',
                 prefix: 'SERF_', separator: '_', suffix: '_000',
                 extension: 'wav' },
@@ -235,7 +243,8 @@ describe BawWorkers::FileInfo do
                 offset: 'Z', ext: 'wav'
               },
                 utc_offset: 'Z',
-                recorded_date: '2015-07-27T13:31:38.000+00:00',
+                recorded_date_local: '2015-07-27T13:31:38.000+00:00',
+                recorded_date: '2015-07-27T13:31:38.000Z',
                 prefix: '', separator: 'T', suffix: '',
                 extension: 'wav' }
       }.each do |file_name, expected_hash|

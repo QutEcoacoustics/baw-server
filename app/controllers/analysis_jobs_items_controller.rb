@@ -78,7 +78,7 @@ class AnalysisJobsItemsController < ApplicationController
     valid_transition = @analysis_jobs_item.may_transition_to_state(desired_state)
 
     if valid_transition
-      @analysis_jobs_item.transition_to_state(desired_state)
+      @analysis_jobs_item.transition_to_state!(desired_state)
     elsif should_cancel
       @analysis_jobs_item.confirm_cancel(desired_state)
     end

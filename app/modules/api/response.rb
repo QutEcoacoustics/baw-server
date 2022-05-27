@@ -29,7 +29,7 @@ module Api
     # Formats an item for a #new response.
     # @param [Object] item A single item from the response.
     # @param [Object] user current_user
-    # @param [Hash] opts the options for additional information.
+    # @param [Hash] _opts the options for additional information.
     # @return [Hash] prepared item
     def prepare_new(item, user, _opts = {})
       unless item.is_a?(ActiveRecord::Base)

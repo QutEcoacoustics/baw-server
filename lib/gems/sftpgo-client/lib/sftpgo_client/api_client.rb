@@ -10,6 +10,7 @@ require_relative 'faraday/authentication_middleware'
 
 require_relative 'models/extensions_filter'
 require_relative 'models/filesystem_config'
+require_relative 'models/hook_payload'
 require_relative 'models/permission'
 require_relative 'models/services_status'
 require_relative 'models/token'
@@ -51,8 +52,8 @@ module SftpgoClient
     def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v2/', logger: nil)
       @base_uri =
         case scheme
-        when 'http' then URI::HTTP.build({ host: host, port: port, path: base_path })
-        when 'https' then URI::HTTPS.build({ host: host, port: port, path: base_path })
+        when 'http' then URI::HTTP.build({ host:, port:, path: base_path })
+        when 'https' then URI::HTTPS.build({ host:, port:, path: base_path })
         else
           raise ArgumentError, "Unsupported scheme `#{scheme}`"
         end

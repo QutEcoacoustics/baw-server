@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::ApiCommunicator do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 

@@ -41,15 +41,21 @@ module BawWorkers
             result = yield
 
             unless result
-              logger.error("#{STATUS_TAG} removed after aborted creation", job_id: job_id)
+              logger.error("#{STATUS_TAG} removed after aborted creation", job_id:)
               persistance.remove(job_id)
             end
 
             result
           rescue StandardError => e
-            logger.error("#{STATUS_TAG} removed after error raised during creation", job_id: job_id)
+            logger.error("#{STATUS_TAG} removed after error raised during creation", job_id:)
             persistance.remove(job_id)
 
+            raise e
+          rescue Async::Stop => e
+            # this was added during a debugging session where this was being raised but not handled
+            logger.error("#{STATUS_TAG} removed after stop raised during creation", job_id:,
+              message: e.message, exception: e)
+            persistance.remove(job_id)
             raise e
           end
         end
@@ -76,7 +82,7 @@ module BawWorkers
 
         def create(messages = nil)
           @status = StatusData.new(
-            job_id: job_id,
+            job_id:,
             name: safe_job_name,
             status: STATUS_QUEUED,
             messages: messages || [],
@@ -86,10 +92,10 @@ module BawWorkers
           )
 
           logger.debug do
-            { message: "#{STATUS_TAG}: creating", job_id: job_id, name: name }
+            { message: "#{STATUS_TAG}: creating", job_id:, name: }
           end
 
-          persistance.create(@status, delay_ttl: delay_ttl)
+          persistance.create(@status, delay_ttl:)
         end
 
         def handle_bad_create_result
@@ -99,12 +105,12 @@ module BawWorkers
           #    but in the meantime another thread has completed safe guards and has been enqueued.
           # For 2: check if the status that was preventing us from enqueuing is valid, and suppress error.
           duplicate_status = persistance.get(job_id)
-          logger.warn("#{STATUS_TAG}: creating failed, duplicate status detected", job_id: job_id)
+          logger.warn("#{STATUS_TAG}: creating failed, duplicate status detected", job_id:)
           if duplicate_status.queued? || duplicate_status.working?
             # probably the same job, has the same id and status
             logger.warn(
               "#{STATUS_TAG}: duplicate status is similar, aborting instead of throwing",
-              job_id: job_id,
+              job_id:,
               status: @status
             )
             # if the unique module is included indicate why we failed
@@ -127,7 +133,7 @@ module BawWorkers
 
           # clone old status
           @status = status.new(
-            messages: messages,
+            messages:,
             status: STATUS_QUEUED,
             options: serialize.deep_symbolize_keys,
             progress: 0,
@@ -138,7 +144,7 @@ module BawWorkers
             {
               message: "#{STATUS_TAG}: updating for job retry",
               status: @status,
-              executions: executions
+              executions:
             }
           end
 

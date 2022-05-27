@@ -20,6 +20,13 @@ describe 'Project permissions' do
     end
   end
 
+  before do
+    # i don't know why but this was true here. maybe a shared state bug with the
+    # the other example groups in this file?
+    project.allow_audio_upload = false
+    project.save!
+  end
+
   the_users :admin, :owner, can_do: everything
   the_users :writer, :reader, can_do: (reading + creation), and_cannot_do: (writing - creation)
 
@@ -37,5 +44,44 @@ describe 'Project permissions' do
     end
 
     ensures :owner, :writer, :reader, :harvester, cannot: [:create]
+  end
+end
+
+# frozen_string_literal: true
+
+describe 'Project permissions (when modifying allow_audio_upload)' do
+  create_entire_hierarchy
+
+  given_the_route '/projects' do
+    {
+      id: project.id
+    }
+  end
+
+  before do
+    project.allow_audio_upload = false
+    project.save!
+  end
+
+  context 'when updating' do
+    # define a non-standard set of behaviors to test against - we don't usually send just a single property
+    send_update_body do
+      [{ project: { allow_audio_upload: true } }, :json]
+    end
+
+    ensures :admin, can: [:update]
+    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:update]
+    ensures :anonymous, :invalid, cannot: [:update], fails_with: :unauthorized
+  end
+
+  context 'when creating' do
+    # define a non-standard set of behaviors to test against - we don't usually send just a single property
+    send_create_body do
+      [body_attributes_for(:project, factory: :project_with_uploads_enabled), :json]
+    end
+
+    ensures :admin, can: [:create]
+    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:create]
+    ensures :anonymous, :invalid, cannot: [:create], fails_with: :unauthorized
   end
 end

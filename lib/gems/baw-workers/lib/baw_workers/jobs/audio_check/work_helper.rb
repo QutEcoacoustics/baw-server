@@ -47,7 +47,7 @@ module BawWorkers
             single_result = run_single(existing_file, audio_params_sym, is_real_run)
 
             # LOW LEVEL PROBLEM: rename old file names to new file names
-            file_move_info = rename_file(existing_file, original_paths[:name_utc], is_real_run)
+            file_move_info = rename_file(existing_file, original_paths[:name_uuid], is_real_run)
 
             # calculate review level
             good_api_results = [:dry_run, :notrequired, :success]
@@ -77,7 +77,7 @@ module BawWorkers
                 compare_hash: single_result[:compare_hash],
                 api_result_hash: single_result[:api_result_hash],
                 api_response: single_result[:api_result],
-                review_level: review_level
+                review_level:
               }
 
             result.push(result_hash)
@@ -260,7 +260,7 @@ module BawWorkers
           api_result_value = update_result ? :success : :error unless update_result.nil?
 
           {
-            compare_hash: compare_hash,
+            compare_hash:,
             api_result_hash: changed_metadata,
             api_result: api_result_value
           }
@@ -304,12 +304,14 @@ module BawWorkers
 
           name_old = original_audio.file_name_10(modify_parameters)
           name_utc = original_audio.file_name_utc(modify_parameters)
+          name_uuid = original_audio.file_name_uuid(modify_parameters)
 
           {
             possible: source_possible_paths.map { |path| File.expand_path(path) },
             existing: source_existing_paths.map { |path| File.expand_path(path) },
-            name_utc: name_utc,
-            name_old: name_old
+            name_utc:,
+            name_old:,
+            name_uuid:
           }
         end
 
@@ -343,19 +345,19 @@ module BawWorkers
             actual: existing_file_info,
             expected: audio_params,
             checks: {
-              file_hash: file_hash,
-              extension: extension,
-              media_type: media_type,
-              sample_rate_hertz: sample_rate_hertz,
-              channels: channels,
-              bit_rate_bps: bit_rate_bps,
-              data_length_bytes: data_length_bytes,
-              duration_seconds: duration_seconds,
-              file_errors: file_errors,
-              new_file_name: new_file_name
+              file_hash:,
+              extension:,
+              media_type:,
+              sample_rate_hertz:,
+              channels:,
+              bit_rate_bps:,
+              data_length_bytes:,
+              duration_seconds:,
+              file_errors:,
+              new_file_name:
             },
-            bit_rate_bps_delta: bit_rate_bps_delta,
-            duration_seconds_delta: duration_seconds_delta
+            bit_rate_bps_delta:,
+            duration_seconds_delta:
           }
         end
 
@@ -419,10 +421,10 @@ module BawWorkers
 
         # Rename file with old file name to new file name.
         # @param [String] existing_file
-        # @param [String] file_name_utc
+        # @param [String] file_name_uuid
         # @param [Boolean] is_real_run
         # @return [Hash] action applied to existing file
-        def rename_file(existing_file, file_name_utc, is_real_run)
+        def rename_file(existing_file, file_name_uuid, is_real_run)
           # create all needed information
           existing_path = existing_file
           existing_name = File.basename(existing_path)
@@ -430,7 +432,7 @@ module BawWorkers
           existing_dir = File.dirname(existing_path)
           existing_is_new = existing_name_without_ext.end_with?('Z')
 
-          new_name = file_name_utc
+          new_name = file_name_uuid
           new_path = File.join(existing_dir, new_name)
           new_name_without_ext = File.basename(new_name, File.extname(new_name))
           new_dir = existing_dir

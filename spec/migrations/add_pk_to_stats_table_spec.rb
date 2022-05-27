@@ -6,7 +6,10 @@ require_migration!
 # A faulty assumption about the equivalence of nulls for a unique constraint has
 # lead to hundreds of duplications in the user_statistics table.
 # This test creates such duplicates and then asserts that our migration correctly fixes problem
-describe AddPkToStatsTable, :migration do
+#
+# AT 2022: the migration no longer works because our data model has moved on and we can't create entities to test
+# with anymore. However all production has been migrated so we consider the migration under test here to be stable.
+xdescribe AddPkToStatsTable, :migration do
   create_audio_recordings_hierarchy
 
   def insert_rows(day, bad_behavior: false)

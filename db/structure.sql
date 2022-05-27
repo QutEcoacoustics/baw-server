@@ -115,7 +115,7 @@ ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage
 
 CREATE TABLE public.active_storage_variant_records (
     id bigint NOT NULL,
-    blob_id bigint NOT NULL,
+    blob_id integer NOT NULL,
     variation_digest character varying NOT NULL
 );
 
@@ -173,6 +173,7 @@ CREATE TABLE public.analysis_jobs (
 --
 
 CREATE SEQUENCE public.analysis_jobs_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -210,6 +211,7 @@ CREATE TABLE public.analysis_jobs_items (
 --
 
 CREATE SEQUENCE public.analysis_jobs_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -275,6 +277,7 @@ CREATE TABLE public.audio_event_comments (
 --
 
 CREATE SEQUENCE public.audio_event_comments_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -315,6 +318,7 @@ CREATE TABLE public.audio_events (
 --
 
 CREATE SEQUENCE public.audio_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -349,6 +353,7 @@ CREATE TABLE public.audio_events_tags (
 --
 
 CREATE SEQUENCE public.audio_events_tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -374,7 +379,7 @@ CREATE UNLOGGED TABLE public.audio_recording_statistics (
     segment_download_count bigint DEFAULT 0,
     segment_download_duration numeric DEFAULT 0.0
 )
-WITH (fillfactor='70');
+WITH (fillfactor='90');
 
 
 --
@@ -412,6 +417,7 @@ CREATE TABLE public.audio_recordings (
 --
 
 CREATE SEQUENCE public.audio_recordings_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -449,6 +455,7 @@ CREATE TABLE public.bookmarks (
 --
 
 CREATE SEQUENCE public.bookmarks_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -835,6 +842,7 @@ CREATE TABLE public.dataset_items (
 --
 
 CREATE SEQUENCE public.dataset_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -869,6 +877,7 @@ CREATE TABLE public.datasets (
 --
 
 CREATE SEQUENCE public.datasets_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -895,7 +904,9 @@ CREATE TABLE public.harvest_items (
     audio_recording_id integer,
     uploader_id integer NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    harvest_id integer,
+    deleted boolean DEFAULT false
 );
 
 
@@ -916,6 +927,45 @@ CREATE SEQUENCE public.harvest_items_id_seq
 --
 
 ALTER SEQUENCE public.harvest_items_id_seq OWNED BY public.harvest_items.id;
+
+
+--
+-- Name: harvests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.harvests (
+    id bigint NOT NULL,
+    streaming boolean,
+    status character varying,
+    last_upload_date timestamp(6) without time zone,
+    upload_user character varying,
+    upload_password character varying,
+    project_id integer NOT NULL,
+    mappings jsonb,
+    creator_id integer,
+    updater_id integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: harvests_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.harvests_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: harvests_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.harvests_id_seq OWNED BY public.harvests.id;
 
 
 --
@@ -942,6 +992,7 @@ CREATE TABLE public.permissions (
 --
 
 CREATE SEQUENCE public.permissions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -974,6 +1025,7 @@ CREATE TABLE public.progress_events (
 --
 
 CREATE SEQUENCE public.progress_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1004,11 +1056,12 @@ CREATE TABLE public.projects (
     deleted_at timestamp without time zone,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
+    image_file_size bigint,
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    allow_original_download character varying
+    allow_original_download character varying,
+    allow_audio_upload boolean DEFAULT false
 );
 
 
@@ -1017,6 +1070,7 @@ CREATE TABLE public.projects (
 --
 
 CREATE SEQUENCE public.projects_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1071,6 +1125,7 @@ CREATE TABLE public.questions (
 --
 
 CREATE SEQUENCE public.questions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1153,6 +1208,7 @@ CREATE TABLE public.responses (
 --
 
 CREATE SEQUENCE public.responses_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1188,6 +1244,7 @@ CREATE TABLE public.saved_searches (
 --
 
 CREATE SEQUENCE public.saved_searches_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1237,6 +1294,7 @@ CREATE TABLE public.scripts (
 --
 
 CREATE SEQUENCE public.scripts_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1267,7 +1325,7 @@ CREATE TABLE public.sites (
     deleted_at timestamp without time zone,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
+    image_file_size bigint,
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
@@ -1283,6 +1341,7 @@ CREATE TABLE public.sites (
 --
 
 CREATE SEQUENCE public.sites_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1317,6 +1376,7 @@ CREATE TABLE public.studies (
 --
 
 CREATE SEQUENCE public.studies_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1349,6 +1409,7 @@ CREATE TABLE public.tag_groups (
 --
 
 CREATE SEQUENCE public.tag_groups_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1386,6 +1447,7 @@ CREATE TABLE public.tags (
 --
 
 CREATE SEQUENCE public.tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1411,7 +1473,7 @@ CREATE UNLOGGED TABLE public.user_statistics (
     audio_original_download_count bigint DEFAULT 0,
     audio_download_duration numeric DEFAULT 0.0
 )
-WITH (fillfactor='70');
+WITH (fillfactor='90');
 
 
 --
@@ -1445,8 +1507,8 @@ CREATE TABLE public.users (
     roles_mask integer,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
-    image_updated_at timestamp without time zone,
+    image_file_size bigint,
+    image_updated_at timestamp(6) without time zone,
     preferences text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255),
@@ -1459,6 +1521,7 @@ CREATE TABLE public.users (
 --
 
 CREATE SEQUENCE public.users_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1632,6 +1695,13 @@ ALTER TABLE ONLY public.datasets ALTER COLUMN id SET DEFAULT nextval('public.dat
 --
 
 ALTER TABLE ONLY public.harvest_items ALTER COLUMN id SET DEFAULT nextval('public.harvest_items_id_seq'::regclass);
+
+
+--
+-- Name: harvests id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests ALTER COLUMN id SET DEFAULT nextval('public.harvests_id_seq'::regclass);
 
 
 --
@@ -1950,6 +2020,14 @@ ALTER TABLE ONLY public.harvest_items
 
 
 --
+-- Name: harvests harvests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT harvests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2003,6 +2081,14 @@ ALTER TABLE ONLY public.responses
 
 ALTER TABLE ONLY public.saved_searches
     ADD CONSTRAINT saved_searches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
 --
@@ -2398,10 +2484,10 @@ CREATE INDEX index_comfy_cms_fragments_on_identifier ON public.comfy_cms_fragmen
 
 
 --
--- Name: index_comfy_cms_fragments_on_record_type_and_record_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_comfy_cms_fragments_on_record; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_comfy_cms_fragments_on_record_type_and_record_id ON public.comfy_cms_fragments USING btree (record_type, record_id);
+CREATE INDEX index_comfy_cms_fragments_on_record ON public.comfy_cms_fragments USING btree (record_type, record_id);
 
 
 --
@@ -2479,6 +2565,13 @@ CREATE INDEX index_comfy_cms_translations_on_locale ON public.comfy_cms_translat
 --
 
 CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_translations USING btree (page_id);
+
+
+--
+-- Name: index_harvest_items_on_path; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_harvest_items_on_path ON public.harvest_items USING btree (path);
 
 
 --
@@ -2734,13 +2827,6 @@ CREATE UNIQUE INDEX tags_text_uidx ON public.tags USING btree (text);
 
 
 --
--- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX unique_schema_migrations ON public.schema_migrations USING btree (version);
-
-
---
 -- Name: users_user_name_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2956,6 +3042,14 @@ ALTER TABLE ONLY public.bookmarks
 
 
 --
+-- Name: harvests fk_rails_08dae8d3d9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_08dae8d3d9 FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
 -- Name: progress_events fk_rails_15ea2f07e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3052,6 +3146,14 @@ ALTER TABLE ONLY public.questions_studies
 
 
 --
+-- Name: harvest_items fk_rails_6d8adad6a1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvest_items
+    ADD CONSTRAINT fk_rails_6d8adad6a1 FOREIGN KEY (harvest_id) REFERENCES public.harvests(id);
+
+
+--
 -- Name: audio_recording_statistics fk_rails_6f222e0805; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3065,6 +3167,14 @@ ALTER TABLE ONLY public.audio_recording_statistics
 
 ALTER TABLE ONLY public.responses
     ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
+
+
+--
+-- Name: harvests fk_rails_7b0ec7081d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_7b0ec7081d FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
@@ -3185,6 +3295,14 @@ ALTER TABLE ONLY public.progress_events
 
 ALTER TABLE ONLY public.harvest_items
     ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+
+
+--
+-- Name: harvests fk_rails_e1f487fcb6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.harvests
+    ADD CONSTRAINT fk_rails_e1f487fcb6 FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
@@ -3441,6 +3559,8 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20210707074343'),
 ('20210730051645'),
 ('20211024235556'),
-('20220331070014');
+('20220331070014'),
+('20220406072625'),
+('20220407040355');
 
 

@@ -1,4 +1,3 @@
 --color
 --format documentation
--r turnip/rspec
 --require rails_helper

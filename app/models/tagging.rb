@@ -26,9 +26,6 @@
 #  audio_events_tags_updater_id_fk      (updater_id => users.id)
 #
 class Tagging < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   self.table_name = 'audio_events_tags'
 
   # relations
@@ -47,7 +44,8 @@ class Tagging < ApplicationRecord
   validates_associated :creator
 
   # attribute validations
-  validates_uniqueness_of :audio_event_id, scope: [:tag_id], message: 'audio_event_id %{value} must be unique within tag_id and audio_event_id'
+  validates_uniqueness_of :audio_event_id, scope: [:tag_id],
+    message: 'audio_event_id %{value} must be unique within tag_id and audio_event_id'
 
   # postgres-specific
   scope :count_unique, -> { Tagging.select(:tag_id).distinct.count }

@@ -9,7 +9,7 @@
 #  description        :text
 #  image_content_type :string
 #  image_file_name    :string
-#  image_file_size    :integer
+#  image_file_size    :bigint
 #  image_updated_at   :datetime
 #  latitude           :decimal(9, 6)
 #  longitude          :decimal(9, 6)
@@ -38,9 +38,6 @@
 #  sites_updater_id_fk  (updater_id => users.id)
 #
 class Site < ApplicationRecord
-  # ensures that creator_id, updater_id, deleter_id are set
-  include UserChange
-
   # ensures timezones are handled consistently
   include TimeZoneAttribute
 

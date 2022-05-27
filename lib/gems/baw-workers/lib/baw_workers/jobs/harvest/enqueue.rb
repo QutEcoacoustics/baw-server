@@ -31,20 +31,20 @@ module BawWorkers
             # TODO: kick off a job again if needed?
             result = nil
             if check_if_harvest_item_exists(path)
-              item = HarvestItem.find_by!(path: path)
+              item = HarvestItem.find_by!(path:)
               if is_real_run
                 result = try_again(path, item)
               else
-                logger.info('Would retry harvesting', path: path)
+                logger.info('Would retry harvesting', path:)
               end
             elsif is_real_run
-              result = enqueue_file(path, info: file_hash, default_user_id: default_user_id)
+              result = enqueue_file(path, info: file_hash, default_user_id:, harvest_id: nil)
             else
-              logger.info('Would enqueue', path: path)
+              logger.info('Would enqueue', path:)
 
             end
 
-            { info: file_hash, result: result }
+            { info: file_hash, result: }
           }
 
           summary = action_summary(results)
@@ -52,34 +52,35 @@ module BawWorkers
           logger.info do
             {
               message: "Summary of harvest #{is_real_run ? 'real run' : 'dry run'} for #{to_do_path}:",
-              summary: summary,
+              summary:,
               total: results.count
             }
           end
 
-          { results: results, path: to_do_path, summary: summary }
+          { results:, path: to_do_path, summary: }
         end
 
         def check_if_harvest_item_exists(path)
-          item = HarvestItem.exists?(path: path)
+          item = HarvestItem.exists?(path:)
 
           return false if item == false
 
           true
         end
 
-        def enqueue_file(rel_path, info:, default_user_id:)
-          item = new_harvest_item(rel_path, info, default_user_id)
+        # create a new harvest item and job to process it
+        def enqueue_file(rel_path, info:, default_user_id:, harvest_id:)
+          item = new_harvest_item(rel_path, info, default_user_id, harvest_id)
 
           success = item.save
           id = item&.id
-          logger.debug('harvest item save', path: rel_path, id: id, success: success)
+          logger.debug('harvest item save', path: rel_path, id:, success:)
 
           return false unless success
 
           result = BawWorkers::Jobs::Harvest::Action.perform_later(item.id, rel_path)
           success = result != false
-          logger.debug('Enqueuing file', path: rel_path, id: id, success: success, job_id: (result || nil)&.job_id)
+          logger.debug('Enqueuing file', path: rel_path, id:, success:, job_id: (result || nil)&.job_id)
 
           success
         end
@@ -92,7 +93,7 @@ module BawWorkers
           if item.status == HarvestItem::STATUS_COMPLETED
             logger.info(
               'will not attempt item again, it is completed',
-              rel_path: rel_path,
+              rel_path:,
               id: item.id,
               audio_recording_id: item.audio_recording_id
             )
@@ -104,26 +105,26 @@ module BawWorkers
           success = result != false
           logger.info(
             'retrying harvest job',
-            rel_path: rel_path,
+            rel_path:,
             id: item.id,
             audio_recording_id: item.audio_recording_id,
-            success: success,
+            success:,
             unique: job.unique?
           )
           success
         end
 
-        def new_harvest_item(rel_path, _info, id)
+        def new_harvest_item(rel_path, _info, id, harvest_id)
           # sanity check
           raise ArgumentError, "#{root_to_do_path}/#{path} does not exist" unless (root_to_do_path / rel_path).exist?
 
           # don't store any info, we're going to recalculate it all on dequeue anyway
-          HarvestItem.new(path: rel_path, status: HarvestItem::STATUS_NEW, uploader_id: id, info: {})
+          HarvestItem.new(path: rel_path, status: HarvestItem::STATUS_NEW, uploader_id: id, info: {}, harvest_id:)
         end
 
-        # TODO: dedupe
+        # @return [Pathname]
         def root_to_do_path
-          @root_to_do_path ||= Pathname(Settings.actions.harvest.to_do_path).realpath
+          Settings.root_to_do_path
         end
 
         def validate_to_do_dir(path)
@@ -188,6 +189,7 @@ module BawWorkers
           summary
         end
 
+        # @return [BawWorkers::Jobs::Harvest::GatherFiles]
         def create_gather_files
           config_file_name = Settings.actions.harvest.config_file_name
           valid_audio_formats = Settings.available_formats.to_h.values.flatten

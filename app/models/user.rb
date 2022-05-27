@@ -16,7 +16,7 @@
 #  failed_attempts        :integer          default(0)
 #  image_content_type     :string
 #  image_file_name        :string
-#  image_file_size        :integer
+#  image_file_size        :bigint
 #  image_updated_at       :datetime
 #  invitation_token       :string
 #  last_seen_at           :datetime
@@ -141,6 +141,9 @@ class User < ApplicationRecord
   has_many :updated_regions, class_name: 'Region', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_regions, class_name: 'Region', foreign_key: :deleter_id, inverse_of: :deleter
 
+  has_many :created_harvests, class_name: 'Harvest', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_harvests, class_name: 'Harvest', foreign_key: :updater_id, inverse_of: :updater
+
   has_many :created_scripts, class_name: 'Script', foreign_key: :creator_id, inverse_of: :creator
 
   has_many :created_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :creator
@@ -213,6 +216,16 @@ class User < ApplicationRecord
   before_validation :ensure_user_role
 
   after_create :special_after_create_actions
+
+  # get's a file system safe ([-A-Za-z0-9_]) version of the user name
+  # @return [String]
+  def safe_user_name
+    user_name
+      .gsub("'", '')
+      .gsub(/[^-_A-Za-z0-9]+/, '-')
+      .delete_prefix('-')
+      .delete_suffix('-')
+  end
 
   # Get the last time this user was seen.
   # @return [DateTime] Date this user was last seen

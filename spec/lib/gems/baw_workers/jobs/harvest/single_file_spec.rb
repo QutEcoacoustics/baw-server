@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Harvest::SingleFile do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -66,7 +66,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
-        recorded_date: recorded_date,
+        recorded_date:,
         site_id: 20,
         duration_seconds: 70.0,
         sample_rate_hertz: 44_100,
@@ -74,7 +74,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
         bit_rate_bps: 239_920,
         media_type: 'audio/ogg',
         data_length_bytes: 822_281,
-        file_hash: file_hash,
+        file_hash:,
         original_file_name: 'test_20141012_181455.ogg',
         notes: {
           relative_path: 'test_20141012_181455.ogg',
@@ -99,7 +99,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
           bit_rate_bps: 239_920,
           media_type: 'audio/ogg',
           data_length_bytes: 822_281,
-          file_hash: file_hash,
+          file_hash:,
           status: 'new',
           original_file_name: 'test_20141012_181455.ogg',
 
@@ -107,20 +107,20 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
           id: 177,
           notes: 'note number 183',
           updated_at: '2014-10-13T05:21:13Z',
-          uuid: uuid
+          uuid:
         }
       }
 
       request_update_status_body = {
-        uuid: uuid,
-        file_hash: file_hash,
+        uuid:,
+        file_hash:,
         status: nil
       }
 
       possible_paths = audio_original.possible_paths(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: Time.zone.parse(recorded_date),
-        original_format: original_format
+        original_format:
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
@@ -197,7 +197,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
-        recorded_date: recorded_date,
+        recorded_date:,
         site_id: 20,
         duration_seconds: 6.577,
         sample_rate_hertz: 22_050,
@@ -205,7 +205,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
         bit_rate_bps: 16,
         media_type: 'audio/x-waac',
         data_length_bytes: 394_644,
-        file_hash: file_hash,
+        file_hash:,
         original_file_name: 'test_20141012_181455.wac',
         notes: {
           relative_path: 'test_20141012_181455.wac',
@@ -230,7 +230,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
           bit_rate_bps: 16,
           media_type: 'audio/x-waac',
           data_length_bytes: 394_644,
-          file_hash: file_hash,
+          file_hash:,
           status: 'new',
           original_file_name: 'test_20141012_181455.wac',
 
@@ -238,20 +238,20 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
           id: 177,
           notes: 'note number 183',
           updated_at: '2014-10-13T05:21:13Z',
-          uuid: uuid
+          uuid:
         }
       }
 
       request_update_status_body = {
-        uuid: uuid,
-        file_hash: file_hash,
+        uuid:,
+        file_hash:,
         status: nil
       }
 
       possible_paths = audio_original.possible_paths(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: Time.zone.parse(recorded_date),
-        original_format: original_format
+        original_format:
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
@@ -330,7 +330,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
         uploader_id: 30,
-        recorded_date: recorded_date,
+        recorded_date:,
         site_id: 20,
         duration_seconds: 29.0,
         sample_rate_hertz: 44_100,
@@ -338,7 +338,7 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
         bit_rate_bps: 160_000,
         media_type: 'audio/ogg',
         data_length_bytes: 296_756,
-        file_hash: file_hash,
+        file_hash:,
         original_file_name: 'test_20141012_181455.ogg',
         notes: {
           relative_path: 'test_20141012_181455.ogg',
@@ -365,9 +365,9 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
       }
 
       possible_paths = audio_original.possible_paths(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: Time.zone.parse(recorded_date),
-        original_format: original_format
+        original_format:
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
@@ -427,9 +427,9 @@ describe BawWorkers::Jobs::Harvest::SingleFile do
       original_format = 'ogg'
 
       possible_paths = audio_original.possible_paths(
-        uuid: uuid,
+        uuid:,
         datetime_with_offset: Time.zone.parse(recorded_date),
-        original_format: original_format
+        original_format:
       )
 
       # execute - process a single file

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::RedisCommunicator do
-  require 'helpers/shared_test_helpers'
+  require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
 
@@ -19,7 +19,7 @@ describe BawWorkers::RedisCommunicator do
     it 'wraps keys in a namespace' do
       communicator.set('abc', 123)
 
-      expect(unwrapped_redis.exists?('baw-workers:abc')).to eq(true)
+      expect(unwrapped_redis.exists?('baw-workers:abc')).to be(true)
     end
 
     it 'allows the key namespace to be configurable' do
@@ -31,13 +31,13 @@ describe BawWorkers::RedisCommunicator do
 
       communicator.set('123', 'abc')
 
-      expect(unwrapped_redis.exists?('boogey-monster:123')).to eq(true)
+      expect(unwrapped_redis.exists?('boogey-monster:123')).to be(true)
     end
 
     it 'wraps the SET command' do
       success = communicator.set('my_object', test: { nested_hash: 123 }, string: 'test')
 
-      expect(success).to eq(true)
+      expect(success).to be(true)
       expect(unwrapped_redis.get('baw-workers:my_object')).to eq('{"test":{"nested_hash":123},"string":"test"}')
     end
 
@@ -45,7 +45,7 @@ describe BawWorkers::RedisCommunicator do
       out_opts = { expire_seconds: 7200 }
       success = communicator.set('my_object', { test: { nested_hash: 123 }, string: 'test' }, out_opts)
 
-      expect(success).to eq(true)
+      expect(success).to be(true)
       expect(unwrapped_redis.ttl('baw-workers:my_object')).to eq(7200)
     end
 
@@ -53,7 +53,7 @@ describe BawWorkers::RedisCommunicator do
       out_opts = {}
       success = communicator.set('my_object', { test: 'test' }, out_opts)
 
-      expect(success).to eq(true)
+      expect(success).to be(true)
       expect(out_opts[:key]).to eq('baw-workers:my_object')
     end
 
@@ -72,39 +72,38 @@ describe BawWorkers::RedisCommunicator do
     it 'wraps the GET command - for missing keys' do
       response = communicator.get('a-key-that-does-not-exist')
 
-      expect(response).to eq(nil)
+      expect(response).to be_nil
     end
 
     it 'handles empty values' do
       set_success = communicator.set('test_empty', nil)
       response = communicator.get('test_empty')
 
-      expect(set_success).to eq(true)
+      expect(set_success).to be(true)
       expect(response).to be_nil
 
       set_success = communicator.set('test_empty', '')
       response = communicator.get('test_empty')
 
-      expect(set_success).to eq(true)
+      expect(set_success).to be(true)
       expect(response).to eq('')
     end
 
     it 'wraps the DEL command' do
       unwrapped_redis.set('baw-workers:my_object', '{"test":{"nested_hash":123},"string":"test"}')
 
-      expect(communicator.delete('my_object')).to eq(true)
-      expect(unwrapped_redis.exists?('baw-workers:my_object')).to eq(false)
+      expect(communicator.delete('my_object')).to be(true)
+      expect(unwrapped_redis.exists?('baw-workers:my_object')).to be(false)
     end
 
     it 'wraps the EXISTS command' do
       unwrapped_redis.set('baw-workers:my_object', '{"test":{"nested_hash":123},"string":"test"}')
 
-      expect(communicator.exists('my_object')).to eq(true)
+      expect(communicator.exists('my_object')).to be(true)
     end
   end
 
   describe 'can store a file' do
-    include TempFileHelpers::ExampleGroup
 
     let(:path) { Fixtures.audio_file_mono29 }
     let(:hash) { BawWorkers::Config.file_info.generate_hash(path).hexdigest }
@@ -113,8 +112,8 @@ describe BawWorkers::RedisCommunicator do
     it 'can store a file' do
       result = communicator.set_file(key, path)
 
-      expect(result).to eq true
-      expect(communicator.exists?(key)).to eq true
+      expect(result).to be true
+      expect(communicator.exists?(key)).to be true
 
       ttl = communicator.ttl(key)
       expect(ttl).to be_within(1).of(60)
@@ -123,21 +122,21 @@ describe BawWorkers::RedisCommunicator do
     it 'can check a file is present' do
       result = communicator.set_file(key, path)
 
-      expect(result).to eq true
-      expect(communicator.exists_file?(key)).to eq true
+      expect(result).to be true
+      expect(communicator.exists_file?(key)).to be true
     end
 
     it 'can delete a file' do
-      expect(communicator.set_file(key, path)).to eq true
+      expect(communicator.set_file(key, path)).to be true
       result = communicator.delete_file(key)
 
-      expect(result).to eq true
+      expect(result).to be true
 
-      expect(communicator.exists?(key)).to eq false
+      expect(communicator.exists?(key)).to be false
     end
 
     it 'can fetch a file (to disk)' do
-      expect(communicator.set_file(key, path)).to eq true
+      expect(communicator.set_file(key, path)).to be true
 
       dest = temp_file
       result = communicator.get_file(key, dest)
@@ -148,7 +147,7 @@ describe BawWorkers::RedisCommunicator do
     end
 
     it 'can fetch a file (to an IO)' do
-      expect(communicator.set_file(key, path)).to eq true
+      expect(communicator.set_file(key, path)).to be true
 
       result = false
       buffer = BawWorkers::IO.write_binary_buffer { |io|
@@ -168,7 +167,7 @@ describe BawWorkers::RedisCommunicator do
 
       result = communicator.get_file('i dont exist', dest)
 
-      expect(result).to eq nil
+      expect(result).to be_nil
       expect(dest.size).to eq size
       expect(dest.mtime).to eq modified
       expect(dest.read).to eq 'testing'

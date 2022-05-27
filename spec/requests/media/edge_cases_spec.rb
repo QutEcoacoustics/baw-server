@@ -60,7 +60,7 @@ describe '.../media', type: :request, aggregate_failures: true do
       # this was throwing with:
       # An Errno::ENOENT occurred in media#show:
       #
-      #   No such file or directory @ rb_sysopen - /home/baw_web/baw-server/tmp/_test_cached_audio/7a/7a51b949-f593-487b-a47a-7ad9874f9af9_0.0_30.0_0_22050.mp3
+      #   No such file or directory @ rb_sysopen - /data/test/cached_audio/7a/7a51b949-f593-487b-a47a-7ad9874f9af9_0.0_30.0_0_22050.mp3
       #   app/models/range_request.rb:122:in `initialize'
       #
       # The range request headers are what triggered the bug
