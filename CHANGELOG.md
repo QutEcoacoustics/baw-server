@@ -1,5 +1,17 @@
 # Changelog
 
+## [8.0.0](https://github.com/QutEcoacoustics/baw-server/tree/8.0.0) (2022-05-27)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.4.0...8.0.0)
+
+**Closed issues:**
+
+- Create a remote upload interface [\#539](https://github.com/QutEcoacoustics/baw-server/issues/539)
+
+**Merged pull requests:**
+
+- Adds Harvest table and APIs [\#582](https://github.com/QutEcoacoustics/baw-server/pull/582) ([atruskie](https://github.com/atruskie))
+
 ## [7.4.0](https://github.com/QutEcoacoustics/baw-server/tree/7.4.0) (2022-04-07)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.3.1...7.4.0)
