@@ -4,18 +4,20 @@
 #
 # Table name: harvests
 #
-#  id               :bigint           not null, primary key
-#  last_upload_date :datetime
-#  mappings         :jsonb
-#  status           :string
-#  streaming        :boolean
-#  upload_password  :string
-#  upload_user      :string
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  creator_id       :integer
-#  project_id       :integer          not null
-#  updater_id       :integer
+#  id                      :bigint           not null, primary key
+#  last_mappings_change_at :datetime
+#  last_metadata_review_at :datetime
+#  last_upload_at          :datetime
+#  mappings                :jsonb
+#  status                  :string
+#  streaming               :boolean
+#  upload_password         :string
+#  upload_user             :string
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  creator_id              :integer
+#  project_id              :integer          not null
+#  updater_id              :integer
 #
 # Foreign Keys
 #

@@ -140,6 +140,25 @@ class Project < ApplicationRecord
         order_by: :name,
         direction: :asc
       },
+      capabilities: {
+        update_allow_audio_upload:
+        {
+          can_item: ->(item) { Current.ability.can?(:allow_audio_upload, item) },
+          details: nil
+        },
+        create_harvest: {
+          can_item: ->(item) { Current.ability.can?(:create, Harvest.new(project: item)) && item&.allow_audio_upload },
+          details: lambda { |can, item, _klass|
+                     unless can
+                       if item.allow_audio_upload
+                         'You do not have permission to upload audio. You must be an owner of this project.'
+                       else
+                         'This project does not allow uploading audio. Contact the site administrator to request permission to upload audio.'
+                       end
+                     end
+                   }
+        }
+      },
       valid_associations: [
         {
           join: Permission,
