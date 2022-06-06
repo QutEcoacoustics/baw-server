@@ -154,6 +154,14 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: true
+                      details: 
+                    create_harvest:
+                      can: false
+                      details: This project does not allow uploading audio. Contact
+                        the site administrator to request permission to upload audio.
                 data:
                   id: 1
                   name: gen_project2
@@ -237,6 +245,13 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: true
+                      details: 
+                    create_harvest:
+                      can: true
+                      details: 
                 data:
                   id: 2
                   name: gen_project3
@@ -337,6 +352,14 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: true
+                      details: 
+                    create_harvest:
+                      can: false
+                      details: This project does not allow uploading audio. Contact
+                        the site administrator to request permission to upload audio.
                 data:
                   id: 4
                   name: gen_project6
@@ -426,6 +449,14 @@ paths:
                     current: http://localhost:3000/projects/filter?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: 
+                      details: 
+                    create_harvest:
+                      can: 
+                      details: This project does not allow uploading audio. Contact
+                        the site administrator to request permission to upload audio.
                 data:
                 - id: 5
                   name: gen_project7
@@ -512,6 +543,14 @@ paths:
                     current: http://localhost:3000/projects?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: 
+                      details: 
+                    create_harvest:
+                      can: 
+                      details: This project does not allow uploading audio. Contact
+                        the site administrator to request permission to upload audio.
                 data:
                 - id: 6
                   name: gen_project8
@@ -586,6 +625,14 @@ paths:
                 meta:
                   status: 201
                   message: Created
+                  capabilities:
+                    update_allow_audio_upload:
+                      can: true
+                      details: 
+                    create_harvest:
+                      can: false
+                      details: This project does not allow uploading audio. Contact
+                        the site administrator to request permission to upload audio.
                 data:
                   id: 8
                   name: gen_project10
@@ -1407,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.4.0 from http://localhost:3000.
+                  Version 8.0.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1447,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.4.0"
+                Write-Information "Acoustic Workbench downloader script version 8.0.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1629,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 7.4.0 from http://localhost:3000.
+                  Version 8.0.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1669,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 7.4.0"
+                Write-Information "Acoustic Workbench downloader script version 8.0.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1861,7 +1908,7 @@ paths:
                         settings for this project
                 data:
                 - id: 28
-                  uuid: b971cdb9-5d6f-4b2a-9ef9-036cbf63d5cc
+                  uuid: b1a02f5b-a229-4cb9-b1cd-b95d6ffb2a1e
                   recorded_date: '2012-04-23T07:06:59.000Z'
                   site_id: 28
                   duration_seconds: 60000.0
@@ -1879,7 +1926,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 28
-                  file_hash: SHA256::28asjnofvtli4p0czpopdnomgtgx6sxgx5cbm767y12azcp39kzadhvb1uz3287j
+                  file_hash: SHA256::283zlcasjnofvtli4p0czpopdnomgtgx6sxgx5cbm767y12azcp39kzadhvb1uz3
                   uploader_id: 124
                   original_file_name: original name 28.mp3
                   canonical_file_name: 20120423T070659Z_site-name-28_28.mp3
@@ -1928,7 +1975,7 @@ paths:
                       details: 
                 data:
                   id: 29
-                  uuid: 416501ac-6c03-4ebb-9c93-cfcb4d606702
+                  uuid: 83ac0fe5-4165-41ac-ac03-2ebb9c93cfcb
                   recorded_date: '2012-04-24T07:06:59.000Z'
                   site_id: 29
                   duration_seconds: 66.0
@@ -1946,7 +1993,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 29
-                  file_hash: SHA256::29kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhbrlqmr633rskzfzfy2cn4zmsqty98
+                  file_hash: SHA256::29dw2kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhbrlqmr633rskzfzfy2cn4zmsqt
                   uploader_id: 128
                   original_file_name: original name 29.mp3
                   canonical_file_name: 20120424T070659Z_site-name-29_29.mp3
@@ -1997,7 +2044,7 @@ paths:
                       details: 
                 data:
                   id: 30
-                  uuid: 9c6110b1-3138-404a-86e4-c34cc521ebfe
+                  uuid: ae29fb9c-6110-4131-b880-4ac6e4c34cc5
                   recorded_date: '2012-04-25T07:06:59.000Z'
                   site_id: 30
                   duration_seconds: 60000.0
@@ -2015,7 +2062,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 30
-                  file_hash: SHA256::304c02hy3yui3iptsk1pjhqxu1b81m2c8uuq07shlpanph5m3wmcovyezpqpgupf
+                  file_hash: SHA256::30x4c02hy3yui3iptsk1pjhqxu1b81m2c8uuq07shlpanph5m3wmcovyezpqpgup
                   uploader_id: 132
                   original_file_name: original name 30.mp3
                   canonical_file_name: 20120425T070659Z_site-name-30_30.mp3
@@ -2061,7 +2108,7 @@ paths:
                       details: 
                 data:
                   id: 31
-                  uuid: c67595a6-8dcf-45a6-bd81-65a42783fe7c
+                  uuid: cfb2fbc6-7595-468d-8fc5-a6fd8165a427
                   recorded_date: '2012-04-26T07:06:59.000Z'
                   site_id: 31
                   duration_seconds: 66.0
@@ -2079,7 +2126,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 31
-                  file_hash: SHA256::31zacwbn39j1wwm7mioyylciu2e1ve2uhrmbn7k0w3nu2oir3x6y8eyhmug9bp7u
+                  file_hash: SHA256::313zacwbn39j1wwm7mioyylciu2e1ve2uhrmbn7k0w3nu2oir3x6y8eyhmug9bp7
                   uploader_id: 136
                   original_file_name: original name 31.mp3
                   canonical_file_name: 20120426T070659Z_site-name-31_31.mp3
@@ -2173,7 +2220,7 @@ paths:
                         settings for this project
                 data:
                 - id: 33
-                  uuid: 1deeb0ae-b80f-4509-84cb-920da8e9a507
+                  uuid: 191deeb0-aeb8-4ff5-8984-cb920da8e9a5
                   recorded_date: '2012-04-28T07:06:59.000Z'
                   site_id: 33
                   duration_seconds: 60000.0
@@ -2191,7 +2238,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 33
-                  file_hash: SHA256::33rg8v0o44mgu9okmxnw273ifvtapv9yl3e7sjjskjy2yai2twpzruhufceganv3
+                  file_hash: SHA256::337rg8v0o44mgu9okmxnw273ifvtapv9yl3e7sjjskjy2yai2twpzruhufceganv
                   uploader_id: 144
                   original_file_name: original name 33.mp3
                   canonical_file_name: 20120428T070659Z_site-name-33_33.mp3
@@ -3476,8 +3523,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3544,8 +3594,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: '2020-01-02T03:04:05.677Z'
+                  last_metadata_review_at: 
+                  last_mappings_change_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3621,8 +3674,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3723,8 +3779,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3818,8 +3877,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3890,8 +3952,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5077,8 +5142,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5160,8 +5228,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5226,8 +5297,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5298,8 +5372,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5367,8 +5444,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: 
+                  last_metadata_review_at: 
+                  last_mappings_change_at: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5428,8 +5508,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity: 
+                    latest_activity_at: 
                     run_time_seconds: 
+                  last_upload_at: '2020-01-02T03:04:05.677Z'
+                  last_metadata_review_at: 
+                  last_mappings_change_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8296,6 +8379,24 @@ components:
           - metadata_review
           - processing
           - complete
+        last_upload_at:
+          type:
+          - 'null'
+          - string
+          format: date-time
+          readOnly: true
+        last_metadata_review_at:
+          type:
+          - 'null'
+          - string
+          format: date-time
+          readOnly: true
+        last_mappings_change_at:
+          type:
+          - 'null'
+          - string
+          format: date-time
+          readOnly: true
         upload_user:
           type:
           - 'null'
@@ -8328,6 +8429,36 @@ components:
         report:
           type: object
           readOnly: true
+          properties:
+            items_total:
+              type: integer
+            items_size_bytes:
+              type: integer
+            items_duration_seconds:
+              type: number
+            items_invalid_fixable:
+              type: integer
+            items_invalid_not_fixable:
+              type: integer
+            items_new:
+              type: integer
+            items_metadata_gathered:
+              type: integer
+            items_failed:
+              type: integer
+            items_completed:
+              type: integer
+            items_errored:
+              type: integer
+            latest_activity_at:
+              type:
+              - 'null'
+              - string
+              format: date-time
+            run_time_seconds:
+              type:
+              - 'null'
+              - number
       required:
       - id
       - creator_id

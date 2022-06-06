@@ -1,5 +1,21 @@
 # Changelog
 
+## [8.1.0](https://github.com/QutEcoacoustics/baw-server/tree/8.1.0) (2022-06-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.0.0...8.1.0)
+
+**Implemented enhancements:**
+
+- Harvest model updates [\#583](https://github.com/QutEcoacoustics/baw-server/issues/583)
+
+**Closed issues:**
+
+- Missing capability details [\#419](https://github.com/QutEcoacoustics/baw-server/issues/419)
+
+**Merged pull requests:**
+
+- Harvest model updates [\#584](https://github.com/QutEcoacoustics/baw-server/pull/584) ([atruskie](https://github.com/atruskie))
+
 ## [8.0.0](https://github.com/QutEcoacoustics/baw-server/tree/8.0.0) (2022-05-27)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/7.4.0...8.0.0)
