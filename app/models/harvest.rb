@@ -4,18 +4,20 @@
 #
 # Table name: harvests
 #
-#  id               :bigint           not null, primary key
-#  last_upload_date :datetime
-#  mappings         :jsonb
-#  status           :string
-#  streaming        :boolean
-#  upload_password  :string
-#  upload_user      :string
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  creator_id       :integer
-#  project_id       :integer          not null
-#  updater_id       :integer
+#  id                      :bigint           not null, primary key
+#  last_mappings_change_at :datetime
+#  last_metadata_review_at :datetime
+#  last_upload_at          :datetime
+#  mappings                :jsonb
+#  status                  :string
+#  streaming               :boolean
+#  upload_password         :string
+#  upload_user             :string
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  creator_id              :integer
+#  project_id              :integer          not null
+#  updater_id              :integer
 #
 # Foreign Keys
 #
@@ -28,6 +30,8 @@ class Harvest < ApplicationRecord
   include AasmHelpers
   HARVEST_FOLDER_PREFIX = 'harvest_'
   HARVEST_ID_FROM_FOLDER_REGEX = %r{/#{HARVEST_FOLDER_PREFIX}(\d+)/}
+
+  before_save :mark_mappings_change_at
 
   has_many :harvest_items, inverse_of: :harvest
 
@@ -46,6 +50,10 @@ class Harvest < ApplicationRecord
   attribute :mappings, ::BawWorkers::ActiveRecord::Type::ArrayOfDomainModelAsJson.new(
     target_class: ::BawWorkers::Jobs::Harvest::Mapping
   )
+
+  def mark_mappings_change_at
+    self.last_mappings_change_at = Time.now if mappings_changed?
+  end
 
   # @return [Boolean]
   def uploads_enabled?
@@ -193,10 +201,10 @@ class Harvest < ApplicationRecord
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true, logger: SemanticLogger[Harvest] do
     state :new_harvest, initial: true
 
-    state :uploading, enter: [:mark_last_upload_date]
+    state :uploading, enter: [:mark_last_upload_at]
     state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
-    state :metadata_review
+    state :metadata_review, enter: [:mark_last_metadata_review_at]
     state :processing
     # @!method complete?
     state :complete, enter: [:close_upload_slot]
@@ -274,8 +282,12 @@ class Harvest < ApplicationRecord
     BawWorkers::Config.upload_communicator.set_user_status(upload_user, enabled: true)
   end
 
-  def mark_last_upload_date
-    self.last_upload_date = Time.now
+  def mark_last_upload_at
+    self.last_upload_at = Time.now
+  end
+
+  def mark_last_metadata_review_at
+    self.last_metadata_review_at = Time.now
   end
 
   def create_default_mappings
@@ -362,7 +374,7 @@ class Harvest < ApplicationRecord
       items_invalid_fixable: harvest_items.sum(HarvestItem.invalid_fixable_arel),
       items_invalid_not_fixable: harvest_items.sum(HarvestItem.invalid_not_fixable_arel),
 
-      latest_activity: last_update,
+      latest_activity_at: last_update,
       run_time_seconds:
     }
   end
@@ -378,7 +390,10 @@ class Harvest < ApplicationRecord
         :upload_password,
         :upload_url,
         :mappings,
-        :report
+        :report,
+        :last_upload_at,
+        :last_metadata_review_at,
+        :last_mappings_change_at
       ],
       text_fields: [],
       custom_fields2: {
@@ -434,6 +449,9 @@ class Harvest < ApplicationRecord
         project_id: Api::Schema.id,
         streaming: { type: 'boolean' },
         status: { type: 'string', enum: Harvest.aasm.states.map(&:name) },
+        last_upload_at: Api::Schema.date(nullable: true, read_only: true),
+        last_metadata_review_at: Api::Schema.date(nullable: true, read_only: true),
+        last_mappings_change_at: Api::Schema.date(nullable: true, read_only: true),
         upload_user: { type: ['null', 'string'], readOnly: true },
         upload_password: { type: ['null', 'string'], readOnly: true },
         upload_url: { type: ['null', 'string'], format: 'url', readOnly: true },

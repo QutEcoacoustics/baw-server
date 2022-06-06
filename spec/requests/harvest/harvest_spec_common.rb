@@ -194,7 +194,7 @@ module HarvestSpecCommon
   )
     report = api_data[:report]
 
-    report[:latest_activity] = Time.parse(report[:latest_activity])
+    report[:latest_activity_at] = Time.parse(report[:latest_activity_at])
 
     # seconds
     expected_speed = 60
@@ -211,7 +211,7 @@ module HarvestSpecCommon
         items_errored:,
         items_invalid_fixable:,
         items_invalid_not_fixable:,
-        latest_activity: be_within(expected_speed.seconds).of(Time.now),
+        latest_activity_at: be_within(expected_speed.seconds).of(Time.now),
         run_time_seconds: an_instance_of(Float).and(be < expected_speed)
       ))
     end

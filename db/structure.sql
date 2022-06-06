@@ -937,7 +937,7 @@ CREATE TABLE public.harvests (
     id bigint NOT NULL,
     streaming boolean,
     status character varying,
-    last_upload_date timestamp(6) without time zone,
+    last_upload_at timestamp(6) without time zone,
     upload_user character varying,
     upload_password character varying,
     project_id integer NOT NULL,
@@ -945,7 +945,9 @@ CREATE TABLE public.harvests (
     creator_id integer,
     updater_id integer,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    last_metadata_review_at timestamp(6) without time zone,
+    last_mappings_change_at timestamp(6) without time zone
 );
 
 
@@ -3561,6 +3563,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20211024235556'),
 ('20220331070014'),
 ('20220406072625'),
-('20220407040355');
+('20220407040355'),
+('20220603004830');
 
 
