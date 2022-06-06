@@ -55,7 +55,6 @@ class BawConfigContract < Dry::Validation::Contract
       required(:cached_spectrograms).array(Baw::CustomTypes::CreatedDirPathname)
       required(:cached_audios).array(Baw::CustomTypes::CreatedDirPathname)
       required(:analysis_scripts).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:cached_datasets).array(Baw::CustomTypes::CreatedDirPathname)
       required(:cached_analysis_jobs).array(Baw::CustomTypes::CreatedDirPathname)
       required(:worker_log_file).filled(:string)
       required(:mailer_log_file).filled(:string)

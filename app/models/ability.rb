@@ -162,6 +162,9 @@ class Ability
   def for_admin
     # admin can access any action on any controller
     can :manage, :all
+
+    # no one is allowed to change allow_audio_upload except an admin
+    can [:allow_audio_upload], Project
   end
 
   def for_harvester

@@ -117,7 +117,7 @@ module BawWorkers
 
             return false unless harvest_item.metadata_gathered?
 
-            harvest_item.updated_at > harvest.last_upload_date
+            harvest_item.updated_at > harvest.last_upload_at
           end
 
           def is_completed?(harvest_item)

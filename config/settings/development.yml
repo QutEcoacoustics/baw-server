@@ -22,9 +22,6 @@ paths:
   analysis_scripts:
     - /data/development/analysis_script
     - /data/test/analysis_script
-  cached_datasets:
-    - /data/development/cached_dataset
-    - /data/test/cached_dataset
   cached_analysis_jobs:
     - /data/development/analysis_results
     - /data/test/analysis_results

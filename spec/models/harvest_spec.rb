@@ -4,18 +4,20 @@
 #
 # Table name: harvests
 #
-#  id               :bigint           not null, primary key
-#  last_upload_date :datetime
-#  mappings         :jsonb
-#  status           :string
-#  streaming        :boolean
-#  upload_password  :string
-#  upload_user      :string
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  creator_id       :integer
-#  project_id       :integer          not null
-#  updater_id       :integer
+#  id                      :bigint           not null, primary key
+#  last_mappings_change_at :datetime
+#  last_metadata_review_at :datetime
+#  last_upload_at          :datetime
+#  mappings                :jsonb
+#  status                  :string
+#  streaming               :boolean
+#  upload_password         :string
+#  upload_user             :string
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  creator_id              :integer
+#  project_id              :integer          not null
+#  updater_id              :integer
 #
 # Foreign Keys
 #
@@ -26,6 +28,8 @@
 RSpec.describe Harvest, type: :model do
   prepare_users
   prepare_project
+  prepare_region
+  prepare_site
 
   subject { build(:harvest) }
 
@@ -41,6 +45,46 @@ RSpec.describe Harvest, type: :model do
 
   it 'encodes the mappings column as jsonb' do
     expect(Harvest.columns_hash['mappings'].type).to eq(:jsonb)
+  end
+
+  it 'saves a date stamp whenever mappings are updated' do
+    expect(subject.last_mappings_change_at).to be_nil
+    subject.save!
+    expect(subject.last_mappings_change_at).to be_nil
+
+    subject.mappings = [
+      BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, site_id: site.id, utc_offset: '+10:00')
+    ]
+    subject.save!
+    now = Time.now
+    expect(subject.last_mappings_change_at).to be_within(0.01.second).of(now)
+
+    sleep 1
+
+    # date stamp not modified on reload
+    subject.reload
+    expect(subject.last_mappings_change_at).to be_within(0.05.second).of(now)
+
+    sleep 1
+
+    # not updated if equivalent
+    subject.mappings = [
+      BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, site_id: site.id, utc_offset: '+10:00')
+    ]
+    subject.save!
+    subject.reload
+    expect(subject.last_mappings_change_at).to be_within(0.05.second).of(now)
+
+    sleep 1
+
+    # is updated if different
+    subject.mappings = [
+      BawWorkers::Jobs::Harvest::Mapping.new(path: '/abc', recursive: true, site_id: site.id, utc_offset: '+10:00')
+    ]
+    now = Time.now
+    subject.save!
+    subject.reload
+    expect(subject.last_mappings_change_at).to be_within(0.05.second).of(now)
   end
 
   it 'can generate a upload url' do
@@ -284,9 +328,9 @@ RSpec.describe Harvest, type: :model do
     end
 
     it 'when entering :uploading state it sets the last upload date' do
-      expect(subject.last_upload_date).to be_nil
+      expect(subject.last_upload_at).to be_nil
       subject.open_upload!
-      expect(subject.last_upload_date).to be_within(0.01.seconds).of(Time.now)
+      expect(subject.last_upload_at).to be_within(0.01.seconds).of(Time.now)
 
       subject.scan!
       subject.extract!
@@ -296,7 +340,7 @@ RSpec.describe Harvest, type: :model do
       sleep 1
 
       subject.open_upload!
-      expect(subject.last_upload_date).to be_within(0.01.seconds).of(Time.now)
+      expect(subject.last_upload_at).to be_within(0.01.seconds).of(Time.now)
     end
 
     it 'when opening uploads, stores user information' do
@@ -365,6 +409,23 @@ RSpec.describe Harvest, type: :model do
       ))
 
       expect(HarvestItem.all).to all(be_new)
+    end
+
+    it 'when entering metadata_review it saves a date stamp' do
+      subject.save!
+      subject.open_upload!
+      subject.scan!
+      subject.extract!
+
+      expect(subject.last_metadata_review_at).to be_nil
+      subject.metadata_review!
+      expect(subject.last_metadata_review_at).to be_within(0.01.seconds).of(Time.now)
+
+      # and it updates it on reentry
+      subject.extract!
+      sleep 1
+      subject.metadata_review!
+      expect(subject.last_metadata_review_at).to be_within(0.01.seconds).of(Time.now)
     end
   end
 end

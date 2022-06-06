@@ -112,8 +112,6 @@ paths:
     - /data/<%= BawApp.env %>/cached_audio
   analysis_scripts:
     - /data/<%= BawApp.env %>/analysis_script
-  cached_datasets:
-    - /data/<%= BawApp.env %>/cached_dataset
   cached_analysis_jobs:
     - /data/<%= BawApp.env %>/analysis_results
   worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
