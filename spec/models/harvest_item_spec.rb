@@ -129,7 +129,7 @@ RSpec.describe HarvestItem, type: :model do
       it 'can query the root path for directories' do
         results = HarvestItem.project_directory_listing(HarvestItem, '').as_json
 
-        expect(results).to eq [
+        expect(results).to contain_exactly(
           {
             'id' => nil,
             'harvest_id' => harvest.id,
@@ -141,7 +141,7 @@ RSpec.describe HarvestItem, type: :model do
             'harvest_id' => harvest.id,
             'path' => 'z'
           }
-        ]
+        )
       end
 
       it 'can query the root path for files' do

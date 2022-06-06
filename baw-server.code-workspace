@@ -272,7 +272,8 @@
     "editor.rulers": [
       80,
       120
-    ]
+    ],
+    "liveServer.settings.useWebExt": true
   },
   "extensions": {
     "recommendations": [

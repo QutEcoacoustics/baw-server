@@ -9,22 +9,3 @@ secret_token: some long secret token - at least 30 chars, all random
 secret_key_base: some long secret token - at least 30 chars, all random
 google_maps:
   api_key: ~
-paths:
-  original_audios:
-    - /data/development/original_audio
-    - /data/test/original_audio
-  cached_spectrograms:
-    - /data/development/cached_spectrogram
-    - /data/test/cached_spectrogram
-  cached_audios:
-    - /data/development/cached_audio
-    - /data/test/cached_audio
-  analysis_scripts:
-    - /data/development/analysis_script
-    - /data/test/analysis_script
-  cached_datasets:
-    - /data/development/cached_dataset
-    - /data/test/cached_dataset
-  cached_analysis_jobs:
-    - /data/development/analysis_results
-    - /data/test/analysis_results

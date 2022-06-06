@@ -70,7 +70,7 @@ describe ControllerWatcher, type: :request do
         wait_for_action_invocation(ProjectsController, :index, goal: 4)
 
         stop = Time.now
-        expect(stop - start).to be_within(0.2).of(3)
+        expect(stop - start).to be_within(0.25).of(3)
       end
     end
 

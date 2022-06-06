@@ -124,6 +124,7 @@ services:
     working_dir: /home/baw_web/baw-server
 
   workers_test:
+    &worker_test
     <<: *worker
     volumes:
       - type: bind
@@ -138,7 +139,7 @@ services:
     command: >-
       rerun -- bin/baw-workers baw:worker:run_scheduler
   scheduler_test:
-    <<: *worker
+    <<: *worker_test
     command: >-
       rerun -- bin/baw-workers baw:worker:run_scheduler
     environment:

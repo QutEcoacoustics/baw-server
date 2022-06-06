@@ -216,8 +216,8 @@ group :development do
   #gem 'traceroute'
 
   # a ruby language server
-  gem 'solargraph'
-  gem 'solargraph-rails', '>= 0.2.2.pre.2'
+  gem 'solargraph', '>= 0.45.0'
+  gem 'solargraph-rails', '>= 0.3.1'
 
   # official ruby typing support
   gem 'typeprof'

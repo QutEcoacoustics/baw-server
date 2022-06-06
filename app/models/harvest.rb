@@ -449,7 +449,21 @@ class Harvest < ApplicationRecord
         },
         report: {
           type: 'object',
-          readOnly: true
+          readOnly: true,
+          properties: {
+            items_total: { type: 'integer' },
+            items_size_bytes: { type: 'integer' },
+            items_duration_seconds: { type: 'number' },
+            items_invalid_fixable: { type: 'integer' },
+            items_invalid_not_fixable: { type: 'integer' },
+            items_new: { type: 'integer' },
+            items_metadata_gathered: { type: 'integer' },
+            items_failed: { type: 'integer' },
+            items_completed: { type: 'integer' },
+            items_errored: { type: 'integer' },
+            latest_activity_at: { type: ['null', 'string'], format: 'date-time' },
+            run_time_seconds: { type: ['null', 'number'] }
+          }
         }
 
       },

@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-
-
 describe 'creation helper' do
   create_entire_hierarchy
   create_study_hierarchy
+
   it 'correctly creates one of everything' do
     expect(User.count).to eq(6)
     expect(User.where(user_name: 'Admin').count).to eq(1)
@@ -16,9 +15,9 @@ describe 'creation helper' do
 
     expect(Permission.count).to eq(3)
 
-    expect(Permission.where(level: 'owner', project: project, user: owner_user).count).to eq(1)
-    expect(Permission.where(level: 'writer', project: project, user: writer_user).count).to eq(1)
-    expect(Permission.where(level: 'reader', project: project, user: reader_user).count).to eq(1)
+    expect(Permission.where(level: 'owner', project:, user: owner_user).count).to eq(1)
+    expect(Permission.where(level: 'writer', project:, user: writer_user).count).to eq(1)
+    expect(Permission.where(level: 'reader', project:, user: reader_user).count).to eq(1)
 
     expect(Project.count).to eq(1)
 
