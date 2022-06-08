@@ -156,6 +156,9 @@ RSpec.configure do |config|
   # The different available types are documented in the features, such as in
   # https://relishapp.com/rspec/rspec-rails/docs
   config.infer_spec_type_from_file_location!
+  config.define_derived_metadata(file_path: Regexp.new('/spec/(permissions|capabilities)/')) do |metadata|
+    metadata[:type] = :request
+  end
 
   # set a random timezone to check for time zone issues
   Zonebie.set_random_timezone
@@ -226,11 +229,11 @@ RSpec.configure do |config|
 
   require_relative 'support/permissions_helper'
   config.extend PermissionsHelpers::ExampleGroup, {
-    file_path: Regexp.new('/spec/requests/permissions/')
+    file_path: Regexp.new('/spec/permissions/')
   }
   require_relative 'support/capabilities_helper'
   config.extend CapabilitiesHelper::ExampleGroup, {
-    file_path: Regexp.new('/spec/requests/capabilities')
+    file_path: Regexp.new('/spec/capabilities')
   }
 
   require_relative 'support/image_helpers'
