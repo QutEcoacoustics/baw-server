@@ -138,7 +138,9 @@ api:
   user: harvester@example.com
   password: password
 upload_service:
-  host: upload
+  admin_host: upload
+  # same in dev but in prod our public host goes through a load balancer
+  public_host: upload
   port: 8080
   username: admin
   password: password

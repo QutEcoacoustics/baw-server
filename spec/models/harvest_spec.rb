@@ -88,7 +88,7 @@ RSpec.describe Harvest, type: :model do
   end
 
   it 'can generate a upload url' do
-    expect(subject.upload_url).to eq "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
+    expect(subject.upload_url).to eq "sftp://#{Settings.upload_service.public_host}:#{Settings.upload_service.sftp_port}"
   end
 
   it 'will fail to create a harvest if uploading is not enabled for the project' do

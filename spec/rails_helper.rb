@@ -99,7 +99,8 @@ require 'fixtures/fixtures'
 
 WEBMOCK_DISABLE_ARGS = { allow_localhost: true, allow: [
   'codeclimate.com',
-  Settings.upload_service.host,
+  Settings.upload_service.public_host,
+  Settings.upload_service.admin_host,
   'web'
 ] }.freeze
 WebMock.disable_net_connect!(**WEBMOCK_DISABLE_ARGS)

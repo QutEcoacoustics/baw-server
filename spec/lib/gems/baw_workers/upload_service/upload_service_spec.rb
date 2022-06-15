@@ -18,7 +18,7 @@ describe BawWorkers::UploadService::Communicator do
     expect(upload_service.client).to be_a(SftpgoClient::ApiClient)
     expect(upload_service.client.connection).to be_a(Faraday::Connection)
 
-    base_uri = URI("http://#{Settings.upload_service.host}:#{Settings.upload_service.port}/api/v2/")
+    base_uri = URI("http://#{Settings.upload_service.admin_host}:#{Settings.upload_service.port}/api/v2/")
     expect(upload_service.client.base_uri).to eq(base_uri)
     expect(upload_service.client.connection.url_prefix).to eq(base_uri)
 
@@ -33,7 +33,7 @@ describe BawWorkers::UploadService::Communicator do
       logger: BawWorkers::Config.logger_worker
     )
 
-    base_uri = URI("https://#{Settings.upload_service.host}:#{Settings.upload_service.port}/api/v2/")
+    base_uri = URI("https://#{Settings.upload_service.admin_host}:#{Settings.upload_service.port}/api/v2/")
     expect(upload_service.client.base_uri).to eq(base_uri)
     expect(upload_service.client.connection.url_prefix).to eq(base_uri)
   end
@@ -44,7 +44,7 @@ describe BawWorkers::UploadService::Communicator do
         username: Settings.upload_service.username,
         password: Settings.upload_service.password,
         scheme: 'malarkey',
-        host: Settings.upload_service.host,
+        host: Settings.upload_service.admin_host,
         port: Settings.upload_service.port,
         logger: BawWorkers::Config.logger_worker
       )
@@ -56,7 +56,7 @@ describe BawWorkers::UploadService::Communicator do
   end
 
   it 'can return the admin interface link' do
-    expect(BawWorkers::Config.upload_communicator.admin_url).to eq("http://#{Settings.upload_service.host}:8080/")
+    expect(BawWorkers::Config.upload_communicator.admin_url).to eq("http://#{Settings.upload_service.admin_host}:8080/")
   end
 
   it 'send basic auth on requests' do
@@ -66,7 +66,7 @@ describe BawWorkers::UploadService::Communicator do
     )
     upload_service.server_version
 
-    auth_request = a_request(:get, "http://#{Settings.upload_service.host}:8080/api/v2/token")
+    auth_request = a_request(:get, "http://#{Settings.upload_service.admin_host}:8080/api/v2/token")
                    .with(headers: {
                      'Accept' => 'application/json',
                      'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
@@ -74,7 +74,7 @@ describe BawWorkers::UploadService::Communicator do
                      'Content-Type' => 'application/json',
                      'User-Agent' => 'workbench-server/sftpgo-client'
                    })
-    actual_request = a_request(:get, "http://#{Settings.upload_service.host}:8080/api/v2/version")
+    actual_request = a_request(:get, "http://#{Settings.upload_service.admin_host}:8080/api/v2/version")
                      .with(headers: {
                        'Accept' => 'application/json',
                        'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
@@ -122,7 +122,7 @@ describe BawWorkers::UploadService::Communicator do
     end
 
     step 'if we make the serice unavailable' do
-      stub_request(:get, "#{Settings.upload_service.host}:8080/api/v2/status")
+      stub_request(:get, "#{Settings.upload_service.admin_host}:8080/api/v2/status")
         .to_return(body: 'error message', status: 500)
     end
 

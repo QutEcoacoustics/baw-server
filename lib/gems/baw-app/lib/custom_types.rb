@@ -12,7 +12,15 @@ module Baw
     ExpandedPathname = Constructor(::Pathname) { |value| ::Pathname.new(value).expand_path }
     CreatedDirPathname = Constructor(::Pathname) { |value|
       p = ::Pathname.new(value).expand_path
-      p.mkpath
+      # Super important that this doesn't crash in production
+      # We want to be able to serve requests even if our storage is not available
+      # but the app will crash while booting
+      begin
+        p.mkpath
+      rescue Errno::EACCES => e
+        puts "ERROR: Could not create directory #{p}, #{e}"
+        raise e if BawApp.dev_or_test?
+      end
       p
     }
     PathExists =

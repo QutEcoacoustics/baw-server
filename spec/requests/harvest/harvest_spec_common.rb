@@ -149,7 +149,7 @@ module HarvestSpecCommon
     expect(api_data).to match(a_hash_including(
       upload_user: "#{harvest.creator.safe_user_name}_#{harvest.id}",
       upload_password: an_instance_of(String).and(match(/\w{24}/)),
-      upload_url: "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
+      upload_url: "sftp://#{Settings.upload_service.public_host}:#{Settings.upload_service.sftp_port}"
     ))
   end
 
@@ -158,7 +158,7 @@ module HarvestSpecCommon
     expect(api_data).to match(a_hash_including(
       upload_user: nil,
       upload_password: nil,
-      upload_url: "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
+      upload_url: "sftp://#{Settings.upload_service.public_host}:#{Settings.upload_service.sftp_port}"
     ))
   end
 

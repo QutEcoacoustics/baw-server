@@ -34,7 +34,8 @@ class BawConfigContract < Dry::Validation::Contract
 
   SftpgoConfigSchema = Dry::Schema.define {
     required(:upload_service).hash do
-      required(:host).filled(:string)
+      required(:admin_host).filled(:string)
+      required(:public_host).filled(:string)
       required(:port).value(:integer, gt?: 0)
       required(:username).filled(:string)
       required(:password).filled(:string)

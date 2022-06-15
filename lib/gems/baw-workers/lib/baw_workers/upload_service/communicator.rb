@@ -25,7 +25,7 @@ module BawWorkers
           username: config.username,
           password: config.password,
           scheme: BawApp.http_scheme,
-          host: config.host,
+          host: config.admin_host,
           port: config.port,
           logger:
         )

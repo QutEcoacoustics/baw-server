@@ -4,7 +4,7 @@ module UploadServiceSteps
   include Dry::Monads[:result]
 
   def upload_host
-    @upload_host = Settings.upload_service.host
+    @upload_host = Settings.upload_service.public_host
     @upload_host
   end
 

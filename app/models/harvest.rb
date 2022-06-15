@@ -90,7 +90,7 @@ class Harvest < ApplicationRecord
 
   # @return [String]
   def upload_url
-    "sftp://#{Settings.upload_service.host}:#{Settings.upload_service.sftp_port}"
+    "sftp://#{Settings.upload_service.public_host}:#{Settings.upload_service.sftp_port}"
   end
 
   # @return [Boolean]

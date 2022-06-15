@@ -11,17 +11,14 @@ class HarvestsController < ApplicationController
     get_project_if_exists
     do_authorize_instance(:show, @project) unless @project.nil?
 
-    respond_to do |format|
-      format.json do
-        @harvests, opts = Settings.api_response.response_advanced(
-          api_filter_params,
-          list_permissions,
-          Harvest,
-          Harvest.filter_settings
-        )
-        respond_index(opts)
-      end
-    end
+    @harvests, opts = Settings.api_response.response_advanced(
+      api_filter_params,
+      list_permissions,
+      Harvest,
+      Harvest.filter_settings
+    )
+
+    respond_index(opts)
   end
 
   # GET /harvests/:id
@@ -57,7 +54,7 @@ class HarvestsController < ApplicationController
     parameters = harvest_params
     sanitize_mappings(parameters)
 
-    do_set_attributes(harvest_params)
+    do_set_attributes(parameters)
     get_project_if_exists
     do_authorize_instance
 
@@ -89,14 +86,20 @@ class HarvestsController < ApplicationController
     parameters = harvest_params(update: true)
     sanitize_mappings(parameters)
 
-    # allow the API to transition this harvest to a new state
-    status = parameters.delete(:status)
-    @harvest.transition_to_state!(status.to_sym) unless status.nil?
+    # use a row-level lock to prevent concurrent updates - especially for race conditions
+    # that can occur while talking with other services (e.g. sftpgo)
+    # https://blog.saeloun.com/2022/03/23/rails-7-adds-lock_with.html
+    # This could cause performance issues: monitor.
+    @harvest.with_lock('FOR UPDATE') do
+      # allow the API to transition this harvest to a new state
+      status = parameters.delete(:status)
+      @harvest.transition_to_state!(status.to_sym) unless status.nil?
 
-    if @harvest.update(parameters)
-      respond_show
-    else
-      respond_change_fail
+      if @harvest.update(parameters)
+        respond_show
+      else
+        respond_change_fail
+      end
     end
   end
 

@@ -12,6 +12,8 @@ devise:
 secret_token: some long secret token - at least 30 chars, all random
 secret_key_base: some long secret token - at least 30 chars, all random
 upload_service:
-  host: upload.test
+  admin_host: upload.test
+  # same in dev but in prod our public host goes through a load balancer
+  public_host: upload.test
 # if a test is failing is just takes way too long to wait for a 60s poll timeout!
 audio_tools_timeout_sec: 10
