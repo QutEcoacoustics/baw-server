@@ -56,6 +56,7 @@ describe AudioEvent, type: :model do
   end
 
   it { is_expected.to belong_to(:audio_recording) }
+  it { is_expected.to belong_to(:audio_event_import).optional }
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }

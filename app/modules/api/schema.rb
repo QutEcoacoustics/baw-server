@@ -269,7 +269,8 @@ module Api
             audio_recording: AudioRecording.schema,
             permission: Permission.schema,
             harvest: Harvest.schema,
-            harvest_item: HarvestItem.schema
+            harvest_item: HarvestItem.schema,
+            audio_event_import: AudioEventImport.schema
 
           }
         }

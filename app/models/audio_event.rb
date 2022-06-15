@@ -38,6 +38,7 @@
 class AudioEvent < ApplicationRecord
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
+  belongs_to :audio_event_import, inverse_of: :audio_events, optional: true
   has_many :taggings, inverse_of: :audio_event, strict_loading: false
   has_many :tags, through: :taggings
 
@@ -45,6 +46,8 @@ class AudioEvent < ApplicationRecord
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events, optional: true
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events, optional: true
   has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
+
+  belongs_to :audio_event_import, inverse_of: :audio_events, optional: true
 
   # AT 2021: disabled. Nested associations are extremely complex,
   # and as far as we are aware, they are not used anywhere in production
@@ -56,8 +59,9 @@ class AudioEvent < ApplicationRecord
   validates_as_paranoid
 
   # association validations
-  validates_associated :audio_recording
-  validates_associated :creator
+  # disabled because they're annoying - no really they're not needed because associated models are always valid
+  #validates_associated :audio_recording
+  #validates_associated :creator
 
   # validation
   validates :is_reference, inclusion: { in: [true, false] }
@@ -65,6 +69,7 @@ class AudioEvent < ApplicationRecord
   validates :end_time_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :low_frequency_hertz, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :high_frequency_hertz, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :channel, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   validate :start_must_be_lte_end
   validate :low_must_be_lte_high
@@ -91,6 +96,8 @@ class AudioEvent < ApplicationRecord
 
   scope :total_duration_seconds, -> { sum((duration_seconds.cast('bigint'))) }
 
+  scope :by_import, ->(import_id) { where(audio_event_import_id: import_id) }
+
   # Define filter api settings
   def self.filter_settings
     {
@@ -99,12 +106,12 @@ class AudioEvent < ApplicationRecord
                      :low_frequency_hertz, :high_frequency_hertz,
                      :is_reference,
                      :created_at, :creator_id, :updated_at,
-                     :duration_seconds],
+                     :duration_seconds, :audio_event_import_id, :channel],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
                       :is_reference,
-                      :creator_id, :updated_at, :created_at],
+                      :creator_id, :updated_at, :created_at, :audio_event_import_id, :channel],
       custom_fields: lambda { |item, _user|
                        # do a query for the attributes that may not be in the projection
                        fresh_audio_event = AudioEvent.find(item.id)
@@ -136,6 +143,11 @@ class AudioEvent < ApplicationRecord
         {
           join: AudioRecording,
           on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+          available: true
+        },
+        {
+          join: AudioEventImport,
+          on: AudioEvent.arel_table[:audio_event_import_id].eq(AudioEventImport.arel_table[:id]),
           available: true
         },
         {
@@ -367,14 +379,14 @@ class AudioEvent < ApplicationRecord
   def start_must_be_lte_end
     return unless end_time_seconds && start_time_seconds
 
-    errors.add(:start_time_seconds, '%{value} must be lower than end time') if start_time_seconds > end_time_seconds
+    errors.add(:start_time_seconds, '%<value>s must be lower than end time') if start_time_seconds > end_time_seconds
   end
 
   def low_must_be_lte_high
     return unless high_frequency_hertz && low_frequency_hertz
 
     if low_frequency_hertz > high_frequency_hertz
-      errors.add(:start_time_seconds, '%{value} must be lower than high frequency')
+      errors.add(:start_time_seconds, '%<value>s must be lower than high frequency')
     end
   end
 

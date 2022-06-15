@@ -13,8 +13,7 @@ class AddHarvestsTable < ActiveRecord::Migration[7.0]
       # streaming harvests process files as they arrive
       t.boolean :streaming
 
-      #         :streaming
-      # :new -> :uploading -> -> :scanning -> :metadata_extraction -> :metadata_review -> :processing -> :complete
+      # :new -> :uploading -> :scanning -> :metadata_extraction -> :metadata_review -> :processing -> :complete
       t.string :status
 
       # the lat time the upload status was in effect

@@ -24,6 +24,20 @@ module Access
           .order('audio_events.updated_at DESC')
       end
 
+      # Get audio event imports created or updated by user.
+      # @param [User] user
+      # @param include_admin [Boolean] if true will strictly only fetch records owned by user, and will not work for admin users
+      # @return [::ActiveRecord::Relation]
+      def audio_event_imports(user, include_admin: true)
+        user = Access::Validate.user(user, false)
+
+        return AudioEventImport.all if include_admin && Access::Core.is_admin?(user)
+
+        AudioEventImport
+          .where('(audio_event_imports.creator_id = ? OR audio_event_imports.updater_id = ?)', user.id, user.id)
+          .order('audio_event_imports.updated_at DESC')
+      end
+
       # Get audio event comments created or updated by user.
       # @param [User] user
       # @return [ActiveRecord::Relation]

@@ -53,7 +53,7 @@ class Tag < ApplicationRecord
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
   # association validations
-  validates_associated :creator
+  #validates_associated :creator
 
   # attribute validations
   validates :is_taxonomic, inclusion: { in: [true, false] }
@@ -109,6 +109,10 @@ class Tag < ApplicationRecord
     end
 
     first_common || first_species || first_other
+  end
+
+  def self.first_with_text(text)
+    Tag.where(arel_table[:text].imatches(text)).first
   end
 
   # Define filter api settings

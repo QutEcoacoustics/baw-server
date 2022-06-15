@@ -40,12 +40,12 @@ class Tagging < ApplicationRecord
   # association validations
   # the audio_event is added after validation
   #validates_associated :audio_event
-  validates_associated :tag
-  validates_associated :creator
+  #  validates_associated :tag
+  #validates_associated :creator
 
   # attribute validations
   validates_uniqueness_of :audio_event_id, scope: [:tag_id],
-    message: 'audio_event_id %{value} must be unique within tag_id and audio_event_id'
+    message: 'audio_event_id %<value>s must be unique within tag_id and audio_event_id'
 
   # postgres-specific
   scope :count_unique, -> { Tagging.select(:tag_id).distinct.count }

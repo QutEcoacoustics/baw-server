@@ -64,18 +64,23 @@ describe '/audio_events' do
   # end
 
   context 'when filtering' do
+    let(:audio_event_import) {
+      create(:audio_event_import)
+    }
+
     before do
-      FactoryBot.create(
+      create(
         :audio_event,
-        creator: reader_user, audio_recording: audio_recording, is_reference: true
+        creator: reader_user, audio_recording:, is_reference: true
       )
-      FactoryBot.create(
+      create(
         :audio_event,
-        creator: reader_user, audio_recording: audio_recording, is_reference: true, start_time_seconds: 4.0
+        creator: reader_user, audio_recording:, is_reference: true, start_time_seconds: 4.0,
+        audio_event_import:
       )
-      FactoryBot.create(
+      create(
         :audio_event,
-        creator: reader_user, audio_recording: audio_recording, is_reference: true, start_time_seconds: 5.4
+        creator: reader_user, audio_recording:, is_reference: true, start_time_seconds: 5.4
       )
     end
 
@@ -99,11 +104,30 @@ describe '/audio_events' do
 
       expect_success
       expect_number_of_items(3)
-      expect(api_data).to all(include(is_reference: eq(true)))
+      expect(api_data).to all(include(is_reference: be(true)))
       expect(api_data).to match [
         a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8),
         a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8),
         a_hash_including(start_time_seconds: 5.4, end_time_seconds: 5.8)
+      ]
+    end
+
+    it 'can filter by audio_event_import' do
+      body = {
+        filter: {
+          'audio_event_imports.id' => {
+            eq: audio_event_import.id
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to all(include(is_reference: be(true)))
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8)
       ]
     end
   end

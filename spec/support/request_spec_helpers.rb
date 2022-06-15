@@ -75,6 +75,67 @@ module RequestSpecHelpers
       }
     end
 
+    # Rails/rack basically does not support parsing mixed/related bodies
+    # I mostly got it working but the json blob was still a string and it was nested... not worth the effort
+    #
+    # require 'net/http/post/multipart'
+    # # A helper for sending JSON metadata along with one or more files.
+    # # Any Pathname object found in the body will be extracted and encoded as a
+    # # separate portion of the request.
+    # # !!! IMPORTANT !!!
+    # # requires use of the `expose_app_as_web_server` helper due to the fact that
+    # # Rack::Test does not support multipart requests (other than form-data).
+    # def post_multipart_request(url, body, token, accept: 'json')
+    #   raise 'body must be an Hash' unless body.is_a? Hash
+
+    #   url = "http://#{Settings.host.name}:#{Settings.host.port}#{url}"
+
+    #   files = {}
+    #   body_without_files = body.deep_map { |keys, value|
+    #     if value.is_a? Pathname
+    #       mime = Mime::Type.lookup_by_extension(value.extname).to_s
+    #       form_data_key = keys.first.to_s + keys[1..].map { |x| "[#{x}]" }.join
+    #       files[form_data_key] = UploadIO.new(value.open, mime, value.basename)
+    #       throw :delete
+    #     else
+    #       value
+    #     end
+    #   }
+
+    #   params = { params: body_without_files.to_json, **files }
+
+    #   url = URI.parse(url)
+    #   response = Net::HTTP.start(url.host, url.port) { |http|
+    #     request = Net::HTTP::Post::Multipart.new(url, params, {
+    #       parts: {
+    #         data: {
+    #           'Content-Type' => 'application/json'
+    #         }
+    #       }
+    #     })
+    #     request.add_field('Authorization', token)
+    #     request.add_field('Accept', MIME::Types.type_for(accept).first.content_type)
+    #     request.add_field('Content-Type', 'multipart/related')
+    #     logger.info("multipart request for #{url}", request: request.inspect)
+
+    #     http.request request
+    #   }
+    #   logger.info("multipart response for #{url}", response:)
+
+    #   response
+    # end
+
+    # @param name [Symbol]
+    # @param path [Pathname]
+    def with_file(path)
+      raise 'Must be a Pathname' unless path.is_a?(Pathname)
+      raise "File does not exist: #{path}" unless path.exist?
+
+      mime = Mime::Type.lookup_by_extension(path.extname).to_s
+
+      Rack::Test::UploadedFile.new(path, mime)
+    end
+
     def with_range_request_headers(headers, ranges:)
       headers ||= {}
       raise 'ranges must not be empty' if ranges.empty?
@@ -104,7 +165,7 @@ module RequestSpecHelpers
       expect(api_result).to match(
         {
           meta: an_instance_of(Hash),
-          data: (an_instance_of(Hash).or(an_instance_of(Array))).and(have_at_least(1).items)
+          data: an_instance_of(Hash).or(an_instance_of(Array)).and(have_at_least(1).items)
         }
       )
 
@@ -217,6 +278,10 @@ module RequestSpecHelpers
       expect(response).to have_http_status(:success)
     end
 
+    def expect_created
+      expect(response).to have_http_status(:created)
+    end
+
     def expect_error(status, details, info = nil)
       status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
 
@@ -284,7 +349,7 @@ module RequestSpecHelpers
       mime = request&.env&.fetch('CONTENT_TYPE')
       body = request.body.read
 
-      if mime&.start_with?('multipart/form-data')
+      if mime&.start_with?('multipart/form-data') || mime&.start_with?('multipart/mixed') || mime&.start_with?('multipart/related')
         return body.split(/-{10,}.*\r\n"/).map { |x| "#{x.split("\r\n\r\n").first}\n<...snip...>" }.join("\n")
       end
 

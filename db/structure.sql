@@ -171,7 +171,7 @@ ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage
 
 CREATE TABLE public.active_storage_variant_records (
     id bigint NOT NULL,
-    blob_id integer NOT NULL,
+    blob_id bigint NOT NULL,
     variation_digest character varying NOT NULL
 );
 
@@ -349,6 +349,43 @@ ALTER SEQUENCE public.audio_event_comments_id_seq OWNED BY public.audio_event_co
 
 
 --
+-- Name: audio_event_imports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audio_event_imports (
+    id bigint NOT NULL,
+    name character varying,
+    files jsonb,
+    description text,
+    creator_id integer,
+    updater_id integer,
+    deleter_id integer,
+    deleted_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: audio_event_imports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.audio_event_imports_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: audio_event_imports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.audio_event_imports_id_seq OWNED BY public.audio_event_imports.id;
+
+
+--
 -- Name: audio_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -365,7 +402,10 @@ CREATE TABLE public.audio_events (
     deleter_id integer,
     deleted_at timestamp without time zone,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    audio_event_import_id integer,
+    context jsonb,
+    channel integer
 );
 
 
@@ -1638,6 +1678,13 @@ ALTER TABLE ONLY public.audio_event_comments ALTER COLUMN id SET DEFAULT nextval
 
 
 --
+-- Name: audio_event_imports id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports ALTER COLUMN id SET DEFAULT nextval('public.audio_event_imports_id_seq'::regclass);
+
+
+--
 -- Name: audio_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1908,6 +1955,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 ALTER TABLE ONLY public.audio_event_comments
     ADD CONSTRAINT audio_event_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: audio_event_imports audio_event_imports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports
+    ADD CONSTRAINT audio_event_imports_pkey PRIMARY KEY (id);
 
 
 --
@@ -2543,10 +2598,10 @@ CREATE INDEX index_comfy_cms_fragments_on_identifier ON public.comfy_cms_fragmen
 
 
 --
--- Name: index_comfy_cms_fragments_on_record; Type: INDEX; Schema: public; Owner: -
+-- Name: index_comfy_cms_fragments_on_record_type_and_record_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_comfy_cms_fragments_on_record ON public.comfy_cms_fragments USING btree (record_type, record_id);
+CREATE INDEX index_comfy_cms_fragments_on_record_type_and_record_id ON public.comfy_cms_fragments USING btree (record_type, record_id);
 
 
 --
@@ -3638,6 +3693,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220603004830'),
 ('20220629023538'),
 ('20220704043031'),
-('20220808062341');
+('20220808062341'),
+('20220825042333');
 
 

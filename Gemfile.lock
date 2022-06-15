@@ -801,6 +801,7 @@ DEPENDENCIES
   kramdown-parser-gfm
   memoist
   mini_magick (>= 4.9.5)
+  multipart-post (~> 2.1)
   nokogiri (~> 1.13.3)
   notiffany (~> 0.1.0)
   paperclip (> 6.0.0)

@@ -95,6 +95,7 @@ class Ability
       to_site(user, is_guest)
       to_audio_recording(user, is_guest)
       to_audio_event(user, is_guest)
+      to_audio_event_import(user, is_guest)
       to_audio_event_comment(user, is_guest)
       to_bookmark(user, is_guest)
       to_analysis_job(user, is_guest)
@@ -426,6 +427,24 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter], AudioEvent
+  end
+
+  def to_audio_event_import(user, is_guest)
+    unless is_guest
+      can [:create], AudioEventImport do |audio_event_import|
+        check_model(audio_event_import)
+        # further permission checks are done for each audio_event import
+        # but that is not related to the permissions of this model
+        # (which is really just a tracking object)
+        true
+      end
+
+      # only creator can update, destroy, show their own audio_event_imports
+      can [:update, :destroy, :show], AudioEventImport, creator_id: user&.id
+    end
+
+    # available to any user
+    can [:index, :filter, :new], AudioEventImport
   end
 
   def to_audio_event_comment(user, is_guest)

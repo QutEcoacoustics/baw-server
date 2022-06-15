@@ -645,6 +645,9 @@ Rails.application.routes.draw do
     resources :audio_event_comments, except: [:edit], defaults: { format: 'json' }, path: :comments, as: :comments
   end
 
+  match 'audio_event_imports/filter' => 'audio_event_imports#filter', via: [:get, :post], defaults: { format: 'json' }
+  resources :audio_event_imports, except: [:edit], defaults: { format: 'json' }
+
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match '/scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: { format: 'json' }
   resources :scripts, only: [:index, :show], defaults: { format: 'json' }

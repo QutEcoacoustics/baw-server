@@ -84,7 +84,7 @@ Metrics/BlockLength:
     - stepwise
 Metrics/MethodLength:
   Max: 30
-  IgnoredMethods:
+  AllowedMethods:
     - filter_settings
 Metrics/ModuleLength:
   Max: 150
@@ -116,7 +116,7 @@ Style/AsciiComments:
 Style/BlockDelimiters:
   EnforcedStyle: semantic
   AllowBracesOnProceduralOneLiners: true
-  IgnoredMethods:
+  AllowedMethods:
     - its
     - it
 Style/ExponentialNotation:

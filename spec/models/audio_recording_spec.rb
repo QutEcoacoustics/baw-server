@@ -551,4 +551,24 @@ describe AudioRecording, type: :model do
 
     expect(actual).to eq('20180226T122930Z_Ants-super-cool-site_123456.wav')
   end
+
+  it 'has a friendly name regex' do
+    match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T222930+1000_Ants-super-cool-site_123456.wav')
+
+    expect(match).not_to be_nil
+    expect(match[:date]).to eq '20180226T222930+1000'
+    expect(match[:site_name]).to eq 'Ants-super-cool-site'
+    expect(match[:id]).to eq '123456'
+    expect(match[:extension]).to eq 'wav'
+  end
+
+  it 'has a friendly name regex (parses Z as well)' do
+    match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T122930Z_Ants-super-cool-site_123456.wav')
+
+    expect(match).not_to be_nil
+    expect(match[:date]).to eq '20180226T122930Z'
+    expect(match[:site_name]).to eq 'Ants-super-cool-site'
+    expect(match[:id]).to eq '123456'
+    expect(match[:extension]).to eq 'wav'
+  end
 end

@@ -237,6 +237,8 @@ class AudioRecording < ApplicationRecord
     "#{date}_#{name}_#{id}.#{original_format_calculated}"
   end
 
+  FRIENDLY_NAME_REGEX = /(?<date>\d{8}T\d{6}(?:Z|[+-]\d+))_(?<site_name>[-\w]+)_(?<id>\d+)\.(?<extension>.+)/
+
   # Calculate the format of original audio recording.
   def original_format_calculated
     # this method previously determined format based on `original_file_name` but this approach is erroneous;
