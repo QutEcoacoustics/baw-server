@@ -1,5 +1,13 @@
 # Changelog
 
+## [8.2.0](https://github.com/QutEcoacoustics/baw-server/tree/8.2.0) (2022-06-15)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.1.0...8.2.0)
+
+**Fixed bugs:**
+
+- Upload host split [\#585](https://github.com/QutEcoacoustics/baw-server/pull/585) ([atruskie](https://github.com/atruskie))
+
 ## [8.1.0](https://github.com/QutEcoacoustics/baw-server/tree/8.1.0) (2022-06-06)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.0.0...8.1.0)
