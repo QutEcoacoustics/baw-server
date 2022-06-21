@@ -39,7 +39,7 @@ describe 'Harvesting files' do
       expect(harvest.mappings).to match(a_collection_containing_exactly(
         a_hash_including(
           site_id: site.id,
-          path: site.safe_name,
+          path: site.unique_safe_name,
           utc_offset: nil,
           recursive: true
         ),

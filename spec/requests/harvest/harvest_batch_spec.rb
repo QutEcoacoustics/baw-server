@@ -151,7 +151,7 @@ describe 'Harvesting a batch of files' do
         @names << name
 
         @size = Fixtures.audio_file_mono.size
-        upload_file(connection, Fixtures.audio_file_mono, to: "/#{site.safe_name}/#{name}")
+        upload_file(connection, Fixtures.audio_file_mono, to: "/#{site.unique_safe_name}/#{name}")
       end
 
       step 'we can see a harvest job has been enqueued' do
@@ -278,7 +278,7 @@ describe 'Harvesting a batch of files' do
         expect(harvest.mappings).to match(a_collection_containing_exactly(
           a_hash_including(
             site_id: site.id,
-            path: site.safe_name,
+            path: site.unique_safe_name,
             utc_offset: nil,
             recursive: true
           ),
@@ -403,7 +403,7 @@ describe 'Harvesting a batch of files' do
       end
     end
 
-    context 'files are mutated after initial upload' do
+    context 'when files are mutated after initial upload' do
       before do
         create_harvest(streaming: false)
         expect(harvest).to be_uploading
@@ -511,6 +511,66 @@ describe 'Harvesting a batch of files' do
               )
             ]
           ))
+        end
+      end
+    end
+
+    context 'with non-unique site names' do
+      let!(:site1) { Creation::Common.create_site(owner_user, project, name: 'site') }
+      let!(:site2) { Creation::Common.create_site(owner_user, project, name: 'site') }
+      # testing uniqueness detection applies to the safe name!
+      let!(:site3) { Creation::Common.create_site(owner_user, project, name: 'ban!ana') }
+      let!(:site4) { Creation::Common.create_site(owner_user, project, name: 'ban ana') }
+
+      it 'has unique directories and mappings' do
+        create_harvest
+        expect_success
+
+        get_harvest
+
+        expect(api_data).to match(a_hash_including({
+          mappings: contain_exactly(
+            {
+              path: site.unique_safe_name,
+              site_id: site.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site1.unique_safe_name,
+              site_id: site1.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site2.unique_safe_name,
+              site_id: site2.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site3.unique_safe_name,
+              site_id: site3.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site4.unique_safe_name,
+              site_id: site4.id,
+              utc_offset: nil,
+              recursive: true
+            }
+          )
+        }))
+
+        [
+          site.unique_safe_name,
+          site1.unique_safe_name,
+          site2.unique_safe_name,
+          site3.unique_safe_name,
+          site4.unique_safe_name
+        ].each do |name|
+          expect(harvest.upload_directory / name).to be_exist
         end
       end
     end

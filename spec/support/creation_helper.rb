@@ -380,10 +380,11 @@ module Creation
         FactoryBot.create(:region, creator:, project:)
       end
 
-      def create_site(creator, project, region: nil)
+      def create_site(creator, project, region: nil, name: nil)
         site = FactoryBot.create(:site, :with_lat_long, creator:)
         site.projects << project
         site.region = region unless region.nil?
+        site.name = name unless name.nil?
         site.save!
         site
       end

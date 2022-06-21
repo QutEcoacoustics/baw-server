@@ -296,7 +296,9 @@ class Harvest < ApplicationRecord
       # we expect streaming uploads to be long term - we really don't want to disable uploads
       # on a site rename so we'll use site.id.
       # For batch uploads we expect user interaction; in that case a site name is much friendlier.
-      site_name = streaming_harvest? ? site.id.to_s : site.safe_name
+      # AT 2022: it is possible for sites names to be non-unique, so we'll use the site.id always in the directory names.
+      site_name = streaming_harvest? ? site.id.to_s : site.unique_safe_name
+
       real_path = upload_directory / site_name
 
       real_path.mkpath
