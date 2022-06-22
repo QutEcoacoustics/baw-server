@@ -74,6 +74,10 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
         harvest.open_upload!
       end
 
+      step 'check updater_id is as expected' do
+        expect(harvest.updater_id).to be_nil
+      end
+
       step 'create some files' do
         [
           'test_file_1.wav',
@@ -164,6 +168,10 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
             HarvestItem::STATUS_METADATA_GATHERED.to_s
           ]
         end
+      end
+
+      step 'check updater_id was updated expected' do
+        expect(harvest.updater_id).to eq(User.harvester_user.id)
       end
     end
   end

@@ -5,7 +5,7 @@ module BawWorkers
     module Harvest
       # Scans a harvest directory for any files that might have been missed by webhooks.
       class ScanJob < BawWorkers::Jobs::ApplicationJob
-        queue_as Settings.actions.harvest.queue
+        include BawWorkers::Jobs::StampUser
         perform_expects Integer
 
         #retry_on StandardError, attempts: 3

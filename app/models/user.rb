@@ -47,6 +47,9 @@
 require 'role_model'
 
 class User < ApplicationRecord
+  ADMIN_USER_NAME = 'Admin'
+  HARVESTER_USER_NAME = 'Harvester'
+
   # ensures timezones are handled consistently
   include TimeZoneAttribute
 
@@ -302,6 +305,18 @@ class User < ApplicationRecord
   # Retrieves the existing stamper (current_user id) for the current request.
   def self.stamper
     Thread.current["#{to_s.downcase}_#{object_id}_stamper"]
+  end
+
+  # Finds the admin user
+  # @return [User]
+  def self.admin_user
+    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
+  end
+
+  # Finds the harvester user
+  # @return [User]
+  def self.harvester_user
+    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
   end
 
   # Define filter api settings

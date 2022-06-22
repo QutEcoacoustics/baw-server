@@ -120,7 +120,6 @@ class HarvestItem < ApplicationRecord
 
   # @return [String, nil]
   def path_relative_to_harvest
-    Rails.logger.warn('harvestItem', item: as_json)
     return if harvest.nil?
 
     harvest_prefix = "#{harvest.upload_directory_name}/"
