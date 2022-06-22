@@ -30,6 +30,9 @@ module BawWorkers
 
           logger.info('Transitioning to metadata extraction', harvest_id:, found:)
 
+          # no need to transition in streaming harvest
+          return if harvest.streaming_harvest?
+
           # finally transition to metadata extraction
           harvest.extract!
         end
@@ -51,6 +54,7 @@ module BawWorkers
           name.start_with?('.') || name == 'Thumbs.db'
         end
 
+        # @param harvest [::Harvest]
         def scan_for_files(harvest)
           root = Settings.root_to_do_path
           target = harvest.upload_directory
@@ -76,12 +80,19 @@ module BawWorkers
 
             #logger.debug('Processing file', path:, rel_path:)
 
-            # scans are only ever done before the metadata extraction phase
+            # For batch harvests: scans are only ever done before the metadata
+            # extraction phase
+            # For streaming harvests: a scan could be done any time
+            should_harvest = harvest.streaming_harvest?
+            # similarly, we only care about debouncing extra metadata gathers for
+            # a batch harvest
+            debounce_on_recent_metadata_extraction = harvest.batch_harvest?
+
             HarvestJob.enqueue_file(
               harvest,
               rel_path,
-              should_harvest: false,
-              debounce_on_recent_metadata_extraction: true
+              should_harvest:,
+              debounce_on_recent_metadata_extraction:
             )
             found += 1
           end

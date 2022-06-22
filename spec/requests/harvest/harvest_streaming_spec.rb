@@ -247,6 +247,17 @@ describe 'Harvesting streaming files' do
         expect_empty_sftp_login_details
       end
 
+      step 'completing enqueues a scan job' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+      end
+
+      step 'scanning does not find any extra files' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+        expect(HarvestItem.count).to eq 1
+      end
+
       step 'process the queued harvest item job' do
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
@@ -268,6 +279,64 @@ describe 'Harvesting streaming files' do
           items_duration_seconds: 30,
           items_completed: 1
         )
+      end
+    end
+
+    stepwise 'on completion a scan job is run' do
+      step 'create a harvest' do
+        create_harvest(streaming: true)
+        expect(harvest).to be_uploading
+      end
+
+      step 'upload a file' do
+        name = generate_recording_name(Time.new(2020, 1, 1, 0, 0, 0, '+00:00'))
+        file = generate_audio(name, sine_frequency: 440)
+        @size = file.size
+        upload_file(connection, file, to: "/#{site.id}/#{name}")
+      end
+
+      step 'we can see 1 harvest jobs have been enqueued' do
+        wait_for_webhook(goal: 1)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      end
+
+      step 'we delete the enqueued job to simulate the webhook not working' do
+        clear_pending_jobs
+        # clear_pending_jobs also clears the queue and all statuses that were in the queue
+        expect_jobs_to_be(completed: 0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+        HarvestItem.all.delete_all
+
+        expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+        expect(HarvestItem.count).to eq 0
+      end
+
+      step 'complete the harvest' do
+        transition_harvest(:complete)
+        expect(harvest).to be_complete
+      end
+
+      step 'completing enqueues a scan job' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+        perform_jobs(count: 1)
+      end
+
+      step 'scanning finds and enqueues any missing files' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+        expect(HarvestItem.count).to eq 1
+      end
+
+      step 'we process the queued harvest item job' do
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+      end
+
+      step 'a new recording is available' do
+        aggregate_failures do
+          expect(AudioRecording.count).to eq 1
+          item = HarvestItem.first
+          expect(item).to be_completed
+        end
       end
     end
   end

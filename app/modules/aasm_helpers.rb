@@ -16,7 +16,13 @@ module AasmHelpers
       pair in { state: ^state }
     }
 
-    raise NoTransitionAvailable.new(self, state, events.size) if events.size != 1
+    if events.size != 1
+      Rails.logger.debug(
+        'Too many possible states', new_state: state, possible_events: events, self: self
+      )
+
+      raise NoTransitionAvailable.new(self, state, events.size)
+    end
 
     events => [ { event: target_event } ]
     Rails.logger.debug(

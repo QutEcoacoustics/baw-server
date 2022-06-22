@@ -174,5 +174,20 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
         expect(harvest.updater_id).to eq(User.harvester_user.id)
       end
     end
+
+    it 'will not transition the harvest if the harvest is a streaming harvest' do
+      harvest.streaming = true
+      harvest.open_upload!
+      harvest.save!
+
+      BawWorkers::Jobs::Harvest::ScanJob.scan(harvest)
+      perform_jobs(count: 1)
+
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+
+      harvest.reload
+
+      expect(harvest).to be_uploading
+    end
   end
 end

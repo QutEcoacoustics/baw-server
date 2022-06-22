@@ -201,6 +201,7 @@ class Harvest < ApplicationRecord
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true, logger: SemanticLogger[Harvest] do
     state :new_harvest, initial: true
 
+    # @!method uploading?
     state :uploading, enter: [:mark_last_upload_at]
     state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
@@ -237,10 +238,14 @@ class Harvest < ApplicationRecord
 
     event :finish do
       transitions from: :processing, to: :complete, guard: :processing_complete?
-      transitions from: :streaming, to: :complete
+      transitions from: :uploading, to: :complete, after: [:scan_upload_directory]
     end
 
-    event :abort do
+    # our state machine helpers allow for automated transitions if there is
+    # only one possible transition - otherwise they error.
+    # The guard here essentially prioritizes the :finish transition over the
+    # :abort transition.
+    event :abort, guard: -> { !may_finish? } do
       transitions to: :complete
     end
   end
