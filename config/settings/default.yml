@@ -27,9 +27,11 @@ resque:
   # specify the Resque queues to watch.
   queues_to_process:
     - media_<%= BawApp.env %>
+    - harvest_scan_<%= BawApp.env %>
     - harvest_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
     - maintenance_<%= BawApp.env %>
+    - harvest_delete_<%= BawApp.env %>
     - default_<%= BawApp.env %>
     - analysis_<%= BawApp.env %>
   connection: *redis_config
@@ -51,6 +53,10 @@ actions:
     queue: harvest_<%= BawApp.env %>
     to_do_path: /data/<%= BawApp.env %>/harvester_to_do
     config_file_name: harvest.yml
+  harvest_scan:
+    queue: harvest_scan_<%= BawApp.env %>
+  harvest_delete:
+    queue: harvest_delete_<%= BawApp.env %>
      # 1 week in seconds
     delete_after: 604800
   media:

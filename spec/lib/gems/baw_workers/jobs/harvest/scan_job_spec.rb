@@ -14,7 +14,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
   pause_all_jobs
 
-  let(:queue_name) { Settings.actions.harvest.queue }
+  let(:queue_name) { Settings.actions.harvest_scan.queue }
 
   context 'when checking basic job behaviour' do
     it 'works on the harvest queue' do
@@ -34,7 +34,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
       job = BawWorkers::Jobs::Harvest::ScanJob.new(harvest.id)
 
-      expected = "Scan job for Harvest:#{harvest.id}"
+      expected = "ScanForHarvest:#{harvest.id}"
       expect(job.name).to eq(expected)
     end
 

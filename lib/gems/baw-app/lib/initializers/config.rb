@@ -27,6 +27,14 @@ class BawConfigContract < Dry::Validation::Contract
           Baw::CustomTypes::CreatedDirPathname
         )
         required(:config_file_name).filled(:string)
+      end
+
+      required(:harvest_scan).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:harvest_delete).hash do
+        required(:queue).filled(:string)
         required(:delete_after).filled(:integer, gt?: 0)
       end
     end

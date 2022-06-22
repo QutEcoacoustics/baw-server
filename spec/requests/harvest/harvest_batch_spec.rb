@@ -412,7 +412,7 @@ describe 'Harvesting a batch of files' do
         @name = generate_recording_name(Time.new(2020, 1, 1, 0, 0, 0, '+00:00'), extension: '.ogg')
         file = generate_audio(@name, sine_frequency: 440)
 
-        upload_file(connection, file, to: "/#{site.safe_name}/#{@name}")
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{@name}")
 
         wait_for_webhook
         expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
@@ -427,7 +427,7 @@ describe 'Harvesting a batch of files' do
         end
 
         step 'we can delete the file we just uploaded' do
-          delete_remote_file(connection, "/#{site.safe_name}/#{@name}")
+          delete_remote_file(connection, "/#{site.unique_safe_name}/#{@name}")
         end
 
         step 'we expect our webhook was fired' do
@@ -441,7 +441,7 @@ describe 'Harvesting a batch of files' do
 
       stepwise 'deleting a file (before the job is dequeued)' do
         step 'we can delete the file we just uploaded' do
-          delete_remote_file(connection, "/#{site.safe_name}/#{@name}")
+          delete_remote_file(connection, "/#{site.unique_safe_name}/#{@name}")
         end
 
         step 'we expect our webhook was fired' do
@@ -477,7 +477,7 @@ describe 'Harvesting a batch of files' do
         end
 
         step 'rename the file' do
-          rename_remote_file(connection, from: "/#{site.safe_name}/#{@name}", to: "/banana/#{@name}")
+          rename_remote_file(connection, from: "/#{site.unique_safe_name}/#{@name}", to: "/banana/#{@name}")
         end
 
         step 'we expect our webhook was fired' do

@@ -5,12 +5,13 @@ module BawWorkers
     module Harvest
       # Eventually deletes a uploaded file after a period of time.
       # For safety we keep a copy of harvested files for a week.
+      # Files that were not successfully harvested are currently not deleted.
       class DeleteHarvestItemFileJob < BawWorkers::Jobs::ApplicationJob
-        queue_as Settings.actions.harvest.queue
+        queue_as Settings.actions.harvest_delete.queue
         perform_expects Integer
 
         def self.delete_after
-          Settings.actions.harvest.delete_after.seconds
+          Settings.actions.harvest_delete.delete_after.seconds
         end
 
         def self.delete_later(harvest_item, wait: nil)
@@ -19,6 +20,7 @@ module BawWorkers
         end
 
         def perform(harvest_item_id)
+          # @type [HarvestItem]
           harvest_item = HarvestItem.find(harvest_item_id)
           logger.info('Preparing to delete harvest item file', harvest_item_id:, path: harvest_item.path)
 
@@ -27,7 +29,10 @@ module BawWorkers
             return
           end
 
-          unless harvest_item.completed?
+          if harvest_item.errored? || harvest_item.failed?
+            logger.info('Harvest item errored, will not delete, will not try again', harvest_item:)
+            return
+          elsif !harvest_item.completed?
             logger.info('Harvest item not completed, will not delete, trying again later', harvest_item:)
             DeleteHarvestItemFileJob.delete_later(harvest_item)
           end
@@ -46,7 +51,7 @@ module BawWorkers
         end
 
         def name
-          "DeleteHarvestItemFileJob:#{arguments.first}"
+          "DeleteHarvestItemFile:#{arguments.first}"
         end
       end
     end
