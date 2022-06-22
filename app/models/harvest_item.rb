@@ -93,6 +93,10 @@ class HarvestItem < ApplicationRecord
     completed? || failed? || errored?
   end
 
+  def metadata_gathered_or_errored?
+    metadata_gathered? || errored?
+  end
+
   def file_deleted?
     deleted
   end

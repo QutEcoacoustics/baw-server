@@ -205,6 +205,7 @@ describe 'Harvesting a batch of files' do
       step 'scanning enqueues a scan job' do
         expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
         perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
       end
 
       step 'scanning finds and enqueues any missing files' do
@@ -572,6 +573,98 @@ describe 'Harvesting a batch of files' do
         ].each do |name|
           expect(harvest.upload_directory / name).to be_exist
         end
+      end
+    end
+  end
+
+  describe 'unhandled errors in the harvest job', :clean_by_truncation, :slow, web_server_timeout: 60 do
+    expose_app_as_web_server
+    pause_all_jobs
+
+    stepwise 'can transition to metadata_review if an error occurred in :metadata_extraction' do
+      step 'create a harvest' do
+        create_harvest(streaming: false)
+        expect(harvest).to be_uploading
+        expect(harvest).to be_batch_harvest
+      end
+
+      step 'generate and upload a file' do
+        name = generate_recording_name(Time.new(2022, 6, 22, 15, 56, 0, '+10:00'))
+        file = generate_audio(name, sine_frequency: 440)
+
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{name}")
+      end
+
+      step 'wait for webhook and process the file' do
+        wait_for_webhook
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+        perform_jobs(count: 1)
+      end
+
+      step 'we can see the harvest item was successfully processed' do
+        expect(HarvestItem.count).to eq 1
+        @item = HarvestItem.first
+
+        expect(@item).to be_metadata_gathered
+      end
+
+      step 'transition to scanning' do
+        transition_harvest(:scanning)
+        expect_success
+        expect(harvest).to be_scanning
+      end
+
+      step 'finish the scan' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+      end
+
+      step 'fake an error' do
+        # fake an error
+        @item.status = HarvestItem::STATUS_ERRORED
+        @item.save!
+
+        expect(@item).to be_metadata_gathered_or_errored
+      end
+
+      step 'check we are in the :metadata_gathering state' do
+        harvest.reload
+        expect(harvest).to be_metadata_extraction
+      end
+
+      step 'can transition from :metadata_gathering to :metadata_review' do
+        get_harvest
+
+        expect(harvest).to be_metadata_extraction_complete
+        expect(harvest).to be_metadata_review
+      end
+
+      step 'can transition from :metadata_review to :processing' do
+        transition_harvest(:processing)
+        expect_success
+
+        expect(harvest).to be_processing
+      end
+
+      step 'process files' do
+        perform_jobs(count: 1)
+      end
+
+      step 'fake an error' do
+        @item.reload
+        # fake an error
+        @item.status = HarvestItem::STATUS_ERRORED
+        @item.save!
+
+        expect(@item).to be_terminal_status
+      end
+
+      step 'can transition from :processing to :complete' do
+        get_harvest
+
+        expect(harvest).to be_processing_complete
+        expect(harvest).to be_complete
       end
     end
   end

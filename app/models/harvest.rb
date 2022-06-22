@@ -359,7 +359,7 @@ class Harvest < ApplicationRecord
 
   def metadata_extraction_complete?
     # have we gathered all the metadata for each item?
-    harvest_items.select(:status).distinct.all?(&:metadata_gathered?)
+    harvest_items.select(:status).distinct.all?(&:metadata_gathered_or_errored?)
   end
 
   def processing_complete?

@@ -319,6 +319,7 @@ describe 'Harvesting streaming files' do
       step 'completing enqueues a scan job' do
         expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
         perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
       end
 
       step 'scanning finds and enqueues any missing files' do
