@@ -93,8 +93,8 @@ class HarvestItem < ApplicationRecord
     completed? || failed? || errored?
   end
 
-  def metadata_gathered_or_errored?
-    metadata_gathered? || errored?
+  def metadata_gathered_or_unsuccessful?
+    metadata_gathered? || errored? || failed?
   end
 
   def file_deleted?
@@ -229,7 +229,7 @@ class HarvestItem < ApplicationRecord
     )
   end
 
-  DEFAULT_COUNTS_BY_STATUS = STATUSES.product([0]).to_h
+  DEFAULT_COUNTS_BY_STATUS = STATUSES.map(&:to_s).product([0]).to_h
   def self.counts_by_status(relation)
     DEFAULT_COUNTS_BY_STATUS.merge(relation.group(:status).count)
   end

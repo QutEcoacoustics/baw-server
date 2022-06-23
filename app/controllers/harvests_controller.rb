@@ -90,16 +90,18 @@ class HarvestsController < ApplicationController
     # that can occur while talking with other services (e.g. sftpgo)
     # https://blog.saeloun.com/2022/03/23/rails-7-adds-lock_with.html
     # This could cause performance issues: monitor.
-    @harvest.with_lock('FOR UPDATE') do
-      # allow the API to transition this harvest to a new state
-      status = parameters.delete(:status)
-      @harvest.transition_to_state!(status.to_sym) unless status.nil?
+    # AT 2022: disabled for now as it seems to be causing race conditions - other code further down the stack locks for
+    # with a transaction that needs to be visible to external actors before this method completed
+    # allow the API to transition this harvest to a new state
+    #@harvest.with_lock('FOR UPDATE') do end
 
-      if @harvest.update(parameters)
-        respond_show
-      else
-        respond_change_fail
-      end
+    status = parameters.delete(:status)
+    @harvest.transition_to_state!(status.to_sym) unless status.nil?
+
+    if @harvest.update(parameters)
+      respond_show
+    else
+      respond_change_fail
     end
   end
 

@@ -625,7 +625,7 @@ describe 'Harvesting a batch of files' do
         @item.status = HarvestItem::STATUS_ERRORED
         @item.save!
 
-        expect(@item).to be_metadata_gathered_or_errored
+        expect(@item).to be_metadata_gathered_or_unsuccessful
       end
 
       step 'check we are in the :metadata_gathering state' do
@@ -666,6 +666,124 @@ describe 'Harvesting a batch of files' do
         expect(harvest).to be_processing_complete
         expect(harvest).to be_complete
       end
+    end
+  end
+
+  describe 'race conditions', :clean_by_truncation, :slow, web_server_timeout: 60 do
+    expose_app_as_web_server
+
+    # very intentionally seeking asynchronous behaviour in this job
+    #pause_all_jobs
+
+    # Ok; we're trying to replicate a production bug here so we're going to
+    # do some weird timing things.
+    # In production it seems that in the time taken to re-enqueue all the jobs
+    # some jobs already ran.
+    #
+    # - transaction opens
+    # - each harvest job is enqueued, and each harvest_item to :new (transaction not yet committed)
+    # - a harvest job runs setting harvest_item to :metadata_gathered
+    # - the transaction is committed, overwriting the fresh :metadata_gathered status with :new
+    # - the harvest stalls waiting for all items to be :metadata_gathered
+
+    let(:duplicates) { 10 }
+
+    let(:slow_enqueue) {
+      Class.new(BawWorkers::Jobs::Harvest::HarvestJob) do
+        def self.enqueue(...)
+          result = super(...)
+          # Sleep after enqueue so job is running in the background, but our overall enqueue process is slowed down.
+          # This should be roughly to enqueuing many files
+          logger.warn('Intentional slow enqueue!!!!!!!!')
+          sleep(1)
+          result
+        end
+      end
+    }
+
+    # For setup, create some real files, but also a large number of dummy items
+    # - enough to trigger some race conditions during enqueuing
+    before do
+      stub_const('BawWorkers::Jobs::Harvest::HarvestJob', slow_enqueue)
+
+      create_harvest(streaming: false)
+      expect(harvest).to be_uploading
+      expect(harvest).to be_batch_harvest
+
+      3.times do |i|
+        name = generate_recording_name(Time.new(2020, 1, i + 1, 0, 0, 0, '+00:00'), extension: '.ogg')
+        file = generate_audio(name, sine_frequency: 440 + (i * 10), duration: 1.0)
+
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{name}")
+      end
+      wait_for_webhook(goal: 3)
+      expect(HarvestItem.count).to eq 3
+
+      # this is not guaranteed to have waited for jobs to finish, adjust timer as needed
+      wait_for_jobs(timeout: 10)
+      expect_jobs_to_be(completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+      # now simulate a very large harvest by creating many harvest items that
+      # are just duplicates of one of the other harvest items
+      # Note: duplicate has an intentional fault to speed the test suite process
+      duplicate_rows_but_with_nonexistent_path
+
+      expect(HarvestItem.count).to eq(duplicates + 3)
+
+      transition_harvest(:scanning)
+      expect_success
+      expect(harvest).to be_scanning
+
+      wait_for_metadata_extraction_to_complete
+
+      expect(harvest).to be_metadata_extraction_complete
+      expect(harvest).to be_metadata_review
+    end
+
+    it 'handles larges batches of jobs correctly and does not suffer from a race condition' do
+      transition_harvest(:metadata_extraction)
+      expect_success
+
+      wait_for_metadata_extraction_to_complete(timeout: 15)
+
+      statuses = HarvestItem.counts_by_status(HarvestItem.all)
+
+      harvest.reload
+
+      aggregate_failures do
+        expect(harvest).to be_metadata_review
+        # before this bug was fixed, some items would remain locked to :new
+        expect(statuses).to match(a_hash_including({
+          HarvestItem::STATUS_NEW.to_s => 0,
+          HarvestItem::STATUS_METADATA_GATHERED.to_s => 3,
+          HarvestItem::STATUS_FAILED.to_s => duplicates
+        }))
+      end
+    end
+
+    def wait_for_metadata_extraction_to_complete(timeout: 10)
+      (timeout * 2).times do |i|
+        sleep 0.5
+        get_harvest
+        logger.info 'Waiting for metadata extraction to complete...', count: i, **api_data[:report]
+        break if harvest.metadata_review?
+      end
+    end
+
+    def duplicate_rows_but_with_nonexistent_path
+      columns = (HarvestItem.column_names - ['id']).join(', ')
+      columns_without_path = (HarvestItem.column_names - ['id', 'path']).join(', ')
+      duplicate_rows_query = <<~SQL
+        INSERT INTO harvest_items (#{columns})
+        (
+          SELECT  'idontexist' AS "path", #{columns_without_path}
+          FROM  (
+            SELECT #{columns} FROM harvest_items ORDER BY id DESC LIMIT 1
+          ) AS t
+          CROSS JOIN LATERAL generate_series(1,#{duplicates})
+        )
+      SQL
+      ActiveRecord::Base.connection.execute(duplicate_rows_query)
     end
   end
 end
