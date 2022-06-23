@@ -60,7 +60,12 @@ class HarvestsController < ApplicationController
 
     if @harvest.save
 
-      @harvest.open_upload!
+      begin
+        @harvest.open_upload!
+      rescue BawWorkers::UploadService::UploadServiceError
+        @harvest.destroy
+        raise
+      end
 
       respond_create_success(project_harvest_path(@harvest.project, @harvest))
     else

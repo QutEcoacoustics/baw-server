@@ -4,6 +4,7 @@ require_relative 'harvest_spec_common'
 
 describe 'Harvesting files' do
   include HarvestSpecCommon
+  render_error_responses
 
   it 'will not allow a harvest to be created if the project does not allow uploads' do
     project.allow_audio_upload = false
@@ -17,6 +18,46 @@ describe 'Harvesting files' do
       { project: ['A harvest cannot be created unless its parent project has enabled audio upload'] }
     )
   end
+
+  it 'will not create the harvest if there is a problem contacting the upload service' do
+    stub_request(:post, 'upload.test:8080/api/v2/users')
+      .to_return(
+        body: '{"message":"cannot stat dir", "error": "error message"}',
+        status: 500,
+        headers: { content_type: 'application/json' }
+      )
+
+    create_harvest
+
+    expect_error(
+      :internal_server_error,
+      'Upload service failure: Failed to create_upload_user, got 500'
+    )
+
+    # don't leave a straggler
+    expect(Harvest.count).to eq 0
+  end
+
+  # This shouldn't be needed yet... wait and see
+  # context 'will attempt to rectify issues with the upload slot if present' do
+  #   before
+  #     create_harvest
+  #   end
+  #
+  #   it 'opens the connection if it is closed when it should be open' do
+  #     harvest.close_upload_slot
+  #     get_harvest
+  #   end
+  #
+  #   it 'enables the connection when it should be enabled' do
+  #   end
+  #
+  #   it 'disables the connection when it should be disabled' do
+  #   end
+  #
+  #   it 'closes the connection when it should be closed' do
+  #   end
+  # end
 
   context 'mappings' do
     let(:another_site) {
