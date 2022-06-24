@@ -59,6 +59,79 @@ describe 'Harvesting files' do
   #   end
   # end
 
+  context 'with incorrect project_id in route parameters' do
+    let!(:another_project) {
+      Creation::Common.create_project(owner_user)
+    }
+
+    it 'will error if it is different in the route and body during creation' do
+      body = {
+        harvest: {
+          streaming: false,
+          project_id: project.id
+        }
+      }
+
+      post "/projects/#{another_project.id}/harvests", params: body, **api_with_body_headers(owner_token)
+
+      expect_error(
+        :not_found,
+        'Could not find the requested page: project_id in route does not match the harvest\'s project_id',
+        {
+          original_route: "/projects/#{another_project.id}/harvests",
+          original_http_method: 'POST'
+        }
+      )
+    end
+
+    it 'will error if it is different in the route and the existing project during update' do
+      create_harvest
+      expect_success
+
+      body = {
+        harvest: {
+          status: :scanning
+        }
+      }
+
+      patch "/projects/#{another_project.id}/harvests/#{harvest.id}", params: body, **api_with_body_headers(owner_token)
+
+      expect_error(
+        :not_found,
+        'Could not find the requested page: project_id in route does not match the harvest\'s project_id',
+        {
+          original_route: "/projects/#{another_project.id}/harvests/#{harvest.id}",
+          original_http_method: 'PATCH'
+        }
+      )
+    end
+
+    it 'will error if it is different than the harvest\'s project_id' do
+      create_harvest
+      expect_success
+
+      get "/projects/#{another_project.id}/harvests/#{harvest.id}", **api_headers(owner_token)
+
+      expect_error(
+        :not_found,
+        'Could not find the requested page: project_id in route does not match the harvest\'s project_id',
+        {
+          original_route: "/projects/#{another_project.id}/harvests/#{harvest.id}",
+          original_http_method: 'GET'
+        }
+      )
+    end
+
+    it 'will error with 404 if it does not exist' do
+      create_harvest
+      expect_success
+
+      get "/projects/999/harvests/#{harvest.id}", **api_headers(owner_token)
+
+      expect_error(:not_found, 'Could not find the requested item.')
+    end
+  end
+
   context 'mappings' do
     let(:another_site) {
       Creation::Common.create_site(owner_user, project, region:)

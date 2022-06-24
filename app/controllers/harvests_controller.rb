@@ -142,8 +142,18 @@ class HarvestsController < ApplicationController
   def get_project_if_exists
     return unless params.key?(:project_id)
 
+    raise '@harvest must be defined' unless defined?(@harvest)
+
     @project = Project.find(params[:project_id])
-    @harvest.project = @project if defined?(@harvest) && defined?(@project)
+
+    if @harvest.project_id.nil?
+      @harvest.project = @project
+      return
+    end
+
+    return if @project.id == @harvest.project_id
+
+    raise CustomErrors::RoutingArgumentError.new, 'project_id in route does not match the harvest\'s project_id'
   end
 
   def list_permissions
