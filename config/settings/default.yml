@@ -18,6 +18,9 @@ host:
     - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
     # development.ecosounds.org is a redirect to localhost
     - !ruby/regexp '/\A(https?:\/\/)?development.ecosounds.org(:\d+)?\z/'
+# trusted proxies allow us to filter out proxy ips so request.remote_ip works
+# An array of IPAddr compatible strings
+trusted_proxies: [ ]
 action_cable:
   adapter: redis
   url: redis://redis:6379/0

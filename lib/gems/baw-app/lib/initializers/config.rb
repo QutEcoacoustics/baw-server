@@ -81,6 +81,8 @@ class BawConfigContract < Dry::Validation::Contract
     InternalConfigSchema,
     PathsConfigSchema
   ) do
+    required(:trusted_proxies).array(Baw::CustomTypes::IPAddr)
+
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
 
