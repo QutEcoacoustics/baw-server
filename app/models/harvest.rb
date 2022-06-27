@@ -203,6 +203,7 @@ class Harvest < ApplicationRecord
 
     # @!method uploading?
     state :uploading, enter: [:mark_last_upload_at]
+    # @!method uploading?
     state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
     state :metadata_review, enter: [:mark_last_metadata_review_at]
@@ -210,15 +211,27 @@ class Harvest < ApplicationRecord
     # @!method complete?
     state :complete, enter: [:close_upload_slot]
 
+    # @!method open_upload
+    # @!method open_upload!
+    # @!method may_open_upload?
+    #   @return [Boolean]
     event :open_upload do
       transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?, after: [:enable_upload_slot]
       transitions from: :new_harvest, to: :uploading, after: [:open_upload_slot, :create_default_mappings]
     end
 
+    # @!method scan
+    # @!method scan!
+    # @!method may_scan?
+    #   @return [Boolean]
     event :scan, guard: :batch_harvest? do
       transitions from: :uploading, to: :scanning
     end
 
+    # @!method extract
+    # @!method extract!
+    # @!method may_extract?
+    #   @return [Boolean]
     event :extract do
       transitions from: :scanning, to: :metadata_extraction
       transitions from: :metadata_review, to: :metadata_extraction, after: [
@@ -226,16 +239,28 @@ class Harvest < ApplicationRecord
       ]
     end
 
+    # @!method metadata_review
+    # @!method metadata_review!
+    # @!method may_metadata_review?
+    #   @return [Boolean]
     event :metadata_review do
       transitions from: :metadata_extraction, to: :metadata_review, guard: :metadata_extraction_complete?
     end
 
+    # @!method process
+    # @!method process!
+    # @!method may_process?
+    #   @return [Boolean]
     event :process do
       transitions from: :metadata_review, to: :processing, after: [
         :reenqueue_all_harvest_items_for_processing
       ]
     end
 
+    # @!method finish
+    # @!method finish!
+    # @!method may_finish?
+    #   @return [Boolean]
     event :finish do
       transitions from: :processing, to: :complete, guard: :processing_complete?
       transitions from: :uploading, to: :complete, after: [:scan_upload_directory]
@@ -245,6 +270,10 @@ class Harvest < ApplicationRecord
     # only one possible transition - otherwise they error.
     # The guard here essentially prioritizes the :finish transition over the
     # :abort transition.
+    # @!method abort
+    # @!method abort!
+    # @!method may_abort?
+    #   @return [Boolean]
     event :abort, guard: -> { !may_finish? } do
       transitions to: :complete
     end
@@ -428,8 +457,8 @@ class Harvest < ApplicationRecord
       controller: :harvests,
       action: :filter,
       defaults: {
-        order_by: :id,
-        direction: :asc
+        order_by: :created_at,
+        direction: :desc
       },
       valid_associations: [
         {

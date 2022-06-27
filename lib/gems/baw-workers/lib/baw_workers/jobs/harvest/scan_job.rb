@@ -6,6 +6,7 @@ module BawWorkers
       # Scans a harvest directory for any files that might have been missed by webhooks.
       class ScanJob < BawWorkers::Jobs::ApplicationJob
         include BawWorkers::Jobs::StampUser
+        include PathFilter
 
         queue_as Settings.actions.harvest_scan.queue
         perform_expects Integer
@@ -43,15 +44,6 @@ module BawWorkers
 
         def name
           "ScanForHarvest:#{arguments.first}"
-        end
-
-        def skip_dir?(name)
-          name.start_with?('.') || name == 'System Volume Information'
-        end
-
-        def skip_file?(name)
-          # including .DS_STORE files in particular
-          name.start_with?('.') || name == 'Thumbs.db'
         end
 
         # @param harvest [::Harvest]

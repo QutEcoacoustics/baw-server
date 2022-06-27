@@ -56,6 +56,8 @@ module Internal
 
     # @param payload [::SftpgoClient::HookPayload]
     def enqueue_harvest_job_for_upload(payload)
+      return if skip?(payload)
+
       load_harvest(payload)
 
       BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
@@ -91,17 +93,33 @@ module Internal
 
     # @param payload [::SftpgoClient::HookPayload]
     def rename_harvest_item(payload)
+      #debugger
+      return if skip?(payload)
+
       load_harvest(payload)
 
       load_harvest_item(payload)
 
-      return if harvest_item.nil?
+      # if for some reason the harvest item doesn't exist, then act as if this is an upload hook
+      # this is main path WinSCP uploads take, upload (which is ignored) and then rename.
+      if harvest_item.nil?
+        logger.debug('Harvest item not found, creating a new one', path: payload.virtual_target_path)
+
+        modified_payload = payload.new(virtual_path: payload.virtual_target_path)
+        return enqueue_harvest_job_for_upload(modified_payload)
+      end
 
       new_path = harvest.harvester_relative_path(payload.virtual_target_path)
 
       logger.debug('Updating harvest item path', old_path: harvest_item.path, new_path:)
       harvest_item.path = new_path
       harvest_item.save!
+    end
+
+    # @param payload [::SftpgoClient::HookPayload]
+    def skip?(payload)
+      path = payload.virtual_target_path || payload.virtual_path
+      BawWorkers::Jobs::Harvest::PathFilter.skip_file?(path)
     end
   end
 end
