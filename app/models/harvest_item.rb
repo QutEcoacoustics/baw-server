@@ -191,10 +191,10 @@ class HarvestItem < ApplicationRecord
     n = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
     Arel.sql(
       <<~SQL
-        (
-          SELECT bool_or(status = '#{n}')
-          FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
-        )::integer
+        COALESCE((
+            SELECT bool_or(status = '#{n}')
+            FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
+          )::integer, 0)
       SQL
     )
   end
@@ -208,10 +208,10 @@ class HarvestItem < ApplicationRecord
     f = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_FIXABLE
     Arel.sql(
       <<~SQL
-        (
-          SELECT every(status = '#{f}')
-          FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
-        )::integer
+        COALESCE((
+            SELECT every(status = '#{f}')
+            FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
+          )::integer, 0)
       SQL
     )
   end
@@ -224,7 +224,7 @@ class HarvestItem < ApplicationRecord
   def self.valid_arel
     Arel.sql(
       <<~SQL
-        (jsonb_array_length(info->'validations') = 0)::integer
+        COALESCE((jsonb_array_length(info->'validations') = 0)::integer, 1)
       SQL
     )
   end
@@ -232,44 +232,6 @@ class HarvestItem < ApplicationRecord
   DEFAULT_COUNTS_BY_STATUS = STATUSES.map(&:to_s).product([0]).to_h
   def self.counts_by_status(relation)
     DEFAULT_COUNTS_BY_STATUS.merge(relation.group(:status).count)
-  end
-
-  # @param query [ActiveRecord::Relation] the current HarvestItem query
-  # @param path [String] the path to filter by
-  # @return [Array<Hash>]
-  def self.project_directory_listing(query, path)
-    path = path.trim('/')
-    path += '/' unless path.blank?
-
-    slash_count = path.count('/')
-    dir_path = 'dir_path'
-
-    table = HarvestItem.arel_table
-    path_col = table[:path]
-
-    dir_count = \
-      query
-      # match 'directories' only in current 'directory' -
-      # that is there is at least two more slashes after our prefix path
-      # e.g. {path}/dir/file.ext
-      .where(path_col =~ "^#{path}[^/]+/.+$")
-      .order(path_col.asc)
-      # transform path into only those immediate sub-directories of our prefix path
-      .select(
-        Arel.sql(
-          "array_to_string((string_to_array(path, '/'))[1:#{slash_count + 1}],'/')"
-        ).as(dir_path),
-        'harvest_id as harvest_id_unambiguous'
-      )
-
-    HarvestItem
-      .from(dir_count, 'dir_subquery')
-      # group by the immediate directories in the path
-      .group(dir_path)
-      .select(
-        Arel.sql("MAX(#{dir_path})").as(path_col.name),
-        Arel.sql('MAX(dir_subquery.harvest_id_unambiguous)').as('harvest_id')
-      )
   end
 
   # When we return fake harvest items that are directories, the id is nil
@@ -280,29 +242,111 @@ class HarvestItem < ApplicationRecord
   # @param query [ActiveRecord::Relation] the current HarvestItem query
   # @param path [String] the path to filter by
   # @return [ActiveRecord::Relation]
-  def self.project_file_listing(query, path)
-    path = path.trim('/')
-    path += '/' unless path.blank?
+  def self.project_directory_listing(relation, path_query)
+    raise ArgumentError, 'query must be an ActiveRecord::Relation' unless relation.is_a?(ActiveRecord::Relation)
+
+    path_query = path_query.trim('/')
+    path_query_bind = Arel::Nodes.build_quoted(path_query)
 
     table = HarvestItem.arel_table
-    path_col = table[:path]
+    harvest_id_name = table[:harvest_id].name
+    all_columns = HarvestItem.columns.map(&:name)
 
-    query
-      # match files only in current 'directory' - that is the path is the
-      # whole prefix before the last '/'
-      .where(path_col =~ "^#{path}[^/]+$")
-      .order(path: :asc)
+    base_query_table = Arel::Table.new('base_query')
+    with_dir_columns_table = Arel::Table.new('with_dir_columns')
+    list_query_table = Arel::Table.new('list_query')
+
+    dir_col = 'dir'
+    current_dir_col = 'current_dir'
+
+    with_dir_columns = base_query_table.project(
+      Arel.star,
+      Arel::Nodes::NamedFunction.new('dirname', [base_query_table[:path]]).as(dir_col),
+      Arel::Nodes::NamedFunction.new(
+        'path_contained_by_query', [
+          Arel::Nodes::NamedFunction.new('dirname', [base_query_table[:path]]),
+          path_query_bind
+        ]
+      ).as(current_dir_col)
+    )
+
+    # these mirror the values produced by Harvest.generate_report
+    dir_status_cols = [
+      Arel.star.count.as('items_total'),
+      HarvestItem.size_arel.sum.as('items_size_bytes'),
+      HarvestItem.duration_arel.sum.as('items_duration_seconds'),
+      *(STATUSES.map { |s| Arel.star.count.filter(with_dir_columns_table['status'].eq(s)).as("items_#{s}") }),
+      HarvestItem.invalid_fixable_arel.sum.as('items_invalid_fixable'),
+      HarvestItem.invalid_not_fixable_arel.sum.as('items_invalid_not_fixable')
+    ]
+    file_status_cols = [
+      Arel.sql('1').as('items_total'),
+      HarvestItem.size_arel.as('items_size_bytes'),
+      HarvestItem.duration_arel.as('items_duration_seconds'),
+      *(STATUSES.map { |s| (with_dir_columns_table['status'].eq(s).cast('int')).as("items_#{s}") }),
+      HarvestItem.invalid_fixable_arel.as('items_invalid_fixable'),
+      HarvestItem.invalid_not_fixable_arel.as('items_invalid_not_fixable')
+    ]
+
+    dir_cols = all_columns.map { |col|
+      case col
+      when table[:path].name then with_dir_columns_table[current_dir_col].as(table[:path].name)
+      when harvest_id_name then ((with_dir_columns_table[harvest_id_name]).maximum).as(harvest_id_name)
+      else Arel.null.as(col)
+      end
+    }
+
+    # rubocop:disable Style/NonNilCheck, Naming/AsciiIdentifiers
+    list_query = Arel::Nodes::Union.new(
+      # child dirs
+      with_dir_columns_table
+        .where((with_dir_columns_table[current_dir_col] != nil).⋀(with_dir_columns_table[dir_col] != path_query_bind))
+        .group(with_dir_columns_table[current_dir_col])
+        .project(*dir_cols, *dir_status_cols),
+      # child files
+      with_dir_columns_table
+        .where(with_dir_columns_table[dir_col] == path_query_bind)
+        .project(*all_columns, *file_status_cols)
+    )
+    # rubocop:enable Style/NonNilCheck, Naming/AsciiIdentifiers
+
+    HarvestItem
+      .with(base_query: relation, with_dir_columns:, list_query:)
+      .from(list_query_table.as(table.name))
+      # sort directories first, then sort by path name
+      .order(Arel.sql("(#{table[:id].name} IS NULL) DESC"))
+  end
+
+  def report
+    {
+      items_total:,
+      items_size_bytes:,
+      items_duration_seconds:,
+      items_invalid_fixable:,
+      items_invalid_not_fixable:,
+      items_new:,
+      items_metadata_gathered:,
+      items_failed:,
+      items_completed:,
+      items_errored:
+    }
   end
 
   def self.filter_settings
     filterable_fields = [
-      :id, :deleted, :path, :status, :created_at,
+      :id, :deleted, :path, :status, :created_at, :harvest_id,
       :updated_at, :audio_recording_id, :uploader_id
     ]
+
+    # terrible no good hack; but I can't work out how to customize filter per action
+    # since filter_settings must be invocable statically, we can't customize with parameter.
+    include_report = Current.action_name == 'filter' ? [] : [:report]
+
     {
       valid_fields: [*filterable_fields],
       render_fields: [
         *filterable_fields,
+        *include_report,
         :validations
       ],
       text_fields: [],
@@ -314,17 +358,33 @@ class HarvestItem < ApplicationRecord
           type: :array
         },
         path: {
-          query_attributes: [:path, :harvest_id],
+          query_attributes: [],
           transform: ->(item) { item.path_relative_to_harvest },
-          arel: nil,
+          arel: arel_table[:path],
           type: :string
+        },
+        report: {
+          query_attributes: [:status, :info,
+                             :items_total,
+                             :items_size_bytes,
+                             :items_duration_seconds,
+                             :items_invalid_fixable,
+                             :items_invalid_not_fixable,
+                             :items_new,
+                             :items_metadata_gathered,
+                             :items_failed,
+                             :items_completed,
+                             :items_errored],
+          transform: ->(item) { item.report },
+          arel: nil,
+          type: :hash
         }
       },
       new_spec_fields: ->(_user) { {} },
       controller: :harvest_items,
       action: :filter,
       defaults: {
-        order_by: :id,
+        order_by: :path,
         direction: :asc
       },
       valid_associations: [
@@ -337,12 +397,33 @@ class HarvestItem < ApplicationRecord
     }
   end
 
+  def self.report_schema
+    {
+      report: {
+        type: 'object',
+        readOnly: true,
+        properties: {
+          items_total: { type: 'integer' },
+          items_size_bytes: { type: ['null', 'integer'] },
+          items_duration_seconds: { type: ['null', 'integer'] },
+          items_invalid_fixable: { type: 'integer' },
+          items_invalid_not_fixable: { type: 'integer' },
+          items_new: { type: 'integer' },
+          items_metadata_gathered: { type: 'integer' },
+          items_failed: { type: 'integer' },
+          items_completed: { type: 'integer' },
+          items_errored: { type: 'integer' }
+        }
+      }
+    }
+  end
+
   def self.schema
     {
       type: :object,
       additionalProperties: false,
       properties: {
-        id: Api::Schema.id,
+        id: Api::Schema.id(nullable: true),
         deleted: { type: 'boolean', readOnly: true },
         path: { type: 'string', readOnly: true },
         status: { type: 'string', enum: STATUSES, readOnly: true },
@@ -350,6 +431,7 @@ class HarvestItem < ApplicationRecord
         updated_at: Api::Schema.date(read_only: true),
         audio_recording_id: Api::Schema.id(nullable: true),
         uploader_id: Api::Schema.id(nullable: true),
+        harvest_id: Api::Schema.id,
         validations: {
           type: 'array',
           readOnly: true,
@@ -369,32 +451,8 @@ class HarvestItem < ApplicationRecord
               name: { type: 'string', readOnly: true }
             }
           }
-        }
-      }
-    }
-  end
-
-  def self.directory_schema
-    {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        path: { type: 'string', readOnly: true },
-        id: { type: 'null', readOnly: true }
-      }
-    }
-  end
-
-  def self.directory_list_schema
-    {
-      type: 'array',
-      readOnly: true,
-      items: {
-        oneOf: [
-          HarvestItem.schema,
-          HarvestItem.directory_schema
-
-        ]
+        },
+        **report_schema
       }
     }
   end

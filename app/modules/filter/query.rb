@@ -160,7 +160,7 @@ module Filter
     def query_sort(query)
       return query unless has_sort_params?
 
-      apply_sort(query, @table, @sorting[:order_by], @valid_fields, @sorting[:direction])
+      apply_sort(query, @table, @sorting[:order_by], @valid_fields + @custom_fields2.keys, @sorting[:direction])
     end
 
     # Add paging to query.

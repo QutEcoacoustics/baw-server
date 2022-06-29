@@ -10,6 +10,10 @@ class Current < ActiveSupport::CurrentAttributes
   #   @return [Ability] The current ability for the request
   attribute :ability
 
+  # @!attribute [rw] action_name
+  #   @return [String] The current action for the request
+  attribute :action_name
+
   # @!parse
   #   extend self
 end

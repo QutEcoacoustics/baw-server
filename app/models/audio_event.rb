@@ -4,19 +4,22 @@
 #
 # Table name: audio_events
 #
-#  id                   :integer          not null, primary key
-#  deleted_at           :datetime
-#  end_time_seconds     :decimal(10, 4)
-#  high_frequency_hertz :decimal(10, 4)
-#  is_reference         :boolean          default(FALSE), not null
-#  low_frequency_hertz  :decimal(10, 4)   not null
-#  start_time_seconds   :decimal(10, 4)   not null
-#  created_at           :datetime
-#  updated_at           :datetime
-#  audio_recording_id   :integer          not null
-#  creator_id           :integer          not null
-#  deleter_id           :integer
-#  updater_id           :integer
+#  id                    :integer          not null, primary key
+#  channel               :integer
+#  context               :jsonb
+#  deleted_at            :datetime
+#  end_time_seconds      :decimal(10, 4)
+#  high_frequency_hertz  :decimal(10, 4)
+#  is_reference          :boolean          default(FALSE), not null
+#  low_frequency_hertz   :decimal(10, 4)   not null
+#  start_time_seconds    :decimal(10, 4)   not null
+#  created_at            :datetime
+#  updated_at            :datetime
+#  audio_event_import_id :integer
+#  audio_recording_id    :integer          not null
+#  creator_id            :integer          not null
+#  deleter_id            :integer
+#  updater_id            :integer
 #
 # Indexes
 #
