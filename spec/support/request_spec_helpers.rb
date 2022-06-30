@@ -37,20 +37,20 @@ module RequestSpecHelpers
       headers
     end
 
-    def api_headers(token)
+    def api_headers(token, accept: 'application/json')
       {
         headers: {
-          'ACCEPT' => 'application/json',
+          'ACCEPT' => accept,
           'HTTP_AUTHORIZATION' => token
         },
         as: :json
       }
     end
 
-    def api_with_body_headers(token, content_type: 'application/json')
+    def api_with_body_headers(token, content_type: 'application/json', accept: 'application/json')
       {
         headers: {
-          'ACCEPT' => 'application/json',
+          'ACCEPT' => accept,
           'HTTP_AUTHORIZATION' => token,
           'CONTENT_TYPE' => content_type
         },

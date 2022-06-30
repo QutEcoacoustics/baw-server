@@ -122,7 +122,6 @@ module IncludeController
 
   # from http://stackoverflow.com/a/94626
   def render_csv(filename = nil)
-    require 'csv'
     filename ||= params[:action]
     filename = filename.trim('.', '')
     filename += '.csv'

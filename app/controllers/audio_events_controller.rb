@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'csv'
-
 class AudioEventsController < ApplicationController
   include Api::ControllerHelper
 

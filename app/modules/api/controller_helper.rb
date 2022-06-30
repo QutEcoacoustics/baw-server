@@ -69,8 +69,7 @@ module Api
 
       Settings.api_response.add_capabilities!(opts, resource_class)
 
-      built_response = Settings.api_response.build(:ok, items, opts)
-      render json: built_response, status: :ok, layout: false
+      render_format(items, opts)
     end
 
     # also used for update_success and new
@@ -147,8 +146,30 @@ module Api
 
       Settings.api_response.add_capabilities!(opts, resource_class)
 
-      built_response = Settings.api_response.build(:ok, items, opts)
-      render json: built_response, status: :ok, content_type: 'application/json', layout: false
+      render_format(items, opts)
+    end
+
+    def filename(opts, format)
+      # a rudimentary way of encoding filtering parameters into a filename
+      # e.g. {id: {in: [1,2,3]}, name: {eq: '\n'}}  ==> id_in_1_2_3_name_eq_n
+      filter = opts[:filter]
+      filter_part = filter.blank? ? '' : "_#{filter.to_json.gsub(/["{}\\\[\]]/, '').gsub(/:|,/, '_')}"
+      "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}_#{resource_name_plural}#{filter_part}.#{format}"
+    end
+
+    def render_format(items, opts)
+      respond_to do |format|
+        format.json do
+          built_response = Settings.api_response.build(:ok, items, opts)
+          render json: built_response, status: :ok, content_type: 'application/json', layout: false
+        end
+        format.csv do
+          headers['Content-Disposition'] = "attachment; filename=\"#{filename(opts, 'csv')}\""
+
+          body = items.blank? ? '' : Api::Csv.dump(Array(items))
+          render body:, status: :ok, content_type: 'text/csv', layout: false
+        end
+      end
     end
 
     # Intended to take filter options and normalize them for a subsequent filter

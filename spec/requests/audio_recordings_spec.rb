@@ -529,4 +529,108 @@ describe '/audio_recordings' do
       })
     end
   end
+
+  context 'when generating CSV reports via filter' do
+    before do
+      create_list(:audio_recording, 5, site:)
+      Timecop.freeze(Time.utc(2022, 1, 2, 3, 4, 5.678))
+    end
+
+    after do
+      Timecop.return
+    end
+
+    it 'works with filter' do
+      body = {
+        projection: { include: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] },
+        filter: { site_id: { eq: site.id } }
+      }
+
+      post '/audio_recordings/filter.csv?disable_paging=true',
+        params: body,
+        **api_with_body_headers(reader_token, accept: 'text/csv')
+
+      expect_success
+      expect(response.headers['Content-Type']).to eq('text/csv; charset=utf-8')
+      expect(response.headers['Content-Disposition'])
+        .to eq("attachment; filename=\"20220102T030405Z_audio_recordings_site_id_eq_#{site.id}.csv\"")
+
+      results = CSV.parse(response_body, headers: true)
+      expect(results.size).to eq(AudioRecording.count)
+
+      expect(results.headers).to eq ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name']
+      rows = results.map(&:to_h)
+      AudioRecording.all.each { |recording|
+        expect(rows).to include(a_hash_including(
+          'canonical_file_name' => recording.friendly_name,
+          'id' => recording.id.to_s,
+          'site_id' => recording.site_id.to_s,
+          'sites.name' => recording.site.name,
+          'recorded_date' => an_instance_of(String)
+        ))
+      }
+    end
+
+    it 'works with filter_encoded' do
+      pick = AudioRecording.all.sample
+      body = {
+        projection: { include: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] },
+        filter: { id: { eq: pick.id } }
+      }
+      filter_encoded = Base64.urlsafe_encode64(body.to_json)
+
+      post "/audio_recordings/filter.csv?disable_paging=true&filter_encoded=#{filter_encoded}",
+        **api_headers(reader_token, accept: 'text/csv')
+
+      expect_success
+      expect(response.headers['Content-Type']).to eq('text/csv; charset=utf-8')
+      expect(response.headers['Content-Disposition'])
+        .to eq("attachment; filename=\"20220102T030405Z_audio_recordings_id_eq_#{pick.id}.csv\"")
+
+      results = CSV.parse(response_body, headers: true)
+      expect(results.size).to eq(1)
+
+      expect(results.headers).to eq ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name']
+      rows = results.map(&:to_h)
+
+      expect(rows.first).to match(a_hash_including(
+        'canonical_file_name' => pick.friendly_name,
+        'id' => pick.id.to_s,
+        'site_id' => pick.site_id.to_s,
+        'sites.name' => pick.site.name,
+        'recorded_date' => an_instance_of(String)
+      ))
+    end
+
+    it 'works with index' do
+      pick = AudioRecording.all.sample
+      body = {
+        projection: { include: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] },
+        filter: { id: { eq: pick.id } }
+      }
+      filter_encoded = Base64.urlsafe_encode64(body.to_json)
+
+      get "/audio_recordings.csv?disable_paging=true&filter_encoded=#{filter_encoded}",
+        **api_headers(reader_token, accept: 'text/csv')
+
+      expect_success
+      expect(response.headers['Content-Type']).to eq('text/csv; charset=utf-8')
+      expect(response.headers['Content-Disposition'])
+        .to eq("attachment; filename=\"20220102T030405Z_audio_recordings_id_eq_#{pick.id}.csv\"")
+
+      results = CSV.parse(response_body, headers: true)
+      expect(results.size).to eq(1)
+
+      expect(results.headers).to eq ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name']
+      rows = results.map(&:to_h)
+
+      expect(rows.first).to match(a_hash_including(
+        'canonical_file_name' => pick.friendly_name,
+        'id' => pick.id.to_s,
+        'site_id' => pick.site_id.to_s,
+        'sites.name' => pick.site.name,
+        'recorded_date' => an_instance_of(String)
+      ))
+    end
+  end
 end
