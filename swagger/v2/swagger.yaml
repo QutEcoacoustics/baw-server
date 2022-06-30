@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.2.0 from http://localhost:3000.
+                  Version 8.5.10 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.2.0"
+                Write-Information "Acoustic Workbench downloader script version 8.5.10"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.2.0 from http://localhost:3000.
+                  Version 8.5.10 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.2.0"
+                Write-Information "Acoustic Workbench downloader script version 8.5.10"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1908,7 +1908,7 @@ paths:
                         settings for this project
                 data:
                 - id: 28
-                  uuid: e209e7fa-47b1-402f-9ba2-298cb971cdb9
+                  uuid: b1a02f5b-a229-4cb9-b1cd-b95d6ffb2a1e
                   recorded_date: '2012-04-23T07:06:59.000Z'
                   site_id: 28
                   duration_seconds: 60000.0
@@ -1926,7 +1926,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 28
-                  file_hash: SHA256::28tu3zlcasjnofvtli4p0czpopdnomgtgx6sxgx5cbm767y12azcp39kzadhvb1u
+                  file_hash: SHA256::283zlcasjnofvtli4p0czpopdnomgtgx6sxgx5cbm767y12azcp39kzadhvb1uz3
                   uploader_id: 124
                   original_file_name: original name 28.mp3
                   canonical_file_name: 20120423T070659Z_site-name-28_28.mp3
@@ -1975,7 +1975,7 @@ paths:
                       details: 
                 data:
                   id: 29
-                  uuid: 84af83ac-0fe5-4165-81ac-6c032ebb9c93
+                  uuid: 83ac0fe5-4165-41ac-ac03-2ebb9c93cfcb
                   recorded_date: '2012-04-24T07:06:59.000Z'
                   site_id: 29
                   duration_seconds: 66.0
@@ -1993,7 +1993,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 29
-                  file_hash: SHA256::29fbdw2kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhbrlqmr633rskzfzfy2cn4zms
+                  file_hash: SHA256::29dw2kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhbrlqmr633rskzfzfy2cn4zmsqt
                   uploader_id: 128
                   original_file_name: original name 29.mp3
                   canonical_file_name: 20120424T070659Z_site-name-29_29.mp3
@@ -2044,7 +2044,7 @@ paths:
                       details: 
                 data:
                   id: 30
-                  uuid: 82f2ae29-fb9c-4110-b131-38804ac6e4c3
+                  uuid: ae29fb9c-6110-4131-b880-4ac6e4c34cc5
                   recorded_date: '2012-04-25T07:06:59.000Z'
                   site_id: 30
                   duration_seconds: 60000.0
@@ -2062,7 +2062,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 30
-                  file_hash: SHA256::30c5x4c02hy3yui3iptsk1pjhqxu1b81m2c8uuq07shlpanph5m3wmcovyezpqpg
+                  file_hash: SHA256::30x4c02hy3yui3iptsk1pjhqxu1b81m2c8uuq07shlpanph5m3wmcovyezpqpgup
                   uploader_id: 132
                   original_file_name: original name 30.mp3
                   canonical_file_name: 20120425T070659Z_site-name-30_30.mp3
@@ -2108,7 +2108,7 @@ paths:
                       details: 
                 data:
                   id: 31
-                  uuid: 5ea5a8dd-cfb2-4bc6-b595-a68dcfc5a6fd
+                  uuid: cfb2fbc6-7595-468d-8fc5-a6fd8165a427
                   recorded_date: '2012-04-26T07:06:59.000Z'
                   site_id: 31
                   duration_seconds: 66.0
@@ -2126,7 +2126,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 31
-                  file_hash: SHA256::3113zacwbn39j1wwm7mioyylciu2e1ve2uhrmbn7k0w3nu2oir3x6y8eyhmug9bp
+                  file_hash: SHA256::313zacwbn39j1wwm7mioyylciu2e1ve2uhrmbn7k0w3nu2oir3x6y8eyhmug9bp7
                   uploader_id: 136
                   original_file_name: original name 31.mp3
                   canonical_file_name: 20120426T070659Z_site-name-31_31.mp3
@@ -2220,7 +2220,7 @@ paths:
                         settings for this project
                 data:
                 - id: 33
-                  uuid: '038d6519-1dee-40ae-b80f-f50984cb920d'
+                  uuid: 191deeb0-aeb8-4ff5-8984-cb920da8e9a5
                   recorded_date: '2012-04-28T07:06:59.000Z'
                   site_id: 33
                   duration_seconds: 60000.0
