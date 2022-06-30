@@ -1,5 +1,17 @@
 # Changelog
 
+## [8.6.0](https://github.com/QutEcoacoustics/baw-server/tree/8.6.0) (2022-06-30)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.5.11...8.6.0)
+
+**Implemented enhancements:**
+
+- Allow CSV format results for endpoints [\#598](https://github.com/QutEcoacoustics/baw-server/issues/598)
+
+## [8.5.11](https://github.com/QutEcoacoustics/baw-server/tree/8.5.11) (2022-06-30)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.5.10...8.5.11)
+
 ## [8.5.10](https://github.com/QutEcoacoustics/baw-server/tree/8.5.10) (2022-06-30)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.2.0...8.5.10)
