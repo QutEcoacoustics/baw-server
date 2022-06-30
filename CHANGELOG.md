@@ -1,5 +1,26 @@
 # Changelog
 
+## [8.5.10](https://github.com/QutEcoacoustics/baw-server/tree/8.5.10) (2022-06-30)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.2.0...8.5.10)
+
+**Implemented enhancements:**
+
+- Add scan job for streaming uploads [\#588](https://github.com/QutEcoacoustics/baw-server/issues/588)
+- Avoid setting user stamps when updater is nil [\#587](https://github.com/QutEcoacoustics/baw-server/issues/587)
+- Add special case for sites with the same name for default harvest folder creation [\#586](https://github.com/QutEcoacoustics/baw-server/issues/586)
+- Harvester fixes [\#599](https://github.com/QutEcoacoustics/baw-server/pull/599) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Harvest Items directory listing is returning incorrect results [\#595](https://github.com/QutEcoacoustics/baw-server/issues/595)
+- Harvest: ignore .filepart files [\#594](https://github.com/QutEcoacoustics/baw-server/issues/594)
+- Harvest: substituting and incorrect project id in the route does not throw an error [\#593](https://github.com/QutEcoacoustics/baw-server/issues/593)
+- Harvest:  undefined local variable or method `extension` [\#592](https://github.com/QutEcoacoustics/baw-server/issues/592)
+- Handle service unavailability. [\#591](https://github.com/QutEcoacoustics/baw-server/issues/591)
+- Harvest: some harvest items remain stuck on new [\#590](https://github.com/QutEcoacoustics/baw-server/issues/590)
+- Harvests: account for errors in metadata stage [\#589](https://github.com/QutEcoacoustics/baw-server/issues/589)
+
 ## [8.2.0](https://github.com/QutEcoacoustics/baw-server/tree/8.2.0) (2022-06-15)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.1.0...8.2.0)

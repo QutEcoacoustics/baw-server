@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.1.0 from http://localhost:3000.
+                  Version 8.2.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.1.0"
+                Write-Information "Acoustic Workbench downloader script version 8.2.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.1.0 from http://localhost:3000.
+                  Version 8.2.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.1.0"
+                Write-Information "Acoustic Workbench downloader script version 8.2.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2282,14 +2282,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
+                    order_by: path
                     direction: asc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/harvests/26/items/filter?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/harvests/26/items/filter?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -2298,6 +2298,7 @@ paths:
                   path: some/relative/path.mp3
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
+                  harvest_id: 26
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 35
                   uploader_id: 153
@@ -2347,14 +2348,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
+                    order_by: path
                     direction: asc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/projects/39/harvests/27/items/a/b?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/projects/39/harvests/27/items/a/b?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -2363,9 +2364,21 @@ paths:
                   path: a/b/c.wav
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
+                  harvest_id: 27
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 37
                   uploader_id: 160
+                  report:
+                    items_total: 1
+                    items_size_bytes: 
+                    items_duration_seconds: 
+                    items_invalid_fixable: 0
+                    items_invalid_not_fixable: 0
+                    items_new: 1
+                    items_metadata_gathered: 0
+                    items_failed: 0
+                    items_completed: 0
+                    items_errored: 0
                   validations: []
               schema:
                 allOf:
@@ -2853,14 +2866,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
+                    order_by: path
                     direction: asc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/projects/51/harvests/36/items/filter?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/projects/51/harvests/36/items/filter?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -2869,6 +2882,7 @@ paths:
                   path: some/relative/path.mp3
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
+                  harvest_id: 36
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 47
                   uploader_id: 205
@@ -3489,14 +3503,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
-                    direction: asc
+                    order_by: created_at
+                    direction: desc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/projects/60/harvests/filter?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/projects/60/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
@@ -3640,14 +3654,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
-                    direction: asc
+                    order_by: created_at
+                    direction: desc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/projects/62/harvests?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/projects/62/harvests?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
@@ -4158,14 +4172,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
+                    order_by: path
                     direction: asc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/harvests/56/items/a/b?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/harvests/56/items/a/b?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -4174,9 +4188,21 @@ paths:
                   path: a/b/c.wav
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
+                  harvest_id: 56
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 68
                   uploader_id: 289
+                  report:
+                    items_total: 1
+                    items_size_bytes: 
+                    items_duration_seconds: 
+                    items_invalid_fixable: 0
+                    items_invalid_not_fixable: 0
+                    items_new: 1
+                    items_metadata_gathered: 0
+                    items_failed: 0
+                    items_completed: 0
+                    items_errored: 0
                   validations: []
               schema:
                 allOf:
@@ -5338,14 +5364,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
-                    direction: asc
+                    order_by: created_at
+                    direction: desc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/harvests/filter?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
@@ -5410,14 +5436,14 @@ paths:
                   status: 200
                   message: OK
                   sorting:
-                    order_by: id
-                    direction: asc
+                    order_by: created_at
+                    direction: desc
                   paging:
                     page: 1
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://localhost:3000/harvests?direction=asc&items=25&order_by=id&page=1
+                    current: http://localhost:3000/harvests?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
@@ -8473,80 +8499,12 @@ components:
       - upload_url
       - mappings
       - report
-    harvest_items_directory_listing:
-      type: array
-      readOnly: true
-      items:
-        oneOf:
-        - type: object
-          additionalProperties: false
-          properties:
-            id:
-              "$ref": "#/components/schemas/id"
-              readOnly: true
-            deleted:
-              type: boolean
-              readOnly: true
-            path:
-              type: string
-              readOnly: true
-            status:
-              type: string
-              enum:
-              - new
-              - metadata_gathered
-              - failed
-              - completed
-              - errored
-              readOnly: true
-            created_at:
-              type: string
-              format: date-time
-              readOnly: true
-            updated_at:
-              type: string
-              format: date-time
-              readOnly: true
-            audio_recording_id:
-              "$ref": "#/components/schemas/nullableId"
-              readOnly: true
-            uploader_id:
-              "$ref": "#/components/schemas/nullableId"
-              readOnly: true
-            validations:
-              type: array
-              readOnly: true
-              items:
-                type: object
-                additionalProperties: false
-                properties:
-                  status:
-                    type: string
-                    readOnly: true
-                    enum:
-                    - fixable
-                    - not_fixable
-                  message:
-                    type: string
-                    readOnly: true
-                  name:
-                    type: string
-                    readOnly: true
-        - type: object
-          additionalProperties: false
-          properties:
-            path:
-              type: string
-              readOnly: true
-            id:
-              type: 'null'
-              readOnly: true
     harvest_item:
       type: object
       additionalProperties: false
       properties:
         id:
-          "$ref": "#/components/schemas/id"
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         deleted:
           type: boolean
@@ -8577,6 +8535,9 @@ components:
         uploader_id:
           "$ref": "#/components/schemas/nullableId"
           readOnly: true
+        harvest_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
         validations:
           type: array
           readOnly: true
@@ -8596,3 +8557,31 @@ components:
               name:
                 type: string
                 readOnly: true
+        report:
+          type: object
+          readOnly: true
+          properties:
+            items_total:
+              type: integer
+            items_size_bytes:
+              type:
+              - 'null'
+              - integer
+            items_duration_seconds:
+              type:
+              - 'null'
+              - integer
+            items_invalid_fixable:
+              type: integer
+            items_invalid_not_fixable:
+              type: integer
+            items_new:
+              type: integer
+            items_metadata_gathered:
+              type: integer
+            items_failed:
+              type: integer
+            items_completed:
+              type: integer
+            items_errored:
+              type: integer
