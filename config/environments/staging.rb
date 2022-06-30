@@ -41,7 +41,7 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for nginx
 
   # https://api.rubyonrails.org/classes/ActionDispatch/RemoteIp.html
-  config.action_dispatch.trusted_proxies = Settings.all_trusted_proxies
+  config.action_dispatch.trusted_proxies = BawApp.all_trusted_proxies
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # config.force_ssl = true

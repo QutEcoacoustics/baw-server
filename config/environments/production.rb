@@ -46,7 +46,7 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
 
   # https://api.rubyonrails.org/classes/ActionDispatch/RemoteIp.html
-  config.action_dispatch.trusted_proxies = Settings.all_trusted_proxies
+  config.action_dispatch.trusted_proxies = BawApp.all_trusted_proxies
 
   # Mount Action Cable outside main process or domain
   # config.action_cable.mount_path = nil

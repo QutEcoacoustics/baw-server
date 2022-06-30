@@ -92,7 +92,7 @@ module BawApp
   def log_to_stdout?
     return false if rspec?
 
-    env_value = ActiveModel::Type::Boolean.new.cast(ENV['RAILS_LOG_TO_STDOUT'])
+    env_value = ActiveModel::Type::Boolean.new.cast(ENV.fetch('RAILS_LOG_TO_STDOUT', nil))
     return env_value unless env_value.nil?
 
     return true if development?
@@ -130,5 +130,11 @@ module BawApp
     @setup = true
 
     @custom_configs = configs || []
+  end
+
+  # @return [Array<IPAddr>]
+  def all_trusted_proxies
+    # placed in this class, because when used to boot app Settings is not yet extended with BawWeb::Settings
+    @all_trusted_proxies ||= (Settings.trusted_proxies.map(&IPAddr.method(:new)) + ActionDispatch::RemoteIp::TRUSTED_PROXIES)
   end
 end

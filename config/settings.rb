@@ -39,11 +39,6 @@ module BawWeb
       internal_allow_ips.any? { |ip| ip.include?(remote_ip) }
     end
 
-    # @return [Array<IPAddr>]
-    def all_trusted_proxies
-      @all_trusted_proxies ||= (trusted_proxies.map(&IPAddr.method(:new)) + ActionDispatch::RemoteIp::TRUSTED_PROXIES)
-    end
-
     def version_info
       return @version_info unless @version_info.nil?
 
