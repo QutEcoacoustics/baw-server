@@ -51,6 +51,9 @@ module IncludeController
     rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
     rescue_from AasmHelpers::NoTransitionAvailable, with: :unprocessable_entity_error_response
 
+    rescue_from BawWorkers::UploadService::UploadServiceError, with: :upload_service_error
+    rescue_from Faraday::ServerError, with: :internal_server_error
+
     # Don't rescue this, it is the base for 406 and 415
     #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
 
@@ -614,6 +617,34 @@ module IncludeController
       "Audio generation failed: #{error.message}",
       error,
       'audio_tool_error_response'
+    )
+  end
+
+  def internal_server_error(error)
+    render_error(
+      :internal_server_error,
+      'Internal server error',
+      error,
+      'service_unavailable'
+    )
+  end
+
+  def upload_service_error(error)
+    render_error(
+      :internal_server_error,
+      "Upload service failure: #{error.message}",
+      error&.cause || error,
+      'upload_service_error'
+    )
+  end
+
+  def service_unavailable(error)
+    render_error(
+      :service_unavailable,
+      'Service unavailable',
+      error,
+      'service_unavailable',
+      options
     )
   end
 

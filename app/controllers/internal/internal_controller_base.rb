@@ -10,6 +10,8 @@ module Internal
     # Internal routes authenticate by an allow list of IPs
     def authenticate!
       name = "internal_#{controller_name}"
+      logger.info("#{name} authenticate!", ip: request.ip, remote_ip: request.remote_ip,
+        http_forwarded_for: request.headers['HTTP_X_FORWARDED_FOR'])
       authorize! :manage, name.to_sym, request.remote_ip
     end
   end

@@ -101,7 +101,7 @@ describe 'Settings' do
       }.to raise_error(Config::Validation::Error, /upload_service: is missing/)
     end
 
-    [:host, :port, :username, :password].each do |key|
+    [:admin_host, :public_host, :port, :username, :password, :sftp_port].each do |key|
       example "validation is done for sub-key #{key} for upload_service" do
         config = ::Config::Options.new
         copy = Settings.to_hash

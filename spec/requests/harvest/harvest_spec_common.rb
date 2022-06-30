@@ -26,6 +26,7 @@ module HarvestSpecCommon
 
   ALL_STATES = Harvest.aasm.states.map(&:name)
 
+  # @return [Harvest,nil]
   def harvest
     return nil if @harvest_id.nil?
 
@@ -164,7 +165,7 @@ module HarvestSpecCommon
 
   def expect_pre_filled_mappings
     get_harvest
-    expected_dir_name = harvest.streaming_harvest? ? site.id.to_s : site.safe_name
+    expected_dir_name = harvest.streaming_harvest? ? site.id.to_s : site.unique_safe_name
 
     expect(api_data).to match(a_hash_including({
       mappings: [

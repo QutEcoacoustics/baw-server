@@ -2,6 +2,9 @@
 
 module BawWorkers
   module UploadService
+    class UploadServiceError < StandardError
+    end
+
     # Convenience methods for working with the sftpgo service
     # Reference: https://github.com/drakkan/sftpgo/blob/master/httpd/schema/openapi.yaml
     module ApiHelpers
@@ -58,6 +61,9 @@ module BawWorkers
         return result.value! if result.success?
 
         raise result.failure
+      rescue ::Faraday::Error
+        operation = caller_locations(1, 2)[1].label
+        raise UploadServiceError, "Failed to #{operation}, got #{result.failure&.response&.fetch(:status)}"
       end
 
       def get_id(subject, target_class)

@@ -23,14 +23,24 @@ describe 'Harvest items info' do
     get "/projects/#{project.id}/harvests/#{harvest.id}/items", **api_headers(owner_token)
 
     expect_success
-    expect(api_data).to match([
+    expect(api_data).to match(a_collection_containing_exactly(
       a_hash_including(
         id: nil,
-        path: 'a'
+        path: 'a',
+        report: a_hash_including(
+          items_total: 5,
+          items_invalid_fixable: 2,
+          items_invalid_not_fixable: 1
+        )
       ),
       a_hash_including(
         id: nil,
-        path: 'z'
+        path: 'z',
+        report: a_hash_including(
+          items_total: 1,
+          items_invalid_fixable: 1,
+          items_invalid_not_fixable: 0
+        )
       ),
       a_hash_including(
         id: @hi1.id,
@@ -44,21 +54,33 @@ describe 'Harvest items info' do
         id: @hi3.id,
         path: @hi3.path_relative_to_harvest
       )
-    ])
+    ))
+
+    expect_has_paging(page: 1, total: 5)
   end
 
   it 'can query for harvest items (sub directory)' do
     get "/projects/#{project.id}/harvests/#{harvest.id}/items/a/b", **api_headers(owner_token)
 
     expect_success
-    expect(api_data).to match([
+    expect(api_data).to match(a_collection_containing_exactly(
       a_hash_including(
         id: nil,
-        path: 'a/b/c'
+        path: 'a/b/c',
+        report: a_hash_including(
+          items_total: 2,
+          items_invalid_fixable: 0,
+          items_invalid_not_fixable: 1
+        )
       ),
       a_hash_including(
         id: nil,
-        path: 'a/b/d'
+        path: 'a/b/d',
+        report: a_hash_including(
+          items_total: 1,
+          items_invalid_fixable: 0,
+          items_invalid_not_fixable: 0
+        )
       ),
       a_hash_including(
         id: @hi7.id,
@@ -68,7 +90,9 @@ describe 'Harvest items info' do
         id: @hi8.id,
         path: @hi8.path_relative_to_harvest
       )
-    ])
+    ))
+
+    expect_has_paging(page: 1, total: 4)
   end
 
   it 'can also do plain old filter requests' do
@@ -82,7 +106,104 @@ describe 'Harvest items info' do
         path: instance_variable_get("@hi#{index}").path_relative_to_harvest
       )
     }
-    expect(api_data).to match(matchers)
+    expect(api_data).to match(a_collection_containing_exactly(*matchers))
+
+    expect_has_paging(page: 1, total: 9)
+  end
+
+  context 'with lots of items' do
+    before do
+      50.times do
+        create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a')
+
+        create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'e')
+      end
+    end
+
+    it 'can query for harvest items (root path)' do
+      get "/projects/#{project.id}/harvests/#{harvest.id}/items", **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).to match(a_collection_containing_exactly(
+        a_hash_including(
+          id: nil,
+          path: 'a'
+        ),
+        a_hash_including(
+          id: nil,
+          path: 'e'
+        ),
+        a_hash_including(
+          id: nil,
+          path: 'z'
+        ),
+        a_hash_including(
+          id: @hi1.id,
+          path: @hi1.path_relative_to_harvest
+        ),
+        a_hash_including(
+          id: @hi2.id,
+          path: @hi2.path_relative_to_harvest
+        ),
+        a_hash_including(
+          id: @hi3.id,
+          path: @hi3.path_relative_to_harvest
+        )
+      ))
+
+      expect_has_paging(page: 1, total: 6)
+    end
+
+    it 'can query for harvest items (sub directory)' do
+      get "/projects/#{project.id}/harvests/#{harvest.id}/items/a", **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).to include(a_hash_including(
+        id: nil,
+        path: 'a/b'
+      ))
+      expect(api_data.length).to eq 25
+
+      expect_has_paging(page: 1, total: 50 + 1)
+    end
+
+    it 'can query for harvest items (sub directory, next page)' do
+      get "/projects/#{project.id}/harvests/#{harvest.id}/items/a?page=2", **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).not_to include(a_hash_including(
+        id: nil,
+        path: 'a/b'
+      ))
+      expect(api_data.length).to eq 25
+
+      expect_has_paging(page: 2, total: 50 + 1)
+    end
+
+    it 'can query for harvest items (sub directory, last page)' do
+      get "/projects/#{project.id}/harvests/#{harvest.id}/items/a?page=3", **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).not_to include(a_hash_including(
+        id: nil,
+        path: 'a/b'
+      ))
+      expect(api_data.length).to eq 1
+
+      expect_has_paging(page: 3, total: 50 + 1)
+    end
+
+    it 'can query for harvest items (the other sub directory)' do
+      get "/projects/#{project.id}/harvests/#{harvest.id}/items/e", **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).not_to match(a_hash_including(
+        id: nil
+      ))
+      expect(api_data.length).to eq 25
+
+      expect_has_paging(page: 1, total: 50)
+    end
   end
 
   def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)

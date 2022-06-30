@@ -201,7 +201,9 @@ class Harvest < ApplicationRecord
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true, logger: SemanticLogger[Harvest] do
     state :new_harvest, initial: true
 
+    # @!method uploading?
     state :uploading, enter: [:mark_last_upload_at]
+    # @!method uploading?
     state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
     state :metadata_review, enter: [:mark_last_metadata_review_at]
@@ -209,15 +211,27 @@ class Harvest < ApplicationRecord
     # @!method complete?
     state :complete, enter: [:close_upload_slot]
 
+    # @!method open_upload
+    # @!method open_upload!
+    # @!method may_open_upload?
+    #   @return [Boolean]
     event :open_upload do
       transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?, after: [:enable_upload_slot]
       transitions from: :new_harvest, to: :uploading, after: [:open_upload_slot, :create_default_mappings]
     end
 
+    # @!method scan
+    # @!method scan!
+    # @!method may_scan?
+    #   @return [Boolean]
     event :scan, guard: :batch_harvest? do
       transitions from: :uploading, to: :scanning
     end
 
+    # @!method extract
+    # @!method extract!
+    # @!method may_extract?
+    #   @return [Boolean]
     event :extract do
       transitions from: :scanning, to: :metadata_extraction
       transitions from: :metadata_review, to: :metadata_extraction, after: [
@@ -225,22 +239,42 @@ class Harvest < ApplicationRecord
       ]
     end
 
+    # @!method metadata_review
+    # @!method metadata_review!
+    # @!method may_metadata_review?
+    #   @return [Boolean]
     event :metadata_review do
       transitions from: :metadata_extraction, to: :metadata_review, guard: :metadata_extraction_complete?
     end
 
+    # @!method process
+    # @!method process!
+    # @!method may_process?
+    #   @return [Boolean]
     event :process do
       transitions from: :metadata_review, to: :processing, after: [
         :reenqueue_all_harvest_items_for_processing
       ]
     end
 
+    # @!method finish
+    # @!method finish!
+    # @!method may_finish?
+    #   @return [Boolean]
     event :finish do
       transitions from: :processing, to: :complete, guard: :processing_complete?
-      transitions from: :streaming, to: :complete
+      transitions from: :uploading, to: :complete, after: [:scan_upload_directory]
     end
 
-    event :abort do
+    # our state machine helpers allow for automated transitions if there is
+    # only one possible transition - otherwise they error.
+    # The guard here essentially prioritizes the :finish transition over the
+    # :abort transition.
+    # @!method abort
+    # @!method abort!
+    # @!method may_abort?
+    #   @return [Boolean]
+    event :abort, guard: -> { !may_finish? } do
       transitions to: :complete
     end
   end
@@ -296,7 +330,9 @@ class Harvest < ApplicationRecord
       # we expect streaming uploads to be long term - we really don't want to disable uploads
       # on a site rename so we'll use site.id.
       # For batch uploads we expect user interaction; in that case a site name is much friendlier.
-      site_name = streaming_harvest? ? site.id.to_s : site.safe_name
+      # AT 2022: it is possible for sites names to be non-unique, so we'll use the site.id always in the directory names.
+      site_name = streaming_harvest? ? site.id.to_s : site.unique_safe_name
+
       real_path = upload_directory / site_name
 
       real_path.mkpath
@@ -352,7 +388,7 @@ class Harvest < ApplicationRecord
 
   def metadata_extraction_complete?
     # have we gathered all the metadata for each item?
-    harvest_items.select(:status).distinct.all?(&:metadata_gathered?)
+    harvest_items.select(:status).distinct.all?(&:metadata_gathered_or_unsuccessful?)
   end
 
   def processing_complete?
@@ -421,8 +457,8 @@ class Harvest < ApplicationRecord
       controller: :harvests,
       action: :filter,
       defaults: {
-        order_by: :id,
-        direction: :asc
+        order_by: :created_at,
+        direction: :desc
       },
       valid_associations: [
         {

@@ -8,7 +8,7 @@ class HarvestsController < ApplicationController
   # GET /projects/:project_id/harvests
   def index
     do_authorize_class
-    get_project_if_exists
+    get_project_if_exists(for_list_endpoint: true)
     do_authorize_instance(:show, @project) unless @project.nil?
 
     @harvests, opts = Settings.api_response.response_advanced(
@@ -60,7 +60,12 @@ class HarvestsController < ApplicationController
 
     if @harvest.save
 
-      @harvest.open_upload!
+      begin
+        @harvest.open_upload!
+      rescue BawWorkers::UploadService::UploadServiceError
+        @harvest.destroy
+        raise
+      end
 
       respond_create_success(project_harvest_path(@harvest.project, @harvest))
     else
@@ -90,16 +95,18 @@ class HarvestsController < ApplicationController
     # that can occur while talking with other services (e.g. sftpgo)
     # https://blog.saeloun.com/2022/03/23/rails-7-adds-lock_with.html
     # This could cause performance issues: monitor.
-    @harvest.with_lock('FOR UPDATE') do
-      # allow the API to transition this harvest to a new state
-      status = parameters.delete(:status)
-      @harvest.transition_to_state!(status.to_sym) unless status.nil?
+    # AT 2022: disabled for now as it seems to be causing race conditions - other code further down the stack locks for
+    # with a transaction that needs to be visible to external actors before this method completed
+    # allow the API to transition this harvest to a new state
+    #@harvest.with_lock('FOR UPDATE') do end
 
-      if @harvest.update(parameters)
-        respond_show
-      else
-        respond_change_fail
-      end
+    status = parameters.delete(:status)
+    @harvest.transition_to_state!(status.to_sym) unless status.nil?
+
+    if @harvest.update(parameters)
+      respond_show
+    else
+      respond_change_fail
     end
   end
 
@@ -120,7 +127,7 @@ class HarvestsController < ApplicationController
   # GET|POST /projects/:project_id/harvests/filter
   def filter
     do_authorize_class
-    get_project_if_exists
+    get_project_if_exists(for_list_endpoint: true)
     do_authorize_instance(:show, @project) unless @project.nil?
 
     filter_response, opts = Settings.api_response.response_advanced(
@@ -132,11 +139,23 @@ class HarvestsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
-  def get_project_if_exists
+  def get_project_if_exists(for_list_endpoint: false)
     return unless params.key?(:project_id)
 
     @project = Project.find(params[:project_id])
-    @harvest.project = @project if defined?(@harvest) && defined?(@project)
+
+    return if for_list_endpoint
+
+    raise '@harvest must be defined' unless defined?(@harvest)
+
+    if @harvest.project_id.nil?
+      @harvest.project = @project
+      return
+    end
+
+    return if @project.id == @harvest.project_id
+
+    raise CustomErrors::RoutingArgumentError.new, 'project_id in route does not match the harvest\'s project_id'
   end
 
   def list_permissions

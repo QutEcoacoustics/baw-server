@@ -126,96 +126,60 @@ RSpec.describe HarvestItem, type: :model do
         @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b')
       end
 
-      it 'can query the root path for directories' do
-        results = HarvestItem.project_directory_listing(HarvestItem, '').as_json
-
-        expect(results).to contain_exactly(
-          {
-            'id' => nil,
-            'harvest_id' => harvest.id,
-
-            'path' => 'a'
-          },
-          {
-            'id' => nil,
-            'harvest_id' => harvest.id,
-            'path' => 'z'
-          }
+      def assert(id, path, total, fixable, not_fixable)
+        a_hash_including(
+          'id' => id,
+          'path' => path,
+          'harvest_id' => harvest.id,
+          'items_invalid_fixable' => fixable,
+          'items_invalid_not_fixable' => not_fixable,
+          'items_total' => total
         )
       end
 
-      it 'can query the root path for files' do
-        results = HarvestItem.project_file_listing(HarvestItem, '')
+      it 'can query the root path' do
+        results = HarvestItem.project_directory_listing(HarvestItem.all, '').as_json
 
-        expect(results).to eq [
-          @hi1,
-          @hi2,
-          @hi3
-        ]
+        expect(results).to match(a_collection_containing_exactly(
+          assert(nil, 'a', 5, 2, 1),
+          assert(nil, 'z', 1, 1, 0),
+          assert(@hi1.id, @hi1.path, 1, 0, 1),
+          assert(@hi2.id, @hi2.path, 1, 0, 1),
+          assert(@hi3.id, @hi3.path, 1, 1, 0)
+        ))
       end
 
-      it 'can query a sub directory "a" for directories' do
-        results = HarvestItem.project_directory_listing(HarvestItem, 'a').as_json
+      it 'can query a sub directory "a"' do
+        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a').as_json
 
-        expect(results).to eq [
-          {
-            'id' => nil,
-            'harvest_id' => harvest.id,
-            'path' => 'a/b'
-          }
-        ]
+        expect(results).to match(a_collection_containing_exactly(
+          assert(nil, 'a/b', 5, 2, 1)
+        ))
       end
 
-      it 'can query a sub directory "a" for files' do
-        results = HarvestItem.project_file_listing(HarvestItem, 'a')
+      it 'can query a sub directory "a/b"' do
+        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a/b').as_json
 
-        expect(results).to eq []
+        expect(results).to match(a_collection_containing_exactly(
+          assert(nil, 'a/b/c', 2, 0, 1),
+          assert(nil, 'a/b/d', 1, 0, 0),
+          assert(@hi7.id, @hi7.path, 1, 1, 0),
+          assert(@hi8.id, @hi8.path, 1, 1, 0)
+        ))
       end
 
-      it 'can query a sub directory "a/b" for directories' do
-        results = HarvestItem.project_directory_listing(HarvestItem, 'a/b').as_json
+      it 'can query a deep directory "a/b/c"' do
+        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a/b/c').as_json
 
-        expect(results).to eq [
-          {
-            'id' => nil,
-            'harvest_id' => harvest.id,
-            'path' => 'a/b/c'
-          },
-          {
-            'id' => nil,
-            'harvest_id' => harvest.id,
-            'path' => 'a/b/d'
-          }
-        ]
-      end
-
-      it 'can query a sub directory "a/b" for files' do
-        results = HarvestItem.project_file_listing(HarvestItem, 'a/b')
-
-        expect(results).to eq [
-          @hi7,
-          @hi8
-        ]
-      end
-
-      it 'can query a deep directory "a/b/c" for directories' do
-        results = HarvestItem.project_directory_listing(HarvestItem, 'a/b/c').as_json
-
-        expect(results).to eq []
-      end
-
-      it 'can query a deep directory "a/b/c" for files' do
-        results = HarvestItem.project_file_listing(HarvestItem, 'a/b/c')
-
-        expect(results).to eq [
-          @hi4,
-          @hi5
-        ]
+        expect(results).to match(a_collection_containing_exactly(
+          assert(@hi4.id, @hi4.path, 1, 0, 1),
+          assert(@hi5.id, @hi5.path, 1, 0, 0)
+        ))
       end
 
       it 'we are not vulnerable to sql injection' do
         results = HarvestItem
-                  .project_directory_listing(HarvestItem, "a' or 1=1 --")
+                  .project_directory_listing(HarvestItem.all, "a' or 1=1 --")
                   .as_json
 
         expect(results).to eq []

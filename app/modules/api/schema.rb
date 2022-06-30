@@ -269,7 +269,6 @@ module Api
             audio_recording: AudioRecording.schema,
             permission: Permission.schema,
             harvest: Harvest.schema,
-            harvest_items_directory_listing: HarvestItem.directory_list_schema,
             harvest_item: HarvestItem.schema
 
           }

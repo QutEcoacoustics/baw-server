@@ -98,7 +98,7 @@ module BawWorkers
             valid_audio_formats = Settings.available_formats.audio
             return if BawWorkers::Config.file_info.valid_ext?(path, valid_audio_formats)
 
-            not_fixable("has invalid extension #{extension}")
+            not_fixable("File has invalid extension `#{path.extname}`")
           end
         end
 

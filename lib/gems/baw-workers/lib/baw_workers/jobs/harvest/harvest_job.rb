@@ -47,21 +47,20 @@ module BawWorkers
               return false
             end
 
-            success = false
-            ::ActiveRecord::Base.transaction do
-              result = perform_later(item.id, should_harvest) { |job|
-                next if job.successfully_enqueued?
-                # if the enqueue fails because the job is already in the queue then we don't care
-                # otherwise throw an error
-                raise "Failed to enqueue file #{item.path} for harvest #{harvest.id}" if job.unique?
-              }
-              success = result != false
-              logger.debug('enqueued file', path: item.path, id: item.id, success:, job_id: (result || nil)&.job_id)
+            # It used to be that we updated this only if the job enqueue was successful
+            # but it's more important to signal that work needs to be done and then enqueue more jobs later when the
+            # enqueue will work.
+            # TODO: Harvest might need some manual machine pumping mechanism to re-enqueue jobs if they're stuck on new
+            item.update_attribute(:status, HarvestItem::STATUS_NEW)
 
-              # whenever a harvest job is enqueued we should reset the status of  the harvest item.
-              # potential race condition here with the harvest job setting the status if it runs really quickly?
-              item.update_attribute(:status, HarvestItem::STATUS_NEW) if success
-            end
+            result = perform_later(item.id, should_harvest) { |job|
+              next if job.successfully_enqueued?
+              # if the enqueue fails because the job is already in the queue then we don't care
+              # otherwise throw an error
+              raise "Failed to enqueue file #{item.path} for harvest #{harvest.id}" if job.unique?
+            }
+            success = result != false
+            logger.debug('enqueued file', path: item.path, id: item.id, success:, job_id: (result || nil)&.job_id)
 
             success
           end

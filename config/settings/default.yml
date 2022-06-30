@@ -18,6 +18,9 @@ host:
     - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
     # development.ecosounds.org is a redirect to localhost
     - !ruby/regexp '/\A(https?:\/\/)?development.ecosounds.org(:\d+)?\z/'
+# trusted proxies allow us to filter out proxy ips so request.remote_ip works
+# An array of IPAddr compatible strings
+trusted_proxies: [ ]
 action_cable:
   adapter: redis
   url: redis://redis:6379/0
@@ -27,9 +30,11 @@ resque:
   # specify the Resque queues to watch.
   queues_to_process:
     - media_<%= BawApp.env %>
+    - harvest_scan_<%= BawApp.env %>
     - harvest_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
     - maintenance_<%= BawApp.env %>
+    - harvest_delete_<%= BawApp.env %>
     - default_<%= BawApp.env %>
     - analysis_<%= BawApp.env %>
   connection: *redis_config
@@ -51,6 +56,10 @@ actions:
     queue: harvest_<%= BawApp.env %>
     to_do_path: /data/<%= BawApp.env %>/harvester_to_do
     config_file_name: harvest.yml
+  harvest_scan:
+    queue: harvest_scan_<%= BawApp.env %>
+  harvest_delete:
+    queue: harvest_delete_<%= BawApp.env %>
      # 1 week in seconds
     delete_after: 604800
   media:

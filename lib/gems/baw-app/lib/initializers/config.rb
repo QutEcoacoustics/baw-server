@@ -27,6 +27,14 @@ class BawConfigContract < Dry::Validation::Contract
           Baw::CustomTypes::CreatedDirPathname
         )
         required(:config_file_name).filled(:string)
+      end
+
+      required(:harvest_scan).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:harvest_delete).hash do
+        required(:queue).filled(:string)
         required(:delete_after).filled(:integer, gt?: 0)
       end
     end
@@ -73,6 +81,8 @@ class BawConfigContract < Dry::Validation::Contract
     InternalConfigSchema,
     PathsConfigSchema
   ) do
+    required(:trusted_proxies).array(Baw::CustomTypes::IPAddr)
+
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
 

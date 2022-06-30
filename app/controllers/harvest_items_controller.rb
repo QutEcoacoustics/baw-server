@@ -15,17 +15,14 @@ class HarvestItemsController < ApplicationController
     path = @harvest.harvester_relative_path(path)
 
     respond_to { |format|
+      query =  HarvestItem.includes([:harvest]).project_directory_listing(list_permissions, path)
       format.json do
-        harvest_items, opts = Settings.api_response.response_advanced(
+        @harvest_items, opts = Settings.api_response.response_advanced(
           api_filter_params,
-          list_permissions,
+          query,
           HarvestItem,
           HarvestItem.filter_settings
         )
-
-        @harvest_items =
-          HarvestItem.project_directory_listing(harvest_items, path) +
-          HarvestItem.project_file_listing(harvest_items, path)
 
         respond_index(opts)
       end

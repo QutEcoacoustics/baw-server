@@ -8,9 +8,13 @@ module BawWorkers
       class Validation
         include Singleton
 
-        def validate(_harvest_item)
+        # rubocop:disable Lint/UnusedMethodArgument
+        # @abstract
+        # @param harvest_item [HarvestItem]
+        def validate(harvest_item)
           raise NotImplementedError('abstract method needs implementation')
         end
+        # rubocop:enable Lint/UnusedMethodArgument
 
         def self.validation_name(new_name = nil)
           @validation_name = new_name if new_name.present?

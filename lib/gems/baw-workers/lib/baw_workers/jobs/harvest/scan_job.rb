@@ -5,7 +5,10 @@ module BawWorkers
     module Harvest
       # Scans a harvest directory for any files that might have been missed by webhooks.
       class ScanJob < BawWorkers::Jobs::ApplicationJob
-        queue_as Settings.actions.harvest.queue
+        include BawWorkers::Jobs::StampUser
+        include PathFilter
+
+        queue_as Settings.actions.harvest_scan.queue
         perform_expects Integer
 
         #retry_on StandardError, attempts: 3
@@ -28,6 +31,9 @@ module BawWorkers
 
           logger.info('Transitioning to metadata extraction', harvest_id:, found:)
 
+          # no need to transition in streaming harvest
+          return if harvest.streaming_harvest?
+
           # finally transition to metadata extraction
           harvest.extract!
         end
@@ -37,18 +43,10 @@ module BawWorkers
         end
 
         def name
-          "Scan job for Harvest:#{arguments.first}"
+          "ScanForHarvest:#{arguments.first}"
         end
 
-        def skip_dir?(name)
-          name.start_with?('.') || name == 'System Volume Information'
-        end
-
-        def skip_file?(name)
-          # including .DS_STORE files in particular
-          name.start_with?('.') || name == 'Thumbs.db'
-        end
-
+        # @param harvest [::Harvest]
         def scan_for_files(harvest)
           root = Settings.root_to_do_path
           target = harvest.upload_directory
@@ -74,12 +72,19 @@ module BawWorkers
 
             #logger.debug('Processing file', path:, rel_path:)
 
-            # scans are only ever done before the metadata extraction phase
+            # For batch harvests: scans are only ever done before the metadata
+            # extraction phase
+            # For streaming harvests: a scan could be done any time
+            should_harvest = harvest.streaming_harvest?
+            # similarly, we only care about debouncing extra metadata gathers for
+            # a batch harvest
+            debounce_on_recent_metadata_extraction = harvest.batch_harvest?
+
             HarvestJob.enqueue_file(
               harvest,
               rel_path,
-              should_harvest: false,
-              debounce_on_recent_metadata_extraction: true
+              should_harvest:,
+              debounce_on_recent_metadata_extraction:
             )
             found += 1
           end

@@ -17,6 +17,25 @@ CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 
 
 --
+-- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.dirname(path text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    AS $$
+DECLARE
+  segments text[];
+  length int;
+BEGIN
+  segments := string_to_array(path, '/');
+  length :=  CARDINALITY(segments) - 1;
+
+  RETURN array_to_string(segments[1:length],'/');
+END;
+$$;
+
+
+--
 -- Name: is_json(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -33,6 +52,36 @@ CREATE FUNCTION public.is_json(input text) RETURNS boolean
     END;
     RETURN TRUE;
   END;
+$$;
+
+
+--
+-- Name: path_contained_by_query(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.path_contained_by_query(path text, query text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    AS $$
+DECLARE
+  segments text[];
+  query_segments text[];
+  query_length int;
+  segments_subset text[];
+BEGIN
+  query := TRIM(BOTH '/' FROM query);
+  query_segments := string_to_array(query, '/');
+  query_length :=  CARDINALITY(query_segments);
+
+  segments := string_to_array(path, '/');
+
+  segments_subset := segments[1:query_length];
+  IF query_segments <> segments_subset THEN
+      RETURN NULL;
+  END IF;
+
+
+  RETURN array_to_string(segments[1:(query_length + 1)],'/');
+END;
 $$;
 
 
@@ -3564,6 +3613,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220331070014'),
 ('20220406072625'),
 ('20220407040355'),
-('20220603004830');
+('20220603004830'),
+('20220629023538');
 
 

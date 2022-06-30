@@ -14,7 +14,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
   pause_all_jobs
 
-  let(:queue_name) { Settings.actions.harvest.queue }
+  let(:queue_name) { Settings.actions.harvest_scan.queue }
 
   context 'when checking basic job behaviour' do
     it 'works on the harvest queue' do
@@ -34,7 +34,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
       job = BawWorkers::Jobs::Harvest::ScanJob.new(harvest.id)
 
-      expected = "Scan job for Harvest:#{harvest.id}"
+      expected = "ScanForHarvest:#{harvest.id}"
       expect(job.name).to eq(expected)
     end
 
@@ -72,6 +72,10 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
     stepwise 'scanning job workflow' do
       step 'open upload' do
         harvest.open_upload!
+      end
+
+      step 'check updater_id is as expected' do
+        expect(harvest.updater_id).to be_nil
       end
 
       step 'create some files' do
@@ -165,6 +169,25 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
           ]
         end
       end
+
+      step 'check updater_id was updated expected' do
+        expect(harvest.updater_id).to eq(User.harvester_user.id)
+      end
+    end
+
+    it 'will not transition the harvest if the harvest is a streaming harvest' do
+      harvest.streaming = true
+      harvest.open_upload!
+      harvest.save!
+
+      BawWorkers::Jobs::Harvest::ScanJob.scan(harvest)
+      perform_jobs(count: 1)
+
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+
+      harvest.reload
+
+      expect(harvest).to be_uploading
     end
   end
 end

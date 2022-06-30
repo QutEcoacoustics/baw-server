@@ -172,7 +172,7 @@ module RequestSpecHelpers
       }))
     end
 
-    def expect_has_paging(page: 0, items: 25, current: nil, total: nil)
+    def expect_has_paging(page: 1, items: 25, current: nil, total: nil)
       expected = {
         items:,
         page:

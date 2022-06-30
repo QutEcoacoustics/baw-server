@@ -194,7 +194,7 @@ group :workers, :server do
   # ASYNC JOBS
   # ------------------------------------
   gem 'redis', '~> 4.1'
-  gem 'resque'
+  gem 'resque', git: 'https://github.com/resque/resque/', ref: '38c21eb942f3c07cc06fb2c1bc6d9982e2ff075d'
   gem 'resque-job-stats'
   gem 'resque-scheduler'
 

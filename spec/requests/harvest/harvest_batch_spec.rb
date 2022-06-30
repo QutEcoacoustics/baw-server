@@ -151,7 +151,7 @@ describe 'Harvesting a batch of files' do
         @names << name
 
         @size = Fixtures.audio_file_mono.size
-        upload_file(connection, Fixtures.audio_file_mono, to: "/#{site.safe_name}/#{name}")
+        upload_file(connection, Fixtures.audio_file_mono, to: "/#{site.unique_safe_name}/#{name}")
       end
 
       step 'we can see a harvest job has been enqueued' do
@@ -205,6 +205,7 @@ describe 'Harvesting a batch of files' do
       step 'scanning enqueues a scan job' do
         expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
         perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
       end
 
       step 'scanning finds and enqueues any missing files' do
@@ -278,7 +279,7 @@ describe 'Harvesting a batch of files' do
         expect(harvest.mappings).to match(a_collection_containing_exactly(
           a_hash_including(
             site_id: site.id,
-            path: site.safe_name,
+            path: site.unique_safe_name,
             utc_offset: nil,
             recursive: true
           ),
@@ -403,7 +404,7 @@ describe 'Harvesting a batch of files' do
       end
     end
 
-    context 'files are mutated after initial upload' do
+    context 'when files are mutated after initial upload' do
       before do
         create_harvest(streaming: false)
         expect(harvest).to be_uploading
@@ -412,7 +413,7 @@ describe 'Harvesting a batch of files' do
         @name = generate_recording_name(Time.new(2020, 1, 1, 0, 0, 0, '+00:00'), extension: '.ogg')
         file = generate_audio(@name, sine_frequency: 440)
 
-        upload_file(connection, file, to: "/#{site.safe_name}/#{@name}")
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{@name}")
 
         wait_for_webhook
         expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
@@ -427,7 +428,7 @@ describe 'Harvesting a batch of files' do
         end
 
         step 'we can delete the file we just uploaded' do
-          delete_remote_file(connection, "/#{site.safe_name}/#{@name}")
+          delete_remote_file(connection, "/#{site.unique_safe_name}/#{@name}")
         end
 
         step 'we expect our webhook was fired' do
@@ -441,7 +442,7 @@ describe 'Harvesting a batch of files' do
 
       stepwise 'deleting a file (before the job is dequeued)' do
         step 'we can delete the file we just uploaded' do
-          delete_remote_file(connection, "/#{site.safe_name}/#{@name}")
+          delete_remote_file(connection, "/#{site.unique_safe_name}/#{@name}")
         end
 
         step 'we expect our webhook was fired' do
@@ -477,7 +478,7 @@ describe 'Harvesting a batch of files' do
         end
 
         step 'rename the file' do
-          rename_remote_file(connection, from: "/#{site.safe_name}/#{@name}", to: "/banana/#{@name}")
+          rename_remote_file(connection, from: "/#{site.unique_safe_name}/#{@name}", to: "/banana/#{@name}")
         end
 
         step 'we expect our webhook was fired' do
@@ -513,6 +514,276 @@ describe 'Harvesting a batch of files' do
           ))
         end
       end
+    end
+
+    context 'with non-unique site names' do
+      let!(:site1) { Creation::Common.create_site(owner_user, project, name: 'site') }
+      let!(:site2) { Creation::Common.create_site(owner_user, project, name: 'site') }
+      # testing uniqueness detection applies to the safe name!
+      let!(:site3) { Creation::Common.create_site(owner_user, project, name: 'ban!ana') }
+      let!(:site4) { Creation::Common.create_site(owner_user, project, name: 'ban ana') }
+
+      it 'has unique directories and mappings' do
+        create_harvest
+        expect_success
+
+        get_harvest
+
+        expect(api_data).to match(a_hash_including({
+          mappings: contain_exactly(
+            {
+              path: site.unique_safe_name,
+              site_id: site.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site1.unique_safe_name,
+              site_id: site1.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site2.unique_safe_name,
+              site_id: site2.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site3.unique_safe_name,
+              site_id: site3.id,
+              utc_offset: nil,
+              recursive: true
+            },
+            {
+              path: site4.unique_safe_name,
+              site_id: site4.id,
+              utc_offset: nil,
+              recursive: true
+            }
+          )
+        }))
+
+        [
+          site.unique_safe_name,
+          site1.unique_safe_name,
+          site2.unique_safe_name,
+          site3.unique_safe_name,
+          site4.unique_safe_name
+        ].each do |name|
+          expect(harvest.upload_directory / name).to be_exist
+        end
+      end
+    end
+  end
+
+  describe 'unhandled errors in the harvest job', :clean_by_truncation, :slow, web_server_timeout: 60 do
+    expose_app_as_web_server
+    pause_all_jobs
+
+    stepwise 'can transition to metadata_review if an error occurred in :metadata_extraction' do
+      step 'create a harvest' do
+        create_harvest(streaming: false)
+        expect(harvest).to be_uploading
+        expect(harvest).to be_batch_harvest
+      end
+
+      step 'generate and upload a file' do
+        name = generate_recording_name(Time.new(2022, 6, 22, 15, 56, 0, '+10:00'))
+        file = generate_audio(name, sine_frequency: 440)
+
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{name}")
+      end
+
+      step 'wait for webhook and process the file' do
+        wait_for_webhook
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+        perform_jobs(count: 1)
+      end
+
+      step 'we can see the harvest item was successfully processed' do
+        expect(HarvestItem.count).to eq 1
+        @item = HarvestItem.first
+
+        expect(@item).to be_metadata_gathered
+      end
+
+      step 'transition to scanning' do
+        transition_harvest(:scanning)
+        expect_success
+        expect(harvest).to be_scanning
+      end
+
+      step 'finish the scan' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+      end
+
+      step 'fake an error' do
+        # fake an error
+        @item.status = HarvestItem::STATUS_ERRORED
+        @item.save!
+
+        expect(@item).to be_metadata_gathered_or_unsuccessful
+      end
+
+      step 'check we are in the :metadata_gathering state' do
+        harvest.reload
+        expect(harvest).to be_metadata_extraction
+      end
+
+      step 'can transition from :metadata_gathering to :metadata_review' do
+        get_harvest
+
+        expect(harvest).to be_metadata_extraction_complete
+        expect(harvest).to be_metadata_review
+      end
+
+      step 'can transition from :metadata_review to :processing' do
+        transition_harvest(:processing)
+        expect_success
+
+        expect(harvest).to be_processing
+      end
+
+      step 'process files' do
+        perform_jobs(count: 1)
+      end
+
+      step 'fake an error' do
+        @item.reload
+        # fake an error
+        @item.status = HarvestItem::STATUS_ERRORED
+        @item.save!
+
+        expect(@item).to be_terminal_status
+      end
+
+      step 'can transition from :processing to :complete' do
+        get_harvest
+
+        expect(harvest).to be_processing_complete
+        expect(harvest).to be_complete
+      end
+    end
+  end
+
+  describe 'race conditions', :clean_by_truncation, :slow, web_server_timeout: 60 do
+    expose_app_as_web_server
+
+    # very intentionally seeking asynchronous behaviour in this job
+    #pause_all_jobs
+
+    # Ok; we're trying to replicate a production bug here so we're going to
+    # do some weird timing things.
+    # In production it seems that in the time taken to re-enqueue all the jobs
+    # some jobs already ran.
+    #
+    # - transaction opens
+    # - each harvest job is enqueued, and each harvest_item to :new (transaction not yet committed)
+    # - a harvest job runs setting harvest_item to :metadata_gathered
+    # - the transaction is committed, overwriting the fresh :metadata_gathered status with :new
+    # - the harvest stalls waiting for all items to be :metadata_gathered
+
+    let(:duplicates) { 10 }
+
+    let(:slow_enqueue) {
+      Class.new(BawWorkers::Jobs::Harvest::HarvestJob) do
+        def self.enqueue(...)
+          result = super(...)
+          # Sleep after enqueue so job is running in the background, but our overall enqueue process is slowed down.
+          # This should be roughly to enqueuing many files
+          logger.warn('Intentional slow enqueue!!!!!!!!')
+          sleep(1)
+          result
+        end
+      end
+    }
+
+    # For setup, create some real files, but also a large number of dummy items
+    # - enough to trigger some race conditions during enqueuing
+    before do
+      stub_const('BawWorkers::Jobs::Harvest::HarvestJob', slow_enqueue)
+
+      create_harvest(streaming: false)
+      expect(harvest).to be_uploading
+      expect(harvest).to be_batch_harvest
+
+      3.times do |i|
+        name = generate_recording_name(Time.new(2020, 1, i + 1, 0, 0, 0, '+00:00'), extension: '.ogg')
+        file = generate_audio(name, sine_frequency: 440 + (i * 10), duration: 1.0)
+
+        upload_file(connection, file, to: "/#{site.unique_safe_name}/#{name}")
+      end
+      wait_for_webhook(goal: 3)
+      expect(HarvestItem.count).to eq 3
+
+      # this is not guaranteed to have waited for jobs to finish, adjust timer as needed
+      wait_for_jobs(timeout: 10)
+      expect_jobs_to_be(completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+      # now simulate a very large harvest by creating many harvest items that
+      # are just duplicates of one of the other harvest items
+      # Note: duplicate has an intentional fault to speed the test suite process
+      duplicate_rows_but_with_nonexistent_path
+
+      expect(HarvestItem.count).to eq(duplicates + 3)
+
+      transition_harvest(:scanning)
+      expect_success
+      expect(harvest).to be_scanning
+
+      wait_for_metadata_extraction_to_complete
+
+      expect(harvest).to be_metadata_extraction_complete
+      expect(harvest).to be_metadata_review
+    end
+
+    it 'handles larges batches of jobs correctly and does not suffer from a race condition' do
+      transition_harvest(:metadata_extraction)
+      expect_success
+
+      wait_for_metadata_extraction_to_complete(timeout: 15)
+
+      statuses = HarvestItem.counts_by_status(HarvestItem.all)
+
+      harvest.reload
+
+      aggregate_failures do
+        expect(harvest).to be_metadata_review
+        # before this bug was fixed, some items would remain locked to :new
+        expect(statuses).to match(a_hash_including({
+          HarvestItem::STATUS_NEW.to_s => 0,
+          HarvestItem::STATUS_METADATA_GATHERED.to_s => 3,
+          HarvestItem::STATUS_FAILED.to_s => duplicates
+        }))
+      end
+    end
+
+    def wait_for_metadata_extraction_to_complete(timeout: 10)
+      (timeout * 2).times do |i|
+        sleep 0.5
+        get_harvest
+        logger.info 'Waiting for metadata extraction to complete...', count: i, **api_data[:report]
+        break if harvest.metadata_review?
+      end
+    end
+
+    def duplicate_rows_but_with_nonexistent_path
+      columns = (HarvestItem.column_names - ['id']).join(', ')
+      columns_without_path = (HarvestItem.column_names - ['id', 'path']).join(', ')
+      duplicate_rows_query = <<~SQL
+        INSERT INTO harvest_items (#{columns})
+        (
+          SELECT  'idontexist' AS "path", #{columns_without_path}
+          FROM  (
+            SELECT #{columns} FROM harvest_items ORDER BY id DESC LIMIT 1
+          ) AS t
+          CROSS JOIN LATERAL generate_series(1,#{duplicates})
+        )
+      SQL
+      ActiveRecord::Base.connection.execute(duplicate_rows_query)
     end
   end
 end

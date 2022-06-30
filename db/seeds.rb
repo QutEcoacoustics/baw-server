@@ -7,9 +7,9 @@
 # loading a user model from the database will not make the password available (as it is hashed)
 
 def ensure_user(user_name:, email:, password:, roles:)
-  user = User.where(user_name: user_name).first
+  user = User.where(user_name:).first
   if user.blank?
-    user = User.new(user_name: user_name, email: email, roles: roles)
+    user = User.new(user_name:, email:, roles:)
     user.password = password
     user.skip_confirmation!
 
@@ -28,7 +28,7 @@ puts 'Loading application seeds...'
 
 # Main admin user must always exist, and must always have these values
 admin_user = ensure_user(
-  user_name: 'Admin',
+  user_name: User::ADMIN_USER_NAME,
   email: Settings.admin_user.email,
   password: Settings.admin_user.password,
   roles: [:admin]
@@ -36,7 +36,7 @@ admin_user = ensure_user(
 
 # harvester user is for machine access via api, and must always have these values
 ensure_user(
-  user_name: 'Harvester',
+  user_name: User::HARVESTER_USER_NAME,
   email: Settings.harvester.email,
   password: Settings.harvester.password,
   roles: [:harvester]

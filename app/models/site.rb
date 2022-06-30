@@ -115,6 +115,12 @@ class Site < ApplicationRecord
       .delete_suffix('-')
   end
 
+  # The same as `safe_name` but appends site.id to ensure a unique name
+  # @return [String]
+  def unique_safe_name
+    "#{safe_name}_#{id}"
+  end
+
   def get_bookmark
     Bookmark.where(audio_recording: audio_recordings).order(:updated_at).first
   end
