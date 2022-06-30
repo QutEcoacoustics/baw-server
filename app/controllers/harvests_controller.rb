@@ -8,7 +8,7 @@ class HarvestsController < ApplicationController
   # GET /projects/:project_id/harvests
   def index
     do_authorize_class
-    get_project_if_exists
+    get_project_if_exists(for_list_endpoint: true)
     do_authorize_instance(:show, @project) unless @project.nil?
 
     @harvests, opts = Settings.api_response.response_advanced(
@@ -127,7 +127,7 @@ class HarvestsController < ApplicationController
   # GET|POST /projects/:project_id/harvests/filter
   def filter
     do_authorize_class
-    get_project_if_exists
+    get_project_if_exists(for_list_endpoint: true)
     do_authorize_instance(:show, @project) unless @project.nil?
 
     filter_response, opts = Settings.api_response.response_advanced(
@@ -139,12 +139,14 @@ class HarvestsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
-  def get_project_if_exists
+  def get_project_if_exists(for_list_endpoint: false)
     return unless params.key?(:project_id)
 
-    raise '@harvest must be defined' unless defined?(@harvest)
-
     @project = Project.find(params[:project_id])
+
+    return if for_list_endpoint
+
+    raise '@harvest must be defined' unless defined?(@harvest)
 
     if @harvest.project_id.nil?
       @harvest.project = @project

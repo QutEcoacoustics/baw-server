@@ -91,11 +91,13 @@ describe BawWorkers::UploadService::Communicator do
     error_object = nil
     expect {
       BawWorkers::Config.upload_communicator.get_user('hansolo')
-    }.to raise_error(Faraday::ResourceNotFound) do |error|
+    }.to raise_error(BawWorkers::UploadService::UploadServiceError) do |error|
       error_object = error
     end
 
-    expect(error_object.response).to match(a_hash_including({
+    inner = error_object.cause
+
+    expect(inner.response).to match(a_hash_including({
       status: 404,
       headers: an_instance_of(Hash),
       body: an_object_having_attributes(

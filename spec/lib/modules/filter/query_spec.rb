@@ -195,7 +195,7 @@ describe Filter::Query do
         "Range filter must use either ('from' and 'to') or ('interval'), not both.")
     end
 
-    it 'occurs when a range has no recognised properties' do
+    it 'occurs when a range has no recognized properties' do
       expect {
         create_filter(
           {
