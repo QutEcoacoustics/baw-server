@@ -313,7 +313,7 @@ class AudioRecording < ApplicationRecord
         :duration_seconds,
         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
         :data_length_bytes, :status, :created_at, :updated_at,
-        :recorded_end_date, :file_hash, :uploader_id, :original_file_name
+        :recorded_end_date, :file_hash, :uploader_id, :original_file_name, :recorded_utc_offset
 
         #, :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at,
@@ -324,7 +324,7 @@ class AudioRecording < ApplicationRecord
                       :data_length_bytes, :status, :created_at, :creator_id,
                       :deleted_at, :deleter_id, :updated_at, :updater_id,
                       :notes, :file_hash, :uploader_id, :original_file_name,
-                      :canonical_file_name, :recorded_date_timezone],
+                      :canonical_file_name, :recorded_date_timezone, :recorded_utc_offset],
       text_fields: [:media_type, :status, :original_file_name],
       custom_fields: lambda { |item, _user|
                        [item, {}]
@@ -474,7 +474,8 @@ class AudioRecording < ApplicationRecord
         recorded_date_timezone: { type: ['null', 'string'] },
         uploader_id: Api::Schema.id(nullable: true, read_only: false),
         original_file_name: { type: 'string' },
-        canonical_file_name: { type: 'string', read_only: true }
+        canonical_file_name: { type: 'string', readOnly: true },
+        recorded_utc_offset: { type: ['null', 'string'], readOnly: true }
       },
       required: [
         :id,
@@ -498,7 +499,8 @@ class AudioRecording < ApplicationRecord
         :notes,
         :uploader_id,
         :original_file_name,
-        :canonical_file_name
+        :canonical_file_name,
+        :recorded_utc_offset
       ]
     }.freeze
   end
