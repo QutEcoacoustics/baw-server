@@ -111,6 +111,47 @@ describe 'Harvest items info' do
     expect_has_paging(page: 1, total: 9)
   end
 
+  context 'when generating CSV reports via filter' do
+    before do
+      Timecop.freeze(Time.utc(2022, 1, 2, 3, 4, 5.678))
+    end
+
+    after do
+      Timecop.return
+    end
+
+    it 'works with filter' do
+      body = {
+        projection: { include: [:id, :harvest_id, :path, :status, :audio_recording_id] },
+        filter: {}
+      }
+
+      post "/projects/#{project.id}/harvests/#{harvest.id}/items/filter.csv?disable_paging=true",
+        params: body,
+        **api_with_body_headers(owner_token, accept: 'text/csv')
+
+      expect_success
+      expect(response.headers['Content-Type']).to eq('text/csv; charset=utf-8')
+      expect(response.headers['Content-Disposition'])
+        .to eq('attachment; filename="20220102T030405Z_harvest_items.csv"')
+
+      results = CSV.parse(response_body, headers: true)
+      expect(results.size).to eq(AudioRecording.count)
+
+      expect(results.headers).to eq ['id', 'harvest_id', 'path', 'status', 'audio_recording_id']
+      rows = results.map(&:to_h)
+      HarvestItem.all.each { |item|
+        expect(rows).to include(a_hash_including(
+          'id' => item.id.to_s,
+          'harvest_id' => item.harvest_id.to_s,
+          'path' => item.path_relative_to_harvest,
+          'status' => item.status,
+          'audio_recording_id' => item.audio_recording_id.to_s
+        ))
+      }
+    end
+  end
+
   context 'with lots of items' do
     before do
       50.times do
