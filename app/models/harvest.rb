@@ -405,6 +405,7 @@ class Harvest < ApplicationRecord
   def extend_upload_user_expiry_if_needed!
     return if streaming_harvest?
     return if complete?
+    return if upload_user.nil?
 
     expiry = BawWorkers::UploadService::Communicator::STANDARD_EXPIRY
     buffer = (expiry / 2).from_now.to_i
