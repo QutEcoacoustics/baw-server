@@ -13,6 +13,7 @@
 #  streaming               :boolean
 #  upload_password         :string
 #  upload_user             :string
+#  upload_user_expiry_at   :datetime
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  creator_id              :integer

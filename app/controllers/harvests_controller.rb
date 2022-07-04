@@ -33,6 +33,8 @@ class HarvestsController < ApplicationController
     # TODO: should do this in the harvest process too!
     @harvest.transition_from_computing_to_review_if_needed!
 
+    @harvest.extend_upload_user_expiry_if_needed!
+
     respond_show
   end
 

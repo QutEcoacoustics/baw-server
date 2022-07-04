@@ -13,6 +13,7 @@
 #  streaming               :boolean
 #  upload_password         :string
 #  upload_user             :string
+#  upload_user_expiry_at   :datetime
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  creator_id              :integer
@@ -292,13 +293,15 @@ class Harvest < ApplicationRecord
     # either ? never expires : use default (7 days)
     expiry = streaming_harvest? ? Time.at(0) : nil
 
-    BawWorkers::Config.upload_communicator.create_upload_user(
+    created_user = BawWorkers::Config.upload_communicator.create_upload_user(
       username: upload_user,
       password: upload_password,
       home_dir: upload_directory,
       permissions:,
       expiry:
     )
+
+    self.upload_user_expiry_at = created_user.expiration_time
   end
 
   def close_upload_slot
@@ -306,6 +309,7 @@ class Harvest < ApplicationRecord
 
     self.upload_user = nil
     self.upload_password = nil
+    self.upload_user_expiry_at = nil
   end
 
   def disable_upload_slot
@@ -394,6 +398,26 @@ class Harvest < ApplicationRecord
   def processing_complete?
     # have we processed all the items?
     harvest_items.select(:status).distinct.all?(&:terminal_status?)
+  end
+
+  # Extends the expiry time of the upload user to 7 days from now,
+  # if the current expiry is less than 3.5 days away.
+  def extend_upload_user_expiry_if_needed!
+    return if streaming_harvest?
+    return if complete?
+
+    expiry = BawWorkers::UploadService::Communicator::STANDARD_EXPIRY
+    buffer = (expiry / 2).from_now.to_i
+
+    return if ((upload_user_expiry_at&.to_i || 0) - buffer).positive?
+
+    # SFTPGO accepts a millisecond encoded integer, however it still seems to
+    # truncate the value to the nearest second... so we do as well so our tracking
+    # field can maintain consistency.
+    new_expiry = expiry.from_now.round(0)
+    BawWorkers::Config.upload_communicator.set_user_expiration_date(upload_user, expiry: new_expiry)
+    self.upload_user_expiry_at = new_expiry
+    save!
   end
 
   # Generates summary statistics for this harvest

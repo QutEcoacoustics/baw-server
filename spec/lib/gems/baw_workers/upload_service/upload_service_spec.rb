@@ -283,4 +283,62 @@ describe BawWorkers::UploadService::Communicator do
       expect(File).to exist(expected), expected
     end
   end
+
+  stepwise 'extending expiry' do
+    before do
+      clear_harvester_to_do
+      expect_configured_service
+      ensure_no_upload_users
+    end
+
+    step 'when i create a user harvester_123 with password abc' do
+      create_upload_user('harvester_123', 'abc')
+    end
+
+    step 'then that user should expire in 7 days' do
+      expect(@user.expiration_date).to be_within(60_000).of((Time.now + 7.days).to_i * 1000)
+    end
+
+    step 'we can modify the expiry' do
+      @now = Time.now
+      result = BawWorkers::Config.upload_communicator.set_user_expiration_date(@user, expiry: @now)
+
+      expect(result).to eq(SftpgoClient::ApiResponse.new(message: 'User updated'))
+    end
+
+    step 'then that user should expire now' do
+      @user = BawWorkers::Config.upload_communicator.get_user(@user)
+      expect(@user.expiration_date).to be_within(0).of(@now.to_i * 1000)
+    end
+
+    step 'and they should not be able to upload files' do
+      source = Fixtures.audio_file_mono
+      upload_file(@connection, source, should_work: false)
+      expect_empty_directories(Pathname(harvest_to_do_path) / @username)
+    end
+
+    step 'we can modify the expiry' do
+      @next_month = 30.days.from_now
+      result = BawWorkers::Config.upload_communicator.set_user_expiration_date(@user, expiry: @next_month)
+
+      expect(result).to eq(SftpgoClient::ApiResponse.new(message: 'User updated'))
+    end
+
+    step 'then that user should expire next month' do
+      @user = BawWorkers::Config.upload_communicator.get_user(@user)
+
+      expect(@user.expiration_date).to be_within(0).of(@next_month.to_i * 1000)
+    end
+
+    step 'and I can upload a file' do
+      @source = Fixtures.audio_file_mono
+      upload_file(@connection, @source)
+    end
+
+    step 'then it should exist in the harvester directory' do
+      #tmp/_harvester_to_do_path/harvest_1/test-audio-mono.ogg
+      expected = Pathname(harvest_to_do_path) / @username / @source.basename
+      expect(File).to exist(expected), expected
+    end
+  end
 end

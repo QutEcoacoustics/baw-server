@@ -99,5 +99,11 @@ module SftpgoClient
     # @!attribute filesystem
     #   @return [SftpgoClient::FilesystemConfig]
     attribute :filesystem, SftpgoClient::FilesystemConfig
+
+    # Get's the `expiration_date` as a Time object
+    # @return [Time]
+    def expiration_time
+      Time.at(0, expiration_date, :millisecond)
+    end
   end
 end

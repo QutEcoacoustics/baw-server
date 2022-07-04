@@ -9,6 +9,8 @@ module BawWorkers
     class Communicator
       include BawWorkers::UploadService::ApiHelpers
 
+      STANDARD_EXPIRY = 7.days
+
       # The underlying API client object for the upload service
       # @return [SftpgoClient::ApiClient]
       attr_accessor :client
@@ -45,7 +47,7 @@ module BawWorkers
       # @param [Time] expiry - the expiry date for the user, will default to 7 days from now
       # @return [SftpgoClient::User]
       def create_upload_user(username:, password:, home_dir: nil, permissions: STANDARD_PERMISSIONS, expiry: nil)
-        expiry ||= Time.now + 7.days
+        expiry ||= Time.now + STANDARD_EXPIRY
         raise ArgumentError, 'expiry must be a Time object' unless expiry.is_a?(Time)
 
         user = SftpgoClient::User.new({
@@ -69,11 +71,26 @@ module BawWorkers
       end
 
       # Updates a user's status (enabled or disabled)
+      # @param [SftpgoClient::User] user - the user to update
+      # @param [Boolean] enabled - true to enable, false to disable
       # @return [SftpgoClient::ApiResponse]
       def set_user_status(user, enabled:)
         user_name = get_id(user, SftpgoClient::User)
         status = enabled ? USER_STATUS_ENABLED : USER_STATUS_DISABLED
         response = client.update_user(user_name:, user: { status: })
+        ensure_successful_response(response)
+      end
+
+      # Updates a user's expiry
+      # @param [SftpgoClient::User] user - the user to update
+      # @param [Time] expiry - the expiry date for the user
+      # @return [SftpgoClient::ApiResponse]
+      def set_user_expiration_date(user, expiry:)
+        raise ArgumentError, 'expiry must be a Time object' unless expiry.is_a?(Time)
+
+        user_name = get_id(user, SftpgoClient::User)
+        expiration_date = time_to_unix_epoch_milliseconds(expiry)
+        response = client.update_user(user_name:, user: { expiration_date: })
         ensure_successful_response(response)
       end
 
