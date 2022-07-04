@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.5.11 from http://localhost:3000.
+                  Version 8.6.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.5.11"
+                Write-Information "Acoustic Workbench downloader script version 8.6.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.5.11 from http://localhost:3000.
+                  Version 8.6.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.5.11"
+                Write-Information "Acoustic Workbench downloader script version 8.6.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1931,6 +1931,7 @@ paths:
                   original_file_name: original name 28.mp3
                   canonical_file_name: 20120423T070659Z_site-name-28_28.mp3
                   recorded_date_timezone: 
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1998,6 +1999,7 @@ paths:
                   original_file_name: original name 29.mp3
                   canonical_file_name: 20120424T070659Z_site-name-29_29.mp3
                   recorded_date_timezone: 
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2067,6 +2069,7 @@ paths:
                   original_file_name: original name 30.mp3
                   canonical_file_name: 20120425T070659Z_site-name-30_30.mp3
                   recorded_date_timezone: 
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2131,6 +2134,7 @@ paths:
                   original_file_name: original name 31.mp3
                   canonical_file_name: 20120426T070659Z_site-name-31_31.mp3
                   recorded_date_timezone: 
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2243,6 +2247,7 @@ paths:
                   original_file_name: original name 33.mp3
                   canonical_file_name: 20120428T070659Z_site-name-33_33.mp3
                   recorded_date_timezone: 
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4093,6 +4098,7 @@ paths:
                   uploader_id: 1
                   original_file_name: original name 66.mp3
                   canonical_file_name: 20120531T070659Z_site-name-68_66.mp3
+                  recorded_utc_offset: 
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8297,7 +8303,12 @@ components:
           type: string
         canonical_file_name:
           type: string
-          read_only: true
+          readOnly: true
+        recorded_utc_offset:
+          type:
+          - 'null'
+          - string
+          readOnly: true
       required:
       - id
       - uuid
@@ -8321,6 +8332,7 @@ components:
       - uploader_id
       - original_file_name
       - canonical_file_name
+      - recorded_utc_offset
     permission:
       type: object
       additionalProperties: false

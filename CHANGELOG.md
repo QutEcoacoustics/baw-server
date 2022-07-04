@@ -1,5 +1,17 @@
 # Changelog
 
+## [8.7.0](https://github.com/QutEcoacoustics/baw-server/tree/8.7.0) (2022-07-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.6.0...8.7.0)
+
+**Implemented enhancements:**
+
+- Auto-renew sftpgo user when expiry date is near [\#600](https://github.com/QutEcoacoustics/baw-server/issues/600)
+
+**Fixed bugs:**
+
+- An ActiveRecord::ConnectionNotEstablished occurred in media\#show: [\#575](https://github.com/QutEcoacoustics/baw-server/issues/575)
+
 ## [8.6.0](https://github.com/QutEcoacoustics/baw-server/tree/8.6.0) (2022-06-30)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.5.11...8.6.0)
