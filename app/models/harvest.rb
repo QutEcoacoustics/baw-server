@@ -169,16 +169,18 @@ class Harvest < ApplicationRecord
     # trim the path
     path = File.dirname(path).to_s
 
-    # remove the leading harvest direcotry
+    # remove the leading harvest directory
     path = path.delete_prefix(upload_directory_name)
 
     # it may or may not have a leading slash, try deleting for consistency
     path = path.delete_prefix('/')
 
+    # choose the path that matched with the most depth
     mappings
-      .select { |mapping| mapping.match(path) }
-      # choose the path that matched with the most depth
-      .max_by { |m| m.path.size }
+      .map { |mapping| [mapping, mapping.match(path)] }
+      .select { |_mapping, match| match.some? }
+      .max_by { |_mapping, match| match.value! }
+      &.first
   end
 
   # We have two methods of uploads:
