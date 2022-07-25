@@ -76,7 +76,7 @@ describe 'HarvestJob will reject files with an ambiguous date', :clean_by_trunca
         {
           name: :ambiguous_date_time,
           status: :fixable,
-          message: 'Only a local date/time was found, supply an UTC offset'
+          message: 'Only a local date/time was found, supply a UTC offset'
         }
       ]
     end

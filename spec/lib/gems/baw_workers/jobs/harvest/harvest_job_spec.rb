@@ -268,7 +268,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
             {
               name: :ambiguous_date_time,
               status: :fixable,
-              message: 'Only a local date/time was found, supply an UTC offset'
+              message: 'Only a local date/time was found, supply a UTC offset'
             },
             {
               name: :no_site_id,

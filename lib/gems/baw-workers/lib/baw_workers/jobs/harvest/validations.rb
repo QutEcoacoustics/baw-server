@@ -126,7 +126,7 @@ module BawWorkers
 
             return unless utc_offset.blank?
 
-            fixable('Only a local date/time was found, supply an UTC offset')
+            fixable('Only a local date/time was found, supply a UTC offset')
           end
         end
 
@@ -256,7 +256,7 @@ module BawWorkers
         def validate(harvest_item)
           uploader_id = harvest_item.info.file_info[:uploader_id]
           uploader = User.find_by(id: uploader_id)
-          fixable('File hash is missing') if uploader_id.blank? || uploader.nil?
+          fixable('File uploader is missing') if uploader_id.blank? || uploader.nil?
         end
       end
 
@@ -350,7 +350,7 @@ module BawWorkers
           return if result[:overlap][:items].empty?
 
           msg = <<~MSG
-            The file #{harvest_item.path} overlaps with the following audio recordings: #{result[:overlap][:items].join(', ')}}}
+            The file #{harvest_item.path} overlaps with the following audio recordings: #{result[:overlap][:items].join(', ')}
           MSG
 
           fixable = result[:overlap][:items].all? { |item| item[:can_fix] }
