@@ -59,7 +59,7 @@ describe BawWorkers::UploadService::Communicator do
     expect(BawWorkers::Config.upload_communicator.admin_url).to eq("http://#{Settings.upload_service.admin_host}:8080/")
   end
 
-  it 'send basic auth on requests' do
+  it 'send basic auth to get JWT on requests' do
     upload_service = BawWorkers::UploadService::Communicator.new(
       config: Settings.upload_service,
       logger: BawWorkers::Config.logger_worker
@@ -85,6 +85,40 @@ describe BawWorkers::UploadService::Communicator do
 
     expect(auth_request).to have_been_made.once
     expect(actual_request).to have_been_made.once
+
+    # expect token to be cached
+    upload_service.server_version
+
+    expect(auth_request).to have_been_made.once
+    expect(actual_request).to have_been_made.twice
+  end
+
+  it 'handles token expiration gracefully' do
+    upload_service = BawWorkers::UploadService::Communicator.new(
+      config: Settings.upload_service,
+      logger: BawWorkers::Config.logger_worker
+    )
+
+    # first generate a token
+    upload_service.server_version
+
+    old_token = upload_service.client.token
+    expect(old_token).to be_an_instance_of(::SftpgoClient::Token)
+
+    # mutate the token to make it invalid
+    new_expiry = 10.minutes.ago
+    new_token = mutate_jwt(old_token.access_token, new_expiry)
+
+    # reassign it to the client
+    upload_service.client.instance_variable_set(
+      :@token,
+      ::SftpgoClient::Token.new(access_token: new_token, expires_at: new_expiry)
+    )
+
+    # reissue the request - our service should automatically renew the expired token
+    expect(upload_service.server_version).to be_success
+
+    expect(upload_service.client.token.access_token).not_to eq new_token
   end
 
   it 'throws when asking for an invalid user' do

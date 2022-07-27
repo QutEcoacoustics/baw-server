@@ -103,3 +103,9 @@ httpd:
   # no ssl for testing
   certificate_file: ""
   certificate_key_file: ""
+  # string. Passphrase to use to derive the signing key for JWT and CSRF tokens.
+  # If empty a random signing key will be generated each time SFTPGo starts.
+  #If you set a signing passphrase you should consider rotating it periodically
+  # for added security.
+  # We set this so we can mock JWTs for testing. DO NOT set in prod.
+  signing_passphrase: iamapassphrasethatneverendsyesigoonandonsomepeoplestartedusingitnotknowingwhatitwasandtheylljustcontinueusingitforeverjustbecause

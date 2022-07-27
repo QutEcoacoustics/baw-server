@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 require 'ipaddr'
-require 'faraday'
-require 'faraday_middleware'
 require 'uri'
+
+require 'faraday'
+require 'faraday-encoding'
+require 'faraday/parse_dates'
+
 require 'dry/monads'
 require 'dry/validation'
 require 'dry-struct'

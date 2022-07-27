@@ -32,9 +32,14 @@ gem 'dry-validation'
 gem 'concurrent-ruby', '~> 1', require: 'concurrent'
 gem 'concurrent-ruby-edge', require: 'concurrent-edge'
 
-# next gen http client used by sftpgo-client
-gem 'faraday'
-gem 'faraday_middleware'
+# next gen http client used by sftpgo-client, Upload service API
+gem 'faraday', '>2.0.1'
+gem 'faraday-encoding'
+gem 'faraday-parse_dates'
+gem 'faraday-retry'
+
+# currently only used for testing jwts sent by sftpgo
+gem 'jwt'
 
 # api docs
 gem 'rswag-api'
@@ -201,9 +206,6 @@ group :workers, :server do
   # Active storage analyzers
   gem 'image_processing'
   gem 'mini_magick', '>= 4.9.5'
-
-  # Upload service API
-  gem 'typhoeus'
 end
 
 # gems that are only required on development machines or for testings

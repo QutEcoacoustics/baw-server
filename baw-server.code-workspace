@@ -73,6 +73,7 @@
       "ipaddr",
       "jsonb",
       "jsonl",
+      "JWTs",
       "keyreq",
       "killable",
       "klass",

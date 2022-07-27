@@ -4,6 +4,9 @@ module SftpgoClient
   # Raised when we tried to authenticate and failed
   class AuthenticationFailure < Faraday::ClientError; end
 
+  # Raised when we attempted a normal request and failed
+  class NeedsAuthenticationFailure < Faraday::ClientError; end
+
   # Faraday middleware that allows for on the fly authentication of requests.
   # When a request fails (a status of 401 is returned), the middleware
   # will attempt to either re-authenticate (username and password) or refresh
@@ -11,6 +14,9 @@ module SftpgoClient
   class AuthenticationMiddleware < Faraday::Middleware
     # @return [ApiClient]
     attr_reader :client
+
+    # @return [::SemanticLogger::Logger]
+    attr_reader :logger
 
     def initialize(app, client, logger)
       super(app)
@@ -24,20 +30,32 @@ module SftpgoClient
     # Rescue from 401's, authenticate then raise the error again so the client
     # can reissue the request.
     def call(env)
-      authenticate!(env) if authenticate_before?(env)
+      authenticate! if authenticate_before?(env)
 
-      @app.call(env).on_complete do |response_env|
-        if authenticate_on_fail?(response_env)
-          authenticate!(env)
+      request_body = env[:body]
+      attempts = 0
+      result = nil
+      begin
+        attempts += 1
+        # after failure env[:body] is set to the response body
+        # reset it to original body
+        env[:body] = request_body
+        # also reset our internal failure tracking state
+        env[:failure] = nil
 
-          # now try again
-          @app.call(env) do |new_response|
-            next new_response
-          end
-        end
+        add_auth_header(env)
 
-        response_env
+        result = @app.call(env).on_complete { |response_env|
+          authenticate_on_fail!(response_env)
+        }
+      rescue NeedsAuthenticationFailure => e
+        logger.debug('Authenticating again after failure against SFTPGO API', e.message)
+        authenticate!
+
+        retry if attempts < 2
       end
+
+      result
     end
 
     def authenticate_before?(env)
@@ -46,44 +64,55 @@ module SftpgoClient
       client.token.nil?
     end
 
-    def authenticate_on_fail?(env)
-      return false if authentication_request?(env)
+    def authenticate_on_fail!(env)
+      return if authentication_request?(env)
 
-      env[:status] == 401
+      return if env[:status] == 200
+      return unless env[:status] == 401
+
+      raise NeedsAuthenticationFailure.new("Needs authentication: #{env[:status]}, #{env.body}", env[:response])
     end
 
     def authentication_request?(env)
       env[:url].path.ends_with?(TokenService::TOKEN_PATH)
     end
 
-    # Performs the authentication and updates the original request with new headers
-    def authenticate!(env)
-      @logger.debug('Attempting to authenticate against SFTPGO API', log_header)
+    # Performs the authentication
+    def authenticate!
+      client.token = nil
+      logger.debug('Attempting to authenticate against SFTPGO API', token: client.token)
       result = client.get_token
       unless result.success?
-        @logger.error('Failed to authenticate')
+        logger.error('Failed to authenticate')
         raise AuthenticationFailure, result.failure
       end
 
       client.token = result.value!
-      client.connection.authorization('Bearer', client.token.access_token)
-      @logger.debug('Authentication successful', log_header)
 
-      # ensure old request has new header
-      update_request(env)
+      logger.debug('Authentication successful', token: client.token)
     end
 
-    def update_request(env)
-      env.request_headers[Faraday::Request::Authorization::KEY] =
-        client.connection.headers[Faraday::Request::Authorization::KEY]
+    def add_auth_header(env)
+      value = authentication_request?(env) ? basic_auth : token_auth
+
+      env.request_headers[Faraday::Request::Authorization::KEY] = value
+
+      logger.debug('Added auth header', authorization: value)
     end
 
-    def log_header
-      {
-        'Authorization' => client.connection.headers[Faraday::Request::Authorization::KEY] #,
-        #username: client.instance_variable_get(:@username),
-        #password: client.instance_variable_get(:@password)
-      }
+    def token_auth
+      value = client&.token&.access_token
+      return if value.blank?
+
+      "Bearer #{value}"
+    end
+
+    def basic_auth
+      login = client.username
+      password = client.password
+      value = Base64.encode64("#{login}:#{password}")
+      value.delete!("\n")
+      "Basic #{value}"
     end
   end
 end

@@ -61,7 +61,7 @@ module SftpgoClient
         {
           status: env.status,
           headers: env.response_headers.to_h,
-          body: body,
+          body:,
           request: {
             method: env.method,
             url_path: env.url.path,

@@ -93,7 +93,6 @@ module Internal
 
     # @param payload [::SftpgoClient::HookPayload]
     def rename_harvest_item(payload)
-      #debugger
       return if skip?(payload)
 
       load_harvest(payload)

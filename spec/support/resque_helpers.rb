@@ -127,7 +127,7 @@ module ResqueHelpers
           klass.disable_test_adapter if defined?(klass.disable_test_adapter)
         end
         ActiveJob::Base.queue_adapter = :resque
-        debugger if logger.nil?
+
         logger.info(trace_metadata(:pause_test_jobs))
         BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(get_pause_test_jobs)
       end

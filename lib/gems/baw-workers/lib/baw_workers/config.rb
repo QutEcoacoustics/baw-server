@@ -24,13 +24,13 @@ module BawWorkers
         @is_baw_workers_entry
       end
 
-      # @return [::SemanticsLogger::Logger]
+      # @return [::SemanticLogger::Logger]
       attr_reader :logger_worker
 
-      # @return [::SemanticsLogger::Logger]
+      # @return [::SemanticLogger::Logger]
       attr_reader :logger_mailer
 
-      # @return [::SemanticsLogger::Logger]
+      # @return [::SemanticLogger::Logger]
       attr_reader :logger_audio_tools
 
       # @return [Pathname]
@@ -350,8 +350,8 @@ module BawWorkers
         result[:resque_worker] = {
           running: is_resque_worker,
           mode: baw_workers_mode(settings),
-          pid_file: is_resque_worker ? ENV['PIDFILE'] : nil,
-          queues: is_resque_worker ? ENV['QUEUES'] : nil,
+          pid_file: is_resque_worker ? ENV.fetch('PIDFILE', nil) : nil,
+          queues: is_resque_worker ? ENV.fetch('QUEUES', nil) : nil,
           poll_interval: is_resque_worker ? ENV['INTERVAL'].to_f : nil
         }
         result

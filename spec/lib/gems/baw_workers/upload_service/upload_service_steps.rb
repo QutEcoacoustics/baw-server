@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'jwt'
+
 module UploadServiceSteps
   include Dry::Monads[:result]
 
@@ -147,9 +149,20 @@ module UploadServiceSteps
     end
   end
 
+  def mutate_jwt(old_token, new_expiry)
+    passphrase = 'iamapassphrasethatneverendsyesigoonandonsomepeoplestartedusingitnotknowingwhatitwasandtheylljustcontinueusingitforeverjustbecause'
+
+    # https://github.com/drakkan/sftpgo/blob/c8158e14e05e05c36845d28cb8395c2e8551df9e/internal/httpd/server.go#L1111
+
+    payload, _header = JWT.decode(old_token, passphrase, true, { algorithm: 'HS256' })
+
+    payload['exp'] = new_expiry.to_i
+    JWT.encode(payload, passphrase, 'HS256', { alg: 'HS256', typ: 'JWT' })
+  end
+
   def self.included(example_group)
     example_group.after(:all) do
-      delete_all_upload_users
+      #delete_all_upload_users
     end
   end
 end

@@ -42,12 +42,20 @@ module SftpgoClient
     attr_reader :base_uri
 
     # The reusable faraday connection. Stores auth, middleware, and API base path.
-    # @return [Faraday::Connection]
+    # @return [::Faraday::Connection]
     attr_reader :connection
 
     # The auth token needed to send to the API.
     # @return [Token]
     attr_accessor :token
+
+    # The username used to generate auth tokens
+    # @return [String]
+    attr_accessor :username
+
+    #  The password used to generate auth tokens
+    # @return [String]
+    attr_accessor :password
 
     def initialize(username:, password:, scheme:, host:, port:, base_path: '/api/v2/', logger: nil)
       @base_uri =
@@ -69,17 +77,20 @@ module SftpgoClient
           'User-Agent' => 'workbench-server/sftpgo-client',
           'Accept' => 'application/json'
         }
-      ) do |faraday|
+      ) do |connection|
         # the order of the middlewares is important!
         # https://lostisland.github.io/faraday/middleware/
-        # authorization header set in our authentication middleware
-        faraday.request :authorization, 'Bearer', ''
-        faraday.request :json
-        faraday.response :logger, logger, log_options unless logger.nil?
-        faraday.use SftpgoClient::ResponseResultMiddleware
-        faraday.use SftpgoClient::AuthenticationMiddleware, self, logger
-        faraday.response :dates
-        faraday.response :json, content_type: /\bjson$/, parser_options: JSON_PARSER_OPTIONS
+
+        connection.request :json
+        connection.response :logger, logger, log_options unless logger.nil?
+
+        # authenticates if required
+        connection.use SftpgoClient::AuthenticationMiddleware, self, logger
+
+        connection.use SftpgoClient::ResponseResultMiddleware
+        connection.response :parse_dates
+        connection.response :json, content_type: /\bjson$/, parser_options: JSON_PARSER_OPTIONS
+        connection.response :encoding
       end
     end
 
