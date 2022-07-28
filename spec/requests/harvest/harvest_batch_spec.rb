@@ -72,6 +72,10 @@ describe 'Harvesting a batch of files' do
         transition_harvest(:metadata_extraction)
         expect_success
         expect(harvest).to be_metadata_extraction
+
+        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
 
       step 'can transition to :metadata_review when a client fetches the record' do
@@ -90,6 +94,10 @@ describe 'Harvesting a batch of files' do
         transition_harvest(:processing)
         expect_success
         expect(harvest).to be_processing
+
+        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 2, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
 
       [:new_harvest, :uploading, :scanning, :metadata_review, :processing].each do |status|
@@ -237,7 +245,9 @@ describe 'Harvesting a batch of files' do
             error: nil,
             validations: []
           ))
-          expect(HarvestItem.all.offset(1).map { |h| h.info.to_h }).to all(match(a_hash_including(
+
+          query = HarvestItem.all.order(:id).offset(1).map { |h| h.info.to_h }
+          expect(query).to all(match(a_hash_including(
             error: nil,
             validations: [
               a_hash_including(
@@ -293,9 +303,22 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'we can then perform the metadata extraction again' do
+        # the previous harvest jobs statuses will deleted when they are reenqueued which
+        # messes up our accounting and results in the perform_jobs in the next step
+        # timing out
+        BawWorkers::ResqueApi.statuses_clear
+
         transition_harvest(:metadata_extraction)
         expect_success
+      end
 
+      step 'the reenqueue job runs (for :metadata_extraction)' do
+        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
+      end
+
+      step 'we perform the harvest jobs' do
         perform_jobs(count: 6)
       end
 
@@ -336,6 +359,12 @@ describe 'Harvesting a batch of files' do
         expect_success
 
         expect(harvest).to be_processing
+      end
+
+      step 'the reenqueue job runs (for :processing)' do
+        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 2, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
 
       step 'we expect 6 harvest jobs to be enqueued' do
@@ -645,6 +674,12 @@ describe 'Harvesting a batch of files' do
         expect_success
 
         expect(harvest).to be_processing
+      end
+
+      step 'the reenqueue job runs (for :processing)' do
+        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        perform_jobs(count: 1)
+        expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
 
       step 'process files' do

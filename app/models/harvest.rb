@@ -359,20 +359,18 @@ class Harvest < ApplicationRecord
   def reenqueue_all_harvest_items_for_metadata_extraction
     # re-enqueue all items
     logger.measure_info('Re-enqueue all harvest items for metadata extraction') do
-      # potentially large query, don't pull back the file info column which could be huge
-      harvest_items.select(:id, :status, :path).each do |item|
-        BawWorkers::Jobs::Harvest::HarvestJob.enqueue(item, should_harvest: false)
-      end
+      # resets all harvest items statuses to :new and then
+      # enqueues a job to enqueue harvest jobs for all items
+      BawWorkers::Jobs::Harvest::ReenqueueJob.enqueue!(self, should_harvest: false)
     end
   end
 
   def reenqueue_all_harvest_items_for_processing
     # re-enqueue all items
     logger.measure_info('Re-enqueue all harvest items for processing') do
-      # potentially large query, don't pull back the file info column which could be huge
-      harvest_items.select(:id, :status, :path).each do |item|
-        BawWorkers::Jobs::Harvest::HarvestJob.enqueue(item, should_harvest: true)
-      end
+      # resets all harvest items statuses to :new and then
+      # enqueues a job to enqueue harvest jobs for all items
+      BawWorkers::Jobs::Harvest::ReenqueueJob.enqueue!(self, should_harvest: true)
     end
   end
 

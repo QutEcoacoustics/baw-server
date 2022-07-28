@@ -332,6 +332,10 @@ module BawWorkers
       BawWorkers::ActiveJob::Status::Persistance.count
     end
 
+    def statuses_clear
+      BawWorkers::ActiveJob::Status::Persistance.clear
+    end
+
     def check_class(klass)
       raise ArgumentError, 'klass should be a class' unless klass.is_a?(Class)
 

@@ -37,10 +37,6 @@ module BawWorkers
             # otherwise create a new one
             item = new_harvest_item(harvest, rel_path) if item.nil?
 
-            enqueue(item, should_harvest:)
-          end
-
-          def enqueue(item, should_harvest:)
             # we never want to harvest a completed item again
             if is_completed?(item)
               logger.warn('Not enqueuing job; item is already completed', item_id: item.id, path: item.path)
@@ -53,16 +49,22 @@ module BawWorkers
             # TODO: Harvest might need some manual machine pumping mechanism to re-enqueue jobs if they're stuck on new
             item.update_attribute(:status, HarvestItem::STATUS_NEW)
 
-            result = perform_later(item.id, should_harvest) { |job|
+            success, job = enqueue(item.id, should_harvest:)
+
+            logger.debug('enqueued file', path: item.path, id: item.id, success:, job_id: (job || nil)&.job_id)
+          end
+
+          # @param id [Integer] the id of the harvest item to enqueue
+          # @param should_harvest [Boolean] whether or not to do a full harvest or just extract metadata
+          # @return [Array(Boolean, (BawWorkers::Jobs::Harvest::HarvestJob, nil))] return [success as a bool, the created job (or nil)]
+          def enqueue(id, should_harvest:)
+            result = perform_later(id, should_harvest) { |job|
               next if job.successfully_enqueued?
               # if the enqueue fails because the job is already in the queue then we don't care
               # otherwise throw an error
-              raise "Failed to enqueue file #{item.path} for harvest #{harvest.id}" if job.unique?
+              raise "Failed to enqueue harvest item with id #{id}" if job.unique?
             }
-            success = result != false
-            logger.debug('enqueued file', path: item.path, id: item.id, success:, job_id: (result || nil)&.job_id)
-
-            success
+            [result != false, result]
           end
 
           private
@@ -107,7 +109,8 @@ module BawWorkers
           # @param should_harvest [Boolean]
           # @param debounce_on_recent_metadata_extraction [Boolean]
           # @return [Boolean]
-          def recently_had_metadata_gathered?(harvest, harvest_item, should_harvest:, debounce_on_recent_metadata_extraction:)
+          def recently_had_metadata_gathered?(harvest, harvest_item, should_harvest:,
+                                              debounce_on_recent_metadata_extraction:)
             return false unless debounce_on_recent_metadata_extraction
 
             return false if should_harvest
