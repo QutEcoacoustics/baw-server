@@ -29,7 +29,9 @@ ExceptionNotification.configure do |config|
     sender_address: Settings.mailer.emails.sender_address,
     exception_recipients: Settings.mailer.emails.required_recipients
   }
-  config.error_grouping = true
+
+  # can't reliably test email delivery if repeated mail in test suites is squashed
+  config.error_grouping = !BawApp.dev_or_test?
 
   # Campfire notifier sends notifications to your Campfire room. Requires 'tinder' gem.
   # config.add_notifier :campfire, {

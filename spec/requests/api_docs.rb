@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe 'api-docs' do
   it 'the OpenAPI UI is mounted at api_docs' do
     request = get '/api-docs'

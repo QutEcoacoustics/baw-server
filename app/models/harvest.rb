@@ -412,13 +412,25 @@ class Harvest < ApplicationRecord
 
     return if ((upload_user_expiry_at&.to_i || 0) - buffer).positive?
 
-    # SFTPGO accepts a millisecond encoded integer, however it still seems to
-    # truncate the value to the nearest second... so we do as well so our tracking
-    # field can maintain consistency.
-    new_expiry = expiry.from_now.round(0)
-    BawWorkers::Config.upload_communicator.set_user_expiration_date(upload_user, expiry: new_expiry)
-    self.upload_user_expiry_at = new_expiry
-    save!
+    begin
+      # SFTPGO accepts a millisecond encoded integer, however it still seems to
+      # truncate the value to the nearest second... so we do as well so our tracking
+      # field can maintain consistency.
+      new_expiry = expiry.from_now.round(0)
+      BawWorkers::Config.upload_communicator.set_user_expiration_date(upload_user, expiry: new_expiry)
+      self.upload_user_expiry_at = new_expiry
+      save!
+    rescue Faraday::ConnectionFailed, Net::OpenTimeout, BawWorkers::UploadService::UploadServiceError => e
+      Rails.logger.warn('Failed to refresh upload user expiry', exception: e)
+
+      ExceptionNotifier.notify_exception(
+        e,
+        data: {
+          message: "Failed to refresh upload user expiry for harvest #{id}",
+          harvest: self
+        }
+      )
+    end
   end
 
   # Generates summary statistics for this harvest
