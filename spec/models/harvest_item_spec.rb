@@ -56,36 +56,117 @@ RSpec.describe HarvestItem, type: :model do
     expect(item.info[:error]).to eq 'hello'
   end
 
-  it 'can find other records that overlap with it' do
-    # 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-    # aaaaa
-    #       bbbbb-
-    #    ccccc
-    # dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-    #             eeeee
-    a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200)
-    b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205)
-    c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200)
-    d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400)
-    e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200)
+  context 'with overlaps' do 
+    prepare_users
+    prepare_project
+    prepare_harvest
 
-    expect(a.overlaps_with).to match_array([c])
-    expect(b.overlaps_with).to match_array([c, e])
-    expect(c.overlaps_with).to match_array([a, b])
+    it 'can find other records that overlap with it' do
+      # 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+      # aaaaa
+      #       bbbbb-
+      #    ccccc
+      # dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+      #             eeeee
+      a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200, harvest)
+      b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205, harvest)
+      c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200, harvest)
+      # different site!
+      d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400, harvest)
+      e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200, harvest)
 
-    expect(d.overlaps_with).to match_array([])
-    expect(e.overlaps_with).to match_array([b])
+      expect(a.overlaps_with).to match_array([c])
+      expect(b.overlaps_with).to match_array([c, e])
+      expect(c.overlaps_with).to match_array([a, b])
+
+      expect(d.overlaps_with).to match_array([])
+      expect(e.overlaps_with).to match_array([b])
+    end
+
+    it 'will not find other records that overlap with it from a different harvest' do
+      other_harvest = Harvest.new(project:, creator: owner_user)
+      other_harvest.save!
+
+      #   | 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+      # 1 | aaaaa
+      # 1 |       bbbbb-
+      # 2 |    ccccc
+      # 2 | dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+      # 1           eeeee
+      a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200, harvest)
+      b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205, harvest)
+      c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200, other_harvest)
+      # different site!
+      d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400, other_harvest)
+      e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200, harvest)
+
+      expect(a.overlaps_with).to match_array([])
+      expect(b.overlaps_with).to match_array([e])
+      expect(c.overlaps_with).to match_array([])
+
+      expect(d.overlaps_with).to match_array([])
+      expect(e.overlaps_with).to match_array([b])
+    end
+
+    def create_with_durations(path, site_id, recorded_date, duration_seconds, harvest)
+      info = ::BawWorkers::Jobs::Harvest::Info.new(
+        file_info: {
+          duration_seconds:,
+          recorded_date:,
+          site_id:
+        }
+      )
+      create(:harvest_item, harvest:, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+    end
   end
 
-  def create_with_durations(path, site_id, recorded_date, duration_seconds)
-    info = ::BawWorkers::Jobs::Harvest::Info.new(
-      file_info: {
-        duration_seconds:,
-        recorded_date:,
-        site_id:
-      }
-    )
-    create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+  context 'with duplicate hashes' do 
+    prepare_users
+    prepare_project
+    prepare_harvest
+
+    it 'can find other records that have a duplicate hash' do
+      a = create_with_hashes('a.mp3', 1, 'imaahash', harvest)
+      b = create_with_hashes('b.ogg', 1, 'imumnotuhhahash', harvest)
+      c = create_with_hashes('c.wav', 1, 'imaahash', harvest)
+      # different site!
+      d = create_with_hashes('d.mp3', 2, 'imaahash', harvest)
+
+      expect(a.duplicate_hash_of).to match_array([c,d])
+      expect(b.duplicate_hash_of).to match_array([])
+      expect(c.duplicate_hash_of).to match_array([a, d])
+
+      expect(d.duplicate_hash_of).to match_array([a,c])
+    end
+
+    it 'will not find other records that have a duplicate hash from a different harvest' do
+      other_harvest = Harvest.new(project:, creator: owner_user)
+      other_harvest.save!
+
+      a = create_with_hashes('a.mp3', 1, 'imaahash', harvest)
+      # different site!
+      b = create_with_hashes('b.ogg', 2, 'imumnotuhhahash', harvest)
+      # different harvests!
+      c = create_with_hashes('c.wav', 1, 'imaahash', other_harvest)
+      # different site!
+      d = create_with_hashes('d.mp3', 2, 'imaahash', other_harvest)
+
+      expect(a.duplicate_hash_of).to match_array([])
+      expect(b.duplicate_hash_of).to match_array([])
+      expect(c.duplicate_hash_of).to match_array([d])
+
+      expect(d.duplicate_hash_of).to match_array([c])
+    end
+
+    def create_with_hashes(path, site_id, file_hash, harvest)
+      info = ::BawWorkers::Jobs::Harvest::Info.new(
+        file_info: {
+          file_hash:,
+          site_id:
+        }
+      )
+      create(:harvest_item, harvest:, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:)
+    end
   end
 
   context 'with other models' do

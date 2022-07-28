@@ -32,7 +32,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
 
   let(:duration) { 30 }
 
-  def prepare_file(date, frequency)
+  def prepare_file(date, frequency, harvest)
     name = generate_recording_name(date)
     temp = generate_audio(name, sine_frequency: frequency, duration:)
 
@@ -47,12 +47,12 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     start2 = start1 + (duration - overlap)
     start3 = start2 + (duration - overlap)
 
-    # generate three files adn copy in a file fixture to harvest
+    # generate three files and copy in a file fixture to harvest
     # generating is required here so we don't fail validation on duplicate hash check
 
-    paths1 = prepare_file(start1, 6000)
-    paths2 = prepare_file(start2, 8000)
-    paths3 = prepare_file(start3, 10_000)
+    paths1 = prepare_file(start1, 6000, harvest)
+    paths2 = prepare_file(start2, 8000, harvest)
+    paths3 = prepare_file(start3, 10_000, harvest)
 
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths1.harvester_relative_path, should_harvest: true)
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths2.harvester_relative_path, should_harvest: true)
@@ -107,18 +107,18 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
   end
 
   it 'will reject large overlaps' do
-    # create recordings that overlap with the target file in a minor way
+    # create recordings that overlap with the target file in a major way
     overlap = 20.0
 
     start1 = Time.new(2022, 1, 1, 0, 0, 0, '+00:00')
     start2 = start1 + (duration - overlap)
     start3 = start2 + (duration - overlap)
 
-    # generate three files adn copy in a file fixture to harvest
+    # generate three files and copy in a file fixture to harvest
     # generating is required here so we don't fail validation on duplicate hash check
-    paths1 = prepare_file(start1, 6000)
-    paths2 = prepare_file(start2, 8000)
-    paths3 = prepare_file(start3, 10_000)
+    paths1 = prepare_file(start1, 6000, harvest)
+    paths2 = prepare_file(start2, 8000, harvest)
+    paths3 = prepare_file(start3, 10_000, harvest)
 
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths1.harvester_relative_path, should_harvest: true)
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths2.harvester_relative_path, should_harvest: true)
@@ -156,6 +156,66 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
 
       # the first recording was added without failure
       expect(AudioRecording.count).to eq 1
+    end
+  end
+
+  it 'will NOT reject large overlaps in other harvests' do
+    other_harvest = Harvest.new(project:, creator: owner_user)
+    other_harvest.mappings = [
+      ::BawWorkers::Jobs::Harvest::Mapping.new(
+        path: '',
+        site_id: site.id,
+        utc_offset: nil,
+        recursive: false
+      )
+    ]
+
+    other_harvest.save!
+
+    # create recordings that overlap with the target file in a major way
+    overlap = 10.0
+
+    start1 = Time.new(2022, 1, 1, 0, 0, 0, '+00:00')
+    start2 = start1 + (duration - overlap)
+    start3 = start2 + (duration - overlap)
+
+    # generate three files and copy in a file fixture to harvest
+    # generating is required here so we don't fail validation on duplicate hash check
+    paths1 = prepare_file(start1, 6000, harvest)
+    paths2 = prepare_file(start2, 8000, other_harvest)
+    paths3 = prepare_file(start3, 10_000, harvest)
+
+    # the in harvest checks really only apply while the files are not harvested
+    # once they're harvested then the audio_recording hash checks apply which
+    # still reject the overlap
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths1.harvester_relative_path, should_harvest: false)
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+      other_harvest,
+      paths2.harvester_relative_path,
+      should_harvest: false
+    )
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, paths3.harvester_relative_path, should_harvest: false)
+
+    perform_jobs(count: 3)
+    expect_jobs_to_be completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+    aggregate_failures do
+      expect(HarvestItem.all.count).to eq 3
+      item1, item2, item3 = HarvestItem.all.order(:id)
+      expect(item1).to be_metadata_gathered
+      expect(item2).to be_metadata_gathered
+      expect(item3).to be_metadata_gathered
+
+      expect(item1.info.error).to be_nil
+      expect(item2.info.error).to be_nil
+      expect(item3.info.error).to be_nil
+
+      expect(item1.info.to_h[:validations]).to match []
+      expect(item2.info.to_h[:validations]).to match []
+      expect(item3.info.to_h[:validations]).to match []
+
+      # the first recording was added without failure
+      expect(AudioRecording.count).to eq 0
     end
   end
 end

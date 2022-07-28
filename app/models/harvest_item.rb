@@ -154,6 +154,7 @@ class HarvestItem < ApplicationRecord
     other_term = "(#{other_recorded_date}, (#{other_duration_seconds} * '1 second'::interval))"
 
     HarvestItem.where(HarvestItem.arel_table[:id] != id)
+               .where(HarvestItem.arel_table[:harvest_id] == harvest_id)
                .where("#{site_id} = #{other_site_id}")
                .where("#{this_term} OVERLAPS #{other_term}")
                .limit(10)
@@ -165,6 +166,7 @@ class HarvestItem < ApplicationRecord
 
     HarvestItem
       .where(HarvestItem.arel_table[:id] != id)
+      .where(HarvestItem.arel_table[:harvest_id] == harvest_id)
       .where(harvest_id:)
       .where("info->'file_info'->>'file_hash' = '#{file_hash}'")
       .limit(10)
@@ -283,7 +285,7 @@ class HarvestItem < ApplicationRecord
       Arel.sql('1').as('items_total'),
       HarvestItem.size_arel.as('items_size_bytes'),
       HarvestItem.duration_arel.as('items_duration_seconds'),
-      *(STATUSES.map { |s| (with_dir_columns_table['status'].eq(s).cast('int')).as("items_#{s}") }),
+      *(STATUSES.map { |s| with_dir_columns_table['status'].eq(s).cast('int').as("items_#{s}") }),
       HarvestItem.invalid_fixable_arel.as('items_invalid_fixable'),
       HarvestItem.invalid_not_fixable_arel.as('items_invalid_not_fixable')
     ]
@@ -291,7 +293,7 @@ class HarvestItem < ApplicationRecord
     dir_cols = all_columns.map { |col|
       case col
       when table[:path].name then with_dir_columns_table[current_dir_col].as(table[:path].name)
-      when harvest_id_name then ((with_dir_columns_table[harvest_id_name]).maximum).as(harvest_id_name)
+      when harvest_id_name then (with_dir_columns_table[harvest_id_name]).maximum.as(harvest_id_name)
       else Arel.null.as(col)
       end
     }
