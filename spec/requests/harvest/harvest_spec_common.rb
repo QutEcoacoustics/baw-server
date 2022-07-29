@@ -198,7 +198,7 @@ module HarvestSpecCommon
     report[:latest_activity_at] = Time.parse(report[:latest_activity_at])
 
     # seconds
-    expected_speed = 60
+    expected_speed = 90
 
     aggregate_failures do
       expect(report).to match(a_hash_including(

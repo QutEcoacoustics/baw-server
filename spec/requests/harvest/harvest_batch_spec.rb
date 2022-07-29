@@ -124,7 +124,7 @@ describe 'Harvesting a batch of files' do
     end
   end
 
-  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 60 do
+  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 90 do
     expose_app_as_web_server
     pause_all_jobs
 
