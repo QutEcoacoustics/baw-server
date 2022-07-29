@@ -1,5 +1,24 @@
 # Changelog
 
+## [8.11.3](https://github.com/QutEcoacoustics/baw-server/tree/8.11.3) (2022-07-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.7.0...8.11.3)
+
+**Implemented enhancements:**
+
+- Harvest: transition from metadata\_review to metadata\_extraction or process is a very large request [\#603](https://github.com/QutEcoacoustics/baw-server/issues/603)
+- Ensure harvest works with various Frontier Labs problems [\#597](https://github.com/QutEcoacoustics/baw-server/issues/597)
+
+**Fixed bugs:**
+
+- Harvests: harvest overlapping validations appears to be matching files from other harvests [\#605](https://github.com/QutEcoacoustics/baw-server/issues/605)
+- Harvest: authentication to sftpgo is failing when token is expired [\#602](https://github.com/QutEcoacoustics/baw-server/issues/602)
+- Harvest: find\_mapping\_for\_path could match the incorrect mapping [\#601](https://github.com/QutEcoacoustics/baw-server/issues/601)
+
+**Closed issues:**
+
+- Harvest: show action - renewing upload user expiry failure should not prevent successful response [\#606](https://github.com/QutEcoacoustics/baw-server/issues/606)
+
 ## [8.7.0](https://github.com/QutEcoacoustics/baw-server/tree/8.7.0) (2022-07-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.6.0...8.7.0)
