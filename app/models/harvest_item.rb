@@ -122,6 +122,12 @@ class HarvestItem < ApplicationRecord
     Settings.root_to_do_path / path
   end
 
+  # @param absolute_path [Pathname]
+  # @return [String]
+  def self.path_from_absolute_path(absolute_path)
+    absolute_path.relative_path_from(Settings.root_to_do_path).to_s
+  end
+
   # @return [String, nil]
   def path_relative_to_harvest
     return if harvest.nil?

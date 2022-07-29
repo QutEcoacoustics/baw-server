@@ -7,11 +7,15 @@ module Emu
 
     module_function
 
-    BAR_LT_DURATION_BUG = 'FL010'
+    FL_DURATION_BUG = 'FL010'
+    FL_PREALLOCATED_HEADER = 'FL001'
+    FL_SPACE_IN_DATESTAMP = 'FL008'
+    FL_INCORRECT_DATA_SIZE = 'FL005'
 
     STATUS_FIXED = 'Fixed'
     STATUS_NOOP = 'NoOperation'
     STATUS_AFFECTED = 'Affected'
+    STATUS_RENAMED = 'Renamed'
 
     CHECK_STATUS_AFFECTED = 'Affected'
     CHECK_STATUS_UNAFFECTED = 'Unaffected'
@@ -28,14 +32,19 @@ module Emu
     # @return [ExecuteResult] The result from executing the emu command.
     #
     def check(path, fix)
+      raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
+
       Emu.execute('fix', 'check', path, '--fix', fix)
     end
 
-    # @param [Pathname] path the path to operate on
-    # @param [String] the fix id for the fix operation to apply
+    # @param oath [Pathname] the path to operate on
+    # @param fixes [Array<String>] the fix id for the fix operation to apply
     # @return [ExecuteResult] The result from executing the emu command.
-    def apply(path, fix)
-      Emu.execute('fix', 'apply', path, '--fix', fix)
+    def apply(path, *fixes)
+      raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
+
+      fixes = ['--fix'].product(fixes).flatten
+      Emu.execute('fix', 'apply', path, *fixes)
     end
 
     # @return [Array<Hash>] The result from executing the emu command.
@@ -52,8 +61,6 @@ module Emu
     # @return [ExecuteResult] The result from executing the emu command.
     def fix_if_needed(path, fix)
       logger.tagged(fix:, path:) do
-        raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
-
         check_result = nil
         logger.measure_debug('checking if fix needed') do
           check_result = check(path, fix)

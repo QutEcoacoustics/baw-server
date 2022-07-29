@@ -100,6 +100,10 @@ module Fixtures
     ensure_exists FILES_PATH / '3.17_Duration' / '20200801T000000+1000_REC.flac'
   end
 
+  def self.bar_lt_preallocated_header
+    ensure_exists FILES_PATH / '3.14_PreallocatedHeader' / '20191125_AAO' / '20191125T000000+1000_REC.flac'
+  end
+
   #
   # Check a fixture exists
   #

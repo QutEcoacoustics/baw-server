@@ -27,7 +27,7 @@ describe 'harvesting a file that needs repairs' do
   end
 
   it 'sanity check: file needs repairs' do
-    actual = Emu::Fix.check(target, Emu::Fix::BAR_LT_DURATION_BUG)
+    actual = Emu::Fix.check(target, Emu::Fix::FL_DURATION_BUG)
     expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::STATUS_AFFECTED
   end
 
@@ -47,13 +47,14 @@ describe 'harvesting a file that needs repairs' do
     expect(HarvestItem.first.info[:fixes]).to match([
       a_hash_including(
         'file' => target.to_s,
-        'problems' => {
+        'problems' => a_hash_including(
           'FL010' => {
             'status' => 'Fixed',
             'check_result' => an_instance_of(Hash),
-            'message' => 'Old total samples was 317292544, new total samples is: 158646272'
+            'message' => 'Old total samples was 317292544, new total samples is: 158646272',
+            'new_path' => nil
           }
-        }
+        )
       )
     ])
 
@@ -69,7 +70,7 @@ describe 'harvesting a file that needs repairs' do
     # and the file should be fixed on disk
     original_path = actual.original_file_paths.first
     expect(File).to exist(original_path)
-    actual = Emu::Fix.check(original_path, Emu::Fix::BAR_LT_DURATION_BUG)
+    actual = Emu::Fix.check(Pathname(original_path), Emu::Fix::FL_DURATION_BUG)
     expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::CHECK_STATUS_REPAIRED
   end
 end

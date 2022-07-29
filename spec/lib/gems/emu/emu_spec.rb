@@ -8,7 +8,6 @@ describe Emu do
   end
 
   context 'when fixing' do
-
     let(:target) {
       path = temp_file
       FileUtils.copy(Fixtures.bar_lt_faulty_duration, path)
@@ -16,7 +15,7 @@ describe Emu do
     }
 
     it 'can check if a fix is needed' do
-      actual = Emu::Fix.check(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      actual = Emu::Fix.check(target, Emu::Fix::FL_DURATION_BUG)
 
       expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,
@@ -44,7 +43,7 @@ describe Emu do
     end
 
     it 'can apply a fix' do
-      actual = Emu::Fix.apply(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      actual = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
 
       expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,
@@ -59,20 +58,52 @@ describe Emu do
           'FL010' => {
             status: 'Fixed',
             check_result: an_instance_of(HashWithIndifferentAccess),
-            message: 'Old total samples was 317292544, new total samples is: 158646272'
+            message: 'Old total samples was 317292544, new total samples is: 158646272',
+            new_path: nil
           }
-        }
+        },
+        backup_file: nil
+      )
+    end
+
+    it 'can apply multiple fixes' do
+      actual = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG, Emu::Fix::FL_PREALLOCATED_HEADER)
+
+      expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+        success: true,
+        log: "\n",
+        records: an_instance_of(Array),
+        time_taken: a_value_within(1.0).of(1.5)
+      )
+
+      expect(actual.records.first).to match(
+        file: target.to_s,
+        problems: {
+          'FL010' => {
+            status: 'Fixed',
+            check_result: an_instance_of(HashWithIndifferentAccess),
+            message: 'Old total samples was 317292544, new total samples is: 158646272',
+            new_path: nil
+          },
+          'FL001' => {
+            status: 'NoOperation',
+            check_result: an_instance_of(HashWithIndifferentAccess),
+            message: nil,
+            new_path: nil
+          }
+        },
+        backup_file: nil
       )
     end
 
     it 'checks each fix is idempotent' do
       # fix once, discard the result
-      _ = Emu::Fix.apply(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      _ = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
 
       last_write = target.mtime
 
       # attempt to fix again - no change should occur
-      actual = Emu::Fix.apply(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      actual = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
 
       expect(target.mtime).to eq last_write
 
@@ -93,16 +124,19 @@ describe Emu do
               severity: 'None',
               data: a_hash_including(
                 tags: ['EMU+FL010']
-              )
+              ),
+              message: "File has already had it's duration repaired"
             ),
-            message: "File has already had it's duration repaired"
+            message: nil,
+            new_path: nil
           }
-        }
+        },
+        backup_file: nil
       )
     end
 
     it 'has a fix if needed function' do
-      actual = Emu::Fix.fix_if_needed(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      actual = Emu::Fix.fix_if_needed(target, Emu::Fix::FL_DURATION_BUG)
 
       expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,
@@ -117,16 +151,18 @@ describe Emu do
           'FL010' => {
             status: 'Fixed',
             check_result: an_instance_of(HashWithIndifferentAccess),
-            message: 'Old total samples was 317292544, new total samples is: 158646272'
+            message: 'Old total samples was 317292544, new total samples is: 158646272',
+            new_path: nil
           }
-        }
+        },
+        backup_file: nil
       )
     end
 
     it 'has a fix if needed function (case: not needed)' do
       # fix once, discard the result
-      _ = Emu::Fix.apply(target, Emu::Fix::BAR_LT_DURATION_BUG)
-      actual = Emu::Fix.fix_if_needed(target, Emu::Fix::BAR_LT_DURATION_BUG)
+      _ = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
+      actual = Emu::Fix.fix_if_needed(target, Emu::Fix::FL_DURATION_BUG)
 
       expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,

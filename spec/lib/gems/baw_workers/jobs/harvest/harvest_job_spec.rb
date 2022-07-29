@@ -70,7 +70,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           a_hash_including({
             'problems' => a_hash_including({
               'FL010' => a_hash_including({
-                'status' => ::Emu::Fix::CHECK_STATUS_UNAFFECTED
+                'status' => ::Emu::Fix::STATUS_NOOP
               })
             })
           })

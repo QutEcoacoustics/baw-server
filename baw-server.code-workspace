@@ -176,7 +176,8 @@
       "zrange",
       "zrangebyscore",
       "zrem",
-      "zrevrange"
+      "zrevrange",
+      "datestamp"
     ],
     "files.associations": {
       "**/provision/*.json": "jsonc",

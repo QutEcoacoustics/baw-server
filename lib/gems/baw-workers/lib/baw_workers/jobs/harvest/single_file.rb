@@ -6,7 +6,7 @@ module BawWorkers
       # Get a list of files to be harvested.
       class SingleFile
         FIXES = [
-          Emu::Fix::BAR_LT_DURATION_BUG
+          Emu::Fix::FL_DURATION_BUG
         ].freeze
         attr_accessor :logger, :file_info_helper, :api_comm
 

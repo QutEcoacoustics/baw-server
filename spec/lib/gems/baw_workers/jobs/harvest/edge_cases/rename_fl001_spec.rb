@@ -2,7 +2,7 @@
 
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
-describe 'HarvestJob can repair FL010', :clean_by_truncation do
+describe 'HarvestJob can rename FL001', :clean_by_truncation do
   require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'
@@ -31,17 +31,17 @@ describe 'HarvestJob can repair FL010', :clean_by_truncation do
 
     # copy in a file fixture to harvest
     @paths = copy_fixture_to_harvest_directory(
-      Fixtures.bar_lt_faulty_duration,
+      Fixtures.bar_lt_preallocated_header,
       harvest
     )
   end
 
   it 'sanity check: file needs repairs' do
-    actual = Emu::Fix.check(@paths.absolute_path, Emu::Fix::FL_DURATION_BUG)
+    actual = Emu::Fix.check(@paths.absolute_path, Emu::Fix::FL_PREALLOCATED_HEADER)
     expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::STATUS_AFFECTED
   end
 
-  it 'repairs the file when harvesting' do
+  it 'renames and rejects the file when harvesting' do
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
       harvest,
       @paths.harvester_relative_path,
@@ -52,33 +52,33 @@ describe 'HarvestJob can repair FL010', :clean_by_truncation do
 
     expect(HarvestItem.all.count).to eq 1
     item = HarvestItem.first
-    expect(item).to be_completed
+    expect(item).to be_failed
+    expect(item.path).to eq "#{@paths.harvester_relative_path}.error_stub"
     expect(item.info[:fixes]).to match([
       a_hash_including(
         'problems' => a_hash_including(
-          'FL010' => {
-            'status' => 'Fixed',
-            'check_result' => an_instance_of(Hash),
-            'message' => 'Old total samples was 317292544, new total samples is: 158646272',
+          'FL001' => a_hash_including(
+            'status' => Emu::Fix::STATUS_RENAMED,
+            'check_result' => a_hash_including(
+              'status' => Emu::Fix::STATUS_AFFECTED,
+              'message' => 'The file is a stub and has no usable data'
+            ),
+            'message' => a_string_matching(/Renamed to.*/),
             'new_path' => nil
-          }
+          )
         )
       )
     ])
 
-    # the latest audio recording is the one we just added
-    actual = AudioRecording.last
-    expect(actual).to have_attributes(
-      status: 'ready',
-      # the original file has a duration that is twice as long as it actually is
-      # 158,646,272 / 22,050 = 7,194.842267573696145124716553288
-      duration_seconds: a_value_within(0.001).of(7_194.842)
-    )
+    expect(item.info.to_h[:validations]).to match [
+      {
+        name: :fl001,
+        status: :not_fixable,
+        message: a_string_matching(/The file is a stub and has no usable data/)
+      }
+    ]
 
-    # and the file should be fixed on disk
-    original_path = actual.original_file_paths.first
-    expect(File).to exist(original_path)
-    actual = Emu::Fix.check(Pathname(original_path), Emu::Fix::FL_DURATION_BUG)
-    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::CHECK_STATUS_REPAIRED
+    expect(item.absolute_path).to be_exist
+    expect(AudioRecording.count).to eq 0
   end
 end

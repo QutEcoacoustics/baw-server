@@ -144,7 +144,10 @@ module BawWorkers
         end
 
         FIXES = [
-          Emu::Fix::BAR_LT_DURATION_BUG
+          Emu::Fix::FL_DURATION_BUG,
+          Emu::Fix::FL_PREALLOCATED_HEADER,
+          Emu::Fix::FL_SPACE_IN_DATESTAMP,
+          Emu::Fix::FL_INCORRECT_DATA_SIZE
         ].freeze
 
         # @return [HarvestItem] The database record for the current harvest item
@@ -199,6 +202,9 @@ module BawWorkers
           # Lastly, EMU is meant to be safe and fault tolerant so we're just
           # Hoping it is up to the task.
           apply_fixes
+
+          # EMU can detect some unfixable problems
+          return move_to_failed unless valid?
 
           extract_metadata
 
@@ -291,16 +297,44 @@ module BawWorkers
 
         def apply_fixes
           file_path = harvest_item.absolute_path
-          fix_log = FIXES.map { |fix_id|
-            logger.debug('Checking if fix needed', fix_id:)
-            result = Emu::Fix.fix_if_needed(file_path, fix_id)
-            raise 'Failed running EMU, see logs' if result&.success? != true
+          logger.measure_debug('Fixing file with emu') do
+            Emu::Fix.apply(file_path, *FIXES)
+          end => result
 
-            # return the fix log for the file
-            result.records.first
-          }
+          raise 'Failed running EMU: ' + result.log unless result&.success?
 
-          harvest_item.info = harvest_item.info.new(fixes: harvest_item.info.fixes + fix_log)
+          # only one file checked so only one result in the array
+          fix_log = result.records.first
+
+          # if the file was renamed update harvest item path
+          if fix_log[:file] != file_path
+            new_path = HarvestItem.path_from_absolute_path(Pathname(fix_log[:file]))
+            harvest_item.path = new_path
+
+            raise "Path does not exist #{harvest_item.absolute_path}" unless harvest_item.absolute_path.exist?
+          end
+
+          # convert any serious modifications into a validation
+          validations = fix_log[:problems].map do |id, details|
+            # affected means the file has the problem
+            # we just tried to fix problems... if the fix didn't work...
+            # TODO: differentiate on severity?
+            if [Emu::Fix::STATUS_RENAMED, Emu::Fix::STATUS_AFFECTED].include?(details[:status])
+              BawWorkers::Jobs::Harvest::ValidationResult.new(
+                name: id.downcase, 
+                status: BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE,
+                message: details[:check_result][:message] + ". " + details[:message]
+              )
+            end
+          end
+
+          # we don't need to save the file or backup_file fields - they're redundant
+          fix_log = fix_log.except(:file, :backup_file)
+
+          harvest_item.info = harvest_item.info.new(
+            fixes: harvest_item.info.fixes + [fix_log],
+            validations: harvest_item.info.validations + validations.compact
+          )
         end
 
         def extract_metadata
