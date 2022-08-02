@@ -85,7 +85,7 @@ class Site < ApplicationRecord
     only_integer: false,
     greater_than_or_equal_to: Site::LATITUDE_MIN,
     less_than_or_equal_to: Site::LATITUDE_MAX,
-    message: "%{value} must be greater than or equal to #{Site::LATITUDE_MIN} and less than or equal to #{Site::LATITUDE_MAX}"
+    message: "%<value>s must be greater than or equal to #{Site::LATITUDE_MIN} and less than or equal to #{Site::LATITUDE_MAX}"
   }, allow_nil: true
 
   # -180 and 180 degrees
@@ -93,12 +93,12 @@ class Site < ApplicationRecord
     only_integer: false,
     greater_than_or_equal_to: Site::LONGITUDE_MIN,
     less_than_or_equal_to: Site::LONGITUDE_MAX,
-    message: "%{value} must be greater than or equal to #{Site::LONGITUDE_MIN} and less than or equal to #{Site::LONGITUDE_MAX}"
+    message: "%<value>s must be greater than or equal to #{Site::LONGITUDE_MIN} and less than or equal to #{Site::LONGITUDE_MAX}"
   }, allow_nil: true
 
   validates_attachment_content_type :image,
     content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
-    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+    message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
@@ -113,6 +113,7 @@ class Site < ApplicationRecord
       .gsub(/[^-_A-Za-z0-9]+/, '-')
       .delete_prefix('-')
       .delete_suffix('-')
+      .squeeze('-')
   end
 
   # The same as `safe_name` but appends site.id to ensure a unique name

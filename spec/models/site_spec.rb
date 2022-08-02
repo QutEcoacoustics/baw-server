@@ -186,4 +186,9 @@ describe Site, type: :model do
     site = build(:site, name: "!aNT\'s fully s!ck site 1337 ;;\n../\\")
     expect(site.safe_name).to eq('aNTs-fully-s-ck-site-1337')
   end
+
+  it 'has a safe_name function that squashes hyphens' do
+    site = build(:site, name: 'Hello - World')
+    expect(site.safe_name).to eq('Hello-World')
+  end
 end
