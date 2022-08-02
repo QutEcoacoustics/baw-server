@@ -38,10 +38,51 @@ describe 'HarvestJob can rename FL001', :clean_by_truncation do
 
   it 'sanity check: file needs repairs' do
     actual = Emu::Fix.check(@paths.absolute_path, Emu::Fix::FL_PREALLOCATED_HEADER)
-    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::STATUS_AFFECTED
+    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::CHECK_STATUS_AFFECTED
   end
 
-  it 'renames and rejects the file when harvesting' do
+  it 'rejects the file when harvesting (should_harvest: false)' do
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+      harvest,
+      @paths.harvester_relative_path,
+      should_harvest: false
+    )
+    perform_jobs(count: 1)
+    expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+    expect(HarvestItem.all.count).to eq 1
+    item = HarvestItem.first
+    expect(item).to be_failed
+    expect(item.path).to eq @paths.harvester_relative_path.to_s
+    expect(item.info[:fixes]).to match([
+      a_hash_including(
+        'problems' => a_hash_including(
+          'FL001' => a_hash_including(
+            'status' => Emu::Fix::STATUS_NOT_FIXED,
+            'check_result' => a_hash_including(
+              'status' => Emu::Fix::CHECK_STATUS_AFFECTED,
+              'message' => 'The file is a stub and has no usable data'
+            ),
+            'message' => nil,
+            'new_path' => nil
+          )
+        )
+      )
+    ])
+
+    expect(item.info.to_h[:validations]).to match [
+      {
+        name: :fl001,
+        status: :not_fixable,
+        message: a_string_matching(/The file is a stub and has no usable data/)
+      }
+    ]
+
+    expect(item.absolute_path).to be_exist
+    expect(AudioRecording.count).to eq 0
+  end
+
+  it 'rejects the file when harvesting (should_harvest: true)' do
     BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
       harvest,
       @paths.harvester_relative_path,
@@ -53,17 +94,81 @@ describe 'HarvestJob can rename FL001', :clean_by_truncation do
     expect(HarvestItem.all.count).to eq 1
     item = HarvestItem.first
     expect(item).to be_failed
-    expect(item.path).to eq "#{@paths.harvester_relative_path}.error_stub"
+    expect(item.path).to eq @paths.harvester_relative_path.to_s
     expect(item.info[:fixes]).to match([
       a_hash_including(
         'problems' => a_hash_including(
           'FL001' => a_hash_including(
-            'status' => Emu::Fix::STATUS_RENAMED,
+            'status' => Emu::Fix::STATUS_NOT_FIXED,
             'check_result' => a_hash_including(
-              'status' => Emu::Fix::STATUS_AFFECTED,
+              'status' => Emu::Fix::CHECK_STATUS_AFFECTED,
               'message' => 'The file is a stub and has no usable data'
             ),
-            'message' => a_string_matching(/Renamed to.*/),
+            'message' => nil,
+            'new_path' => nil
+          )
+        )
+      )
+    ])
+
+    expect(item.info.to_h[:validations]).to match [
+      {
+        name: :fl001,
+        status: :not_fixable,
+        message: a_string_matching(/The file is a stub and has no usable data/)
+      }
+    ]
+
+    expect(item.absolute_path).to be_exist
+    expect(AudioRecording.count).to eq 0
+  end
+
+  it 'rejects the file when harvesting (even after metadata extraction)' do
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+      harvest,
+      @paths.harvester_relative_path,
+      should_harvest: false
+    )
+    perform_jobs(count: 1)
+    expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+      harvest,
+      @paths.harvester_relative_path,
+      should_harvest: true
+    )
+    perform_jobs(count: 1)
+    expect_jobs_to_be completed: 2, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+    expect(HarvestItem.all.count).to eq 1
+    item = HarvestItem.first
+    expect(item).to be_failed
+    expect(item.path).to eq @paths.harvester_relative_path.to_s
+    expect(item.info[:fixes]).to match([
+      a_hash_including(
+        'version' => 1,
+        'problems' => a_hash_including(
+          'FL001' => a_hash_including(
+            'status' => Emu::Fix::STATUS_NOT_FIXED,
+            'check_result' => a_hash_including(
+              'status' => Emu::Fix::CHECK_STATUS_AFFECTED,
+              'message' => 'The file is a stub and has no usable data'
+            ),
+            'message' => nil,
+            'new_path' => nil
+          )
+        )
+      ),
+      a_hash_including(
+        'version' => 2,
+        'problems' => a_hash_including(
+          'FL001' => a_hash_including(
+            'status' => Emu::Fix::STATUS_NOT_FIXED,
+            'check_result' => a_hash_including(
+              'status' => Emu::Fix::CHECK_STATUS_AFFECTED,
+              'message' => 'The file is a stub and has no usable data'
+            ),
+            'message' => nil,
             'new_path' => nil
           )
         )

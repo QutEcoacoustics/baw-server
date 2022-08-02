@@ -28,7 +28,7 @@ describe 'harvesting a file that needs repairs' do
 
   it 'sanity check: file needs repairs' do
     actual = Emu::Fix.check(target, Emu::Fix::FL_DURATION_BUG)
-    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::STATUS_AFFECTED
+    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::CHECK_STATUS_AFFECTED
   end
 
   it 'harvests and repairs the file', :clean_by_truncation, :slow do

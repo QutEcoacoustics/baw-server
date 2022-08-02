@@ -25,6 +25,10 @@ module BawWorkers
         attribute :validations, ::BawWorkers::Dry::Types::Array
           .of(::BawWorkers::Jobs::Harvest::ValidationResult)
           .default([].freeze)
+
+        # @!attribute [r] version
+        #   @return [Integer]
+        attribute :version, ::BawWorkers::Dry::Types::NATURAL.default(0)
       end
     end
   end

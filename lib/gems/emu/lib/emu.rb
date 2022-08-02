@@ -70,11 +70,12 @@ module Emu
               .split("\n")
               .map(&method(:parse_record))
 
-    logger.debug('Ran emu executable', command: all_args.join(' '), status: status, log: error, time_taken: time.total)
+    logger.debug('Ran emu executable', command: all_args.join(' '), status:, log: error, time_taken: time.total,
+      output:)
 
     ExecuteResult.new(
-      success: success,
-      records: records,
+      success:,
+      records:,
       log: error,
       time_taken: time.total
     )
@@ -82,10 +83,10 @@ module Emu
     logger.error(
       'error occurred while invoking emu',
       command: all_args.join(' '),
-      status: status,
+      status:,
       log: error,
       time_taken: time.total,
-      output: output,
+      output:,
       exception: e
     )
     raise

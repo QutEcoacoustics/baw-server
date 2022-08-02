@@ -14,7 +14,7 @@ module Emu
 
     STATUS_FIXED = 'Fixed'
     STATUS_NOOP = 'NoOperation'
-    STATUS_AFFECTED = 'Affected'
+    STATUS_NOT_FIXED = 'NotFixed'
     STATUS_RENAMED = 'Renamed'
 
     CHECK_STATUS_AFFECTED = 'Affected'
@@ -44,7 +44,7 @@ module Emu
       raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
 
       fixes = ['--fix'].product(fixes).flatten
-      Emu.execute('fix', 'apply', path, *fixes)
+      Emu.execute('fix', 'apply', '--no-rename', path, *fixes)
     end
 
     # @return [Array<Hash>] The result from executing the emu command.
@@ -70,7 +70,7 @@ module Emu
 
         return check_result unless check_result.success?
 
-        return check_result unless check_result.records.first[:problems][fix][:status] == STATUS_AFFECTED
+        return check_result unless check_result.records.first[:problems][fix][:status] == CHECK_STATUS_AFFECTED
 
         logger.measure_debug('applying fix') do
           return apply(path, fix)

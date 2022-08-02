@@ -189,6 +189,8 @@ module BawWorkers
         # the main workflow for a harvest
         # @param should_harvest [Boolean] whether or not to actually process the file
         def process_steps(should_harvest)
+          bump_version
+
           simple_validations
 
           # All of the simple validations are basic requirements for processing a file.
@@ -287,6 +289,10 @@ module BawWorkers
           raise 'No harvest record found' if harvest.nil?
         end
 
+        def bump_version
+          harvest_item.info = harvest_item.info.new(version: harvest_item.info.version + 1)
+        end
+
         def simple_validations
           # results will be an array of either nils (no problem) or ValidationResult records
           results = Validations.validate(Validations.simple_validations, harvest_item)
@@ -301,7 +307,7 @@ module BawWorkers
             Emu::Fix.apply(file_path, *FIXES)
           end => result
 
-          raise 'Failed running EMU: ' + result.log unless result&.success?
+          raise "Failed running EMU: #{result.log}" unless result&.success?
 
           # only one file checked so only one result in the array
           fix_log = result.records.first
@@ -315,21 +321,22 @@ module BawWorkers
           end
 
           # convert any serious modifications into a validation
-          validations = fix_log[:problems].map do |id, details|
+          validations = fix_log[:problems].map { |id, details|
             # affected means the file has the problem
             # we just tried to fix problems... if the fix didn't work...
             # TODO: differentiate on severity?
-            if [Emu::Fix::STATUS_RENAMED, Emu::Fix::STATUS_AFFECTED].include?(details[:status])
-              BawWorkers::Jobs::Harvest::ValidationResult.new(
-                name: id.downcase, 
-                status: BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE,
-                message: details[:check_result][:message] + ". " + details[:message]
-              )
-            end
-          end
+            next unless [Emu::Fix::STATUS_RENAMED, Emu::Fix::STATUS_NOT_FIXED].include?(details[:status])
+
+            message = details.fetch(:message, nil).blank? ? '' : details[:message].to_s
+            BawWorkers::Jobs::Harvest::ValidationResult.new(
+              name: id.downcase,
+              status: BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE,
+              message: "#{details[:check_result][:message]}. #{message}"
+            )
+          }
 
           # we don't need to save the file or backup_file fields - they're redundant
-          fix_log = fix_log.except(:file, :backup_file)
+          fix_log = fix_log.except(:file, :backup_file).merge({ version: harvest_item.info.version })
 
           harvest_item.info = harvest_item.info.new(
             fixes: harvest_item.info.fixes + [fix_log],

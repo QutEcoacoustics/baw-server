@@ -162,9 +162,10 @@ module BawWorkers
 
           def validate(harvest_item)
             duration = harvest_item.info.file_info[:duration_seconds]
-            return if duration >= Settings.audio_recording_min_duration_sec
+            min = Settings.audio_recording_min_duration_sec
+            return if duration >= min
 
-            not_fixable("This file is too short (#{duration} seconds)")
+            not_fixable("This file is too short (#{duration} seconds). The minimum is #{min} seconds.")
           end
         end
 

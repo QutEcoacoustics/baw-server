@@ -38,7 +38,7 @@ describe 'HarvestJob can repair FL010', :clean_by_truncation do
 
   it 'sanity check: file needs repairs' do
     actual = Emu::Fix.check(@paths.absolute_path, Emu::Fix::FL_DURATION_BUG)
-    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::STATUS_AFFECTED
+    expect(actual.records.first[:problems].values.first[:status]).to eq Emu::Fix::CHECK_STATUS_AFFECTED
   end
 
   it 'repairs the file when harvesting' do
