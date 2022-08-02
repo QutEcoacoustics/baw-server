@@ -1,5 +1,15 @@
 # Changelog
 
+## [8.12.1](https://github.com/QutEcoacoustics/baw-server/tree/8.12.1) (2022-08-02)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.11.3...8.12.1)
+
+**Implemented enhancements:**
+
+- Site safe name function: check stack delimiters are squashed [\#611](https://github.com/QutEcoacoustics/baw-server/issues/611)
+- Harvest Job validations: check validation messages do not mention harvest items [\#610](https://github.com/QutEcoacoustics/baw-server/issues/610)
+- Harvest: wrong validation message shown FL001 [\#609](https://github.com/QutEcoacoustics/baw-server/issues/609)
+
 ## [8.11.3](https://github.com/QutEcoacoustics/baw-server/tree/8.11.3) (2022-07-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.7.0...8.11.3)

@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.7.0 from http://localhost:3000.
+                  Version 8.11.3 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.7.0"
+                Write-Information "Acoustic Workbench downloader script version 8.11.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.7.0 from http://localhost:3000.
+                  Version 8.11.3 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.7.0"
+                Write-Information "Acoustic Workbench downloader script version 8.11.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1909,7 +1909,7 @@ paths:
                 data:
                 - id: 28
                   uuid: b1a02f5b-a229-4cb9-b1cd-b95d6ffb2a1e
-                  recorded_date: '2012-04-23T07:06:59.000Z'
+                  recorded_date: '2000-04-23T07:06:59.000Z'
                   site_id: 28
                   duration_seconds: 60000.0
                   sample_rate_hertz: 44100
@@ -1929,7 +1929,7 @@ paths:
                   file_hash: SHA256::283zlcasjnofvtli4p0czpopdnomgtgx6sxgx5cbm767y12azcp39kzadhvb1uz3
                   uploader_id: 124
                   original_file_name: original name 28.mp3
-                  canonical_file_name: 20120423T070659Z_site-name-28_28.mp3
+                  canonical_file_name: 20000423T070659Z_site-name-28_28.mp3
                   recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
@@ -1977,7 +1977,7 @@ paths:
                 data:
                   id: 29
                   uuid: 83ac0fe5-4165-41ac-ac03-2ebb9c93cfcb
-                  recorded_date: '2012-04-24T07:06:59.000Z'
+                  recorded_date: '2000-04-24T07:06:59.000Z'
                   site_id: 29
                   duration_seconds: 66.0
                   sample_rate_hertz: 44100
@@ -1997,7 +1997,7 @@ paths:
                   file_hash: SHA256::29dw2kbuxzu6b5i7jgtn6xb8m27skx1ipi19lhbrlqmr633rskzfzfy2cn4zmsqt
                   uploader_id: 128
                   original_file_name: original name 29.mp3
-                  canonical_file_name: 20120424T070659Z_site-name-29_29.mp3
+                  canonical_file_name: 20000424T070659Z_site-name-29_29.mp3
                   recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
@@ -2047,7 +2047,7 @@ paths:
                 data:
                   id: 30
                   uuid: ae29fb9c-6110-4131-b880-4ac6e4c34cc5
-                  recorded_date: '2012-04-25T07:06:59.000Z'
+                  recorded_date: '2000-04-25T07:06:59.000Z'
                   site_id: 30
                   duration_seconds: 60000.0
                   sample_rate_hertz: 44100
@@ -2067,7 +2067,7 @@ paths:
                   file_hash: SHA256::30x4c02hy3yui3iptsk1pjhqxu1b81m2c8uuq07shlpanph5m3wmcovyezpqpgup
                   uploader_id: 132
                   original_file_name: original name 30.mp3
-                  canonical_file_name: 20120425T070659Z_site-name-30_30.mp3
+                  canonical_file_name: 20000425T070659Z_site-name-30_30.mp3
                   recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
@@ -2112,7 +2112,7 @@ paths:
                 data:
                   id: 31
                   uuid: cfb2fbc6-7595-468d-8fc5-a6fd8165a427
-                  recorded_date: '2012-04-26T07:06:59.000Z'
+                  recorded_date: '2000-04-26T07:06:59.000Z'
                   site_id: 31
                   duration_seconds: 66.0
                   sample_rate_hertz: 44100
@@ -2132,7 +2132,7 @@ paths:
                   file_hash: SHA256::313zacwbn39j1wwm7mioyylciu2e1ve2uhrmbn7k0w3nu2oir3x6y8eyhmug9bp7
                   uploader_id: 136
                   original_file_name: original name 31.mp3
-                  canonical_file_name: 20120426T070659Z_site-name-31_31.mp3
+                  canonical_file_name: 20000426T070659Z_site-name-31_31.mp3
                   recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
@@ -2225,7 +2225,7 @@ paths:
                 data:
                 - id: 33
                   uuid: 191deeb0-aeb8-4ff5-8984-cb920da8e9a5
-                  recorded_date: '2012-04-28T07:06:59.000Z'
+                  recorded_date: '2000-04-28T07:06:59.000Z'
                   site_id: 33
                   duration_seconds: 60000.0
                   sample_rate_hertz: 44100
@@ -2245,7 +2245,7 @@ paths:
                   file_hash: SHA256::337rg8v0o44mgu9okmxnw273ifvtapv9yl3e7sjjskjy2yai2twpzruhufceganv
                   uploader_id: 144
                   original_file_name: original name 33.mp3
-                  canonical_file_name: 20120428T070659Z_site-name-33_33.mp3
+                  canonical_file_name: 20000428T070659Z_site-name-33_33.mp3
                   recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
@@ -4077,7 +4077,7 @@ paths:
                 data:
                   id: 66
                   uuid: 18103b10-7995-4aae-91cb-e82f6694644f
-                  recorded_date: '2012-05-31T07:06:59.000Z'
+                  recorded_date: '2000-05-31T07:06:59.000Z'
                   site_id: 66
                   duration_seconds: 60000.0
                   sample_rate_hertz: 22050
@@ -4097,7 +4097,7 @@ paths:
                   file_hash: SHA256::66c10a8iy16dbhk2bqzrl8gycf6ouhnc7ok8n1j7pcnki6nb9ekq26o6d85grz2l
                   uploader_id: 1
                   original_file_name: original name 66.mp3
-                  canonical_file_name: 20120531T070659Z_site-name-68_66.mp3
+                  canonical_file_name: 20000531T070659Z_site-name-68_66.mp3
                   recorded_utc_offset: 
               schema:
                 allOf:
