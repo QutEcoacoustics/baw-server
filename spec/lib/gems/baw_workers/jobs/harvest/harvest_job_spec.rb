@@ -273,7 +273,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
             {
               name: :no_site_id,
               status: :fixable,
-              message: 'No site id found. Update the harvest mappings.'
+              message: 'No site id found. Add a mapping.'
             }
           ]
         end

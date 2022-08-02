@@ -226,7 +226,7 @@ module BawWorkers
             duplicates = AudioRecording.where(file_hash:).limit(10).pluck(:id)
             return if duplicates.empty?
 
-            not_fixable("File duplicate of audio recordings: #{duplicates.join(', ')}. Hash: #{file_hash}")
+            not_fixable("File duplicate of previously uploaded audio recordings: #{duplicates.join(', ')}. Hash: #{file_hash}")
           end
         end
 
@@ -244,7 +244,7 @@ module BawWorkers
             return if duplicates_in_this_job.empty?
 
             duplicate_msg = duplicates_in_this_job.map(&:path).join(', ')
-            msg = "File duplicate of harvest items: #{duplicate_msg}. Hash: #{file_hash}"
+            msg = "File duplicate of: #{duplicate_msg}. Hash: #{file_hash}"
 
             not_fixable(msg)
           end
@@ -278,7 +278,7 @@ module BawWorkers
 
         def validate(harvest_item)
           site_id = harvest_item.info.file_info[:site_id]
-          fixable('No site id found. Update the harvest mappings.') if site_id.blank? || Site.find_by(id: site_id).nil?
+          fixable('No site id found. Add a mapping.') if site_id.blank? || Site.find_by(id: site_id).nil?
         end
       end
 
@@ -351,7 +351,7 @@ module BawWorkers
           return if result[:overlap][:items].empty?
 
           msg = <<~MSG
-            The file #{harvest_item.path} overlaps with the following audio recordings: #{result[:overlap][:items].join(', ')}
+            The file #{harvest_item.path} overlaps with the following previously uploaded audio recordings: #{result[:overlap][:items].join(', ')}
           MSG
 
           fixable = result[:overlap][:items].all? { |item| item[:can_fix] }

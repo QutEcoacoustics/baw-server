@@ -140,7 +140,7 @@ describe 'HarvestJob can deal with overlaps', :clean_by_truncation do
       {
         name: :overlapping_files,
         status: :not_fixable,
-        message: /overlaps with the following audio recordings/
+        message: /overlaps with the following previously uploaded audio recordings/
       }
     ]
 
