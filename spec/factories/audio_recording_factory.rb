@@ -54,7 +54,7 @@ require "#{__dir__}/../support/misc_helper"
 FactoryBot.define do
   factory :audio_recording do
     sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n) }
-    sequence(:recorded_date) { |n| (DateTime.parse('2012-03-26 07:06:59') + n.to_i.day).to_s }
+    sequence(:recorded_date) { |n| (DateTime.parse('2000-03-26 07:06:59') + n.to_i.day).to_s }
     duration_seconds { 60_000 }
     sample_rate_hertz { 22_050 }
     channels { 2 }
@@ -86,8 +86,8 @@ FactoryBot.define do
       after(:create) do |audio_recording, evaluator|
         raise 'Creator was blank' if evaluator.creator.blank?
 
-        create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording: audio_recording,
-creator: evaluator.creator)
+        create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording:,
+          creator: evaluator.creator)
       end
     end
 
@@ -98,7 +98,7 @@ creator: evaluator.creator)
       after(:create) do |audio_recording, evaluator|
         raise 'Creator was blank' if evaluator.creator.blank?
 
-        create_list(:bookmark, evaluator.bookmark_count, audio_recording: audio_recording, creator: evaluator.creator)
+        create_list(:bookmark, evaluator.bookmark_count, audio_recording:, creator: evaluator.creator)
       end
     end
 

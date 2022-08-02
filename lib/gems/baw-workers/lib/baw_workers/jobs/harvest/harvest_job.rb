@@ -312,6 +312,8 @@ module BawWorkers
           # only one file checked so only one result in the array
           fix_log = result.records.first
 
+          raise "fix_log is nil: #{result.to_json}" if fix_log.nil?
+
           # if the file was renamed update harvest item path
           if fix_log[:file] != file_path
             new_path = HarvestItem.path_from_absolute_path(Pathname(fix_log[:file]))

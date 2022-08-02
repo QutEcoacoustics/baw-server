@@ -345,11 +345,12 @@ RSpec.describe Harvest, type: :model do
     end
   end
 
-  context 'when transitioning' do
+  context 'when transitioning', :clean_by_truncation do
     let(:upload_communicator) {
       BawWorkers::Config.upload_communicator
     }
 
+    pause_all_jobs
     ignore_pending_jobs
 
     before do
@@ -395,7 +396,7 @@ RSpec.describe Harvest, type: :model do
       sleep 1
 
       harvest.open_upload!
-      expect(harvest.last_upload_at).to be_within(0.01.seconds).of(Time.now)
+      expect(harvest.last_upload_at).to be_within(0.1.seconds).of(Time.now)
     end
 
     it 'when opening uploads, stores user information' do
@@ -412,6 +413,7 @@ RSpec.describe Harvest, type: :model do
       harvest.save!
       harvest.open_upload!
       harvest.scan!
+      perform_jobs(count: 1)
       harvest.extract!
       harvest.metadata_review!
 
@@ -429,6 +431,10 @@ RSpec.describe Harvest, type: :model do
 
       harvest.extract!
 
+      expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+      perform_jobs(count: 1)
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
+
       jobs = expect_enqueued_jobs(3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
       expect(jobs.map { |j| j.dig('args', 0, 'arguments') }).to all(match(
         [an_instance_of(Integer), false]
@@ -441,6 +447,7 @@ RSpec.describe Harvest, type: :model do
       harvest.save!
       harvest.open_upload!
       harvest.scan!
+      perform_jobs(count: 1)
       harvest.extract!
       harvest.metadata_review!
 
@@ -457,6 +464,10 @@ RSpec.describe Harvest, type: :model do
       end
 
       harvest.process!
+
+      expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+      perform_jobs(count: 1)
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
 
       jobs = expect_enqueued_jobs(3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
       expect(jobs.map { |j| j.dig('args', 0, 'arguments') }).to all(match(

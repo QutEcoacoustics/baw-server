@@ -472,7 +472,7 @@ describe Filter::Query do
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
             :data_length_bytes, :status, :created_at, :updated_at,
             :creator_id, :deleted_at, :deleter_id, :updater_id,
-            :notes, :file_hash, :uploader_id, :original_file_name, :canonical_file_name, :recorded_date_timezone
+            :notes, :file_hash, :uploader_id, :original_file_name, :canonical_file_name, :recorded_date_timezone, :recorded_utc_offset
           ]
         },
         filter: {
@@ -1397,7 +1397,7 @@ describe Filter::Query do
         SELECT tzinfo_tz
         FROM "sites"
         WHERE "audio_recordings"."site_id" = "sites"."id"))
-        AS "recorded_date_timezone"
+        AS "recorded_date_timezone", "audio_recordings"."recorded_utc_offset"
         FROM "audio_recordings"
         INNER
         JOIN "sites"
@@ -1837,8 +1837,8 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter: {
-          duration_seconds: { eq: 78 }, start_time_seconds: { eq: 20 }
-        },
+            duration_seconds: { eq: 78 }, start_time_seconds: { eq: 20 }
+          },
           filter_start_time_seconds: 10, filter_end_time_seconds: 88 },
         Access::ByPermission.audio_events(admin_user, audio_recording:),
         AudioEvent,
@@ -1867,9 +1867,9 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter: {
-          duration_seconds: { eq: 100 },
-          or: { media_type: { contains: 'wav' }, status: { contains: 'wav' } }
-        },
+            duration_seconds: { eq: 100 },
+            or: { media_type: { contains: 'wav' }, status: { contains: 'wav' } }
+          },
           filter_duration_seconds: 120,
           filter_partial_match: 'mp3' },
         Access::ByPermission.audio_recordings(admin_user),
@@ -1902,9 +1902,9 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter: {
-          duration_seconds: { eq: 100 },
-          or: { media_type: { contains: 'wav' }, status: { contains: 'wav' } }
-        },
+            duration_seconds: { eq: 100 },
+            or: { media_type: { contains: 'wav' }, status: { contains: 'wav' } }
+          },
           filter_duration_seconds: 120,
           filter_partial_match: 'mp3' },
         Access::ByPermission.audio_recordings(writer_user),
