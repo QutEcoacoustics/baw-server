@@ -302,6 +302,42 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           expect(AudioRecording.count).to eq 1
         end
       end
+
+      context 'when testing a timeout' do
+        # ensure a timeout
+        before do
+          @original_timeout = BawWorkers::Config.audio_helper.run_program.instance_variable_get(:@timeout_sec)
+          BawWorkers::Config.audio_helper.run_program.instance_variable_set(:@timeout_sec, 0)
+        end
+
+        after do
+          BawWorkers::Config.audio_helper.run_program.instance_variable_set(:@timeout_sec, @original_timeout)
+        end
+
+        it 'automatically retries for timeouts' do
+          item = HarvestItem.new(
+            path: @paths.harvester_relative_path,
+            status: HarvestItem::STATUS_NEW,
+            uploader_id: harvest.creator_id,
+            info: {},
+            harvest:
+          )
+
+          item.save!
+
+          job = BawWorkers::Jobs::Harvest::HarvestJob.new(item.id, true)
+
+          job.perform_now
+
+          # job got reenqueued
+          expect_jobs_to_be(completed: 0, enqueued: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
+
+          item.reload
+          expect(item).to be_new
+
+          expect(BawWorkers::ResqueApi.delayed_count).to eq 1
+        end
+      end
     end
   end
 end

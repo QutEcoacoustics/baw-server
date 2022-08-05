@@ -276,7 +276,9 @@
       80,
       120
     ],
-    "liveServer.settings.useWebExt": true
+    "liveServer.settings.useWebExt": true,
+    "livePreview.autoRefreshPreview": "Never",
+    "livePreview.portNumber": 5000
   },
   "extensions": {
     "recommendations": [

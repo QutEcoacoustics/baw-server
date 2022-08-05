@@ -30,7 +30,8 @@ describe BawWorkers::ActiveJob::Arguments do
           perform_expects String, String, String, String
         end
         job_class.perform_later!
-      }.to raise_error(ArgumentError, 'Arity of perform is 0 but 4 types were provided')
+      }.to raise_error(ArgumentError,
+        'Arity of perform is 0 but 4 types were provided: [String, String, String, String]')
     end
 
     it 'will be happy with 0 args' do
@@ -74,7 +75,7 @@ describe BawWorkers::ActiveJob::Arguments do
           perform_expects
         end
         job_class.perform_later!
-      }.to raise_error(ArgumentError, 'Arity of perform is 3 but 0 types were provided')
+      }.to raise_error(ArgumentError, 'Arity of perform is 3 but 0 types were provided: []')
     end
 
     it 'will verify the arity of types provided with too many args' do
@@ -83,7 +84,8 @@ describe BawWorkers::ActiveJob::Arguments do
           perform_expects String, String, String, String
         end
         job_class.perform_later!
-      }.to raise_error(ArgumentError, 'Arity of perform is 3 but 4 types were provided')
+      }.to raise_error(ArgumentError,
+        'Arity of perform is 3 but 4 types were provided: [String, String, String, String]')
     end
 
     it 'errors on initialization if perform_expects was never set' do

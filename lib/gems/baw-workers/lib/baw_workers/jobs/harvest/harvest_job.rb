@@ -241,6 +241,9 @@ module BawWorkers
           #    - Do not send a notification.
           #    - Maybe it can be retried?
 
+          # here we detect exceptions that should trigger a retry
+          raise if should_retry?(e)
+
           # raise will mark the job tracker as :errored
           raise unless one_of_our_exceptions(e)
 
@@ -248,6 +251,35 @@ module BawWorkers
           failed!(e.message)
         ensure
           save_state
+        end
+
+        RETRY_ERRORS = [
+          Net::OpenTimeout,
+          Net::ReadTimeout,
+          Timeout::Error,
+          BawAudioTools::Exceptions::AudioToolTimedOutError
+        ].freeze
+
+        retry_on(*RETRY_ERRORS)
+
+        def should_retry?(error)
+          should = RETRY_ERRORS.any? { |e| error.instance_of?(e) }
+
+          if should
+            # reset the jobs status as new so the harvest knows items are outstanding
+            mark_status(HarvestItem::STATUS_NEW)
+            logger.warn("Scheduled job to be retried because of error: #{error.class.name}:#{error.message}")
+          end
+
+          should
+        end
+
+        def one_of_our_exceptions(error)
+          return true if error.class.name =~ /BawAudioTools::Exceptions/
+          return true if error.class.name =~ /BawWorkers::Exceptions/
+
+          # more to come
+          false
         end
 
         def mark_status(status)
@@ -470,14 +502,6 @@ module BawWorkers
 
         def post_process
           DeleteHarvestItemFileJob.delete_later(harvest_item)
-        end
-
-        def one_of_our_exceptions(error)
-          return true if error.class.name =~ /BawAudioTools::Exceptions/
-          return true if error.class.name =~ /BawWorkers::Exceptions/
-
-          # more to come
-          false
         end
 
         def create_draft_audio_recording

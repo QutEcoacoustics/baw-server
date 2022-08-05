@@ -220,7 +220,8 @@ class Harvest < ApplicationRecord
     #   @return [Boolean]
     event :open_upload do
       transitions from: :metadata_review, to: :uploading, guard: :batch_harvest?, after: [:enable_upload_slot]
-      transitions from: :new_harvest, to: :uploading, after: [:open_upload_slot, :create_default_mappings]
+      transitions from: :new_harvest, to: :uploading,
+        after: [:open_upload_slot, :create_harvest_dir, :create_default_mappings]
     end
 
     # @!method scan
@@ -328,6 +329,11 @@ class Harvest < ApplicationRecord
 
   def mark_last_metadata_review_at
     self.last_metadata_review_at = Time.now
+  end
+
+  def create_harvest_dir
+    # make sure a place exists for files to be uploaded
+    upload_directory.mkpath
   end
 
   def create_default_mappings

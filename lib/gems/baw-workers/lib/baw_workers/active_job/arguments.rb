@@ -46,7 +46,7 @@ module BawWorkers
         raise 'perform_expects must be set before the job is run' if signature.nil? && arity.positive?
 
         unless arity == signature.count
-          raise ArgumentError, "Arity of perform is #{arity} but #{signature.count} types were provided"
+          raise ArgumentError, "Arity of perform is #{arity} but #{signature.count} types were provided: #{signature}"
         end
 
         arg_count = arguments.count

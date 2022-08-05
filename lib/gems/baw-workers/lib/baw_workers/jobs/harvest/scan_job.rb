@@ -11,7 +11,7 @@ module BawWorkers
         queue_as Settings.actions.harvest_scan.queue
         perform_expects Integer
 
-        #retry_on StandardError, attempts: 3
+        retry_on StandardError, attempts: 3, wait: 0
 
         # @param harvest [::Harvest]
         def self.scan(harvest)
@@ -25,7 +25,7 @@ module BawWorkers
           harvest = ::Harvest.find(harvest_id)
           logger.info('Preparing to scan harvest directory', harvest_id:, path: harvest.upload_directory)
 
-          found = logger.measure_info('File scan finished') {
+          found = logger.measure_info('File scan finished', on_exception_level: :error) {
             scan_for_files(harvest)
           }
 
@@ -33,6 +33,14 @@ module BawWorkers
 
           # no need to transition in streaming harvest
           return if harvest.streaming_harvest?
+
+          # reload to prevent race conditions
+          # https://github.com/QutEcoacoustics/baw-server/issues/613
+          harvest.reload
+
+          # sometimes the harvest may have been cancelled while were waiting
+          # https://github.com/QutEcoacoustics/baw-server/issues/615
+          return unless harvest.may_extract?
 
           # finally transition to metadata extraction
           harvest.extract!
@@ -58,6 +66,7 @@ module BawWorkers
             basename = path.basename.to_s
             if path.directory?
               # don't descend into this directory
+
               Find.prune if skip_dir?(basename)
               # regardless we don't want to enqueue any directory only files within them
               #logger.debug('Skipping directory', path:)

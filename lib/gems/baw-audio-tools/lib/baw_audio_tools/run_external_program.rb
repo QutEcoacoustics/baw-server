@@ -32,7 +32,8 @@ module BawAudioTools
       pid = nil
 
       time = Benchmark.realtime do
-        run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions_inner, pid_inner|
+        run_with_timeout(command,
+          timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions_inner, pid_inner|
           #thread_success = thread.value.success?
           stdout_str = output
           stderr_str = error
@@ -63,7 +64,7 @@ module BawAudioTools
       raise Exceptions::AudioToolError, msg if !status.success? && raise_exit_error
 
       {
-        command: command,
+        command:,
         stdout: stdout_str,
         stderr: stderr_str,
         time_taken: time,
@@ -89,8 +90,8 @@ module BawAudioTools
     # @param [Array] opts
     def run_with_timeout(*opts)
       options = opts.extract_options!.reverse_merge(timeout: 60, tick: 1, cleanup_sleep: 0.1, buffer_size: 10_240)
-
       timeout = options[:timeout]
+      timeout = 60 if timeout.nil?
       cleanup_sleep = options[:cleanup_sleep]
 
       output = ''

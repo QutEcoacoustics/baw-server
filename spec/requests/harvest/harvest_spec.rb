@@ -325,4 +325,27 @@ describe 'Harvesting files' do
       clear_pending_jobs
     end
   end
+
+  describe 'for System Volume Information directories', :clean_by_truncation, :slow, web_server_timeout: 60 do
+    extend WebServerHelper::ExampleGroup
+
+    expose_app_as_web_server
+    pause_all_jobs
+
+    before do
+      create_harvest(streaming: false)
+      expect_success
+    end
+
+    it 'ignores them' do
+      upload_file(connection, Fixtures.audio_file_mono,
+        to: '/a/System Volume Information/20190913T000000+1000_REC.flac')
+
+      wait_for_webhook
+
+      expect(HarvestItem.count).to eq 0
+      expect_enqueued_jobs(0)
+      clear_pending_jobs
+    end
+  end
 end

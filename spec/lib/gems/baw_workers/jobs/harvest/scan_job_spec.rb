@@ -86,6 +86,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
           'a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/test_file_3.wav',
           'a/.DS_STORE',
           'System Volume Information/file.txt',
+          '20220317_61/244/159/System Volume Information/WPSettings.dat',
           '.hidden/file.txt',
           'a/.bash_profile'
         ].each_with_index do |path, i|
@@ -188,6 +189,82 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
       harvest.reload
 
       expect(harvest).to be_uploading
+    end
+
+    it 'will transition the harvest even if the harvest was still in :uploading when the job started' do
+      harvest.open_upload!
+      harvest.save!
+
+      expect(harvest).to be_uploading
+
+      # https://github.com/QutEcoacoustics/baw-server/issues/613
+      # the bug is:
+      # 1. transition to scan
+      # 2. enqueue job
+      # 3. job is started
+      # 4. model is saved
+      # 5. job finishes and stale model is in an invalid state
+
+      waiter = introduce_delay(job_class: BawWorkers::Jobs::Harvest::ScanJob, method: :scan_for_files, delay: 0.5) {
+        # 4. model is saved
+        harvest.save!
+      }
+
+      # 1. transition to scan
+      harvest.scan
+      # 2. enqueue job
+      BawWorkers::Jobs::Harvest::ScanJob.scan(harvest)
+
+      # 3. job is started
+      perform_jobs_immediately(count: 1)
+      waiter.call
+      wait_for_jobs
+
+      # 5. job finishes, but no longer fails because bug fix
+
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+
+      harvest.reload
+
+      expect(harvest).to be_metadata_extraction
+    end
+
+    it 'if a harvest is closed while the scan job is running it will not error' do
+      harvest.open_upload!
+      harvest.save!
+
+      expect(harvest).to be_uploading
+
+      # https://github.com/QutEcoacoustics/baw-server/issues/615
+      # the bug is:
+      # 1. transition to scan (model saved)
+      # 2. enqueue job
+      # 3. job is started
+      # 4. harvest is cancelled during job run
+      # 5. job finishes and stale model is in an invalid state and tries to transition to extract when it can't
+
+      waiter = introduce_delay(job_class: BawWorkers::Jobs::Harvest::ScanJob, method: :scan_for_files, delay: 0.5) {
+        # 4. harvest is cancelled
+        harvest.abort!
+      }
+
+      # 1. transition to scan
+      harvest.scan!
+      # 2. job in enqueued
+      expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+
+      # 3. job is started
+      perform_jobs_immediately(count: 1)
+      waiter.call
+      wait_for_jobs
+
+      # 5. job finishes, but no longer fails because bug fix
+
+      expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
+
+      harvest.reload
+
+      expect(harvest).to be_complete
     end
   end
 end

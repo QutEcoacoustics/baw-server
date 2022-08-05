@@ -346,6 +346,47 @@ module ResqueHelpers
       logger.info('Finished waiting for test jobs to be performed', { remaining: count })
     end
 
+    # Slow down a job by wrapping a target method in a remote job class with a proxy
+    # that waits for a delay. If given a block the block will be run (on the client),
+    # then the delay will occur (on the client), then finally
+    # the target method is invoked (on the remote), and the job will resume normally.
+    # YOU MUST invoke `.call` on return value of this function.
+    # @param job [Class<::BawWorkers::Jobs::ApplicationJob>]
+    # @param method [Symbol]
+    # @param delay [Numeric] delay in seconds
+    # @yield a callback executed just before the wait happens
+    # @return [Proc] a waiter you must call to block with until the delay has occurred
+    def introduce_delay(job_class:, method:, delay: 1, &block)
+      raise ArgumentError, 'delay must be less than 30' if delay > 30
+
+      BawWorkers::Jobs::IntroduceDelay.add_hook(job_class, method)
+
+      # return a proc that will do the waiting
+      lambda do
+        started = Time.now
+        elapsed = 0
+        loop do
+          elapsed = Time.now - started
+          logger.info('IntroduceDelay: Waiting for job method to be invoked', elapsed:)
+          sleep 0.1
+
+          break if BawWorkers::Jobs::IntroduceDelay.waiting?
+          raise 'IntroduceDelay: Timed out waiting for job hook' if elapsed > 30
+        end
+
+        logger.info('IntroduceDelay: Job hook hit, executing client hook')
+        block&.call
+
+        logger.info('IntroduceDelay: Sleep by', delay:)
+        sleep delay
+
+        logger.info('IntroduceDelay: Releasing job')
+
+        BawWorkers::Jobs::IntroduceDelay.stop_waiting!
+        BawWorkers::Jobs::IntroduceDelay.remove_hook
+      end
+    end
+
     # Perform a number of jobs and **BLOCK** execution until the jobs are completed.
     # Set a flag in redis that the Test worker listens for.
     # That worker will then complete the given number of jobs.

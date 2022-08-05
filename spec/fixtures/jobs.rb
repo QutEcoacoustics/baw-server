@@ -93,7 +93,7 @@ module Fixtures
     def perform(_echo_id)
       logger.info { 'starting killable ' }
       (0..100).each do |num|
-        logger.info('progress killable ', num: num)
+        logger.info('progress killable ', num:)
         report_progress(num, 100, "At #{num} of 100")
         sleep(0.1)
       end
@@ -146,6 +146,20 @@ module Fixtures
     end
   end
 
+  class CheckPointJob < FixtureJob
+    perform_expects
+
+    def perform
+      push_message("Before some_work:#{Time.now.iso8601(6)}")
+      some_work
+      push_message("After some_work:#{Time.now.iso8601(6)}")
+    end
+
+    def some_work
+      push_message("In some_work:#{Time.now.iso8601(6)}")
+    end
+  end
+
   class FakeAnalysisJob < BawWorkers::Jobs::ApplicationJob
     queue_as Settings.actions.analysis.queue
     perform_expects Hash
@@ -172,7 +186,7 @@ module Fixtures
       # do some work
       work = {
         resque_id: job_id,
-        analysis_params: analysis_params,
+        analysis_params:,
         result: Time.now
       }
 

@@ -57,7 +57,9 @@ describe 'creation helper' do
 
     expect(Dataset.count).to eq(2)
     expect(DatasetItem.count).to eq(2)
-    expect(Dataset.all[1].id).to eq(DatasetItem.first.dataset_id)
+    # AT 2020: This is untrue, especially if there has been any churn on the id sequence
+    # Disabling but leaving for documentation since I'm not sure what effect this will have.
+    #expect(Dataset.all[1].id).to eq(DatasetItem.first.dataset_id)
 
     expect(Study.count).to eq(1)
     expect(Question.count).to eq(1)

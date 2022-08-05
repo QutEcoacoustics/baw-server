@@ -118,7 +118,7 @@ module Internal
     # @param payload [::SftpgoClient::HookPayload]
     def skip?(payload)
       path = payload.virtual_target_path || payload.virtual_path
-      BawWorkers::Jobs::Harvest::PathFilter.skip_file?(path)
+      BawWorkers::Jobs::Harvest::PathFilter.skip_path?(path)
     end
   end
 end

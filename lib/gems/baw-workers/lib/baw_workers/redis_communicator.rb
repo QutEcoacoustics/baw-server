@@ -30,7 +30,7 @@ module BawWorkers
       "#{namespace}:#{key}"
     end
 
-    # @return [Redis]
+    # @return [::Redis]
     attr_reader :redis
 
     # Delete a single key.

@@ -485,13 +485,13 @@ RSpec.describe Harvest, type: :model do
 
       expect(harvest.last_metadata_review_at).to be_nil
       harvest.metadata_review!
-      expect(harvest.last_metadata_review_at).to be_within(0.01.seconds).of(Time.now)
+      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.now)
 
       # and it updates it on reentry
       harvest.extract!
       sleep 1
       harvest.metadata_review!
-      expect(harvest.last_metadata_review_at).to be_within(0.01.seconds).of(Time.now)
+      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.now)
     end
   end
 end
