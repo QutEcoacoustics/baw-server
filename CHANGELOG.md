@@ -1,5 +1,15 @@
 # Changelog
 
+## [8.12.4](https://github.com/QutEcoacoustics/baw-server/tree/8.12.4) (2022-08-05)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.12.1...8.12.4)
+
+**Fixed bugs:**
+
+- Harvest: An AASM::InvalidTransition occurred in background  [\#615](https://github.com/QutEcoacoustics/baw-server/issues/615)
+- Harvest: timeout while processing HarvestItem should schedule a retry [\#614](https://github.com/QutEcoacoustics/baw-server/issues/614)
+- Harvest: transitioning to scan state in production sometimes does not save state [\#613](https://github.com/QutEcoacoustics/baw-server/issues/613)
+
 ## [8.12.1](https://github.com/QutEcoacoustics/baw-server/tree/8.12.1) (2022-08-02)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.11.3...8.12.1)
