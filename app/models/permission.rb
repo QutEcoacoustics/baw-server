@@ -117,6 +117,11 @@ class Permission < ApplicationRecord
           join: Project,
           on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
           available: true
+        },
+        {
+          join: User,
+          on: Permission.arel_table[:user_id].eq(User.arel_table[:id]),
+          available: true
         }
       ]
     }
