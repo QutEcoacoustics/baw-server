@@ -1,5 +1,13 @@
 # Changelog
 
+## [8.13.0](https://github.com/QutEcoacoustics/baw-server/tree/8.13.0) (2022-08-08)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.12.4...8.13.0)
+
+**Implemented enhancements:**
+
+- Permissions: add user association to allow filtering permissions by username [\#616](https://github.com/QutEcoacoustics/baw-server/issues/616)
+
 ## [8.12.4](https://github.com/QutEcoacoustics/baw-server/tree/8.12.4) (2022-08-05)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.12.1...8.12.4)
