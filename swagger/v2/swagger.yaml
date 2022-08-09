@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.12.4 from http://localhost:3000.
+                  Version 8.13.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.12.4"
+                Write-Information "Acoustic Workbench downloader script version 8.13.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 8.12.4 from http://localhost:3000.
+                  Version 8.13.0 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 8.12.4"
+                Write-Information "Acoustic Workbench downloader script version 8.13.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3534,7 +3534,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -3605,7 +3605,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -3685,7 +3685,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -3790,7 +3790,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -3888,7 +3888,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -3963,7 +3963,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5166,7 +5166,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5252,7 +5252,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5321,7 +5321,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5396,7 +5396,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5468,7 +5468,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
@@ -5532,7 +5532,7 @@ paths:
                   report:
                     items_total: 0
                     items_size_bytes: 0
-                    items_duration_seconds: 0
+                    items_duration_seconds: 0.0
                     items_new: 0
                     items_metadata_gathered: 0
                     items_failed: 0
