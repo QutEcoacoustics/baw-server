@@ -212,7 +212,7 @@ module HarvestSpecCommon
         items_errored:,
         items_invalid_fixable:,
         items_invalid_not_fixable:,
-        latest_activity_at: be_within(expected_speed.seconds).of(Time.now),
+        latest_activity_at: be_within(expected_speed.seconds).of(Time.now.utc),
         run_time_seconds: an_instance_of(Float).and(be < expected_speed)
       ))
     end

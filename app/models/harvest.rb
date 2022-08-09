@@ -439,23 +439,25 @@ class Harvest < ApplicationRecord
     end
   end
 
+  REPORT_EXPRESSIONS = {
+    items_total: Arel.star.count.coalesce(0),
+    items_size_bytes: HarvestItem.size_arel.sum.coalesce(0).cast('bigint'),
+    items_duration_seconds: HarvestItem.duration_arel.sum.coalesce(0),
+    **HarvestItem.counts_by_status_arel('items_'),
+    items_invalid_fixable: HarvestItem.invalid_fixable_arel.sum.coalesce(0),
+    items_invalid_not_fixable: HarvestItem.invalid_not_fixable_arel.sum.coalesce(0),
+    latest_activity_at: HarvestItem.arel_table[:updated_at].maximum
+  }.freeze
+
   # Generates summary statistics for this harvest
   def generate_report
-    last_update = harvest_items.order(updated_at: :desc).select(:updated_at)&.first&.updated_at
+    result = harvest_items.pick_hash(REPORT_EXPRESSIONS)
+
+    last_update = result[:latest_activity_at]
     run_time_seconds = last_update.nil? ? nil : last_update - created_at
+    result[:run_time_seconds] = run_time_seconds
 
-    {
-      items_total: harvest_items.count,
-      items_size_bytes: harvest_items.sum(HarvestItem.size_arel),
-      items_duration_seconds: harvest_items.sum(HarvestItem.duration_arel),
-      **HarvestItem.counts_by_status(harvest_items).transform_keys { |k| "items_#{k}" },
-
-      items_invalid_fixable: harvest_items.sum(HarvestItem.invalid_fixable_arel),
-      items_invalid_not_fixable: harvest_items.sum(HarvestItem.invalid_not_fixable_arel),
-
-      latest_activity_at: last_update,
-      run_time_seconds:
-    }
+    result
   end
 
   # Define filter api settings

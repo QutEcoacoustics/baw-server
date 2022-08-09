@@ -17,6 +17,13 @@ CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 
 
 --
+-- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
+
+
+--
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2620,6 +2627,20 @@ CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_transla
 
 
 --
+-- Name: index_harvest_items_on_harvest_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_harvest_items_on_harvest_id ON public.harvest_items USING btree (harvest_id);
+
+
+--
+-- Name: index_harvest_items_on_info; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_harvest_items_on_info ON public.harvest_items USING gin (info);
+
+
+--
 -- Name: index_harvest_items_on_path; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3616,6 +3637,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220407040355'),
 ('20220603004830'),
 ('20220629023538'),
-('20220704043031');
+('20220704043031'),
+('20220808062341');
 
 

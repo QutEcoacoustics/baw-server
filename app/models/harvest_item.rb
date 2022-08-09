@@ -21,8 +21,10 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 #
 # Indexes
 #
-#  index_harvest_items_on_path    (path)
-#  index_harvest_items_on_status  (status)
+#  index_harvest_items_on_harvest_id  (harvest_id)
+#  index_harvest_items_on_info        (info) USING gin
+#  index_harvest_items_on_path        (path)
+#  index_harvest_items_on_status      (status)
 #
 # Foreign Keys
 #
@@ -238,8 +240,18 @@ class HarvestItem < ApplicationRecord
   end
 
   DEFAULT_COUNTS_BY_STATUS = STATUSES.map(&:to_s).product([0]).to_h
-  def self.counts_by_status(relation)
-    DEFAULT_COUNTS_BY_STATUS.merge(relation.group(:status).count)
+
+  # Returns a hash of keys and arel expressions to count statuses.
+  # Works with with {ApplicationRecord.pick_hash}.
+  # @param prefix [String] an optional prefix for the keys of the hash
+  # @return [Hash<Symbol, ::Arel::Nodes::Node>]
+  def self.counts_by_status_arel(prefix = "")
+    STATUSES.to_h { |x|
+      [
+        (prefix + x.to_s).to_sym,
+        arel_table[:status].count.filter(arel_table[:status] == x).coalesce(0)
+      ]
+    }
   end
 
   # When we return fake harvest items that are directories, the id is nil

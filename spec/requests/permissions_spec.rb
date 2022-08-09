@@ -42,6 +42,9 @@ describe '/projects/{project_id}/permissions' do
       filter: {
         'users.user_name' => {
           contains: 'thon'
+        },
+        'users.roles_mask': {
+          eq: 2
         }
       }
     }
