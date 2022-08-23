@@ -77,6 +77,39 @@ describe Site, type: :model do
     expect(s.errors[:name].size).to eq(1)
   end
 
+  it 'obfuscates locations' do
+    s = Site.new(latitude: -30.0873, longitude: 145.894)
+
+    aggregate_failures do
+      expect(s.custom_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
+      expect(s.custom_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
+
+      jitter_exclude_range = Site::JITTER_RANGE * 0.1
+      expect(s.custom_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
+      expect(s.custom_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
+    end
+  end
+
+  it 'location obfuscation is stable' do
+    s1 = Site.new(latitude: -30.0873, longitude: 145.894)
+    s2 = Site.new(latitude: -30.0873, longitude: 145.894)
+
+    # tiny one digit change in longitude
+    s3 = Site.new(latitude: -30.0873, longitude: 145.895)
+
+    # tiny one digit change in latitude
+    s4 = Site.new(latitude: -30.0872, longitude: 145.894)
+
+    expect(s1.custom_latitude).to eq(s2.custom_latitude)
+    expect(s1.custom_latitude).to eq(s2.custom_latitude)
+
+    expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
+    expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
+
+    expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
+    expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
+  end
+
   it 'obfuscates lat/longs properly' do
     original_lat = -23.0
     original_lng = 127.0
@@ -94,8 +127,8 @@ describe Site, type: :model do
       s.latitude = original_lat
       s.longitude = original_lng
 
-      jit_lat = Site.add_location_jitter(s.latitude, lat_min, lat_max)
-      jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max)
+      jit_lat = Site.add_location_jitter(s.latitude, lat_min, lat_max, s.location_jitter_seed)
+      jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max, s.location_jitter_seed)
 
       expect(jit_lat).to be_within(jitter_range).of(s.latitude)
       expect(jit_lat).not_to be_within(jitter_exclude_range).of(s.latitude)

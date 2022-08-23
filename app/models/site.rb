@@ -67,8 +67,8 @@ class Site < ApplicationRecord
   LONGITUDE_MAX = 180
 
   # See https://en.wikipedia.org/wiki/Decimal_degrees
-  # (scale of a large town or village)
-  JITTER_RANGE = 0.03
+  # (neighborhood, street, about 333m)
+  JITTER_RANGE = 0.003
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -153,7 +153,7 @@ class Site < ApplicationRecord
   def custom_latitude
     value = read_attribute(:latitude)
     if location_obfuscated && !value.blank?
-      Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX)
+      Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX, location_jitter_seed)
     else
       value
     end
@@ -162,7 +162,7 @@ class Site < ApplicationRecord
   def custom_longitude
     value = read_attribute(:longitude)
     if location_obfuscated && !value.blank?
-      Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)
+      Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed)
     else
       value
     end
@@ -185,43 +185,35 @@ class Site < ApplicationRecord
     @location_obfuscated
   end
 
-  def self.add_location_jitter(value, min, max)
-    # multiply by 10,000 to get to ~10m accuracy
-    accuracy = 10_000
-    multiplied = (value * accuracy).floor.to_i
+  def location_jitter_seed
+    # random numbers for jitters will be stable for given coordinates
+    # but changing coordinates will change the jitter
+    ((latitude * 1e12) + (longitude * 1e6)).to_i
+  end
 
-    # get a range for potential jitter
+  def self.add_location_jitter(value, min, max, seed)
+    # create a stable jitter by using the given seed
+    # but ensure a different seed is used for lat/long by incorporating the max
+    generator = Random.new(seed * max)
 
-    max_diff = (Site::JITTER_RANGE * accuracy).floor.to_i
-    range_min = multiplied - max_diff
-    range_max = multiplied + max_diff
+    # sample once
+    random = generator.rand
 
-    # included range (inclusive range)
-    range = (range_min..range_max).to_a
+    # partition random over 0.5 to get a range of [-0.5, 0.5]
+    # this allows us to spread either side of the target value
+    random -= 0.5
 
-    excluded_diff = (Site::JITTER_RANGE * 0.1 * accuracy).floor.to_i
-    excluded_min = multiplied - excluded_diff
-    excluded_max = multiplied + excluded_diff
+    # calculate the actual jitter
+    jitter = Site::JITTER_RANGE * random
 
-    # excluded numbers (inclusive range)
-    excluded = (excluded_min..excluded_max).to_a
+    # add in an exclusion buffer
+    # the addition pushes the jitter away from the mid point
+    # we push out by 10% of the jitter range, so for 0.003° ≈ 333m the push range is +- 33m
+    jitter += ((jitter >= 0 ? 1 : -1) * (Site::JITTER_RANGE * 0.1))
 
-    # create array of available numbers with middle range excluded
-    available = range - excluded
-
-    # select a random value from the available array of ints
-    selected = available.sample
-
-    # ensure the last digit is not zero (0), as this will be removed when converted
-    selected += 1 if selected.to_s.last == '0'
-
-    # round to ensure precision is maintained (damn floating point in-exactness)
-    # 3 decimal places is at the scale of an 'individual street, land parcel'
-    modified_value = selected.fdiv(accuracy).round(4)
-
-    # ensure range is maintained (damn floating point in-exactness)
-    modified_value = value + Site::JITTER_RANGE if modified_value > (value + Site::JITTER_RANGE)
-    modified_value = value - Site::JITTER_RANGE if modified_value < (value - Site::JITTER_RANGE)
+    # finally augment the input value
+    # rounding just to produce a neat value
+    modified_value = (value + jitter).round(5)
 
     # ensure modified value stays within lat/long valid ranges
     modified_value = max if modified_value > max
