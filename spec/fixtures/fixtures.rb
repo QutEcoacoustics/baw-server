@@ -104,6 +104,12 @@ module Fixtures
     ensure_exists FILES_PATH / '3.14_PreallocatedHeader' / '20191125_AAO' / '20191125T000000+1000_REC.flac'
   end
 
+  # rubocop:disable Naming/MethodName
+  def self.problem_WA002
+    ensure_exists FILES_PATH / 'WA_SM3_1.35A' / 'SM304290_0+1_20211001_130001.wav'
+  end
+  # rubocop:enable Naming/MethodName
+
   #
   # Check a fixture exists
   #

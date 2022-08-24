@@ -147,7 +147,8 @@ module BawWorkers
           Emu::Fix::FL_DURATION_BUG,
           Emu::Fix::FL_PREALLOCATED_HEADER,
           Emu::Fix::FL_SPACE_IN_DATESTAMP,
-          Emu::Fix::FL_INCORRECT_DATA_SIZE
+          Emu::Fix::FL_INCORRECT_DATA_SIZE,
+          Emu::Fix::WA_NO_DATA
         ].freeze
 
         # @return [HarvestItem] The database record for the current harvest item

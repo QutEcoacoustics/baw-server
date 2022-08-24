@@ -2,7 +2,7 @@
 
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
-describe 'HarvestJob can rename FL001', :clean_by_truncation do
+describe 'HarvestJob can detect FL001', :clean_by_truncation do
   require 'support/shared_test_helpers'
 
   include_context 'shared_test_helpers'

@@ -60,7 +60,7 @@ Metrics/CyclomaticComplexity:
 Layout/SpaceAroundMethodCallOperator:
   Enabled: true
 Metrics/BlockLength:
-  IgnoredMethods:
+  AllowedMethods:
     - resource
     - describe
     - example_group
