@@ -1,5 +1,21 @@
 # Changelog
 
+## [8.16.0](https://github.com/QutEcoacoustics/baw-server/tree/8.16.0) (2022-08-24)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.14.0...8.16.0)
+
+**Fixed bugs:**
+
+- Site: public jitter amount out by as much as 2km [\#620](https://github.com/QutEcoacoustics/baw-server/issues/620)
+
+**Closed issues:**
+
+- Harvest: unknown error processing files [\#617](https://github.com/QutEcoacoustics/baw-server/issues/617)
+
+## [8.14.0](https://github.com/QutEcoacoustics/baw-server/tree/8.14.0) (2022-08-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.13.0...8.14.0)
+
 ## [8.13.0](https://github.com/QutEcoacoustics/baw-server/tree/8.13.0) (2022-08-08)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.12.4...8.13.0)
