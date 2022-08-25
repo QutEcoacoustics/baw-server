@@ -49,7 +49,7 @@ class Region < ApplicationRecord
   validates :image,
     size: {
       less_than_or_equal_to: BawApp.attachment_size_limit,
-      message: "%{attribute} size %{file_size} is greater than #{ActiveSupport::NumberHelper.number_to_human_size(BawApp.attachment_size_limit)}, try a smaller file"
+      message: "%<attribute>s size %<file_size>s is greater than #{ActiveSupport::NumberHelper.number_to_human_size(BawApp.attachment_size_limit)}, try a smaller file"
     },
     content_type: [:png, :jpg, :jpeg]
 
@@ -108,7 +108,7 @@ class Region < ApplicationRecord
         **Api::Schema.all_user_stamps,
         notes: { type: 'object' },
         project_id: { '$ref' => '#/components/schemas/id' },
-        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
         image_urls: Api::Schema.image_urls,
         image: { type: 'string', format: 'binary', writeOnly: true, nullable: true }
       },
