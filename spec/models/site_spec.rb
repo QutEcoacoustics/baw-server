@@ -138,6 +138,28 @@ describe Site, type: :model do
     }
   end
 
+  it 'returns nil for obfuscated location when inputs are nil' do
+    s1 = Site.new(latitude: nil, longitude: 145.894)
+    s2 = Site.new(latitude: -30.0873, longitude: nil)
+    s3 = Site.new(latitude: nil, longitude: nil)
+
+    expect([s1.custom_latitude, s2.custom_latitude, s3.custom_latitude]).to match(
+      [
+        nil,
+        be_within(Site::JITTER_RANGE).of(-30.0873),
+        nil
+      ]
+    )
+
+    expect([s1.custom_longitude, s2.custom_longitude, s3.custom_longitude]).to match(
+      [
+        be_within(Site::JITTER_RANGE).of(145.894),
+        nil,
+        nil
+      ]
+    )
+  end
+
   it 'latitude should be within the range [-90, 90]' do
     site = build(:site)
 

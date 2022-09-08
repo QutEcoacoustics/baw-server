@@ -188,7 +188,7 @@ class Site < ApplicationRecord
   def location_jitter_seed
     # random numbers for jitters will be stable for given coordinates
     # but changing coordinates will change the jitter
-    ((latitude * 1e12) + (longitude * 1e6)).to_i
+    (((latitude || 0) * 1e12) + ((longitude || 0) * 1e6)).to_i
   end
 
   def self.add_location_jitter(value, min, max, seed)
