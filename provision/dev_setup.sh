@@ -20,6 +20,8 @@ SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.
     && chown -R $USERNAME /commandhistory \
     && echo $SNIPPET >> "/home/$USERNAME/.bashrc"
 
+git config --global core.editor "code --wait"
+
 # we're generating some powershell scripts from the server, thus we need powershell to test them
 # currently this is dev time only dependency
 # https://docs.microsoft.com/en-us/powershell/scripting/install/install-debian?view=powershell-7.2
