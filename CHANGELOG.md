@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.0.0](https://github.com/QutEcoacoustics/baw-server/tree/9.0.0) (2022-09-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.16.0...9.0.0)
+
+**Fixed bugs:**
+
+- A NoMethodError occurred in sites\#filter: [\#621](https://github.com/QutEcoacoustics/baw-server/issues/621)
+
 ## [8.16.0](https://github.com/QutEcoacoustics/baw-server/tree/8.16.0) (2022-08-24)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.14.0...8.16.0)
@@ -115,6 +123,10 @@
 **Fixed bugs:**
 
 - Upload host split [\#585](https://github.com/QutEcoacoustics/baw-server/pull/585) ([atruskie](https://github.com/atruskie))
+
+**Closed issues:**
+
+- Allow user to upload annotations [\#573](https://github.com/QutEcoacoustics/baw-server/issues/573)
 
 ## [8.1.0](https://github.com/QutEcoacoustics/baw-server/tree/8.1.0) (2022-06-06)
 
