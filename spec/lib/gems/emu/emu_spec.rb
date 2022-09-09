@@ -32,10 +32,14 @@ describe Emu do
             severity: 'Moderate',
             message: "File's duration is wrong",
             data: {
-              comment: 'SensorFirmwareVersion= 3.20                                 ',
-              version: 3.2,
-              found_at: '[207, 267)',
-              tags: []
+              firmware: {
+                comment: 'SensorFirmwareVersion= 3.20                                 ',
+                version: 3.2,
+                found_at: '[207, 267)',
+                tags: []
+              },
+              header_samples: 317_292_544,
+              counted_samples: 158_646_272
             }
           }
         }
@@ -123,7 +127,9 @@ describe Emu do
               status: 'Repaired',
               severity: 'None',
               data: a_hash_including(
-                tags: ['EMU+FL010']
+                firmware: a_hash_including(
+                  tags: ['EMU+FL010']
+                )
               ),
               message: "File has already had it's duration repaired"
             ),
@@ -179,7 +185,9 @@ describe Emu do
             message: "File has already had it's duration repaired",
             severity: 'None',
             data: a_hash_including(
-              tags: ['EMU+FL010']
+              firmware: a_hash_including(
+                tags: ['EMU+FL010']
+              )
             )
           }
         }
