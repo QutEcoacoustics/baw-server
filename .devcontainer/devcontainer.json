@@ -43,5 +43,5 @@
     "stevejpurves.cucumber",
     "ms-azuretools.vscode-docker",
     "GitHub.vscode-pull-request-github"
-  ],
+  ]
 }
