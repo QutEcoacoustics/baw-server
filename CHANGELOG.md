@@ -1,5 +1,17 @@
 # Changelog
 
+## [9.0.2](https://github.com/QutEcoacoustics/baw-server/tree/9.0.2) (2022-09-14)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.1...9.0.2)
+
+**Fixed bugs:**
+
+- EMU exit code check fail [\#623](https://github.com/QutEcoacoustics/baw-server/issues/623)
+
+## [9.0.1](https://github.com/QutEcoacoustics/baw-server/tree/9.0.1) (2022-09-14)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.0...9.0.1)
+
 ## [9.0.0](https://github.com/QutEcoacoustics/baw-server/tree/9.0.0) (2022-09-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/8.16.0...9.0.0)
