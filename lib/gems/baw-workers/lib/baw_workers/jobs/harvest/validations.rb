@@ -98,6 +98,9 @@ module BawWorkers
             valid_audio_formats = Settings.available_formats.audio
             return if BawWorkers::Config.file_info.valid_ext?(path, valid_audio_formats)
 
+            # allow partial data files through to the emu repair step
+            return if path.basename.to_s == 'data'
+
             not_fixable("File has invalid extension `#{path.extname}`")
           end
         end

@@ -144,10 +144,12 @@ module BawWorkers
         end
 
         FIXES = [
+          Emu::Fix::FL_PARTIAL_FILE,
           Emu::Fix::FL_DURATION_BUG,
           Emu::Fix::FL_PREALLOCATED_HEADER,
           Emu::Fix::FL_SPACE_IN_DATESTAMP,
           Emu::Fix::FL_INCORRECT_DATA_SIZE,
+          Emu::Fix::FL_DATA_SIZE_0,
           Emu::Fix::WA_NO_DATA
         ].freeze
 

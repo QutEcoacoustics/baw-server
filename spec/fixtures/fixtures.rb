@@ -108,6 +108,14 @@ module Fixtures
   def self.problem_WA002
     ensure_exists FILES_PATH / 'WA_SM3_1.35A' / 'SM304290_0+1_20211001_130001.wav'
   end
+
+  def self.partial_file_FL011
+    ensure_exists FILES_PATH / '3.17_PartialDataFiles' / 'Robson-Creek-Dry-A_201' / '20200426_STUDY' / 'data'
+  end
+
+  def self.partial_file_FL011_empty
+    ensure_exists FILES_PATH / '3.17_PartialDataFiles' / 'Robson-Creek-Dry-A_201' / '20210416_STUDY' / 'data'
+  end
   # rubocop:enable Naming/MethodName
 
   #

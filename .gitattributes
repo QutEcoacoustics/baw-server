@@ -2,7 +2,7 @@
 * text=auto eol=lf
 # ...Unless the name matches the following
 # overriding patterns
-# Definitively text files 
+# Definitively text files
 *.txt text eol=lf
 *.rb  text eol=lf
 *.gemspec diff=ruby eol=lf
@@ -23,3 +23,4 @@ bin/* diff=ruby eol=lf
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.flac filter=lfs diff=lfs merge=lfs -text
 *.JPG filter=lfs diff=lfs merge=lfs -text
+spec/fixtures/**/data filter=lfs diff=lfs merge=lfs -text
