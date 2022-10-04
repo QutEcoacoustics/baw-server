@@ -9,6 +9,7 @@
 #  last_metadata_review_at :datetime
 #  last_upload_at          :datetime
 #  mappings                :jsonb
+#  name                    :string
 #  status                  :string
 #  streaming               :boolean
 #  upload_password         :string

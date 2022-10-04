@@ -181,7 +181,7 @@ class HarvestsController < ApplicationController
   def harvest_params(update: false)
     harvest = params.require(:harvest)
 
-    permitted = []
+    permitted = [:name]
     permitted << :project_id unless update
     permitted << :status if update
     permitted << :streaming unless update

@@ -403,14 +403,13 @@ module ResqueHelpers
       end
 
       logger.info "Performing #{count} jobs..."
-      started = Time.now
+      started = now
 
       expect(BawWorkers::ResquePatch::PauseDequeueForTests.set_perform_count(count)).to eq 'OK'
 
       statuses = []
       elapsed = 0
       error = loop {
-        now = Time.now
         elapsed = now - started
         break 'Timed out waiting for jobs to finish' if elapsed > timeout
 
@@ -427,7 +426,7 @@ module ResqueHelpers
       error_statuses_count = statuses.select(&:errored?).count
       if wait_for_resque_failures && error_statuses_count.positive? && BawWorkers::ResqueApi.failed_count != error_statuses_count
         logger.info('Waiting for failures to be reported')
-        sleep 0.5 until BawWorkers::ResqueApi.failed_count == error_statuses_count || (Time.now - started) > (timeout + 10)
+        sleep 0.5 until BawWorkers::ResqueApi.failed_count == error_statuses_count || (now - started) > (timeout + 10)
       end
 
       unless error.blank?
@@ -451,6 +450,13 @@ module ResqueHelpers
         statuses_count: statuses.count,
         status_execution_count: statuses.sum { |s| (s&.options&.fetch(:executions, nil) || 0) + 1 }
       }
+    end
+
+    private
+
+    # like Time.now but ignores Timecop
+    def now
+      Time.now_without_mock_time
     end
   end
 end

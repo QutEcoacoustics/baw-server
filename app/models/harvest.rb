@@ -9,6 +9,7 @@
 #  last_metadata_review_at :datetime
 #  last_upload_at          :datetime
 #  mappings                :jsonb
+#  name                    :string
 #  status                  :string
 #  streaming               :boolean
 #  upload_password         :string
@@ -33,6 +34,8 @@ class Harvest < ApplicationRecord
   HARVEST_ID_FROM_FOLDER_REGEX = %r{/#{HARVEST_FOLDER_PREFIX}(\d+)/}
 
   before_save :mark_mappings_change_at
+  before_create :set_default_name
+  before_update :set_default_name
 
   has_many :harvest_items, inverse_of: :harvest
 
@@ -54,6 +57,12 @@ class Harvest < ApplicationRecord
 
   def mark_mappings_change_at
     self.last_mappings_change_at = Time.now if mappings_changed?
+  end
+
+  def set_default_name
+    return unless name.blank?
+
+    self.name = "#{created_at.strftime('%B')} #{created_at.day.ordinalize} Upload"
   end
 
   # @return [Boolean]
@@ -462,7 +471,10 @@ class Harvest < ApplicationRecord
 
   # Define filter api settings
   def self.filter_settings
-    filterable_fields = [:id, :creator_id, :created_at, :updater_id, :updated_at, :streaming, :status, :project_id]
+    filterable_fields = [
+      :id, :creator_id, :created_at, :updater_id, :updated_at,
+      :streaming, :status, :project_id, :name
+    ]
     {
       valid_fields: [*filterable_fields],
       render_fields: [
@@ -526,6 +538,7 @@ class Harvest < ApplicationRecord
       additionalProperties: false,
       properties: {
         id: Api::Schema.id,
+        name: { type: ['null', 'string'] },
         **Api::Schema.updater_and_creator_user_stamps,
         project_id: Api::Schema.id,
         streaming: { type: 'boolean' },

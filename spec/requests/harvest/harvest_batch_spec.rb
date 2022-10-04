@@ -59,7 +59,7 @@ describe 'Harvesting a batch of files' do
       [:new_harvest, :uploading, :scanning, :metadata_review, :processing, :review].each do |status|
         step "the client cannot transition from :metadata_extraction->#{status}" do
           transition_harvest(status)
-          expect_transition_not_allowed(status)
+          expect_transition_not_allowed
         end
       end
 
@@ -103,7 +103,7 @@ describe 'Harvesting a batch of files' do
       [:new_harvest, :uploading, :scanning, :metadata_review, :processing].each do |status|
         step "the client cannot transition from processing->#{status}" do
           transition_harvest(status)
-          expect_transition_not_allowed(status)
+          expect_transition_not_allowed
         end
       end
 

@@ -110,6 +110,10 @@ RSpec/VariableName:
   IgnoredPatterns:
     # Variable named after http header required by rswag
     - ^Authorization$
+RSpec/NamedSubject:
+  # referring to subject explicitly is referring to a named variable - named subject
+  # I disagree with this style rule.
+  Enabled: false
 Style/AsciiComments:
   # emoji are useful
   Enabled: false

@@ -46,12 +46,14 @@ module HarvestSpecCommon
     BawWorkers::Config.upload_communicator
   end
 
-  def create_harvest(streaming: false)
+  def create_harvest(streaming: false, name: :ignore)
     body = {
       harvest: {
         streaming:
       }
     }
+
+    body[:harvest][:name] = name unless name == :ignore
 
     post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
 
@@ -62,6 +64,18 @@ module HarvestSpecCommon
     body = {
       harvest: {
         status: new_status
+      }
+    }
+
+    patch "/projects/#{project.id}/harvests/#{harvest.id}", params: body, **api_with_body_headers(owner_token)
+
+    harvest.reload
+  end
+
+  def rename_harvest(new_name)
+    body = {
+      harvest: {
+        name: new_name
       }
     }
 
@@ -112,7 +126,7 @@ module HarvestSpecCommon
     )
   end
 
-  def expect_transition_not_allowed(_new_status)
+  def expect_transition_not_allowed
     expect_error(
       :method_not_allowed,
       match(/The method received the request is known by the server but not supported by the target resource: Cannot update a harvest while it is .*/),

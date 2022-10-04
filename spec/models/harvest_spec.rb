@@ -9,6 +9,7 @@
 #  last_metadata_review_at :datetime
 #  last_upload_at          :datetime
 #  mappings                :jsonb
+#  name                    :string
 #  status                  :string
 #  streaming               :boolean
 #  upload_password         :string
@@ -45,6 +46,50 @@ RSpec.describe Harvest, type: :model do
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional(true) }
 
   it { is_expected.to validate_presence_of(:project) }
+
+  context 'when changing the name' do
+    before do
+      Timecop.freeze
+    end
+
+    after do
+      Timecop.return
+    end
+
+    it 'has a default value for the name column' do
+      n = Time.now
+      subject.save!
+
+      expect(subject.name).to eq "#{n.strftime('%B')} #{n.day.ordinalize} Upload"
+    end
+
+    it 'sets a default value for the name column on update if name is null' do
+      # create makes a default name
+      subject.save!
+
+      # update with a blank name
+      subject.name = nil
+      subject.save!
+
+      n = subject.created_at
+      expect(subject.name).to eq "#{n.strftime('%B')} #{n.day.ordinalize} Upload"
+    end
+
+    it 'can be created with a custom name' do
+      subject.name = 'hello'
+      subject.save!
+
+      expect(subject.name).to eq 'hello'
+    end
+
+    it 'can be updated with a custom name' do
+      subject.save!
+      subject.name = 'world'
+      subject.save!
+
+      expect(subject.name).to eq 'world'
+    end
+  end
 
   it 'encodes the mappings column as jsonb' do
     expect(Harvest.columns_hash['mappings'].type).to eq(:jsonb)

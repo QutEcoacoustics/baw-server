@@ -1044,7 +1044,8 @@ CREATE TABLE public.harvests (
     updated_at timestamp(6) without time zone NOT NULL,
     last_metadata_review_at timestamp(6) without time zone,
     last_mappings_change_at timestamp(6) without time zone,
-    upload_user_expiry_at timestamp(6) without time zone
+    upload_user_expiry_at timestamp(6) without time zone,
+    name character varying
 );
 
 
@@ -3694,6 +3695,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220629023538'),
 ('20220704043031'),
 ('20220808062341'),
-('20220825042333');
+('20220825042333'),
+('20220930062323');
 
 
