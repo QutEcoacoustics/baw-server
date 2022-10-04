@@ -1,5 +1,17 @@
 # Changelog
 
+## [9.0.3](https://github.com/QutEcoacoustics/baw-server/tree/9.0.3) (2022-10-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.2...9.0.3)
+
+**Implemented enhancements:**
+
+- Support processing partial data files [\#624](https://github.com/QutEcoacoustics/baw-server/issues/624)
+
+**Closed issues:**
+
+- Add an optional name field to harvest [\#619](https://github.com/QutEcoacoustics/baw-server/issues/619)
+
 ## [9.0.2](https://github.com/QutEcoacoustics/baw-server/tree/9.0.2) (2022-09-14)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.1...9.0.2)

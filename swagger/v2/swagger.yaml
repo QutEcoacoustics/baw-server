@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 9.0.1 from http://localhost:3000.
+                  Version 9.0.2 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 9.0.1"
+                Write-Information "Acoustic Workbench downloader script version 9.0.2"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 9.0.1 from http://localhost:3000.
+                  Version 9.0.2 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 9.0.1"
+                Write-Information "Acoustic Workbench downloader script version 9.0.2"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3527,6 +3527,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 60
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -3594,6 +3595,7 @@ paths:
                   streaming: true
                   status: uploading
                   project_id: 61
+                  name: January 2nd Upload
                   upload_user: Admin_47
                   upload_password: JfP9F2BWtxodssSphXFjtr1e
                   upload_url: sftp://upload.test:2022
@@ -3678,6 +3680,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 62
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -3783,6 +3786,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 64
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -3881,6 +3885,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 66
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -3956,6 +3961,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 67
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5528,6 +5534,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 98
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5614,6 +5621,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 100
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5683,6 +5691,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 101
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5758,6 +5767,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 102
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5830,6 +5840,7 @@ paths:
                   streaming: false
                   status: new_harvest
                   project_id: 103
+                  name: January 2nd Upload
                   upload_user: 
                   upload_password: 
                   upload_url: sftp://upload.test:2022
@@ -5890,6 +5901,7 @@ paths:
                   streaming: true
                   status: uploading
                   project_id: 104
+                  name: January 2nd Upload
                   upload_user: Admin_91
                   upload_password: B7Mx2RJE4maGyAvYsBn9Vmha
                   upload_url: sftp://upload.test:2022
@@ -8756,6 +8768,10 @@ components:
         id:
           "$ref": "#/components/schemas/id"
           readOnly: true
+        name:
+          type:
+          - 'null'
+          - string
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
