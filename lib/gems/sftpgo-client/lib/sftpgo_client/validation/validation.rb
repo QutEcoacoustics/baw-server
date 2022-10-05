@@ -21,7 +21,7 @@ module SftpgoClient
     def validate_user_name(name, value)
       return if value.is_a?(String) && !value.blank?
 
-      raise ArgumentError "#{name} must be an non-blank string"
+      raise ArgumentError, "#{name} must be an non-blank string"
     end
 
     def add_to_params(hash, name, value, &validation)

@@ -26,6 +26,10 @@ module HarvestSpecCommon
 
   ALL_STATES = Harvest.aasm.states.map(&:name)
 
+  def harvest_id=(value)
+    @harvest_id = value
+  end
+
   # @return [Harvest,nil]
   def harvest
     return nil if @harvest_id.nil?

@@ -211,11 +211,12 @@ class Harvest < ApplicationRecord
   #                     |---------------------------------------------------|
   #
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true, logger: SemanticLogger[Harvest] do
+    # @!method new_harvest?
     state :new_harvest, initial: true
 
     # @!method uploading?
     state :uploading, enter: [:mark_last_upload_at]
-    # @!method uploading?
+    # @!method scanning?
     state :scanning, enter: [:disable_upload_slot, :scan_upload_directory]
     state :metadata_extraction
     state :metadata_review, enter: [:mark_last_metadata_review_at]
@@ -317,6 +318,8 @@ class Harvest < ApplicationRecord
   end
 
   def close_upload_slot
+    return if upload_user.nil?
+
     BawWorkers::Config.upload_communicator.delete_upload_user(username: upload_user)
 
     self.upload_user = nil

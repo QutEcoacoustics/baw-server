@@ -38,6 +38,24 @@ describe 'Harvesting files' do
     expect(Harvest.count).to eq 0
   end
 
+  it 'abort works with a malformed upload' do
+    h = Harvest.new(project_id: project.id, creator: owner_user)
+    h.save!
+
+    self.harvest_id = h.id
+
+    get_harvest
+
+    # represents some kind of failed creation request
+    expect(harvest).to be_new_harvest
+    expect(harvest.upload_user).to be_blank
+
+    transition_harvest(:complete)
+    expect_success
+
+    expect(harvest).to be_complete
+  end
+
   # This shouldn't be needed yet... wait and see
   # context 'will attempt to rectify issues with the upload slot if present' do
   #   before
