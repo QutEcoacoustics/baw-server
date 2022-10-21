@@ -69,7 +69,7 @@ group :server do
   gem 'rails_same_site_cookie'
 
   # bumping to latest RC because it has pre-compiled native binaries
-  gem 'nokogiri', '~> 1.13.3'
+  gem 'nokogiri', '~> 1.13.9'
 
   # cms
   gem 'comfortable_mexican_sofa', '~> 2.0.0'
