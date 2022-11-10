@@ -1,0 +1,39 @@
+# grc configuration to colorize pbs syslogs
+# <30>1 2022-10-10T01:52:20.320316+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Svr;0cd99441e8fd;Scheduler sent command 3
+# <30>1 2022-10-10T01:52:20.381646+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Job;3.0cd99441e8fd;Job Queued at request of pbsuser@0cd99441e8fd, owner = pbsuser@0cd99441e8fd, job name = STDIN, queue = workq
+# <30>1 2022-10-10T01:52:20.381728+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Svr;0cd99441e8fd;Scheduler sent command 1
+# <30>1 2022-10-10T01:52:20.382882+00:00 0cd99441e8fd pbs_sched - - -  Job;3.0cd99441e8fd;Job run
+# <30>1 2022-10-10T01:52:20.382911+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Node;0cd99441e8fd;set_vnode_state;vnode.state=0x0 vnode_o.state=0x0 vnode.last_state_change_time=1665366740 vnode_o.last_state_change_time=1665366000 state_bits=0xffffffffffffffaf state_bit_op_type_str=Nd_State_And state_bit_op_type_enum=2
+# <30>1 2022-10-10T01:52:20.382929+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Job;3.0cd99441e8fd;Job Run at request of Scheduler@0cd99441e8fd on exec_vnode (0cd99441e8fd:ncpus=1)
+# <30>1 2022-10-10T01:52:20.438345+00:00 0cd99441e8fd pbs_mom - - -  Job;3.0cd99441e8fd;Started, pid = 1189
+# <30>1 2022-10-10T01:52:21.436455+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Svr;0cd99441e8fd;Scheduler sent command 3
+# <30>1 2022-10-10T01:52:21.495010+00:00 0cd99441e8fd pbs_mom - - -  Job;3.0cd99441e8fd;Terminated
+# <30>1 2022-10-10T01:52:22.441266+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Svr;0cd99441e8fd;Scheduler sent command 3
+# <30>1 2022-10-10T01:52:22.497632+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Job;3.0cd99441e8fd;Obit received momhop:1 serverhop:1 state:R substate:41
+# <30>1 2022-10-10T01:52:22.505308+00:00 0cd99441e8fd pbs_mom - - -  Job;3.0cd99441e8fd;copy file request received
+# <30>1 2022-10-10T01:52:22.513074+00:00 0cd99441e8fd pbs_mom - - -  Job;3.0cd99441e8fd;no active tasks
+# <30>1 2022-10-10T01:52:22.520325+00:00 0cd99441e8fd pbs_mom - - -  Job;3.0cd99441e8fd;delete job request received
+# <30>1 2022-10-10T01:52:22.524865+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Node;0cd99441e8fd;set_vnode_state;vnode.state=0x0 vnode_o.state=0x0 vnode.last_state_change_time=1665366742 vnode_o.last_state_change_time=1665366000 state_bits=0xffffffffffffffaf state_bit_op_type_str=Nd_State_And state_bit_op_type_enum=2
+# <30>1 2022-10-10T01:52:22.525001+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Job;3.0cd99441e8fd;Exit_status=0 resources_used.cpupercent=0 resources_used.cput=00:00:00 resources_used.mem=0kb resources_used.ncpus=1 resources_used.vmem=0kb resources_used.walltime=00:00:01
+# <30>1 2022-10-10T01:52:22.528453+00:00 0cd99441e8fd Server@0cd99441e8fd - - -  Svr;0cd99441e8fd;Scheduler sent command 2
+
+
+# ietf syslog format
+# priority, version, datestamp, hostname
+regexp=^(<\d+>)(.) ([\d-]{10}T[\d:+-.]{21}) ([\d\w.-]+)
+colours=white,white,"\033[38;5;244m",green,red
+-
+# pbs keywords
+regexp=(Svr|Node);([^;]*);(.*)
+colours=white,cyan,white,yellow
+-
+regexp=(Job);([^;]*);(.*)
+colours=white,cyan,"\033[38;5;46m",yellow
+-
+regexp=([\w\d.-]+?)\s?=\s?(\S+)
+colours=white,yellow,cyan
+count=more
+-
+regexp=(pbs_mom|pbs_sched).*?(Job);(.*?);(.*)
+colours=white,blue,blue,"\033[38;5;46m",yellow
+-

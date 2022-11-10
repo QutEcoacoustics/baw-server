@@ -31,7 +31,7 @@ class AnalysisJobsItem < ApplicationRecord
   include AASM
   include AasmHelpers
 
-  SYSTEM_JOB_ID = 'system'
+  SYSTEM_JOB_ID = AnalysisJob::SYSTEM_JOB_NAME
 
   # ensure we allow with_deleted here for race condition where analysis job
   # has been soft deleted while job items are still updating
@@ -49,13 +49,13 @@ class AnalysisJobsItem < ApplicationRecord
   validate :has_queue_id_when_needed
 
   validates :created_at,
-            presence: true,
-            timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime },
-            unless: :new_record?
+    presence: true,
+    timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime },
+    unless: :new_record?
 
   validates :queued_at, :work_started_at, :completed_at,
-            allow_blank: true, allow_nil: true,
-            timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
+    allow_blank: true, allow_nil: true,
+    timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
 
   def self.filter_settings(is_system = false)
     fields = [
@@ -136,23 +136,23 @@ class AnalysisJobsItem < ApplicationRecord
   #
 
   def self.for_analysis_job(analysis_job_id)
-    where(analysis_job_id: analysis_job_id)
+    where(analysis_job_id:)
   end
 
   def self.completed_for_analysis_job(analysis_job_id)
-    where(analysis_job_id: analysis_job_id, status: COMPLETED_ITEM_STATUS_SYMBOLS)
+    where(analysis_job_id:, status: COMPLETED_ITEM_STATUS_SYMBOLS)
   end
 
   def self.failed_for_analysis_job(analysis_job_id)
-    where(analysis_job_id: analysis_job_id, status: FAILED_ITEM_STATUS_SYMBOLS)
+    where(analysis_job_id:, status: FAILED_ITEM_STATUS_SYMBOLS)
   end
 
   def self.queued_for_analysis_job(analysis_job_id)
-    queued.where(analysis_job_id: analysis_job_id)
+    queued.where(analysis_job_id:)
   end
 
   def self.cancelled_for_analysis_job(analysis_job_id)
-    where(analysis_job_id: analysis_job_id, status: [:cancelling, :cancelled])
+    where(analysis_job_id:, status: [:cancelling, :cancelled])
   end
 
   # Scoped query for getting fake analysis_jobs.
@@ -301,7 +301,7 @@ class AnalysisJobsItem < ApplicationRecord
   AVAILABLE_ITEM_STATUS_SYMBOLS = aasm.states.map(&:name)
   AVAILABLE_ITEM_STATUS = AVAILABLE_ITEM_STATUS_SYMBOLS.map(&:to_s)
 
-  AVAILABLE_ITEM_STATUS_DISPLAY = aasm.states.map { |x| [x.name, x.display_name] }.to_h
+  AVAILABLE_ITEM_STATUS_DISPLAY = aasm.states.to_h { |x| [x.name, x.display_name] }
 
   COMPLETED_ITEM_STATUS_SYMBOLS = [:successful, :failed, :timed_out, :cancelled].freeze
   FAILED_ITEM_STATUS_SYMBOLS = [:failed, :timed_out, :cancelled].freeze
@@ -343,7 +343,7 @@ class AnalysisJobsItem < ApplicationRecord
       raise
     end
 
-    @enqueue_results = { result: result, error: error }
+    @enqueue_results = { result:, error: }
   end
 
   def set_queued_at
@@ -380,10 +380,10 @@ class AnalysisJobsItem < ApplicationRecord
 
     # merge base
     payload.merge({
-      command_format: command_format,
+      command_format:,
 
       config: config_string,
-      job_id: job_id,
+      job_id:,
 
       uuid: audio_recording.uuid,
       id: audio_recording.id,

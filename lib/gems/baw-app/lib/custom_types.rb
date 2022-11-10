@@ -3,8 +3,8 @@
 require 'dry-types'
 require 'dry/inflector'
 
-module Baw
-  module CustomTypes
+module BawApp
+  module Types
     include Dry.Types()
     #inflector = Dry::Inflector.new
 
@@ -23,14 +23,27 @@ module Baw
       end
       p
     }
-    PathExists =
+    PathExists = Constructor(::Pathname) { |value|
+      p = ::Pathname.new(value).expand_path
+      raise "#{p} does not exist" unless p.exist?
 
-      LogLevel = CustomTypes::Coercible::String.enum(
-        'Logger::DEBUG', 'Logger::INFO', 'Logger::WARN', 'Logger::ERROR', 'Logger::FATAL', 'Logger::UNKNOWN'
-      )
+      p
+    }
+
+    LogLevel = Types::Coercible::String.enum(
+      'Logger::DEBUG', 'Logger::INFO', 'Logger::WARN', 'Logger::ERROR', 'Logger::FATAL', 'Logger::UNKNOWN'
+    )
 
     IPAddr = Constructor(::IPAddr) { |value|
       ::IPAddr.new(value)
     }
+
+    UnixTime = Constructor(::Time) { |value|
+      next nil if value.blank?
+
+      ::Time.at(value)
+    }
+
+    JsonScalar = Types::JSON::Decimal | Types::String | Types::Nil
   end
 end

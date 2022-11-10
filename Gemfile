@@ -22,6 +22,11 @@ gem 'memoist'
 # bootsnap helps rails boot quickly
 gem 'bootsnap', require: false
 
+# logging
+gem 'amazing_print'
+gem 'rails_semantic_logger', '>= 4.10.0'
+gem 'semantic_logger'
+
 # standardised way to validate objects
 gem 'dry-monads'
 gem 'dry-struct'
@@ -37,6 +42,12 @@ gem 'faraday', '>2.0.1'
 gem 'faraday-encoding'
 gem 'faraday-parse_dates'
 gem 'faraday-retry'
+
+# used for connecting to PBS clusters via the batch analysis service
+gem 'bcrypt_pbkdf'
+gem 'ed25519'
+gem 'net-scp', '>= 4.0.0.rc1'
+gem 'net-ssh'
 
 # currently only used for testing jwts sent by sftpgo
 gem 'jwt'
@@ -187,10 +198,6 @@ end
 group :workers, :server do
   # For autoloading Gems. Zeitwerk is the default in Rails 6.
   gem 'zeitwerk', '>= 2.3', require: false
-
-  # logging
-  gem 'amazing_print'
-  gem 'rails_semantic_logger', '>= 4.10.0'
 
   # SETTINGS
   # -------------------------------------

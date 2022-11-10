@@ -34,6 +34,7 @@
       "constantize",
       "cors",
       "Cyclomatic",
+      "datestamp",
       "datetime",
       "decr",
       "deduplication",
@@ -59,6 +60,7 @@
       "ffprobe",
       "FILESYSTEMS",
       "fileutils",
+      "finalizer",
       "FLAC",
       "fmap",
       "Gemfile",
@@ -74,6 +76,7 @@
       "jsonb",
       "jsonl",
       "JWTs",
+      "keepalive",
       "keyreq",
       "killable",
       "klass",
@@ -109,6 +112,11 @@
       "prepend",
       "prepended",
       "prepending",
+      "qdel",
+      "qmgr",
+      "qselect",
+      "qstat",
+      "qsub",
       "qutecoacoustics",
       "Ractor",
       "Railtie",
@@ -177,8 +185,7 @@
       "zrange",
       "zrangebyscore",
       "zrem",
-      "zrevrange",
-      "datestamp"
+      "zrevrange"
     ],
     "files.associations": {
       "**/provision/*.json": "jsonc",
@@ -277,7 +284,6 @@
       80,
       120
     ],
-    "liveServer.settings.useWebExt": true,
     "livePreview.autoRefreshPreview": "Never",
     "livePreview.portNumber": 5000
   },
@@ -295,6 +301,7 @@
       "github.copilot",
       "koichisasada.vscode-rdbg",
       "mame.ruby-typeprof",
+      "ms-vscode.live-server",
     ]
   }
 }

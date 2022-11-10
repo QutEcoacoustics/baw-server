@@ -223,6 +223,8 @@ RSpec.configure do |config|
   config.extend ResqueHelpers::ExampleGroup
   config.include ResqueHelpers::Example
 
+  require_relative 'support/pbs_helpers'
+
   require_relative 'support/api_spec_helpers'
   config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
   require_relative 'support/shared_context/api_spec_shared_context'

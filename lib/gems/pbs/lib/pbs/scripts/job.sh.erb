@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#PBS -j oe
+
+# Acoustic workbench worker script
+# --------------------------------
+# This script is intended to be templated
+# Templated on <%= date %>
+
+set -e
+
+# variables
+
+# functions
+function log {
+  echo "$(date -Is) LOG: $*"
+}
+
+function report_start {
+  log "Reporting start"
+  <%= report_start_script %>
+}
+
+function report_error {
+  log "Reporting error"
+  <%= report_error_script %>
+}
+
+function report_finish {
+  log "Reporting finish"
+  <%= report_finish_script %>
+}
+
+# traps
+
+trap report_error ERR
+
+# script
+log "vars: PBS_JOBNAME=$PBS_JOBNAME PBS_JOBID=$PBS_JOBID PBS_O_WORKDIR=$PBS_O_WORKDIR TMPDIR=$TMPDIR"
+log "cd $PBS_O_WORKDIR"
+cd $PBS_O_WORKDIR
+
+log "Begin"
+report_start
+
+log "Begin custom portion"
+echo "\n"
+
+<%= script %>
+
+echo "\n"
+log "Finish custom portion"
+
+report_finish
+log "Success"

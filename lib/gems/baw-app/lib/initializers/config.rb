@@ -24,7 +24,7 @@ class BawConfigContract < Dry::Validation::Contract
       required(:harvest).hash do
         required(:queue).filled(:string)
         required(:to_do_path).filled(
-          Baw::CustomTypes::CreatedDirPathname
+          BawApp::Types::CreatedDirPathname
         )
         required(:config_file_name).filled(:string)
       end
@@ -53,7 +53,7 @@ class BawConfigContract < Dry::Validation::Contract
 
   InternalConfigSchema = Dry::Schema.define {
     required(:internal).hash do
-      required(:allow_list).array(Baw::CustomTypes::IPAddr)
+      required(:allow_list).array(BawApp::Types::IPAddr)
     end
   }
 
@@ -61,15 +61,32 @@ class BawConfigContract < Dry::Validation::Contract
     required(:paths).hash do
       required(:temp_dir).filled(:string)
       required(:programs_dir).filled(:string)
-      required(:cached_spectrograms).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:cached_audios).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:analysis_scripts).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:cached_analysis_jobs).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:cached_spectrograms).array(BawApp::Types::CreatedDirPathname)
+      required(:cached_audios).array(BawApp::Types::CreatedDirPathname)
+      required(:cached_analysis_jobs).array(BawApp::Types::CreatedDirPathname)
       required(:worker_log_file).filled(:string)
       required(:mailer_log_file).filled(:string)
       required(:audio_tools_log_file).filled(:string)
       required(:temp_dir).filled(:string)
       required(:programs_dir).filled(:string)
+    end
+  }
+
+  BatchAnalysisSchema = Dry::Schema.define {
+    required(:batch_analysis).hash do
+      required(:connection).hash do
+        required(:host).filled(:string)
+        required(:port).value(:integer, gt?: 0)
+        required(:username).filled(:string)
+        required(:password).maybe(:string)
+        required(:key_file).maybe(BawApp::Types::PathExists)
+      end
+      required(:default_queue).maybe(:string)
+      required(:default_project).filled(:string)
+      required(:root_data_path_mapping).hash do
+        required(:workbench).filled(:string)
+        required(:cluster).filled(:string)
+      end
     end
   }
 
@@ -79,9 +96,10 @@ class BawConfigContract < Dry::Validation::Contract
     ActionsConfigSchema,
     SftpgoConfigSchema,
     InternalConfigSchema,
-    PathsConfigSchema
+    PathsConfigSchema,
+    BatchAnalysisSchema
   ) do
-    required(:trusted_proxies).array(Baw::CustomTypes::IPAddr)
+    required(:trusted_proxies).array(BawApp::Types::IPAddr)
 
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
@@ -94,13 +112,13 @@ class BawConfigContract < Dry::Validation::Contract
     required(:resque).hash do
       required(:connection).hash
       required(:namespace).filled(:string)
-      required(:log_level).filled(Baw::CustomTypes::LogLevel)
-      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
+      required(:log_level).filled(BawApp::Types::LogLevel)
+      required(:polling_interval_seconds).filled(BawApp::Types::Coercible::Float)
     end
 
     required(:resque_scheduler).hash do
-      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
-      required(:log_level).filled(Baw::CustomTypes::LogLevel)
+      required(:polling_interval_seconds).filled(BawApp::Types::Coercible::Float)
+      required(:log_level).filled(BawApp::Types::LogLevel)
     end
   end
 
@@ -121,6 +139,9 @@ module ConfigExtensions
   end
 end
 Config.singleton_class.prepend ConfigExtensions
+
+require "#{__dir__}/../settings_module.rb"
+Config::Options.prepend(BawApp::SettingsModule)
 
 Config.setup do |config|
   # Name of the constant exposing loaded settings

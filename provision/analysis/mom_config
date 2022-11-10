@@ -1,0 +1,2 @@
+$clienthost hostname
+$logevent 0x1fff

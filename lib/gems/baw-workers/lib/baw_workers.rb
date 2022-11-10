@@ -17,7 +17,7 @@ require 'active_storage/engine'
 require 'action_mailer'
 
 require_relative '../../baw-app/lib/baw_app'
-require_relative '../../baw-audio-tools/lib/baw_audio_tools'
+require_relative '../../pbs/lib/pbs'
 
 Dir.glob("#{__dir__}/patches/**/*.rb").each do |override|
   #puts "loading #{override}"

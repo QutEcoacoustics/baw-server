@@ -26,6 +26,7 @@ require('config/integrations/rails/railtie')
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 require "#{__dir__}/../lib/gems/emu/lib/emu"
+require "#{__dir__}/../lib/gems/pbs/lib/pbs"
 
 # The main module for this application.
 module Baw

@@ -115,6 +115,40 @@ describe 'Settings' do
     end
   end
 
+  describe 'the batch_analysis settings' do
+    example 'validation is done for the batch_analysis key' do
+      config = ::Config::Options.new
+      without_batch_analysis = Settings.to_hash.except(:batch_analysis)
+      config.add_source!(without_batch_analysis)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /batch_analysis: is missing/)
+    end
+
+    [:host, :port, :username, :password, :key_file].each do |key|
+      example "validation is done for sub-key #{key} for batch_analysis" do
+        config = ::Config::Options.new
+        copy = Settings.to_hash
+        copy[:batch_analysis][:connection].delete(key)
+        config.add_source!(copy)
+
+        expect {
+          config.reload!
+        }.to raise_error(Config::Validation::Error, /#{key}: is missing/)
+      end
+    end
+
+    it 'has a settings helper' do
+      ba = Settings.batch_analysis
+      expect(ba).to be_an_instance_of(BawApp::BatchAnalysisSettings)
+
+      connection = ba.connection
+      expect(connection).to be_an_instance_of(BawApp::BatchAnalysisSettings::ConnectionSettings)
+      expect(connection.host).to eq 'analysis_test'
+    end
+  end
+
   describe 'new active_* queues' do
     example 'validation is done for active_storage queues' do
       config = ::Config::Options.new

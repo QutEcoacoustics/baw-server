@@ -73,6 +73,24 @@ actions:
   active_job_default:
     queue: default_<%= BawApp.env %>
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
+# batch analysis needs a ssh connection to a head node on a PBS cluster
+batch_analysis:
+  connection:
+    host: analysis_test
+    port: 22
+    username: pbsuser
+    # we support password auth but prefer private key
+    password: ~ #password
+    key_file: ./provision/analysis/client_key
+  default_queue:
+  # the project to set for submitted jobs - we use this as an identifier/tag
+  default_project: <%= BawApp.env %>
+  # the mapping between the data mount on the workbench and the mount on the cluster
+  # in most setups the workbench doesn't control the cluster - we're just a guest -
+  # which means the mounts are different
+  root_data_path_mapping:
+    workbench: /data/<%= BawApp.env %>
+    cluster: /data/<%= BawApp.env %>
 dbs:
   ######################################################
   # these values are read by config/database.yml
@@ -119,8 +137,6 @@ paths:
     - /data/<%= BawApp.env %>/cached_spectrogram
   cached_audios:
     - /data/<%= BawApp.env %>/cached_audio
-  analysis_scripts:
-    - /data/<%= BawApp.env %>/analysis_script
   cached_analysis_jobs:
     - /data/<%= BawApp.env %>/analysis_results
   worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log

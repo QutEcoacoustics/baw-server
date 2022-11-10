@@ -51,4 +51,29 @@ if default_dataset.blank?
   default_dataset.save!(validate: false)
 end
 
+# default script
+default_script = Script.default_script
+if default_script.blank?
+  default_script = Script.new(
+    name: 'The default script',
+    description: 'The default script run all audio',
+    version: 0,
+    executable_command: 'echo "not set up, update me"',
+    executable_settings: '',
+    executable_settings_media_type: 'text/plain'
+  )
+
+  default_script.save!
+end
+
+# default analysis
+system_analysis = AnalysisJob.system_analysis
+if system_analysis.blank?
+  system_analysis = AnalysisJob.new(name: AnalysisJob.SYSTEM_JOB_NAME)
+  system_analysis.name = 'The default analysis'
+  system_analysis.description = 'A standard analysis run on all audio'
+  system_analysis.creator_id = admin_user.id
+  system_analysis.save!(validate: false)
+end
+
 puts 'Finished loading application seeds!'

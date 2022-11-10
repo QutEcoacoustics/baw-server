@@ -1,4 +1,5 @@
---- #-------------------------------------------------------------------------------------------------------------
+---
+#-------------------------------------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
@@ -21,15 +22,16 @@ services:
     # ports:
     #   - 3000:3000
     #group_add:
-      # - docker
-      # the docker group id on my host is 1001
-      # - 1001
+    # - docker
+    # the docker group id on my host is 1001
+    # - 1001
     volumes:
       # Update this to wherever you want VS Code to mount the folder of your project
       #- .:/home/baw_web/baw-server
       # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker-compose for details.
       # - /var/run/docker.sock:/var/run/docker.sock
       - baw-server-vscode-extensions:/root/.vscode-server/extensions
+      - baw-server-vscode-extensions:/home/baw-web/.vscode-server/extensions
       - baw-server-vscode-bash-history:/commandhistory
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.

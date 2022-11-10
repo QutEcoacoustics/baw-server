@@ -72,6 +72,9 @@ module BawWorkers
       # @return [BawWorkers::UploadService::Communicator]
       attr_reader :upload_communicator
 
+      # @return [BawWorkers::BatchAnalysis::Communicator]
+      attr_reader :batch_analysis
+
       # Adjust initialization context when started from rake task
       # @param [Boolean] :resque_worker (false) are we running in the context of a Resque worker?
       def set(is_resque_worker: false, is_scheduler: false)
@@ -97,6 +100,8 @@ module BawWorkers
         configure_loggers(core_logger, settings)
 
         configure_upload_service(settings)
+
+        @batch_analysis = BawWorkers::BatchAnalysis::Communicator.new
 
         # configure Resque
         configure_redis(settings)

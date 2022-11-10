@@ -44,12 +44,12 @@
 #  analysis_jobs_updater_id_fk       (updater_id => users.id)
 #
 class AnalysisJob < ApplicationRecord
-
   # allow a state machine to work with this class
   include AASM
   include AasmHelpers
 
   OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
+  SYSTEM_JOB_NAME = 'system'
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs, optional: true
@@ -81,6 +81,19 @@ class AnalysisJob < ApplicationRecord
   }
   validates :overall_data_length_bytes, presence: true,
     numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+
+  # lookup the default dataset id
+  # This will potentially be hit very often, maybe multiple times per request
+  # and therefore is a possible avenue for future optimization if necessary
+  def self.default_dataset_id
+    # NOTE: this may cause db:create and db:migrate to fail
+    default_dataset.id
+  end
+
+  # (scope) return the default dataset
+  def self.system_analysis
+    AnalysisJob.where(name: SYSTEM_JOB_NAME).first
+  end
 
   renders_markdown_for :description
 
@@ -246,7 +259,7 @@ class AnalysisJob < ApplicationRecord
   aasm column: :overall_status, no_direct_assignment: true, whiny_persistence: true do
     # We don't need to explicitly set display_name - they get humanized by default
     state :before_save, { initial: true, display_name: 'Before save' }
-    state :new, enter: [:initialise_job_tracking, :update_job_progress]
+    state :new, enter: [:initialize_job_tracking, :update_job_progress]
     state :preparing, enter: :send_preparing_email, after_enter: [:prepare_job, :process!]
     state :processing, enter: [:update_job_progress]
     state :suspended, enter: [:suspend_job, :update_job_progress]
@@ -343,7 +356,7 @@ class AnalysisJob < ApplicationRecord
   # callbacks for the state machine
   #
 
-  def initialise_job_tracking
+  def initialize_job_tracking
     self.overall_count = 0
     self.overall_duration_seconds = 0
     self.overall_data_length_bytes = 0
