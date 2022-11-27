@@ -240,11 +240,33 @@ module Api
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
+      do_authorize_jwt(custom_action_name)
+
       authorize! (custom_action_name || action_name).to_sym, (custom_resource || get_resource)
     end
 
     def do_authorize_class(custom_action_name = nil, custom_class = nil)
+      do_authorize_jwt(custom_action_name)
+
       authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
+    end
+
+    # Our JWT tokens can include claims that limit access to a resource or action.
+    # This does not allow any additional access (the cancan rules still apply), but
+    # it will short-circuit and fail if the JWT does not allow access.
+    def do_authorize_jwt(custom_action_name = nil)
+      # @type [::Api::Jwt::Token]
+      token = request.env.fetch(Api::AuthStrategies::Jwt::ENV_KEY, nil)
+
+      return if token.nil?
+
+      if token.resource && token.resource.to_s != controller_name
+        raise ::Api::ApiAuth::AccessDenied, 'JWT does not allow access to this resource'
+      end
+
+      if token.action && token.action.to_s != (custom_action_name || action_name)
+        raise ::Api::ApiAuth::AccessDenied, 'JWT does not allow access to this action'
+      end
     end
   end
 end

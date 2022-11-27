@@ -50,6 +50,7 @@ gem 'net-scp', '>= 4.0.0.rc1'
 gem 'net-ssh'
 
 # currently only used for testing jwts sent by sftpgo
+# 2022-11: now also used for analysis job http updates
 gem 'jwt'
 
 # api docs

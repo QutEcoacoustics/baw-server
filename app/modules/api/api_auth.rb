@@ -1,66 +1,18 @@
 # frozen_string_literal: true
 
 module Api
+  # A module for authorizing via tokens.
   module ApiAuth
+    class AccessDenied < StandardError; end
+
     extend ActiveSupport::Concern
 
     private
 
-    # Authenticate user.
-    # @see https://gist.github.com/josevalim/fb706b1e933ef01e4fb6
-    # @return [void]
-    def authenticate_user_custom!
-      sign_in_params = get_sign_in_params
-      do_sign_in(sign_in_params)
-    end
-
-    def do_sign_in(sign_in_params)
-      # only sign in if we have a valid resource and the comparison was successful.
-      sign_in sign_in_params[:resource], store: false if sign_in_params[:resource] && sign_in_params[:comparison]
-    end
-
-    # Retrieve sign in parameters.
-    # @example
-    #   {"login": "user@example.com", "password": "user_password"}
-    #   {"login": "user_name", "password": "user_password"}
-    #   (header) Authorization: 'Token token="tokenvalue"'
-    # @return [Hash] sign in parameters.
-    def get_sign_in_params
-      # available parameters
-      email = params[:email].presence
-      login = params[:login].presence
-      password = params[:password].presence
-
-      token, token_options = get_token
-
-      # Use the email or login or token to get the user resource.
-      resource = nil
-      if login
-        resource = User.find_for_database_authentication(login: login)
-      elsif email
-        resource = User.find_for_database_authentication(email: email)
-      elsif token
-        # allow login with only token
-        resource = User.find_by_authentication_token(token)
-      end
-
-      # Compare the password or token.
-      comparison = false
-      if password && resource
-        comparison = resource.valid_password?(password)
-      elsif token
-        comparison = valid_token_login?(resource, token)
-      end
-
-      {
-        email: email,
-        login: login,
-        token: token,
-        password: password,
-        token_options: token_options,
-        resource: resource,
-        comparison: comparison
-      }
+    # Gets a JWT token instance if we signed in with a JWT
+    # @return [::Api::Jwt::Token,nil]
+    def jwt
+      env.fetch(::Api::AuthStrategies::Jwt::ENV_KEY, nil)
     end
 
     # CSRF protection is enabled for API.
@@ -74,61 +26,40 @@ module Api
       cookies[csrf_cookie_key] = form_authenticity_token if protect_against_forgery? && current_user
     end
 
-    # Get the auth token.
-    # @return [String]
-    def get_token
-      token = params[:user_token].presence
+    # Simply calls current_user to trigger authentication.
+    # We override only so we can customize our API response body.
+    def authenticate_user!
+      # ripped off https://github.com/heartcombo/devise/blob/6d32d2447cc0f3739d9732246b5a5bde98d9e032/lib/devise/controllers/helpers.rb#L99-L119
+      return if current_user
 
-      token_options = {}
-
-      # get token from Authentication header
-      if token.blank?
-        # enable devise to get auth token in header
-        # expects header with name "Authorization" and value 'Token token="tokenvalue"'
-        # @see https://groups.google.com/forum/?fromgroups#!topic/plataformatec-devise/o3Gqgl0yUZo
-        # @see http://api.rubyonrails.org/v3.2.19/classes/ActionController/HttpAuthentication/Token.html
-        token_with_options = ActionController::HttpAuthentication::Token.token_and_options(request)
-        token = token_with_options[0] if token_with_options
-        token_options = token_with_options[1] if token_with_options
-      end
-
-      [token, token_options]
+      session_unauthenticated
     end
 
-    # Was an api authorisation method used?
-    #   (header) Authorization: 'Token token="<tokenvalue>"'
-    #   (params) user_token=<tokenvalue>
-    # @return [Boolean]
-    def api_auth_success?
-      token, token_options = get_token
-
-      resource = nil
-      resource = User.find_by_authentication_token(token) unless token.blank?
-
-      comparison = valid_token_login?(resource, token)
-
-      # token, resource, and comparison must all be valid
-      !token.blank? && !resource.blank? && comparison
+    def session_response_wrapper(status_symbol, data, error_details = nil, error_links = [])
+      built_response = Settings.api_response.build(
+        status_symbol,
+        data,
+        { error_details:, error_links: }
+      )
+      render json: built_response, status: status_symbol, layout: false
     end
 
-    def valid_token_login?(resource, token)
-      comparison = false
+    def session_create_fail
+      session_response_wrapper(
+        :unauthorized,
+        nil,
+        'Incorrect user name, email, or password. Alternatively, you may need to confirm your account or it may be locked.',
+        [:confirm, :reset_password, :resend_unlock]
+      )
+    end
 
-      if resource && token
-        # Notice how we use Devise.secure_compare to compare the token
-        # in the database with the token given in the params, mitigating
-        # timing attacks.
-        comparison = Devise.secure_compare(resource.authentication_token, token)
-
-        # if token is given, but does not match, it is invalid
-        token_was_invalid = !comparison
-      else
-        token_was_invalid = resource.nil? && !token.blank?
-      end
-
-      raise CanCan::AccessDenied, "Invalid authentication token '#{token}'." if token_was_invalid
-
-      comparison
+    def session_unauthenticated
+      session_response_wrapper(
+        :unauthorized,
+        nil,
+        I18n.t('devise.failure.unauthenticated'),
+        [:sign_in, :sign_up]
+      )
     end
   end
 end

@@ -7,16 +7,14 @@ module IncludeController
   include Api::ApiAuth
 
   included do
-    # custom authentication for api only
-    before_action :authenticate_user_custom!
-
     # devise strong params set up
     before_action :configure_permitted_parameters, if: :devise_controller?
 
     # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
     # devise's generated methods
+    # Note: we define our own authenticate_user! method in Api::ApiAuth
+    before_action :authenticate_user!
     before_action :current_user, unless: :devise_controller?
-    before_action :authenticate_user!, if: :devise_controller?
 
     before_action :validate_contains_post_params, only: [:create, :update]
 
@@ -35,6 +33,7 @@ module IncludeController
     rescue_from NotImplementedError, with: :not_implemented_response
     rescue_from ActionController::UnknownFormat, with: :unknown_format_response
     rescue_from ActionController::UnpermittedParameters, with: :unprocessable_entity_error_response
+    rescue_from ActionController::ParameterMissing, with: :unprocessable_entity_error_response
 
     # Custom errors - these use the message in the error
     # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -61,6 +60,7 @@ module IncludeController
 
     # error handling for cancan authorization checks
     rescue_from CanCan::AccessDenied, with: :access_denied_response
+    rescue_from Api::ApiAuth::AccessDenied, with: :access_denied_response
 
     # Prevent CSRF attacks by raising an exception.
     # For APIs, you may want to use :null_session instead.
@@ -74,20 +74,10 @@ module IncludeController
     around_action :set_then_reset_user_stamper
 
     # update users last activity log every 10 minutes
-    before_action :set_last_seen_at,
-      if: proc {
-        user_signed_in? &&
-          (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
-      }
+    before_action :set_last_seen_at
 
     # We've had headers misbehave. Validating them here means we can email someone about the problem!
     after_action :validate_headers
-
-    # A dummy method to get rid of all the Rubymine errors.
-    # @return [User]
-
-    # A dummy method to get rid of all the Rubymine errors.
-    # @return [Boolean]
   end
 
   protected
@@ -117,6 +107,7 @@ module IncludeController
   # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
     csrf_header_key = 'X-XSRF-TOKEN'
+
     super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
   end
 
@@ -356,8 +347,11 @@ module IncludeController
       message = 'Request body was empty'
       status = :bad_request
       # include link to 'new' endpoint if body was empty
-      options = { should_notify_error: true,
-                  error_links: [{ text: 'New Resource', url: send("new_#{resource_name}_path") }] }
+      url = respond_to?("new_#{resource_name}_path".to_sym) ? send("new_#{resource_name}_path") : nil
+      options = {
+        should_notify_error: true,
+        error_links: [{ text: 'New Resource', url: }]
+      }
     else
       options = { should_notify_error: true }
       status = :unsupported_media_type
@@ -531,7 +525,17 @@ module IncludeController
   end
 
   def access_denied_response(error)
-    if current_user&.confirmed?
+    if error.is_a?(::Api::ApiAuth::AccessDenied)
+      render_error(
+        :forbidden,
+        I18n.t('devise.failure.unauthorized'),
+        error,
+        'access_denied_response - JWT forbidden',
+        {
+          error_info: error.message
+        }
+      )
+    elsif current_user&.confirmed?
       render_error(
         :forbidden,
         I18n.t('devise.failure.unauthorized'),
@@ -548,9 +552,7 @@ module IncludeController
         'access_denied_response - unconfirmed',
         { error_links: [:confirm] }
       )
-
     else
-
       render_error(
         :unauthorized,
         I18n.t('devise.failure.unauthenticated'),
@@ -687,6 +689,12 @@ module IncludeController
   end
 
   def set_last_seen_at
+    return unless user_signed_in?
+
+    set_recently = Time.zone.at((session[:last_seen_at] || 0).to_i) < 10.minutes.ago
+
+    return unless session[:last_seen_at].blank? || set_recently
+
     the_time = Time.zone.now
     current_user.update_attribute(:last_seen_at, the_time)
     session[:last_seen_at] = the_time.to_i

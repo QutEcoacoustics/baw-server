@@ -41,7 +41,29 @@ module ApiSpecHelpers
     # Actual auth tests should be done in the requests specs.
     def with_authorization
       self.baw_security = [{ auth_token_header: [] }]
-      let(:Authorization) { admin_token }
+      let(:Authorization) {
+        admin_token
+      }
+    end
+
+    def with_cookie
+      self.baw_security = [{ cookie: [] }]
+      let(:cookie) {
+        password = Settings.admin_user.password
+        body = { user: { email: admin_user.email, password: } }
+        post '/security', params: body, headers: headers(post: true), as: :json
+        expect_success
+        response.headers['set-cookie'].split(';').select { |x| x.include?('_baw_session') }.first
+      }
+    end
+
+    def with_jwt
+      # see notes in with_authorization about token
+      self.baw_security = [{ jwt: [] }]
+      let(:Authorization) {
+        token = Api::Jwt.encode(subject: reader_user.id)
+        "Bearer #{token}"
+      }
     end
 
     def with_query_string_authorization

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ErrorsController < ApplicationController
+  skip_before_action :authenticate_user!
   skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions, :show, :method_not_allowed_error]
 
   # see application_controller.rb for error handling for specific exceptions.
@@ -19,7 +20,7 @@ class ErrorsController < ApplicationController
     case error_code_or_id
     when 400, '400', 'bad_request'
       status_symbol = :bad_request
-    when 401, '401', 'unauthorized', 'unauthorised'
+    when 401, '401', 'unauthorized', 'unauthorized'
       status_symbol = :unauthorized
       detail_message = I18n.t('devise.failure.unauthenticated')
       additional_info[:error_links] = [:sign_in, :sign_up, :confirm]

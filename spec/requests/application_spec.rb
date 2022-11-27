@@ -121,4 +121,95 @@ describe 'Common behaviour', { type: :request } do
       })
     end
   end
+
+  describe 'JWT authorization claims' do
+    disable_cookie_jar
+
+    create_audio_recordings_hierarchy
+
+    it 'can access anything with a standard token' do
+      jwt = Api::Jwt.encode(subject: reader_user.id)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_success
+
+      get '/sites', **jwt_headers(jwt)
+      expect_success
+      expect_has_ids(*Site.all.pluck(:id))
+    end
+
+    it 'can restrict a JWT to a single resourcee' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, resource: :projects)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_success
+
+      get '/sites', **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this resource')
+    end
+
+    it 'can restrict a JWT to a single (other) resource' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, resource: :sites)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this resource')
+
+      get '/sites', **jwt_headers(jwt)
+      expect_has_ids(*Site.all.pluck(:id))
+    end
+
+    it 'can restrict a JWT to a single action' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, action: :show)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_success
+
+      get '/sites', **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this action')
+    end
+
+    it 'can restrict a JWT to a single (other) action' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, action: :index)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this action')
+
+      get '/sites', **jwt_headers(jwt)
+      expect_has_ids(*Site.all.pluck(:id))
+    end
+
+    it 'can restrict a JWT to a single resource and action' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, resource: :projects, action: :show)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_success
+
+      get '/projects', **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this action')
+
+      get '/sites', **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this resource')
+    end
+
+    it 'can restrict a JWT to a single (other) resource and action' do
+      jwt = Api::Jwt.encode(subject: reader_user.id, resource: :sites, action: :index)
+
+      get "/projects/#{project.id}", **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this resource')
+
+      get '/sites', **jwt_headers(jwt)
+      expect_has_ids(*Site.all.pluck(:id))
+
+      get "/sites/#{site.id}", **jwt_headers(jwt)
+      expect_error(:forbidden, 'You do not have sufficient permissions to access this page.',
+        'JWT does not allow access to this action')
+    end
+  end
 end

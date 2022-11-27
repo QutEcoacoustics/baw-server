@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../custom_types'
+require_relative '../types'
 
 # The schema for our Settings files
 class BawConfigContract < Dry::Validation::Contract

@@ -60,6 +60,17 @@ module Api
               type: :apiKey,
               name: 'user_token',
               in: :query_string
+            },
+            cookie: {
+              type: :apiKey,
+              name: 'cookie',
+              scheme: :apiKey,
+              in: :header
+            },
+            jwt: {
+              type: :bearer,
+              name: 'Authorization',
+              in: :header
             }
           },
           schemas: {
@@ -216,6 +227,16 @@ module Api
                 }
               },
               additionalProperties: false
+            },
+            security: {
+              type: 'object',
+              required: [:user_name, :auth_token, :user_id],
+              properties: {
+                user_name: { type: 'string', readOnly: true },
+                auth_token: { type: 'string', readOnly: true },
+                user_id: id,
+                message: { type: 'string', readOnly: true }
+              }
             },
             stats: {
               type: 'object',

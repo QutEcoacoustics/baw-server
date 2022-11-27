@@ -261,12 +261,12 @@ class AudioRecordingsController < ApplicationController
         :unprocessable_entity,
         "Status #{new_status} is not in available status list",
         { error_info: { audio_recording: {
-          id: params[:id],
-          status: {
-            stored: @audio_recording.status,
-            request: new_status
-          }
-        },
+                          id: params[:id],
+                          status: {
+                            stored: @audio_recording.status,
+                            request: new_status
+                          }
+                        },
                         available_statuses: AudioRecording::AVAILABLE_STATUSES } }
       )
     end

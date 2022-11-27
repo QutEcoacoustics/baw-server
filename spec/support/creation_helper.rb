@@ -361,6 +361,12 @@ module Creation
     class << self
       def create_user_token(user = nil)
         token = user.blank? ? 'NOT_A_VALID_TOKEN' : user.authentication_token
+
+        if token.blank?
+          token = user.ensure_authentication_token
+          user.save!
+        end
+
         "Token token=\"#{token}\""
       end
 

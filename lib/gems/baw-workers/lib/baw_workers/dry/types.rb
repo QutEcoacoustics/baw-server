@@ -56,6 +56,12 @@ module BawWorkers
 
         item.deep_symbolize_keys
       }
+
+      UnixTime = Constructor(::Time) { |value|
+        next nil if value.blank?
+
+        ::Time.at(value)
+      }
     end
   end
 end
