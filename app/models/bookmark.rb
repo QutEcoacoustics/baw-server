@@ -36,8 +36,8 @@ class Bookmark < ApplicationRecord
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_bookmarks, optional: true
 
   # association validations
-  validates_associated :audio_recording
-  validates_associated :creator
+  #validates_associated :audio_recording
+  #validates_associated :creator
 
   # attribute validations
   validates :offset_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }

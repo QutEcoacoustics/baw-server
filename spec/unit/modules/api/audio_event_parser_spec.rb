@@ -17,19 +17,17 @@ describe Api::AudioEventParser do
 
   describe 'failure cases' do
     it 'fails when given an empty file' do
-      parser = Api::AudioEventParser.new(import)
-      results = parser.parse('', nil)
-
-      expect(results).to be_an_instance_of(Dry::Monads::Result::Failure)
-      expect(results.failure).to eq 'File must not be empty'
+      parser = Api::AudioEventParser.new(import, reader_user)
+      expect {
+        parser.parse('', nil)
+      }.to raise_error(StandardError, 'File must not be empty')
     end
 
     it 'fails when given an unknown format' do
-      parser = Api::AudioEventParser.new(import)
-      results = parser.parse('fLaC', nil)
-
-      expect(results).to be_an_instance_of(Dry::Monads::Result::Failure)
-      expect(results.failure).to eq 'File be a CSV with headers, a Raven file, or a JSON array'
+      parser = Api::AudioEventParser.new(import, reader_user)
+      expect {
+        parser.parse('fLaC', nil)
+      }.to raise_error(StandardError, 'File be a CSV with headers, a Raven file, or a JSON array')
     end
   end
 
@@ -47,14 +45,16 @@ describe Api::AudioEventParser do
     }
 
     it 'can parse events' do
-      parser = Api::AudioEventParser.new(import)
-      results = parser.parse(baw_format, baw_basename).value!
+      parser = Api::AudioEventParser.new(import, reader_user)
+      parser.parse(baw_format, baw_basename)
+
+      results = parser.serialize_audio_events
       expect(results.size).to be(2)
-      expect(results).to all(be_an_instance_of(AudioEvent))
+      expect(results).to all(be_an_instance_of(Hash))
 
       results => [r1, r2]
 
-      expect(r1).to have_attributes(
+      expect(r1).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: nil,
@@ -62,13 +62,12 @@ describe Api::AudioEventParser do
         end_time_seconds: 1042.9645,
         low_frequency_hertz: 3143.8477,
         high_frequency_hertz: 8397.9492,
-        is_reference: false,
         id: nil
-      )
+      ))
 
-      expect(r1.tags.map(&:as_json)).to match([])
+      expect(r1[:tags]).to match([])
 
-      expect(r2).to have_attributes(
+      expect(r2).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: nil,
@@ -78,28 +77,24 @@ describe Api::AudioEventParser do
         high_frequency_hertz: 7795.0195,
         is_reference: true,
         id: nil
-      )
+      ))
 
-      expect(r2.tags.map(&:as_json)).to match([
+      expect(r2[:tags]).to match([
         a_hash_including(
           'text' => tag_crickets.text,
           'id' => tag_crickets.id
         ),
         a_hash_including(
-          'text' => 'Eastern Bristlebird',
-          'notes' => notes
+          'text' => 'Eastern Bristlebird'
         ),
         a_hash_including(
-          'text' => 'Pied Currawong',
-          'notes' => notes
+          'text' => 'Pied Currawong'
         ),
         a_hash_including(
-          'text' => 'unsure',
-          'notes' => notes
+          'text' => 'unsure'
         ),
         a_hash_including(
-          'text' => 'overlap',
-          'notes' => notes
+          'text' => 'overlap'
         )
       ])
     end
@@ -159,14 +154,17 @@ describe Api::AudioEventParser do
     }
 
     it 'can parse events' do
-      parser = Api::AudioEventParser.new(import)
-      results = parser.parse(ap_json, ap_json_basename).value!
+      parser = Api::AudioEventParser.new(import, reader_user)
+      parser.parse(ap_json, ap_json_basename)
+
+      results = parser.serialize_audio_events
+
       expect(results.size).to be(2)
-      expect(results).to all(be_an_instance_of(AudioEvent))
+      expect(results).to all(be_an_instance_of(Hash))
 
       results => [r1, r2]
 
-      expect(r1).to have_attributes(
+      expect(r1).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: nil,
@@ -174,18 +172,16 @@ describe Api::AudioEventParser do
         end_time_seconds: be_within(0.001).of(47.72861678004535),
         low_frequency_hertz: 5800.0,
         high_frequency_hertz: 8200.0,
-        is_reference: false,
         id: nil
-      )
+      ))
 
-      expect(r1.tags.map(&:as_json)).to match([
+      expect(r1[:tags]).to match([
         a_hash_including(
-          'text' => 'Tyto tenebricosa',
-          'notes' => notes
+          'text' => 'Tyto tenebricosa'
         )
       ])
 
-      expect(r2).to have_attributes(
+      expect(r2).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: nil,
@@ -193,19 +189,17 @@ describe Api::AudioEventParser do
         end_time_seconds: be_within(0.001).of(52.12879818594104),
         low_frequency_hertz: 1200.0,
         high_frequency_hertz: 6500.0,
-        is_reference: false,
         id: nil
-      )
+      ))
 
-      expect(r2.tags.map(&:as_json)).to match([
+      expect(r2[:tags]).to match([
         a_hash_including(
-          'text' => 'Tyto tenebricosa',
-          'notes' => notes
+          'text' => 'Tyto tenebricosa'
         )
       ])
 
       # test object equivalence - we shouldn't be creating duplicate new tags
-      expect(r1.tags.first).to eq r2.tags.first
+      expect(r1[:tags].first).to eq r2[:tags].first
     end
   end
 
@@ -225,14 +219,17 @@ describe Api::AudioEventParser do
     }
 
     it 'can parse events' do
-      parser = Api::AudioEventParser.new(import)
-      results = parser.parse(raven, raven_basename).value!
+      parser = Api::AudioEventParser.new(import, reader_user)
+      parser.parse(raven, raven_basename)
+
+      results = parser.serialize_audio_events
+
       expect(results.size).to be(2)
-      expect(results).to all(be_an_instance_of(AudioEvent))
+      expect(results).to all(be_an_instance_of(Hash))
 
       results => [r1, r2]
 
-      expect(r1).to have_attributes(
+      expect(r1).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: 1,
@@ -240,18 +237,16 @@ describe Api::AudioEventParser do
         end_time_seconds: be_within(0.001).of(15.096397225),
         low_frequency_hertz: be_within(0.001).of(1739.012),
         high_frequency_hertz: be_within(0.001).of(3798.813),
-        is_reference: false,
         id: nil
-      )
+      ))
 
-      expect(r1.tags.map(&:as_json)).to match([
+      expect(r1[:tags]).to match([
         a_hash_including(
-          'text' => 'Birb',
-          'notes' => notes
+          'text' => 'Birb'
         )
       ])
 
-      expect(r2).to have_attributes(
+      expect(r2).to match(a_hash_including(
         audio_event_import_id: import.id,
         audio_recording_id: audio_recording.id,
         channel: 1,
@@ -259,14 +254,12 @@ describe Api::AudioEventParser do
         end_time_seconds: be_within(0.001).of(40.257059266),
         low_frequency_hertz: be_within(0.001).of(1587.060),
         high_frequency_hertz: be_within(0.001).of(4136.485),
-        is_reference: false,
         id: nil
-      )
+      ))
 
-      expect(r2.tags.map(&:as_json)).to match([
+      expect(r2[:tags]).to match([
         a_hash_including(
-          'text' => 'donkey',
-          'notes' => notes
+          'text' => 'donkey'
         )
       ])
     end

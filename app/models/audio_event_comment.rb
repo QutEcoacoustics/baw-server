@@ -61,8 +61,8 @@ class AudioEventComment < ApplicationRecord
   enumerize :flag, in: AVAILABLE_FLAGS, predicates: true
 
   # association validations
-  validates_associated :audio_event
-  validates_associated :creator
+  #validates_associated :audio_event
+  #validates_associated :creator
 
   # attribute validations
   validates :comment, presence: true, length: { minimum: 2 }

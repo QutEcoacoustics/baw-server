@@ -21,6 +21,7 @@
       "binmode",
       "binread",
       "binstub",
+      "Boobook",
       "boolify",
       "bootsnap",
       "Bootsnap",

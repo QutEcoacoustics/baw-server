@@ -32,9 +32,9 @@ class DatasetItem < ApplicationRecord
   has_many :responses, dependent: :destroy
 
   # association validations
-  validates_associated :dataset
-  validates_associated :audio_recording
-  validates_associated :creator
+  #validates_associated :dataset
+  #validates_associated :audio_recording
+  #validates_associated :creator
 
   # validation
   validates :start_time_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }

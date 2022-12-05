@@ -30,7 +30,7 @@ class Dataset < ApplicationRecord
   # This may change in the future
 
   # association validations
-  validates_associated :creator
+  #validates_associated :creator
 
   # validation
   validates :name, presence: true, length: { minimum: 2 }

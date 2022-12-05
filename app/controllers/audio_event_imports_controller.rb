@@ -144,23 +144,18 @@ class AudioEventImportsController < ApplicationController
 
     additional_tags = (additional_tag_ids || []).map { |tag_id| Tag.find(tag_id) }
 
-    parser = Api::AudioEventParser.new(@audio_event_import, additional_tags:)
-    audio_events = parser.parse(file.tempfile.read, file.original_filename).value!
-
-    import_permissions_check(audio_events)
+    parser = Api::AudioEventParser.new(@audio_event_import, current_user, additional_tags:)
 
     if commit
       update_model(file.original_filename, additional_tags.map(&:id))
-      ActiveRecord::Base.transaction do
-        @audio_event_import.save!
-        audio_events.each(&:save!)
-      end
+
+      parser.parse_and_commit(file.tempfile.read, file.original_filename)
     else
-      audio_events.each(&:valid?)
+      parser.parse(file.tempfile.read, file.original_filename)
     end
 
     # save into model for serialization into response
-    @audio_event_import.imported_events = audio_events
+    @audio_event_import.imported_events = parser.serialize_audio_events
   end
 
   def update_model(filename, tag_ids)
@@ -169,19 +164,5 @@ class AudioEventImportsController < ApplicationController
       additional_tags: tag_ids,
       imported_at: Time.now
     }
-  end
-
-  def import_permissions_check(imported_events)
-    attempted_audio_recording_assignments = imported_events.map(&:audio_recording_id).uniq.sort
-
-    ids = Access::ByPermission
-          .audio_recordings(current_user, levels: :writer)
-          .where(AudioRecording.arel_table[:id].in(attempted_audio_recording_assignments))
-          .order(id: :asc)
-          .pluck(:id)
-
-    return if (attempted_audio_recording_assignments <=> ids).zero?
-
-    raise CanCan::AccessDenied, 'You do not have permission to add audio events to all audio recordings'
   end
 end

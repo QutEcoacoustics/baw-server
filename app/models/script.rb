@@ -38,7 +38,7 @@ class Script < ApplicationRecord
   has_many :analysis_jobs, inverse_of: :script
 
   # association validations
-  validates_associated :creator
+  #validates_associated :creator
 
   # attribute validations
   validates :analysis_action_params, json: { message: 'Must be valid JSON' }
