@@ -9,8 +9,9 @@
 #  analysis_identifier            :string           not null
 #  description                    :string
 #  executable_command             :text             not null
-#  executable_settings            :text             not null
+#  executable_settings            :text
 #  executable_settings_media_type :string(255)      default("text/plain")
+#  executable_settings_name       :string
 #  name                           :string           not null
 #  verified                       :boolean          default(FALSE)
 #  version                        :decimal(4, 2)    default(0.1), not null
@@ -39,6 +40,7 @@ FactoryBot.define do
     sequence(:executable_command) { |n| "executable command #{n}" }
     sequence(:executable_settings) { |n| "executable settings #{n}" }
     sequence(:executable_settings_media_type) { |_n| 'text/plain' }
+    sequence(:executable_settings_name) { |_n| 'config.txt' }
     sequence(:analysis_action_params) do |n|
       {
         file_executable: './AnalysisPrograms/AnalysisPrograms.exe',

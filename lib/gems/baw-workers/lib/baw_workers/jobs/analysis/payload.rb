@@ -3,6 +3,12 @@
 module BawWorkers
   module Jobs
     module Analysis
+      # class ScriptParams < ::BawWorkers::Dry::SerializedStrictStruct
+      #   # @!attribute [r] file_executable
+      #   #   @return [String]
+      #   attribute :file_executable, ::BawWorkers::Dry::Types::String.optional.default(nil)
+      # end
+
       # Class that handles creating and evaluating analysis payloads.
       class Payload
         # A list of fields invariant to the payload
@@ -64,49 +70,6 @@ module BawWorkers
           @class_name = self.class.name
         end
 
-        # Read a csv file containing audio recording info, and create analysis config files using a template yml file.
-        # e.g. bundle exec baw:analysis:standalone:from_csv[settings_file,csv_file,config_file,command_file]
-        # @param [String] csv_file
-        # @param [String] config_file
-        # @param [String] command_file
-        # @return [Array<Hash>] analysis payloads
-        def from_csv(csv_file, config_file, command_file)
-          csv_path = BawWorkers::Validation.normalise_file(csv_file)
-          config_path = BawWorkers::Validation.normalise_file(config_file)
-          command_path = BawWorkers::Validation.normalise_file(command_file)
-
-          command_info = YAML.load_file(command_path)
-
-          command_format = command_info['command_format']
-          file_executable = command_info['file_executable']
-          copy_paths = command_info['copy_paths']
-          config_string = File.read(config_path)
-          job_id = command_info['job_id']
-
-          results = []
-
-          BawWorkers::ReadCsv.read_audio_recording_csv(csv_path) do |audio_params|
-            opts = {
-              command_format: command_format,
-              file_executable: file_executable,
-              copy_paths: copy_paths,
-              config_string: config_string,
-              job_id: job_id,
-
-              uuid: audio_params[:uuid],
-              id: audio_params[:id],
-              datetime_with_offset: audio_params[:recorded_date],
-              original_format: audio_params[:original_format]
-            }
-
-            # add analysis payload to results
-            result = build(opts)
-            results.push(result)
-          end
-
-          results
-        end
-
         # Build an analysis task payload.
         # @param [Hash] raw_opts
         # @option raw_opts [String] :command_format (nil) command line format string
@@ -121,10 +84,10 @@ module BawWorkers
         # @option raw_opts [String] :original_format (nil) audio_recording original_format
         # @return [Hash] analysis task payload
         def build(raw_opts)
-          # normalise config
+          # normalize config
           raw_opts[:config] = get_config(raw_opts)
 
-          # normalise recorded date
+          # normalize recorded date
           raw_opts[:datetime_with_offset] = get_datetime_with_offset(raw_opts)
 
           # validate opts
@@ -183,7 +146,7 @@ module BawWorkers
 
         # Normalize opts so that keys are Symbols and check all required keys are present.
         # @param [Hash] opts
-        # @return [Hash] normalised opts
+        # @return [Hash] normalized opts
         def self.normalize_opts(opts)
           normalized_keys = BawWorkers::Validation.deep_symbolize_keys(opts)
           BawWorkers::Validation.check_custom_hash(normalized_keys, BawWorkers::Jobs::Analysis::Payload::OPTS_FIELDS)

@@ -202,8 +202,7 @@ ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.acti
 CREATE TABLE public.analysis_jobs (
     id integer NOT NULL,
     name character varying NOT NULL,
-    annotation_name character varying,
-    custom_settings text NOT NULL,
+    custom_settings text,
     script_id integer NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
@@ -212,7 +211,7 @@ CREATE TABLE public.analysis_jobs (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     description text,
-    saved_search_id integer NOT NULL,
+    saved_search_id integer,
     started_at timestamp without time zone,
     overall_status character varying NOT NULL,
     overall_status_modified_at timestamp without time zone NOT NULL,
@@ -1383,9 +1382,10 @@ CREATE TABLE public.scripts (
     creator_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
     executable_command text NOT NULL,
-    executable_settings text NOT NULL,
+    executable_settings text,
     executable_settings_media_type character varying(255) DEFAULT 'text/plain'::character varying,
-    analysis_action_params json
+    analysis_action_params json,
+    executable_settings_name character varying
 );
 
 
@@ -3696,6 +3696,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220704043031'),
 ('20220808062341'),
 ('20220825042333'),
-('20220930062323');
+('20220930062323'),
+('20221117035017');
 
 

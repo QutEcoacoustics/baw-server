@@ -6,12 +6,16 @@ module BawWorkers
       # Runs analysis scripts on audio files.
       class Job < BawWorkers::Jobs::ApplicationJob
         queue_as Settings.actions.analysis.queue
-        perform_expects Hash
+        perform_expects Integer
+
+        # @return [::AnalysisJobsItem] The database record for the current job item
+        attr_reader :analysis_job_item
 
         # Perform analysis on a single file. Used by resque.
-        # @param [Hash] analysis_params
-        # @return [Hash] result information
-        def perform(analysis_params)
+        # @param analysis_job_item_id [Integer]
+        def perform(analysis_job_item_id)
+          load_records(analysis_job_item_id)
+
           analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalize_opts(analysis_params)
 
           BawWorkers::Config.logger_worker.info do
@@ -66,32 +70,11 @@ module BawWorkers
           result
         end
 
-        # Perform analysis on a single file using a yaml file.
-        # @param [String] analysis_params_file
-        # @return [Hash] result information
-        def action_perform_rake(analysis_params_file)
-          path = BawWorkers::Validation.normalise_file(analysis_params_file)
-          analysis_params = YAML.load_file(path)
-          BawWorkers::Jobs::Analysis::Job.perform_later!(analysis_params)
-        end
+        # @return [::AnalysisJobsItem]
+        def load_records(analysis_job_item_id)
+          aji = AnalysisJobItem.find(analysis_job_item_id)
 
-        # Perform analysis using details from a csv file.
-        # @param [String] csv_file
-        # @param [String] config_file
-        # @param [String] command_file
-        # @return [Hash] result information
-        def action_perform_rake_csv(csv_file, config_file, command_file)
-          payloads = action_payload.from_csv(csv_file, config_file, command_file)
-
-          results = []
-          payloads.each do |payload|
-            result = BawWorkers::Jobs::Analysis::Job.perform_later!(payload)
-            results.push(result)
-          rescue StandardError => e
-            BawWorkers::Config.logger_worker.error { e }
-          end
-
-          results
+          @analysis_job_item = aji
         end
 
         # Enqueue an analysis request.
@@ -99,7 +82,7 @@ module BawWorkers
         # @return [String] An unique key for the job if enqueuing was successful.
         # payloads to work. Must be common to all payloads in a group.
         def self.action_enqueue(analysis_params, job_class = nil)
-          BawWorkers::Config.logger_worker.info('args', analysis_params: analysis_params, job_class: job_class)
+          BawWorkers::Config.logger_worker.info('args', analysis_params:, job_class:)
           analysis_params_sym = BawWorkers::Jobs::Analysis::Payload.normalize_opts(analysis_params)
 
           job_class ||= BawWorkers::Jobs::Analysis::Job
@@ -111,45 +94,6 @@ module BawWorkers
           end
 
           job.job_id
-        end
-
-        # Enqueue an analysis request using a single file via an analysis config file.
-        # @param [String] single_file_config
-        # @return [Boolean] True if job was queued, otherwise false. +nil+
-        #   if the job was rejected by a before_enqueue hook.
-        def self.action_enqueue_rake(single_file_config)
-          path = BawWorkers::Validation.normalise_file(single_file_config)
-          config = YAML.load_file(path)
-          BawWorkers::Jobs::Analysis::Job.perform_later!(config)
-        end
-
-        # Enqueue an analysis request using information from a csv file.
-        # @param [String] csv_file
-        # @param [String] config_file
-        # @param [String] command_file
-        # @return [<Array<Boolean>] True if job was queued, otherwise false. +nil+
-        #   if the job was rejected by a before_enqueue hook.
-        def self.action_enqueue_rake_csv(csv_file, config_file, command_file)
-          payloads = action_payload.from_csv(csv_file, config_file, command_file)
-
-          results = []
-          payloads.each do |payload|
-            result = BawWorkers::Jobs::Analysis::Job.perform_later!(payload)
-            results.push(result)
-          rescue StandardError => e
-            BawWorkers::Config.logger_worker.error { e }
-          end
-          results
-        end
-
-        def self.format_params_for_log(params)
-          return params if params.blank? || !params.is_a?(Hash)
-
-          if params.include?(:config)
-            params.except(:config)
-          else
-            params
-          end
         end
 
         # Create a BawWorkers::Jobs::Analysis::Runner instance.

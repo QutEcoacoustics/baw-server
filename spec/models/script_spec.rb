@@ -9,8 +9,9 @@
 #  analysis_identifier            :string           not null
 #  description                    :string
 #  executable_command             :text             not null
-#  executable_settings            :text             not null
+#  executable_settings            :text
 #  executable_settings_media_type :string(255)      default("text/plain")
+#  executable_settings_name       :string
 #  name                           :string           not null
 #  verified                       :boolean          default(FALSE)
 #  version                        :decimal(4, 2)    default(0.1), not null

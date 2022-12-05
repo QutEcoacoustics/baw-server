@@ -138,8 +138,6 @@ Other parameters are described in the `Actions` section below.
 
 #### Standalone
 
-    bundle exec rake baw:analysis:standalone:from_files[settings_file,analysis_config_file]  # Analyse audio files directly
-    bundle exec rake baw:audio_check:standalone:from_csv[settings_file,csv_file]             # Enqueue audio recording file checks from a csv file to be processed directly
     bundle exec rake baw:harvest:standalone:from_files[settings_file,harvest_dir]            # Harvest audio files directly
     # media action can only be run as a Resque dequeue worker
 

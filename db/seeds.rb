@@ -55,12 +55,17 @@ end
 default_script = Script.default_script
 if default_script.blank?
   default_script = Script.new(
-    name: 'The default script',
+    name: Script::DEFAULT_SCRIPT_NAME,
     description: 'The default script run all audio',
     version: 0,
     executable_command: 'echo "not set up, update me"',
-    executable_settings: '',
-    executable_settings_media_type: 'text/plain'
+    executable_settings: nil,
+    executable_settings_media_type: nil,
+    executable_settings_name: nil,
+    creator: admin_user,
+    verified: true,
+    analysis_action_params: {},
+    analysis_identifier: Script::DEFAULT_SCRIPT_IDENTIFIER
   )
 
   default_script.save!
@@ -69,11 +74,15 @@ end
 # default analysis
 system_analysis = AnalysisJob.system_analysis
 if system_analysis.blank?
-  system_analysis = AnalysisJob.new(name: AnalysisJob.SYSTEM_JOB_NAME)
-  system_analysis.name = 'The default analysis'
-  system_analysis.description = 'A standard analysis run on all audio'
-  system_analysis.creator_id = admin_user.id
-  system_analysis.save!(validate: false)
+  system_analysis = AnalysisJob.new(
+    name: AnalysisJob::SYSTEM_JOB_NAME,
+    description: 'A default analysis run on all audio',
+    creator: admin_user,
+    script: default_script,
+    custom_settings: nil
+  )
+
+  system_analysis.save!
 end
 
 puts 'Finished loading application seeds!'

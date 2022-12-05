@@ -5,8 +5,7 @@
 # Table name: analysis_jobs
 #
 #  id                           :integer          not null, primary key
-#  annotation_name              :string
-#  custom_settings              :text             not null
+#  custom_settings              :text
 #  deleted_at                   :datetime
 #  description                  :text
 #  name                         :string           not null
@@ -22,7 +21,7 @@
 #  updated_at                   :datetime
 #  creator_id                   :integer          not null
 #  deleter_id                   :integer
-#  saved_search_id              :integer          not null
+#  saved_search_id              :integer
 #  script_id                    :integer          not null
 #  updater_id                   :integer
 #

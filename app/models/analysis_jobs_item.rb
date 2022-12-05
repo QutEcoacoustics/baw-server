@@ -31,22 +31,20 @@ class AnalysisJobsItem < ApplicationRecord
   include AASM
   include AasmHelpers
 
-  SYSTEM_JOB_ID = AnalysisJob::SYSTEM_JOB_NAME
-
   # ensure we allow with_deleted here for race condition where analysis job
   # has been soft deleted while job items are still updating
   belongs_to :analysis_job, -> { with_deleted }, inverse_of: :analysis_jobs_items
   belongs_to :audio_recording, inverse_of: :analysis_jobs_items
 
-  validates_associated :analysis_job
-  validates_associated :audio_recording
+  #validates_associated :analysis_job
+  #validates_associated :audio_recording
 
   # attribute validations
   validates :status, presence: true, length: { minimum: 2, maximum: 255 }
   validates :queue_id, uniqueness: { case_sensitive: true }
 
-  validate :is_new_when_created, on: :create
-  validate :has_queue_id_when_needed
+  validate :new_when_created, on: :create
+  validate :queue_id_set_when_needed
 
   validates :created_at,
     presence: true,
@@ -57,7 +55,7 @@ class AnalysisJobsItem < ApplicationRecord
     allow_blank: true, allow_nil: true,
     timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
 
-  def self.filter_settings(is_system = false)
+  def self.filter_settings
     fields = [
       :id, :analysis_job_id, :audio_recording_id,
       :created_at, :queued_at, :work_started_at, :completed_at,
@@ -65,7 +63,7 @@ class AnalysisJobsItem < ApplicationRecord
       :status
     ]
 
-    settings = {
+    {
       valid_fields: fields,
       render_fields: fields,
       text_fields: [:queue_id],
@@ -122,13 +120,6 @@ class AnalysisJobsItem < ApplicationRecord
         }
       ]
     }
-
-    if is_system
-      settings[:base_association] = AnalysisJobsItem.system_query
-      settings[:base_association_key] = :audio_recording_id
-    end
-
-    settings
   end
 
   #
@@ -155,38 +146,6 @@ class AnalysisJobsItem < ApplicationRecord
     where(analysis_job_id:, status: [:cancelling, :cancelled])
   end
 
-  # Scoped query for getting fake analysis_jobs.
-  # @return [ActiveRecord::Relation]
-  def self.system_query
-    analysis_jobs_items = arel_table
-    table_name = analysis_jobs_items.table_name
-
-    # alias audio_recordings so other add on queries don't get confused
-    audio_recordings_inner = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
-
-    # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
-    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| "\"#{table_name}\".\"#{c}\"" }
-
-    # then add an extra select to shift the audio_recording.id into audio_recording_id
-    projections = columns.unshift("\"#{audio_recordings_inner.name}\".\"id\" AS \"audio_recording_id\"")
-
-    # right outer ensures audio_recordings generate 'fake'(empty) analysis_jobs_items rows
-    # we make sure the join condition always fails - we don't want the outer join to match real rows
-    joined = analysis_jobs_items
-             .project(*projections)
-             .join(audio_recordings_inner, Arel::Nodes::RightOuterJoin)
-             .on(audio_recordings_inner[:id].eq(nil))
-
-    # convert to sub-query - hides weird table names
-    subquery = joined.as(table_name)
-
-    # cast back to active record relation
-    query = from(subquery)
-
-    # merge with AudioRecording to apply default scope (e.g. where deleted_at IS NULL)
-    query.joins(:audio_recording)
-  end
-
   #
   # public methods
   #
@@ -200,15 +159,6 @@ class AnalysisJobsItem < ApplicationRecord
     new_status = nil if !new_record? && new_status == :new.to_s && old_status.nil?
 
     super(new_status)
-  end
-
-  def analysis_job_id
-    super_id = super()
-
-    # When fake records are returned from system_query their analysis_job_id's are nil.
-    # This patch ensures serialized system records have the analysis_job_id set to 'system' - good practice for
-    # RESTful object. E.g. routing to a resource is done with analysis_job_id; having it set simplifies client logic.
-    !new_record? && id.nil? ? SYSTEM_JOB_ID : super_id
   end
 
   #
@@ -249,31 +199,31 @@ class AnalysisJobsItem < ApplicationRecord
     state :cancelling, enter: :set_cancel_started_at
     state :cancelled, enter: :set_completed_at
 
-    event :queue, guards: [:not_system_job] do
+    event :queue, guards: [] do
       transitions from: :new, to: :queued
     end
 
-    event :work, guards: [:not_system_job] do
+    event :work, guards: [] do
       transitions from: :queued, to: :working
     end
 
-    event :succeed, guards: [:not_system_job] do
+    event :succeed, guards: [] do
       transitions from: :working, to: :successful
       transitions from: [:cancelling, :cancelled], to: :successful
     end
 
-    event :fail, guards: [:not_system_job] do
+    event :fail, guards: [] do
       transitions from: :working, to: :failed
       transitions from: [:cancelling, :cancelled], to: :failed
     end
 
-    event :time_out, guards: [:not_system_job] do
+    event :time_out, guards: [] do
       transitions from: :working, to: :timed_out
       transitions from: [:cancelling, :cancelled], to: :timed_out
     end
 
     # https://github.com/aasm/aasm/issues/324
-    # event :complete, guards: [:not_system_job] do
+    # event :complete, guards: [] do
     #   transitions from: :working, to: :successful
     #   transitions from: :working, to: :failed
     #   transitions from: :working, to: :timed_out
@@ -282,15 +232,15 @@ class AnalysisJobsItem < ApplicationRecord
     #   transitions from: [:cancelling, :cancelled], to: :timed_out
     # end
 
-    event :cancel, guards: [:not_system_job] do
+    event :cancel, guards: [] do
       transitions from: :queued, to: :cancelling
     end
 
-    event :confirm_cancel, guards: [:not_system_job] do
+    event :confirm_cancel, guards: [] do
       transitions from: :cancelling, to: :cancelled
     end
 
-    event :retry, guards: [:not_system_job] do
+    event :retry, guards: [] do
       transitions from: [:failed, :timed_out], to: :queued
       transitions from: :cancelled, to: :queued
       transitions from: :cancelling, to: :queued
@@ -311,10 +261,6 @@ class AnalysisJobsItem < ApplicationRecord
   #
   # state machine guards
   #
-
-  def not_system_job
-    analysis_job_id != SYSTEM_JOB_ID
-  end
 
   #
   # state machine callbacks
@@ -392,13 +338,13 @@ class AnalysisJobsItem < ApplicationRecord
     })
   end
 
-  def is_new_when_created
+  def new_when_created
     errors.add(:status, 'must be new when first created') unless status == :new.to_s
   end
 
-  def has_queue_id_when_needed
-    if status != :new.to_s && queue_id.blank?
-      errors.add(:queue_id, 'A queue_id must be provided when status is not new')
-    end
+  def queue_id_set_when_needed
+    return unless status != :new.to_s && queue_id.blank?
+
+    errors.add(:queue_id, 'A queue_id must be provided when status is not new')
   end
 end

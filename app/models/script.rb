@@ -9,8 +9,9 @@
 #  analysis_identifier            :string           not null
 #  description                    :string
 #  executable_command             :text             not null
-#  executable_settings            :text             not null
+#  executable_settings            :text
 #  executable_settings_media_type :string(255)      default("text/plain")
+#  executable_settings_name       :string
 #  name                           :string           not null
 #  verified                       :boolean          default(FALSE)
 #  version                        :decimal(4, 2)    default(0.1), not null
@@ -29,6 +30,9 @@
 #  scripts_group_id_fk    (group_id => scripts.id)
 #
 class Script < ApplicationRecord
+  DEFAULT_SCRIPT_NAME = 'default'
+  DEFAULT_SCRIPT_IDENTIFIER = 'default'
+
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
   has_many :analysis_jobs, inverse_of: :script
@@ -39,12 +43,24 @@ class Script < ApplicationRecord
   # attribute validations
   validates :analysis_action_params, json: { message: 'Must be valid JSON' }
 
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type,
+  validates :name, :analysis_identifier, :executable_command,
     presence: true, length: { minimum: 2 }
   validate :check_version_increase, on: :create
 
   # for the first script in a group, make sure group_id is set to the script's id
   after_create :set_group_id
+
+  # Return the default Script ID
+  # @return [Integer]
+  def self.default_script_id
+    @default_script_id ||= Script.where(name: DEFAULT_SCRIPT_NAME).pluck(:id).first
+  end
+
+  # Return the default Script
+  # @return [Script]
+  def self.default_script
+    @default_script ||= Script.where(name: DEFAULT_SCRIPT_NAME).first
+  end
 
   def display_name
     "#{name} - v. #{version}"
@@ -71,7 +87,7 @@ class Script < ApplicationRecord
                       .maximum(:version)
     end
 
-    # prioritise value from db query
+    # prioritize value from db query
     read_attribute(:last_version) || @last_version
   end
 
@@ -86,7 +102,7 @@ class Script < ApplicationRecord
                        .minimum(:version)
     end
 
-    # prioritise value from db query
+    # prioritize value from db query
     read_attribute(:first_version) || @first_version
   end
 
@@ -204,16 +220,19 @@ class Script < ApplicationRecord
       .unscoped
       .where(group_id:)
       .where('version >= ?', version)
-    if matching_or_higher_versions.count.positive?
-      errors.add(:version,
-        "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})")
-    end
+
+    return unless matching_or_higher_versions.count.positive?
+
+    errors.add(
+      :version,
+      "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})"
+    )
   end
 
   def set_group_id
-    if group_id.blank?
-      self.group_id = id
-      save!
-    end
+    return unless group_id.blank?
+
+    self.group_id = id
+    save!
   end
 end

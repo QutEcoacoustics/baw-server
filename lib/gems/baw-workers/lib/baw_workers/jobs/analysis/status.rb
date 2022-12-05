@@ -15,8 +15,6 @@ module BawWorkers
 
         # @param [Hash] params
         def begin(params)
-          # is system job? then ignore - we have no status tracking
-          return if should_not_process?(params)
 
           analysis_job_id = params[:job_id]
           audio_recording_id = params[:id]
@@ -56,8 +54,6 @@ module BawWorkers
         # @param [Symbol] status
         # @param [Hash] params
         def end(params, status)
-          # is system job? then ignore - we have no status tracking
-          return if should_not_process?(params)
 
           analysis_job_id = params[:job_id]
           audio_recording_id = params[:id]
@@ -113,9 +109,6 @@ module BawWorkers
           }
         end
 
-        def should_not_process?(params)
-          !params || params[:job_id].to_s.strip.downcase == BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
-        end
       end
     end
   end

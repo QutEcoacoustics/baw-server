@@ -18,7 +18,9 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 class Dataset < ApplicationRecord
-  #relationships
+  DEFAULT_DATASET_NAME = 'default'
+
+  # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets, optional: true
   has_many :dataset_items, dependent: :destroy
@@ -32,21 +34,21 @@ class Dataset < ApplicationRecord
 
   # validation
   validates :name, presence: true, length: { minimum: 2 }
-  validates :name, unless: -> { id == Dataset.default_dataset_id }, exclusion: { in: ['default'], message: '%{value} is a reserved dataset name' }
-
-  DEFAULT_DATASET_NAME = 'default'
+  validates :name, unless: lambda {
+                             id == Dataset.default_dataset_id
+                           }, exclusion: { in: ['default'], message: '%<value>s is a reserved dataset name' }
 
   # lookup the default dataset id
   # This will potentially be hit very often, maybe multiple times per request
   # and therefore is a possible avenue for future optimization if necessary
   def self.default_dataset_id
-    # note: this may cause db:create and db:migrate to fail
-    default_dataset.id
+    # NOTE: this may cause db:create and db:migrate to fail
+    @default_dataset_id ||= Dataset.where(name: DEFAULT_DATASET_NAME).pluck(:id).first
   end
 
   # (scope) return the default dataset
   def self.default_dataset
-    Dataset.where(name: DEFAULT_DATASET_NAME).first
+    @default_dataset ||= Dataset.where(name: DEFAULT_DATASET_NAME).first
   end
 
   # Define filter api settings

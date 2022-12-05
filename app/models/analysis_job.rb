@@ -5,8 +5,7 @@
 # Table name: analysis_jobs
 #
 #  id                           :integer          not null, primary key
-#  annotation_name              :string
-#  custom_settings              :text             not null
+#  custom_settings              :text
 #  deleted_at                   :datetime
 #  description                  :text
 #  name                         :string           not null
@@ -22,7 +21,7 @@
 #  updated_at                   :datetime
 #  creator_id                   :integer          not null
 #  deleter_id                   :integer
-#  saved_search_id              :integer          not null
+#  saved_search_id              :integer
 #  script_id                    :integer          not null
 #  updater_id                   :integer
 #
@@ -49,14 +48,14 @@ class AnalysisJob < ApplicationRecord
   include AasmHelpers
 
   OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
-  SYSTEM_JOB_NAME = 'system'
+  SYSTEM_JOB_NAME = 'default'
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs, optional: true
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_analysis_jobs, optional: true
 
   belongs_to :script, inverse_of: :analysis_jobs
-  belongs_to :saved_search, inverse_of: :analysis_jobs
+  belongs_to :saved_search, inverse_of: :analysis_jobs, optional: true
   has_many :projects, through: :saved_search
   has_many :analysis_jobs_items, inverse_of: :analysis_job
 
@@ -65,11 +64,11 @@ class AnalysisJob < ApplicationRecord
   validates_as_paranoid
 
   # association validations
-  validates_associated :script, :saved_search, :creator
+  #validates_associated :script, :saved_search, :creator
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
-  validates :custom_settings, :overall_progress, presence: true
+  validates :overall_progress, presence: true
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
   validates :overall_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :overall_duration_seconds, presence: true,
@@ -82,17 +81,15 @@ class AnalysisJob < ApplicationRecord
   validates :overall_data_length_bytes, presence: true,
     numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
-  # lookup the default dataset id
-  # This will potentially be hit very often, maybe multiple times per request
-  # and therefore is a possible avenue for future optimization if necessary
-  def self.default_dataset_id
-    # NOTE: this may cause db:create and db:migrate to fail
-    default_dataset.id
+  # Return the system Analysis Job ID
+  # @return [Integer]
+  def self.system_analysis_id
+    @system_analysis_id ||= Script.where(name: SYSTEM_JOB_NAME).pluck(:id).first
   end
 
-  # (scope) return the default dataset
+  # (scope) return the system analysis
   def self.system_analysis
-    AnalysisJob.where(name: SYSTEM_JOB_NAME).first
+    @system_analysis ||= AnalysisJob.where(name: SYSTEM_JOB_NAME).first
   end
 
   renders_markdown_for :description
@@ -226,7 +223,7 @@ class AnalysisJob < ApplicationRecord
 
   # analysis_job lifecycle:
   # 1. When a new analysis job is created, the state will be `before_save`.
-  #    The required attributes will be initialised by `initialize_workflow` and state will be transitioned to `new`.
+  #    The required attributes will be initialized by `initialize_workflow` and state will be transitioned to `new`.
   #    The new analysis job should be saved at this point (and is saved if created via create action on controller).
   #    Note: no AnalysisJobsItems have been made and no resque jobs have been enqueued.
   # 2. Then the job must be prepared. Currently synchronous but designed to be asynchronous.
