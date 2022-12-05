@@ -20,6 +20,11 @@ class AudioEventImport < ApplicationRecord
   # @return [Array<AudioEvent>]
   attr_accessor :imported_events
 
+  def initialize(...)
+    @imported_events = []
+    super(...)
+  end
+
   # relations
   has_many :audio_events, inverse_of: :audio_event_import
 
@@ -48,26 +53,6 @@ class AudioEventImport < ApplicationRecord
     self.files ||= []
   end
 
-  def serialize_imported_events
-    return [] if imported_events.blank?
-
-    imported_events.map do |e|
-      hash = e.as_json
-
-      all_errors = errors.to_hash(true).map { |k, v|
-        v.map do |msg|
-          { id: k, title: msg }
-        end
-      }.flatten
-
-      hash[:errors] = all_errors
-
-      hash[:tags] = e.tags.map(&:as_json)
-
-      hash
-    end
-  end
-
   def self.filter_settings
     common_fields = [
       :id, :name, :description, :files, :imported_events,
@@ -82,7 +67,7 @@ class AudioEventImport < ApplicationRecord
         imported_events: {
           query_attributes: [:id],
           transform: lambda { |item|
-                       item.serialize_imported_events
+                       item.imported_events || []
                      },
           arel: nil,
           type: :hash
@@ -135,7 +120,7 @@ class AudioEventImport < ApplicationRecord
             readOnly: true
           }
         },
-        # TODO: flush this out when we add an audio events schema
+        # TODO: flesh this out when we add an audio events schema
         imported_events: {
           type: 'array',
           readOnly: true,

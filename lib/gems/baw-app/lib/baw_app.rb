@@ -2,6 +2,7 @@
 
 require 'dry-validation'
 require 'config'
+require_relative 'inspector'
 
 Dir.glob("#{__dir__}/patches/**/*.rb").each do |override|
   require override

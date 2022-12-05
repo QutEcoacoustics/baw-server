@@ -34,8 +34,8 @@ class Tagging < ApplicationRecord
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_taggings
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_taggings, optional: true
 
-  accepts_nested_attributes_for :audio_event
-  accepts_nested_attributes_for :tag
+  # accepts_nested_attributes_for :audio_event
+  # accepts_nested_attributes_for :tag
 
   # association validations
   # the audio_event is added after validation

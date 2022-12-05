@@ -4,6 +4,9 @@ module Api
   class AudioEventParser
     # A tag resolver and creator that caches input.
     class TagCache
+      # @return [Hash<string,Tag>]
+      attr_accessor :cache
+
       def initialize(import_id)
         @cache = {}
         @import_id = import_id

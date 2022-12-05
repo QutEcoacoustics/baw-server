@@ -75,7 +75,7 @@ class Site < ApplicationRecord
   validates_as_paranoid
 
   # association validations
-  validates_associated :creator
+  #validates_associated :creator
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2 }
