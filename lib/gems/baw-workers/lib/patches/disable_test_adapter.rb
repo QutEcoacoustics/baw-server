@@ -6,7 +6,7 @@
 # - RUNNING_RSPEC is only defined by the test runner, which is on the web-server container, and not the worker container
 # Related to  https://github.com/rails/rails/issues/37270
 if !ENV.key?('RUNNING_RSPEC') && defined?(::ActiveJob::TestHelper)
-  puts 'Monkey patch: removing constant ::ActiveJob::TestHelper'
+  puts 'PATCH: ::ActiveJob::TestHelper constant removed'
 
   ::ActiveJob.send(:remove_const, :TestHelper)
 

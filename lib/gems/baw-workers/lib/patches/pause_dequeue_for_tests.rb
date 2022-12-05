@@ -80,7 +80,7 @@ if BawApp.test?
             to_do = should_dequeue.to_i
             if to_do <= 0
               raise ArgumentError,
-                    "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
+                "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
             end
 
             # decrement the counter by 1, to process one job for this pass
@@ -92,7 +92,7 @@ if BawApp.test?
             true
           else
             raise ArgumentError,
-                  "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
+              "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
           end
         end
       end
@@ -116,9 +116,9 @@ if BawApp.test?
   ::Resque.alias_method :__pop, :pop
   # Patch all resque jobs (global so we can catch jobs defined by third parties like ActiveJob)
   ::Resque.prepend(BawWorkers::ResquePatch::PauseDequeue)
-  puts 'Monkey patched Resque with BawWorkers::Resque::PauseDequeue'
+  puts 'PATCH: BawWorkers::Resque::PauseDequeue applied to ::Resque'
 
   raise 'Resque has not been patched for tests' unless ::Resque.include?(BawWorkers::ResquePatch::PauseDequeue)
 else
-  puts 'BawWorkers::ResquePatch::PauseDequeue loading skipped'
+  puts 'PATCH: BawWorkers::Resque::PauseDequeue NOT applied'
 end
