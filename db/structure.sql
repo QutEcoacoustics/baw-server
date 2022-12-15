@@ -24,6 +24,20 @@ COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiS
 
 
 --
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -285,7 +299,7 @@ ALTER SEQUENCE public.analysis_jobs_items_id_seq OWNED BY public.analysis_jobs_i
 -- Name: anonymous_user_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE UNLOGGED TABLE public.anonymous_user_statistics (
+CREATE TABLE public.anonymous_user_statistics (
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     audio_segment_download_count bigint DEFAULT 0,
     audio_original_download_count bigint DEFAULT 0,
@@ -467,7 +481,7 @@ ALTER SEQUENCE public.audio_events_tags_id_seq OWNED BY public.audio_events_tags
 -- Name: audio_recording_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE UNLOGGED TABLE public.audio_recording_statistics (
+CREATE TABLE public.audio_recording_statistics (
     audio_recording_id bigint NOT NULL,
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     original_download_count bigint DEFAULT 0,
@@ -1566,7 +1580,7 @@ ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 -- Name: user_statistics; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE UNLOGGED TABLE public.user_statistics (
+CREATE TABLE public.user_statistics (
     user_id bigint NOT NULL,
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     audio_segment_download_count bigint DEFAULT 0,
@@ -3697,6 +3711,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220808062341'),
 ('20220825042333'),
 ('20220930062323'),
-('20221117035017');
+('20221117035017'),
+('20221215000234');
 
 
