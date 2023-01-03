@@ -44,5 +44,19 @@ module PBSHelpers
 
       job
     end
+
+    def expect_pbs_jobs(count)
+      jobs = connection.fetch_all_jobs.value!.jobs
+      expect(jobs.size).to eq(count)
+
+      jobs
+    end
+
+    def expect_enqueued_pbs_jobs(count)
+      enqueued = connection.fetch_all_jobs.value!.jobs.where(&:queued?).size
+      expect(enqueued).to eq(count)
+
+      enqueued
+    end
   end
 end

@@ -142,6 +142,10 @@ class AnalysisJobsItem < ApplicationRecord
     queued.where(analysis_job_id:)
   end
 
+  def self.new_for_analysis_job(analysis_job_id)
+    where(analysis_job_id:, status: :new)
+  end
+
   def self.cancelled_for_analysis_job(analysis_job_id)
     where(analysis_job_id:, status: [:cancelling, :cancelled])
   end
@@ -166,38 +170,41 @@ class AnalysisJobsItem < ApplicationRecord
   #                             --> :successful
   #                             |
   # :new → :queued → :working ----> :failed
-  #           |                 |
-  #           |                 --> :timed_out
-  #           |
-  #           ----> :cancelling --> :cancelled
+  #           |          |      |
+  #           |          |      --> :timed_out
+  #           |          |
+  #           --------------------> :cancelled
   #
   # Retry an item:
   #
-  # :failed ---------> :queued
+  # :failed ---------> :queued (new queue_id)
   #              |
-  # :timed_out ---
+  # :timed_out --|
+  #              |
+  # :cancelled ---
   #
-  # During cancellation:
+  # Cancellation:
   #
-  #  :cancelling --> :queued (same queue_id)
-  #
-  # After cancellation:
-  #
-  #  :cancelled --> :queued (new queue_id)
+  #  :queued ∪ :working --> :cancelled
   #
   # Avoid race conditions for cancellation: an item can always finish!
   #
-  # :cancelling ⊕ :cancelled ----> :successful ⊕ :failed ⊕ :timed_out
+  # :cancelled ----> :successful ⊕ :failed ⊕ :timed_out
   #
   aasm column: :status, no_direct_assignment: true, whiny_persistence: true do
+    # @!method new?
+    #   @return [Boolean] true if the item has is new
     state :new, initial: true
+    # @!method queued?
+    #   @return [Boolean] true if the item has is queued
     state :queued, before_enter: :add_to_queue, enter: :set_queued_at
     state :working, enter: :set_work_started_at
-    state :successful, enter: :set_completed_at
-    state :failed, enter: :set_completed_at
-    state :timed_out, enter: :set_completed_at
-    state :cancelling, enter: :set_cancel_started_at
-    state :cancelled, enter: :set_completed_at
+    state :successful, before_enter: :clear_queue_id, enter: :set_completed_at
+    state :failed, before_enter: :clear_queue_id, enter: :set_completed_at
+    state :timed_out, before_enter: :clear_queue_id, enter: :set_completed_at
+    # @!method cancelled?
+    #   @return [Boolean] true if the item has been cancelled
+    state :cancelled, before_enter: [:remove_from_queue, :clear_queue_id], enter: :set_completed_at
 
     event :queue, guards: [] do
       transitions from: :new, to: :queued
@@ -222,22 +229,10 @@ class AnalysisJobsItem < ApplicationRecord
       transitions from: [:cancelling, :cancelled], to: :timed_out
     end
 
-    # https://github.com/aasm/aasm/issues/324
-    # event :complete, guards: [] do
-    #   transitions from: :working, to: :successful
-    #   transitions from: :working, to: :failed
-    #   transitions from: :working, to: :timed_out
-    #   transitions from: [:cancelling, :cancelled], to: :successful
-    #   transitions from: [:cancelling, :cancelled], to: :failed
-    #   transitions from: [:cancelling, :cancelled], to: :timed_out
-    # end
-
     event :cancel, guards: [] do
-      transitions from: :queued, to: :cancelling
-    end
-
-    event :confirm_cancel, guards: [] do
-      transitions from: :cancelling, to: :cancelled
+      transitions from: :queued, to: :cancelled
+      transitions from: :working, to: :cancelled
+      transitions from: :new, to: :cancelled
     end
 
     event :retry, guards: [] do
@@ -266,30 +261,39 @@ class AnalysisJobsItem < ApplicationRecord
   # state machine callbacks
   #
 
-  # Enqueue payloads representing audio recordings from saved search to asynchronous processing queue.
+  # Enqueue this item representing an audio recordings to a asynchronous processing queue.
+  # On error attempts to re-enqueue the job three times.
+  # Will raise on failure.
   def add_to_queue
     if !queue_id.blank? && cancelling?
+      Rails.logger.debug "Enqueue cancelled for analysis job item #{id} because it is already queued."
+
       # cancelling items already have a valid job payload on the queue - do not add again
       return
     end
 
-    payload = AnalysisJobsItem.create_action_payload(analysis_job, audio_recording)
+    retry_with_backoff(logger: Rails.logger) do
+      result = BawWorkers::Config.batch_analysis.submit_job(self)
 
-    result = nil
-    error = nil
-
-    begin
-      result = BawWorkers::Jobs::Analysis::Job.action_enqueue(payload)
-
-      # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
-      self.queue_id = result
-    rescue StandardError => e
-      # NOTE: exception used to be swallowed. We might need better error handling here later on.
-      Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
-      raise
+      # the assumption here is that result is a unique identifier that we can
+      # later use to interrogate the message queue
+      self.queue_id = result.value!
     end
+  end
 
-    @enqueue_results = { result:, error: }
+  # Dequeue this item representing an audio recordings to a asynchronous processing queue.
+  # On error attempts to de-enqueue the job three times.
+  # Will raise on failure.
+  def remove_from_queue
+    return if queue_id.blank?
+
+    retry_with_backoff(logger: Rails.logger) do
+      BawWorkers::Config.batch_analysis.cancel_job(self).value!
+    end
+  end
+
+  def clear_queue_id
+    self.queue_id = nil
   end
 
   def set_queued_at
@@ -311,32 +315,6 @@ class AnalysisJobsItem < ApplicationRecord
   #
   # other methods
   #
-
-  def self.create_action_payload(analysis_job, audio_recording)
-    # common payload info
-    command_format = analysis_job.script.executable_command.to_s
-    config_string = analysis_job.custom_settings.to_s
-    job_id = analysis_job.id.to_i
-
-    # get base options for analysis from the script
-    # Options invariant to the AnalysisJob are stuck in here, like:
-    # - file_executable
-    # - copy_paths
-    payload = (analysis_job.script.analysis_action_params || {}).dup.deep_symbolize_keys
-
-    # merge base
-    payload.merge({
-      command_format:,
-
-      config: config_string,
-      job_id:,
-
-      uuid: audio_recording.uuid,
-      id: audio_recording.id,
-      datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-      original_format: audio_recording.original_format_calculated
-    })
-  end
 
   def new_when_created
     errors.add(:status, 'must be new when first created') unless status == :new.to_s

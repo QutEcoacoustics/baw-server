@@ -19,7 +19,7 @@ ARG pbs_package=openpbs_22.05.11.opensuse_leap_15.3.zip
 # tar & gzip used for doxker cli install
 RUN zypper --non-interactive refresh && \
     zypper --non-interactive install tar gzip unzip sudo nano \
-        openssl certmonger curl python3
+    openssl certmonger curl python3
 
 #
 # rsyslogd
@@ -72,6 +72,7 @@ RUN --mount=type=bind,source=.,target=/build <<-EOF
     cat /build/client_key.pub > ~/.ssh/authorized_keys
     chmod 700 ~/.ssh
     chmod 600 ~/.ssh/authorized_keys
+    chmod 600 /etc/ssh/ssh_host_rsa_key
 EOF
 
 #
@@ -109,10 +110,10 @@ COPY mom_config /var/spool/pbs/mom_priv/config
 
 ENV DOCKERVERSION=20.10.17
 RUN \
-  curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
-  && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 \
-                 -C /usr/local/bin docker/docker \
-  && rm docker-${DOCKERVERSION}.tgz
+    curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
+    && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 \
+    -C /usr/local/bin docker/docker \
+    && rm docker-${DOCKERVERSION}.tgz
 
 #
 # COPY entrypoint

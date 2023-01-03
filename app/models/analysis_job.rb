@@ -264,12 +264,12 @@ class AnalysisJob < ApplicationRecord
     # completed just means all processing has finished, whether it succeeds or not.
     state :completed, enter: [:update_job_progress], after_enter: :send_completed_email
 
-    event :initialize_workflow, unless: :has_status_timestamp? do
+    event :initialize_workflow, unless: :status_timestamp_present? do
       transitions from: :before_save, to: :new
     end
 
     # we send email here because initialize_workflow does not guarantee that an id is set.
-    event :prepare, guard: :has_id? do
+    event :prepare, guard: :id_present? do
       transitions from: :new, to: :preparing
     end
 
@@ -325,11 +325,11 @@ class AnalysisJob < ApplicationRecord
   # guards for the state machine
   #
 
-  def has_status_timestamp?
+  def status_timestamp_present?
     !overall_status_modified_at.nil?
   end
 
-  def has_id?
+  def id_present?
     !id.nil?
   end
 
@@ -401,29 +401,19 @@ class AnalysisJob < ApplicationRecord
     self.overall_data_length_bytes = options[:data_length_bytes_sum]
     save!
 
+    ::BawWorkers::Jobs::Analysis::AnalysisChangeJob.enqueue(self)
+
     Rails.logger.info "AnalysisJob::prepare_job: Complete. Queued: #{options[:queued_count]}"
   end
 
   # Suspends an analysis job by cancelling all queued items
   def suspend_job
-    # get items
-    query = AnalysisJobsItem.queued_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:cancel!)
-    end
+    ::BawWorkers::Jobs::Analysis::AnalysisChangeJob.suspend(self)
   end
 
   # Resumes an analysis job by converting cancelling or cancelled items to queued items
   def resume_job
-    # get items
-    query = AnalysisJobsItem.cancelled_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:retry!)
-    end
+    ::BawWorkers::Jobs::Analysis::AnalysisChangeJob.resume(self)
   end
 
   def send_completed_email
@@ -432,13 +422,7 @@ class AnalysisJob < ApplicationRecord
 
   # Retry an analysis job by re-enqueuing all failed items
   def retry_job
-    # get items
-    query = AnalysisJobsItem.failed_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:retry!)
-    end
+    ::BawWorkers::Jobs::Analysis::AnalysisChangeJob.retry(self)
   end
 
   def send_retry_email
@@ -487,13 +471,13 @@ class AnalysisJob < ApplicationRecord
       item.save!
 
       # now try to transition to queued state (and save if transition successful)
-      success = item.queue!
-      raise 'Could not queue AnalysisJobItem' unless success
+      # success = item.queue!
+      # raise 'Could not queue AnalysisJobItem' unless success
 
-      options[:queued_count] += 1 if item.enqueue_results[:result]
-      options[:failed_count] += 1 if item.enqueue_results[:error]
+      # options[:queued_count] += 1 if item.enqueue_results[:result]
+      # options[:failed_count] += 1 if item.enqueue_results[:error]
 
-      options[:results].push(item.enqueue_results)
+      # options[:results].push(item.enqueue_results)
     end
 
     options

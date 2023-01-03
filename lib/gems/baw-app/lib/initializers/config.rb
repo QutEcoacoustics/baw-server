@@ -37,6 +37,14 @@ class BawConfigContract < Dry::Validation::Contract
         required(:queue).filled(:string)
         required(:delete_after).filled(:integer, gt?: 0)
       end
+
+      required(:analysis_change).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:analysis).hash do
+        required(:queue).filled(:string)
+      end
     end
   }
 
@@ -83,6 +91,8 @@ class BawConfigContract < Dry::Validation::Contract
       end
       required(:default_queue).maybe(:string)
       required(:default_project).filled(:string)
+      required(:primary_group).filled(:string)
+      required(:auth_tokens_expire_in).filled(:integer, gt?: 0)
       required(:root_data_path_mapping).hash do
         required(:workbench).filled(:string)
         required(:cluster).filled(:string)

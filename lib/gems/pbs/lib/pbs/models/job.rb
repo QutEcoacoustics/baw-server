@@ -15,6 +15,7 @@ module PBS
     #   "Error_Path": "725ccdf1a5fb:/home/pbsuser/testname.e0",
     #   "exec_host": "725ccdf1a5fb/0",
     #   "exec_vnode": "(725ccdf1a5fb:ncpus=1)",
+    #   "group_list": "pbsuser",
     #   "Hold_Types": "n",
     #   "Join_Path": "n",
     #   "Keep_Files": "n",
@@ -107,6 +108,10 @@ module PBS
       #   @return [String]
       attribute? :exec_vnode, ::BawApp::Types::String
 
+      # @!attribute [r] group_list
+      #   @return [String]
+      attribute? :group_list, ::BawApp::Types::String
+
       # @!attribute [r] hold_type
       #   @return [String]
       attribute :hold_type, ::BawApp::Types::String.optional.default(nil)
@@ -149,7 +154,7 @@ module PBS
 
       # @!attribute [r] stime
       #   @return [Time,nil]
-      attribute :stime, ::BawApp::Types::JSON::Time.optional.default(nil)
+      attribute? :stime, ::BawApp::Types::JSON::Time.optional.default(nil)
 
       # @!attribute [r] obittime
       #   @return [Time]
@@ -169,7 +174,7 @@ module PBS
 
       # @!attribute [r] comment
       #   @return [String]
-      attribute :comment, ::BawApp::Types::String
+      attribute? :comment, ::BawApp::Types::String
 
       # @!attribute [r] etime
       #   @return [Time]

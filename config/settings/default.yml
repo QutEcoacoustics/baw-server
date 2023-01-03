@@ -31,6 +31,7 @@ resque:
   queues_to_process:
     - media_<%= BawApp.env %>
     - harvest_scan_<%= BawApp.env %>
+    - analysis_change_<%= BawApp.env %>
     - harvest_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
     - maintenance_<%= BawApp.env %>
@@ -50,6 +51,8 @@ resque_scheduler:
   polling_interval_seconds: 5.0
 # these are the available background jobs that can be enqueued
 actions:
+  analysis_change:
+    queue: analysis_change_<%= BawApp.env %>
   analysis:
     queue: analysis_<%= BawApp.env %>
   harvest:
@@ -85,6 +88,11 @@ batch_analysis:
   default_queue:
   # the project to set for submitted jobs - we use this as an identifier/tag
   default_project: <%= BawApp.env %>
+  # the primary group:
+  #   qsub -W group_list=pbs_user job.sh
+  primary_group: pbsuser
+  # how long an issued jwt is valid for, 14 * 86400 = 1209600
+  auth_tokens_expire_in: 1209600
   # the mapping between the data mount on the workbench and the mount on the cluster
   # in most setups the workbench doesn't control the cluster - we're just a guest -
   # which means the mounts are different

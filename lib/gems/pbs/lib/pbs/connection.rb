@@ -10,7 +10,7 @@ module PBS
     ENV_PBS_O_QUEUE = 'PBS_O_QUEUE'
     ENV_PBS_JOBNAME = 'PBS_JOBNAME'
     ENV_PBS_JOBID = 'PBS_JOBID'
-    PBS_TMPDIR = 'PBS_TMPDIR'
+    ENV_TMPDIR = 'TMPDIR'
 
     JSON_PARSER_OPTIONS = {
       allow_nan: true,
@@ -20,9 +20,13 @@ module PBS
     # names and values as per the qsub format
     # https://manpages.org/qsub
     DEFAULT_RESOURCES = {
-      ncpus: '12',
-      mem: '32GB',
+      ncpus: '4',
+      mem: '16GB',
       walltime: '3600'
+    }.freeze
+
+    DEFAULT_ADDITIONAL_ATTRIBUTES = {
+      'group_list' => Settings.batch_analysis.primary_group
     }.freeze
 
     TEMPLATE_PATH = Pathname(__dir__) / 'scripts' / 'job.sh.erb'
@@ -49,7 +53,7 @@ module PBS
     # @return [::Dry::Monads::Result<::PBS::Models::JobList>]
     def fetch_all_statuses
       # can't use `-u` on qstat because it triggers a double record output in the alternated format 🤦‍♂️
-      command = "qselect -u -u #{settings.connection.username} | qstat -x -f -F JSON"
+      command = "qselect -u #{settings.connection.username} | qstat -x -f -F JSON"
 
       execute_safe(command).fmap { |stdout, _stderr|
         hash = JSON.parse(stdout, JSON_PARSER_OPTIONS)
@@ -96,6 +100,7 @@ module PBS
     # @option options [String] :report_start_script The script to execute on starting
     # @option options [Hash<Symbol,String>] :env  key value pairs of information made available to the script
     # @option options [Hash<Symbol,String]  :resources resources to request from PBS, names and values as per https://manpages.org/qsub
+    # @option options [Boolean] :hold whether to submit the job in a held state (a User hold)
     # @return [::Dry::Monads::Result<String>] the created job id
     def submit_job(script, working_directory, options = {})
       raise ArgumentError, 'script must not be empty' if script.blank?
@@ -113,7 +118,9 @@ module PBS
        .gsub(/^#{settings.root_data_path_mapping.workbench}/, settings.root_data_path_mapping.cluster.to_s)
       ) => remote_working_directory
 
-      script_name = "#{job_name}.sh"
+      # used to append `.sh` here but it is actually not needed and I prefer
+      # the slightly shorter name.
+      script_name = job_name.to_s
       script_remote_path = remote_working_directory / script_name
 
       # template script
@@ -134,11 +141,21 @@ module PBS
     end
 
     # Deletes a job identified by a job id
+    # @param job_id [String] the job id
     # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
     def cancel_job(job_id)
       command = "qdel -x #{job_id}"
 
       execute_safe(command, "deleting job #{jobs_id}")
+    end
+
+    # Releases a job identified by a job id
+    # @param job_id [String] the job id
+    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    def release_job(job_id)
+      command = "qrls -x #{job_id}"
+
+      execute_safe(command, "releasing job #{jobs_id}")
     end
 
     # Deletes all jobs created by the connection user
@@ -163,6 +180,8 @@ module PBS
       return Failure("status was non-zero: #{status}") unless status&.zero?
 
       max_value = parse_qmgr_list(stdout, 'max_queued')
+
+      return Failure('qmgr did not return the max_queued value') if max_value.blank?
 
       # 🚨DODGY ALERT:🚨 find the first number and assume it is a limit
       number = max_value.match(/\d+/)&.values_at(0)&.first
@@ -236,24 +255,39 @@ module PBS
 
     def template_qsub_command(working_directory, script_path, job_name, options)
       env = options.fetch(:env, {})
+      additional_attributes = DEFAULT_ADDITIONAL_ATTRIBUTES.merge(options.fetch(:additional_attributes, {}))
       resources = DEFAULT_RESOURCES.merge(options.fetch(:resources, {}))
       queue = settings.default_queue
       project = settings.default_project
+      hold = options.fetch(:hold, false)
 
       # -l <resource list>
       resource_string = resources.map { |key, value| "-l #{key}=#{value}" }.join(' ')
+
       # -v <variable list>
       env_string = ''
       unless env.empty?
         pairs = env.map { |key, value| "#{key}='#{value}'" }.join(',')
         env_string = "-v \"#{pairs}\""
       end
+
+      # -W <additional attributes>
+      additional_attributes_string = ''
+      unless additional_attributes.empty?
+        pairs = additional_attributes.map { |key, value| "#{key}=#{value}" }.join(',')
+        additional_attributes_string = "-W \"#{pairs}\""
+      end
+
       # -q <queue_name>
       queue_string = queue.blank? ? '' : "-q #{queue}"
+
+      # -h
+      hold_string = hold ? '-h' : ''
+
       cd = "cd '#{working_directory}'"
       # -P <project_name>
       # -N <job_name>
-      qsub = "qsub -N #{job_name} -P #{project} #{queue_string} #{resource_string} #{env_string} #{script_path}"
+      qsub = "qsub -N #{job_name} -P #{project} #{queue_string} #{hold_string} #{resource_string} #{additional_attributes_string} #{env_string} #{script_path}"
       "#{cd} && #{qsub}"
     end
   end

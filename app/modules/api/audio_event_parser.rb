@@ -239,7 +239,7 @@ module Api
       elsif raven?(contents)
         parse_raven(contents)
       else
-        raise 'File be a CSV with headers, a Raven file, or a JSON array'
+        raise 'File must be a CSV with headers, a Raven file, or a JSON array'
       end => data
 
       raise 'data must be an array' unless data.is_a?(Array)

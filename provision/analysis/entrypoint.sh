@@ -8,14 +8,20 @@ pbs_conf_file=/etc/pbs.conf
 mom_conf_file=/var/spool/pbs/mom_priv/config
 hostname=$(hostname)
 
+echo "[entrypoint] run at $(date -Is)"
+
 # replace hostname in pbs.conf
+echo "[sed] template $pbs_conf_file"
 sed -i "s/PBS_SERVER=.*/PBS_SERVER=$hostname/" $pbs_conf_file
 
 # replace mom_priv/config
+echo "[sed] template $mom_conf_file"
 sed -i "s/\$clienthost .*/\$clienthost $hostname/" $mom_conf_file
 
 echo "[kill] kill any existing rsyslogd process"
 pkill -F /var/run/rsyslogd.pid --echo || true
+rm /var/run/rsyslogd.pid || true
+
 echo "[start] start rsyslogd"
 rsyslogd -n &
 echo "[start] start sshd"

@@ -24,20 +24,6 @@ COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiS
 
 
 --
--- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
-
-
---
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
-
-
---
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -486,7 +472,8 @@ CREATE TABLE public.audio_recording_statistics (
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     original_download_count bigint DEFAULT 0,
     segment_download_count bigint DEFAULT 0,
-    segment_download_duration numeric DEFAULT 0.0
+    segment_download_duration numeric DEFAULT 0.0,
+    analyses_completed_count bigint DEFAULT 0
 )
 WITH (fillfactor='90');
 
@@ -1585,7 +1572,8 @@ CREATE TABLE public.user_statistics (
     bucket tsrange DEFAULT tsrange((CURRENT_DATE)::timestamp without time zone, (CURRENT_DATE + '1 day'::interval)) NOT NULL,
     audio_segment_download_count bigint DEFAULT 0,
     audio_original_download_count bigint DEFAULT 0,
-    audio_download_duration numeric DEFAULT 0.0
+    audio_download_duration numeric DEFAULT 0.0,
+    analyses_completed_count bigint DEFAULT 0
 )
 WITH (fillfactor='90');
 
@@ -3712,6 +3700,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20220825042333'),
 ('20220930062323'),
 ('20221117035017'),
-('20221215000234');
+('20221215000234'),
+('20221219052856');
 
 

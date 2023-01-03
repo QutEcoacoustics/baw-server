@@ -18,9 +18,6 @@ class AnalysisJobsItemsController < ApplicationController
   # - Analysis workers need to poll the #show method. Requiring disk access in such cases slows down the response
   #   and introduces disk based dependencies for a status API.
   #
-  # System jobs are run automatically by the system. They don't have analysis_jobs_item records in the database. Rather
-  # we proxy requests to audio_recordings table.
-  #
   # Warning: this controller does not expose any AnalysisJobsItems by the `id` primary key!
 
   # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/

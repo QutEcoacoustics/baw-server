@@ -7,7 +7,8 @@ module Api
 
     ALGORITHM = 'HS256'
 
-    # Create a JWT
+    # Create a JWT.
+    # By default, the token is immediately useable but will expire in 24 hours.
     # @param subject [Integer] a [User] id to grant the token for
     # @param action [Symbol,nil] an optional action to encode the token for
     # @param resource [Symbol,nil] an optional resource (a controller) to encode the token for
@@ -84,18 +85,18 @@ module Api
         raise ArgumentError, 'not_before must be a ActiveSupport::Duration'
       end
 
-      unless resource.nil?
-        klass = nil
-        begin
-          klass = "#{resource}_controller".classify.constantize
-        rescue NameError
-          # squash
-        end
-        unless klass.present? && klass < ApplicationController
-          raise ArgumentError,
-            'JWT resource claim must be a valid controller'
-        end
+      return if resource.nil?
+
+      klass = nil
+      begin
+        klass = "#{resource}_controller".classify.constantize
+      rescue NameError
+        # squash
       end
+
+      return if klass.present? && klass < ApplicationController
+
+      raise ArgumentError, 'JWT resource claim must be a valid controller'
     end
   end
 end

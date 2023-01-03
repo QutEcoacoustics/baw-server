@@ -17,7 +17,8 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
+      upload: 'Alive',
+      batch_analysis: 'Connected'
     })
   end
 
@@ -39,7 +40,8 @@ describe '/status.json' do
       database: 'unknown',
       redis: 'unknown',
       storage: 'unknown',
-      upload: 'unknown'
+      upload: 'unknown',
+      batch_analysis: 'unknown'
     })
   end
 
@@ -56,7 +58,8 @@ describe '/status.json' do
       database: true,
       redis: 'error: message',
       storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
+      upload: 'Alive',
+      batch_analysis: 'Connected'
     })
   end
 
@@ -77,7 +80,8 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'error message'
+      upload: 'error message',
+      batch_analysis: 'Connected'
     })
   end
 
@@ -95,7 +99,8 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'Client sent an HTTP request to an HTTPS server.'
+      upload: 'Client sent an HTTP request to an HTTPS server.',
+      batch_analysis: 'Connected'
     })
   end
 
@@ -112,7 +117,8 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'error: execution expired'
+      upload: 'error: execution expired',
+      batch_analysis: 'Connected'
     })
   end
 end

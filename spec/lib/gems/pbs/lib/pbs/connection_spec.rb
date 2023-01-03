@@ -263,6 +263,43 @@ describe PBS::Connection do
         expect(job.resource_list.mem).to eq '256mb'
         expect(job.resource_list.walltime).to eq '00:01:00'
       end
+
+      it 'will set the primary group by default' do
+        result = connection.submit_job(
+          'echo "I’m capable of running my own diagnostics, thank you very much."',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+        job = wait_for_pbs_job(job_id)
+
+        expect(job.group_list).to eq Settings.batch_analysis.primary_group
+      end
+
+      it 'can submit a help job' do
+        result = connection.submit_job(
+          'echo "I’m capable of running my own diagnostics, thank you very much."',
+          working_directory,
+          {
+            hold: true
+          }
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+
+        status = connection.fetch_status(job_id)
+        expect(status).to be_held
+
+        release_result = connection.release_job(job_id)
+        expect(release_result).to be_success
+
+        job = wait_for_pbs_job(job_id)
+
+        expect(job).to be_success
+        expect(job.value!.second).to be_finished
+      end
     end
   end
 end

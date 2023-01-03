@@ -16,6 +16,7 @@
       "autoloaders",
       "autoloads",
       "autosave",
+      "backoff",
       "backtrace",
       "behaviour",
       "binmode",

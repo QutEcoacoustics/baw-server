@@ -37,6 +37,14 @@ module BawApp
     #   @return [String,nil]
     attribute :default_project, ::BawApp::Types::String
 
+    # @!attribute [r] primary_group
+    #   @return [String,nil]
+    attribute :primary_group, ::BawApp::Types::String
+
+    # @!attribute [r] auth_tokens_expire_in
+    #   @return [Integer]
+    attribute :auth_tokens_expire_in, ::BawApp::Types::Integer.constrained(gt: 0)
+
     # @!parse
     #   class RootDataPathMapping
     #     # @return [Pathname]
