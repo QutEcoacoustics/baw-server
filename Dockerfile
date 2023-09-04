@@ -65,7 +65,7 @@ ENV RAILS_ENV=production \
 USER ${app_user}
 
 # "Install" our metadata utility
-COPY --from=qutecoacoustics/emu:6.0.0 --chown==${app_user} /emu /emu
+COPY --from=qutecoacoustics/emu:7.0.3 --chown==${app_user} /emu /emu
 
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}
@@ -77,8 +77,8 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 # skip installing gem documentation
 RUN (([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true) \
   && (([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true)
-  # ensure required bundler version is installed
-  # https://bundler.io/blog/2019/05/14/solutions-for-cant-find-gem-bundler-with-executable-bundle.html
+# ensure required bundler version is installed
+# https://bundler.io/blog/2019/05/14/solutions-for-cant-find-gem-bundler-with-executable-bundle.html
 RUN gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)" \
   # install baw-server
   && bundle install \
