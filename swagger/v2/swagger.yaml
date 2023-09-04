@@ -1454,7 +1454,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 9.0.3 from http://localhost:3000.
+                  Version 9.1.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1494,7 +1494,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 9.0.3"
+                Write-Information "Acoustic Workbench downloader script version 9.1.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1676,7 +1676,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 9.0.3 from http://localhost:3000.
+                  Version 9.1.1 from http://localhost:3000.
 
                 .EXAMPLE
 
@@ -1716,7 +1716,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 9.0.3"
+                Write-Information "Acoustic Workbench downloader script version 9.1.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -6337,11 +6337,67 @@ paths:
       security:
       - auth_token_header: []
       parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '200':
           description: successful
           content:
             application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: updated_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/analysis_jobs?direction=desc&items=25&order_by=updated_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 78
+                  name: job name 78
+                  description: job description 78
+                  annotation_name: 
+                  custom_settings: custom settings 78
+                  creator_id: 501
+                  updater_id: 
+                  deleter_id: 
+                  created_at: '2020-01-02T03:04:05.677Z'
+                  updated_at: '2020-01-02T03:04:05.677Z'
+                  deleted_at: 
+                  script_id: 78
+                  saved_search_id: 79
+                  started_at: '2020-01-02T03:04:05.677Z'
+                  overall_status: new
+                  overall_status_modified_at: '2020-01-02T03:04:05.677Z'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-01-02T03:04:05.677Z'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 78</p>\n"
+                  description_html_tagline: job description 78
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6377,6 +6433,7 @@ paths:
                   id: 80
                   name: job name 80
                   description: job description 80
+                  annotation_name: 
                   custom_settings: custom settings 80
                   creator_id: 1
                   updater_id: 1
@@ -6472,6 +6529,7 @@ paths:
                   id: 82
                   name: job name 82
                   description: job description 82
+                  annotation_name: 
                   custom_settings: custom settings 82
                   creator_id: 516
                   updater_id: 
@@ -6539,6 +6597,7 @@ paths:
                   id: 83
                   name: job name 84
                   description: job description 84
+                  annotation_name: 
                   custom_settings: custom settings 83
                   creator_id: 520
                   updater_id: 1
@@ -6611,6 +6670,7 @@ paths:
                   id: 84
                   name: job name 86
                   description: job description 86
+                  annotation_name: 
                   custom_settings: custom settings 85
                   creator_id: 527
                   updater_id: 1
@@ -6683,11 +6743,67 @@ paths:
       security:
       - auth_token_header: []
       parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '200':
           description: successful
           content:
             application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: updated_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/analysis_jobs/filter?direction=desc&items=25&order_by=updated_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 86
+                  name: job name 88
+                  description: job description 88
+                  annotation_name: 
+                  custom_settings: custom settings 88
+                  creator_id: 538
+                  updater_id: 
+                  deleter_id: 
+                  created_at: '2020-01-02T03:04:05.677Z'
+                  updated_at: '2020-01-02T03:04:05.677Z'
+                  deleted_at: 
+                  script_id: 88
+                  saved_search_id: 89
+                  started_at: '2020-01-02T03:04:05.677Z'
+                  overall_status: new
+                  overall_status_modified_at: '2020-01-02T03:04:05.677Z'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-01-02T03:04:05.677Z'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 88</p>\n"
+                  description_html_tagline: job description 88
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
