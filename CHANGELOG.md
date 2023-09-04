@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.2.2](https://github.com/QutEcoacoustics/baw-server/tree/9.2.2) (2023-09-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.1.1...9.2.2)
+
+**Fixed bugs:**
+
+- Problem parsing EMU results [\#631](https://github.com/QutEcoacoustics/baw-server/issues/631)
+
 ## [9.1.1](https://github.com/QutEcoacoustics/baw-server/tree/9.1.1) (2022-12-05)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.3...9.1.1)
