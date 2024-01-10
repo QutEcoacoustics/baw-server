@@ -13,6 +13,7 @@
 #  image_file_name         :string
 #  image_file_size         :bigint
 #  image_updated_at        :datetime
+#  license                 :text
 #  name                    :string           not null
 #  notes                   :text
 #  urn                     :string
@@ -78,9 +79,11 @@ class Project < ApplicationRecord
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
   validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z},
-    message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
+    message: 'urn %<value>s is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z},
-    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+    message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
+
+  validates :license, length: { minimum: 1 }, allow_nil: true
 
   # ensure allow original download is a permission level.
   # Do not add predicates to Project ( #reader?, #writer?, #owner? do not make sense when attached directly to Project).
@@ -99,7 +102,8 @@ class Project < ApplicationRecord
                      :updater_id,
                      :updated_at,
                      :deleter_id,
-                     :deleted_at],
+                     :deleted_at,
+                     :license],
       render_fields: [:id, :name, :description, :creator_id,
                       :created_at,
                       :updater_id,
@@ -108,7 +112,8 @@ class Project < ApplicationRecord
                       :deleted_at,
                       :notes,
                       :allow_original_download,
-                      :allow_audio_upload],
+                      :allow_audio_upload,
+                      :license],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection
@@ -212,7 +217,8 @@ class Project < ApplicationRecord
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels,
         allow_original_download: Api::Schema.permission_levels,
-        allow_audio_upload: { type: 'boolean' }
+        allow_audio_upload: { type: 'boolean' },
+        license: { type: ['string', 'null'] }
       },
       required: [
         :id,
@@ -231,7 +237,8 @@ class Project < ApplicationRecord
         :site_ids,
         :region_ids,
         :image_urls,
-        :allow_original_download
+        :allow_original_download,
+        :license
       ]
     }.freeze
   end
