@@ -82,6 +82,25 @@ describe 'Projects' do
       expect(response.body).to match 'projects/new'
     end
 
+    it 'allows creating a project without a license' do
+      body = { project: { name: 'test123' } }
+      post '/projects', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect(api_data).to match(hash_including({
+        name: 'test123',
+        license: nil
+      }))
+    end
+
+    it 'does not allow creating a project with an empty string license' do
+      body = { project: { name: 'test123', license: '' } }
+      post '/projects', params: body, **api_with_body_headers(reader_token)
+
+      expect_error(:unprocessable_entity, 'Record could not be saved',
+        { license: ['is too short (minimum is 1 character)'] })
+    end
+
     # can't test empty body with multipart/form-data content type
     # because middleware errors when trying to parse it
   end
@@ -171,6 +190,4 @@ describe 'Projects' do
       }))
     end
   end
-
-
 end
