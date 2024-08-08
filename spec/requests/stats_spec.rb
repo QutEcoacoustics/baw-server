@@ -23,7 +23,7 @@ describe '/stats' do
         users_online: an_instance_of(Integer),
         users_total: User.count,
         online_window_start: an_instance_of(String),
-        projects_total: 2,
+        projects_total: 3,
         regions_total: 1,
         sites_total: 3,
         annotations_total: 2,

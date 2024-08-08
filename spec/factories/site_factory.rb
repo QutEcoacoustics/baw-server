@@ -44,6 +44,7 @@ FactoryBot.define do
     sequence(:description) { |n| "site description #{n}" }
 
     creator
+    projects { [create(:project)] }
 
     trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
@@ -65,7 +66,7 @@ FactoryBot.define do
         raise 'Creator was blank' if evaluator.creator.blank?
 
         create_list(:audio_recording_with_audio_events_and_bookmarks, evaluator.audio_recording_count,
-                    site: site, creator: evaluator.creator, uploader: evaluator.creator)
+          site:, creator: evaluator.creator, uploader: evaluator.creator)
       end
     end
 
