@@ -102,7 +102,9 @@ class Site < ApplicationRecord
 
   # AT 2024: soft deprecating sites existing in more than one project
   # Causes many issues and is officially replaced by the project-region-site relationship
-  # Later work will remove the projects_sites join table
+  # Later work will remove the projects_sites join table.
+  # Can't enforce this for updates because it would prevent any update for
+  # sites that are currently in more than one project.
   validate :only_one_site_per_project, on: :create
 
   # commonly used queries

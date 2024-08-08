@@ -36,7 +36,7 @@ describe 'Sites' do
     end
 
     # AT 2024: soft-deprecating the many to many project-site relationship
-    example 'canNOT create an a site that belongs to multiple projects' do
+    example 'can *NOT* create an a site that belongs to multiple projects' do
       second_project = create(:project)
       body = {
         site: {
@@ -117,8 +117,6 @@ describe 'Sites' do
 
   describe 'accidental assignment bug' do
     # https://github.com/QutEcoacoustics/baw-server/issues/679
-    create_entire_hierarchy
-
     let(:site) { create(:site) }
     let(:another_site) { create(:site) }
 
