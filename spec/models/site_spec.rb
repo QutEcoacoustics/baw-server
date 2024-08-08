@@ -193,8 +193,8 @@ describe Site, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it 'errors on checking orphaned site if site is orphaned' do
-    # depends on factory not automatically associating a site with any projects
     site = create(:site)
+    site.projects = []
     expect {
       Access::Core.check_orphan_site!(site)
     }.to raise_error(CustomErrors::OrphanedSiteError)

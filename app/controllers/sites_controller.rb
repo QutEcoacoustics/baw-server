@@ -42,7 +42,7 @@ class SitesController < ApplicationController
   def new
     do_new_resource
     get_project_if_exists
-    do_set_attributes
+    do_set_attributes(site_params(create: true))
     do_authorize_instance
 
     # initialize lat/lng to Brisbane-ish
@@ -65,7 +65,7 @@ class SitesController < ApplicationController
   # POST /projects/:project_id/sites
   def create
     do_new_resource
-    do_set_attributes(site_params)
+    do_set_attributes(site_params(for_create: true))
     get_project_if_exists
     do_authorize_instance
 
@@ -96,7 +96,7 @@ class SitesController < ApplicationController
     @original_site_name = @site.name
 
     respond_to do |format|
-      if @site.update(site_params)
+      if @site.update(site_params(for_create: false))
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
@@ -225,16 +225,23 @@ class SitesController < ApplicationController
 
   def get_project
     @project = Project.find(params[:project_id])
-    # avoid the same project assigned more than once to a site
-    @site.projects << @project if defined?(@site) && !@site.projects.include?(@project)
   end
 
   def get_project_if_exists
+    # none of this matters for the shallow routes
     return unless params.key?(:project_id)
 
-    @project = Project.find(params[:project_id])
-    # avoid the same project assigned more than once to a site
-    @site.projects << @project if defined?(@site) && defined?(@project) && !@site.projects.include?(@project)
+    project_id = params[:project_id].to_i
+
+    # for show/edit/update, check that the site belongs to the project
+    if @site.present? && !@site.new_record? && !@site.project_ids.include?(project_id)
+
+      # this site does not belong to the project in the route parameter
+      raise ActiveRecord::RecordNotFound
+    end
+
+    # for index just load it to use for the permissions check
+    @project = Project.find(project_id)
   end
 
   def list_permissions
@@ -245,13 +252,27 @@ class SitesController < ApplicationController
     end
   end
 
-  def site_params
-    params.require(:site).permit(
+  def site_params(for_create:)
+    result = params.require(:site).permit(
       :name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, :region_id, project_ids: []
     )
-  end
 
-  def site_show_params
-    params.permit(:id, :project_id, site: {})
+    # normalize the project_ids between the route parameter and the body
+    # route param does not exist for shallow routes
+    if params.key?(:project_id)
+      # is it also in the body?
+      if result.key?(:project_ids)
+        # if so it should be a subset of the supplied project_ids
+        unless result[:project_ids].include?(params[:project_id].to_i)
+          raise CustomErrors::BadRequestError, '`project_ids` must include the project id in the route parameter'
+        end
+      elsif for_create
+        # otherwise fill the body with the route parameter
+        # but not for updates - we don't want to change the project unless explicitly requested
+        result[:project_ids] = [params[:project_id].to_i]
+      end
+    end
+
+    result
   end
 end

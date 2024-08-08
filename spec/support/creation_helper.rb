@@ -381,8 +381,8 @@ module Creation
       end
 
       def create_site(creator, project, region: nil, name: nil)
-        site = FactoryBot.create(:site, :with_lat_long, creator:)
-        site.projects << project
+        site = FactoryBot.build(:site, :with_lat_long, creator:, projects: [project])
+
         site.region = region unless region.nil?
         site.name = name unless name.nil?
         site.save!

@@ -100,6 +100,11 @@ class Site < ApplicationRecord
     content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 
+  # AT 2024: soft deprecating sites existing in more than one project
+  # Causes many issues and is officially replaced by the project-region-site relationship
+  # Later work will remove the projects_sites join table
+  validate :only_one_site_per_project, on: :create
+
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
@@ -220,6 +225,12 @@ class Site < ApplicationRecord
     modified_value = min if modified_value < min
 
     modified_value
+  end
+
+  def only_one_site_per_project
+    return if project_ids.count == 1
+
+    errors.add(:project_ids, 'Site must belong to exactly one project')
   end
 
   # Define filter api settings
