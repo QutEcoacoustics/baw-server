@@ -13,13 +13,11 @@ x-gh_actions:
 # in all the containers. In this case /data should always be the internal path for this shared mount.
 # Client side we mount to ./data.
 # In each case a sub-folder is used to isolated environments.
-x-data-mount-dev:
-  &data_mount_dev
+x-data-mount-dev: &data_mount_dev
   type: bind
   source: ./data/development
   target: /data/development
-x-data-mount-test:
-  &data_mount_test
+x-data-mount-test: &data_mount_test
   type: bind
   source: ./data/test
   target: /data/test
@@ -51,12 +49,11 @@ services:
   # `rails baw:truncate_sftpgo_tables`.
   # Error from logs:
   #   Unable to initialize/update the data provider: pq: relation "sftpgo_schema_version" already exists
-  upload:
-    &upload
+  upload: &upload
     <<: *gh_actions
     # Default command is `sftpgo serve`
     #command: sftpgo serve
-    image: drakkan/sftpgo:v2-alpine
+    image: drakkan/sftpgo:v2.2.3-alpine
     depends_on:
       - db
     environment:
@@ -100,8 +97,7 @@ services:
         target: /var/lib/sftpgo
       - <<: *data_mount_test
 
-  workers:
-    &worker
+  workers: &worker
     <<: *gh_actions
     build:
       context: .
@@ -123,8 +119,7 @@ services:
       - <<: *data_mount_dev
     working_dir: /home/baw_web/baw-server
 
-  workers_test:
-    &worker_test
+  workers_test: &worker_test
     <<: *worker
     volumes:
       - type: bind

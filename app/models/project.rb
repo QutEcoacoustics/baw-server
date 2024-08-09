@@ -211,7 +211,7 @@ class Project < ApplicationRecord
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
         **Api::Schema.all_user_stamps,
-        site_ids: Api::Schema.ids,
+        site_ids: Api::Schema.ids(read_only: true),
         region_ids: Api::Schema.ids(read_only: true),
         owner_ids: Api::Schema.ids(read_only: true),
         image_urls: Api::Schema.image_urls,

@@ -96,7 +96,7 @@ class SavedSearch < ApplicationRecord
       properties: {
         id: { '$ref' => '#/components/schemas/id', readOnly: true },
         analysis_job_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
-        project_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        project_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
         stored_query: { type: 'object' },

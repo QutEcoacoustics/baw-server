@@ -7,7 +7,7 @@ describe 'sites (nested)', type: :request do
 
   sends_json_and_expects_json
   with_authorization
-  for_model Site
+  for_model Site, factory_args: -> { { projects: [project] } }
   which_has_schema ref(:site)
 
   let(:project_id) { project.id }
@@ -109,7 +109,10 @@ describe 'sites (orphans)', type: :request do
   which_has_schema ref(:site)
 
   let!(:orphaned_site) {
-    create(:site, projects: [], project_ids: [])
+    s = build(:site, projects: [], project_ids: [])
+    # intentionally invalid
+    s.save!(validate: false)
+    s
   }
 
   path '/sites/orphans/filter' do

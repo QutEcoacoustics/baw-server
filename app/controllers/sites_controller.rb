@@ -42,7 +42,7 @@ class SitesController < ApplicationController
   def new
     do_new_resource
     get_project_if_exists
-    do_set_attributes(site_params(for_create: true))
+    do_set_attributes
     do_authorize_instance
 
     # initialize lat/lng to Brisbane-ish
