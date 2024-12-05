@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Set user stamps for creator, updater, and deleter
 module UserChange
   extend ActiveSupport::Concern
 

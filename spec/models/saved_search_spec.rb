@@ -24,15 +24,16 @@
 #  saved_searches_creator_id_fk  (creator_id => users.id)
 #  saved_searches_deleter_id_fk  (deleter_id => users.id)
 #
-describe SavedSearch, type: :model do
+describe SavedSearch do
   it 'has a valid factory' do
     expect(create(:saved_search)).to be_valid
   end
 
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:deleter).optional }
 
   it { is_expected.to validate_presence_of(:stored_query) }
+
   it 'encodes the stored query as jsonb' do
     expect(SavedSearch.columns_hash['stored_query'].type).to eq(:jsonb)
   end
@@ -42,12 +43,12 @@ describe SavedSearch, type: :model do
     expect(b).not_to be_valid
   end
 
-  it 'should not allow duplicate names for the same user (case-insensitive)' do
+  it 'does not allow duplicate names for the same user (case-insensitive)' do
     user = create(:user)
     create(:saved_search, { creator: user, name: 'I love the smell of napalm in the morning.' })
     ss = build(:saved_search, { creator: user, name: 'I LOVE the smell of napalm in the morning.' })
     expect(ss).not_to be_valid
-    expect(ss.valid?).to be_falsey
+    expect(ss).not_to be_valid
     expect(ss.errors[:name].size).to eq(1)
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
@@ -55,7 +56,7 @@ describe SavedSearch, type: :model do
     expect(ss).to be_valid
   end
 
-  it 'should allow duplicate names for different users (case-insensitive)' do
+  it 'allows duplicate names for different users (case-insensitive)' do
     user1 = create(:user)
     user2 = create(:user)
     user3 = create(:user)
@@ -74,16 +75,12 @@ describe SavedSearch, type: :model do
     expect(create(:saved_search).projects.size).to eq(0)
   end
 
-  it 'is valid without analysis_jobs' do
-    expect(create(:saved_search).analysis_jobs.size).to eq(0)
-  end
-
-  it 'should have a valid query' do
+  it 'has a valid query' do
     ss = create(:saved_search)
     ss.audio_recording_conditions(ss.creator)
   end
 
-  it 'should return the expected audio recording ids from the query' do
+  it 'returns the expected audio recording ids from the query' do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
@@ -103,11 +100,11 @@ describe SavedSearch, type: :model do
     expect(result.first).to eq(audio_recording_2)
   end
 
-  it 'should populate the projects used in the query' do
+  it 'populates the projects used in the query' do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
-    audio_recording_1 = create(:audio_recording, site: site_1, creator: user, uploader: user)
+    create(:audio_recording, site: site_1, creator: user, uploader: user)
 
     project_2 = create(:project, creator: user)
     site_2 = create(:site, projects: [project_2], creator: user)
@@ -122,14 +119,14 @@ describe SavedSearch, type: :model do
     expect(result.first).to eq(project_2)
   end
 
-  it 'should have a project if populated in many to many table' do
+  it 'has a project if populated in many to many table' do
     project = create(:project)
     saved_search = create(:saved_search, projects: [project])
 
     expect(saved_search.projects.size).to eq(1)
   end
 
-  it 'should have a project if populated in many to many table manually' do
+  it 'has a project if populated in many to many table manually' do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
@@ -158,7 +155,7 @@ describe SavedSearch, type: :model do
     expect(SavedSearch.find(ss.id).projects.pluck(:id)[0]).to eq(project_2.id)
   end
 
-  it 'should have a project if populated in many to many table on create' do
+  it 'has a project if populated in many to many table on create' do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
@@ -177,12 +174,5 @@ describe SavedSearch, type: :model do
 
     expect(SavedSearch.find(ss.id).projects.size).to eq(1)
     expect(SavedSearch.find(ss.id).projects.pluck(:id)[0]).to eq(project_2.id)
-  end
-
-  it 'should have an analysis_job if an analysis job uses the saved search' do
-    saved_search = create(:saved_search)
-    analysis_job = create(:analysis_job, saved_search: saved_search)
-
-    expect(saved_search.analysis_jobs.size).to eq(1)
   end
 end

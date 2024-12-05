@@ -79,49 +79,7 @@ module BawWorkers
       def partial_path(opts)
         validate_uuid(opts)
 
-        opts[:uuid][0, 2].downcase
-      end
-
-      # Extract information from a file name.
-      # @param [String] file_path
-      # @return [Hash] info
-      def parse_file_path(file_path)
-        result = File.basename(file_path).match(NAME_REGEX_ALL_VERSIONS)
-
-        opts = {}
-
-        # uuid is present in all three versions
-        opts[:uuid] = result[:uuid]
-        validate_uuid(opts)
-
-        # date is only present is versions 1 and 2
-        date_part = result[:date]
-        if date_part.present?
-          case date_part.length
-          when 11
-            # 120302-1505
-            Time
-              .utc("20#{date_part[0..1]}", date_part[2..3], date_part[4..5], date_part[7..8], date_part[9..10])
-              .advance(hours: -10)
-              .in_time_zone
-          when 16
-            # 20120302-050537Z
-            Time
-              .utc(date_part[0..3], date_part[4..5], date_part[6..7], date_part[9..10], date_part[11..12], date_part[13..14])
-              .in_time_zone
-          else
-            raise ArgumentError, "Invalid file name date format: #{file_name}."
-          end => date
-
-          opts[:datetime_with_offset] = date
-          validate_datetime(opts)
-        end
-
-        # extension is present in all three versions
-        opts[:original_format] = result[:extension]
-        validate_original_format(opts)
-
-        opts
+        uuid_partitioning(opts[:uuid], partition_length: 2).downcase
       end
     end
   end

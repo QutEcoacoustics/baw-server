@@ -63,9 +63,6 @@ module BawWorkers
       # @return [BawWorkers::FileInfo]
       attr_reader :file_info
 
-      # @return [BawWorkers::ApiCommunicator]
-      attr_reader :api_communicator
-
       # @return [BawWorkers::RedisCommunicator]
       attr_reader :redis_communicator
 
@@ -90,7 +87,7 @@ module BawWorkers
         # assert settings is a singleton
         raise StandardError, 'run_web: Settings should have already been initialized' if settings.nil?
         raise StandardError, 'run_web: Settings were nil but should be defined' if Settings.nil?
-        raise StandardError, 'run_web:  Settings should be identical to Settings' if settings != Settings
+        raise StandardError, 'run_web: Settings should be identical to Settings' if settings != Settings
 
         # configure basic attributes first
         configure_paths(settings, true)
@@ -113,7 +110,7 @@ module BawWorkers
         # configure complex attributes
         configure_audio_helper(settings)
         configure_spectrogram_helper(settings)
-        configure_api_communicator(settings)
+
         @file_info = BawWorkers::FileInfo.new(BawWorkers::Config.audio_helper)
 
         # configure resque worker
@@ -194,9 +191,9 @@ module BawWorkers
 
       def configure_mailer(_settings)
         # All settings should be set by rails
-        unless BawWorkers::Mail::Mailer.logger == BawWorkers::Config.logger_mailer
-          raise 'BawWorkers::Mail::Mailer logger incorrect'
-        end
+        return if BawWorkers::Mail::Mailer.logger == BawWorkers::Config.logger_mailer
+
+        raise 'BawWorkers::Mail::Mailer logger incorrect'
       end
 
       def configure_audio_helper(settings)
@@ -224,18 +221,11 @@ module BawWorkers
         )
       end
 
-      def configure_api_communicator(settings)
-        @api_communicator = BawWorkers::ApiCommunicator.new(
-          BawWorkers::Config.logger_worker,
-          settings.api,
-          settings.endpoints
-        )
-      end
-
       def configure_resque(settings)
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         Resque.redis.namespace = Settings.resque.namespace
         BawWorkers::ActiveJob::Status::Persistance.configure(Resque.redis.redis)
+        BawWorkers::ActiveJob::Concurrency::Persistance.configure(Resque.redis.redis)
 
         # Logger set automatically by SemanticLogger RailTie
         raise 'Resque logger not configured' unless Resque.logger.is_a?(SemanticLogger::Logger)
@@ -346,7 +336,14 @@ module BawWorkers
             mailer: BawWorkers::Config.logger_mailer.level,
             audio_tools: BawWorkers::Config.logger_audio_tools.level,
             resque: Resque.logger.level
-          }
+          },
+          yjit: lambda {
+            begin
+              RubyVM::YJIT.enabled?
+            rescue StandardError
+              'YJIT not available'
+            end
+          }.call
         }
       end
 

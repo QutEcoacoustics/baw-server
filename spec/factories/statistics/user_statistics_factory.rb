@@ -4,6 +4,8 @@
 #
 # Table name: user_statistics
 #
+#  analyses_completed_count      :bigint           default(0)
+#  analyzed_audio_duration       :decimal(, )      default(0.0), not null
 #  audio_download_duration       :decimal(, )      default(0.0)
 #  audio_original_download_count :bigint           default(0)
 #  audio_segment_download_count  :bigint           default(0)

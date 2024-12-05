@@ -20,7 +20,6 @@ describe TagsController, type: :routing do
     it { expect(get('/tags')).to route_to('tags#index', format: 'json') }
     it { expect(get('/tags/1')).to route_to('tags#show', id: '1', format: 'json') }
 
-    it { expect(get('/tags/filter')).to route_to('tags#filter', format: 'json') }
-    it { expect(post('/tags/filter')).to route_to('tags#filter', format: 'json') }
+    it_behaves_like 'our api routing patterns', '/tags', 'tags', [:filterable]
   end
 end

@@ -10,11 +10,20 @@ module PBS
 
     class TransportError < StandardError; end
 
-    # forces all log messages into a debug level inspired by
+    # forces all log messages into a lower level inspired by
     # https://github.com/reidmorrison/semantic_logger/blob/v4.9.0/lib/semantic_logger/debug_as_trace_logger.rb
-    class InfoAsDebugLogger < ::SemanticLogger::Logger
+    class SuppressedLevelLogger < ::SemanticLogger::Logger
+      def initialize(...)
+        @split = ::SemanticLogger::Levels.index(:info)
+        super(...)
+      end
+
       def log_internal(level, *args, **keyword_args, &)
-        return super(:debug, *args, **keyword_args, &) if level == :info
+        index = ::SemanticLogger::Levels.index(level)
+        if index <= @split
+          level = ::SemanticLogger::Levels.level(index - 1) if index.positive?
+          return super(level, *args, **keyword_args, &)
+        end
 
         super
       end
@@ -30,9 +39,9 @@ module PBS
       @ssh_logger ||= SemanticLogger[PBS::SSH]
     end
 
-    # @return [InfoAsDebugLogger]
+    # @return [SuppressedLevelLogger]
     def net_ssh_logger
-      @net_ssh_logger ||= InfoAsDebugLogger.new(Net::SSH.name)
+      @net_ssh_logger ||= SuppressedLevelLogger.new(Net::SSH.name)
     end
 
     # @return [String]
@@ -42,11 +51,16 @@ module PBS
 
     # Execute a command
     # @param command [String]
-    # @return [Array((Integer,nil),String,String)] status, stdout, stderr
+    # @return [Array((Integer,nil),String,String)] a tuple of
+    #   status, stdout, stderr. stdout and stderr are NOT split into lines.
     def execute(command)
       stdout = ''
       stderr = ''
       status = {}
+
+      # normalize the remote environment
+      command = "export TZ=UTC LANG=en_US.UTF-8; #{command}"
+
       ssh_logger.measure_debug('execute ssh command', payload: { command: }) do
         connection.exec!(command, status:) do |_channel, stream, data|
           stdout += data if stream == :stdout
@@ -66,10 +80,11 @@ module PBS
       [exit_code, stdout, stderr]
     end
 
-    # Execute a command
+    # Execute a command but wrap the result in monad based on exit status.
     # @param command [String] the shell command to execute
     # @param fail_message [String] a message to add to the failure if the command fails
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Array(String,String)>] a tuple of
+    #   stdout, stderr, each of which is NOT split into lines.
     def execute_safe(command, fail_message: '')
       status, stdout, stderr = execute(command)
 

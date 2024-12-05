@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-rdbg --nonstop --command -- "$@"
+bundle exec rdbg --nonstop --command -- "$@"

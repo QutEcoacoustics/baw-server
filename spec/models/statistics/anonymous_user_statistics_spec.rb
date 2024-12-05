@@ -14,7 +14,7 @@
 #  constraint_baw_anonymous_user_statistics_unique  (bucket) UNIQUE
 #
 
-RSpec.describe Statistics::AnonymousUserStatistics, type: :model do
+RSpec.describe Statistics::AnonymousUserStatistics do
   subject { build(:anonymous_user_statistics) }
 
   it 'has a valid factory' do

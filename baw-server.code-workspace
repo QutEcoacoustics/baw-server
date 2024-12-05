@@ -7,12 +7,15 @@
   "settings": {
     "cSpell.words": [
       "AASM",
+      "afterany",
       "appender",
+      "archivable",
       "arel",
       "arity",
       "autoflush",
       "autoload",
       "autoloaded",
+      "autoloader",
       "autoloaders",
       "autoloads",
       "autosave",
@@ -22,6 +25,7 @@
       "binmode",
       "binread",
       "binstub",
+      "birdnet",
       "Boobook",
       "boolify",
       "bootsnap",
@@ -41,11 +45,15 @@
       "decr",
       "deduplication",
       "deepsort",
+      "deinterlace",
+      "Deinterlaces",
       "deleter",
       "denormalize",
       "deserialization",
       "deserializes",
       "devcontainer",
+      "discardable",
+      "discarder",
       "downcase",
       "ecoacoustic",
       "Ecoacoustics",
@@ -98,14 +106,18 @@
       "middlewares",
       "mkdir",
       "mkpath",
+      "ncpus",
+      "ngpus",
       "nodoc",
       "numericality",
       "organisation",
+      "pageable",
       "paginator",
       "Passengerfile",
       "Phusion",
       "PIDFILE",
       "pids",
+      "posix",
       "postgesql",
       "postgres",
       "postgresql",
@@ -114,11 +126,14 @@
       "prepend",
       "prepended",
       "prepending",
+      "procs",
       "qdel",
       "qmgr",
+      "qrls",
       "qselect",
       "qstat",
       "qsub",
+      "queueable",
       "qutecoacoustics",
       "Ractor",
       "Railtie",
@@ -127,9 +142,11 @@
       "realdirpath",
       "realpath",
       "recaptcha",
+      "regexes",
       "Resque",
       "Retryable",
       "rmtree",
+      "routable",
       "RSPEC",
       "rstrip",
       "Rswag",
@@ -143,6 +160,8 @@
       "sfptgo",
       "sftpgo",
       "Sftpgo",
+      "shellescape",
+      "Shellwords",
       "shntool",
       "shoulda",
       "sismember",
@@ -158,13 +177,19 @@
       "symlink",
       "symlinks",
       "taggings",
+      "Templater",
       "templating",
       "Timecop",
       "titleize",
       "Truskinger",
       "tsrange",
       "typecheck",
+      "Undiscard",
+      "undiscarded",
+      "undiscarding",
+      "undiscards",
       "UNLOGGED",
+      "unnest",
       "unpermitted",
       "Unprocessable",
       "unregister",
@@ -175,11 +200,13 @@
       "upsert",
       "urlsafe",
       "uuid",
+      "walltime",
       "wavpack",
       "webdav",
       "webm",
       "wvunpack",
       "yieldparam",
+      "yieldreturn",
       "zadd",
       "zcard",
       "Zeitwerk",
@@ -212,7 +239,10 @@
       "statusBar.foreground": "#15202b",
       "sash.hoverBorder": "#97d9a2",
       "statusBarItem.remoteBackground": "#72cb80",
-      "statusBarItem.remoteForeground": "#15202b"
+      "statusBarItem.remoteForeground": "#15202b",
+      "tab.activeBackground": "#575757",
+      "tab.inactiveBackground": "#04060899",
+      "commandCenter.border": "#15202b99"
     },
     "peacock.remoteColor": "#72cb80",
     // "testExplorer.addToEditorContextMenu": true,
@@ -234,6 +264,7 @@
     "solargraph.checkGemVersion": true,
     "solargraph.logLevel": "debug",
     "editor.formatOnSave": true,
+    "rubyLsp.bundleGemfile": "./ruby-lsp/Gemfile",
     "ruby.useBundler": true, //run non-lint commands with bundle exec
     "ruby.useLanguageServer": false, // use the internal language server (see below)
     "ruby.intellisense": false,
@@ -243,9 +274,6 @@
         "lint": true,
         "rails": true
       },
-      // "reek": {
-      //   "useBundler": true // enable reek via bundler
-      // }
     },
     "ruby.format": "rubocop", // use rubocop for formatting
     "[ruby]": {
@@ -255,12 +283,7 @@
     "cSpell.enableFiletypes": [
       "ruby"
     ],
-    "editor.minimap.size": "fit",
-    // "solargraph.transport": "external",
-    // "solargraph.externalServer": {
-    //   "host": "localhost",
-    //   "port": 7658
-    // }
+    "editor.minimap.size": "fill",
     "terminal.integrated.profiles.linux": {
       "bash": {
         "path": "bash"
@@ -281,17 +304,16 @@
     "remote.extensionKind": {
       "ms-azuretools.vscode-docker": "ui"
     },
-    "python.pythonPath": "/usr/bin/python3",
     "editor.rulers": [
       80,
       120
     ],
     "livePreview.autoRefreshPreview": "Never",
-    "livePreview.portNumber": 5000
+    "livePreview.portNumber": 5000,
   },
   "extensions": {
     "recommendations": [
-      "rebornix.ruby",
+      "Shopify.ruby-lsp",
       "castwide.solargraph",
       "streetsidesoftware.code-spell-checker",
       "editorconfig.editorconfig",

@@ -6,10 +6,10 @@ describe 'Settings' do
   }
 
   it { is_expected.to be_a(Config::Options) }
-  it { is_expected.to be_a_kind_of(BawWeb::Settings) }
+  it { is_expected.to be_a(BawWeb::Settings) }
 
   it 'includes BawWeb::Settings' do
-    expect(subject.class.ancestors).to start_with(BawWeb::Settings, Config::Options)
+    expect(subject.class.ancestors).to include(BawWeb::Settings, Config::Options)
   end
 
   it 'includes special methods from BawWeb::Settings' do
@@ -92,7 +92,7 @@ describe 'Settings' do
 
   describe 'the upload service settings' do
     example 'validation is done for the upload_service key' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       without_upload = Settings.to_hash.except(:upload_service)
       config.add_source!(without_upload)
 
@@ -103,7 +103,7 @@ describe 'Settings' do
 
     [:admin_host, :public_host, :port, :username, :password, :sftp_port].each do |key|
       example "validation is done for sub-key #{key} for upload_service" do
-        config = ::Config::Options.new
+        config = Config::Options.new
         copy = Settings.to_hash
         copy[:upload_service].delete(key)
         config.add_source!(copy)
@@ -117,7 +117,7 @@ describe 'Settings' do
 
   describe 'the batch_analysis settings' do
     example 'validation is done for the batch_analysis key' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       without_batch_analysis = Settings.to_hash.except(:batch_analysis)
       config.add_source!(without_batch_analysis)
 
@@ -128,7 +128,7 @@ describe 'Settings' do
 
     [:host, :port, :username, :password, :key_file].each do |key|
       example "validation is done for sub-key #{key} for batch_analysis" do
-        config = ::Config::Options.new
+        config = Config::Options.new
         copy = Settings.to_hash
         copy[:batch_analysis][:connection].delete(key)
         config.add_source!(copy)
@@ -151,7 +151,7 @@ describe 'Settings' do
 
   describe 'new active_* queues' do
     example 'validation is done for active_storage queues' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       copy = Settings.to_hash
       copy[:actions].delete(:active_storage)
       config.add_source!(copy)
@@ -162,7 +162,7 @@ describe 'Settings' do
     end
 
     example 'validation is done for active_job default queues' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       copy = Settings.to_hash
       copy[:actions].delete(:active_job_default)
       config.add_source!(copy)
@@ -173,7 +173,7 @@ describe 'Settings' do
     end
 
     example 'validation is done for active_storage queue name' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       copy = Settings.to_hash
       copy[:actions][:active_storage][:queue] = ''
       config.add_source!(copy)
@@ -184,7 +184,7 @@ describe 'Settings' do
     end
 
     example 'validation is done for active_job_default queue name' do
-      config = ::Config::Options.new
+      config = Config::Options.new
       copy = Settings.to_hash
       copy[:actions][:active_job_default][:queue] = ''
       config.add_source!(copy)

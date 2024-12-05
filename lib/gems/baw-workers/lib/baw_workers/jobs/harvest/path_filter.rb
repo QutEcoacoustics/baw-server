@@ -23,7 +23,8 @@ module BawWorkers
         def skip_file?(name)
           # including .DS_STORE files in particular
           # .filepart files are incomplete WinSCP uploads
-          name.start_with?('.') || name == 'Thumbs.db' || name.ends_with?('.filepart')
+          # .partial files are incomplete rclone uploads (as of version 1.63.0)
+          name.start_with?('.') || name == 'Thumbs.db' || name.ends_with?('.filepart') || name.ends_with?('.partial')
         end
 
         # Checks whether or not we should skip a directory or file

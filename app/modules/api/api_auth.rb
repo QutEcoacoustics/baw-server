@@ -30,8 +30,22 @@ module Api
     # We override only so we can customize our API response body.
     def authenticate_user!
       # ripped off https://github.com/heartcombo/devise/blob/6d32d2447cc0f3739d9732246b5a5bde98d9e032/lib/devise/controllers/helpers.rb#L99-L119
+      # if valid user then all good
       return if current_user
 
+      # if there was something wrong with authentication (like an invalid token)
+      # then fail here.
+      # This is a backwards compatibility branch. We _could_ allow someone with
+      # an invalid token to access a public resource, but
+      #   a) that's a breaking change
+      #   and b) I think it's better to fail. More secure? More rigid? More consistent?
+      return session_unauthenticated if warden.result == :failure
+
+      # if here: no user, and no auth failure, so is this a public resource?
+      # if so continue.
+      return unless should_authenticate_user?
+
+      # Otherwise this is a non-public resource. A user is required, so fail.
       session_unauthenticated
     end
 
@@ -57,7 +71,7 @@ module Api
       session_response_wrapper(
         :unauthorized,
         nil,
-        I18n.t('devise.failure.unauthenticated'),
+        warden&.message || I18n.t('devise.failure.unauthenticated'),
         [:sign_in, :sign_up]
       )
     end

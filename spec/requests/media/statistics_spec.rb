@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :request, aggregate_failures: true do
+describe '/audio_recordings/:audio_recording_id/original(.:format)', :aggregate_failures do
   include_context 'shared_test_helpers'
   create_audio_recordings_hierarchy
 
@@ -89,33 +89,33 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
     let(:headers) { media_request_headers(admin_token) }
 
     it 'counts segment downloads' do
-      get media_url(0, 30), headers: headers
+      get(media_url(0, 30), headers:)
 
       expect_success
       expect_stats(1, 0, 30.0, 1, 0, 30.0)
     end
 
     if it 'counts original downloads' do
-         get original_url, headers: headers
+         get(original_url, headers:)
 
          expect_success
          expect_stats(0, 1, audio_file_bar_lt_metadata[:duration_seconds], 0, 1, 0)
        end
 
       it 'counts a mix of downloads' do
-        get media_url(0, 30), headers: headers
-        get original_url, headers: headers
-        get media_url(10.5, 30), headers: headers
-        get original_url, headers: headers
-        get media_url(5000, 5300), headers: headers
+        get(media_url(0, 30), headers:)
+        get(original_url, headers:)
+        get(media_url(10.5, 30), headers:)
+        get(original_url, headers:)
+        get(media_url(5000, 5300), headers:)
 
-        duration =  (audio_file_bar_lt_metadata[:duration_seconds] * 2) + 30 + 19.5 + 300
+        duration = (audio_file_bar_lt_metadata[:duration_seconds] * 2) + 30 + 19.5 + 300
         expect_stats(3, 2, duration, 3, 2, 30 + 19.5 + 300)
         expect(Statistics::AudioRecordingStatistics.count).to eq 1
       end
 
       it 'does not count HEAD requests' do
-        head media_url(0, 30), headers: headers
+        head(media_url(0, 30), headers:)
         expect_success
 
         expect_stats(nil, nil, nil, nil, nil, nil)
@@ -139,8 +139,8 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       end
 
       it 'does not count failed requests' do
-        get media_url(90, 30), headers: headers
-        expect(response).to have_http_status(:unprocessable_entity)
+        get(media_url(90, 30), headers:)
+        expect(response).to have_http_status(:unprocessable_content)
 
         expect_stats(nil, nil, nil, nil, nil, nil)
         expect(Statistics::AudioRecordingStatistics.count).to eq 0
@@ -154,18 +154,18 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       let(:headers) { media_request_headers(anonymous_token) }
 
       it 'counts segment downloads' do
-        get media_url(0, 30), headers: headers
+        get(media_url(0, 30), headers:)
 
         expect_success
         expect_stats(1, 0, 30.0, 1, 0, 30.0)
       end
 
       it 'counts a mix of downloads' do
-        get media_url(0, 30), headers: headers
+        get(media_url(0, 30), headers:)
 
-        get media_url(10.5, 30), headers: headers
+        get(media_url(10.5, 30), headers:)
 
-        get media_url(5000, 5300), headers: headers
+        get(media_url(5000, 5300), headers:)
 
         expect_stats(3, 0, 30 + 19.5 + 300, 3, 0, 30 + 19.5 + 300)
         expect(Statistics::AudioRecordingStatistics.count).to eq 1

@@ -125,6 +125,7 @@ end
 # Uncomment this module and `config.public_auth` above to use custom public authentication
 module ComfyPublicAuthentication
   def authenticate
+    # means any request (for public read access) will be allowed
     true
   end
 end

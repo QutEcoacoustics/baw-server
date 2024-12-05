@@ -21,7 +21,6 @@ end
 require 'bundler' # Set up gems listed in the Gemfile.
 Bundler.setup(:test)
 Bundler.require(:test)
-
 require 'spec_helper'
 
 require 'test-prof'
@@ -171,6 +170,9 @@ RSpec.configure do |config|
   require 'support/temp_file_helper'
   config.include TempFileHelpers::Example
 
+  require 'support/path_helpers'
+  config.include PathHelpers::Example
+
   require_relative 'support/logger_helper'
   config.extend LoggerHelpers::ExampleGroup
   config.include LoggerHelpers::Example
@@ -183,8 +185,7 @@ RSpec.configure do |config|
   require_relative 'support/factory_bot_helpers'
   config.include FactoryBotHelpers::Example
 
-  require 'active_storage_validations/matchers'
-  ActiveStorageValidations # need to kick start the autoloader for some reason
+  require 'active_storage_validations/matchers' # need to kick start the auto loader for some reason
   config.include ActiveStorageValidations::Matchers, { type: :model }
 
   config.include RSpec::Benchmark::Matchers
@@ -224,6 +225,10 @@ RSpec.configure do |config|
   config.include ResqueHelpers::Example
 
   require_relative 'support/pbs_helpers'
+  # Not done by default because our standard before/after cleanup here adds a
+  # lot of overhead to the tests - especially given it's done via a SSH connection
+  #config.extend PBSHelpers::ExampleGroup
+  #config.include PBSHelpers::Example
 
   require_relative 'support/api_spec_helpers'
   config.extend ApiSpecHelpers::ExampleGroup, { file_path: Regexp.new('/spec/api/') }
@@ -247,16 +252,16 @@ RSpec.configure do |config|
   require_relative 'support/shared_examples/capabilities_for'
   require_relative 'support/shared_examples/a_stats_bucket'
   require_relative 'support/shared_examples/a_stats_segment_incrementor'
-  require_relative 'support/shared_test_helpers'
+  require_relative 'support/shared_examples/our_api_routing_patterns'
+  require_relative 'support/shared_examples/an_archivable_route'
+  require_relative 'support/shared_examples/a_documented_archivable_route'
+  require_relative 'support/shared_examples/cascade_deletes_for'
 
   require "#{RSPEC_ROOT}/support/shared_context/baw_audio_tools_shared"
+  require "#{RSPEC_ROOT}/support/shared_context/shared_test_helpers"
+  require "#{RSPEC_ROOT}/support/shared_context/async_context"
 
-  # Ensure we actually perform jobs with resque.
-  # We don't want to run jobs inline, it produces unrealistic tests.
-  # https://github.com/rails/rails/issues/37270#issuecomment-558278392
-  (ActiveJob::Base.descendants << ActiveJob::Base).each(&:disable_test_adapter)
-  Rails.application.config.active_job.queue_adapter = :resque
-  ActiveJob::Base.queue_adapter = :resque
+  require_relative 'support/matchers/be_same_file_as'
 
   # change the default creation strategy
   # Previous versions of factory bot would ensure associations used the :create
@@ -304,7 +309,7 @@ RSpec.configure do |config|
     rescue Exception => e
       puts 'failure while loading seeds'
       puts e
-      puts e.inspect
+      puts e.full_message(highlight: true, order: :top)
       exit 1
     end
   end
@@ -316,7 +321,7 @@ RSpec.configure do |config|
 
   config.after type: :request do
     # clear paperclip attachments from tmp directory
-    FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
+    FileUtils.rm_rf(Dir[Rails.root.join('tmp/paperclip/[^.]*').to_s])
   end
   example_logger = SemanticLogger[RSpec]
 
@@ -336,6 +341,8 @@ RSpec.configure do |config|
   end
 
   config.after do
+    Temping.teardown
+
     DatabaseCleaner.clean
     strategy = DatabaseCleaner[:active_record].strategy
     if strategy.is_a?(DatabaseCleaner::ActiveRecord::Truncation) || strategy.is_a?(DatabaseCleaner::ActiveRecord::Deletion)
@@ -343,12 +350,18 @@ RSpec.configure do |config|
     end
 
     Warden.test_reset!
+
+    Resque.redis.close
+    BawWorkers::Config.redis_communicator.redis.close
+    # some of our tests make use of threads or fibers that can hold onto connections
+    # so disconnect everything after each test
+    ActiveRecord::Base.connection_pool.disconnect!
   end
 
   config.around do |example|
     example_description = example.description
     example_logger.info("BEGIN #{example_description}\n")
-    example_logger.measure_debug('END') {
+    example_logger.measure_debug("END #{example_description}") {
       example.run
     }
   end

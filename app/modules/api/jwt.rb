@@ -28,8 +28,8 @@ module Api
       payload['sub'] = subject
       payload['exp'] = expiration.from_now.to_i unless expiration.nil?
       payload['nbf'] = not_before.from_now.to_i unless not_before.nil?
-      payload['resource'] = resource.to_s unless resource.blank?
-      payload['action'] = action.to_s unless action.blank?
+      payload['resource'] = resource.to_s if resource.present?
+      payload['action'] = action.to_s if action.present?
 
       JWT.encode(
         payload,
@@ -87,12 +87,7 @@ module Api
 
       return if resource.nil?
 
-      klass = nil
-      begin
-        klass = "#{resource}_controller".classify.constantize
-      rescue NameError
-        # squash
-      end
+      klass = "#{resource}_controller".classify.safe_constantize
 
       return if klass.present? && klass < ApplicationController
 

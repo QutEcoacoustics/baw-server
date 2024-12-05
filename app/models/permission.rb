@@ -28,7 +28,7 @@
 # Foreign Keys
 #
 #  permissions_creator_id_fk  (creator_id => users.id)
-#  permissions_project_id_fk  (project_id => projects.id)
+#  permissions_project_id_fk  (project_id => projects.id) ON DELETE => cascade
 #  permissions_updater_id_fk  (updater_id => users.id)
 #  permissions_user_id_fk     (user_id => users.id)
 #
@@ -37,8 +37,8 @@ class Permission < ApplicationRecord
 
   belongs_to :project, inverse_of: :permissions
   belongs_to :user, inverse_of: :permissions, optional: true
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_permissions
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_permissions, optional: true
 
   AVAILABLE_LEVELS_SYMBOLS = Access::Core.levels
   AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map(&:to_s)
@@ -58,7 +58,7 @@ class Permission < ApplicationRecord
   validates :level, presence: true
   validates :user_id, uniqueness: {
     scope: :project_id,
-    conditions: -> { where('user_id IS NOT NULL') },
+    conditions: -> { where.not(user_id: nil) },
     message: 'permission has already been set for project'
   }
   validates :allow_logged_in, uniqueness: {
@@ -164,24 +164,24 @@ class Permission < ApplicationRecord
     allows_anon = allow_anonymous == true ? 1 : 0
     exclusive_set = has_user + allows_logged_in + allows_anon
 
-    if exclusive_set != 1
-      error_msg = 'is not exclusive: '
-      error_msg += 'user is set, ' if has_user == 1
-      error_msg += 'logged in users is true, ' if allows_logged_in == 1
-      error_msg += 'anonymous users is true, ' if allows_anon == 1
+    return unless exclusive_set != 1
 
-      if exclusive_set < 1
-        error_msg = 'nothing was set, at least one is required'
-        errors.add(:user_id, error_msg)
-        errors.add(:allow_logged_in, error_msg)
-        errors.add(:allow_anonymous, error_msg)
-        return
-      end
+    error_msg = 'is not exclusive: '
+    error_msg += 'user is set, ' if has_user == 1
+    error_msg += 'logged in users is true, ' if allows_logged_in == 1
+    error_msg += 'anonymous users is true, ' if allows_anon == 1
 
-      errors.add(:user_id, error_msg) if has_user == 1
-      errors.add(:allow_logged_in, error_msg) if allow_logged_in
-      errors.add(:allow_anonymous, error_msg) if allow_anonymous
+    if exclusive_set < 1
+      error_msg = 'nothing was set, at least one is required'
+      errors.add(:user_id, error_msg)
+      errors.add(:allow_logged_in, error_msg)
+      errors.add(:allow_anonymous, error_msg)
+      return
     end
+
+    errors.add(:user_id, error_msg) if has_user == 1
+    errors.add(:allow_logged_in, error_msg) if allow_logged_in
+    errors.add(:allow_anonymous, error_msg) if allow_anonymous
   end
 
   def additional_levels
@@ -190,9 +190,9 @@ class Permission < ApplicationRecord
       errors.add(:allow_anonymous, "level must be reader, but was '#{level}'")
     end
 
-    if allow_logged_in && !['reader', 'writer'].include?(level.to_s)
-      errors.add(:level, "must be reader or writer for logged in user, but was '#{level}'")
-      errors.add(:allow_logged_in, "level must be reader or writer, but was '#{level}'")
-    end
+    return unless allow_logged_in && ['reader', 'writer'].exclude?(level.to_s)
+
+    errors.add(:level, "must be reader or writer for logged in user, but was '#{level}'")
+    errors.add(:allow_logged_in, "level must be reader or writer, but was '#{level}'")
   end
 end

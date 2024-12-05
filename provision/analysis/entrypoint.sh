@@ -40,9 +40,14 @@ echo "[PBS] set scheduler iteration"
 /opt/pbs/bin/qmgr -c "set server scheduler_iteration = 1"
 echo "[PBS] set log_events"
 /opt/pbs/bin/qmgr -c "s s log_events=511"
-# The hpc we're trying to simulate has a max queue limit even though it's not a default, replicate it here
+# The hpc we're trying to simulate has a max queue limit even though it's not
+# default, replicate it here
 echo "[PBS] set server max_queued"
-/opt/pbs/bin/qmgr -c "set server max_queued = [u:PBS_GENERIC=5000]"
+/opt/pbs/bin/qmgr -c "set server max_queued = [u:PBS_GENERIC=10]"
+# limit max run to make testing easier - particularly queries about jobs waiting
+# in queues
+echo "[PBS] set server max_run"
+/opt/pbs/bin/qmgr -c "set server max_run = [u:PBS_GENERIC=5]"
 
 # Allows pbsuser to run containers
 echo "[docker] set permissions for docker sock"

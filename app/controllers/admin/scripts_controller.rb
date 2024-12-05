@@ -91,8 +91,7 @@ module Admin
         :name, :description, :analysis_identifier,
         :version, :verified,
         :executable_command,
-        :executable_settings, :executable_settings_media_type,
-        :analysis_action_params
+        :executable_settings, :executable_settings_media_type
       )
     end
 

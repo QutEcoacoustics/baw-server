@@ -3,8 +3,6 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
@@ -23,7 +21,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
 
   context 'when checking basic job behaviour' do
     it 'works on the harvest queue' do
-      expect((BawWorkers::Jobs::Harvest::HarvestJob.queue_name)).to eq(queue_name)
+      expect(BawWorkers::Jobs::Harvest::HarvestJob.queue_name).to eq(queue_name)
     end
 
     it 'can enqueue' do
@@ -70,7 +68,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           a_hash_including({
             'problems' => a_hash_including({
               'FL010' => a_hash_including({
-                'status' => ::Emu::Fix::STATUS_NOOP
+                'status' => Emu::Fix::STATUS_NOOP
               })
             })
           })
@@ -110,7 +108,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
     # this lets us avoid all those tricky distributed systems things that can be a pain
     prepare_harvest_with_mappings do
       [
-        ::BawWorkers::Jobs::Harvest::Mapping.new(
+        BawWorkers::Jobs::Harvest::Mapping.new(
           path: '',
           site_id: site.id,
           utc_offset: '+10:00',
@@ -279,7 +277,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         end
 
         # now provide a mapping and attempt again
-        harvest.mappings << ::BawWorkers::Jobs::Harvest::Mapping.new(
+        harvest.mappings << BawWorkers::Jobs::Harvest::Mapping.new(
           path: '',
           site_id: site.id,
           utc_offset: '+10:00',

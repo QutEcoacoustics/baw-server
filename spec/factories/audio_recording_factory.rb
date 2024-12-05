@@ -45,7 +45,7 @@
 #
 #  audio_recordings_creator_id_fk   (creator_id => users.id)
 #  audio_recordings_deleter_id_fk   (deleter_id => users.id)
-#  audio_recordings_site_id_fk      (site_id => sites.id)
+#  audio_recordings_site_id_fk      (site_id => sites.id) ON DELETE => cascade
 #  audio_recordings_updater_id_fk   (updater_id => users.id)
 #  audio_recordings_uploader_id_fk  (uploader_id => users.id)
 #
@@ -63,6 +63,7 @@ FactoryBot.define do
     data_length_bytes { 3800 }
     sequence(:notes) { |n| { test: "note number #{n}" } }
     sequence(:original_file_name) { |n| "original name #{n}.mp3" }
+    status { 'ready' }
 
     creator
     uploader do

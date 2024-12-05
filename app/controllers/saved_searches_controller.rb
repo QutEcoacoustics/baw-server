@@ -50,14 +50,7 @@ class SavedSearchesController < ApplicationController
   end
 
   # DELETE /saved_searches/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-
-    @saved_search.destroy
-    add_archived_at_header(@saved_search)
-    respond_destroy
-  end
+  # Handled in Archivable
 
   # GET|POST /saved_searches/filter
   def filter

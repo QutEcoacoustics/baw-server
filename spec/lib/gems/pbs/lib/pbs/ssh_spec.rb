@@ -3,9 +3,7 @@
 describe PBS::SSH do
   # make all instance methods public for testing1
   PBS::SSH.class_eval do
-    # rubocop:disable Style/AccessModifierDeclarations
     public(*private_instance_methods(false))
-    # rubocop:enable Style/AccessModifierDeclarations
   end
 
   before do
@@ -55,6 +53,38 @@ describe PBS::SSH do
       expect(status).to eq 0
       expect(stdout).to eq "hello world\n"
       expect(stderr).to eq "hello error\n"
+    end
+  end
+
+  it 'sets the TZ and LANG environment variables' do
+    status, stdout, = ssh.execute('env')
+
+    aggregate_failures do
+      expect(status).to eq 0
+      expect(stdout).to include('TZ=UTC')
+      expect(stdout).to include('LANG=en_US.UTF-8')
+    end
+  end
+
+  context 'with our method of setting environment variables we are robust' do
+    example 'command combinations' do
+      status, stdout, = ssh.execute('echo "hello" && env')
+
+      aggregate_failures do
+        expect(status).to eq 0
+        expect(stdout).to include('TZ=UTC')
+        expect(stdout).to include('LANG=en_US.UTF-8')
+      end
+    end
+
+    example 'command termination' do
+      status, stdout, = ssh.execute('echo "hello"; env')
+
+      aggregate_failures do
+        expect(status).to eq 0
+        expect(stdout).to include('TZ=UTC')
+        expect(stdout).to include('LANG=en_US.UTF-8')
+      end
     end
   end
 

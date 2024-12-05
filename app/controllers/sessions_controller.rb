@@ -15,10 +15,10 @@ class SessionsController < Devise::SessionsController
   skip_before_action :verify_signed_out_user
 
   # skip caching current_ability in Current.ability
-  # Not sure what he issue here is, but I think the set_current_ability callback
+  # Not sure what he issue here is, but I think the set_current callback
   # happens before the rest of the callbacks in this controller. Once current_ability
   # is called it's value is cached and the callbacks in this controller fail
-  skip_before_action :set_current_ability
+  skip_before_action :set_current
 
   # current_user triggers an authentication before our code can run
   skip_around_action :set_then_reset_user_stamper
@@ -39,19 +39,6 @@ class SessionsController < Devise::SessionsController
   end
 
   respond_to :json
-
-  # GET /security/new
-  # devise sessions controller
-  def new
-    session_response_wrapper(
-      :ok,
-      {
-        email: nil,
-        login: nil,
-        password: nil
-      }
-    )
-  end
 
   # GET /security/user
   def show
@@ -74,6 +61,19 @@ class SessionsController < Devise::SessionsController
         [:sign_in, :sign_up]
       )
     end
+  end
+
+  # GET /security/new
+  # devise sessions controller
+  def new
+    session_response_wrapper(
+      :ok,
+      {
+        email: nil,
+        login: nil,
+        password: nil
+      }
+    )
   end
 
   # used by harvester, do not change!

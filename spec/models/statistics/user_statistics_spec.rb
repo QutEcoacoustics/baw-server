@@ -4,6 +4,8 @@
 #
 # Table name: user_statistics
 #
+#  analyses_completed_count      :bigint           default(0)
+#  analyzed_audio_duration       :decimal(, )      default(0.0), not null
 #  audio_download_duration       :decimal(, )      default(0.0)
 #  audio_original_download_count :bigint           default(0)
 #  audio_segment_download_count  :bigint           default(0)
@@ -20,7 +22,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 
-RSpec.describe Statistics::UserStatistics, type: :model do
+RSpec.describe Statistics::UserStatistics do
   subject { build(:user_statistics) }
 
   it 'has a valid factory' do
@@ -42,6 +44,10 @@ RSpec.describe Statistics::UserStatistics, type: :model do
   }
 
   it { is_expected.to validate_numericality_of(:audio_download_duration).is_greater_than_or_equal_to(0) }
+
+  it { is_expected.to validate_numericality_of(:analyses_completed_count).is_greater_than_or_equal_to(0).only_integer }
+
+  it { is_expected.to validate_numericality_of(:analyzed_audio_duration).is_greater_than_or_equal_to(0) }
 
   context 'with data' do
     create_audio_recordings_hierarchy
@@ -96,6 +102,25 @@ RSpec.describe Statistics::UserStatistics, type: :model do
         actual = reader_user.statistics
         expect(actual.audio_segment_download_count).to eq 2
         expect(actual.audio_download_duration).to eq 42.5
+      end
+
+      it 'can increment analysis count' do
+        Statistics::UserStatistics.increment_analysis_count(reader_user, duration: 30)
+
+        stats = Statistics::UserStatistics.first
+        expect(stats.analyses_completed_count).to eq 1
+        expect(stats.analyzed_audio_duration).to eq 30.0
+
+        Statistics::UserStatistics.increment_analysis_count(reader_user, duration: 12.5)
+
+        stats.reload
+        expect(stats.analyses_completed_count).to eq 2
+        expect(stats.analyzed_audio_duration).to eq 42.5
+
+        reader_user.reload_statistics
+        actual = reader_user.statistics
+        expect(actual.analyses_completed_count).to eq 2
+        expect(actual.analyzed_audio_duration).to eq 42.5
       end
     end
   end

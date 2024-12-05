@@ -3,6 +3,12 @@
 class DatasetItemsController < ApplicationController
   include Api::ControllerHelper
 
+  def should_authenticate_user?
+    return false if action_sym == :next_for_me
+
+    super
+  end
+
   # GET /datasets/:dataset_id/items
   def index
     do_authorize_class
@@ -42,6 +48,7 @@ class DatasetItemsController < ApplicationController
   # GET datasets/:dataset_id/dataset_items/next_for_me
   def next_for_me
     do_authorize_class
+
     #priority_algorithm = DatasetItem.next_for_user(current_user_id = current_user ? current_user.id : nil)
 
     # All dataset items that the user has permission to see
@@ -107,14 +114,7 @@ class DatasetItemsController < ApplicationController
   end
 
   # DELETE /datasets/:dataset_id/items/:dataset_item_id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-
-    @dataset_item.destroy
-
-    respond_destroy
-  end
+  # Handled in Archivable
 
   private
 
@@ -122,9 +122,9 @@ class DatasetItemsController < ApplicationController
     params[:dataset_item][:dataset_id] = params[:dataset_id]
 
     params.require(:dataset_item).permit(:dataset_id,
-                                         :audio_recording_id,
-                                         :start_time_seconds,
-                                         :end_time_seconds,
-                                         :order)
+      :audio_recording_id,
+      :start_time_seconds,
+      :end_time_seconds,
+      :order)
   end
 end

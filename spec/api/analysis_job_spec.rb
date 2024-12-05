@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 
 describe 'analysis jobs', type: :request do
@@ -30,10 +32,23 @@ describe 'analysis jobs', type: :request do
     end
 
     post('create analysis_job') do
+      ignore_pending_jobs
       model_sent_as_parameter_in_body
       response(201, 'successful') do
         schema_for_single
-        auto_send_model
+        send_model do
+          {
+            analysis_job: {
+              name: 'test job',
+              description: 'test job **description**',
+              ongoing: true,
+              project_id: nil,
+              system_job: true,
+              scripts: [{ script_id: script.id }],
+              filter: {}
+            }
+          }
+        end
         run_test!
       end
     end
@@ -94,6 +109,48 @@ describe 'analysis jobs', type: :request do
         schema nil
         run_test! do
           expect_empty_body
+        end
+      end
+    end
+  end
+
+  [
+    :retry,
+    :suspend,
+    :resume,
+    :amend
+  ].each do |action|
+    path "/analysis_jobs/{id}/#{action}" do
+      with_id_route_parameter
+      ignore_pending_jobs
+
+      let(:id) { analysis_job.id }
+
+      before do
+        # change state based on action
+        case action
+        when :suspend
+          analysis_job.update_column(:overall_status, :processing)
+        when :resume
+          analysis_job.update_column(:overall_status, :suspended)
+        when :retry
+          analysis_job.update_column(:overall_status, :completed)
+          analysis_job.save!
+          # mark one item to be failed so we can retry the job
+          analysis_jobs_item.result_failed!
+        when :amend
+          analysis_job.update_column(:overall_status, :completed)
+          analysis_job.ongoing = true
+          analysis_job.save!
+        end
+      end
+
+      post("#{action} analysis_job") do
+        response(204, 'successful') do
+          schema nil
+          run_test! do
+            expect_empty_body
+          end
         end
       end
     end

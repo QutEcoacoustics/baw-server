@@ -13,13 +13,13 @@ module BawWorkers
         attribute :name, ::BawWorkers::Dry::Types::String.optional
         # @!attribute [r] status
         #   @return [String]
-        attribute :status, ::BawWorkers::Dry::Types::Statuses
+        attribute :status, STATUSES_ENUM
         # @!attribute [r] messages
         #   @return [Array<String>]
         attribute :messages, ::BawWorkers::Dry::Types::Array.of(::BawWorkers::Dry::Types::String).default([].freeze)
         # @!attribute [r] time
         #   @return [DateTime]
-        attribute :time, (::BawWorkers::Dry::Types::JSON::Time.default { Time.now })
+        attribute :time, (::BawWorkers::Dry::Types::JSON::Time.default { Time.zone.now })
         # @!attribute [r] options
         #   @return [String]
         attribute :options, ::BawWorkers::Dry::Types::Hash

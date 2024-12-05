@@ -6,6 +6,7 @@
 #
 
 set -e
+set -x
 rm --force .ready
 
 echo -e "\n== Debug container permissions  ==\n"
@@ -23,6 +24,12 @@ if [[ "$RAILS_ENV" == "development" ]]
 then
     # reset passenger file
     cp ./provision/Passengerfile.development.json /home/baw_web/baw-server/Passengerfile.json
+
+    echo -e "\n== Truncating log files ==\n"
+    for f in /home/baw_web/baw-server/log/*.log; do 
+        # keep the last 10000 lines
+        echo "$(tail -n 10000 $f)" > $f
+    done
 fi
 
 echo -e "\n== Checking database ==\n"

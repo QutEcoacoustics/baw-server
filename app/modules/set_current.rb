@@ -5,22 +5,16 @@ module SetCurrent
   extend ActiveSupport::Concern
 
   included do
-    before_action :set_current_user
-    before_action :set_current_ability
-    before_action :set_current_action
+    before_action :set_current
   end
 
   private
 
-  def set_current_user
+  def set_current
     Current.user = current_user
-  end
-
-  def set_current_ability
     Current.ability = current_ability
-  end
-
-  def set_current_action
     Current.action_name = action_name
+    Current.path = request.env['PATH_INFO']
+    Current.method = request.method
   end
 end

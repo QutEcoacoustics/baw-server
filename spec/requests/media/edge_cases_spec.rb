@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-describe '.../media', type: :request, aggregate_failures: true do
+describe '.../media', :aggregate_failures, type: :request do
   include_context 'shared_test_helpers'
 
   create_audio_recordings_hierarchy
 
   let(:lt_recording) {
-    FactoryBot.create(
+    create(
       :audio_recording,
       recorded_date: Time.zone.parse('2019-09-13T00:00:01+1000 '),
       duration_seconds: audio_file_bar_lt_metadata[:duration_seconds],
@@ -47,7 +47,7 @@ describe '.../media', type: :request, aggregate_failures: true do
     # don't let the worker actually run
     pause_all_jobs
 
-    example 'generated media do not generate Errno::ENOENT when directories do not exist' do
+    it 'generated media do not generate Errno::ENOENT when directories do not exist' do
       # we do not want the job to run, we do want the redis cache to return a result
 
       # get the expected key for this job
@@ -55,7 +55,7 @@ describe '.../media', type: :request, aggregate_failures: true do
 
       # stuff a fake response in so we can serve it immediately
       BawWorkers::Config.redis_communicator.set_file(key, Fixtures.audio_file_mono)
-      expect(BawWorkers::Config.redis_communicator.exists_file?(key)).to eq true
+      expect(BawWorkers::Config.redis_communicator.exists_file?(key)).to be true
 
       # this was throwing with:
       # An Errno::ENOENT occurred in media#show:
@@ -72,7 +72,7 @@ describe '.../media', type: :request, aggregate_failures: true do
       expect(response.content_type).to eq('audio/mpeg')
       # our range request implementation limits unbounded requests to 512 kB
       expect(response.content_length).to be_within(0).of(RangeRequest.new.max_range_size)
-      expect(response.headers['X-Error-Message']).to be nil
+      expect(response.headers['X-Error-Message']).to be_nil
 
       clear_pending_jobs
     end

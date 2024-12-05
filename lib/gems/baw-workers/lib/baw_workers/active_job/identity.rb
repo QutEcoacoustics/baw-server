@@ -29,14 +29,14 @@ module BawWorkers
           return if ::ActiveJob::Enqueuing.method_defined?(:enqueue)
 
           raise TypeError,
-                '::ActiveJob::Enqueuing no longer has method enqueue. Our hook will fail.'
+            '::ActiveJob::Enqueuing no longer has method enqueue. Our hook will fail.'
         end
 
         def job_base_is_ancestor!
           return if ancestors.include?(::ActiveJob::Base)
 
           raise TypeError,
-                "must be prepended in ActiveJob::Base. Actually is #{self}"
+            "must be prepended in ActiveJob::Base. Actually is #{self}"
         end
       end
 
@@ -82,7 +82,7 @@ module BawWorkers
       # before any callbacks get the chance to use it.
       # https://github.com/rails/rails/blob/58b46e9440f3460e93b8164205614e3ab85784da/activejob/lib/active_job/enqueuing.rb#L59
       def initialize(...)
-        super(...)
+        super
 
         # there's no point making a job id on deserialization
         # deserialize creates the instance without assigning anything,
@@ -111,7 +111,7 @@ module BawWorkers
       def application_job_overrides_method!(name)
         return if application_job_class.nil?
 
-        raise NotImplementedError, "You must implement #{name} in your job class."
+        raise NotImplementedError, "You must implement `#{name}` in your job class (#{self.class.name})."
       end
     end
   end

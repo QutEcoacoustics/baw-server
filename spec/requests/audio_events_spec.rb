@@ -68,6 +68,14 @@ describe '/audio_events' do
       create(:audio_event_import)
     }
 
+    let(:audio_event_import_file) {
+      create(:audio_event_import_file, :with_file, audio_event_import: audio_event_import)
+    }
+
+    let(:second_audio_recording) {
+      create(:audio_recording, creator: reader_user, recorded_date: audio_recording.recorded_date + 1.day)
+    }
+
     before do
       create(
         :audio_event,
@@ -76,11 +84,11 @@ describe '/audio_events' do
       create(
         :audio_event,
         creator: reader_user, audio_recording:, is_reference: true, start_time_seconds: 4.0,
-        audio_event_import:
+        audio_event_import_file:
       )
       create(
         :audio_event,
-        creator: reader_user, audio_recording:, is_reference: true, start_time_seconds: 5.4
+        creator: reader_user, audio_recording: second_audio_recording, is_reference: true, start_time_seconds: 5.4
       )
     end
 
@@ -124,9 +132,34 @@ describe '/audio_events' do
       post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
 
       expect_success
-      expect_number_of_items(1)
-      expect(api_data).to all(include(is_reference: be(true)))
+      # plus one that already existed from the hierarchy
+      expect_number_of_items(2)
       expect(api_data).to match [
+        a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8, is_reference: true),
+        # the defaults values for audio event factory from the existing hierarchy
+        a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8, is_reference: false)
+      ]
+    end
+
+    it 'can filter by audio_recording.recorded_end_date' do
+      pending 'Depends on a feature we haven not made yet https://github.com/QutEcoacoustics/baw-server/issues/689'
+      next
+
+      filter = {
+        'filter' => {
+          'audio_recordings.recorded_end_date' => { 'lt' => second_audio_recording.recorded_date }
+        },
+        'projection' => {
+          'include' => ['audio_recordings.recorded_end_date']
+        }
+      }
+
+      post '/audio_events/filter', params: filter, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(2)
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8),
         a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8)
       ]
     end

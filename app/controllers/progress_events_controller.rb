@@ -94,12 +94,7 @@ class ProgressEventsController < ApplicationController
   end
 
   # DELETE /progress_events/:progress_event_id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-    @progress_event.destroy
-    respond_destroy
-  end
+  # Handled in Archivable
 
   private
 

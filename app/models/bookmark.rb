@@ -24,7 +24,7 @@
 #
 # Foreign Keys
 #
-#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  bookmarks_creator_id_fk          (creator_id => users.id)
 #  bookmarks_updater_id_fk          (updater_id => users.id)
 #
@@ -32,8 +32,8 @@ class Bookmark < ApplicationRecord
   # relations
   belongs_to :audio_recording, inverse_of: :bookmarks
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_bookmarks
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_bookmarks, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_bookmarks
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_bookmarks, optional: true
 
   # association validations
   #validates_associated :audio_recording
@@ -41,7 +41,6 @@ class Bookmark < ApplicationRecord
 
   # attribute validations
   validates :offset_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :audio_recording_id, presence: true
   validates :name, presence: true,
     uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
 

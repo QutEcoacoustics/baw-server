@@ -34,6 +34,10 @@ Install:
 - If you have issue with bind mount permissions, boot the container as the root
   user and `chown -R 1000 .` to grant access to files
 
+- Clear container logs with:
+   - `sudo find /mnt/wsl/docker-desktop-data/version-pack-data/community/docker/containers -name *.log -exec truncate -s 0 {} \;`
+   - warning: this can corrupt the docker logs, use with caution
+
 ### MacOS
 
 Install Docker Desktop
@@ -162,6 +166,13 @@ a break point after the debugger starts.
 (container) > RAILS_ENV='test' rdbg --command -- /home/baw_web/baw-server/bin/rspec /home/baw_web/baw-server/spec/lib/modules/filter/query_spec.rb -e association
 ```
 
+We've also defined a helper script to run the debugger:
+
+```shell
+(container) > debug rspec /home/baw_web/baw-server/spec/lib/modules/filter/query_spec.rb -e association
+```
+
+
 More information here: https://github.com/ruby/debug
 
 ### Tests
@@ -200,6 +211,7 @@ These commands should be executed automatically but are listed because they are 
 - Run rspec tests and generate a HTML report: `rspec --format html --out rspec_results.html`
 - Generate API documentation: `bin/generate_docs.sh`
 
+
 ## Production setup and deploying
 
 Create production settings file `config/settings/production.yml` based on `config/settings/default.yml`.
@@ -228,7 +240,10 @@ A basic redis setup is included with the docker-compose file.
   - postgresql
   - redis
   - a single worker (for test and dev environments)
-  -
+  - a single scheduler (for test and dev environments)
+  - an instance of sftpgo
+  - an instance of PBS (for test and dev environments)
+
 
 ## Credits
 

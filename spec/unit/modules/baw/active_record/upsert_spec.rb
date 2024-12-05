@@ -2,7 +2,7 @@
 
 describe Baw::ActiveRecord::Upsert do
   let(:model) { Statistics::AudioRecordingStatistics }
-  let(:foreign_relation) { create(:audio_recording) }
+  let!(:foreign_relation) { create(:audio_recording) }
   let(:foreign_key) { foreign_relation.id }
   let(:attributes) {
     {
@@ -34,7 +34,7 @@ describe Baw::ActiveRecord::Upsert do
     }.to raise_error(ArgumentError, '`conflict_where` must be an arel expression but was  1 <> 2')
   end
 
-  def expect_insert_then_update(insert, update = omitted = true)
+  def expect_insert_then_update(insert, update = omitted = true, count: 1)
     update = insert if omitted
     result = query.execute
 
@@ -42,7 +42,7 @@ describe Baw::ActiveRecord::Upsert do
 
     result = query.execute
     expect(result).to match update
-    expect(model.count).to eq 1
+    expect(model.count).to eq count
   end
 
   context 'with basic upsert' do
@@ -51,7 +51,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO UPDATE
@@ -73,7 +73,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO UPDATE
@@ -94,7 +94,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO UPDATE
@@ -116,7 +116,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO NOTHING
@@ -140,7 +140,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO UPDATE
@@ -174,7 +174,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) DO UPDATE
@@ -203,7 +203,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT ON CONSTRAINT #{unique_index.name} DO UPDATE
@@ -229,7 +229,7 @@ describe Baw::ActiveRecord::Upsert do
     }
 
     it 'generates the expected sql' do
-      expected = <<~SQL
+      expected = <<~SQL.squish
         INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration")
         VALUES ($1, $2, $3)
         ON CONFLICT (audio_recording_id, bucket) WHERE "audio_recording_id" != 0 DO UPDATE
@@ -242,6 +242,75 @@ describe Baw::ActiveRecord::Upsert do
 
     it 'runs the query (insert, then update)' do
       expect_insert_then_update [[foreign_key, an_instance_of(Range)]]
+    end
+  end
+
+  context 'with upsert, with custom AREL insert statement can be used' do
+    before do
+      # some data to base our bulk update on
+      create_list(:audio_recording, 2)
+    end
+
+    let!(:query) {
+      sum = Baw::Arel::Helpers.upsert_on_conflict_sum(
+        model.arel_table,
+        :segment_download_count,
+        :segment_download_duration
+      )
+
+      model.upsert_query(
+        # custom arel insert statement,
+        Arel::Nodes::InsertStatement.new(model.arel_table).tap { |insert_statement|
+          insert_statement.columns = [
+            model.arel_table[:audio_recording_id],
+            model.arel_table[:segment_download_count],
+            model.arel_table[:segment_download_duration]
+          ]
+          # `SELECT id FROM audio_recordings`
+          insert_statement.select = AudioRecording.arel_table.project(
+            AudioRecording.arel_table[:id],
+            Arel::Nodes::SqlLiteral.new('3'),
+            Arel::Nodes::SqlLiteral.new('4.5')
+          )
+        },
+        on_conflict: sum
+      )
+    }
+
+    it 'generates the expected sql' do
+      expected = <<~SQL.squish
+        INSERT INTO "audio_recording_statistics" ("audio_recording_id", "segment_download_count", "segment_download_duration") (
+        SELECT "audio_recordings"."id", 3, 4.5 FROM "audio_recordings")
+        ON CONFLICT (audio_recording_id, bucket) DO UPDATE
+        SET "segment_download_count" = ("audio_recording_statistics"."segment_download_count" + EXCLUDED."segment_download_count"), "segment_download_duration" = ("audio_recording_statistics"."segment_download_duration" + EXCLUDED."segment_download_duration")
+        RETURNING audio_recording_id, bucket
+      SQL
+
+      comparison_sql(query.to_sql, expected)
+    end
+
+    it 'runs the query (insert, then update)' do
+      ar1, ar2, ar3 = AudioRecording.pluck(:id)
+      expect_insert_then_update(
+        [
+          [ar1, an_instance_of(Range)],
+          [ar2, an_instance_of(Range)],
+          [ar3, an_instance_of(Range)]
+        ],
+        count: 3
+      )
+
+      expect(model.count).to eq(3)
+
+      expect(model.all).to all(
+        have_attributes({
+          segment_download_count: 6,
+          segment_download_duration: 4.5 * 2
+        })
+      )
+
+      ids = model.pluck(:audio_recording_id)
+      expect(ids.uniq).to eq(ids)
     end
   end
 

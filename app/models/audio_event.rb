@@ -4,50 +4,56 @@
 #
 # Table name: audio_events
 #
-#  id                    :integer          not null, primary key
-#  channel               :integer
-#  context               :jsonb
-#  deleted_at            :datetime
-#  end_time_seconds      :decimal(10, 4)
-#  high_frequency_hertz  :decimal(10, 4)
-#  is_reference          :boolean          default(FALSE), not null
-#  low_frequency_hertz   :decimal(10, 4)   not null
-#  start_time_seconds    :decimal(10, 4)   not null
-#  created_at            :datetime
-#  updated_at            :datetime
-#  audio_event_import_id :integer
-#  audio_recording_id    :integer          not null
-#  creator_id            :integer          not null
-#  deleter_id            :integer
-#  updater_id            :integer
+#  id                                                                              :integer          not null, primary key
+#  channel                                                                         :integer
+#  deleted_at                                                                      :datetime
+#  end_time_seconds                                                                :decimal(10, 4)
+#  high_frequency_hertz                                                            :decimal(10, 4)
+#  import_file_index(Index of the row/entry in the file that generated this event) :integer
+#  is_reference                                                                    :boolean          default(FALSE), not null
+#  low_frequency_hertz                                                             :decimal(10, 4)
+#  score(Score or confidence for this event.)                                      :decimal(, )
+#  start_time_seconds                                                              :decimal(10, 4)   not null
+#  created_at                                                                      :datetime
+#  updated_at                                                                      :datetime
+#  audio_event_import_file_id                                                      :integer
+#  audio_recording_id                                                              :integer          not null
+#  creator_id                                                                      :integer          not null
+#  deleter_id                                                                      :integer
+#  provenance_id(Source of this event)                                             :integer
+#  updater_id                                                                      :integer
 #
 # Indexes
 #
-#  index_audio_events_on_audio_recording_id  (audio_recording_id)
-#  index_audio_events_on_creator_id          (creator_id)
-#  index_audio_events_on_deleter_id          (deleter_id)
-#  index_audio_events_on_updater_id          (updater_id)
+#  index_audio_events_on_audio_event_import_file_id  (audio_event_import_file_id)
+#  index_audio_events_on_audio_recording_id          (audio_recording_id)
+#  index_audio_events_on_creator_id                  (creator_id)
+#  index_audio_events_on_deleter_id                  (deleter_id)
+#  index_audio_events_on_provenance_id               (provenance_id)
+#  index_audio_events_on_updater_id                  (updater_id)
 #
 # Foreign Keys
 #
-#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  audio_events_creator_id_fk          (creator_id => users.id)
 #  audio_events_deleter_id_fk          (deleter_id => users.id)
 #  audio_events_updater_id_fk          (updater_id => users.id)
+#  fk_rails_...                        (audio_event_import_file_id => audio_event_import_files.id) ON DELETE => cascade
+#  fk_rails_...                        (provenance_id => provenances.id)
 #
 class AudioEvent < ApplicationRecord
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
-  belongs_to :audio_event_import, inverse_of: :audio_events, optional: true
-  has_many :taggings, inverse_of: :audio_event, strict_loading: false
+  belongs_to :audio_event_import_file, inverse_of: :audio_events, optional: true
+  belongs_to :provenance, optional: true
+
+  has_many :taggings, inverse_of: :audio_event, strict_loading: false, dependent: :destroy
   has_many :tags, through: :taggings
 
-  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
-  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events, optional: true
-  has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
-
-  belongs_to :audio_event_import, inverse_of: :audio_events, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_audio_events
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_audio_events, optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_audio_events, optional: true
+  has_many :comments, class_name: 'AudioEventComment', inverse_of: :audio_event, dependent: :delete_all
 
   # AT 2021: disabled. Nested associations are extremely complex,
   # and as far as we are aware, they are not used anywhere in production
@@ -55,8 +61,8 @@ class AudioEvent < ApplicationRecord
   #accepts_nested_attributes_for :tags
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :comments, batch: true
 
   # association validations
   # disabled because they're annoying - no really they're not needed because associated models are always valid
@@ -81,22 +87,31 @@ class AudioEvent < ApplicationRecord
 
   # Scopes
   scope :start_after, ->(offset_seconds) { where('start_time_seconds > ?', offset_seconds) }
-  scope :start_before, ->(offset_seconds) { where('start_time_seconds < ?', offset_seconds) }
+  scope :start_before, ->(offset_seconds) { where(start_time_seconds: ...offset_seconds) }
   scope :end_after, ->(offset_seconds) { where('end_time_seconds > ?', offset_seconds) }
-  scope :end_before, ->(offset_seconds) { where('end_time_seconds < ?', offset_seconds) }
+  scope :end_before, ->(offset_seconds) { where(end_time_seconds: ...offset_seconds) }
 
   # postgres-specific
-  scope :select_start_absolute, lambda {
+  scope(:select_start_absolute, lambda {
                                   select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute')
-                                }
-  scope :select_end_absolute, lambda {
+                                })
+  scope(:select_end_absolute, lambda {
                                 select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute')
-                              }
+                              })
   scope :duration_seconds, -> { arel_table[:end_time_seconds] - arel_table[:start_time_seconds] }
 
-  scope :total_duration_seconds, -> { sum((duration_seconds.cast('bigint'))) }
+  scope :total_duration_seconds, -> { sum(duration_seconds.cast('bigint')) }
 
-  scope :by_import, ->(import_id) { where(audio_event_import_id: import_id) }
+  scope(:by_import, lambda { |import_id|
+                      raise ArgumentError, 'import_id must be an integer' unless import_id.is_a?(Integer)
+
+                      joins(:audio_event_import_file)
+                        .where(
+                        AudioEventImportFile
+                          .arel_table[:audio_event_import_id]
+                          .eq(import_id)
+                      )
+                    })
 
   # Define filter api settings
   def self.filter_settings
@@ -106,12 +121,14 @@ class AudioEvent < ApplicationRecord
                      :low_frequency_hertz, :high_frequency_hertz,
                      :is_reference,
                      :created_at, :creator_id, :updated_at,
-                     :duration_seconds, :audio_event_import_id, :channel],
+                     :duration_seconds,
+                     :audio_event_import_file_id, :import_file_index, :provenance_id, :channel],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
                       :is_reference,
-                      :creator_id, :updated_at, :created_at, :audio_event_import_id, :channel],
+                      :creator_id, :updated_at, :created_at,
+                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel],
       custom_fields: lambda { |item, _user|
                        # do a query for the attributes that may not be in the projection
                        fresh_audio_event = AudioEvent.find(item.id)
@@ -120,8 +137,8 @@ class AudioEvent < ApplicationRecord
 
                        audio_event_hash[:taggings] =
                          Tagging
-                         .where(audio_event_id: fresh_audio_event.id)
-                         .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
+                           .where(audio_event_id: fresh_audio_event.id)
+                           .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
 
                        [item, audio_event_hash]
                      },
@@ -146,9 +163,16 @@ class AudioEvent < ApplicationRecord
           available: true
         },
         {
-          join: AudioEventImport,
-          on: AudioEvent.arel_table[:audio_event_import_id].eq(AudioEventImport.arel_table[:id]),
-          available: true
+          join: AudioEventImportFile,
+          on: AudioEvent.arel_table[:audio_event_import_file_id].eq(AudioEventImportFile.arel_table[:id]),
+          available: true,
+          associations: [
+            {
+              join: AudioEventImport,
+              on: AudioEventImportFile.arel_table[:audio_event_import_id].eq(AudioEventImport.arel_table[:id]),
+              available: true
+            }
+          ]
         },
         {
           join: AudioEventComment,
@@ -172,6 +196,39 @@ class AudioEvent < ApplicationRecord
     }
   end
 
+  def self.schema
+    {
+      type: 'object',
+      properties: {
+        id: Api::Schema.id(nullable: true),
+        audio_recording_id: Api::Schema.id(read_only: false),
+        start_time_seconds: { type: 'number', readOnly: false },
+        end_time_seconds: { type: 'number', readOnly: false },
+        low_frequency_hertz: { type: 'number', readOnly: false },
+        high_frequency_hertz: { type: 'number', readOnly: false },
+        is_reference: { type: 'boolean', readOnly: false },
+        **Api::Schema.all_user_stamps,
+        duration_seconds: { type: 'number', readOnly: true },
+        taggings: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: Api::Schema.id,
+              audio_event_id: Api::Schema.id,
+              tag_id: Api::Schema.id,
+              **Api::Schema.updater_and_creator_user_stamps
+            }
+          }
+        },
+        audio_event_import_file_id: Api::Schema.id(nullable: true, read_only: true),
+        import_file_index: { type: ['null', 'integer'], readOnly: true },
+        provenance_id: Api::Schema.id(nullable: true),
+        channel: { type: ['null', 'integer'] }
+      }
+    }
+  end
+
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
   # @param [User] user
@@ -183,7 +240,7 @@ class AudioEvent < ApplicationRecord
   # @param [String] timezone_name
   # @return [Arel:SelectManager]
   def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
-    # NOTE: if other modifications are made to the default_scope (like acts_as_paranoid does),
+    # NOTE: if other modifications are made to the default_scope (like acts_as_discardable does),
     # manually constructed queries like this need to be updated to match
     # (search for ':deleted_at' to find the relevant places)
 
@@ -202,8 +259,8 @@ class AudioEvent < ApplicationRecord
 
     timezone_name = 'UTC' if timezone_name.blank?
     timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
-    field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset.utc_offset)
-    field_suffix = "#{timezone_offset.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
+    field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset&.utc_offset || 0)
+    field_suffix = "#{timezone_offset&.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
       '')}".parameterize.underscore
 
     timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
@@ -238,105 +295,105 @@ class AudioEvent < ApplicationRecord
 
     projects_aggregate =
       projects_sites
-      .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
-      .where(projects[:deleted_at].eq(nil))
-      .where(projects_sites[:site_id].eq(sites[:id]))
-      .project(projects_agg)
+        .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+        .where(projects[:deleted_at].eq(nil))
+        .where(projects_sites[:site_id].eq(sites[:id]))
+        .project(projects_agg)
 
     tags_common =
       tags
-      .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-      .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-      .where(tags[:type_of_tag].eq('common_name'))
+        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+        .where(tags[:type_of_tag].eq('common_name'))
 
     tags_common_aggregate = tags_common.clone.project(simple_tags_agg)
     tags_common_ids = tags_common.clone.project(simple_tags_ids)
 
     tags_species =
       tags
-      .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-      .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-      .where(tags[:type_of_tag].eq('species_name'))
+        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+        .where(tags[:type_of_tag].eq('species_name'))
 
     tags_species_aggregate = tags_species.clone.project(simple_tags_agg)
     tags_species_ids = tags_species.clone.project(simple_tags_ids)
 
     tags_others =
       tags
-      .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-      .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-      .where(tags[:type_of_tag].in(['species_name', 'common_name']).not)
+        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+        .where(tags[:type_of_tag].in(['species_name', 'common_name']).not)
 
     tags_others_aggregate = tags_others.clone.project(other_tags_agg)
     tags_others_ids = tags_others.clone.project(other_tags_ids)
 
     query =
       audio_events
-      .where(audio_events[:deleted_at].eq(nil))
-      .join(users).on(users[:id].eq(audio_events[:creator_id]))
-      .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
-      .where(audio_recordings[:deleted_at].eq(nil))
-      .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
-      .where(sites[:deleted_at].eq(nil))
-      .order(audio_events[:id].desc)
-      .project(
-        audio_events[:id].as('audio_event_id'),
-        audio_recordings[:id].as('audio_recording_id'),
-        audio_recordings[:uuid].as('audio_recording_uuid'),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-          format_date).as("audio_recording_start_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-          format_time).as("audio_recording_start_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-          format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-          format_date).as("event_created_at_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-          format_time).as("event_created_at_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-          format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
-        projects_aggregate.as('projects'),
-        sites[:id].as('site_id'),
-        sites[:name].as('site_name'),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-          format_date).as("event_start_date_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-          format_time).as("event_start_time_#{field_suffix}"),
-        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-          format_iso8601).as("event_start_datetime_#{field_suffix}"),
-        audio_events[:start_time_seconds].as('event_start_seconds'),
-        audio_events[:end_time_seconds].as('event_end_seconds'),
-        infix_operation(:-, audio_events[:end_time_seconds],
-          audio_events[:start_time_seconds]).as('event_duration_seconds'),
-        audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
-        audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
-        audio_events[:is_reference].as('is_reference'),
-        audio_events[:creator_id].as('created_by'),
-        audio_events[:updater_id].as('updated_by'),
-        tags_common_aggregate.as('common_name_tags'),
-        tags_common_ids.as('common_name_tag_ids'),
-        tags_species_aggregate.as('species_name_tags'),
-        tags_species_ids.as('species_name_tag_ids'),
-        tags_others_aggregate.as('other_tags'),
-        tags_others_ids.as('other_tag_ids'),
-        Arel::Nodes::SqlLiteral.new(
-          "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
-                           '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
-                           '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
+        .where(audio_events[:deleted_at].eq(nil))
+        .join(users).on(users[:id].eq(audio_events[:creator_id]))
+        .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
+        .where(audio_recordings[:deleted_at].eq(nil))
+        .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
+        .where(sites[:deleted_at].eq(nil))
+        .order(audio_events[:id].desc)
+        .project(
+          audio_events[:id].as('audio_event_id'),
+          audio_recordings[:id].as('audio_recording_id'),
+          audio_recordings[:uuid].as('audio_recording_uuid'),
+          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+            format_date).as("audio_recording_start_date_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+            format_time).as("audio_recording_start_time_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+            format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+            format_date).as("event_created_at_date_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+            format_time).as("event_created_at_time_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+            format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
+          projects_aggregate.as('projects'),
+          sites[:id].as('site_id'),
+          sites[:name].as('site_name'),
+          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+            format_date).as("event_start_date_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+            format_time).as("event_start_time_#{field_suffix}"),
+          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+            format_iso8601).as("event_start_datetime_#{field_suffix}"),
+          audio_events[:start_time_seconds].as('event_start_seconds'),
+          audio_events[:end_time_seconds].as('event_end_seconds'),
+          infix_operation(:-, audio_events[:end_time_seconds],
+            audio_events[:start_time_seconds]).as('event_duration_seconds'),
+          audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
+          audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
+          audio_events[:is_reference].as('is_reference'),
+          audio_events[:creator_id].as('created_by'),
+          audio_events[:updater_id].as('updated_by'),
+          tags_common_aggregate.as('common_name_tags'),
+          tags_common_ids.as('common_name_tag_ids'),
+          tags_species_aggregate.as('species_name_tags'),
+          tags_species_ids.as('species_name_tag_ids'),
+          tags_others_aggregate.as('other_tags'),
+          tags_others_ids.as('other_tag_ids'),
+          Arel::Nodes::SqlLiteral.new(
+            "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
+                             '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
+                             '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
+          )
+              .as('listen_url'),
+          Arel::Nodes::SqlLiteral.new(
+            "'#{url_base}library/' || \"audio_recordings\".\"id\" || '/audio_events/' || audio_events.id"
+          )
+              .as('library_url')
         )
-            .as('listen_url'),
-        Arel::Nodes::SqlLiteral.new(
-          "'#{url_base}library/' || \"audio_recordings\".\"id\" || '/audio_events/' || audio_events.id"
-        )
-            .as('library_url')
-      )
 
     # ensure deleted projects are not included
     site_ids_for_live_project_ids = projects
-                                    .where(projects[:deleted_at].eq(nil))
-                                    .join(projects_sites).on(projects[:id].eq(projects_sites[:project_id]))
-                                    .where(sites[:id].eq(projects_sites[:site_id]))
-                                    .project(sites[:id]).distinct
+      .where(projects[:deleted_at].eq(nil))
+      .join(projects_sites).on(projects[:id].eq(projects_sites[:project_id]))
+      .where(sites[:id].eq(projects_sites[:site_id]))
+      .project(sites[:id]).distinct
 
     query = query.where(sites[:id].in(site_ids_for_live_project_ids))
 
@@ -344,11 +401,11 @@ class AudioEvent < ApplicationRecord
 
     if project
       site_ids = sites
-                 .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
-                 .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
-                 .where(projects[:deleted_at].eq(nil))
-                 .where(projects[:id].eq(project.id))
-                 .project(sites[:id]).distinct
+        .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
+        .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+        .where(projects[:deleted_at].eq(nil))
+        .where(projects[:id].eq(project.id))
+        .project(sites[:id]).distinct
 
       query = query.where(sites[:id].in(site_ids))
     end
@@ -385,9 +442,9 @@ class AudioEvent < ApplicationRecord
   def low_must_be_lte_high
     return unless high_frequency_hertz && low_frequency_hertz
 
-    if low_frequency_hertz > high_frequency_hertz
-      errors.add(:start_time_seconds, '%<value>s must be lower than high frequency')
-    end
+    return unless low_frequency_hertz > high_frequency_hertz
+
+    errors.add(:start_time_seconds, '%<value>s must be lower than high frequency')
   end
 
   # AT 2021: disabled. I can't work out what this code does or what effect is has

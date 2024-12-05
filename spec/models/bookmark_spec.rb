@@ -24,11 +24,11 @@
 #
 # Foreign Keys
 #
-#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  bookmarks_creator_id_fk          (creator_id => users.id)
 #  bookmarks_updater_id_fk          (updater_id => users.id)
 #
-describe Bookmark, type: :model do
+describe Bookmark do
   subject { build(:bookmark) }
 
   it 'has a valid factory' do
@@ -36,10 +36,8 @@ describe Bookmark, type: :model do
   end
 
   it { is_expected.to belong_to(:audio_recording) }
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-
-  it { is_expected.to validate_presence_of(:audio_recording_id) }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional }
 
   it 'is invalid without name specified' do
     b = build(:bookmark, name: nil)
@@ -86,5 +84,9 @@ describe Bookmark, type: :model do
     ss3 = build(:bookmark, { creator: user3, name: 'You talkin\' to me?' })
     expect(ss3.creator_id).not_to eql(ss1.creator_id), 'The same user is present for both cases, invalid test!'
     expect(ss3).to be_valid
+  end
+
+  it_behaves_like 'cascade deletes for', :bookmark, {} do
+    create_entire_hierarchy
   end
 end

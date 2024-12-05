@@ -136,7 +136,7 @@ class AudioRecordingOverlap
               .where(end_b_gt_start_a)
               .where(start_b_lt_end_a)
 
-      query = query.where(audio_recordings_arel[:id].not_eq(id)) unless id.blank?
+      query = query.where(audio_recordings_arel[:id].not_eq(id)) if id.present?
 
       query
     end

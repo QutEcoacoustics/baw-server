@@ -8,7 +8,7 @@ module SftpgoClient
     # @return [Dry::Monads::Result<SftpgoClient::ServicesStatus>]
     def get_status
       wrap_response(@connection.get(STATUS_PATH))
-        .fmap { |r| SftpgoClient::ServicesStatus.new(r.body) }
+        .fmap { |audio_recording| SftpgoClient::ServicesStatus.new(audio_recording.body) }
     end
   end
 end

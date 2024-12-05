@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe BawWorkers::RedisCommunicator do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   let(:communicator) { BawWorkers::Config.redis_communicator }
@@ -104,7 +102,6 @@ describe BawWorkers::RedisCommunicator do
   end
 
   describe 'can store a file' do
-
     let(:path) { Fixtures.audio_file_mono29 }
     let(:hash) { BawWorkers::Config.file_info.generate_hash(path).hexdigest }
     let(:key) { path.basename }

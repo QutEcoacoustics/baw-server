@@ -8,6 +8,7 @@ exclude:
 - ".bundle/**/*"
 require:
   - semantic_logger
+  - redis
 domains: []
 reporters:
   - rubocop

@@ -70,12 +70,7 @@ class StudiesController < ApplicationController
   end
 
   # DELETE /studies/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-    @study.destroy
-    respond_destroy
-  end
+  # Handled in Archivable
 
   private
 

@@ -19,23 +19,30 @@ module Creation
       prepare_permission_reader
 
       prepare_tag
+      prepare_provenance
       prepare_script
-
-      prepare_harvest
 
       prepare_region
       prepare_site
 
       prepare_audio_recording
+      prepare_audio_recording_statistic
       prepare_bookmark
+
       prepare_audio_event
 
       prepare_audio_events_tags
       prepare_audio_event_comment
 
+      prepare_harvest
+      prepare_harvest_item
+
       prepare_saved_search
       prepare_analysis_job
       prepare_analysis_jobs_item
+
+      prepare_audio_event_import
+      prepare_audio_event_import_file
 
       prepare_dataset
 
@@ -117,16 +124,72 @@ module Creation
       prepare_user_response
     end
 
+    # assumes create_audio_recordings_hierarchy has been called (or at least
+    # site exists)
+    def create_analysis_jobs_matrix(analysis_jobs_count: 1, scripts_count: 1, audio_recordings_count: 1)
+      let!(:analysis_jobs_matrix) {
+        scripts = create_list(:script, scripts_count)
+        analysis_jobs = create_list(
+          :analysis_job,
+          analysis_jobs_count,
+          scripts: [],
+          creator: owner_user,
+          project:
+        )
+        audio_recordings = create_list(:audio_recording, audio_recordings_count, site:)
+        analysis_jobs_items = []
+
+        analysis_jobs.each do |analysis_job|
+          # it seems the factory is too insistent on saving the scripts
+          analysis_job.scripts.clear
+          analysis_job.save!(validate: false)
+
+          scripts.each do |script|
+            AnalysisJobsScript.new(analysis_job:, script:).save!
+
+            audio_recordings.each do |audio_recording|
+              item = AnalysisJobsItem.new(
+                analysis_job:,
+                audio_recording:,
+                script:,
+                transition: AnalysisJobsItem::TRANSITION_QUEUE
+              )
+
+              item.save!
+
+              analysis_jobs_items.push(item)
+            end
+          end
+
+          analysis_job.reload
+        end
+
+        expect(AnalysisJobsItem.count).to eq(analysis_jobs_count * scripts_count * audio_recordings_count)
+
+        {
+          analysis_jobs:,
+          scripts:,
+          audio_recordings:,
+          analysis_jobs_items:
+        }
+      }
+    end
+
     def prepare_study
+      let!(:default_study) { Common.create_study(admin_user, default_dataset) }
       let!(:study) { Common.create_study(admin_user, dataset) }
     end
 
     def prepare_question
+      let!(:default_question) { Common.create_question(admin_user, default_study) }
       let!(:question) { Common.create_question(admin_user, study) }
     end
 
     def prepare_user_response
       # named to avoid name collision with rspec 'response'
+      let!(:default_user_response) {
+        Common.create_user_response(reader_user, default_dataset_item, default_study, default_question)
+      }
       let!(:user_response) { Common.create_user_response(reader_user, dataset_item, study, question) }
     end
 
@@ -231,7 +294,7 @@ module Creation
     end
 
     def prepare_harvest_item
-      let(:harvest_item) { Common.create_harvest_item(harvest) }
+      let!(:harvest_item) { Common.create_harvest_item(harvest, audio_recording, owner_user) }
     end
 
     def prepare_region
@@ -263,21 +326,39 @@ module Creation
       let!(:tag) { Common.create_tag(admin_user) }
     end
 
+    def prepare_provenance
+      let!(:provenance) { Common.create_provenance(admin_user) }
+    end
+
     def prepare_script
-      let!(:script) { Common.create_script(admin_user) }
+      let!(:script) { Common.create_script(admin_user, provenance) }
     end
 
     def prepare_audio_recording
       let!(:audio_recording) { Common.create_audio_recording(writer_user, writer_user, site) }
     end
 
+    def prepare_audio_recording_statistic
+      let!(:audio_recording_statistic) { Common.create_audio_recording_statistic(audio_recording) }
+    end
+
     def prepare_bookmark
       let!(:bookmark) { Common.create_bookmark(writer_user, audio_recording) }
     end
 
+    def prepare_audio_event_import
+      let!(:audio_event_import) { Common.create_audio_event_import(writer_user) }
+    end
+
+    def prepare_audio_event_import_file
+      let!(:audio_event_import_file) {
+        Common.create_audio_event_import_file(audio_event_import, analysis_jobs_item)
+      }
+    end
+
     def prepare_audio_event
       prepare_audio_recording
-      let!(:audio_event) { Common.create_audio_event(writer_user, audio_recording) }
+      let!(:audio_event) { Common.create_audio_event(writer_user, audio_recording, audio_event_import_file) }
     end
 
     def prepare_audio_events_tags
@@ -293,12 +374,13 @@ module Creation
     end
 
     def prepare_analysis_job
-      let!(:analysis_job) { Common.create_analysis_job(writer_user, script, saved_search) }
+      let!(:analysis_job) { Common.create_analysis_job(writer_user, script, project) }
     end
 
     def prepare_analysis_jobs_item
-      prepare_analysis_job
-      let!(:analysis_jobs_item) { Common.create_analysis_job_item(analysis_job, audio_recording) }
+      let!(:analysis_jobs_item) {
+        Common.create_analysis_job_item(analysis_job, script, audio_recording)
+      }
     end
 
     def prepare_dataset
@@ -307,18 +389,16 @@ module Creation
     end
 
     def prepare_dataset_item
-      prepare_dataset
-      prepare_audio_recording
+      let!(:default_dataset_item) { Common.create_dataset_item(admin_user, default_dataset, audio_recording) }
       let!(:dataset_item) { Common.create_dataset_item(admin_user, dataset, audio_recording) }
     end
 
     def prepare_progress_event
-      let!(:default_dataset_item) {
-        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording:,
-          dataset: default_dataset)
+      let!(:default_progress_event) {
+        Common.create_progress_event(admin_user, default_dataset_item)
       }
       let!(:progress_event) {
-        Common.create_progress_event(admin_user, default_dataset_item)
+        Common.create_progress_event(admin_user, dataset_item)
       }
       let!(:progress_event_for_no_access_user) {
         # create a progress event where the creator does not have read permissions
@@ -378,8 +458,8 @@ module Creation
         FactoryBot.create(:harvest, creator:, project:)
       end
 
-      def create_harvest_item(harvest)
-        FactoryBot.create(:harvest_item, harvest:)
+      def create_harvest_item(harvest, audio_recording, uploader)
+        FactoryBot.create(:harvest_item, harvest:, audio_recording:, uploader:)
       end
 
       def create_region(creator, project)
@@ -387,9 +467,9 @@ module Creation
       end
 
       def create_site(creator, project, region: nil, name: nil)
-        site = FactoryBot.create(:site, :with_lat_long, creator:)
+        site = FactoryBot.create(:site, :with_lat_long, creator:, region:)
         site.projects << project
-        site.region = region unless region.nil?
+        #site.region = region unless region.nil?
         site.name = name unless name.nil?
         site.save!
         site
@@ -399,8 +479,12 @@ module Creation
         FactoryBot.create(:tag, creator:)
       end
 
-      def create_script(creator)
-        FactoryBot.create(:script, creator:)
+      def create_provenance(creator)
+        FactoryBot.create(:provenance, creator:)
+      end
+
+      def create_script(creator, provenance = nil)
+        FactoryBot.create(:script, creator:, provenance:)
       end
 
       def create_audio_recording(creator, uploader, site)
@@ -414,12 +498,26 @@ module Creation
         )
       end
 
+      def create_audio_recording_statistic(audio_recording)
+        FactoryBot.create(:audio_recording_statistics, audio_recording:)
+      end
+
       def create_bookmark(creator, audio_recording)
         FactoryBot.create(:bookmark, creator:, audio_recording:)
       end
 
-      def create_audio_event(creator, audio_recording)
-        FactoryBot.create(:audio_event, creator:, audio_recording:)
+      def create_audio_event_import(creator)
+        FactoryBot.create(:audio_event_import, creator:, updater: creator)
+      end
+
+      def create_audio_event_import_file(audio_event_import, analysis_jobs_item)
+        FactoryBot.create(:audio_event_import_file, :with_path,
+          audio_event_import:,
+          analysis_jobs_item:)
+      end
+
+      def create_audio_event(creator, audio_recording, audio_event_import_file = nil)
+        FactoryBot.create(:audio_event, creator:, audio_recording:, audio_event_import_file:)
       end
 
       def create_audio_event_tags(creator, audio_event, tag)
@@ -442,12 +540,12 @@ module Creation
         saved_search
       end
 
-      def create_analysis_job(creator, script, saved_search)
-        FactoryBot.create(:analysis_job, creator:, script:, saved_search:)
+      def create_analysis_job(creator, script, project, filter = {})
+        FactoryBot.create(:analysis_job, creator:, project:, scripts: [script], filter:)
       end
 
-      def create_analysis_job_item(analysis_job, audio_recording)
-        FactoryBot.create(:analysis_jobs_item, analysis_job:, audio_recording:)
+      def create_analysis_job_item(analysis_job, script, audio_recording)
+        FactoryBot.create(:analysis_jobs_item, analysis_job:, script:, audio_recording:)
       end
 
       def create_dataset(creator)

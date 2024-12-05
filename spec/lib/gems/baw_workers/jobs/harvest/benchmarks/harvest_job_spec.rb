@@ -3,8 +3,6 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
@@ -23,7 +21,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
     # this lets us avoid all those tricky distributed systems things that can be a pain
     prepare_harvest_with_mappings do
       [
-        ::BawWorkers::Jobs::Harvest::Mapping.new(
+        BawWorkers::Jobs::Harvest::Mapping.new(
           path: '',
           site_id: site.id,
           utc_offset: '+10:00',

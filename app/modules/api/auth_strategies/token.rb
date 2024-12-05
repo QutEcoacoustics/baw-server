@@ -25,19 +25,19 @@ module Api
         token = parse_token
         return if token.nil?
 
-        return fail!("Invalid authentication token '#{token}'.") if token.blank?
+        return fail!('Invalid authentication token') if token.blank?
 
-        user = User.find_by_authentication_token(token)
+        user = User.find_by(authentication_token: token)
 
         # intentionally obscure here, this is a public message.
-        return fail!("Invalid authentication token '#{token}'.") if user.nil?
+        return fail!('Invalid authentication token') if user.nil?
 
         # Notice how we use Devise.secure_compare to compare the token
         # in the database with the token given in the params, mitigating
         # timing attacks.
         comparison = Devise.secure_compare(user.authentication_token, token)
 
-        return fail!("Invalid authentication token '#{token}'.") unless comparison
+        return fail!('Invalid authentication token') unless comparison
 
         success! user
       end

@@ -57,7 +57,7 @@ class AudioRecordingsController < ApplicationController
 
     if !user_exists || !is_allowed
       respond_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'uploader does not exist or does not have access to this project',
         { error_info: {
           project_id: @project.nil? ? nil : @project.id,
@@ -78,9 +78,9 @@ class AudioRecordingsController < ApplicationController
       Rails.logger.warn overlap_result
 
       if too_many
-        respond_error(:unprocessable_entity, 'Too many overlapping recordings', { error_info: overlap_result })
+        respond_error(:unprocessable_content, 'Too many overlapping recordings', { error_info: overlap_result })
       elsif not_fixed
-        respond_error(:unprocessable_entity, 'Some overlaps could not be fixed', { error_info: overlap_result })
+        respond_error(:unprocessable_content, 'Some overlaps could not be fixed', { error_info: overlap_result })
       elsif @audio_recording.save
         respond_create_success
       else
@@ -215,7 +215,7 @@ class AudioRecordingsController < ApplicationController
   end
 
   def update_status_params_check
-    opts = { error_info: { audio_recording_id: params[:id] } }
+    { error_info: { audio_recording_id: params[:id] } }
 
     if @audio_recording.blank?
       respond_error(
@@ -223,30 +223,30 @@ class AudioRecordingsController < ApplicationController
         "Could not find Audio Recording with id #{params[:id]}",
         { error_info: { audio_recording_id: params[:id] } }
       )
-    elsif !params.include?(:file_hash)
-      respond_error(:unprocessable_entity, 'Must include file hash')
+    elsif params.exclude?(:file_hash)
+      respond_error(:unprocessable_content, 'Must include file hash')
     elsif @audio_recording.file_hash != params[:file_hash]
       respond_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'Incorrect file hash',
         { error_info: { audio_recording: { id: params[:id], file_hash: {
           stored: @audio_recording.file_hash,
           request: params[:file_hash]
         } } } }
       )
-    elsif !params.include?(:uuid)
-      respond_error(:unprocessable_entity, 'Must include uuid')
+    elsif params.exclude?(:uuid)
+      respond_error(:unprocessable_content, 'Must include uuid')
     elsif @audio_recording.uuid != params[:uuid]
       respond_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'Incorrect uuid',
         { error_info: { audio_recording: { id: params[:id], uuid: {
           stored: @audio_recording.uuid,
           request: params[:uuid]
         } } } }
       )
-    elsif !params.include?(:status)
-      respond_error(:unprocessable_entity, 'Must include status')
+    elsif params.exclude?(:status)
+      respond_error(:unprocessable_content, 'Must include status')
     else
       update_status_available_check
     end
@@ -258,7 +258,7 @@ class AudioRecordingsController < ApplicationController
       update_status_audio_recording(new_status)
     else
       respond_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         "Status #{new_status} is not in available status list",
         { error_info: { audio_recording: {
                           id: params[:id],

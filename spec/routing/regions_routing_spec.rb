@@ -20,6 +20,7 @@ describe RegionsController, type: :routing do
     it { expect(put('regions/1')).to route_to('regions#update', format: 'json', id: '1') }
     it { expect(patch('regions/1')).to route_to('regions#update', format: 'json', id: '1') }
     it { expect(delete('regions/1')).to route_to('regions#destroy', format: 'json', id: '1') }
-    it { expect(post('regions/filter')).to route_to('regions#filter', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/regions', 'regions', [:filterable]
   end
 end

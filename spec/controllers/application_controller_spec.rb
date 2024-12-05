@@ -14,12 +14,13 @@ describe ApplicationController, type: :controller do
     it 'fails if content-length is negative' do
       expect {
         get :index
-      }.to raise_error(CustomErrors::BadHeaderError)
+      }.to raise_error(CustomErrors::NegativeContentLengthError)
     end
   end
 
   describe 'associative array validation', type: :controller do
     controller do
+      skip_before_action :authenticate_user!
       skip_authorization_check
       skip_load_and_authorize_resource
 
@@ -59,9 +60,10 @@ describe ApplicationController, type: :controller do
         details = 'The request was not valid: some_field is not valid JSON. Additionally, support for string-encoded JSON is deprecated.'
       when :root_hash
         status = 422
-        message = 'Unprocessable Entity'
+        message = 'Unprocessable Content'
         details = 'The request could not be understood: some_field must have a root JSON object (not a scalar or an array).'
       end
+
       {
         'meta' =>
         {
@@ -79,14 +81,14 @@ describe ApplicationController, type: :controller do
     shared_examples_for 'sanitization', :aggregate_failures do |current_action|
       let(:current_action) { current_action }
 
-      def invoke(test_value, expected = :unprocessable_entity)
+      def invoke(test_value, expected = :unprocessable_content)
         body = current_action == :nested ? { nested: { some_field: test_value } } : { some_field: test_value }
         post current_action, body: body.to_json, as: :json, format: :json
         #post current_action, body: body.to_json, format: :json
         expect(response.media_type).to include('application/json')
         expect(response).to have_http_status(expected)
 
-        JSON.parse(response.body)
+        response.parsed_body.as_json
       end
 
       describe 'should parse strings as JSON,' do
@@ -193,6 +195,7 @@ describe ApplicationController, type: :controller do
     create_entire_hierarchy
 
     controller(ApplicationController) do
+      skip_before_action :authenticate_user!
       skip_authorization_check
 
       attr_accessor :ability, :user
@@ -219,7 +222,7 @@ describe ApplicationController, type: :controller do
     end
 
     it 'inherits from the application controller' do
-      expect(controller).to be_a_kind_of(ApplicationController)
+      expect(controller).to be_a(ApplicationController)
     end
 
     it 'sets Current.user when a user session is supplied' do
@@ -242,7 +245,7 @@ describe ApplicationController, type: :controller do
       expect(controller.ability).to be_an_instance_of(Ability)
 
       # if you're signed in you can download an original recording
-      expect(controller.ability.can?(:original, audio_recording)).to eq true
+      expect(controller.ability.can?(:original, audio_recording)).to be true
 
       expect(response.body).to eq('Ability')
     end
@@ -252,7 +255,7 @@ describe ApplicationController, type: :controller do
       expect(controller.ability).to be_an_instance_of(Ability)
 
       # if you're not signed in you cannot download an original recording
-      expect(controller.ability.can?(:original, audio_recording)).to eq false
+      expect(controller.ability.can?(:original, audio_recording)).to be false
 
       expect(response.body).to eq('Ability')
     end

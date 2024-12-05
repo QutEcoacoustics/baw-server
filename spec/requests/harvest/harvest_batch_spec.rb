@@ -22,7 +22,7 @@ describe 'Harvesting a batch of files' do
       post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
 
       expect_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'The request could not be understood: found unpermitted parameter: :status'
       )
     end
@@ -48,7 +48,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'it will automatically transition from :scanning to :metadata_extraction' do
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ScanJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
 
@@ -73,7 +73,7 @@ describe 'Harvesting a batch of files' do
         expect_success
         expect(harvest).to be_metadata_extraction
 
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
@@ -95,7 +95,7 @@ describe 'Harvesting a batch of files' do
         expect_success
         expect(harvest).to be_processing
 
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 2, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
@@ -110,6 +110,13 @@ describe 'Harvesting a batch of files' do
       step 'can transition to :complete when a client fetches the record' do
         get_harvest
         expect(harvest).to be_complete
+      end
+
+      step 'we expect an analysis amend job to be enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        # but no other jobs
+        expect_enqueued_jobs(1)
+        clear_pending_jobs
       end
     end
   end
@@ -198,7 +205,7 @@ describe 'Harvesting a batch of files' do
         expect_jobs_to_be(completed: 0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
 
         # also delete two of the harvest items
-        HarvestItem.all.order(created_at: :desc).limit(2).delete_all
+        HarvestItem.order(created_at: :desc).limit(2).delete_all
 
         expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
         expect(HarvestItem.count).to eq 4
@@ -246,7 +253,7 @@ describe 'Harvesting a batch of files' do
             validations: []
           ))
 
-          query = HarvestItem.all.order(:id).offset(1).map { |h| h.info.to_h }
+          query = HarvestItem.order(:id).offset(1).map { |h| h.info.to_h }
           expect(query).to all(match(a_hash_including(
             error: nil,
             validations: [
@@ -313,7 +320,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'the reenqueue job runs (for :metadata_extraction)' do
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
@@ -362,7 +369,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'the reenqueue job runs (for :processing)' do
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 2, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
@@ -431,6 +438,13 @@ describe 'Harvesting a batch of files' do
 
         expect(recordings.size).to eq 6
       end
+
+      step 'we expect an analysis amend job to be enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        # but no other jobs
+        expect_enqueued_jobs(1)
+        clear_pending_jobs
+      end
     end
 
     context 'when files are mutated after initial upload' do
@@ -490,10 +504,8 @@ describe 'Harvesting a batch of files' do
           status = statuses.first
 
           expect(status).to be_failed
-          expect(status.messages).to match_array([
-            /Harvest item \d+ not found/,
-            /Couldn't find HarvestItem with 'id'=\d+/
-          ])
+          expect(status.messages).to contain_exactly(/Harvest item \d+ not found/,
+            /Couldn't find HarvestItem with 'id'=\d+/)
         end
 
         step 'we can see the harvest item is still deleted' do
@@ -677,7 +689,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'the reenqueue job runs (for :processing)' do
-        expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
         perform_jobs(count: 1)
         expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       end
@@ -700,6 +712,13 @@ describe 'Harvesting a batch of files' do
 
         expect(harvest).to be_processing_complete
         expect(harvest).to be_complete
+      end
+
+      step 'we expect an analysis amend job to be enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        # but no other jobbs
+        expect_enqueued_jobs(1)
+        clear_pending_jobs
       end
     end
   end
@@ -726,7 +745,7 @@ describe 'Harvesting a batch of files' do
     let(:slow_enqueue) {
       Class.new(BawWorkers::Jobs::Harvest::HarvestJob) do
         def self.enqueue(...)
-          result = super(...)
+          result = super
           # Sleep after enqueue so job is running in the background, but our overall enqueue process is slowed down.
           # This should be roughly to enqueuing many files
           logger.warn('Intentional slow enqueue!!!!!!!!')
@@ -808,7 +827,7 @@ describe 'Harvesting a batch of files' do
     def duplicate_rows_but_with_nonexistent_path
       columns = (HarvestItem.column_names - ['id']).join(', ')
       columns_without_path = (HarvestItem.column_names - ['id', 'path']).join(', ')
-      duplicate_rows_query = <<~SQL
+      duplicate_rows_query = <<~SQL.squish
         INSERT INTO harvest_items (#{columns})
         (
           SELECT  'idontexist' AS "path", #{columns_without_path}

@@ -11,9 +11,32 @@ module Fixtures
     ensure_exists FILES_PATH / 'example__Tiles.sqlite3'
   end
 
+  SQLITE_FIXTURE_FILES = {
+    '/BLENDED.Tile_20160727T110000Z_240.png' =>	4393,
+    '/BLENDED.Tile_20160727T110000Z_120.png' =>	7989,
+    '/BLENDED.Tile_20160727T110000Z_60.png' =>	15_319,
+    '/BLENDED.Tile_20160727T123000Z_30.png' =>	29_977,
+    '/BLENDED.Tile_20160727T123000Z_15.png' =>	60_483,
+    '/sub_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png' =>	92_507,
+    '/sub_dir_2/BLENDED.Tile_20160727T125230Z_7.5.png' =>	33_554,
+    '/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png' =>	65_360,
+    '/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png' =>	97_722,
+    '/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png' =>	100_993
+  }.freeze
+
+  # @return [Pathname]
+  def self.zip_fixture
+    ensure_exists FILES_PATH / 'compressed.zip'
+  end
+
   # @return [Pathname]
   def self.audio_check_csv
     ensure_exists FILES_PATH / 'audio_check.csv'
+  end
+
+  # @return [Pathname]
+  def self.hoot_detective
+    ensure_exists FILES_PATH / 'Hoot Detective data 12 october 2021-cleaned.csv'
   end
 
   # @return [Pathname]

@@ -1,4 +1,3 @@
-// Production configuration
 {
   // Run the app in a production environment. The default value is "development".
   "environment": "production",

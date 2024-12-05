@@ -68,7 +68,7 @@ RUN --mount=type=bind,source=.,target=/build <<-EOF
     sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config
     sed -ri 's/#UsePAM no/UsePAM no/g' /etc/ssh/sshd_config
 
-    mkdir /root/.ssh/
+    mkdir -p /root/.ssh/
     cat /build/client_key.pub > ~/.ssh/authorized_keys
     chmod 700 ~/.ssh
     chmod 600 ~/.ssh/authorized_keys
@@ -101,7 +101,7 @@ RUN <<-EOF
 EOF
 
 COPY pbs.conf /etc/pbs.conf
-COPY mom_config /var/spool/pbs/mom_priv/config
+COPY --chmod=444 mom_config /var/spool/pbs/mom_priv/config
 
 #
 # Install docker-cli (but not the daemon)

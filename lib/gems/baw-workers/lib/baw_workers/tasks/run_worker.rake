@@ -22,7 +22,7 @@ namespace :baw do
     # detect the rails constant and won't add the Rails railtie, and thus the settings
     # won't load! ... but only for workers and not the rails server!
     # We now force load the config railtie in application.rb!
-    require "#{__dir__}/../../../../../../config/application"
+    require(BawApp.root / 'config/application')
 
     # set time zone
     Time.zone = 'UTC'
@@ -66,6 +66,20 @@ namespace :baw do
 
       require 'resque/scheduler/tasks'
       require 'resque-scheduler'
+
+      # import schedules for our application jobs
+      Resque::Scheduler.dynamic = true
+
+      # NOTE: we disable recurring jobs by default on our test scheduler
+      # because extra enqueued jobs while other tests are running would break
+      # so many things.
+      if BawApp.test?
+        Rails.logger.warn(
+          'Resque scheduler is running in test mode. JOB SCHEDULES HAVE NOT BEEN SET AUTOMATICALLY.'
+        )
+      else
+        BawWorkers::ResqueApi.create_all_schedules
+      end
 
       # invoke the resque rake task
       Rake::Task['resque:scheduler'].invoke

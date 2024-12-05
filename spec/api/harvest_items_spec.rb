@@ -2,7 +2,7 @@
 
 require 'swagger_helper'
 
-describe 'harvest items (normal listing)', type: :request do
+describe 'harvest items (normal listing)' do
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)
@@ -34,7 +34,7 @@ describe 'harvest items (normal listing)', type: :request do
   end
 end
 
-describe 'harvest items (nested, normal listing)', type: :request do
+describe 'harvest items (nested, normal listing)' do
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)
@@ -69,7 +69,7 @@ end
 
 # ---
 
-describe 'harvest items (path listing)', type: :request do
+describe 'harvest items (path listing)' do
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)
@@ -101,7 +101,7 @@ describe 'harvest items (path listing)', type: :request do
   end
 end
 
-describe 'harvest items (nested, path listing)', type: :request do
+describe 'harvest items (nested, path listing)' do
   create_audio_recordings_hierarchy
   prepare_anonymous_access(:project)
   prepare_logged_in_access(:project)

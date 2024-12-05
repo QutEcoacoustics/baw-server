@@ -16,12 +16,55 @@ module BawWorkers
     # Get a count of jobs that are in the resque scheduler delay queue.
     # @return [Integer]
     def delayed_count
-      Resque.delayed_queue_schedule_size
+      Resque.count_all_scheduled_jobs
     end
 
     # Deschedule all jobs from the resque scheduler delay queue and run them now.
     def enqueue_delayed_jobs
       Resque.enqueue_delayed_selection { |_job| true }
+    end
+
+    # Sets resque-scheduler schedules for all recurring jobs (that use our
+    # BawWorkers::ActiveJob::Recurring module).
+    # Run this when the scheduler starts.
+    def create_all_schedules
+      raise 'Dynamic schedules must be in use' unless Resque::Scheduler.dynamic
+
+      # require all jobs
+      (BawApp.root / 'lib/gems/baw-workers/lib/baw_workers/jobs').glob('**/*job*.rb').each do |file|
+        require_dependency file
+      end
+      # filter for those that have configured themselves to use a  recurring schedule
+      BawWorkers::Jobs::ApplicationJob
+        .descendants
+        .filter(&:recurring_cron_schedule)
+        .each do |job_class|
+          BawWorkers::Config.logger_worker.info(
+            'rake_task:baw:worker:run_scheduler adding recurring job',
+            job_class: job_class.name,
+            schedule: job_class.recurring_cron_schedule
+          )
+
+          # add the job to the resque scheduler
+          Resque.set_schedule(
+            job_class.name,
+            {
+              class: job_class.name,
+              cron: job_class.recurring_cron_schedule,
+              queue: job_class.queue_name
+              # We don't persist the schedule because we set it every time
+              # we start up the scheduler (this very process).
+              #persist:
+            }
+          )
+        end
+    end
+
+    # Remove all resque-scheduler schedules for recurring jobs.
+    def clear_all_schedules
+      Resque.all_schedules.each do |key, _schedule|
+        Resque.remove_schedule(key)
+      end
     end
 
     # Get all currently queued jobs.
@@ -218,8 +261,8 @@ module BawWorkers
       Resque.queues.filter { |queue| queue =~ env_regex }
     end
 
-    def clear_queues(_env = BawApp.env)
-      queue_names.each { |queue| clear_queue(queue) }
+    def clear_queues(env = BawApp.env)
+      queue_names(env).each { |queue| clear_queue(queue) }
     end
 
     # Clear a queue
@@ -317,15 +360,19 @@ module BawWorkers
 
       statuses = Array(statuses)
       results = BawWorkers::ActiveJob::Status::Persistance.get_statuses
-      results = results.filter { |s| statuses.include?(s.status) } unless statuses.blank?
+      results = results.filter { |script| statuses.include?(script.status) } if statuses.present?
 
       unless of_class.nil?
         check_class(of_class)
         class_name = of_class.to_s
-        results = results.filter { |s| class_name == s.options[:job_class] }
+        results = results.filter { |script| class_name == script.options[:job_class] }
       end
 
       results
+    end
+
+    def job_count_by_class
+      jobs.group_by { |job| job_class(job) }.transform_values(&:count)
     end
 
     def statuses_count

@@ -97,7 +97,7 @@ module BawWorkers
           end
 
           def existing_harvest_item(harvest, rel_path)
-            result = HarvestItem.find_by_path_and_harvest(rel_path, harvest)
+            result = HarvestItem.find_by(path: rel_path, harvest:)
 
             logger.debug('found existing harvest item', harvest_item_id: result.id) unless result.nil?
 
@@ -153,13 +153,13 @@ module BawWorkers
           Emu::Fix::WA_NO_DATA
         ].freeze
 
-        # @return [HarvestItem] The database record for the current harvest item
+        # @return [::HarvestItem] The database record for the current harvest item
         attr_reader :harvest_item
 
-        # @return [Harvest] The database record for the current harvest
+        # @return [::Harvest] The database record for the current harvest
         attr_reader :harvest
 
-        # @return [AudioRecording] the audio recording for this harvest item
+        # @return [::AudioRecording] the audio recording for this harvest item
         attr_reader :audio_recording
 
         # Gather metadata about a file and potentially harvest it
@@ -504,7 +504,16 @@ module BawWorkers
         end
 
         def post_process
+          # delete the source file
           DeleteHarvestItemFileJob.delete_later(harvest_item)
+
+          # Enqueue a job to update any analysis jobs that are ongoing
+          # We only do this for streaming harvests because non-streaming harvests
+          # run this job at the end of the harvest.
+          # This may fail due to the unique job id constraint, but that's fine,
+          # because each job is idempotent and will include all previous recordings
+          # in each amend.
+          harvest.enqueue_amend_analysis_jobs if harvest.streaming_harvest?
         end
 
         def create_draft_audio_recording
@@ -534,7 +543,7 @@ module BawWorkers
 
           return time_or_string if time_or_string.is_a?(Time)
 
-          Time.parse(time_or_string)
+          Time.zone.parse(time_or_string)
         end
 
         # @param [AudioRecording] audio_recording

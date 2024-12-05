@@ -52,7 +52,7 @@ resource 'Errors' do
   end
 
   get '/test_exceptions?exception_class=CustomErrors::UnprocessableEntityError' do
-    standard_request_options(:get, 'ERROR', :unprocessable_entity,
+    standard_request_options(:get, 'ERROR', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'The request could not be understood' })
   end
 

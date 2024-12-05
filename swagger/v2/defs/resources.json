@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/QutEcoacoustics/baw-server/master/swagger/v2/defs/resources.json",
+  "$defs": {
+    "constantOrPolynomial": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "object",
+          "required": [
+            "property",
+            "coefficients"
+          ],
+          "properties": {
+            "property": {
+              "type": "string",
+              "default": "duration",
+              "title": "The property to scale the current resource against",
+              "description": "Duration is the duration of the recording in seconds. Size is the size of the recording in bytes.",
+              "enum": [
+                "size",
+                "duration"
+              ],
+              "examples": [
+                "size",
+                "duration"
+              ]
+            },
+            "coefficients": {
+              "type": "array",
+              "default": [
+                1,
+                0
+              ],
+              "title": "The coefficients to use for scaling the resource",
+              "description": "The coefficients are used to scale the resource, stored highest order to lowest order. The lowest order coefficient is the constant term.",
+              "minContains": 1,
+              "maxContains": 5,
+              "items": {
+                "type": "number",
+                "default": 1,
+                "examples": [
+                  0.3
+                ]
+              },
+              "examples": [
+                [
+                  0.3,
+                  300
+                ]
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "title": "Compute resources required to process a job",
+  "required": [
+    "walltime",
+    "mem"
+  ],
+  "properties": {
+    "ncpus": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constantOrPolynomial"
+        },
+        {
+          "title": "The number of CPUs required to process a job",
+          "description": "As per https://help.altair.com/2022.1.0/PBS%20Professional/PBSReferenceGuide2022.1.pdf",
+          "default": 1,
+          "examples": [
+            {
+              "property": "duration",
+              "coefficients": [
+                3600,
+                1
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "walltime": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constantOrPolynomial"
+        },
+        {
+          "title": "The number of seconds a job is allowed to run for before being terminated",
+          "description": "As per https://help.altair.com/2022.1.0/PBS%20Professional/PBSReferenceGuide2022.1.pdf",
+          "default": 3600,
+          "examples": [
+            {
+              "property": "duration",
+              "coefficients": [
+                0.3,
+                300
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "mem": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constantOrPolynomial"
+        },
+        {
+          "title": "The amount of memory in bytes allowed to be used before a job is terminated",
+          "description": "As per https://help.altair.com/2022.1.0/PBS%20Professional/PBSReferenceGuide2022.1.pdf",
+          "default": 12000000000,
+          "examples": [
+            {
+              "property": "duration",
+              "coefficients": [
+                0.0000036,
+                4000000000
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ngpus": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constantOrPolynomial"
+        },
+        {
+          "title": "The number of GPUs required to process a job",
+          "description": "As per https://help.altair.com/2022.1.0/PBS%20Professional/PBSReferenceGuide2022.1.pdf",
+          "default": 1,
+          "examples": [
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "ncpus": 1,
+      "walltime": 3600,
+      "mem": 1000000,
+      "ngpus": 1
+    },
+    {
+      "ncpus": {
+        "property": "size",
+        "coefficients": [
+          1
+        ]
+      },
+      "walltime": {
+        "property": "duration",
+        "coefficients": [
+          0.3,
+          300
+        ]
+      },
+      "mem": {
+        "property": "duration",
+        "coefficients": [
+          0.0000036,
+          4000000000
+        ]
+      },
+      "ngpus": {
+        "property": "size",
+        "coefficients": [
+          1
+        ]
+      }
+    }
+  ]
+}

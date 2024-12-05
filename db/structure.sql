@@ -24,6 +24,68 @@ COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiS
 
 
 --
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: analysis_jobs_item_result; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.analysis_jobs_item_result AS ENUM (
+    'success',
+    'failed',
+    'killed',
+    'cancelled'
+);
+
+
+--
+-- Name: analysis_jobs_item_state; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.analysis_jobs_item_state AS ENUM (
+    'new',
+    'queued',
+    'working',
+    'finished'
+);
+
+
+--
+-- Name: analysis_jobs_item_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.analysis_jobs_item_status AS ENUM (
+    'new',
+    'queued',
+    'working',
+    'finished'
+);
+
+
+--
+-- Name: analysis_jobs_item_transition; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.analysis_jobs_item_transition AS ENUM (
+    'queue',
+    'retry',
+    'cancel',
+    'finish'
+);
+
+
+--
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -202,8 +264,6 @@ ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.acti
 CREATE TABLE public.analysis_jobs (
     id integer NOT NULL,
     name character varying NOT NULL,
-    custom_settings text,
-    script_id integer NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
@@ -211,16 +271,77 @@ CREATE TABLE public.analysis_jobs (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     description text,
-    saved_search_id integer,
     started_at timestamp without time zone,
     overall_status character varying NOT NULL,
     overall_status_modified_at timestamp without time zone NOT NULL,
-    overall_progress json NOT NULL,
-    overall_progress_modified_at timestamp without time zone NOT NULL,
     overall_count integer NOT NULL,
     overall_duration_seconds numeric(14,4) NOT NULL,
-    overall_data_length_bytes bigint DEFAULT 0 NOT NULL
+    overall_data_length_bytes bigint DEFAULT 0 NOT NULL,
+    filter jsonb,
+    system_job boolean DEFAULT false NOT NULL,
+    ongoing boolean DEFAULT false NOT NULL,
+    project_id integer,
+    retry_count integer DEFAULT 0 NOT NULL,
+    amend_count integer DEFAULT 0 NOT NULL,
+    suspend_count integer DEFAULT 0 NOT NULL,
+    resume_count integer DEFAULT 0 NOT NULL
 );
+
+
+--
+-- Name: COLUMN analysis_jobs.filter; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.filter IS 'API filter to include recordings in this job. If blank then all recordings are included.';
+
+
+--
+-- Name: COLUMN analysis_jobs.system_job; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.system_job IS 'If true this job is automatically run and not associated with a single project. We can have multiple system jobs.';
+
+
+--
+-- Name: COLUMN analysis_jobs.ongoing; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.ongoing IS 'If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.';
+
+
+--
+-- Name: COLUMN analysis_jobs.project_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.project_id IS 'Project this job is associated with. This field simply influences which jobs are shown on a project page.';
+
+
+--
+-- Name: COLUMN analysis_jobs.retry_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.retry_count IS 'Count of retries';
+
+
+--
+-- Name: COLUMN analysis_jobs.amend_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.amend_count IS 'Count of amendments';
+
+
+--
+-- Name: COLUMN analysis_jobs.suspend_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.suspend_count IS 'Count of suspensions';
+
+
+--
+-- Name: COLUMN analysis_jobs.resume_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs.resume_count IS 'Count of resumptions';
 
 
 --
@@ -248,17 +369,88 @@ ALTER SEQUENCE public.analysis_jobs_id_seq OWNED BY public.analysis_jobs.id;
 --
 
 CREATE TABLE public.analysis_jobs_items (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     analysis_job_id integer NOT NULL,
     audio_recording_id integer NOT NULL,
     queue_id character varying(255),
-    status character varying(255) DEFAULT 'new'::character varying NOT NULL,
+    status public.analysis_jobs_item_status DEFAULT 'new'::public.analysis_jobs_item_status NOT NULL,
     created_at timestamp without time zone NOT NULL,
     queued_at timestamp without time zone,
     work_started_at timestamp without time zone,
-    completed_at timestamp without time zone,
-    cancel_started_at timestamp without time zone
+    finished_at timestamp without time zone,
+    cancel_started_at timestamp without time zone,
+    script_id integer NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    transition public.analysis_jobs_item_transition,
+    result public.analysis_jobs_item_result,
+    error text,
+    used_walltime_seconds integer,
+    used_memory_bytes integer,
+    import_success boolean
 );
+
+
+--
+-- Name: COLUMN analysis_jobs_items.status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.status IS 'Current status of this job item';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.script_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.script_id IS 'Script used for this item';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.attempts; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.attempts IS 'Number of times this job item has been attempted';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.transition; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.transition IS 'The pending transition to apply to this item. Any high-latency action should be done via transition and on a worker rather than in a web request.';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.result; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.result IS 'Result of this job item';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.error; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.error IS 'Error message if this job item failed';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.used_walltime_seconds; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.used_walltime_seconds IS 'Walltime used by this job item';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.used_memory_bytes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.used_memory_bytes IS 'Memory used by this job item';
+
+
+--
+-- Name: COLUMN analysis_jobs_items.import_success; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_items.import_success IS 'Did importing audio events succeed?';
 
 
 --
@@ -279,6 +471,24 @@ CREATE SEQUENCE public.analysis_jobs_items_id_seq
 --
 
 ALTER SEQUENCE public.analysis_jobs_items_id_seq OWNED BY public.analysis_jobs_items.id;
+
+
+--
+-- Name: analysis_jobs_scripts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.analysis_jobs_scripts (
+    analysis_job_id integer NOT NULL,
+    script_id integer NOT NULL,
+    custom_settings text
+);
+
+
+--
+-- Name: COLUMN analysis_jobs_scripts.custom_settings; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_scripts.custom_settings IS 'Custom settings for this script and analysis job';
 
 
 --
@@ -348,21 +558,84 @@ ALTER SEQUENCE public.audio_event_comments_id_seq OWNED BY public.audio_event_co
 
 
 --
+-- Name: audio_event_import_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audio_event_import_files (
+    id bigint NOT NULL,
+    audio_event_import_id integer NOT NULL,
+    analysis_jobs_item_id integer,
+    path character varying,
+    additional_tag_ids integer[],
+    created_at timestamp(6) without time zone NOT NULL,
+    file_hash text NOT NULL,
+    CONSTRAINT path_and_analysis_jobs_item CHECK ((((path IS NOT NULL) AND (analysis_jobs_item_id IS NOT NULL)) OR ((path IS NULL) AND (analysis_jobs_item_id IS NULL))))
+);
+
+
+--
+-- Name: COLUMN audio_event_import_files.path; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.path IS 'Path to the file on disk, relative to the analysis job item. Not used for uploaded files';
+
+
+--
+-- Name: COLUMN audio_event_import_files.additional_tag_ids; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.additional_tag_ids IS 'Additional tag ids applied for this import';
+
+
+--
+-- Name: COLUMN audio_event_import_files.file_hash; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.file_hash IS 'Hash of the file contents used for uniqueness checking';
+
+
+--
+-- Name: audio_event_import_files_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.audio_event_import_files_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: audio_event_import_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.audio_event_import_files_id_seq OWNED BY public.audio_event_import_files.id;
+
+
+--
 -- Name: audio_event_imports; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.audio_event_imports (
     id bigint NOT NULL,
     name character varying,
-    files jsonb,
     description text,
-    creator_id integer,
+    creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    analysis_job_id integer
 );
+
+
+--
+-- Name: COLUMN audio_event_imports.analysis_job_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_imports.analysis_job_id IS 'Analysis job that created this import';
 
 
 --
@@ -393,7 +666,7 @@ CREATE TABLE public.audio_events (
     audio_recording_id integer NOT NULL,
     start_time_seconds numeric(10,4) NOT NULL,
     end_time_seconds numeric(10,4),
-    low_frequency_hertz numeric(10,4) NOT NULL,
+    low_frequency_hertz numeric(10,4),
     high_frequency_hertz numeric(10,4),
     is_reference boolean DEFAULT false NOT NULL,
     creator_id integer NOT NULL,
@@ -402,10 +675,33 @@ CREATE TABLE public.audio_events (
     deleted_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    audio_event_import_id integer,
-    context jsonb,
-    channel integer
+    channel integer,
+    provenance_id integer,
+    score numeric,
+    import_file_index integer,
+    audio_event_import_file_id bigint
 );
+
+
+--
+-- Name: COLUMN audio_events.provenance_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_events.provenance_id IS 'Source of this event';
+
+
+--
+-- Name: COLUMN audio_events.score; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_events.score IS 'Score or confidence for this event.';
+
+
+--
+-- Name: COLUMN audio_events.import_file_index; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_events.import_file_index IS 'Index of the row/entry in the file that generated this event';
 
 
 --
@@ -1206,6 +1502,68 @@ CREATE TABLE public.projects_sites (
 
 
 --
+-- Name: provenances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.provenances (
+    id integer NOT NULL,
+    name character varying,
+    version character varying,
+    url character varying,
+    description text,
+    score_minimum numeric,
+    score_maximum numeric,
+    creator_id integer,
+    updater_id integer,
+    deleter_id integer,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
+    deleted_at timestamp(6) without time zone
+);
+
+
+--
+-- Name: COLUMN provenances.description; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.provenances.description IS 'Markdown description of this source';
+
+
+--
+-- Name: COLUMN provenances.score_minimum; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.provenances.score_minimum IS 'Lower bound for scores emitted by this source, if known';
+
+
+--
+-- Name: COLUMN provenances.score_maximum; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.provenances.score_maximum IS 'Upper bound for scores emitted by this source, if known';
+
+
+--
+-- Name: provenances_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.provenances_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: provenances_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.provenances_id_seq OWNED BY public.provenances.id;
+
+
+--
 -- Name: questions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1377,7 +1735,7 @@ CREATE TABLE public.scripts (
     name character varying NOT NULL,
     description character varying,
     analysis_identifier character varying NOT NULL,
-    version numeric(4,2) DEFAULT 0.1 NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
     verified boolean DEFAULT false,
     group_id integer,
     creator_id integer NOT NULL,
@@ -1385,9 +1743,39 @@ CREATE TABLE public.scripts (
     executable_command text NOT NULL,
     executable_settings text,
     executable_settings_media_type character varying(255) DEFAULT 'text/plain'::character varying,
-    analysis_action_params json,
-    executable_settings_name character varying
+    executable_settings_name character varying,
+    resources jsonb,
+    provenance_id integer,
+    event_import_glob character varying
 );
+
+
+--
+-- Name: COLUMN scripts.analysis_identifier; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.analysis_identifier IS 'a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]';
+
+
+--
+-- Name: COLUMN scripts.version; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.version IS 'Version of this script - not the version of program the script runs!';
+
+
+--
+-- Name: COLUMN scripts.resources; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.resources IS 'Resources required by this script in the PBS format.';
+
+
+--
+-- Name: COLUMN scripts.event_import_glob; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.event_import_glob IS 'Glob pattern to match result files that should be imported as audio events';
 
 
 --
@@ -1408,6 +1796,351 @@ CREATE SEQUENCE public.scripts_id_seq
 --
 
 ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
+
+
+--
+-- Name: sftpgo_admins_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_admins_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_admins_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_admins_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_admins_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_admins_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_api_keys_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_api_keys_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_api_keys_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_api_keys_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_api_keys_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_api_keys_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_events_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_events_id_seq1
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_events_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_events_id_seq2
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_hosts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_hosts_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq1
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_defender_hosts_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq2
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_mapping_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_mapping_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_folders_mapping_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_schema_version_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_schema_version_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_schema_version_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_schema_version_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_schema_version_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_schema_version_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_shares_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_shares_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_shares_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_shares_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_shares_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_shares_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_users_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_users_id_seq1
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sftpgo_users_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sftpgo_users_id_seq2
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 
 --
@@ -1573,7 +2306,8 @@ CREATE TABLE public.user_statistics (
     audio_segment_download_count bigint DEFAULT 0,
     audio_original_download_count bigint DEFAULT 0,
     audio_download_duration numeric DEFAULT 0.0,
-    analyses_completed_count bigint DEFAULT 0
+    analyses_completed_count bigint DEFAULT 0,
+    analyzed_audio_duration numeric DEFAULT 0.0 NOT NULL
 )
 WITH (fillfactor='90');
 
@@ -1678,6 +2412,13 @@ ALTER TABLE ONLY public.analysis_jobs_items ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.audio_event_comments ALTER COLUMN id SET DEFAULT nextval('public.audio_event_comments_id_seq'::regclass);
+
+
+--
+-- Name: audio_event_import_files id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_import_files ALTER COLUMN id SET DEFAULT nextval('public.audio_event_import_files_id_seq'::regclass);
 
 
 --
@@ -1835,6 +2576,13 @@ ALTER TABLE ONLY public.projects ALTER COLUMN id SET DEFAULT nextval('public.pro
 
 
 --
+-- Name: provenances id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.provenances ALTER COLUMN id SET DEFAULT nextval('public.provenances_id_seq'::regclass);
+
+
+--
 -- Name: questions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1945,6 +2693,14 @@ ALTER TABLE ONLY public.analysis_jobs
 
 
 --
+-- Name: analysis_jobs_scripts analysis_jobs_scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.analysis_jobs_scripts
+    ADD CONSTRAINT analysis_jobs_scripts_pkey PRIMARY KEY (analysis_job_id, script_id);
+
+
+--
 -- Name: ar_internal_metadata ar_internal_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1958,6 +2714,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 ALTER TABLE ONLY public.audio_event_comments
     ADD CONSTRAINT audio_event_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: audio_event_import_files audio_event_import_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_import_files
+    ADD CONSTRAINT audio_event_import_files_pkey PRIMARY KEY (id);
 
 
 --
@@ -2169,6 +2933,14 @@ ALTER TABLE ONLY public.projects
 
 
 --
+-- Name: provenances provenances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.provenances
+    ADD CONSTRAINT provenances_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2356,6 +3128,13 @@ CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.ac
 
 
 --
+-- Name: index_analysis_jobs_items_are_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_analysis_jobs_items_are_unique ON public.analysis_jobs_items USING btree (analysis_job_id, script_id, audio_recording_id);
+
+
+--
 -- Name: index_analysis_jobs_items_on_analysis_job_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2367,6 +3146,13 @@ CREATE INDEX index_analysis_jobs_items_on_analysis_job_id ON public.analysis_job
 --
 
 CREATE INDEX index_analysis_jobs_items_on_audio_recording_id ON public.analysis_jobs_items USING btree (audio_recording_id);
+
+
+--
+-- Name: index_analysis_jobs_items_on_script_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_analysis_jobs_items_on_script_id ON public.analysis_jobs_items USING btree (script_id);
 
 
 --
@@ -2384,17 +3170,10 @@ CREATE INDEX index_analysis_jobs_on_deleter_id ON public.analysis_jobs USING btr
 
 
 --
--- Name: index_analysis_jobs_on_saved_search_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_analysis_jobs_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_saved_search_id ON public.analysis_jobs USING btree (saved_search_id);
-
-
---
--- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_analysis_jobs_on_script_id ON public.analysis_jobs USING btree (script_id);
+CREATE INDEX index_analysis_jobs_on_project_id ON public.analysis_jobs USING btree (project_id);
 
 
 --
@@ -2440,6 +3219,34 @@ CREATE INDEX index_audio_event_comments_on_updater_id ON public.audio_event_comm
 
 
 --
+-- Name: index_audio_event_import_files_on_analysis_jobs_item_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_event_import_files_on_analysis_jobs_item_id ON public.audio_event_import_files USING btree (analysis_jobs_item_id);
+
+
+--
+-- Name: index_audio_event_import_files_on_audio_event_import_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_event_import_files_on_audio_event_import_id ON public.audio_event_import_files USING btree (audio_event_import_id);
+
+
+--
+-- Name: index_audio_event_imports_on_analysis_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_event_imports_on_analysis_job_id ON public.audio_event_imports USING btree (analysis_job_id);
+
+
+--
+-- Name: index_audio_events_on_audio_event_import_file_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_events_on_audio_event_import_file_id ON public.audio_events USING btree (audio_event_import_file_id);
+
+
+--
 -- Name: index_audio_events_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2458,6 +3265,13 @@ CREATE INDEX index_audio_events_on_creator_id ON public.audio_events USING btree
 --
 
 CREATE INDEX index_audio_events_on_deleter_id ON public.audio_events USING btree (deleter_id);
+
+
+--
+-- Name: index_audio_events_on_provenance_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_events_on_provenance_id ON public.audio_events USING btree (provenance_id);
 
 
 --
@@ -2832,6 +3646,13 @@ CREATE INDEX index_scripts_on_group_id ON public.scripts USING btree (group_id);
 
 
 --
+-- Name: index_scripts_on_provenance_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_scripts_on_provenance_id ON public.scripts USING btree (provenance_id);
+
+
+--
 -- Name: index_sites_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2981,22 +3802,6 @@ ALTER TABLE ONLY public.analysis_jobs
 
 
 --
--- Name: analysis_jobs analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.analysis_jobs
-    ADD CONSTRAINT analysis_jobs_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES public.saved_searches(id);
-
-
---
--- Name: analysis_jobs analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.analysis_jobs
-    ADD CONSTRAINT analysis_jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES public.scripts(id);
-
-
---
 -- Name: analysis_jobs analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3009,7 +3814,7 @@ ALTER TABLE ONLY public.analysis_jobs
 --
 
 ALTER TABLE ONLY public.audio_event_comments
-    ADD CONSTRAINT audio_event_comments_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id);
+    ADD CONSTRAINT audio_event_comments_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id) ON DELETE CASCADE;
 
 
 --
@@ -3045,11 +3850,35 @@ ALTER TABLE ONLY public.audio_event_comments
 
 
 --
+-- Name: audio_event_imports audio_event_imports_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports
+    ADD CONSTRAINT audio_event_imports_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: audio_event_imports audio_event_imports_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports
+    ADD CONSTRAINT audio_event_imports_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
+
+
+--
+-- Name: audio_event_imports audio_event_imports_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports
+    ADD CONSTRAINT audio_event_imports_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
 -- Name: audio_events audio_events_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audio_events
-    ADD CONSTRAINT audio_events_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT audio_events_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
 
 
 --
@@ -3073,7 +3902,7 @@ ALTER TABLE ONLY public.audio_events
 --
 
 ALTER TABLE ONLY public.audio_events_tags
-    ADD CONSTRAINT audio_events_tags_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id);
+    ADD CONSTRAINT audio_events_tags_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id) ON DELETE CASCADE;
 
 
 --
@@ -3129,7 +3958,7 @@ ALTER TABLE ONLY public.audio_recordings
 --
 
 ALTER TABLE ONLY public.audio_recordings
-    ADD CONSTRAINT audio_recordings_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id);
+    ADD CONSTRAINT audio_recordings_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -3153,7 +3982,7 @@ ALTER TABLE ONLY public.audio_recordings
 --
 
 ALTER TABLE ONLY public.bookmarks
-    ADD CONSTRAINT bookmarks_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT bookmarks_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
 
 
 --
@@ -3173,6 +4002,14 @@ ALTER TABLE ONLY public.bookmarks
 
 
 --
+-- Name: audio_event_imports fk_rails_0521146902; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_imports
+    ADD CONSTRAINT fk_rails_0521146902 FOREIGN KEY (analysis_job_id) REFERENCES public.analysis_jobs(id);
+
+
+--
 -- Name: harvests fk_rails_08dae8d3d9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3181,11 +4018,19 @@ ALTER TABLE ONLY public.harvests
 
 
 --
+-- Name: audio_events fk_rails_15ae5d1422; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT fk_rails_15ae5d1422 FOREIGN KEY (audio_event_import_file_id) REFERENCES public.audio_event_import_files(id) ON DELETE CASCADE;
+
+
+--
 -- Name: progress_events fk_rails_15ea2f07e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.progress_events
-    ADD CONSTRAINT fk_rails_15ea2f07e1 FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
+    ADD CONSTRAINT fk_rails_15ea2f07e1 FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id) ON DELETE CASCADE;
 
 
 --
@@ -3194,6 +4039,14 @@ ALTER TABLE ONLY public.progress_events
 
 ALTER TABLE ONLY public.questions
     ADD CONSTRAINT fk_rails_1b78df6070 FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
+-- Name: audio_event_import_files fk_rails_1b93a0a373; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_import_files
+    ADD CONSTRAINT fk_rails_1b93a0a373 FOREIGN KEY (analysis_jobs_item_id) REFERENCES public.analysis_jobs_items(id) ON DELETE CASCADE;
 
 
 --
@@ -3221,6 +4074,14 @@ ALTER TABLE ONLY public.harvest_items
 
 
 --
+-- Name: provenances fk_rails_293d8f544c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.provenances
+    ADD CONSTRAINT fk_rails_293d8f544c FOREIGN KEY (deleter_id) REFERENCES public.users(id);
+
+
+--
 -- Name: responses fk_rails_325af149a3; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3245,6 +4106,14 @@ ALTER TABLE ONLY public.studies
 
 
 --
+-- Name: analysis_jobs_items fk_rails_50c0011a46; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.analysis_jobs_items
+    ADD CONSTRAINT fk_rails_50c0011a46 FOREIGN KEY (script_id) REFERENCES public.scripts(id);
+
+
+--
 -- Name: responses fk_rails_51009e83c9; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3257,7 +4126,7 @@ ALTER TABLE ONLY public.responses
 --
 
 ALTER TABLE ONLY public.analysis_jobs_items
-    ADD CONSTRAINT fk_rails_522df5cc92 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT fk_rails_522df5cc92 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
 
 
 --
@@ -3281,7 +4150,7 @@ ALTER TABLE ONLY public.questions_studies
 --
 
 ALTER TABLE ONLY public.harvest_items
-    ADD CONSTRAINT fk_rails_6d8adad6a1 FOREIGN KEY (harvest_id) REFERENCES public.harvests(id);
+    ADD CONSTRAINT fk_rails_6d8adad6a1 FOREIGN KEY (harvest_id) REFERENCES public.harvests(id) ON DELETE CASCADE;
 
 
 --
@@ -3289,7 +4158,7 @@ ALTER TABLE ONLY public.harvest_items
 --
 
 ALTER TABLE ONLY public.audio_recording_statistics
-    ADD CONSTRAINT fk_rails_6f222e0805 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT fk_rails_6f222e0805 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
 
 
 --
@@ -3297,7 +4166,7 @@ ALTER TABLE ONLY public.audio_recording_statistics
 --
 
 ALTER TABLE ONLY public.responses
-    ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
+    ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id) ON DELETE CASCADE;
 
 
 --
@@ -3305,7 +4174,15 @@ ALTER TABLE ONLY public.responses
 --
 
 ALTER TABLE ONLY public.harvests
-    ADD CONSTRAINT fk_rails_7b0ec7081d FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT fk_rails_7b0ec7081d FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: analysis_jobs fk_rails_81c0fed756; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT fk_rails_81c0fed756 FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
@@ -3313,7 +4190,7 @@ ALTER TABLE ONLY public.harvests
 --
 
 ALTER TABLE ONLY public.dataset_items
-    ADD CONSTRAINT fk_rails_81ed124069 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT fk_rails_81ed124069 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
 
 
 --
@@ -3321,7 +4198,7 @@ ALTER TABLE ONLY public.dataset_items
 --
 
 ALTER TABLE ONLY public.analysis_jobs_items
-    ADD CONSTRAINT fk_rails_86f75840f2 FOREIGN KEY (analysis_job_id) REFERENCES public.analysis_jobs(id);
+    ADD CONSTRAINT fk_rails_86f75840f2 FOREIGN KEY (analysis_job_id) REFERENCES public.analysis_jobs(id) ON DELETE CASCADE;
 
 
 --
@@ -3329,7 +4206,7 @@ ALTER TABLE ONLY public.analysis_jobs_items
 --
 
 ALTER TABLE ONLY public.sites
-    ADD CONSTRAINT fk_rails_8829b783ca FOREIGN KEY (region_id) REFERENCES public.regions(id);
+    ADD CONSTRAINT fk_rails_8829b783ca FOREIGN KEY (region_id) REFERENCES public.regions(id) ON DELETE CASCADE;
 
 
 --
@@ -3338,6 +4215,14 @@ ALTER TABLE ONLY public.sites
 
 ALTER TABLE ONLY public.active_storage_variant_records
     ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: analysis_jobs_scripts fk_rails_9f083d42e6; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.analysis_jobs_scripts
+    ADD CONSTRAINT fk_rails_9f083d42e6 FOREIGN KEY (analysis_job_id) REFERENCES public.analysis_jobs(id) ON DELETE CASCADE;
 
 
 --
@@ -3369,7 +4254,7 @@ ALTER TABLE ONLY public.responses
 --
 
 ALTER TABLE ONLY public.regions
-    ADD CONSTRAINT fk_rails_a93b9e488e FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT fk_rails_a93b9e488e FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
@@ -3378,6 +4263,22 @@ ALTER TABLE ONLY public.regions
 
 ALTER TABLE ONLY public.studies
     ADD CONSTRAINT fk_rails_a94a68aa0b FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: analysis_jobs_scripts fk_rails_b0e8ff71e8; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.analysis_jobs_scripts
+    ADD CONSTRAINT fk_rails_b0e8ff71e8 FOREIGN KEY (script_id) REFERENCES public.scripts(id);
+
+
+--
+-- Name: audio_event_import_files fk_rails_be11349b96; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_event_import_files
+    ADD CONSTRAINT fk_rails_be11349b96 FOREIGN KEY (audio_event_import_id) REFERENCES public.audio_event_imports(id) ON DELETE CASCADE;
 
 
 --
@@ -3421,11 +4322,27 @@ ALTER TABLE ONLY public.progress_events
 
 
 --
+-- Name: provenances fk_rails_d6ac8b2936; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.provenances
+    ADD CONSTRAINT fk_rails_d6ac8b2936 FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
 -- Name: harvest_items fk_rails_dc2d52ddad; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.harvest_items
-    ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
+    ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
+
+
+--
+-- Name: scripts fk_rails_df2b719b60; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.scripts
+    ADD CONSTRAINT fk_rails_df2b719b60 FOREIGN KEY (provenance_id) REFERENCES public.provenances(id);
 
 
 --
@@ -3437,11 +4354,27 @@ ALTER TABLE ONLY public.harvests
 
 
 --
+-- Name: audio_events fk_rails_e821b1ee82; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT fk_rails_e821b1ee82 FOREIGN KEY (provenance_id) REFERENCES public.provenances(id);
+
+
+--
 -- Name: regions fk_rails_e89672d43e; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.regions
     ADD CONSTRAINT fk_rails_e89672d43e FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: provenances fk_rails_eec5c78eb1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.provenances
+    ADD CONSTRAINT fk_rails_eec5c78eb1 FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
@@ -3473,7 +4406,7 @@ ALTER TABLE ONLY public.permissions
 --
 
 ALTER TABLE ONLY public.permissions
-    ADD CONSTRAINT permissions_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT permissions_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
@@ -3513,7 +4446,7 @@ ALTER TABLE ONLY public.projects
 --
 
 ALTER TABLE ONLY public.projects_saved_searches
-    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
@@ -3537,7 +4470,7 @@ ALTER TABLE ONLY public.projects_sites
 --
 
 ALTER TABLE ONLY public.projects_sites
-    ADD CONSTRAINT projects_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id);
+    ADD CONSTRAINT projects_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id) ON DELETE CASCADE;
 
 
 --
@@ -3627,80 +4560,85 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20130715022212'),
-('20130715035926'),
-('20130718000123'),
-('20130718063158'),
-('20130719015419'),
-('20130724113058'),
-('20130724113348'),
-('20130725095559'),
-('20130725100043'),
-('20130729050807'),
-('20130729055348'),
-('20130819030336'),
-('20130828053819'),
-('20130830045300'),
-('20130905033759'),
-('20130913001136'),
-('20130919043216'),
-('20131002065752'),
-('20131120070151'),
-('20131124234346'),
-('20131230021055'),
-('20140125054808'),
-('20140127011711'),
-('20140222044740'),
-('20140404234458'),
-('20140621014304'),
-('20140819034103'),
-('20140901005918'),
-('20141115234848'),
-('20150306224910'),
-('20150306235304'),
-('20150307010121'),
-('20150709112116'),
-('20150709141712'),
-('20150710080933'),
-('20150710082554'),
-('20150807150417'),
-('20150819005323'),
-('20150904234334'),
-('20150905234917'),
-('20160226103516'),
-('20160226130353'),
-('20160306083845'),
-('20160420030414'),
-('20160614230504'),
-('20160712051359'),
-('20160726014747'),
-('20180118002015'),
-('20181210052707'),
-('20181210052725'),
-('20181210052735'),
-('20200612004608'),
-('20200625025540'),
-('20200625040615'),
-('20200714005247'),
-('20200831130746'),
-('20200901011916'),
-('20200904064318'),
-('20210707050202'),
-('20210707050203'),
-('20210707074343'),
-('20210730051645'),
-('20211024235556'),
-('20220331070014'),
-('20220406072625'),
-('20220407040355'),
-('20220603004830'),
-('20220629023538'),
-('20220704043031'),
-('20220808062341'),
-('20220825042333'),
-('20220930062323'),
-('20221117035017'),
+('20241106015941'),
+('20241004055117'),
+('20240828062256'),
+('20240524011344'),
+('20240524003721'),
+('20230512055427'),
+('20221219052856'),
 ('20221215000234'),
-('20221219052856');
-
+('20221117035017'),
+('20220930062323'),
+('20220825042333'),
+('20220808062341'),
+('20220704043031'),
+('20220629023538'),
+('20220603004830'),
+('20220407040355'),
+('20220406072625'),
+('20220331070014'),
+('20211024235556'),
+('20210730051645'),
+('20210707074343'),
+('20210707050203'),
+('20210707050202'),
+('20200904064318'),
+('20200901011916'),
+('20200831130746'),
+('20200714005247'),
+('20200625040615'),
+('20200625025540'),
+('20200612004608'),
+('20181210052735'),
+('20181210052725'),
+('20181210052707'),
+('20180118002015'),
+('20160726014747'),
+('20160712051359'),
+('20160614230504'),
+('20160420030414'),
+('20160306083845'),
+('20160226130353'),
+('20160226103516'),
+('20150905234917'),
+('20150904234334'),
+('20150819005323'),
+('20150807150417'),
+('20150710082554'),
+('20150710080933'),
+('20150709141712'),
+('20150709112116'),
+('20150307010121'),
+('20150306235304'),
+('20150306224910'),
+('20141115234848'),
+('20140901005918'),
+('20140819034103'),
+('20140621014304'),
+('20140404234458'),
+('20140222044740'),
+('20140127011711'),
+('20140125054808'),
+('20131230021055'),
+('20131124234346'),
+('20131120070151'),
+('20131002065752'),
+('20130919043216'),
+('20130913001136'),
+('20130905033759'),
+('20130830045300'),
+('20130828053819'),
+('20130819030336'),
+('20130729055348'),
+('20130729050807'),
+('20130725100043'),
+('20130725095559'),
+('20130724113348'),
+('20130724113058'),
+('20130719015419'),
+('20130718063158'),
+('20130718000123'),
+('20130715035926'),
+('20130715022212');
 

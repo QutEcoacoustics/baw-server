@@ -19,7 +19,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  fk_rails_...  (creator_id => users.id)
 #  fk_rails_...  (dataset_id => datasets.id)
 #
@@ -27,7 +27,7 @@ class DatasetItem < ApplicationRecord
   # relationships
   belongs_to :dataset, inverse_of: :dataset_items
   belongs_to :audio_recording, inverse_of: :dataset_items
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_dataset_items
+  belongs_to :creator, class_name: 'User', inverse_of: :created_dataset_items
   has_many :progress_events, inverse_of: :dataset_item, dependent: :destroy
   has_many :responses, dependent: :destroy
 
@@ -119,7 +119,7 @@ class DatasetItem < ApplicationRecord
   # Currently only one dummy algorithm for testing
   # Is current_user.id vulnerable to sql injection?
   @priority_algorithms = {
-    reverse_order: DatasetItem.arel_table[:order].*(-1)
+    reverse_order: DatasetItem.arel_table[:order] * -1
   }
 
   # Below is an attempt to sort by number of views in a more Arel way than the SQL in self.next_for_user
@@ -139,7 +139,7 @@ class DatasetItem < ApplicationRecord
     order_by_clauses = []
 
     # first order by the number of views, ascending
-    order_by_clauses.push <<~SQL
+    order_by_clauses.push <<~SQL.squish
       (SELECT count(*) FROM progress_events
        WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC
     SQL
@@ -148,7 +148,7 @@ class DatasetItem < ApplicationRecord
     # Anonymous users are permitted to list dataset items, and only items that are associated with permitted
     # projects are shown.
     if user_id
-      order_by_clauses.push <<~SQL
+      order_by_clauses.push <<~SQL.squish
         (SELECT count(*) FROM progress_events
          WHERE dataset_item_id = dataset_items.id
          AND progress_events.activity = 'viewed'

@@ -46,7 +46,7 @@ resource 'Media' do
     let(:format) { 'mp4' }
 
     standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader)', :not_acceptable,
-      { expected_json_path: 'meta/error/info/available_formats/audio/0/' })
+      { expected_response_has_content: false, expected_response_content_type: 'audio/mp4' })
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -69,7 +69,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    example 'MEDIA (as reader) checking default json format - 200', document: true do
+    example 'MEDIA (as reader) checking default json format - 200', :document do
       do_request
       expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
@@ -192,7 +192,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:sample_rate) { 96_000 }
 
-    example 'MEDIA (as reader)json 96000hz', document: true do
+    example 'MEDIA (as reader)json 96000hz', :document do
       do_request
       expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
@@ -264,7 +264,7 @@ resource 'Media' do
     let(:end_offset) { '2' }
     let(:sample_rate) { '11025' }
 
-    example 'MEDIA (as reader) checking modified json format - 200', document: true do
+    example 'MEDIA (as reader) checking modified json format - 200', :document do
       do_request
       expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
@@ -338,7 +338,7 @@ resource 'Media' do
     let(:end_offset) { '2' }
     let(:sample_rate) { '11025' }
 
-    example 'MEDIA (as reader) checking modified json format - 200', document: true do
+    example 'MEDIA (as reader) checking modified json format - 200', :document do
       do_request
       expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
       expect(response_body).to include('audio/mpeg')
@@ -543,7 +543,7 @@ resource 'Media' do
       media_request_options(
         :get,
         'MEDIA (audio get request wav with non-standard and non-original sample rate as reader)',
-        :unprocessable_entity,
+        :unprocessable_content,
         {
           expected_response_content_type: 'audio/wav',
           expected_response_has_content: false,
@@ -562,7 +562,7 @@ resource 'Media' do
       media_request_options(
         :get,
         'MEDIA (audio get request mp3 with non-standard original sample rate as reader)',
-        :unprocessable_entity,
+        :unprocessable_content,
         {
           expected_response_content_type: 'audio/mpeg',
           expected_response_has_content: false,
@@ -582,7 +582,7 @@ resource 'Media' do
       standard_request_options(
         :get,
         'MEDIA (json), as reader with non-standard non-original sample rate)',
-        :unprocessable_entity,
+        :unprocessable_content,
         {
           expected_response_content_type: 'application/json',
           expected_json_path: ['meta/error'],
@@ -674,7 +674,7 @@ resource 'Media' do
       let(:format) { 'json' }
 
       example 'MEDIA (as reader) checking available and formats valid sample rates for audio recording with non-standard original sample rate - 200',
-        document: true do
+        :document do
         do_request
         expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
 
@@ -760,7 +760,7 @@ resource 'Media' do
     let(:end_offset) { 7 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 5,
+      FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 5,
         end_time_seconds: 6, is_reference: true)
     end
 
@@ -801,7 +801,7 @@ resource 'Media' do
     let(:end_offset) { 150 }
 
     before do
-      audio_event = FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 0,
+      FactoryBot.create(:audio_event, audio_recording_id:, start_time_seconds: 0,
         end_time_seconds: 10, is_reference: true)
     end
 
@@ -868,7 +868,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { 'number' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid start_offset)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid start_offset)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number' })
   end
 
@@ -878,7 +878,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { 'number' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid end_offset)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid end_offset)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number' })
   end
 
@@ -888,7 +888,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { (audio_recording.duration_seconds + 1).to_s }
 
-    standard_request_options(:get, 'MEDIA (as reader end_offset past original duration)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader end_offset past original duration)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording' })
   end
 
@@ -898,7 +898,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { '0' }
 
-    standard_request_options(:get, 'MEDIA (as reader end_offset too small)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader end_offset too small)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.' })
   end
 
@@ -908,7 +908,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { audio_recording.duration_seconds.to_s }
 
-    standard_request_options(:get, 'MEDIA (as reader start_offset past original duration)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader start_offset past original duration)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording' })
   end
 
@@ -918,7 +918,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { '-1' }
 
-    standard_request_options(:get, 'MEDIA (as reader start_offset smaller than 0)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader start_offset smaller than 0)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0' })
   end
 
@@ -929,7 +929,7 @@ resource 'Media' do
     let(:start_offset) { '9' }
     let(:end_offset) { '8' }
 
-    standard_request_options(:get, 'MEDIA (as reader start_offset larger than end_offset)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader start_offset larger than end_offset)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset' })
   end
 
@@ -939,7 +939,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_size) { 'number' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid window_size)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid window_size)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter' })
   end
 
@@ -949,7 +949,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_function) { 'number' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid window_function)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid window_function)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter' })
   end
 
@@ -959,7 +959,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:sample_rate) { '22' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid sample_rate)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid sample_rate)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'sample_rate parameter' })
   end
 
@@ -969,7 +969,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:channel) { (audio_recording.channels + 1).to_s }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid channel)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid channel)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'channel parameter' })
   end
 
@@ -979,7 +979,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:colour) { 'z' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_content,
       { expected_json_path: 'meta/error/details', response_body_content: 'colour parameter' })
   end
 
@@ -989,7 +989,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/details',
         response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be an integer'
@@ -1001,7 +1001,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/details',
         response_body_content: 'The request could not be understood: window_size parameter (512user_token=ANAUTHTOKEN) must be valid'
@@ -1013,7 +1013,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/details',
         response_body_content: 'The request could not be understood: channel parameter (0user_token=ANAUTHTOKEN) must be valid'

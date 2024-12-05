@@ -12,17 +12,26 @@ module BawWorkers
         # Helper method for generating a random job_id
         # Ensures that every job is unique.
         # @param job [::ActiveJob::Base]
-        # @param prefix [String] id prefix. If nil, uses `job.class.name`
+        # @param prefix [String,nil] id prefix. If nil, uses `job.class.name`
         # @return [String]
         def self.generate_uuid(job, prefix = nil)
           key = SecureRandom.uuid
           "#{class_name(job, prefix)}:#{key}"
         end
 
+        # Helper method for generating a timestamp based job_id
+        # Useful for a monotonic increasing id. Not guaranteed to be unique.
+        # @param job [::ActiveJob::Base]
+        # @param prefix [String,nil] id prefix. If nil, uses `job.class.name`
+        # @return [String]
+        def self.generate_timestamp(job, prefix = nil)
+          "#{class_name(job, prefix)}:#{now_to_s}"
+        end
+
         # Helper method for generating a deterministic hash based job_id
         # Ensures a job with the same arguments from the same job class is unique.
         # @param job [::ActiveJob::Base]
-        # @param prefix [String] id prefix. If nil, uses `job.class.name`
+        # @param prefix [String,nil] id prefix. If nil, uses `job.class.name`
         # @return [String] unique id
         def self.generate_hash_id(job, prefix = nil)
           args = job.serialize['arguments']
@@ -37,7 +46,7 @@ module BawWorkers
         # Helper method for generating a query string style job_id.
         # Be conscious of key length, shorter keys are ideal.
         # @param job [::ActiveJob::Base]
-        # @param prefix [String] id prefix. If nil, uses `job.class.name`
+        # @param prefix [String,nil] id prefix. If nil, uses `job.class.name`
         # @param opts [Hash] - key value pairs to encode in the key hash
         def self.generate_keyed_id(job, opts, prefix = nil)
           raise ArgumentError, 'opts must be a non-empty hash' unless opts.is_a?(Hash) && opts.length.positive?
@@ -51,6 +60,10 @@ module BawWorkers
           raise ArgumentError, "Generated key '#{key}'is too long" if key.length > 1024
 
           key
+        end
+
+        def self.now_to_s
+          Time.now.utc.strftime('%Y%m%dT%H%M%S.%6NZ')
         end
 
         def self.class_name(job, prefix)

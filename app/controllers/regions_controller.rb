@@ -82,15 +82,10 @@ class RegionsController < ApplicationController
 
   # DELETE /regions/:id
   # DELETE /projects/:project_id/regions/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_project_if_exists
-    do_authorize_instance
-
-    @region.destroy
-    add_archived_at_header(@region)
-
-    respond_destroy
   end
 
   # GET|POST /regions/filter
@@ -118,9 +113,9 @@ class RegionsController < ApplicationController
 
   def list_permissions
     if @project.nil?
-      Access::ByPermission.regions(current_user)
+      Access::ByPermission.regions(current_user).includes([:image_attachment])
     else
-      Access::ByPermission.regions(current_user, project_id: @project.id)
+      Access::ByPermission.regions(current_user, project_id: @project.id).includes([:image_attachment])
     end
   end
 

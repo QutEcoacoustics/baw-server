@@ -32,7 +32,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...         (region_id => regions.id)
+#  fk_rails_...         (region_id => regions.id) ON DELETE => cascade
 #  sites_creator_id_fk  (creator_id => users.id)
 #  sites_deleter_id_fk  (deleter_id => users.id)
 #  sites_updater_id_fk  (updater_id => users.id)
@@ -61,7 +61,7 @@ longitudes = [
   { 200 => false }
 ]
 
-describe Site, type: :model do
+describe Site do
   it 'has a valid factory' do
     expect(create(:site)).to be_valid
   end
@@ -186,11 +186,12 @@ describe Site, type: :model do
     }
   end
 
-  it { is_expected.to have_and_belong_to_many :projects }
+  it { is_expected.to have_many(:projects).through(:projects_sites) }
+  it { is_expected.to have_many(:projects_sites) }
   it { is_expected.to belong_to(:region).optional }
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional }
+  it { is_expected.to belong_to(:deleter).optional }
 
   it 'errors on checking orphaned site if site is orphaned' do
     # depends on factory not automatically associating a site with any projects
@@ -229,7 +230,7 @@ describe Site, type: :model do
   end
 
   it 'includes TimeZoneAttribute' do
-    expect(Site.new).to be_a_kind_of(TimeZoneAttribute)
+    expect(Site.new).to be_a(TimeZoneAttribute)
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
@@ -237,13 +238,43 @@ describe Site, type: :model do
   #                 allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
   #                 rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
 
-  it 'has a safe_name function' do
-    site = build(:site, name: "!aNT\'s fully s!ck site 1337 ;;\n../\\")
-    expect(site.safe_name).to eq('aNTs-fully-s-ck-site-1337')
+  describe 'safe names' do
+    [
+      ["!aNT's fully s!ck site 1337 ;;\n../\\", 'aNTs-fully-s-ck-site-1337'],
+      ['Hello - World', 'Hello-World'],
+      ['!@#!#$$@!%', '']
+    ].each do |name, safe_name|
+      it 'has a safe_name function' do
+        site = build(:site, name:)
+        expect(site.safe_name).to eq(safe_name)
+      end
+
+      it 'has an arel equivalent of safe_name' do
+        site = create(:site, name:)
+        actual = Site.where(id: site.id).pick(Site::SAFE_NAME_AREL)
+
+        expect(actual).to eq(safe_name)
+      end
+    end
   end
 
-  it 'has a safe_name function that squashes hyphens' do
-    site = build(:site, name: 'Hello - World')
-    expect(site.safe_name).to eq('Hello-World')
+  it_behaves_like 'cascade deletes for', :site, {
+    audio_recordings: {
+      audio_events: {
+        taggings: nil,
+        comments: nil
+      },
+      analysis_jobs_items: :audio_event_import_files,
+      bookmarks: nil,
+      dataset_items: {
+        progress_events: nil,
+        responses: nil
+      },
+      harvest_item: nil,
+      statistics: nil
+    },
+    projects_sites: nil
+  } do
+    create_entire_hierarchy
   end
 end

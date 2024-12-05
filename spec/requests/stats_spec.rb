@@ -5,6 +5,12 @@ describe '/stats' do
   prepare_project
   prepare_region
   prepare_site
+  prepare_provenance
+  prepare_script
+  prepare_analysis_job
+  prepare_analysis_jobs_item
+  prepare_audio_event_import
+  prepare_audio_event_import_file
   prepare_audio_event
   prepare_tag
   prepare_audio_events_tags
@@ -23,8 +29,8 @@ describe '/stats' do
         users_online: an_instance_of(Integer),
         users_total: User.count,
         online_window_start: an_instance_of(String),
-        projects_total: 2,
-        regions_total: 1,
+        projects_total: 3,
+        regions_total: 2,
         sites_total: 3,
         annotations_total: 2,
         annotations_total_duration: 2.0,

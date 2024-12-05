@@ -20,10 +20,16 @@ module Baw
       end
 
       def primary_keys
-        @primary_keys ||= defined?(model.primary_keys) ? model.primary_keys : [model.primary_key]
+        @primary_keys ||= model.primary_key.is_a?(Array) ? model.primary_key : [model.primary_key]
       end
 
       def insert(attributes)
+        # allow for just overriding the insert statement with a custom one
+        if attributes.is_a?(::Arel::Nodes::InsertStatement)
+          @ast.insert = attributes
+          return
+        end
+
         @ast.insert = ::Arel::Nodes::InsertStatement.new.tap do |i|
           i.relation = table
           i.columns = attributes.keys.map { |key| validate_column(model, key) }
@@ -39,8 +45,10 @@ module Baw
 
           c.target = if conflict_target.is_a?(String)
                        wrap_value(conflict_target)
-                     else
-                       make_column_group(wrap_columns(table, conflict_target || primary_keys))
+                     elsif conflict_target == :primary_keys
+                       make_column_group(wrap_columns(table, primary_keys))
+                     elsif !conflict_target.nil?
+                       make_column_group(wrap_columns(table, conflict_target))
                      end
 
           unless ::Arel.arel_node?(conflict_where) || conflict_where.nil?

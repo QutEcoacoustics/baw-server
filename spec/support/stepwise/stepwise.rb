@@ -103,6 +103,7 @@ module Baw
           reporter.publish(:step_failed, { step: })
 
           #e.backtrace.push "#{step.location}:in `#{step.description}'"
+
           raise e
         end
 
@@ -250,7 +251,7 @@ module Baw
   end
 end
 
-if defined?(::RSpec::Core)
+if defined?(RSpec::Core)
   module ::RSpec
     module Core
       module Formatters
@@ -325,9 +326,9 @@ RSpec.configure do |config|
 end
 
 # type hints for solargraph - these are never executed
-# rubocop:disable RSpec/EmptyExampleGroup, RSpec/FilePath, RSpec/DescribeClass
-RSpec.describe '', skip: true do
+# rubocop:disable RSpec/EmptyExampleGroup, RSpec/RSpec/DescribeClass
+RSpec.describe '', :skip do
   extend Baw::Stepwise::ExampleGroup
   include Baw::Stepwise::Example
 end
-# rubocop:enable RSpec/EmptyExampleGroup, RSpec/FilePath, RSpec/DescribeClass
+# rubocop:enable RSpec/EmptyExampleGroup

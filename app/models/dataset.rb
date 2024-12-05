@@ -21,10 +21,10 @@ class Dataset < ApplicationRecord
   DEFAULT_DATASET_NAME = 'default'
 
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_datasets
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_datasets, optional: true
   has_many :dataset_items, dependent: :destroy
-  has_many :study
+  has_many :study, dependent: :destroy
 
   # We have not enabled soft deletes yet since we do not support deleting datasets
   # This may change in the future
@@ -42,13 +42,35 @@ class Dataset < ApplicationRecord
   # This will potentially be hit very often, maybe multiple times per request
   # and therefore is a possible avenue for future optimization if necessary
   def self.default_dataset_id
-    # NOTE: this may cause db:create and db:migrate to fail
-    @default_dataset_id ||= Dataset.where(name: DEFAULT_DATASET_NAME).pluck(:id).first
+    find_or_create_default.id
   end
 
   # (scope) return the default dataset
   def self.default_dataset
-    @default_dataset ||= Dataset.where(name: DEFAULT_DATASET_NAME).first
+    find_or_create_default
+  end
+
+  def self.find_or_create_default(owner = nil)
+    # we cache the default dataset to avoid hitting the database multiple times
+    # however, the caching can mess up tests, which recreate and destroy the item frequently
+    # and makes this cache invalid. So we disable it in test mode
+    return @default_dataset if @default_dataset && !BawApp.test?
+
+    default = Dataset.find_by(name: DEFAULT_DATASET_NAME)
+
+    return default if default
+
+    default = Dataset.new(
+      name: DEFAULT_DATASET_NAME,
+      description: 'The default dataset',
+      creator_id: owner || User.admin_user.id
+    )
+
+    default.save!(validate: false)
+
+    @default_dataset = default
+
+    default
   end
 
   # Define filter api settings

@@ -3,6 +3,9 @@
 require 'dry-types'
 require 'dry/inflector'
 
+require_relative 'sexagesimal'
+require_relative 'byte_format'
+
 module BawApp
   module Types
     include Dry.Types()
@@ -18,7 +21,7 @@ module BawApp
       begin
         p.mkpath
       rescue Errno::EACCES => e
-        puts "ERROR: Could not create directory #{p}, #{e}"
+        Rails.logger.debug { "ERROR: Could not create directory #{p}, #{e}" }
         raise e if BawApp.dev_or_test?
       end
       p
@@ -41,9 +44,45 @@ module BawApp
     UnixTime = Constructor(::Time) { |value|
       next nil if value.blank?
 
-      ::Time.at(value)
+      ::Time.zone.at(value)
+    }
+
+    # Like the standard dry-types Time but assumes local times
+    # are in the UTC timezone - not rails default of local timezone.
+    # The difference is moot because our app always uses UTC, but since
+    # we are dealing with external systems that use local time, we need
+    # to be explicit.
+    # Implementation is based on the standard dry-types Time:
+    # https://github.com/dry-rb/dry-types/blob/2ac0ba485a9c141377151e166861e0e418983495/lib/dry/types/coercions.rb#L64-L78
+    UtcTime = Constructor(::Time) { |input|
+      if input.respond_to?(:to_str)
+        begin
+          BawApp.utc_tz.parse(input)
+        rescue ArgumentError => e
+          ::Dry::Types::CoercionError.handle(e, &block)
+        end
+      elsif input.is_a?(::Time)
+        input
+      else
+        raise ::Dry::Types::CoercionError, "#{input.inspect} is not a string"
+      end
     }
 
     JsonScalar = Types::JSON::Decimal | Types::String | Types::Nil
+
+    DURATION_REGEX = /\A(?<hours>\d+):(?<minutes>\d{2}):(?<seconds>\d+)\z/
+    Sexagesimal = Constructor(Numeric) { |value|
+      next nil if value.blank?
+
+      next value if value.is_a?(Numeric)
+
+      ::BawApp::Sexagesimal.parse(value)
+    }
+
+    PbsByteFormat = Constructor(Numeric) { |value|
+      next nil if value.blank?
+
+      ::BawApp::ByteSize.parse(value)
+    }
   end
 end

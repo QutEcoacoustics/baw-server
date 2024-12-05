@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ProjectMailer < ActionMailer::Base
+class ProjectMailer < ApplicationMailer
   default from: Settings.mailer.emails.sender_address
 
   def project_access_request(sender_user, project_ids, reason)

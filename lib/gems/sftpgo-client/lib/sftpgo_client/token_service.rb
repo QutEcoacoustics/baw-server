@@ -12,8 +12,8 @@ module SftpgoClient
         @connection.get(TOKEN_PATH, nil)
       )
 
-      response.fmap { |r|
-        SftpgoClient::Token.new(r.body)
+      response.fmap { |audio_recording|
+        SftpgoClient::Token.new(audio_recording.body)
       }
     end
   end

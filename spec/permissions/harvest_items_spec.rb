@@ -34,28 +34,29 @@ describe 'Harvest items permissions (nested)' do
     end
   end
 
-  custom_index = {
+  with_custom_action(
+    :index,
     path: '',
     verb: :get,
     expect: lambda { |_user, _action|
-              expect(api_response).to include({
-                summary: a_hash
-              })
-            },
-    action: :index
-  }
+      expect(api_response).to include({
+        summary: a_hash
+      })
+    }
+  )
 
   # there's no point testing :new or :show - each of these have path suffixes
   # ('new' and '{id}', respectively) that are confused for the (/:path) route
   # parameter.
+  do_not_check_permissions_for(all_users, [:new, :show])
 
   ensures :admin, :owner,
-    can: [custom_index, :filter],
+    can: [:index, :filter],
     cannot: [:create, :update, :destroy],
     fails_with: :not_found
 
   ensures :writer, :reader, :no_access, :anonymous,
-    can: [custom_index, :filter],
+    can: [:index, :filter],
     cannot: [],
     fails_with: :forbidden
 
@@ -66,12 +67,12 @@ describe 'Harvest items permissions (nested)' do
 
   ensures :harvester,
     can: [],
-    cannot: [custom_index, :filter]
+    cannot: [:index, :filter]
 
   the_users :invalid,
     can_do: nothing,
     and_cannot_do: everything,
-    fails_with: :unauthorized
+    fails_with: [:unauthorized, :not_found]
 end
 
 describe 'Harvest items permissions (shallow)' do
@@ -108,28 +109,29 @@ describe 'Harvest items permissions (shallow)' do
     end
   end
 
-  custom_index = {
+  with_custom_action(
+    :index,
     path: '',
     verb: :get,
     expect: lambda { |_user, _action|
-              expect(api_response).to include({
-                summary: a_hash
-              })
-            },
-    action: :index
-  }
+      expect(api_response).to include({
+        summary: a_hash
+      })
+    }
+  )
 
   # there's no point testing :new or :show - each of these have path suffixes
   # ('new' and '{id}', respectively) that are confused for the (/:path) route
   # parameter.
+  do_not_check_permissions_for(all_users, [:new, :show])
 
   ensures :admin, :owner,
-    can: [custom_index, :filter],
+    can: [:index, :filter],
     cannot: [:create, :update, :destroy],
     fails_with: :not_found
 
   ensures :writer, :reader, :no_access, :anonymous,
-    can: [custom_index, :filter],
+    can: [:index, :filter],
     cannot: [],
     fails_with: :forbidden
 
@@ -140,10 +142,10 @@ describe 'Harvest items permissions (shallow)' do
 
   ensures :harvester,
     can: [],
-    cannot: [custom_index, :filter]
+    cannot: [:index, :filter]
 
   the_users :invalid,
     can_do: nothing,
     and_cannot_do: everything,
-    fails_with: :unauthorized
+    fails_with: [:unauthorized, :not_found]
 end

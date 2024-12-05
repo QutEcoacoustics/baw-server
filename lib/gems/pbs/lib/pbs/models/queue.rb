@@ -53,24 +53,32 @@ module PBS
       attribute? :from_route_only, ::BawApp::Types::Params::Bool
 
       # @!attribute [r] resources_max
-      #   @return [Hash<string,(String,Number)>]
-      attribute? :resources_max, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::JsonScalar)
+      #   @return [Hash<,(String,Number)>]
+      attribute? :resources_max, ::BawApp::Types::Hash
+        .map(::BawApp::Types::Symbol, ::BawApp::Types::JsonScalar)
+        .optional.default({}.freeze)
 
       # @!attribute [r] resources_min
-      #   @return [Hash<string,(String,Number)>]
-      attribute? :resources_min, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::JsonScalar)
+      #   @return [Hash<,(String,Number)>]
+      attribute? :resources_min, ::BawApp::Types::Hash
+        .map(::BawApp::Types::Symbol, ::BawApp::Types::JsonScalar)
+        .optional.default({}.freeze)
 
       # @!attribute [r] resources_assigned
-      #   @return [Hash<string,(String,Number)>]
-      attribute? :resources_assigned, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::JsonScalar)
+      #   @return [Hash<,(String,Number)>]
+      attribute? :resources_assigned, ::BawApp::Types::Hash
+        .map(::BawApp::Types::Symbol, ::BawApp::Types::JsonScalar)
+        .optional.default({}.freeze)
 
       # @!attribute [r] max_run
       #   @return [String]
       attribute? :max_run, ::BawApp::Types::String
 
       # @!attribute [r] max_run_res
-      #   @return [Hash<string,(String,Number)>]
-      attribute? :max_run_res, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::JsonScalar)
+      #   @return [Hash<,(String,Number)>]
+      attribute? :max_run_res, ::BawApp::Types::Hash
+        .map(::BawApp::Types::Symbol, ::BawApp::Types::JsonScalar)
+        .optional.default({}.freeze)
 
       # @!attribute [r] enabled
       #   @return [Boolean]

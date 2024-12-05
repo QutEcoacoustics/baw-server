@@ -19,6 +19,38 @@ class Hash
     deep_map_internal(self, [], &block)
   end
 
+  # The opposite of dig. Sets a value at an arbitrary key depth.
+  # If the intermediate keys or hashes do not exist they will be created.
+  # For performance reasons this method is mutative.
+  # @param keys [Array] - the key path to use
+  # @param value [Object] - the value to set
+  # @param default [Proc] - a proc to use to create new hashes
+  # @param on_conflict [Proc] - a proc to use to resolve conflicts. The proc
+  # receives the current value and the new value and should return the desired value.
+  # Defaults to the new value.
+  # @return [Hash] the modified hash
+  def bury!(*keys, value:, default: -> { {} }, on_conflict: ->(_current, new) { new })
+    raise 'key path required' if keys.empty?
+
+    keys.flatten => [*rest, last]
+
+    rest.reduce(self) do |current, key|
+      current[key] = default.call unless current.key?(key)
+
+      current[key]
+    end => current
+
+    if current.key?(last)
+      on_conflict.call(current[last], value)
+    else
+      value
+    end => value
+
+    current[last] = value
+
+    self
+  end
+
   private
 
   # Iterates deeply over a structure preserving context as keys.

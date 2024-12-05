@@ -6,6 +6,8 @@ module Api
   module Schema
     extend Helpers
 
+    RESOURCES_PATH = Rails.root.join('swagger/v2/defs/resources.json').freeze
+
     DEFINITION = {
       'v2/swagger.yaml' => {
         openapi: '3.0.1',
@@ -38,6 +40,7 @@ module Api
           }
         ],
         components: {
+
           securitySchemes: {
             auth_token_header: {
               type: :apiKey,
@@ -116,7 +119,7 @@ module Api
             permission_levels: {
               type: 'string',
               nullable: true,
-              enum: ['owner', 'writer', 'reader', nil]
+              enum: [*Access::Core.levels, nil]
             },
             meta: {
               properties: {
@@ -144,8 +147,33 @@ module Api
               type: 'object',
               properties: {
                 error: {
-                  type: 'object'
-
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    details: {
+                      description: 'A human readable description of the error',
+                      type: 'string'
+                    },
+                    info: {
+                      description: 'Freeform additional information about the error',
+                      type: ['null', 'object', 'string', 'array']
+                    },
+                    links: {
+                      type: 'object',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          text: {
+                            type: 'string'
+                          },
+                          url: {
+                            type: 'string'
+                          }
+                        }
+                      },
+                      required: ['text']
+                    }
+                  }
                 },
                 required: ['error']
               }
@@ -281,6 +309,7 @@ module Api
             },
             project: Project.schema,
             analysis_job: AnalysisJob.schema,
+            analysis_jobs_item: AnalysisJobsItem.schema,
             bookmark: Bookmark.schema,
             dataset: Dataset.schema,
             saved_search: SavedSearch.schema,
@@ -291,8 +320,13 @@ module Api
             permission: Permission.schema,
             harvest: Harvest.schema,
             harvest_item: HarvestItem.schema,
-            audio_event_import: AudioEventImport.schema
-
+            audio_event_import: AudioEventImport.schema,
+            audio_event_import_file: AudioEventImportFile.schema,
+            audio_event: AudioEvent.schema,
+            provenance: Provenance.schema
+          },
+          parameters: {
+            'archived-parameter': archived_parameter
           }
         }
       }

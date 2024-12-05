@@ -35,7 +35,7 @@
 #  projects_deleter_id_fk  (deleter_id => users.id)
 #  projects_updater_id_fk  (updater_id => users.id)
 #
-describe Project, type: :model do
+describe Project do
   it 'has a valid factory' do
     expect(create(:project)).to be_valid
   end
@@ -45,11 +45,12 @@ describe Project, type: :model do
 
   it { is_expected.to have_many :harvests }
 
-  it { is_expected.to have_and_belong_to_many :sites }
+  it { is_expected.to have_many(:sites).through(:projects_sites) }
+  it { is_expected.to have_many :projects_sites }
 
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional }
+  it { is_expected.to belong_to(:deleter).optional }
 
   it 'is invalid without a name' do
     expect(build(:project, name: nil)).not_to be_valid
@@ -97,4 +98,36 @@ describe Project, type: :model do
   #it 'requires a valid urn' do
   #  FactoryBot.build(:project, :urn => 'not a urn').should_not be_valid
   #end
+
+  it_behaves_like 'cascade deletes for', :project, {
+    regions: {
+      sites: {
+        audio_recordings: {
+          audio_events: {
+            taggings: nil,
+            comments: nil
+          },
+          analysis_jobs_items: :audio_event_import_files,
+          bookmarks: nil,
+          dataset_items: {
+            progress_events: nil,
+            responses: nil
+          },
+          statistics: nil
+        }
+      }
+    },
+    projects_sites: nil,
+    projects_saved_searches: nil,
+    permissions: nil,
+    harvests: {
+      harvest_items: nil
+    },
+    analysis_jobs: {
+      analysis_jobs_scripts: nil,
+      analysis_jobs_items: nil
+    }
+  } do
+    create_entire_hierarchy
+  end
 end

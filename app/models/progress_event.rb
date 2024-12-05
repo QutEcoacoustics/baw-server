@@ -13,16 +13,14 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id) ON DELETE => cascade
 #
 class ProgressEvent < ApplicationRecord
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_progress_events
+  belongs_to :creator, class_name: 'User', inverse_of: :created_progress_events
   belongs_to :dataset_item, inverse_of: :progress_events
 
   # association validations
-  validates_presence_of :dataset_item
-  validates_presence_of :creator
 
   # field validations
 

@@ -5,7 +5,7 @@ module BawWorkers
     module Harvest
       # Scans a harvest directory for any files that might have been missed by webhooks.
       class ScanJob < BawWorkers::Jobs::ApplicationJob
-        include BawWorkers::Jobs::StampUser
+        include BawWorkers::ActiveJob::StampUser
         include PathFilter
 
         queue_as Settings.actions.harvest_scan.queue

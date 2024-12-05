@@ -64,6 +64,8 @@ class User < ApplicationRecord
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
+  # before and after methods
+  before_validation :ensure_user_role
   # user must always have an authentication token
   after_create :ensure_authentication_token
 
@@ -100,6 +102,10 @@ class User < ApplicationRecord
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :deleter_id, inverse_of: :delete
 
   has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id,
     inverse_of: :creator
@@ -149,6 +155,10 @@ class User < ApplicationRecord
 
   has_many :created_scripts, class_name: 'Script', foreign_key: :creator_id, inverse_of: :creator
 
+  has_many :created_provenances, class_name: 'Provenance', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_provenances, class_name: 'Provenance', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_provenances, class_name: 'Provenance', foreign_key: :deleter_id, inverse_of: :deleter
+
   has_many :created_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_sites, class_name: 'Site', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :deleter
@@ -173,17 +183,17 @@ class User < ApplicationRecord
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
-  scope :recently_seen,
+  scope(:recently_seen,
     lambda { |time|
       where(
         (arel_table[:last_seen_at] > time)
         .or(arel_table[:current_sign_in_at] > time)
         .or(arel_table[:last_sign_in_at] > time)
       )
-    }
+    })
 
   # store preferences as json in a text column
-  serialize :preferences, JSON
+  serialize :preferences, coder: JSON
 
   # validations
   validates :user_name,
@@ -214,9 +224,6 @@ class User < ApplicationRecord
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
-
-  # before and after methods
-  before_validation :ensure_user_role
 
   after_create :special_after_create_actions
 
@@ -322,13 +329,19 @@ class User < ApplicationRecord
   # Finds the admin user
   # @return [User]
   def self.admin_user
-    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
+    # caching these values screws up the tests - we relay on AR cache instead?
+    User.where(user_name: ADMIN_USER_NAME).first
   end
 
   # Finds the harvester user
   # @return [User]
   def self.harvester_user
-    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
+    # caching these values screws up the tests - we relay on AR cache instead?
+    User.where(user_name: HARVESTER_USER_NAME).first
+  end
+
+  def admin?
+    Access::Core.is_admin?(self)
   end
 
   # Define filter api settings

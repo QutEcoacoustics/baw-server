@@ -3,14 +3,13 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob, :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
   prepare_project
   prepare_region
   prepare_site
+  prepare_audio_recording
 
   pause_all_jobs
 
@@ -25,7 +24,7 @@ describe BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob, :clean_by_truncati
     end
 
     it 'works on the harvest queue' do
-      expect((BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob.queue_name)).to eq(queue_name)
+      expect(BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob.queue_name).to eq(queue_name)
     end
 
     it 'can enqueue' do
@@ -66,7 +65,7 @@ describe BawWorkers::Jobs::Harvest::DeleteHarvestItemFileJob, :clean_by_truncati
 
     # create a file to delete
     let(:target) {
-      name = generate_recording_name(Time.now)
+      name = generate_recording_name(Time.zone.now)
       path = harvest.upload_directory / name
 
       path.touch

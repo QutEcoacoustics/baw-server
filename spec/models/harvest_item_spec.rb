@@ -24,11 +24,11 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
-#  fk_rails_...  (harvest_id => harvests.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
+#  fk_rails_...  (harvest_id => harvests.id) ON DELETE => cascade
 #  fk_rails_...  (uploader_id => users.id)
 #
-RSpec.describe HarvestItem, type: :model do
+RSpec.describe HarvestItem do
   subject { build(:harvest_item) }
 
   it 'has a valid factory' do
@@ -38,7 +38,7 @@ RSpec.describe HarvestItem, type: :model do
   it { is_expected.to belong_to(:harvest).optional(true) }
 
   it { is_expected.to belong_to(:audio_recording).optional(true) }
-  it { is_expected.to belong_to(:uploader).with_foreign_key(:uploader_id) }
+  it { is_expected.to belong_to(:uploader) }
 
   it { is_expected.to enumerize(:status).in(HarvestItem::STATUSES) }
 
@@ -48,17 +48,17 @@ RSpec.describe HarvestItem, type: :model do
 
   it 'deserializes the info column as an Info object' do
     item = build(:harvest_item)
-    item.info = ::BawWorkers::Jobs::Harvest::Info.new(error: 'hello')
+    item.info = BawWorkers::Jobs::Harvest::Info.new(error: 'hello')
     item.save!
 
     item = HarvestItem.find(item.id)
 
-    expect(item.info).to be_an_instance_of(::BawWorkers::Jobs::Harvest::Info)
+    expect(item.info).to be_an_instance_of(BawWorkers::Jobs::Harvest::Info)
     expect(item.info.error).to eq 'hello'
     expect(item.info[:error]).to eq 'hello'
   end
 
-  context 'with overlaps' do 
+  context 'with overlaps' do
     prepare_users
     prepare_project
     prepare_harvest
@@ -70,22 +70,22 @@ RSpec.describe HarvestItem, type: :model do
       #    ccccc
       # dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
       #             eeeee
-      a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200, harvest)
-      b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205, harvest)
-      c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200, harvest)
+      a = create_with_durations('a.mp3', 1, Time.zone.local(2019, 1, 1, 0, 0, 0), 7200, harvest)
+      b = create_with_durations('b.ogg', 1, Time.zone.local(2019, 1, 1, 2, 0, 0), 7205, harvest)
+      c = create_with_durations('c.wav', 1, Time.zone.local(2019, 1, 1, 1, 0, 0), 7200, harvest)
       # different site!
-      d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400, harvest)
-      e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200, harvest)
+      d = create_with_durations('d.mp3', 2, Time.zone.local(2019, 1, 1, 0, 0, 0), 86_400, harvest)
+      e = create_with_durations('e.ogg', 1, Time.zone.local(2019, 1, 1, 4, 0, 0), 7200, harvest)
 
-      expect(a.overlaps_with).to match_array([c])
-      expect(b.overlaps_with).to match_array([c, e])
-      expect(c.overlaps_with).to match_array([a, b])
+      expect(a.overlaps_with).to contain_exactly(c)
+      expect(b.overlaps_with).to contain_exactly(c, e)
+      expect(c.overlaps_with).to contain_exactly(a, b)
 
-      expect(d.overlaps_with).to match_array([])
-      expect(e.overlaps_with).to match_array([b])
+      expect(d.overlaps_with).to be_empty
+      expect(e.overlaps_with).to contain_exactly(b)
     end
 
-    it 'will not find other records that overlap with it from a different harvest' do
+    it 'does not find other records that overlap with it from a different harvest' do
       other_harvest = Harvest.new(project:, creator: owner_user)
       other_harvest.save!
 
@@ -95,23 +95,23 @@ RSpec.describe HarvestItem, type: :model do
       # 2 |    ccccc
       # 2 | dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
       # 1           eeeee
-      a = create_with_durations('a.mp3', 1, Time.new(2019, 1, 1, 0, 0, 0), 7200, harvest)
-      b = create_with_durations('b.ogg', 1, Time.new(2019, 1, 1, 2, 0, 0), 7205, harvest)
-      c = create_with_durations('c.wav', 1, Time.new(2019, 1, 1, 1, 0, 0), 7200, other_harvest)
+      a = create_with_durations('a.mp3', 1, Time.zone.local(2019, 1, 1, 0, 0, 0), 7200, harvest)
+      b = create_with_durations('b.ogg', 1, Time.zone.local(2019, 1, 1, 2, 0, 0), 7205, harvest)
+      c = create_with_durations('c.wav', 1, Time.zone.local(2019, 1, 1, 1, 0, 0), 7200, other_harvest)
       # different site!
-      d = create_with_durations('d.mp3', 2, Time.new(2019, 1, 1, 0, 0, 0), 86_400, other_harvest)
-      e = create_with_durations('e.ogg', 1, Time.new(2019, 1, 1, 4, 0, 0), 7200, harvest)
+      d = create_with_durations('d.mp3', 2, Time.zone.local(2019, 1, 1, 0, 0, 0), 86_400, other_harvest)
+      e = create_with_durations('e.ogg', 1, Time.zone.local(2019, 1, 1, 4, 0, 0), 7200, harvest)
 
-      expect(a.overlaps_with).to match_array([])
-      expect(b.overlaps_with).to match_array([e])
-      expect(c.overlaps_with).to match_array([])
+      expect(a.overlaps_with).to be_empty
+      expect(b.overlaps_with).to contain_exactly(e)
+      expect(c.overlaps_with).to be_empty
 
-      expect(d.overlaps_with).to match_array([])
-      expect(e.overlaps_with).to match_array([b])
+      expect(d.overlaps_with).to be_empty
+      expect(e.overlaps_with).to contain_exactly(b)
     end
 
     def create_with_durations(path, site_id, recorded_date, duration_seconds, harvest)
-      info = ::BawWorkers::Jobs::Harvest::Info.new(
+      info = BawWorkers::Jobs::Harvest::Info.new(
         file_info: {
           duration_seconds:,
           recorded_date:,
@@ -122,7 +122,7 @@ RSpec.describe HarvestItem, type: :model do
     end
   end
 
-  context 'with duplicate hashes' do 
+  context 'with duplicate hashes' do
     prepare_users
     prepare_project
     prepare_harvest
@@ -134,14 +134,14 @@ RSpec.describe HarvestItem, type: :model do
       # different site!
       d = create_with_hashes('d.mp3', 2, 'imaahash', harvest)
 
-      expect(a.duplicate_hash_of).to match_array([c,d])
-      expect(b.duplicate_hash_of).to match_array([])
-      expect(c.duplicate_hash_of).to match_array([a, d])
+      expect(a.duplicate_hash_of).to contain_exactly(c, d)
+      expect(b.duplicate_hash_of).to be_empty
+      expect(c.duplicate_hash_of).to contain_exactly(a, d)
 
-      expect(d.duplicate_hash_of).to match_array([a,c])
+      expect(d.duplicate_hash_of).to contain_exactly(a, c)
     end
 
-    it 'will not find other records that have a duplicate hash from a different harvest' do
+    it 'does not find other records that have a duplicate hash from a different harvest' do
       other_harvest = Harvest.new(project:, creator: owner_user)
       other_harvest.save!
 
@@ -153,15 +153,15 @@ RSpec.describe HarvestItem, type: :model do
       # different site!
       d = create_with_hashes('d.mp3', 2, 'imaahash', other_harvest)
 
-      expect(a.duplicate_hash_of).to match_array([])
-      expect(b.duplicate_hash_of).to match_array([])
-      expect(c.duplicate_hash_of).to match_array([d])
+      expect(a.duplicate_hash_of).to be_empty
+      expect(b.duplicate_hash_of).to be_empty
+      expect(c.duplicate_hash_of).to contain_exactly(d)
 
-      expect(d.duplicate_hash_of).to match_array([c])
+      expect(d.duplicate_hash_of).to contain_exactly(c)
     end
 
     def create_with_hashes(path, site_id, file_hash, harvest)
-      info = ::BawWorkers::Jobs::Harvest::Info.new(
+      info = BawWorkers::Jobs::Harvest::Info.new(
         file_info: {
           file_hash:,
           site_id:
@@ -262,8 +262,8 @@ RSpec.describe HarvestItem, type: :model do
 
       it 'we are not vulnerable to sql injection' do
         results = HarvestItem
-                  .project_directory_listing(HarvestItem.all, "a' or 1=1 --")
-                  .as_json
+          .project_directory_listing(HarvestItem.all, "a' or 1=1 --")
+          .as_json
 
         expect(results).to eq []
       end
@@ -272,25 +272,25 @@ RSpec.describe HarvestItem, type: :model do
     def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)
       validations = []
       fixable.times do
-        validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+        validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
           status: :fixable,
           name: :wascally_wabbit,
           message: nil
         )
       end
       not_fixable.times do
-        validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+        validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
           status: :not_fixable,
           name: :kiww_the_wabbit,
           message: nil
         )
       end
 
-      info = ::BawWorkers::Jobs::Harvest::Info.new(
+      info = BawWorkers::Jobs::Harvest::Info.new(
         validations:
       )
 
-      path = generate_recording_name(Time.now)
+      path = generate_recording_name(Time.zone.now)
       path = File.join(sub_directories, path) if sub_directories.present?
 
       create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:, harvest:)

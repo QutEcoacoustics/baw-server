@@ -20,7 +20,7 @@ class ErrorsController < ApplicationController
     case error_code_or_id
     when 400, '400', 'bad_request'
       status_symbol = :bad_request
-    when 401, '401', 'unauthorized', 'unauthorized'
+    when 401, '401', 'unauthorized'
       status_symbol = :unauthorized
       detail_message = I18n.t('devise.failure.unauthenticated')
       additional_info[:error_links] = [:sign_in, :sign_up, :confirm]
@@ -60,13 +60,19 @@ class ErrorsController < ApplicationController
     render_error(status_symbol, detail_message, error, method_name, additional_info)
   end
 
+  # invoked by the catch-all route in routes.rb
   def route_error
     render_error(
       :not_found,
       'Could not find the requested page.',
       nil,
       'route_error',
-      { error_info: { original_route: params[:requested_route], original_http_method: request.method } }
+      {
+        error_info: {
+          original_route: params[:requested_route],
+          original_http_method: request.method
+        }
+      }
     )
   end
 
@@ -76,10 +82,16 @@ class ErrorsController < ApplicationController
       'HTTP method not allowed for this resource.',
       nil,
       'method_not_allowed_error',
-      { error_info: { original_route: params[:requested_route], original_http_method: request.method } }
+      {
+        error_info: {
+          original_route: params[:requested_route],
+          original_http_method: request.method
+        }
+      }
     )
   end
 
+  # invoked by the exceptions_app setting in application.rb
   def uncaught_error
     # called with env as a parameter
 
@@ -87,9 +99,8 @@ class ErrorsController < ApplicationController
     # for friendly responses to exceptions
     # only used when:
     # Rails.application.config.consider_all_requests_local = false
-    # Rails.application.config.action_dispatch.show_exceptions = true
+    # Rails.application.config.action_dispatch.show_exceptions = :all
     # https://github.com/s-andringa/recipes_exceptions_example/blob/b28b42f2b96c808bde93badbb05aff0bdc2c7fe9/app/controllers/exception_controller.rb
-
     error = request.env['action_dispatch.exception']
     exception_wrapper = ActionDispatch::ExceptionWrapper.new(request.env, error)
     status_code = exception_wrapper.status_code
@@ -117,29 +128,27 @@ class ErrorsController < ApplicationController
   end
 
   def test_exceptions
-    if BawApp.test? && params.include?(:exception_class)
-      msg = 'Purposeful exception raised for testing.'
-      error_class_string = params[:exception_class]
+    return unless BawApp.test? && params.include?(:exception_class)
 
-      # Unsafe reflection method constantize called with parameter value.
-      # I think this is ok as it's only available in test env.
-      error_class = error_class_string.constantize
+    msg = 'Purposeful exception raised for testing.'
+    error_class_string = params[:exception_class]
 
-      case error_class_string
-      when 'ActionController::BadRequest'
-        raise error_class, response
+    # Unsafe reflection method constantize called with parameter value.
+    # I think this is ok as it's only available in test env.
+    error_class = error_class_string.constantize
 
-      when 'ActiveRecord::RecordNotUnique'
-        raise error_class, msg
+    case error_class_string
+    when 'ActionController::BadRequest'
+      raise error_class, response
 
-      when 'CustomErrors::UnsupportedMediaTypeError',
-            'CustomErrors::NotAcceptableError'
-        raise error_class.new(msg, Settings.supported_media_types)
+    when 'ActiveRecord::RecordNotUnique'
+      raise error_class, msg
 
-      else
-        raise error_class, msg
-      end
-
+    when 'CustomErrors::UnsupportedMediaTypeError',
+          'CustomErrors::NotAcceptableError'
+      raise error_class.new(msg, Settings.supported_media_types)
+    else
+      raise error_class, msg
     end
   end
 end

@@ -154,10 +154,10 @@ module MetadataState
       last_value = nil
 
       metadatas
-        .map { |m, index|
+        .map { |manager, index|
         indent = index == 0 ? '' : "#{'  ' * (index - 1)}-> "
-        group_name = indent + (m[:description] || '<nil>')
-        state = m.key?(name) ? m[name] : nil
+        group_name = indent + (manager[:description] || '<nil>')
+        state = manager.key?(name) ? manager[name] : nil
 
         value = format_value(name, state)
         location = ''

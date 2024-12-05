@@ -7,7 +7,7 @@ describe '/status.json' do
     }
   end
 
-  example 'everything ok' do
+  it 'everything ok' do
     get '/status.json'
 
     expect_success
@@ -22,7 +22,7 @@ describe '/status.json' do
     })
   end
 
-  example 'timeout (storage)' do
+  it 'timeout (storage)' do
     allow(AudioRecording).to receive(:check_storage) {
       # simulate timeout
       (1..120).each do |i|
@@ -45,7 +45,7 @@ describe '/status.json' do
     })
   end
 
-  example 'redis cant connect' do
+  it 'redis cant connect' do
     allow(BawWorkers::Config.redis_communicator).to \
       receive(:ping)
       .and_raise(Redis::CannotConnectError, 'message')
@@ -63,7 +63,7 @@ describe '/status.json' do
     })
   end
 
-  example 'upload service, bad storage' do
+  it 'upload service, bad storage' do
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_return(
         body: '{"data_provider":{"error": "error message"}}',
@@ -85,7 +85,7 @@ describe '/status.json' do
     })
   end
 
-  example 'upload service, somewhere in the middle error' do
+  it 'upload service, somewhere in the middle error' do
     # error generated due to bad config in prod, but we didn't handle it well, hence the test
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_return(body: "Client sent an HTTP request to an HTTPS server.\n", status: 400)
@@ -104,7 +104,7 @@ describe '/status.json' do
     })
   end
 
-  example 'upload service, time out' do
+  it 'upload service, time out' do
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_timeout
 

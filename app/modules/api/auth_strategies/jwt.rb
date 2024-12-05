@@ -20,7 +20,6 @@ module Api
         return if token.nil?
 
         jwt = ::Api::Jwt.decode(token)
-
         unless jwt.valid?
           Rails.logger.debug('JWT authorization failed', jwt:)
           # intentionally obscure here, this is a public message.
@@ -34,7 +33,7 @@ module Api
 
         user = User.find_by(id: jwt.subject)
 
-        return fail!("Unknown user in JWT sub claim #{jwt.subject}") if user.nil?
+        return fail!("Unknown user id `#{jwt.subject}` in JWT sub claim") if user.nil?
 
         env[ENV_KEY] = jwt
         success! user
@@ -46,7 +45,7 @@ module Api
       def parse_token
         header = authorization_header
 
-        return unless header.present?
+        return if header.blank?
 
         parse_header(header)
       end

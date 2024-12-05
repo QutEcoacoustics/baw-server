@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PublicMailer < ActionMailer::Base
+class PublicMailer < ApplicationMailer
   default from: Settings.mailer.emails.sender_address
 
   # @param [User] logged_in_user
@@ -41,9 +41,9 @@ class PublicMailer < ActionMailer::Base
   def send_message(logged_in_user, model, rails_request, subject_prefix, template_name)
     @info = {
       logged_in_user_name: logged_in_user.blank? ? nil : logged_in_user.user_name,
-      model: model,
-      sender_email: model.email.blank? ? nil : model.email,
-      sender_name: model.name.blank? ? "someone (who didn't include their name)" : model.name,
+      model:,
+      sender_email: model.email.presence,
+      sender_name: (model.name.presence || "someone (who didn't include their name)"),
       client_ip: rails_request.blank? ? '' : rails_request.remote_ip,
       client_browser: rails_request.blank? ? '' : rails_request.user_agent,
       datestamp: Time.zone.now.utc.iso8601
@@ -54,7 +54,7 @@ class PublicMailer < ActionMailer::Base
       to: Settings.mailer.emails.required_recipients,
       subject: "#{Settings.mailer.emails.email_prefix} [#{subject_prefix}] Form submission from #{@info[:sender_name]}.",
       template_path: 'public_mailer',
-      template_name: template_name
+      template_name:
     )
   end
 end

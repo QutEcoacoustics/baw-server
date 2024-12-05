@@ -2,6 +2,8 @@
 
 module ResqueHelpers
   module Emulate
+    @logger = SemanticLogger[ResqueHelpers::Emulate]
+
     module_function
 
     def resque_worker_with_job(job_class, job_args, opts = {})
@@ -29,7 +31,8 @@ module ResqueHelpers
     # @param [Boolean] verbose
     # @param [Boolean] fork
     # @return [Array] worker, job
-    # @param [String] override_class - specify to switch what type actually processes the payload at the last minute. Useful for testing.
+    # @param [String,nil] override_class - specify to switch what type actually
+    #   processes the payload at the last minute. Useful for testing.
     def resque_worker(queue, verbose, fork, override_class = nil)
       queue ||= 'test_queue'
 
@@ -46,22 +49,29 @@ module ResqueHelpers
         end
 
         # can't fork during tests
-        without_forking do
-          # start worker working, using interval of 0.5 seconds
-          # see Resque::Worker#work
-          worker.work(0.5) do |worker_job|
-            job = worker_job
-          end
-        end
+        #without_forking do
+        # start worker working, using interval of 0.5 seconds
+        # see Resque::Worker#work
+        @logger.info('Waiting for job in process', job:)
+        worker.work(0)
+        # do |worker_job|
+        #   job = worker_job
+        # end
+        #end
 
       else
         job = worker.reserve
 
         unless job.nil?
           job.payload['class'] = override_class if override_class
+          @logger.info('Performing job in process', job:)
           finished_job = worker.perform(job)
           job = finished_job
+
+          ActiveRecord::Base.connection_pool.release_connection
+          ActiveRecord::Base.connection_handler.clear_active_connections!(:all)
         end
+
       end
 
       [worker, job]
@@ -121,25 +131,31 @@ module ResqueHelpers
       example_group.define_metadata_state :ignore_leftover_jobs, default: false
 
       example_group.before do
-        # Disable the inbuilt test adapter for every test!
-        # https://github.com/rails/rails/issues/37270
-        (ActiveJob::Base.descendants << ActiveJob::Base).each do |klass|
-          klass.disable_test_adapter if defined?(klass.disable_test_adapter)
-        end
-        ActiveJob::Base.queue_adapter = :resque
-
         logger.info(trace_metadata(:pause_test_jobs))
         BawWorkers::ResquePatch::PauseDequeueForTests.set_paused(get_pause_test_jobs)
+
+        # NOTE: we disable recurring jobs by default on our test scheduler
+        # because extra enqueued jobs while other tests are running would break
+        # so many things.
+        logger.info('Clearing all recurring schedules')
+        BawWorkers::ResqueApi.clear_all_schedules
       end
 
       example_group.after do |example|
+        # NOTE: we disable recurring jobs by default on our test scheduler
+        # because extra enqueued jobs while other tests are running would break
+        # so many things.
+        logger.info('Clearing all recurring schedules')
+        BawWorkers::ResqueApi.clear_all_schedules
+
         remaining = BawWorkers::ResqueApi.queued_count
         next if remaining.zero?
 
         logger.info(trace_metadata(:ignore_leftover_jobs))
         unless get_ignore_leftover_jobs
           spec_info = example.location
-          raise "There are #{remaining} uncompleted jobs for this spec: #{spec_info}"
+          other_jobs = BawWorkers::ResqueApi.job_count_by_class
+          raise "There are #{remaining} uncompleted jobs for this spec: #{spec_info}\n#{other_jobs}"
         end
 
         logger.warn "#{remaining} jobs are still in the queue, ignored intentionally by ignore_pending_jobs"
@@ -205,7 +221,10 @@ module ResqueHelpers
 
       aggregate_failures do
         expect(queued).to be_a(Array)
-        expect(queued.size).to eq count
+        expect(queued).to(
+          have(count).items,
+          "expected array with count #{count}, but got #{queued.size} with items: #{queued.inspect}"
+        )
       end
       queued
     end
@@ -260,7 +279,7 @@ module ResqueHelpers
       connection_settings = Settings.redis.connection.to_h.freeze
       lock = Concurrent::Semaphore.new(1)
       lock.acquire
-      r = Concurrent::Promises.future(connection_settings) { |cs|
+      audio_recording = Concurrent::Promises.future(connection_settings) { |cs|
         redis = Redis.new(cs)
         messages = []
         catch(:stop) do
@@ -279,7 +298,7 @@ module ResqueHelpers
         lock.release
       end
 
-      r.value!
+      audio_recording.value!
     end
 
     # Pop a single job off of `queue_name` and run it locally.
@@ -324,11 +343,11 @@ module ResqueHelpers
 
     # wait for running jobs (either enqueued or running) to be completed for a short period.
     def wait_for_jobs(timeout: 5)
-      started = Time.now
+      started = Time.zone.now
       elapsed = 0
       count = 0
       while elapsed < timeout
-        now = Time.now
+        now = Time.zone.now
         elapsed = now - started
 
         statuses = BawWorkers::ResqueApi.statuses(
@@ -363,10 +382,10 @@ module ResqueHelpers
 
       # return a proc that will do the waiting
       lambda do
-        started = Time.now
+        started = Time.zone.now
         elapsed = 0
         loop do
-          elapsed = Time.now - started
+          elapsed = Time.zone.now - started
           logger.info('IntroduceDelay: Waiting for job method to be invoked', elapsed:)
           sleep 0.1
 
@@ -429,7 +448,7 @@ module ResqueHelpers
         sleep 0.5 until BawWorkers::ResqueApi.failed_count == error_statuses_count || (now - started) > (timeout + 10)
       end
 
-      unless error.blank?
+      if error.present?
         details = BawWorkers::ResqueApi.failed.reduce('') { |message, failed| "#{message}\n#{failed}" }
         raise "#{error}\nFailures that occurred while waiting: #{details}\nStatuses received #{statuses}"
       end
@@ -452,6 +471,25 @@ module ResqueHelpers
       }
     end
 
+    def assert_mailer_job(message_type)
+      jobs = expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
+      expect(jobs.first['args'].first['arguments'][1]).to eq(message_type)
+    end
+
+    def perform_mailer_job(message_type)
+      assert_mailer_job(message_type)
+      perform_jobs(count: 1)
+    end
+
+    def perform_purge_jobs
+      while (purge_jobs = BawWorkers::ResqueApi.jobs_queued_of(ActiveStorage::PurgeJob)).any?
+        # expect only jobs of this type
+        expect_enqueued_jobs(purge_jobs.count, of_class: ActiveStorage::PurgeJob)
+
+        perform_jobs(count: purge_jobs.count)
+      end
+    end
+
     private
 
     # like Time.now but ignores Timecop
@@ -465,7 +503,7 @@ class FakeJob
   def self.perform(*job_args)
     {
       job_args:,
-      result: Time.now
+      result: Time.zone.now
     }
   end
 end

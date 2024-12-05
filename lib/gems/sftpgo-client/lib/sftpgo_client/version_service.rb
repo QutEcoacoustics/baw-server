@@ -9,7 +9,7 @@ module SftpgoClient
     def get_version
       response = wrap_response(@connection.get(VERSION_PATH))
 
-      response.fmap { |r| SftpgoClient::VersionInfo.new(r.body) }
+      response.fmap { |audio_recording| SftpgoClient::VersionInfo.new(audio_recording.body) }
     end
   end
 end

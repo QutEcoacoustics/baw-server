@@ -86,14 +86,7 @@ module Admin
     end
 
     # DELETE /admin/tags/:id
-    def destroy
-      @tag = Tag.find(params[:id])
-
-      @tag.destroy
-      respond_to do |format|
-        format.html { redirect_to admin_tags_path, notice: 'Tag was successfully destroyed.' }
-      end
-    end
+    # Handled in Archivable
 
     private
 

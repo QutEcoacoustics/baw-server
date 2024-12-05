@@ -15,7 +15,8 @@ module Mime
         set = Mime::LOOKUP[mime_string]
         sym = set.instance_variable_get('@symbol') if set
         return sym.to_s if sym
-        return $LAST_MATCH_INFO[:last_token] if mime_string =~ /(?<last_token>\w+)$/
+
+        $LAST_MATCH_INFO[:last_token] if mime_string =~ /(?<last_token>\w+)$/
       end
     end
   end

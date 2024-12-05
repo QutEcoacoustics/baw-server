@@ -22,7 +22,7 @@ describe Filter::Query do
 
   context 'when using expressions' do
     context 'with bad input will error' do
-      it 'will fail with an expression function that does not exist' do
+      it 'fails with an expression function that does not exist' do
         expect {
           create_filter(
             {
@@ -34,10 +34,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expression function `month` does not exist')
+          'Filter parameters were not valid: Expression function `month` does not exist')
       end
 
-      it 'will fail without a value' do
+      it 'fails without a value' do
         expect {
           create_filter(
             {
@@ -49,10 +49,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expression must contain a value')
+          'Filter parameters were not valid: Expression must contain a value')
       end
 
-      it 'will fail with only one value' do
+      it 'fails with only one value' do
         expect {
           create_filter(
             {
@@ -64,10 +64,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expressions must contain at least one function')
+          'Filter parameters were not valid: Expressions must contain at least one function')
       end
 
-      it 'will fail with no expressions key' do
+      it 'fails with no expressions key' do
         expect {
           create_filter(
             {
@@ -79,7 +79,7 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expressions object must contain an expressions array')
+          'Filter parameters were not valid: Expressions object must contain an expressions array')
       end
     end
 
@@ -98,7 +98,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           LEFT OUTER JOIN "sites"
@@ -126,7 +126,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
               CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
@@ -161,7 +161,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           LEFT OUTER JOIN "sites"
@@ -189,7 +189,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
               CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
@@ -224,7 +224,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -256,7 +256,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
               CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
@@ -278,7 +278,7 @@ describe Filter::Query do
         compare_filter_sql(params, complex_result)
       end
 
-      it 'will fail if a model cannot provide a timezone' do
+      it 'fails if a model cannot provide a timezone' do
         expect {
           Filter::Query.new(
             {
@@ -293,7 +293,7 @@ describe Filter::Query do
             Tag.filter_settings
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Cannot use `local_offset` or `local_tz` with the `Tag` model because it does have timezone information')
+          'Filter parameters were not valid: Cannot use `local_offset` or `local_tz` with the `Tag` model because it does have timezone information')
       end
 
       it 'ensures local_offset comes before time_of_day' do
@@ -308,7 +308,7 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expression function `local_offset` or `local_tz` is not compatible with type `time`')
+          'Filter parameters were not valid: Expression function `local_offset` or `local_tz` is not compatible with type `time`')
       end
 
       it 'ensures local_tz comes before time_of_day' do
@@ -323,7 +323,7 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expression function `local_offset` or `local_tz` is not compatible with type `time`')
+          'Filter parameters were not valid: Expression function `local_offset` or `local_tz` is not compatible with type `time`')
       end
 
       it 'fails if a non-time is given to a time_of_day filter' do
@@ -343,7 +343,7 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Expression time_of_day must be supplied with a time, got `2022-02-02T22:22`')
+          'Filter parameters were not valid: Expression time_of_day must be supplied with a time, got `2022-02-02T22:22`')
       end
 
       context 'when using an unsupported type' do
@@ -363,7 +363,7 @@ describe Filter::Query do
                 }
               ).query_full
             }.to raise_error(CustomErrors::FilterArgumentError,
-              "Expression function `local_offset` or `local_tz` is not compatible with type `#{type}`")
+              "Filter parameters were not valid: Expression function `local_offset` or `local_tz` is not compatible with type `#{type}`")
           end
         end
       end

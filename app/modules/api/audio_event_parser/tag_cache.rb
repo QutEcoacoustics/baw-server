@@ -7,9 +7,13 @@ module Api
       # @return [Hash<string,Tag>]
       attr_accessor :cache
 
-      def initialize(import_id)
+      # @return [Integer]
+      attr_accessor :import_id
+
+      def initialize(import_id:, creator_id:)
         @cache = {}
         @import_id = import_id
+        @creator_id = creator_id
       end
 
       def map_tags(tags)
@@ -32,6 +36,7 @@ module Api
       def new_tag(text)
         Tag.new(
           text:,
+          creator_id: @creator_id,
           notes: {
             created: {
               message: 'Created via audio event import',

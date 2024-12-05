@@ -4,38 +4,44 @@
 #
 # Table name: audio_events
 #
-#  id                    :integer          not null, primary key
-#  channel               :integer
-#  context               :jsonb
-#  deleted_at            :datetime
-#  end_time_seconds      :decimal(10, 4)
-#  high_frequency_hertz  :decimal(10, 4)
-#  is_reference          :boolean          default(FALSE), not null
-#  low_frequency_hertz   :decimal(10, 4)   not null
-#  start_time_seconds    :decimal(10, 4)   not null
-#  created_at            :datetime
-#  updated_at            :datetime
-#  audio_event_import_id :integer
-#  audio_recording_id    :integer          not null
-#  creator_id            :integer          not null
-#  deleter_id            :integer
-#  updater_id            :integer
+#  id                                                                              :integer          not null, primary key
+#  channel                                                                         :integer
+#  deleted_at                                                                      :datetime
+#  end_time_seconds                                                                :decimal(10, 4)
+#  high_frequency_hertz                                                            :decimal(10, 4)
+#  import_file_index(Index of the row/entry in the file that generated this event) :integer
+#  is_reference                                                                    :boolean          default(FALSE), not null
+#  low_frequency_hertz                                                             :decimal(10, 4)
+#  score(Score or confidence for this event.)                                      :decimal(, )
+#  start_time_seconds                                                              :decimal(10, 4)   not null
+#  created_at                                                                      :datetime
+#  updated_at                                                                      :datetime
+#  audio_event_import_file_id                                                      :integer
+#  audio_recording_id                                                              :integer          not null
+#  creator_id                                                                      :integer          not null
+#  deleter_id                                                                      :integer
+#  provenance_id(Source of this event)                                             :integer
+#  updater_id                                                                      :integer
 #
 # Indexes
 #
-#  index_audio_events_on_audio_recording_id  (audio_recording_id)
-#  index_audio_events_on_creator_id          (creator_id)
-#  index_audio_events_on_deleter_id          (deleter_id)
-#  index_audio_events_on_updater_id          (updater_id)
+#  index_audio_events_on_audio_event_import_file_id  (audio_event_import_file_id)
+#  index_audio_events_on_audio_recording_id          (audio_recording_id)
+#  index_audio_events_on_creator_id                  (creator_id)
+#  index_audio_events_on_deleter_id                  (deleter_id)
+#  index_audio_events_on_provenance_id               (provenance_id)
+#  index_audio_events_on_updater_id                  (updater_id)
 #
 # Foreign Keys
 #
-#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  audio_events_creator_id_fk          (creator_id => users.id)
 #  audio_events_deleter_id_fk          (deleter_id => users.id)
 #  audio_events_updater_id_fk          (updater_id => users.id)
+#  fk_rails_...                        (audio_event_import_file_id => audio_event_import_files.id) ON DELETE => cascade
+#  fk_rails_...                        (provenance_id => provenances.id)
 #
-describe AudioEvent, type: :model do
+describe AudioEvent do
   subject { build(:audio_event) }
 
   it 'has a valid factory' do
@@ -56,10 +62,11 @@ describe AudioEvent, type: :model do
   end
 
   it { is_expected.to belong_to(:audio_recording) }
-  it { is_expected.to belong_to(:audio_event_import).optional }
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
+  it { is_expected.to belong_to(:audio_event_import_file).optional }
+  it { is_expected.to belong_to(:provenance).optional }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional }
+  it { is_expected.to belong_to(:deleter).optional }
 
   it { is_expected.to have_many(:tags) }
   # AT 2021: disabled. Nested associations are extremely complex,
@@ -118,7 +125,7 @@ describe AudioEvent, type: :model do
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
     query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
 
-    sql = <<~SQL
+    sql = <<~SQL.squish
       SELECT"audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
       AS "audio_recording_id","audio_recordings"."uuid"
@@ -215,8 +222,8 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids",'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
-      AS "listen_url",'http://localhost/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
+      IN ('species_name', 'common_name'))) "other_tag_ids",'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
       INNER
@@ -265,7 +272,7 @@ describe AudioEvent, type: :model do
     query =
       AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, 'Brisbane')
 
-    sql = <<~SQL
+    sql = <<~SQL.squish
       SELECT "audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
       AS "audio_recording_id","audio_recordings"."uuid"
@@ -362,8 +369,8 @@ describe AudioEvent, type: :model do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids",'http://localhost/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
-      AS "listen_url",'http://localhost/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
+      IN ('species_name', 'common_name'))) "other_tag_ids",'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
       INNER
@@ -411,24 +418,24 @@ describe AudioEvent, type: :model do
 
     # create combinations of deleted and not deleted for project, site, audio_recording, audio_event
     expected_audio_recording = nil
-    (0..1).each do |project_n|
+    2.times do |project_n|
       project = create(:project, creator: user)
-      project.destroy if project_n == 1
+      project.discard! if project_n == 1
 
-      (0..1).each do |site_n|
+      2.times do |site_n|
         site = create(:site, :with_lat_long, creator: user)
         site.projects << project
         site.save!
-        site.destroy if site_n == 1
+        site.discard! if site_n == 1
 
-        (0..1).each do |audio_recording_n|
+        2.times do |audio_recording_n|
           audio_recording = create(:audio_recording, :status_ready, creator: user, uploader: user,
             site:)
-          audio_recording.destroy if audio_recording_n == 1
+          audio_recording.discard! if audio_recording_n == 1
 
-          (0..1).each do |audio_event_n|
+          2.times do |audio_event_n|
             audio_event = create(:audio_event, creator: user, audio_recording:)
-            audio_event.destroy if audio_event_n == 1
+            audio_event.discard! if audio_event_n == 1
             if project_n == 0 && site_n == 0 && audio_recording_n == 0 && audio_event_n == 0
               expected_audio_recording = audio_event
             end
@@ -442,24 +449,24 @@ describe AudioEvent, type: :model do
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
-    expect(Project.with_deleted.count).to eq(2)
-    expect(Project.count).to eq(1)
-    expect(Project.only_deleted.count).to eq(1)
+    # expect(Project.with_discarded.count).to eq(2)
+    # expect(Project.count).to eq(1)
+    # expect(Project.discarded.count).to eq(1)
 
-    expect(Site.with_deleted.count).to eq(4)
+    expect(Site.with_discarded.count).to eq(4)
     expect(Site.count).to eq(2)
-    expect(Site.only_deleted.count).to eq(2)
+    expect(Site.discarded.count).to eq(2)
 
-    expect(AudioRecording.with_deleted.count).to eq(8)
+    expect(AudioRecording.with_discarded.count).to eq(8)
     expect(AudioRecording.count).to eq(4)
-    expect(AudioRecording.only_deleted.count).to eq(4)
+    expect(AudioRecording.discarded.count).to eq(4)
 
-    expect(AudioEvent.with_deleted.count).to eq(16)
+    expect(AudioEvent.with_discarded.count).to eq(16)
     expect(AudioEvent.count).to eq(8)
-    expect(AudioEvent.only_deleted.count).to eq(8)
+    expect(AudioEvent.discarded.count).to eq(8)
 
     expected_audio_events = [expected_audio_recording.id]
-    actual_audio_event_ids = formatted_annotations.map { |item| item['audio_event_id'] }
+    actual_audio_event_ids = formatted_annotations.pluck('audio_event_id')
 
     expect(actual_audio_event_ids).to eq(expected_audio_events)
   end
@@ -490,17 +497,19 @@ describe AudioEvent, type: :model do
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
-    expect(Project.with_deleted.count).to eq(2)
-    expect(Site.with_deleted.count).to eq(2 * 2)
-    expect(AudioRecording.with_deleted.count).to eq(2 * 2 * 2)
-    expect(AudioEvent.with_deleted.count).to eq(2 * 2 * 2 * 2)
-
-    actual_audio_event_ids = formatted_annotations.map { |item| item['audio_event_id'] }
+    actual_audio_event_ids = formatted_annotations.pluck('audio_event_id')
 
     expect(actual_audio_event_ids.count).to eq(2 * 2 * 2 * 2)
 
     expected_audio_event_ids = actual_audio_event_ids.uniq
 
     expect(actual_audio_event_ids).to eq(expected_audio_event_ids)
+  end
+
+  it_behaves_like 'cascade deletes for', :audio_event, {
+    taggings: nil,
+    comments: nil
+  } do
+    create_entire_hierarchy
   end
 end

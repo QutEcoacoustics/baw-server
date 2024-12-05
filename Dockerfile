@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.3
+# syntax=docker/dockerfile:1.4
 # Debian releases:
 #
-FROM ruby:3.1.2-slim-bullseye
+FROM ruby:3.2.2-slim-bullseye
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -39,8 +39,10 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   && mkdir -p "$GEM_HOME/bin" \
   && chmod 777 "$GEM_HOME/bin" \
   # https://github.com/moby/moby/issues/20437
-  && mkdir -p /home/${app_user}/${app_name}/tmp \
+  && mkdir -p /home/${app_user}/${app_name} \
+  && chmod g+srx /home/${app_user}/${app_name} \
   && chown -R 1000:1000 /home/${app_user} \
+  && mkdir -p /home/${app_user}/${app_name}/tmp \
   && mkdir /data \
   && chown -R 1000:1000 /data \
   && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi)
@@ -59,10 +61,9 @@ ENV RAILS_ENV=production \
   # generate assets for rails app
   # must be done in context (i.e. in production for production, not in dev for production)
   # should not be done for workers and in dev/test environments
-  GENERATE_ASSETS=false
+  GENERATE_ASSETS=false \
+  BINDING=0.0.0.0
 
-
-USER ${app_user}
 
 # "Install" our metadata utility
 COPY --from=qutecoacoustics/emu:6.0.0 --chown==${app_user} /emu /emu
@@ -75,15 +76,31 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-RUN (([ "x${trimmed}" != "xtrue" ] && echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc") || true) \
-  && (([ "x${trimmed}" = "xtrue" ] && bundle config set without development test) || true)
-  # ensure required bundler version is installed
-  # https://bundler.io/blog/2019/05/14/solutions-for-cant-find-gem-bundler-with-executable-bundle.html
-RUN gem install bundler -v "$(grep -A 1 "BUNDLED WITH" Gemfile.lock | tail -n 1)" \
-  # install baw-server
-  && bundle install \
-  # install docs for dev work
-  && (([ "x${trimmed}" != "xtrue" ] && solargraph download-core && solargraph bundle) || true)
+  # run this as the app user
+RUN <<EOF
+  su ${app_user} << "EOF2"
+    echo "Running as: $(whoami) || $(id)"
+    set -eux
+
+    # last known version that worked
+    # gem version 3.5.21
+    # bundler version 2.5.21
+    gem update --system 3.5.21
+
+    # skip installing gem documentation
+    if [ "x${trimmed}" = "xtrue" ]; then
+      echo 'gem: --no-document' >> "$HOME/.gemrc"
+      bundle config set without development test
+    fi
+
+    # ensure required bundler version is installed
+    # https://bundler.io/blog/2019/05/14/solutions-for-cant-find-gem-bundler-with-executable-bundle.html
+    gem install bundler -v "$(grep -A 1 'BUNDLED WITH' Gemfile.lock | tail -n 1)"
+
+    # install baw-server
+    bundle install
+EOF2
+EOF
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
@@ -96,11 +113,25 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 COPY --chown=${app_user}:${app_user} ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 # asign permissions to special things
-RUN  chmod a+x ./provision/*.sh \
-  && chmod a+x ./bin/* \
-  # https://github.com/moby/moby/issues/20437
-  && chmod 1777 ./tmp
+RUN <<EOF bash
+  set -ex
 
+  # allow group to read
+  chmod -R g+r .
+  find . -type d -exec chmod g+srx {} \;
+
+  # and write for assets compilation
+  chmod -R g+ws ./public
+
+  # ensure execute permssions for scripts
+  chmod a+x ./provision/*.sh
+  chmod a+x ./bin/*
+
+  # https://github.com/moby/moby/issues/20437
+  chmod 1777 ./tmp
+EOF
+
+USER ${app_user}
 
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only

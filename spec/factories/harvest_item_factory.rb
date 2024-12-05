@@ -24,8 +24,8 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
-#  fk_rails_...  (harvest_id => harvests.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
+#  fk_rails_...  (harvest_id => harvests.id) ON DELETE => cascade
 #  fk_rails_...  (uploader_id => users.id)
 #
 FactoryBot.define do

@@ -24,7 +24,7 @@ module Baw
         def visit_Baw_Arel_Nodes_OnConflict(o, collector)
           collector << 'ON CONFLICT '
 
-          visit o.target, collector
+          maybe_visit o.target, collector
 
           collect_nodes_for o.where, collector, ' WHERE ', ' AND ' if o.where
           maybe_visit o.action, collector
@@ -36,7 +36,7 @@ module Baw
 
         def visit_Baw_Arel_Nodes_DoUpdateSetValues(o, collector)
           collector << 'DO UPDATE '
-          unless o.values.blank?
+          if o.values.present?
             collector << 'SET '
             collector = inject_join o.values, collector, ', '
           end
@@ -48,7 +48,7 @@ module Baw
 
         def visit_Baw_Arel_Nodes_DoUpdateSetExpression(o, collector)
           collector << 'DO UPDATE '
-          unless o.expression.blank?
+          if o.expression.present?
             collector << 'SET '
             visit o.expression, collector
           end
@@ -69,15 +69,52 @@ module Baw
 
         def visit_Baw_Arel_Nodes_AsTimeZone(o, collector)
           collector << '('
-          o.expressions.each_with_index do |e, i|
-            collector << ' ' if i != 0
-            collector = visit e, collector
-          end
+          collector = inject_join o.expressions, collector, ' '
           collector << ')'
           collector
         end
-      end
 
+        def visit_Baw_Arel_Nodes_ArrayLike(o, collector)
+          # essentially a noop, used only for injecting array like methods into
+          # the AST
+          visit o.expression, collector
+        end
+
+        def visit_Baw_Arel_Nodes_ArrayConstructor(o, collector)
+          # wrapping in brackets
+          collector << '(ARRAY['
+          collector = inject_join o.expression, collector, ', '
+          collector << '])'
+        end
+
+        def visit_Baw_Arel_Nodes_Subscript(o, collector)
+          collector = visit o.expression, collector
+          collector << '['
+
+          # 4 cases:
+          # 1. get one item 1=1
+          # 2. get a bounded range of items 1:2
+          # 3/4. get unbounded range of items 1: or :2
+
+          case [o.subscript_start, o.subscript_end]
+          in Integer => a, Integer => b if a == b
+            collector = visit o.subscript_start, collector
+          in nil, Integer
+            collector << ':'
+            collector = visit o.subscript_end, collector
+          in Integer, nil
+            collector = visit o.subscript_start, collector
+            collector << ':'
+          else
+            collector = visit o.subscript_start, collector
+            collector << ':'
+            collector = visit o.subscript_end, collector
+          end
+
+          collector << ']'
+          collector
+        end
+      end
       # rubocop:enable Naming/MethodName, Naming/MethodParameterName
     end
   end

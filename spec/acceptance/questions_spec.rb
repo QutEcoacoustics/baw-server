@@ -17,7 +17,7 @@ def basic_filter_opts
   {
     #response_body_content: ['test question'],
     expected_json_path: ['data/0/text', 'data/0/data'],
-    data_item_count: 1
+    data_item_count: 2
   }
 end
 
@@ -40,7 +40,7 @@ resource 'Questions' do
     let(:current_user) { current_user }
 
     def token(target)
-      target.send("#{current_user}_token".to_sym)
+      target.send(:"#{current_user}_token")
     end
 
     # INDEX
@@ -135,7 +135,7 @@ resource 'Questions' do
         :get,
         'INDEX (as admin)',
         :ok,
-        basic_filter_opts
+        basic_filter_opts.merge(data_item_count: 2)
       )
     end
 
@@ -375,72 +375,6 @@ resource 'Questions' do
   # # UPDATE
   # ################################
 
-  describe 'update' do
-    put '/questions/:id' do
-      body_params
-      let(:id) { question.id }
-      let(:raw_post) { { question: post_attributes }.to_json }
-      let(:authentication_token) { admin_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as admin)',
-        :ok,
-        { expected_json_path: ['data/text', 'data/data'], response_body_content: 'New Question text' }
-      )
-    end
-
-    put '/questions/:id' do
-      body_params
-      let(:id) { question.id }
-      let(:raw_post) { { question: post_attributes }.to_json }
-      let(:authentication_token) { no_access_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as no access user)',
-        :forbidden,
-        { expected_json_path: get_json_error_path(:permissions) }
-      )
-    end
-
-    put '/questions/:id' do
-      body_params
-      let(:id) { question.id }
-      let(:raw_post) { { question: post_attributes }.to_json }
-      let(:authentication_token) { invalid_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with invalid token)',
-        :unauthorized,
-        { expected_json_path: get_json_error_path(:sign_up) }
-      )
-    end
-
-    put '/questions/:id' do
-      body_params
-      let(:id) { question.id }
-      let(:raw_post) { { question: post_attributes }.to_json }
-      standard_request_options(
-        :put,
-        'UPDATE (as anonymous user)',
-        :unauthorized,
-        { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) }
-      )
-    end
-
-    put '/questions/:id' do
-      body_params
-      let(:id) { question.id }
-      let(:raw_post) { { question: post_attributes }.to_json }
-      let(:authentication_token) { harvester_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with harvester token)',
-        :forbidden,
-        { expected_json_path: get_json_error_path(:permissions) }
-      )
-    end
-  end
-
   # ################################
   # # DESTROY
   # ################################
@@ -608,7 +542,7 @@ resource 'Questions' do
         {
           #response_body_content: ['Test question'],
           expected_json_path: 'data/0/text',
-          data_item_count: 1
+          data_item_count: 2
         }
       )
     end

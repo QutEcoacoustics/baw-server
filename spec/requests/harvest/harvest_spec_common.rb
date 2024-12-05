@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'support/shared_test_helpers'
 require_relative(Rails.root / 'spec/lib/gems/baw_workers/upload_service/upload_service_steps')
 
 module HarvestSpecCommon
@@ -124,7 +123,7 @@ module HarvestSpecCommon
 
   def expect_transition_error(new_status)
     expect_error(
-      :unprocessable_entity,
+      :unprocessable_content,
       match(/The request could not be understood: Cannot transition from .* to #{new_status}, \d+ allowed transitions found/),
       nil
     )
@@ -133,7 +132,7 @@ module HarvestSpecCommon
   def expect_transition_not_allowed
     expect_error(
       :method_not_allowed,
-      match(/The method received the request is known by the server but not supported by the target resource: Cannot update a harvest while it is .*/),
+      match(/not supported by the target resource: Cannot update a harvest while it is in state `.*`/),
       nil
     )
   end
@@ -213,7 +212,7 @@ module HarvestSpecCommon
   )
     report = api_data[:report]
 
-    report[:latest_activity_at] = Time.parse(report[:latest_activity_at])
+    report[:latest_activity_at] = Time.zone.parse(report[:latest_activity_at])
 
     # seconds
     expected_speed = 90

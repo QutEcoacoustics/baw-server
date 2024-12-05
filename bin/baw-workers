@@ -5,7 +5,7 @@ ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
 env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
 
 require 'bundler' # Set up gems listed in the Gemfile.
-Bundler.setup(:default, :server, :workers, env.to_sym)
+Bundler.setup(:default, env.to_sym)
 
 require 'bootsnap'
 Bootsnap.setup(

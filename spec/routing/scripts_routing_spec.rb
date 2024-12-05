@@ -12,8 +12,8 @@ describe ScriptsController, type: :routing do
     it { expect(get('/admin/scripts/1')).to route_to('admin/scripts#show', id: '1') }
 
     it { expect(get('/scripts')).to route_to('scripts#index', format: 'json') }
-    it { expect(get('/scripts/filter')).to route_to('scripts#filter', format: 'json') }
-    it { expect(post('/scripts/filter')).to route_to('scripts#filter', format: 'json') }
     it { expect(get('/scripts/1')).to route_to('scripts#show', id: '1', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/scripts', 'scripts', [:filterable]
   end
 end

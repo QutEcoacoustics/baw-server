@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'dry-validation'
+require 'dry-struct'
 require 'config'
 require_relative 'inspector'
 
@@ -137,5 +138,11 @@ module BawApp
   def all_trusted_proxies
     # placed in this class, because when used to boot app Settings is not yet extended with BawWeb::Settings
     @all_trusted_proxies ||= (Settings.trusted_proxies.map(&IPAddr.method(:new)) + ActionDispatch::RemoteIp::TRUSTED_PROXIES)
+  end
+
+  # Keeps a cached copy of the UTC timezone.
+  # @return [ActiveSupport::TimeZone]
+  def utc_tz
+    @utc_tz ||= ActiveSupport::TimeZone['UTC']
   end
 end

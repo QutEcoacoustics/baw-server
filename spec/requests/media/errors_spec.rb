@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-describe '.../media', type: :request, aggregate_failures: true do
+describe '.../media', :aggregate_failures, type: :request do
   include_context 'shared_test_helpers'
 
   create_audio_recordings_hierarchy
 
   let!(:lt_recording) {
-    FactoryBot.create(
+    create(
       :audio_recording,
       recorded_date: Time.zone.parse('2019-09-13T00:00:01+1000 '),
       duration_seconds: audio_file_bar_lt_metadata[:duration_seconds],
@@ -30,17 +30,17 @@ describe '.../media', type: :request, aggregate_failures: true do
         [
           'start_offset=-3&end_offset=30',
           'Custom Errors/Unprocessable Entity Error',
-          'start_offset parameter (-3.0) must be greater than or equal to 0.'
+          'The request could not be understood: start_offset parameter (-3.0) must be greater than or equal to 0.'
         ],
         [
           'start_offset=7180&end_offset=7210',
           'Custom Errors/Unprocessable Entity Error',
-          'end_offset parameter (7210.0) must be smaller than or equal to the duration of the audio recording (7194.7494).'
+          'The request could not be understood: end_offset parameter (7210.0) must be smaller than or equal to the duration of the audio recording (7194.7494).'
         ],
         [
           'start_offset=0&end_offset=6000',
           'Custom Errors/Requested Media Duration Invalid',
-          'Requested duration 6000.0 (0.0 to 6000.0) is greater than maximum (300.0).'
+          'The request could not be understood: Requested duration 6000.0 (0.0 to 6000.0) is greater than maximum (300.0).'
         ]
       ])
 
@@ -65,7 +65,7 @@ describe '.../media', type: :request, aggregate_failures: true do
         end
 
         it 'has a error response code' do
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it 'has no body' do

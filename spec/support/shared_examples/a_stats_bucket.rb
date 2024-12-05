@@ -8,6 +8,11 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
   let(:parent) { send(options[:parent]) }
   let(:other_key) { options[:other_key] }
 
+  def today_utc_range
+    today = Time.zone.now.utc.to_date
+    today...(today + 1.day)
+  end
+
   context 'when creating records' do
     let!(:default) {
       if has_other_relation
@@ -20,11 +25,11 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
     }
 
     it 'the correct default bucket value is used' do
-      expect(default.bucket).to eq(Date.today...(Date.today + 1.day))
+      expect(default.bucket).to eq(today_utc_range), "Expected #{default.bucket} to be #{today_utc_range}"
     end
 
     model = options[:model]
-    pks = defined?(model.primary_keys) ? model.primary_keys : [model.primary_key]
+    pks = model.primary_key.is_a?(Array) ? model.primary_key : [model.primary_key]
     options[:model].columns.each do |column|
       next if column.name == 'id'
       next if pks.include?(column.name)
@@ -42,12 +47,12 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
             other_key => second_parent.id
           ).reload
 
-          expect(second.bucket).to eq(Date.today...(Date.today + 1.day))
+          expect(second.bucket).to eq(today_utc_range)
         end
 
         it 'allows other records to have overlapping buckets' do
           second_parent = create(parent_factory)
-          bucket = ((Date.today.to_datetime + 0.5.day)...(Date.today.to_datetime + 1.day + 0.5.day))
+          bucket = ((Time.zone.today.to_datetime + 0.5.days)...(Time.zone.today.to_datetime + 1.day + 0.5.days))
           second = model.create!(
             other_key => second_parent.id,
             bucket:
@@ -76,7 +81,7 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
   end
 
   context 'with bad records' do
-    it 'will fail with no bucket' do
+    it 'fails with no bucket' do
       # active record knows the column is NOT NULL with a default value
       # you have to try really hard to outsmart it.
       # This test is testing the primary key is as we expect and is still valid.
@@ -103,7 +108,7 @@ RSpec.shared_examples 'a model with a temporal stats bucket' do |options|
     end
 
     if has_other_relation
-      it 'will fail with null as the other key' do
+      it 'fails with null as the other key' do
         expect {
           model.create!(
             other_key => nil

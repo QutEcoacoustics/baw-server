@@ -14,7 +14,7 @@ describe '/regions' do
   context 'with bad params' do
     render_error_responses
 
-    it 'will not accept notes via form data' do
+    it 'does not accept notes via form data' do
       old_notes = region.notes
 
       put "/regions/#{region.id}", params: {
@@ -22,7 +22,7 @@ describe '/regions' do
       }, **form_multipart_headers(owner_token)
 
       expect_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'The request could not be understood: found unpermitted parameter: :notes'
       )
 

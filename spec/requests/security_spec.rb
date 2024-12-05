@@ -103,7 +103,7 @@ describe '/security' do
       describe 'errors' do
         render_error_responses
 
-        it 'will error without email and login' do
+        it 'errors without email and login' do
           body = {
             user: {
               password:
@@ -111,11 +111,11 @@ describe '/security' do
           }
           post '/security', params: body, headers: headers(post: true), as: :json
 
-          expect_error(:unprocessable_entity,
+          expect_error(:unprocessable_content,
             'The request could not be understood: param is missing or the value is empty: login')
         end
 
-        it 'will error without password' do
+        it 'errors without password' do
           body = {
             user: {
               login: reader_user.email
@@ -123,11 +123,11 @@ describe '/security' do
           }
           post '/security', params: body, headers: headers(post: true), as: :json
 
-          expect_error(:unprocessable_entity,
+          expect_error(:unprocessable_content,
             'The request could not be understood: param is missing or the value is empty: password')
         end
 
-        it 'will error without password (2)' do
+        it 'errors without password (2)' do
           body = {
             user: {
               email: reader_user.email
@@ -135,7 +135,7 @@ describe '/security' do
           }
           post '/security', params: body, headers: headers(post: true), as: :json
 
-          expect_error(:unprocessable_entity,
+          expect_error(:unprocessable_content,
             'The request could not be understood: param is missing or the value is empty: password')
         end
       end
@@ -345,14 +345,14 @@ describe '/security' do
         expect_success
       end
 
-      it 'will reject nonsense' do
+      it 'rejects nonsense' do
         @token = 'nonsense'
         get "/projects/#{project.id}", headers: headers(token: @token), as: :json
 
-        expect_error(:unauthorized, 'You need to log in or register before continuing.')
+        expect_error(:unauthorized, 'Invalid authentication token')
       end
 
-      it 'will reject an empty string' do
+      it 'rejects an empty string' do
         @token = ''
         get "/projects/#{project.id}", headers: headers(token: @token), as: :json
 
@@ -414,30 +414,30 @@ describe '/security' do
         expect_success
       end
 
-      it 'will not accept a JWT that is expired' do
+      it 'does not accept a JWT that is expired' do
         @token = Api::Jwt.encode(subject: reader_user.id, expiration: -1.hour)
-        decoded_token = Api::Jwt.decode(@token)
+        Api::Jwt.decode(@token)
         get "/projects/#{project.id}", headers: headers(jwt: @token), as: :json
 
-        expect_error(:unauthorized, 'You need to log in or register before continuing.')
+        expect_error(:unauthorized, 'JWT decode error: token is expired')
       end
 
-      it 'will not accept a JWT that is that is not valid yet' do
+      it 'does not accept a JWT that is that is not valid yet' do
         @token = Api::Jwt.encode(subject: reader_user.id, not_before: 1.hour)
-        decoded_token = Api::Jwt.decode(@token)
+        Api::Jwt.decode(@token)
         get "/projects/#{project.id}", headers: headers(jwt: @token), as: :json
 
-        expect_error(:unauthorized, 'You need to log in or register before continuing.')
+        expect_error(:unauthorized, 'JWT decode error: token is immature')
       end
 
-      it 'will reject nonsense' do
+      it 'rejects nonsense' do
         @token = 'nonsense'
         get "/projects/#{project.id}", headers: headers(jwt: @token), as: :json
 
-        expect_error(:unauthorized, 'You need to log in or register before continuing.')
+        expect_error(:unauthorized, 'JWT decode error')
       end
 
-      it 'will reject an empty string' do
+      it 'rejects an empty string' do
         @token = ''
         get "/projects/#{project.id}", headers: headers(jwt: @token), as: :json
 

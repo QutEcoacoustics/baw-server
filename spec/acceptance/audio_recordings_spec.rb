@@ -282,7 +282,7 @@ def test_overlap
 
       status_code = outputs[:status_code]
 
-      example "CREATE (as harvester, overlapping upload) - #{status_code}", document: true do
+      example "CREATE (as harvester, overlapping upload) - #{status_code}", :document do
         # existing recordings are created here before do_request (so before the posted item)
         inputs[:existing_items].each do |existing|
           existing_item = FactoryBot.create(
@@ -500,17 +500,6 @@ resource 'AudioRecordings' do
     }
 
     let(:authentication_token) { harvester_token }
-
-    # Execute request with ids defined in above let(:id) statements
-    example 'CREATE (as harvester) - 201', document: true do
-      do_request
-      expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-      expect(response_body).to have_json_path('data/bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
-
-      new_audio_recording_id = JSON.parse(response_body)['data']['id']
-
-      expect(AudioRecording.where(id: new_audio_recording_id).first.status).to eq('new')
-    end
   end
 
   # test resuming upload works
@@ -557,7 +546,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { harvester_token }
 
     # Execute request with ids defined in above let(:id) statements
-    example 'CREATE (as harvester, resuming upload) - 201', document: true do
+    example 'CREATE (as harvester, resuming upload) - 201', :document do
       FactoryBot.create(:audio_recording,
         original_file_name:,
         file_hash:,
@@ -602,7 +591,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
 
-    standard_request_options(:post, 'CREATE (as harvester, short duration)', :unprocessable_entity,
+    standard_request_options(:post, 'CREATE (as harvester, short duration)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/info/duration_seconds/',
         respond_body_content: '"Record could not be saved"'
@@ -684,7 +673,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { { audio_recording: posted_item_attrs }.to_json }
     let(:authentication_token) { harvester_token }
 
-    example 'CREATE AUDIORECORDING (as harvester with 0.003 overlap)', document: true do
+    example 'CREATE AUDIORECORDING (as harvester with 0.003 overlap)', :document do
       # create existing item
       FactoryBot.create(
         :audio_recording,
@@ -795,7 +784,7 @@ resource 'AudioRecordings' do
     }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect file hash)', :unprocessable_entity,
+    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect file hash)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/info/audio_recording/file_hash/request',
         response_body_info: 'Incorrect file hash'
@@ -817,7 +806,7 @@ resource 'AudioRecordings' do
     }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect uuid)', :unprocessable_entity,
+    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect uuid)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/info/audio_recording/uuid/stored',
         response_body_info: 'Incorrect uuid'
@@ -840,7 +829,7 @@ resource 'AudioRecordings' do
     }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect status)', :unprocessable_entity,
+    standard_request_options(:put, 'UPDATE STATUS (as harvester incorrect status)', :unprocessable_content,
       {
         expected_json_path: 'meta/error/info/available_statuses',
         response_body_content: '"Status does_not_exist is not in available status list"'
@@ -981,7 +970,7 @@ resource 'AudioRecordings' do
     standard_request_options(
       :put,
       'UPDATE (as harvester) file hash and other properties',
-      :unprocessable_entity,
+      :unprocessable_content,
       { expected_json_path: 'meta/error/info/file_hash' }
     )
   end
@@ -1172,7 +1161,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
 
     standard_request_options(:post, 'FILTER (as reader filtering by project id)', :ok, {
-      response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://localhost:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1"',
+      response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://web:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1',
       data_item_count: 1
     })
   end

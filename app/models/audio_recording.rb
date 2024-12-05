@@ -45,7 +45,7 @@
 #
 #  audio_recordings_creator_id_fk   (creator_id => users.id)
 #  audio_recordings_deleter_id_fk   (deleter_id => users.id)
-#  audio_recordings_site_id_fk      (site_id => sites.id)
+#  audio_recordings_site_id_fk      (site_id => sites.id) ON DELETE => cascade
 #  audio_recordings_updater_id_fk   (updater_id => users.id)
 #  audio_recordings_uploader_id_fk  (uploader_id => users.id)
 #
@@ -54,6 +54,7 @@ require 'digest/md5'
 
 class AudioRecording < ApplicationRecord
   extend Enumerize
+  extend AudioRecording::ArelExpressions
 
   attr_reader :overlapping
 
@@ -65,20 +66,21 @@ class AudioRecording < ApplicationRecord
   has_many :tags, through: :audio_events
   has_many :dataset_items, inverse_of: :audio_recording
 
-  has_one :statistics, class_name: Statistics::AudioRecordingStatistics.name
+  has_one :statistics, class_name: Statistics::AudioRecordingStatistics.name, dependent: :destroy
+  has_one :harvest_item, inverse_of: :audio_recording, dependent: :destroy
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings,
+  belongs_to :creator, class_name: 'User', inverse_of: :created_audio_recordings
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_audio_recordings,
     optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings,
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_audio_recordings,
     optional: true
-  belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
+  belongs_to :uploader, class_name: 'User', inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :audio_events
 
   # Enums for audio recording status
   # new - record created and passes validation
@@ -101,7 +103,7 @@ class AudioRecording < ApplicationRecord
   HASH_TOKEN = '::'
 
   # TODO: clean notes column in db
-  serialize :notes, JsonTextSerializer
+  serialize :notes, coder: JsonTextSerializer
 
   # association validations
   # AT: disabled... we don't really want to check those models are valid
@@ -139,47 +141,47 @@ class AudioRecording < ApplicationRecord
   after_initialize :set_uuid
 
   # postgres-specific
-  scope :start_after, ->(time) { where('recorded_date >= ?', time) }
-  scope :start_before, ->(time) { where('recorded_date <= ?', time) }
-  scope :start_before_not_equal, ->(time) { where('recorded_date < ?', time) }
+  scope :start_after, ->(time) { where(recorded_date: time..) }
+  scope :start_before, ->(time) { where(recorded_date: ..time) }
+  scope :start_before_not_equal, ->(time) { where(recorded_date: ...time) }
   scope :end_after, ->(time) { where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time) }
-  scope :end_after_not_equal, lambda { |time|
+  scope(:end_after_not_equal, lambda { |time|
                                 where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  > ?', time)
-                              }
-  scope :end_before, lambda { |time|
+                              })
+  scope(:end_before, lambda { |time|
                        where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time)
-                     }
-  scope :has_tag, ->(tag) { includes(:tags).where('tags.text = ?', tag) }
+                     })
+  scope :has_tag, ->(tag) { includes(:tags).where(tags: { text: tag }) }
   scope :has_tags, ->(tags) { includes(:tags).where('tags.text IN ?', tags) }
-  scope :does_not_have_tag, ->(tag) { includes(:tags).where('tags.text <> ?', tag) }
+  scope :does_not_have_tag, ->(tag) { includes(:tags).where.not(tags: { text: tag }) }
   scope :does_not_have_tags, ->(tags) { includes(:tags).where('tags.text NOT IN ?', tags) }
-  scope :tag_count, lambda { |num_tags|
+  scope(:tag_count, lambda { |num_tags|
                       #   'audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags))
 
                       tagging_arel = Tagging.arel_table
                       grouping = tagging_arel
-                                 .project(tagging_arel[:tag_id])
-                                 .group(tagging_arel[:tag_id])
-                                 .having(tagging_arel[:tag_id].count.gt(num_tags.to_i))
+                        .project(tagging_arel[:tag_id])
+                        .group(tagging_arel[:tag_id])
+                        .having(tagging_arel[:tag_id].count.gt(num_tags.to_i))
 
                       audio_events_arel = AudioEvent.arel_table
                       condition = audio_events_arel[:tag_id].in(grouping)
 
                       includes(:tags).where(condition)
-                    }
-  scope :tag_types, lambda { |tag_types|
+                    })
+  scope(:tag_types, lambda { |tag_types|
                       tags_arel = Tag.arel_table
                       condition = tags_arel[:type_of_tag].in(tag_types)
                       includes(:tags).where(condition)
-                    }
-  scope :tag_text, lambda { |tag_text|
+                    })
+  scope(:tag_text, lambda { |tag_text|
                      sanitized_value = tag_text.gsub(/[\\_%|]/) { |x| "\\#{x}" }
                      contains_value = "#{sanitized_value}%"
                      includes(:tags).where(Tag.arel_table[:text].matches(contains_value))
-                   }
-  scope :order_by_absolute_end_desc, lambda {
+                   })
+  scope(:order_by_absolute_end_desc, lambda {
                                        order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')
-                                     }
+                                     })
   scope :total_data_bytes, -> { sum(arel_table[:data_length_bytes].cast('bigint')) }
   scope :total_duration_seconds, -> { sum(arel_table[:duration_seconds].cast('bigint')) }
 
@@ -227,7 +229,10 @@ class AudioRecording < ApplicationRecord
     return nil if site.nil?
 
     name = site.safe_name
-    if site.timezone.blank?
+    name = 'NONAME' if name.blank?
+
+    # use Z if possible, or as a backup for a missing zone
+    if site.timezone.blank? || site.timezone[:utc_total_offset].zero?
       recorded_date&.utc&.strftime('%Y%m%dT%H%M%SZ')
     else
       timezone = TimeZoneHelper.tzinfo_class(site.tzinfo_tz)
@@ -237,9 +242,15 @@ class AudioRecording < ApplicationRecord
     "#{date}_#{name}_#{id}.#{original_format_calculated}"
   end
 
+  # gets a filename that looks nice enough to provide to a user for a file download
+  # but is calculated on the database server as part of the query.
+  # Mirrors the logic in `friendly_name`.
+  FRIENDLY_NAME_AREL = build_friendly_name_query.freeze
+
   FRIENDLY_NAME_REGEX = /(?<date>\d{8}T\d{6}(?:Z|[+-]\d+))_(?<site_name>[-\w]+)_(?<id>\d+)\.(?<extension>.+)/
 
   # Calculate the format of original audio recording.
+  # Despite the weird name this returns an extension!
   def original_format_calculated
     # this method previously determined format based on `original_file_name` but this approach is erroneous;
     # Our source of truth should be the `media_type` field. The `original_file_name` is kept as metadata only.
@@ -544,8 +555,8 @@ class AudioRecording < ApplicationRecord
   # Results in:
   # ((SELECT tzinfo_tz FROM "sites" WHERE "audio_recordings"."site_id" = "sites"."id"))
   def self.arel_timezone
-    s = Site.arel_table
-    a = AudioRecording.arel_table
-    Arel.grouping(s.where(a[:site_id] == s[:id]).project(:tzinfo_tz))
+    site = Site.arel_table
+    analysis_job = AudioRecording.arel_table
+    Arel.grouping(site.where(analysis_job[:site_id] == site[:id]).project(:tzinfo_tz))
   end
 end

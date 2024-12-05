@@ -15,6 +15,7 @@ require 'active_storage'
 require 'active_storage/engine'
 
 require 'action_mailer'
+require 'zeitwerk'
 
 require_relative '../../baw-app/lib/baw_app'
 require_relative '../../pbs/lib/pbs'
@@ -24,12 +25,12 @@ Dir.glob("#{__dir__}/patches/**/*.rb").each do |override|
   require override
 end
 
-require 'zeitwerk'
-Zeitwerk::Loader.new.tap do |loader|
+BAW_WORKERS_AUTOLOADER = Zeitwerk::Loader.new.tap do |loader|
   loader.tag = 'baw-workers'
   base_dir = __dir__
   loader.push_dir(base_dir)
   loader.ignore("#{base_dir}/patches")
+  loader.ignore("#{base_dir}/**/_*.rb")
   loader.inflector.inflect(
     'io' => 'IO'
   )
@@ -38,17 +39,7 @@ Zeitwerk::Loader.new.tap do |loader|
   loader.setup # ready!
 end
 
+# Module for background workers.
 module BawWorkers
   ROOT = __dir__.to_s
-end
-
-# simply mentioning this namespace should allow test-worker to patch jobs
-if BawApp.test?
-
-  # Disable the inbuilt test adapter for every test!
-  # https://github.com/rails/rails/issues/37270
-  (::ActiveJob::Base.descendants << ActiveJob::Base).each do |klass|
-    klass.disable_test_adapter if defined?(klass.disable_test_adapter)
-  end
-  ::ActiveJob::Base.queue_adapter = :resque
 end

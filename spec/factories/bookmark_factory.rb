@@ -24,7 +24,7 @@
 #
 # Foreign Keys
 #
-#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  bookmarks_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  bookmarks_creator_id_fk          (creator_id => users.id)
 #  bookmarks_updater_id_fk          (updater_id => users.id)
 #

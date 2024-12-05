@@ -17,29 +17,24 @@ describe 'Internal::SftpgoController permissions' do
     [{}, :json]
   end
 
-  valid_hook_post = {
-    path: '',
-    verb: :post,
-    expect: lambda { |_user, _action|
-            },
-    action: :hook
-  }
+  with_custom_action(:hook, path: '', verb: :post, expect: ->(_user, _action) {})
 
   # ok this one is a little weird
   # none of our normal users are allowed to access this endpoint
   # only the other service (sftpgo) is allowed and it does not authenticate
   # so if there are any auth tokens present, then access denied, even if it is a valid token!
+  ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous, :invalid,
+    can: nothing,
+    cannot: everything - [:hook, :create],
+    fails_with: :not_found
+
   ensures :admin, :owner, :writer, :reader, :no_access, :harvester,
     can: nothing,
-    cannot: [valid_hook_post]
+    cannot: [:hook, :create],
+    fails_with: :forbidden
 
-  ensures :anonymous,
+  ensures :anonymous, :invalid,
     can: nothing,
-    cannot: [valid_hook_post],
-    fails_with: :unauthorized
-
-  the_user :invalid,
-    can_do: nothing,
-    and_cannot_do: everything,
+    cannot: [:hook, :create],
     fails_with: :unauthorized
 end

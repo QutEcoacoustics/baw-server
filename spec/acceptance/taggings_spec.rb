@@ -157,62 +157,6 @@ resource 'Taggings' do
       { expected_json_path: 'data/tag_id' })
   end
 
-  post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Documentation in rspec_api_documentation
-
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:raw_post) { { 'tagging' => post_nested_attributes }.to_json }
-
-    let(:authentication_token) { writer_token }
-
-    standard_request_options(:post, 'CREATE (with tag_attributes as writer, with shallow path)', :created,
-      { expected_json_path: 'data/tag_id' })
-  end
-
-  post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Documentation in rspec_api_documentation
-
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:raw_post) { { 'tagging' => post_invalid_nested_attributes }.to_json }
-
-    let(:authentication_token) { writer_token }
-    # 0 - index in array
-
-    standard_request_options(:post, 'CREATE (invalid tag_attributes as writer, with shallow path)', :unprocessable_entity,
-      { expected_json_path: 'type_of_tag', response_body_content: '"is not included in the list"' })
-  end
-
-  post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Documentation in rspec_api_documentation
-
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:raw_post) {
-      { tagging: { tag_attributes: { is_taxonomic: false, text: existing_tag.text, type_of_tag: 'looks like',
-                                     retired: false } } }.to_json
-    }
-
-    let(:authentication_token) { writer_token }
-
-    #example 'CREATE (existing tag name as writer) - 200', :document => true do
-    #  # create orphaned tags
-    #  2.times do |i|
-    #    FactoryBot.create(:tag)
-    #  end
-    #
-    #  do_request
-    #  status.should == 200
-    #  response_body.should have_json_path('2/is_taxonomic')
-    #end
-    standard_request_options(:post, 'CREATE (with tag_attributes but existing tag text as writer, with shallow path)', :created,
-      { expected_json_path: 'data/tag_id' })
-  end
-
   #####################
   # Filter
   #####################
@@ -236,7 +180,7 @@ resource 'Taggings' do
       {
         expected_json_path: 'data/0/audio_event_id',
         data_item_count: 1,
-        response_body_content: '"filter":{"audio_event_id":{"gt":0}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+        response_body_content: '"filter":{"audio_event_id":{"gt":0}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://web:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
       })
   end
 
@@ -259,7 +203,7 @@ resource 'Taggings' do
       {
         expected_json_path: 'data/0/audio_event_id',
         data_item_count: 1,
-        response_body_content: '"filter":{"audio_events.is_reference":{"eq":false}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+        response_body_content: '"filter":{"audio_events.is_reference":{"eq":false}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://web:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
       })
   end
 end

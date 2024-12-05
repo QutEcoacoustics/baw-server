@@ -28,8 +28,8 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
-#  fk_rails_...  (harvest_id => harvests.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
+#  fk_rails_...  (harvest_id => harvests.id) ON DELETE => cascade
 #  fk_rails_...  (uploader_id => users.id)
 #
 class HarvestItem < ApplicationRecord
@@ -40,7 +40,7 @@ class HarvestItem < ApplicationRecord
   # harvests were introduced after harvest_items, hence the parent association is optional
   belongs_to :harvest, optional: true
 
-  belongs_to :uploader, class_name: User.name, foreign_key: :uploader_id
+  belongs_to :uploader, class_name: 'User'
 
   validates :path, presence: true, length: { minimum: 2 }, format: {
     # don't allow paths that start with a `/`
@@ -54,7 +54,7 @@ class HarvestItem < ApplicationRecord
   # If the file has fixable mistakes they can be changed by the user here
   # (e.g. missing utc offset / site_id for a folder)
   STATUS_METADATA_GATHERED = :metadata_gathered
-  # he file is not valid for some reason we now about (missing utc offset which the user didn't fix)
+  # the file is not valid for some reason we now about (missing utc offset which the user didn't fix)
   STATUS_FAILED = :failed
   # successfully harvested the file, there will be an audio_recording that is available now
   STATUS_COMPLETED = :completed
@@ -162,11 +162,11 @@ class HarvestItem < ApplicationRecord
     other_term = "(#{other_recorded_date}, (#{other_duration_seconds} * '1 second'::interval))"
 
     HarvestItem.where(HarvestItem.arel_table[:id] != id)
-               .where(HarvestItem.arel_table[:harvest_id] == harvest_id)
-               .where("#{site_id} = #{other_site_id}")
-               .where("#{this_term} OVERLAPS #{other_term}")
-               .limit(10)
-               .to_a
+      .where(HarvestItem.arel_table[:harvest_id] == harvest_id)
+      .where("#{site_id} = #{other_site_id}")
+      .where("#{this_term} OVERLAPS #{other_term}")
+      .limit(10)
+      .to_a
   end
 
   def duplicate_hash_of
@@ -200,7 +200,7 @@ class HarvestItem < ApplicationRecord
   def self.invalid_not_fixable_arel
     n = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_NOT_FIXABLE
     Arel.sql(
-      <<~SQL
+      <<~SQL.squish
         COALESCE((
             SELECT bool_or(status = '#{n}')
             FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
@@ -217,7 +217,7 @@ class HarvestItem < ApplicationRecord
   def self.invalid_fixable_arel
     f = BawWorkers::Jobs::Harvest::ValidationResult::STATUS_FIXABLE
     Arel.sql(
-      <<~SQL
+      <<~SQL.squish
         COALESCE((
             SELECT every(status = '#{f}')
             FROM jsonb_to_recordset(info->'validations') AS statuses(status text)
@@ -233,7 +233,7 @@ class HarvestItem < ApplicationRecord
   # @return [Arel::Nodes::Grouping]
   def self.valid_arel
     Arel.sql(
-      <<~SQL
+      <<~SQL.squish
         COALESCE((jsonb_array_length(info->'validations') = 0)::integer, 1)
       SQL
     )
@@ -245,11 +245,11 @@ class HarvestItem < ApplicationRecord
   # Works with with {ApplicationRecord.pick_hash}.
   # @param prefix [String] an optional prefix for the keys of the hash
   # @return [Hash<Symbol, ::Arel::Nodes::Node>]
-  def self.counts_by_status_arel(prefix = "")
+  def self.counts_by_status_arel(prefix = '')
     STATUSES.to_h { |x|
       [
         (prefix + x.to_s).to_sym,
-        arel_table[:status].count.filter(arel_table[:status] == x).coalesce(0)
+        arel_table[:status].count.filter(arel_table[:status].eq(x)).coalesce(0)
       ]
     }
   end
@@ -295,7 +295,9 @@ class HarvestItem < ApplicationRecord
       Arel.star.count.as('items_total'),
       HarvestItem.size_arel.sum.as('items_size_bytes'),
       HarvestItem.duration_arel.sum.as('items_duration_seconds'),
-      *(STATUSES.map { |s| Arel.star.count.filter(with_dir_columns_table['status'].eq(s)).as("items_#{s}") }),
+      *(STATUSES.map { |script|
+          Arel.star.count.filter(with_dir_columns_table['status'].eq(script)).as("items_#{script}")
+        }),
       HarvestItem.invalid_fixable_arel.sum.as('items_invalid_fixable'),
       HarvestItem.invalid_not_fixable_arel.sum.as('items_invalid_not_fixable')
     ]
@@ -303,7 +305,7 @@ class HarvestItem < ApplicationRecord
       Arel.sql('1').as('items_total'),
       HarvestItem.size_arel.as('items_size_bytes'),
       HarvestItem.duration_arel.as('items_duration_seconds'),
-      *(STATUSES.map { |s| with_dir_columns_table['status'].eq(s).cast('int').as("items_#{s}") }),
+      *(STATUSES.map { |script| with_dir_columns_table['status'].eq(script).cast('int').as("items_#{script}") }),
       HarvestItem.invalid_fixable_arel.as('items_invalid_fixable'),
       HarvestItem.invalid_not_fixable_arel.as('items_invalid_not_fixable')
     ]

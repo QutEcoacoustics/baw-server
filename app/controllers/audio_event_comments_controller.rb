@@ -76,15 +76,6 @@ class AudioEventCommentsController < ApplicationController
   end
 
   # DELETE /audio_events/:audio_event_id/comments/:id
-  def destroy
-    do_load_resource
-    get_audio_event
-    do_authorize_instance
-
-    @audio_event_comment.destroy
-    add_archived_at_header(@audio_event_comment)
-    respond_destroy
-  end
 
   # GET|POST /audio_event_comments/filter
   def filter

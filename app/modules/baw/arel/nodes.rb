@@ -50,6 +50,74 @@ module Baw
           super([left, ::Arel.sql('AT TIME ZONE'), right])
         end
       end
+
+      class ArrayAgg < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('array_agg', expr)
+        end
+      end
+
+      class Unnest < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('unnest', expr)
+        end
+      end
+
+      class ArrayConstructor < ::Arel::Nodes::Node
+        include ::Arel::AliasPredication
+        include ArrayFunctions
+
+        attr_reader :expression
+
+        def initialize(expressions)
+          super()
+          @expression = expressions
+        end
+      end
+
+      class ArrayLike < ::Arel::Nodes::Node
+        include ArrayFunctions
+        include ::Arel::OrderPredications
+
+        attr_reader :expression
+
+        def initialize(expression)
+          super()
+          @expression = expression
+        end
+      end
+
+      class Subscript < ArrayLike
+        attr_reader :subscript_start, :subscript_end
+
+        def initialize(array, subscript_start, subscript_end = :empty)
+          super(array)
+
+          case subscript_start
+          in nil
+            nil
+          in Integer => s
+            s + 1
+          else
+            raise ArgumentError, 'subscript_start must be an Integer or nil'
+          end => subscript_start
+
+          case subscript_end
+          in :empty
+            # when empty we make end==start to have an effect range of 1
+            subscript_start
+          in nil
+            nil
+          in Integer => e
+            e + 1
+          else
+            raise ArgumentError, 'subscript_end must be an Integer, nil, or :empty'
+          end => subscript_end
+
+          @subscript_start = subscript_start
+          @subscript_end = subscript_end
+        end
+      end
     end
   end
 end

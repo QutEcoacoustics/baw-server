@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../types'
+# used by resque-scheduler to do cron string parsing
+require 'fugit'
 
 # The schema for our Settings files
 class BawConfigContract < Dry::Validation::Contract
@@ -26,7 +28,6 @@ class BawConfigContract < Dry::Validation::Contract
         required(:to_do_path).filled(
           BawApp::Types::CreatedDirPathname
         )
-        required(:config_file_name).filled(:string)
       end
 
       required(:harvest_scan).hash do
@@ -38,11 +39,31 @@ class BawConfigContract < Dry::Validation::Contract
         required(:delete_after).filled(:integer, gt?: 0)
       end
 
-      required(:analysis_change).hash do
+      required(:analysis_cancel_items).hash do
         required(:queue).filled(:string)
       end
 
-      required(:analysis).hash do
+      required(:analysis_remote_enqueue).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+      end
+
+      required(:analysis_stale_check).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+        required(:min_age_seconds).filled(:integer, gt?: 0)
+      end
+
+      required(:analysis_status_check).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+      end
+
+      required(:analysis_import_results).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:analysis_amend_after_harvest).hash do
         required(:queue).filled(:string)
       end
     end
@@ -89,9 +110,12 @@ class BawConfigContract < Dry::Validation::Contract
         required(:password).maybe(:string)
         required(:key_file).maybe(BawApp::Types::PathExists)
       end
-      required(:default_queue).maybe(:string)
-      required(:default_project).filled(:string)
-      required(:primary_group).filled(:string)
+      required(:pbs).hash do
+        required(:default_queue).maybe(:string)
+        required(:default_project).filled(:string)
+        required(:primary_group).filled(:string)
+      end
+      required(:remote_enqueue_limit).maybe(:integer, gt?: 0)
       required(:auth_tokens_expire_in).filled(:integer, gt?: 0)
       required(:root_data_path_mapping).hash do
         required(:workbench).filled(:string)
@@ -100,14 +124,40 @@ class BawConfigContract < Dry::Validation::Contract
     end
   }
 
+  OrganizationNames = Dry::Schema.define {
+    required(:organisation_names).hash do
+      required(:site_short_name).filled(:string)
+      required(:site_long_name).filled(:string)
+      required(:organisation_name).filled(:string)
+      required(:github_issues_url).filled(:string)
+      required(:address).filled(:string)
+    end
+  }
+
+  AudioEventFileImport = Dry::Schema.define {
+    required(:audio_event_imports).hash do
+      required(:max_file_size_bytes).filled(:integer, gteq?: 0)
+      required(:acceptable_content_types).array(:string)
+    end
+  }
+
+  DEPRECATIONS = [
+    :api,
+    :endpoints
+  ].freeze
+
   # TODO: add more validation
   # Note: ruby config does not make use of values that may have been coerced during validation
+  # so type conversion is useless.
+  # See ../settings_module.rb for an example of how to strongly type settings.
   schema(
     ActionsConfigSchema,
     SftpgoConfigSchema,
     InternalConfigSchema,
     PathsConfigSchema,
-    BatchAnalysisSchema
+    BatchAnalysisSchema,
+    OrganizationNames,
+    AudioEventFileImport
   ) do
     required(:trusted_proxies).array(BawApp::Types::IPAddr)
 
@@ -130,6 +180,11 @@ class BawConfigContract < Dry::Validation::Contract
       required(:polling_interval_seconds).filled(BawApp::Types::Coercible::Float)
       required(:log_level).filled(BawApp::Types::LogLevel)
     end
+
+    # deprecations (validated below)
+    DEPRECATIONS.each do |key|
+      optional(key)
+    end
   end
 
   rule(:audio_recording_max_overlap_sec, :audio_recording_min_duration_sec) do
@@ -138,6 +193,25 @@ class BawConfigContract < Dry::Validation::Contract
       message = "Maximum overlap and trim duration (#{values[:audio_recording_max_overlap_sec]}) " \
                 "must be less than minimum audio recording duration (#{values[:audio_recording_min_duration_sec]})."
       key.failure(message)
+    end
+  end
+
+  rule(actions: { analysis_remote_enqueue: :schedule }) do
+    # parse the cron string to check it is valid in the same way that
+    # resque-scheduler does.
+
+    next if Fugit.parse_cron(value)
+
+    # will raise on failure
+    key.failure("Could not parse cron schedule for value '#{value}'. Supported values are defined at https://github.com/floraison/fugit/#fugitcron")
+  end
+
+  # deprecations
+  DEPRECATIONS.each do |deprecation|
+    rule(deprecation) do
+      next if value.nil?
+
+      key.failure('is deprecated, please remove this settings section')
     end
   end
 end

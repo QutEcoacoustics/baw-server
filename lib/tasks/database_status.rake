@@ -13,7 +13,7 @@ def __baw_db_status
 
     # let the script know if migrations are needed
     migrations_paths = ActiveRecord::Migrator.migrations_paths
-    schema_migration = ActiveRecord::Base.connection.schema_migration
+    schema_migration = ::ActiveRecord::Base.connection_pool.schema_migration
     migration_context = ActiveRecord::MigrationContext.new(migrations_paths, schema_migration)
     if migration_context.needs_migration?
       __baw_db_log 'ℹ Database needs to be migrated'

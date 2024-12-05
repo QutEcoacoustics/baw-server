@@ -110,18 +110,10 @@ class SitesController < ApplicationController
 
   # DELETE /sites/:id
   # DELETE /projects/:project_id/sites/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_project_if_exists
-    do_authorize_instance
-
-    @site.destroy
-    add_archived_at_header(@site)
-
-    respond_to do |format|
-      format.html { redirect_to project_sites_url(@project) }
-      format.json { respond_destroy }
-    end
   end
 
   # GET /projects/:project_id/sites/:id/upload_instructions
@@ -157,7 +149,7 @@ class SitesController < ApplicationController
   def orphans
     do_authorize_class
 
-    @sites = Site.with_deleted.left_joins(:projects_sites).where('projects_sites.project_id IS NULL')
+    @sites = Site.with_discarded.left_joins(:projects_sites).where(projects_sites: { project_id: nil })
 
     respond_to { |format|
       format.html
@@ -226,7 +218,7 @@ class SitesController < ApplicationController
   def get_project
     @project = Project.find(params[:project_id])
     # avoid the same project assigned more than once to a site
-    @site.projects << @project if defined?(@site) && !@site.projects.include?(@project)
+    @site.projects << @project if defined?(@site) && @site.projects.exclude?(@project)
   end
 
   def get_project_if_exists
@@ -234,7 +226,7 @@ class SitesController < ApplicationController
 
     @project = Project.find(params[:project_id])
     # avoid the same project assigned more than once to a site
-    @site.projects << @project if defined?(@site) && defined?(@project) && !@site.projects.include?(@project)
+    @site.projects << @project if defined?(@site) && defined?(@project) && @site.projects.exclude?(@project)
   end
 
   def list_permissions

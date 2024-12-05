@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-require 'support/shared_test_helpers'
-
-xdescribe 'Website forms with user', type: :feature do
+xdescribe 'Website forms with user' do
   before do
     @user = create(:user)
     login_as @user, scope: :user
@@ -150,7 +148,7 @@ xdescribe 'Website forms with user', type: :feature do
   end
 end
 
-xdescribe 'public website forms', type: :feature do
+xdescribe 'public website forms' do
   context 'static pages' do
     it 'shows the ethics_statement page' do
       visit ethics_statement_path

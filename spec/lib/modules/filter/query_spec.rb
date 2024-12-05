@@ -38,7 +38,8 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognized combiner or field name: not_a_real_filter.')
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        'Filter parameters were not valid: Unrecognized combiner or field name `not_a_real_filter`.')
     end
 
     it 'occurs when or has only 1 entry' do
@@ -62,12 +63,11 @@ describe Filter::Query do
         create_filter(
           {
             filter: {
-              not: {
-              }
+              not: {}
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Filter hash must have at least 1 entry, got 0.')
+      }.to raise_error(CustomErrors::FilterArgumentError, /Filter hash must have at least 1 entry, got 0./)
     end
 
     it 'occurs when or has no entries' do
@@ -75,8 +75,7 @@ describe Filter::Query do
         create_filter(
           {
             filter: {
-              or: {
-              }
+              or: {}
             }
           }
         ).query_full
@@ -135,7 +134,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name: not_a_valid_combiner/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `not_a_valid_combiner`/)
     end
 
     it "occurs when a range is missing 'from'" do
@@ -192,7 +191,7 @@ describe Filter::Query do
           }
         ).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-        "Range filter must use either ('from' and 'to') or ('interval'), not both.")
+        "Filter parameters were not valid: Range filter must use either ('from' and 'to') or ('interval'), not both.")
     end
 
     it 'occurs when a range has no recognized properties' do
@@ -219,8 +218,7 @@ describe Filter::Query do
           {
             filter: {
               or: {
-                site_id: {
-                }
+                site_id: {}
               }
             }
           }
@@ -321,7 +319,8 @@ describe Filter::Query do
 
       expect {
         create_filter(filter_params).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Array values cannot be hashes.')
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        'Filter parameters were not valid: Array values cannot be hashes.')
     end
 
     it 'occurs for an invalid range filter' do
@@ -329,7 +328,7 @@ describe Filter::Query do
       expect {
         create_filter(filter_params).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-        "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
+        "Filter parameters were not valid: Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
     end
   end
 
@@ -349,7 +348,7 @@ describe Filter::Query do
         }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -366,7 +365,7 @@ describe Filter::Query do
         filter: { id: { eq: audio_recording.id } }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT  "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."recorded_date", "audio_recordings"."media_type"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -383,7 +382,7 @@ describe Filter::Query do
         filter: { id: { eq: audio_recording.id } }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT ("audio_recordings"."recorded_date" +
         CAST("audio_recordings"."duration_seconds" || ' seconds' as interval))
         AS "recorded_end_date"
@@ -402,7 +401,7 @@ describe Filter::Query do
         filter: { id: { eq: audio_recording.id } }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "sites"."name"
         AS "sites.name", "projects"."name"
         AS "projects.name"
@@ -433,7 +432,7 @@ describe Filter::Query do
         filter: { id: { eq: audio_recording.id } }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "regions"."name"
         AS "regions.name"
         FROM "audio_recordings"
@@ -482,7 +481,7 @@ describe Filter::Query do
         }
       }
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -709,7 +708,7 @@ describe Filter::Query do
       expect(filter_query.filter).to eq(expected_filter)
 
       user_id = user.id
-      complex_result_2 = <<~SQL
+      complex_result_2 = <<~SQL.squish
         SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."media_type"
         FROM "audio_recordings"
         INNER
@@ -832,7 +831,7 @@ describe Filter::Query do
           }
         }
       }
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at"
@@ -886,7 +885,7 @@ describe Filter::Query do
       user = writer_user
       user_id = user.id
 
-      complex_result_2 = <<~SQL
+      complex_result_2 = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
         FROM "audio_recordings"
         INNER
@@ -997,7 +996,7 @@ describe Filter::Query do
           direction: 'desc'
         }
       }
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."recorded_date", "audio_recordings"."created_at"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at"
@@ -1033,7 +1032,7 @@ describe Filter::Query do
       user = writer_user
       user_id = user.id
 
-      complex_result_2 = <<~SQL
+      complex_result_2 = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."recorded_date", "audio_recordings"."created_at"
         FROM "audio_recordings"
         INNER
@@ -1120,18 +1119,9 @@ describe Filter::Query do
       user = writer_user
       user_id = user.id
 
-      complex_result = <<~SQL
+      complex_result = <<~SQL.squish
         SELECT "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."audio_recording_id", "analysis_jobs_items"."status"
-        FROM (
-        SELECT "tmp_audio_recordings_generator"."id"
-        AS "audio_recording_id", "analysis_jobs_items"."id", "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."queue_id", "analysis_jobs_items"."status", "analysis_jobs_items"."created_at", "analysis_jobs_items"."queued_at", "analysis_jobs_items"."work_started_at",          "analysis_jobs_items"."completed_at", "analysis_jobs_items"."cancel_started_at"
         FROM "analysis_jobs_items"
-          RIGHT
-          OUTER
-          JOIN "audio_recordings" "tmp_audio_recordings_generator"
-          ON "tmp_audio_recordings_generator"."id"
-            IS
-            NULL) "analysis_jobs_items"
           INNER
           JOIN "audio_recordings"
             ON ("audio_recordings"."deleted_at"
@@ -1144,7 +1134,11 @@ describe Filter::Query do
               IS
               NULL)
                AND ("sites"."id" = "audio_recordings"."site_id")
-        WHERE (
+        INNER
+        JOIN "analysis_jobs"
+        ON "analysis_jobs"."id" = "analysis_jobs_items"."analysis_job_id"
+        WHERE ("analysis_jobs"."id" = #{analysis_job.id})
+        AND (
           EXISTS (
             SELECT 1
                       FROM "projects_sites"
@@ -1165,35 +1159,17 @@ describe Filter::Query do
                       AND (("permissions"."user_id" = #{user_id})
                       OR ("permissions"."allow_logged_in" =#{' '}
                       TRUE)))))
-              AND ("analysis_jobs_items"."audio_recording_id"
+              AND ("analysis_jobs_items"."id"
               IN (
-              SELECT "analysis_jobs_items"."audio_recording_id"
-                FROM (
-                  SELECT "analysis_jobs_items".*
-                  FROM (
-                    SELECT "tmp_audio_recordings_generator"."id"
-                    AS "audio_recording_id", "analysis_jobs_items"."id", "analysis_jobs_items"."analysis_job_id", "analysis_jobs_items"."queue_id", "analysis_jobs_items"."status", "analysis_jobs_items"."created_at", "analysis_jobs_items"."queued_at", "analysis_jobs_items"."work_started_at", "analysis_jobs_items"."completed_at", "analysis_jobs_items"."cancel_started_at"
-                  FROM "analysis_jobs_items"
-                    RIGHT
-                    OUTER
-                    JOIN "audio_recordings" "tmp_audio_recordings_generator"
-                      ON "tmp_audio_recordings_generator"."id"
-                      IS
-                      NULL) "analysis_jobs_items"
-                    INNER
-                    JOIN "audio_recordings"
-                      ON  ("audio_recordings"."deleted_at"
-                      IS
-                      NULL)
-                        AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")) "analysis_jobs_items"
+              SELECT "analysis_jobs_items"."id"
+                FROM "analysis_jobs_items"
                   LEFT
                   OUTER
                   JOIN "audio_recordings"
                     ON "analysis_jobs_items"."audio_recording_id" = "audio_recordings"."id"
               WHERE "audio_recordings"."duration_seconds" >= 60000.0))
         ORDER
-        BY "audio_recording_id"
-        ASC, "analysis_jobs_items"."audio_recording_id"
+        BY "analysis_jobs_items"."audio_recording_id"
         ASC
         LIMIT 20
         OFFSET 20
@@ -1201,9 +1177,9 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.analysis_jobs_items(nil, user, system_mode: true),
+        Access::ByPermission.analysis_jobs_items(analysis_job, user),
         AnalysisJobsItem,
-        AnalysisJobsItem.filter_settings(true)
+        AnalysisJobsItem.filter_settings
       )
 
       comparison_sql(filter_query.query_full.to_sql, complex_result)
@@ -1230,8 +1206,8 @@ describe Filter::Query do
         AudioEvent.filter_settings
       )
 
-      expected_sql = <<~SQL
-        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_id", "audio_events"."channel"
+      expected_sql = <<~SQL.squish
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel"
         FROM "audio_events"
         INNER
         JOIN "audio_recordings"
@@ -1313,8 +1289,8 @@ describe Filter::Query do
         AudioEvent.filter_settings
       )
 
-      expected_sql = <<~SQL
-        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_id", "audio_events"."channel"
+      expected_sql = <<~SQL.squish
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel"
         FROM "audio_events"
         INNER JOIN "audio_recordings"
         ON ("audio_recordings"."deleted_at"
@@ -1392,7 +1368,7 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expected_sql = <<~SQL
+      expected_sql = <<~SQL.squish
         SELECT "audio_recordings"."id", "audio_recordings"."uuid", "audio_recordings"."recorded_date", "audio_recordings"."site_id", "audio_recordings"."duration_seconds", "audio_recordings"."sample_rate_hertz", "audio_recordings"."channels", "audio_recordings"."bit_rate_bps", "audio_recordings"."media_type", "audio_recordings"."data_length_bytes", "audio_recordings"."status", "audio_recordings"."created_at", "audio_recordings"."creator_id", "audio_recordings"."deleted_at",  "audio_recordings"."deleter_id",  "audio_recordings"."updated_at", "audio_recordings"."updater_id", "audio_recordings"."notes", "audio_recordings"."file_hash", "audio_recordings"."uploader_id", "audio_recordings"."original_file_name", ((
         SELECT tzinfo_tz
         FROM "sites"
@@ -1450,10 +1426,10 @@ describe Filter::Query do
 
       site = project.sites.first
 
-      project1 = project
-      project2 = create(:project, creator: user, sites: [site])
+      project
+      create(:project, creator: user, sites: [site])
 
-      project3 = create(:project, creator: user, sites: [site])
+      create(:project, creator: user, sites: [site])
 
       request_body_obj = {
         projection: {
@@ -1470,7 +1446,7 @@ describe Filter::Query do
 
       ids = filter_query.query_full.pluck(:id)
 
-      expect(ids).to match_array(AudioEvent.all.pluck(:id))
+      expect(ids).to match_array(AudioEvent.pluck(:id))
     end
 
     it 'does not duplicate audio_event_comments' do
@@ -1478,10 +1454,10 @@ describe Filter::Query do
 
       site = project.sites.first
 
-      project1 = project
-      project2 = create(:project, creator: user, sites: [site])
+      project
+      create(:project, creator: user, sites: [site])
 
-      project3 = create(:project, creator: user, sites: [site])
+      create(:project, creator: user, sites: [site])
 
       request_body_obj = {
         projection: {
@@ -1498,7 +1474,7 @@ describe Filter::Query do
 
       ids = filter_query.query_full.pluck(:id)
 
-      expect(ids).to match_array(AudioEventComment.all.pluck(:id))
+      expect(ids).to match_array(AudioEventComment.pluck(:id))
     end
   end
 
@@ -1521,7 +1497,9 @@ describe Filter::Query do
       )
 
       ids_inaccessible = filter_query_inaccessible.query_full.pluck(:id)
-      expect(ids_inaccessible).to match_array([project_no_access.id])
+
+      expect(ids_inaccessible).to include(project_no_access.id)
+      expect(ids_inaccessible).not_to include(project.id)
     end
 
     it 'accessible' do
@@ -1545,7 +1523,7 @@ describe Filter::Query do
       )
 
       ids_accessible = filter_query_accessible.query_full.pluck(:id)
-      expect(ids_accessible).to match_array([project_access.id, access_via_created.id])
+      expect(ids_accessible).to contain_exactly(project_access.id, access_via_created.id)
     end
   end
 
@@ -1643,7 +1621,7 @@ describe Filter::Query do
       project3 = Creation::Common.create_project(the_user)
       site3 = Creation::Common.create_site(the_user, project3)
       audio_recording3 = Creation::Common.create_audio_recording(the_user, the_user, site3)
-      audio_event3 = Creation::Common.create_audio_event(the_user, audio_recording3)
+      Creation::Common.create_audio_event(the_user, audio_recording3)
 
       expect(AudioEvent.count).to eq(3)
 
@@ -1688,7 +1666,7 @@ describe Filter::Query do
       site3 = Creation::Common.create_site(the_user, project3)
       audio_recording3 = Creation::Common.create_audio_recording(the_user, the_user, site3)
       audio_event3 = Creation::Common.create_audio_event(the_user, audio_recording3)
-      comment3 = Creation::Common.create_audio_event_comment(the_user, audio_event3)
+      Creation::Common.create_audio_event_comment(the_user, audio_event3)
 
       expect(AudioEventComment.count).to eq(3)
 
@@ -1757,7 +1735,7 @@ describe Filter::Query do
       )
       expect {
         filter.build.parse(filter.filter)
-      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognized combiner or field name: this_is_not_a_field.')
+      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `this_is_not_a_field`./)
     end
 
     it 'allows mapped fields as a generic equality field' do
@@ -1997,7 +1975,7 @@ describe Filter::Query do
       expect(filter.filter).to eq(filter_hash[:filter])
 
       query = filter.query_full
-      expect(query.pluck(:id)).to match_array([])
+      expect(query.pluck(:id)).to be_empty
     end
   end
 
@@ -2016,7 +1994,7 @@ describe Filter::Query do
       expect(filter.filter).to eq(filter_hash[:filter])
 
       query = filter.query_full
-      expect(query.pluck(:id)).to match_array([])
+      expect(query.pluck(:id)).to be_empty
     end
 
     it 'returns no sites for regular user' do
@@ -2033,7 +2011,7 @@ describe Filter::Query do
       expect(filter.filter).to eq(filter_hash[:filter])
 
       query = filter.query_full
-      expect(query.pluck(:id)).to match_array([])
+      expect(query.pluck(:id)).to be_empty
     end
   end
 end

@@ -83,6 +83,23 @@ module Api
       def permission_levels
         { '$ref' => '#/components/schemas/permission_levels' }
       end
+
+      def archived_parameter
+        # i'm unsure of rswag's support for common parameters from
+        # OAS 3.1. This is a workaround that just inlines the definition
+        # where it's needed.
+        {
+          name: ::Api::Archivable::ARCHIVE_ACCESS_PARAM,
+          # rswag custom getter
+          getter: :archived_qsp,
+          in: :query,
+          schema: {
+            type: :boolean
+          },
+          required: false,
+          allowEmptyValue: true
+        }
+      end
     end
   end
 end

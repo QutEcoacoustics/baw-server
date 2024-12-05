@@ -44,7 +44,7 @@
 #  index_users_on_email                 (email) UNIQUE
 #  users_user_name_unique               (user_name) UNIQUE
 #
-describe User, type: :model do
+describe User do
   it 'errors on invalid timezone' do
     expect {
       create(:user, tzinfo_tz: 'blah')
@@ -73,7 +73,7 @@ describe User, type: :model do
   end
 
   it 'includes TimeZoneAttribute' do
-    expect(User.new).to be_a_kind_of(TimeZoneAttribute)
+    expect(User.new).to be_a(TimeZoneAttribute)
   end
 
   it { is_expected.to have_many(:created_regions) }
@@ -115,7 +115,7 @@ describe User, type: :model do
   #                 .rejecting('text/xml', 'image_maybe/abc', 'some_image/png','text/plain') }
 
   it 'has a safe_user_name function' do
-    user = build(:user, user_name: "!aNT\'s fully s!ck user name 1337;;\n)/\)\'")
+    user = build(:user, user_name: "!aNT's fully s!ck user name 1337;;\n)/)'")
 
     expect(user.safe_user_name).to eq('aNTs-fully-s-ck-user-name-1337')
   end

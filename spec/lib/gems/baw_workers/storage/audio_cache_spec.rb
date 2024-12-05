@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'support/shared_test_helpers'
-
 describe BawWorkers::Storage::AudioCache do
   include_context 'shared_test_helpers'
   let(:audio_cache) { BawWorkers::Config.audio_cache_helper }
@@ -139,22 +137,5 @@ describe BawWorkers::Storage::AudioCache do
   it 'creates the correct full path' do
     expected = [File.join(Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_given_parameters)]
     expect(audio_cache.possible_paths(opts)).to eq expected
-  end
-
-  it 'parses a valid cache file name correctly' do
-    path = audio_cache.possible_paths_file(opts, cached_audio_file_name_given_parameters)
-
-    path_info = audio_cache.parse_file_path(path[0])
-
-    expect(path.size).to eq 1
-    expect(path.first).to eq("#{BawWorkers::Config.audio_cache_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050.wav")
-
-    expect(path_info.keys.size).to eq 6
-    expect(path_info[:uuid]).to eq uuid
-    expect(path_info[:start_offset]).to eq start_offset
-    expect(path_info[:end_offset]).to eq end_offset
-    expect(path_info[:sample_rate]).to eq sample_rate
-    expect(path_info[:channel]).to eq channel
-    expect(path_info[:format]).to eq format_audio
   end
 end

@@ -89,7 +89,8 @@ module SftpgoClient
 
         connection.use SftpgoClient::ResponseResultMiddleware
         connection.response :parse_dates
-        connection.response :json, content_type: /\bjson$/, parser_options: JSON_PARSER_OPTIONS
+        # parser_options needs to be not frozen
+        connection.response :json, content_type: /\bjson$/, parser_options: JSON_PARSER_OPTIONS.dup
         connection.response :encoding
       end
     end

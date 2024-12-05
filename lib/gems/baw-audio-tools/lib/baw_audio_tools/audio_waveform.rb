@@ -33,9 +33,9 @@ module BawAudioTools
       args = [cmd_scale, cmd_colour_fg, cmd_size].join(':')
 
       # ffmpeg -i spec/fixtures/files/test-audio-mono.ogg -filter_complex 'showwavespic=colors=#00FFFF' waveform.png -y
-      "#{@ffmpeg_executable} -nostdin -i '#{source}'" \
-        " -filter_complex 'showwavespic=#{args}'" \
-        " '#{target}'"
+      "#{@ffmpeg_executable} -nostdin -i '#{source}' " \
+        "-filter_complex 'showwavespic=#{args}' " \
+        "'#{target}'"
     end
 
     def self.scale_options
@@ -70,6 +70,8 @@ module BawAudioTools
     private
 
     def integer?(value)
+      return true if value.is_a?(Integer)
+
       return true if value =~ /[0-9]+/
 
       begin

@@ -25,15 +25,14 @@
 #  saved_searches_deleter_id_fk  (deleter_id => users.id)
 #
 class SavedSearch < ApplicationRecord
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_saved_searches
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_saved_searches, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_saved_searches
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_saved_searches, optional: true
 
   has_and_belongs_to_many :projects, inverse_of: :saved_searches
-  has_many :analysis_jobs, inverse_of: :saved_search
+  has_many :analysis_jobs
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
 
   validates :name, presence: true, length: { minimum: 2, maximum: 255 },
     uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
@@ -56,7 +55,10 @@ class SavedSearch < ApplicationRecord
                        saved_search_hash[:project_ids] =
                          fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
                        saved_search_hash[:analysis_job_ids] =
-                         fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
+                         # AT 2024 INTENTIONALLY BROKEN: analysis jobs no longer are linked to saved searches
+                         # but we don't have time to remove saved searches
+                         #fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
+                         []
                        saved_search_hash.merge!(item.render_markdown_for_api_for(:description))
                        [item, saved_search_hash]
                      },
@@ -177,23 +179,23 @@ class SavedSearch < ApplicationRecord
 
     audio_recordings_exists =
       ar
-      .where(pt[:deleted_at].eq(nil))
-      .where(ar[:site_id].eq(ps[:site_id]))
+        .where(pt[:deleted_at].eq(nil))
+        .where(ar[:site_id].eq(ps[:site_id]))
 
     conditions = audio_recording_conditions(user)
     audio_recordings_exists = append_conditions(audio_recordings_exists, conditions)
 
     audio_recordings_exists =
       audio_recordings_exists
-      .project(1)
-      .exists
+        .project(1)
+        .exists
 
     projects_sites_exist =
       ps
-      .where(pt[:id].eq(ps[:project_id]))
-      .where(audio_recordings_exists)
-      .project(1)
-      .exists
+        .where(pt[:id].eq(ps[:project_id]))
+        .where(audio_recordings_exists)
+        .project(1)
+        .exists
 
     Project.where(projects_sites_exist)
   end

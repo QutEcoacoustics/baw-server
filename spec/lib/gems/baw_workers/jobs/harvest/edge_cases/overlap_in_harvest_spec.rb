@@ -3,8 +3,6 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
@@ -14,7 +12,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
 
   prepare_harvest_with_mappings do
     [
-      ::BawWorkers::Jobs::Harvest::Mapping.new(
+      BawWorkers::Jobs::Harvest::Mapping.new(
         path: '',
         site_id: site.id,
         utc_offset: nil,
@@ -26,6 +24,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
   pause_all_jobs
 
   before do
+    AudioRecording.destroy_all
     clear_original_audio
     clear_harvester_to_do
   end
@@ -61,7 +60,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     perform_jobs(count: 3)
     expect_jobs_to_be completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob
 
-    expect(HarvestItem.all.count).to eq 3
+    expect(HarvestItem.count).to eq 3
     items = HarvestItem.all
     expect(items).to all(be_completed)
 
@@ -106,7 +105,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     end
   end
 
-  it 'will reject large overlaps' do
+  it 'rejects large overlaps' do
     # create recordings that overlap with the target file in a major way
     overlap = 20.0
 
@@ -128,7 +127,7 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     expect_jobs_to_be completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob
 
     aggregate_failures do
-      expect(HarvestItem.all.count).to eq 3
+      expect(HarvestItem.count).to eq 3
       item1, item2, item3 = HarvestItem.all
       expect(item1).to be_completed
       expect(item2).to be_failed
@@ -159,10 +158,10 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     end
   end
 
-  it 'will NOT reject large overlaps in other harvests' do
+  it 'does not reject large overlaps in other harvests' do
     other_harvest = Harvest.new(project:, creator: owner_user)
     other_harvest.mappings = [
-      ::BawWorkers::Jobs::Harvest::Mapping.new(
+      BawWorkers::Jobs::Harvest::Mapping.new(
         path: '',
         site_id: site.id,
         utc_offset: nil,
@@ -200,8 +199,8 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
     expect_jobs_to_be completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob
 
     aggregate_failures do
-      expect(HarvestItem.all.count).to eq 3
-      item1, item2, item3 = HarvestItem.all.order(:id)
+      expect(HarvestItem.count).to eq 3
+      item1, item2, item3 = HarvestItem.order(:id)
       expect(item1).to be_metadata_gathered
       expect(item2).to be_metadata_gathered
       expect(item3).to be_metadata_gathered

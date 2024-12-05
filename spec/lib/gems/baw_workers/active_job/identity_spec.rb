@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
+# rubocop:disable Rails/ApplicationJob
 describe BawWorkers::ActiveJob::Identity do
   before do
     # get a copy of the class that is unmodified from the rails initializers
-    original = ::ActiveJob::Base.const_get(:ACTIVE_JOB_BASE_BACKUP)
+    original = ActiveJob::Base.const_get(:ACTIVE_JOB_BASE_BACKUP)
     stub_const('::ActiveJob::Base', original.clone)
   end
 
   specify 'we are working with an unmodified ::ActiveJob::Base' do
-    expect(::ActiveJob::Base.ancestors).not_to include(BawWorkers::ActiveJob::Identity)
+    expect(ActiveJob::Base.ancestors).not_to include(BawWorkers::ActiveJob::Identity)
   end
 
   it 'errors if included' do
@@ -33,17 +34,21 @@ describe BawWorkers::ActiveJob::Identity do
     }
 
     before do
-      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      stub_const('ApplicationJob', Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity))
       stub_const('FakeJob', Class.new(ApplicationJob))
     end
 
     it 'errors if name is not changed' do
       job_class.define_method(:create_job_id, -> { 'placeholder' })
-      expect { job_class.new.name }.to raise_error NotImplementedError, 'You must implement name in your job class.'
+      expect {
+        job_class.new.name
+      }.to raise_error NotImplementedError, 'You must implement `name` in your job class (FakeJob).'
     end
 
     it 'errors if job_id is not changed' do
-      expect { job_class.new }.to raise_error NotImplementedError, 'You must implement create_job_id in your job class.'
+      expect {
+        job_class.new
+      }.to raise_error NotImplementedError, 'You must implement `create_job_id` in your job class (FakeJob).'
     end
   end
 
@@ -55,16 +60,16 @@ describe BawWorkers::ActiveJob::Identity do
     before do
       stub_const(
         'FakeJob',
-        Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity))
+        Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity)
       )
     end
 
     it 'generates a uuid name' do
-      expect(job.name).to match /FakeJob:[-a-f0-9]{36}/
+      expect(job.name).to match(/FakeJob:[-a-f0-9]{36}/)
     end
 
     it 'generates a uuid job_id' do
-      expect(job.job_id).to match /FakeJob:[-a-f0-9]{36}/
+      expect(job.job_id).to match(/FakeJob:[-a-f0-9]{36}/)
     end
   end
 
@@ -74,7 +79,8 @@ describe BawWorkers::ActiveJob::Identity do
     }
 
     before do
-      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      stub_const('ApplicationJob', Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity))
+
       impl = Class.new(ApplicationJob) do
         def name
           "#{self.class.name}: fake job name for #{job_id}"
@@ -102,7 +108,7 @@ describe BawWorkers::ActiveJob::Identity do
     }
 
     before do
-      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      stub_const('ApplicationJob', Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity))
       impl = Class.new(ApplicationJob) do
         def name
           "#{self.class.name}: fake job name for #{job_id}"
@@ -130,7 +136,7 @@ describe BawWorkers::ActiveJob::Identity do
     }
 
     before do
-      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      stub_const('ApplicationJob', Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity))
       impl = Class.new(ApplicationJob) do
         def name
           "#{self.class.name}: fake job name for #{job_id}"
@@ -158,7 +164,7 @@ describe BawWorkers::ActiveJob::Identity do
     }
 
     before do
-      stub_const('ApplicationJob', Class.new(::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)))
+      stub_const('ApplicationJob', Class.new(ActiveJob::Base).prepend(BawWorkers::ActiveJob::Identity))
       impl = Class.new(ApplicationJob) do
         def name
           "#{self.class.name}: fake job name for #{job_id}"
@@ -182,3 +188,4 @@ describe BawWorkers::ActiveJob::Identity do
     end
   end
 end
+# rubocop:enable Rails/ApplicationJob

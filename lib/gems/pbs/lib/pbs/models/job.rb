@@ -12,6 +12,7 @@ module PBS
     #   "server": "725ccdf1a5fb",
     #   "Checkpoint": "u",
     #   "ctime": "Tue Oct 11 08:13:45 2022",
+    #   "depend": "beforeany:1014.905bfe60ad67@905bfe60ad67:1015.905bfe60ad67@905bfe60ad67,beforeok:1016.905bfe60ad67@905bfe60ad67",
     #   "Error_Path": "725ccdf1a5fb:/home/pbsuser/testname.e0",
     #   "exec_host": "725ccdf1a5fb/0",
     #   "exec_vnode": "(725ccdf1a5fb:ncpus=1)",
@@ -64,6 +65,14 @@ module PBS
     #   },
     # }
     class Job < BaseStruct
+      # @!attribute [r] job_id
+      #   The job id. Note: this attribute is not normally part
+      #   of the PBS job status response. It is added by the
+      #   by us since moving around a single status object is
+      #   easier than moving around a status object and a job id.
+      #   @return [String]
+      attribute :job_id, ::BawApp::Types::String
+
       # @!attribute [r] job_name
       #   @return [String]
       attribute :job_name, ::BawApp::Types::String
@@ -94,7 +103,15 @@ module PBS
 
       # @!attribute [r] ctime
       #   @return [Time]
-      attribute :ctime, ::BawApp::Types::JSON::Time
+      attribute :ctime, ::BawApp::Types::UtcTime
+
+      # @!attribute [r] depend
+      #   @return [Hash<string, Array<string>>]
+      attribute? :depend,
+        ::BawApp::Types::Hash.map(
+          ::BawApp::Types::Symbol,
+          ::BawApp::Types::Array.of(::BawApp::Types::String)
+        ).optional.default({}.freeze)
 
       # @!attribute [r] error_path
       #   @return [String]
@@ -114,7 +131,7 @@ module PBS
 
       # @!attribute [r] hold_type
       #   @return [String]
-      attribute :hold_type, ::BawApp::Types::String.optional.default(nil)
+      attribute :hold_types, ::BawApp::Types::String.optional.default(nil)
 
       # @!attribute [r] join_path
       #   @return [String]
@@ -130,19 +147,19 @@ module PBS
 
       # @!attribute [r] mtime
       #   @return [Time]
-      attribute :mtime, ::BawApp::Types::JSON::Time
+      attribute :mtime, ::BawApp::Types::UtcTime
 
       # @!attribute [r] output_path
       #   @return [String]
       attribute :output_path, ::BawApp::Types::String
 
       # @!attribute [r] priority
-      #   @return [Time]
-      attribute :priority, ::BawApp::Types::JSON::Decimal
+      #   @return [Number]
+      attribute :priority, ::BawApp::Types::Nominal::Integer
 
       # @!attribute [r] qtime
       #   @return [Time]
-      attribute :qtime, ::BawApp::Types::JSON::Time
+      attribute :qtime, ::BawApp::Types::UtcTime
 
       # @!attribute [r] rerunable
       #   @return [Boolean]
@@ -154,19 +171,19 @@ module PBS
 
       # @!attribute [r] stime
       #   @return [Time,nil]
-      attribute? :stime, ::BawApp::Types::JSON::Time.optional.default(nil)
+      attribute? :stime, ::BawApp::Types::UtcTime.optional.default(nil)
 
       # @!attribute [r] obittime
       #   @return [Time]
-      attribute? :obittime, ::BawApp::Types::JSON::Time
+      attribute? :obittime, ::BawApp::Types::UtcTime
 
       # @!attribute [r] job_dir
       #   @return [String]
-      attribute? :job_dir, ::BawApp::Types::String
+      attribute? :jobdir, ::BawApp::Types::String
 
       # @!attribute [r] substate
       #   @return [Time]
-      attribute :substate, ::BawApp::Types::JSON::Decimal
+      attribute :substate, ::BawApp::Types::Nominal::Integer
 
       # @!attribute [r] variable_list
       #   @return [Hash<string,string>]
@@ -177,20 +194,20 @@ module PBS
       attribute? :comment, ::BawApp::Types::String
 
       # @!attribute [r] etime
-      #   @return [Time]
-      attribute :etime, ::BawApp::Types::JSON::Time
+      #   @return [Time,nil]
+      attribute? :etime, ::BawApp::Types::UtcTime.optional.default(nil)
 
       # @!attribute [r] run_count
-      #   @return [Time]
-      attribute? :run_count, ::BawApp::Types::JSON::Decimal
+      #   @return [Integer]
+      attribute? :run_count, ::BawApp::Types::Nominal::Integer
 
       # @!attribute [r] stageout_status
-      #   @return [Time]
-      attribute? :stageout_status, ::BawApp::Types::JSON::Decimal
+      #   @return [Number]
+      attribute? :stageout_status, ::BawApp::Types::Nominal::Integer
 
       # @!attribute [r] exit_status
-      #   @return [Time]
-      attribute? :exit_status, ::BawApp::Types::JSON::Decimal
+      #   @return [Number]
+      attribute? :exit_status, ::BawApp::Types::Nominal::Integer
 
       # @!attribute [r] submit_arguments
       #   @return [String]
@@ -209,12 +226,16 @@ module PBS
       attribute :submit_host, ::BawApp::Types::String
 
       # @!attribute [r] eligible_time
-      #   @return [String]
-      attribute? :eligible_time, ::BawApp::Types::String
+      #   @return [Float]
+      attribute? :eligible_time, ::BawApp::Types::Sexagesimal
 
       # @!attribute [r] array
       #   @return [String]
       attribute? :array, ::BawApp::Types::Params::Bool
+
+      # @!attribute [r] array_state_count
+      #   @return [String]
+      attribute? :array_state_count, ::BawApp::Types::String
 
       # @!attribute [r] state
       #   @return [String]
@@ -230,7 +251,7 @@ module PBS
 
       # @!attribute [r] estimated
       #   @return [Hash<string,string>]
-      attribute? :estimated, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::String).optional
+      attribute? :estimated, ::BawApp::Types::Hash.map(::BawApp::Types::Symbol, ::BawApp::Types::String).optional
 
       def begun?
         job_state.start_with?('B')

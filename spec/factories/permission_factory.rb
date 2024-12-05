@@ -28,7 +28,7 @@
 # Foreign Keys
 #
 #  permissions_creator_id_fk  (creator_id => users.id)
-#  permissions_project_id_fk  (project_id => projects.id)
+#  permissions_project_id_fk  (project_id => projects.id) ON DELETE => cascade
 #  permissions_updater_id_fk  (updater_id => users.id)
 #  permissions_user_id_fk     (user_id => users.id)
 #

@@ -82,12 +82,7 @@ class QuestionsController < ApplicationController
   end
 
   # DELETE /questions/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-    @question.destroy
-    respond_destroy
-  end
+  # Handled in Archivable
 
   private
 

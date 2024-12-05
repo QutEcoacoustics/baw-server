@@ -27,6 +27,12 @@ describe Api::Jwt do
       be_within(10.seconds).of(24.hours.from_now)
   end
 
+  it 'will validate a resource symbol' do
+    expect {
+      Api::Jwt.encode(subject: 0, resource: :monkeys, action: :show)
+    }.to raise_error(ArgumentError, 'JWT resource claim must be a valid controller')
+  end
+
   it 'cannot decode a token with a bad secret' do
     token = JWT.encode(
       { 'sub' => 123 },
@@ -42,7 +48,7 @@ describe Api::Jwt do
 
   describe 'can handle expirations' do
     before do
-      Timecop.freeze(Time.now)
+      Timecop.freeze(Time.zone.now)
     end
 
     after do

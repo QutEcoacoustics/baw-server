@@ -4,10 +4,6 @@ module Baw
   module ActiveRecord
     # Helper methods for incrementing counters
     module Upsert
-      # We've added custom Arel nodes, extend the ToSql visitor class so that our
-      # nodes can be translated to SQL.
-      ::Arel::Visitors::ToSql.prepend(Baw::Arel::Visitors::ToSqlExtensions)
-
       # Increments the counters from attributes by inserting the values or
       # updating existing values to be the sum of the new and old values.
       # Primary keys are detected and omitted on update.
@@ -37,16 +33,22 @@ module Baw
       #   do a custom update. Custom updates are useful for combining new and old values
       #   (e.g. incrementing counters with a SUM) or for inserting computed values.
       # @param [Symbol,Array<Symbol>,String] conflict_target: used to constrain
-      #   the conflict resolution to a subset of columns. If omitted defaults to the
-      #   value of `primary_keys`. If a symbol or an array of symbols it assumed these
+      #   the conflict resolution to a subset of columns. If omitted (or if the symbol
+      #   `:primary_keys` is passed), it defaults to the value of `model.primary_keys`.
+      #   If set to `nil` not specified and leaves it up to the database.
+      #   If a symbol or an array of symbols it assumed these
       #   are references to a tuple of columns that are unique. If a string, is used
       #   as the name of the unique constraint to reference for uniqueness.
       # @param [Array<::Arel::Nodes::Node>] conflict_where: a predicate used to allow partial
       #   unique indexes to be resolved.
-      # @return [Array<Array<Object>,Object>] an array rows each including an array columns,
-      #   if `returning` is not `nil`. If only one column is returned the columns array will be unwrapped.
-
-      def upsert_query(attributes, on_conflict:, returning: [], conflict_target: nil, conflict_where: nil)
+      # @return [Baw::Arel::UpsertManager]
+      def upsert_query(
+        attributes,
+        on_conflict:,
+        returning: [],
+        conflict_target: :primary_keys,
+        conflict_where: nil
+      )
         Baw::Arel::UpsertManager.new(self).tap do |u|
           u.insert(attributes)
 
@@ -60,7 +62,7 @@ module Baw
       private
 
       def _primary_keys
-        defined?(primary_keys) ? primary_keys : [primary_key]
+        primary_key.is_a?(Array) ? primary_key : [primary_key]
       end
     end
   end

@@ -57,8 +57,6 @@ module Api
       def valid?
         !expired && !immature && errored.blank?
       end
-
-      def authorize!; end
     end
   end
 end

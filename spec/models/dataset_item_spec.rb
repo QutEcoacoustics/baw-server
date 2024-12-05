@@ -19,15 +19,15 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  fk_rails_...  (creator_id => users.id)
 #  fk_rails_...  (dataset_id => datasets.id)
 #
 RSpec.describe DatasetItem, type: :model do
-  subject { FactoryBot.build(:dataset_item) }
+  subject { build(:dataset_item) }
 
   it 'has a valid factory' do
-    expect(FactoryBot.create(:dataset_item)).to be_valid
+    expect(create(:dataset_item)).to be_valid
   end
 
   it 'is invalid if the dataset_id is missing' do
@@ -64,14 +64,21 @@ RSpec.describe DatasetItem, type: :model do
     expect(build(:dataset_item, { order: 2_000_000_000.1 })).to be_valid
   end
 
-  it 'should get the created_at field populated automatically' do
+  it 'gets the created_at field populated automatically' do
     now = Time.zone.now
     soon = now + 60 # in one minute
 
-    dataset_item = FactoryBot.create(:dataset_item)
+    dataset_item = create(:dataset_item)
 
-    expect(dataset_item.created_at).to be_kind_of(ActiveSupport::TimeWithZone)
+    expect(dataset_item.created_at).to be_a(ActiveSupport::TimeWithZone)
     expect(dataset_item.created_at > now).to be_truthy
     expect(dataset_item.created_at < soon).to be_truthy
+  end
+
+  it_behaves_like 'cascade deletes for', :dataset_item, {
+    progress_events: nil,
+    responses: nil
+  } do
+    create_entire_hierarchy
   end
 end

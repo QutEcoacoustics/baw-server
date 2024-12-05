@@ -10,12 +10,16 @@ class ApplicationRecord < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # !@parse
+  # extend Discardable::ClassMethods
+  include Discardable
+
   # Like `pick` except it accepts a hash of attributes and returns
   # picked values in a hash with the same keys.
   #
   # @param [Hash<Symbol,object>] attributes key-value pairs of attribute names.
   #   Values can be the names of the columns to extract, or Arel expressions.
-  # @param [ActiveRecord::Relation] scope an existing relation to extend. If nil,
+  # @param [::ActiveRecord::Relation] scope an existing relation to extend. If nil,
   #   the default scope is used.
   #
   # @return [Hash<Symbol,object>] key-value pairs where they keys are taken from

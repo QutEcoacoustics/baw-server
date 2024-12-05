@@ -17,24 +17,22 @@ describe 'Stats permissions' do
     [{}, :json]
   end
 
-  custom_index = {
-    path: '',
-    verb: :get,
-    expect: lambda { |_user, _action|
-              expect(api_response).to include({
-                summary: a_hash
-              })
-            },
-    action: :index
-  }
+  with_custom_action(:index, path: '', verb: :get, expect: lambda { |_user, _action|
+    expect(api_response).to include({
+      summary: a_hash
+    })
+  })
 
   ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous,
-          can: [custom_index],
-          cannot: [:create, :update, :destroy, :new, :filter, :show],
-          fails_with: :not_found
+    can: [:index],
+    cannot: [:create, :update, :destroy, :new, :filter, :show],
+    fails_with: :not_found
 
-  the_user :invalid,
-           can_do: nothing,
-           and_cannot_do: everything,
-           fails_with: :unauthorized
+  ensures :invalid,
+    cannot: [:index],
+    fails_with: :unauthorized
+
+  ensures :invalid,
+    cannot: everything - [:index],
+    fails_with: :not_found
 end

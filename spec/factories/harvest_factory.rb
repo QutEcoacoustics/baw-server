@@ -24,7 +24,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #  fk_rails_...  (updater_id => users.id)
 #
 FactoryBot.define do

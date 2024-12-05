@@ -29,13 +29,31 @@ module Access
       # @param include_admin [Boolean] if true will strictly only fetch records owned by user, and will not work for admin users
       # @return [::ActiveRecord::Relation]
       def audio_event_imports(user, include_admin: true)
-        user = Access::Validate.user(user, false)
+        user = Access::Validate.user(user, true)
+
+        return AudioEventImport.none if user.nil?
 
         return AudioEventImport.all if include_admin && Access::Core.is_admin?(user)
 
         AudioEventImport
           .where('(audio_event_imports.creator_id = ? OR audio_event_imports.updater_id = ?)', user.id, user.id)
           .order('audio_event_imports.updated_at DESC')
+      end
+
+      def audio_event_import_files(audio_event_import, user)
+        user = Access::Validate.user(user, true)
+
+        return AudioEventImportFile.none if user.nil?
+
+        base_query = AudioEventImportFile
+          .joins(:audio_event_import)
+          .where(audio_event_import:)
+          .order('audio_event_import_files.created_at DESC')
+
+        return base_query if Access::Core.is_admin?(user)
+
+        base_query
+          .where('(audio_event_imports.creator_id = ?)', user.id)
       end
 
       # Get audio event comments created or updated by user.

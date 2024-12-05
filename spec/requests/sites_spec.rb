@@ -4,7 +4,7 @@ describe 'Sites' do
   create_entire_hierarchy
 
   context 'for time zones' do
-    example 'accepts an IANA identifier' do
+    it 'accepts an IANA identifier' do
       body = {
         site: {
           name: 'test site',
@@ -12,7 +12,7 @@ describe 'Sites' do
         }
       }
       post "/projects/#{project.id}/sites", params: body, headers: api_request_headers(owner_token, send_body: true),
-as: :json
+        as: :json
       expect(response).to have_http_status(:success)
       expect(api_result).to include(data: hash_including({
         timezone_information: hash_including({
@@ -23,7 +23,7 @@ as: :json
   end
 
   context 'project associations' do
-    example 'cannot create an orphan a site' do
+    it 'cannot create an orphan a site' do
       body = {
         site: {
           name: 'testy test site'
@@ -32,10 +32,10 @@ as: :json
 
       post '/sites', params: body, headers: api_request_headers(owner_token, send_body: true), as: :json
 
-      expect_error(400, 'Site testy test site () is not in any projects.')
+      expect_error(400, 'The request was not valid: Site testy test site () is not in any projects.')
     end
 
-    example 'can create an a site that belongs to multiple projects' do
+    it 'can create an a site that belongs to multiple projects' do
       second_project = create(:project)
       body = {
         site: {
@@ -50,13 +50,13 @@ as: :json
         expect(response).to have_http_status(:success)
         expect(api_result).to include({
           data: hash_including({
-            project_ids: match_array([project.id, second_project.id])
+            project_ids: contain_exactly(project.id, second_project.id)
           })
         })
       end
     end
 
-    example 'update a site so that it belongs to multiple projects' do
+    it 'update a site so that it belongs to multiple projects' do
       second_project = create(:project)
       body = {
         site: {
@@ -70,7 +70,7 @@ as: :json
         expect(response).to have_http_status(:success)
         expect(api_result).to include({
           data: hash_including({
-            project_ids: match_array([project.id, second_project.id])
+            project_ids: contain_exactly(project.id, second_project.id)
           })
         })
       end

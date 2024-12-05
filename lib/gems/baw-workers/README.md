@@ -30,12 +30,6 @@ Runs checks on original audio recording files. This action checks an entire sing
 
  - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
 
-### Harvest
-
-Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system.
-
- - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
- - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
 
 ### Media
 
@@ -122,10 +116,6 @@ An action is the actual processing that job arguments will be used to carry out.
 Every action has a `queue` setting.
 The `queue` is the name of the queue the action will add jobs to when running as a Resque enqueue worker.
 See the Actions section below for more information about action-specific settings.
-
-#### `settings.endpoints` and `settings.api`
-
-These settings must match the equivalent [baw-server](https://github.com/QutBioacoustics/baw-server) settings.
 
 #### `log_level` settings
 

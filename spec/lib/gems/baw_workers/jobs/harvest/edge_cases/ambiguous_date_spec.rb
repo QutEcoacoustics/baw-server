@@ -3,8 +3,6 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe 'HarvestJob will reject files with an ambiguous date', :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
@@ -14,7 +12,7 @@ describe 'HarvestJob will reject files with an ambiguous date', :clean_by_trunca
 
   prepare_harvest_with_mappings do
     [
-      ::BawWorkers::Jobs::Harvest::Mapping.new(
+      BawWorkers::Jobs::Harvest::Mapping.new(
         path: '',
         site_id: site.id,
         utc_offset: nil,
@@ -84,7 +82,7 @@ describe 'HarvestJob will reject files with an ambiguous date', :clean_by_trunca
 
   it 'can use recursive mappings to resolve reject ambiguous dates' do
     harvest.mappings = [
-      ::BawWorkers::Jobs::Harvest::Mapping.new(
+      BawWorkers::Jobs::Harvest::Mapping.new(
         path: '',
         site_id: site.id,
         utc_offset: '-11:00',

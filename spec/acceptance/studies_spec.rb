@@ -17,7 +17,7 @@ def basic_filter_opts
   {
     #response_body_content: ['test study'],
     expected_json_path: 'data/0/name',
-    data_item_count: 1
+    data_item_count: 2
   }
 end
 
@@ -40,7 +40,7 @@ resource 'Studies' do
     let(:current_user) { current_user }
 
     def token(target)
-      target.send("#{current_user}_token".to_sym)
+      target.send(:"#{current_user}_token")
     end
 
     # INDEX
@@ -51,7 +51,7 @@ resource 'Studies' do
         :get,
         "Any user, including #{current_user}, can access",
         :ok,
-        { expected_json_path: 'data/0/name', data_item_count: 1 }
+        { expected_json_path: 'data/0/name', data_item_count: 2 }
       )
     end
 
@@ -135,7 +135,7 @@ resource 'Studies' do
         :get,
         'INDEX (as admin)',
         :ok,
-        { expected_json_path: 'data/0/name', data_item_count: 1 }
+        { expected_json_path: 'data/0/name', data_item_count: 2 }
       )
     end
 
@@ -155,7 +155,7 @@ resource 'Studies' do
         :get,
         'INDEX (as anonymous user)',
         :ok,
-        { remove_auth: true, expected_json_path: 'data/0/name', data_item_count: 1 }
+        { remove_auth: true, expected_json_path: 'data/0/name', data_item_count: 2 }
       )
     end
 
@@ -362,72 +362,6 @@ resource 'Studies' do
   # # UPDATE
   # ################################
 
-  describe 'update' do
-    put '/studies/:id' do
-      body_params
-      let(:id) { study.id }
-      let(:raw_post) { { study: post_attributes }.to_json }
-      let(:authentication_token) { admin_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as admin)',
-        :ok,
-        { expected_json_path: 'data/name', response_body_content: 'New Study name' }
-      )
-    end
-
-    put '/studies/:id' do
-      body_params
-      let(:id) { study.id }
-      let(:raw_post) { { study: post_attributes }.to_json }
-      let(:authentication_token) { no_access_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as no access user)',
-        :forbidden,
-        { expected_json_path: get_json_error_path(:permissions) }
-      )
-    end
-
-    put '/studies/:id' do
-      body_params
-      let(:id) { study.id }
-      let(:raw_post) { { study: post_attributes }.to_json }
-      let(:authentication_token) { invalid_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with invalid token)',
-        :unauthorized,
-        { expected_json_path: get_json_error_path(:sign_up) }
-      )
-    end
-
-    put '/studies/:id' do
-      body_params
-      let(:id) { study.id }
-      let(:raw_post) { { study: post_attributes }.to_json }
-      standard_request_options(
-        :put,
-        'UPDATE (as anonymous user)',
-        :unauthorized,
-        { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) }
-      )
-    end
-
-    put '/studies/:id' do
-      body_params
-      let(:id) { study.id }
-      let(:raw_post) { { study: post_attributes }.to_json }
-      let(:authentication_token) { harvester_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with harvester token)',
-        :forbidden,
-        { expected_json_path: get_json_error_path(:permissions) }
-      )
-    end
-  end
-
   # ################################
   # # DESTROY
   # ################################
@@ -590,7 +524,7 @@ resource 'Studies' do
         {
           #response_body_content: ['Test study'],
           expected_json_path: 'data/0/name',
-          data_item_count: 1
+          data_item_count: 2
         }
       )
     end

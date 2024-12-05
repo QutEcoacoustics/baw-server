@@ -4,37 +4,38 @@
 #
 # Table name: audio_event_imports
 #
-#  id          :bigint           not null, primary key
-#  deleted_at  :datetime
-#  description :text
-#  files       :jsonb
-#  name        :string
-#  created_at  :datetime         not null
-#  updated_at  :datetime         not null
-#  creator_id  :integer
-#  deleter_id  :integer
-#  updater_id  :integer
+#  id                                                     :bigint           not null, primary key
+#  deleted_at                                             :datetime
+#  description                                            :text
+#  name                                                   :string
+#  created_at                                             :datetime         not null
+#  updated_at                                             :datetime         not null
+#  analysis_job_id(Analysis job that created this import) :integer
+#  creator_id                                             :integer          not null
+#  deleter_id                                             :integer
+#  updater_id                                             :integer
+#
+# Indexes
+#
+#  index_audio_event_imports_on_analysis_job_id  (analysis_job_id)
+#
+# Foreign Keys
+#
+#  audio_event_imports_creator_id_fk  (creator_id => users.id)
+#  audio_event_imports_deleter_id_fk  (deleter_id => users.id)
+#  audio_event_imports_updater_id_fk  (updater_id => users.id)
+#  fk_rails_...                       (analysis_job_id => analysis_jobs.id)
 #
 class AudioEventImport < ApplicationRecord
-  # Temporary property showing events recently imported.
-  # @return [Array<AudioEvent>]
-  attr_accessor :imported_events
+  # associations
+  has_many :audio_event_import_files, inverse_of: :audio_event_import, dependent: :destroy
+  has_many :audio_events, through: :audio_event_import_files
 
-  def initialize(...)
-    @imported_events = []
-    super(...)
-  end
+  belongs_to :analysis_job, inverse_of: :audio_event_imports, optional: true
 
-  # relations
-  has_many :audio_events, inverse_of: :audio_event_import
-
-  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
-  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events,
-    optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events,
-    optional: true
-
-  after_initialize :set_defaults
+  belongs_to :creator, class_name: 'User', inverse_of: :created_audio_event_imports
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_audio_event_imports, optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_audio_event_imports, optional: true
 
   # scopes
   # @!method self.created_by(user)
@@ -44,18 +45,15 @@ class AudioEventImport < ApplicationRecord
   scope :created_by, ->(user) { AudioEventImport.where(creator: user) }
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :audio_events, batch: true
 
+  # validations
   validates :name, presence: true, length: { minimum: 2 }
-
-  def set_defaults
-    self.files ||= []
-  end
 
   def self.filter_settings
     common_fields = [
-      :id, :name, :description, :files, :imported_events,
+      :id, :name, :description, :analysis_job_id,
       :creator_id, :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at
     ]
     {
@@ -63,22 +61,13 @@ class AudioEventImport < ApplicationRecord
       render_fields: common_fields + [:description_html_tagline, :description_html],
       text_fields: [:name, :description],
       custom_fields2: {
-        **AudioEventImport.new_render_markdown_for_api_for(:description),
-        imported_events: {
-          query_attributes: [:id],
-          transform: lambda { |item|
-                       item.imported_events || []
-                     },
-          arel: nil,
-          type: :hash
-        }
-
+        **AudioEventImport.new_render_markdown_for_api_for(:description)
       },
       new_spec_fields: lambda { |_user|
         {
           name: nil,
           description: nil,
-          file_name: nil
+          analysis_jobs_id: nil
         }
       },
       controller: :audio_event_imports,
@@ -89,9 +78,21 @@ class AudioEventImport < ApplicationRecord
       },
       valid_associations: [
         {
-          join: AudioEvent,
-          on: AudioEventImport.arel_table[:id].eq(AudioEvent.arel_table[:audio_event_import_id]),
+          join: AnalysisJob,
+          on: AudioEventImport.arel_table[:analysis_jobs_id].eq(AnalysisJob.arel_table[:id]),
           available: true
+        },
+        {
+          join: AudioEventImportFile,
+          on: AudioEventImport.arel_table[:id].eq(AudioEventImportFile.arel_table[:audio_event_import_id]),
+          available: true,
+          associations: [
+            {
+              join: AudioEvent,
+              on: AudioEventImportFile.arel_table[:id].eq(AudioEvent.arel_table[:audio_event_import_file_id]),
+              available: true
+            }
+          ]
         }
       ]
     }
@@ -103,40 +104,14 @@ class AudioEventImport < ApplicationRecord
       additionalProperties: false,
       properties: {
         id: Api::Schema.id,
+        analysis_job_id: Api::Schema.id(nullable: true, read_only: true),
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
-        **Api::Schema.all_user_stamps,
-        files: {
-          type: 'array',
-          readOnly: true,
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              name: { type: 'string' },
-              additional_tags: Api::Schema.ids(read_only: true),
-              imported_at: Api::Schema.date(read_only: true)
-            },
-            readOnly: true
-          }
-        },
-        # TODO: flesh this out when we add an audio events schema
-        imported_events: {
-          type: 'array',
-          readOnly: true,
-          items: {
-            properties: {
-              errors: { type: 'array', readOnly: true }
-            },
-            readOnly: true
-          }
-        }
+        **Api::Schema.all_user_stamps
       },
       required: [
         :id,
         :name,
-        :files,
-        :imported_events,
         :description,
         :description_html,
         :description_html_tagline,

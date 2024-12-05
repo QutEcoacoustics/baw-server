@@ -2,7 +2,7 @@
 
 module PBS
   module Models
-    # Represents a jobs on a PBS cluster
+    # Represents a jobs' resource list on a PBS cluster
     #   "Resource_List": {
     #     "ncpus": 1,
     #     "nodect": 1,
@@ -16,11 +16,11 @@ module PBS
 
       # @!attribute [r] walltime
       #   @return [String]
-      attribute? :walltime, ::BawApp::Types::String
+      attribute? :walltime, ::BawApp::Types::Sexagesimal
 
       # @!attribute [r] mem
       #   @return [String]
-      attribute? :mem, ::BawApp::Types::String
+      attribute? :mem, ::BawApp::Types::PbsByteFormat
 
       # @!attribute [r] nodect
       #   @return [String]

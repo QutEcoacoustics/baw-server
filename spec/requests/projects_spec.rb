@@ -105,7 +105,7 @@ describe 'Projects' do
   describe 'API filtering' do
     create_entire_hierarchy
 
-    example 'basically works' do
+    it 'basically works' do
       body = {
         'filter' => {
           'id' => {
@@ -123,7 +123,7 @@ describe 'Projects' do
       expect_has_projection({ include: ['id', 'name'] })
     end
 
-    example 'filter partial match' do
+    it 'filter partial match' do
       url = '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1'
       get url, headers: api_request_headers(reader_token)
       expect(response).to have_http_status(:success)
@@ -131,13 +131,13 @@ describe 'Projects' do
       expect_has_paging(
         page: 1,
         items: 35,
-        current: 'http://localhost:3000/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1'
+        current: 'http://web:3000/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1'
       )
 
       expect_has_sorting(order_by: 'created_at', direction: 'desc')
     end
 
-    example 'filter with paging via GET' do
+    it 'filter with paging via GET' do
       # default items per page is 25
       create_list(:project, 29, creator: writer_user)
 
@@ -145,12 +145,14 @@ describe 'Projects' do
 
       expect(response).to have_http_status(:success)
       expect_number_of_items(2)
-      expect_has_paging(page: 1, items: 2, total: Project.all.count)
+
+      actual_count = Access::ByPermission.projects(writer_user).count
+      expect_has_paging(page: 1, items: 2, total: actual_count)
     end
   end
 
   describe 'regions' do
-    example 'api response can return region_ids' do
+    it 'api response can return region_ids' do
       expect(project.region_ids).to have_at_least(1).item
 
       get "/projects/#{project.id}", headers: api_request_headers(reader_token), as: :json
@@ -161,8 +163,8 @@ describe 'Projects' do
       }))
     end
 
-    example 'api response can return empty array when no regions exist' do
-      Region.all.delete_all
+    it 'api response can return empty array when no regions exist' do
+      Region.delete_all
       get "/projects/#{project.id}", headers: api_request_headers(reader_token), as: :json
 
       expect_success
@@ -171,6 +173,4 @@ describe 'Projects' do
       }))
     end
   end
-
-
 end

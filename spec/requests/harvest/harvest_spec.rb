@@ -6,20 +6,20 @@ describe 'Harvesting files' do
   include HarvestSpecCommon
   render_error_responses
 
-  it 'will not allow a harvest to be created if the project does not allow uploads' do
+  it 'does not allow a harvest to be created if the project does not allow uploads' do
     project.allow_audio_upload = false
     project.save!
 
     create_harvest
 
     expect_error(
-      :unprocessable_entity,
+      :unprocessable_content,
       'Record could not be saved',
       { project: ['A harvest cannot be created unless its parent project has enabled audio upload'] }
     )
   end
 
-  it 'will not create the harvest if there is a problem contacting the upload service' do
+  it 'does not create the harvest if there is a problem contacting the upload service' do
     stub_request(:post, 'upload.test:8080/api/v2/users')
       .to_return(
         body: '{"message":"cannot stat dir", "error": "error message"}',
@@ -82,7 +82,7 @@ describe 'Harvesting files' do
       Creation::Common.create_project(owner_user)
     }
 
-    it 'will error if it is different in the route and body during creation' do
+    it 'errors if it is different in the route and body during creation' do
       body = {
         harvest: {
           streaming: false,
@@ -102,7 +102,7 @@ describe 'Harvesting files' do
       )
     end
 
-    it 'will error if it is different in the route and the existing project during update' do
+    it 'errors if it is different in the route and the existing project during update' do
       create_harvest
       expect_success
 
@@ -124,7 +124,7 @@ describe 'Harvesting files' do
       )
     end
 
-    it 'will error if it is different than the harvest\'s project_id' do
+    it 'errors if it is different than the harvest project_id' do
       create_harvest
       expect_success
 
@@ -140,7 +140,7 @@ describe 'Harvesting files' do
       )
     end
 
-    it 'will error with 404 if it does not exist' do
+    it 'errors with 404 if it does not exist' do
       create_harvest
       expect_success
 
@@ -206,7 +206,7 @@ describe 'Harvesting files' do
         recursive: true
       ))
 
-      expect_error(:unprocessable_entity, /Record could not be saved/, {
+      expect_error(:unprocessable_content, /Record could not be saved/, {
         mappings: [
           "Site '123456' does not exist for mapping ''"
         ]
@@ -221,7 +221,7 @@ describe 'Harvesting files' do
         recursive: true
       })
 
-      expect_error(:unprocessable_entity, /Invalid mapping.*nil \(NilClass\) has invalid type for :path/)
+      expect_error(:unprocessable_content, /Invalid mapping.*nil \(NilClass\) has invalid type for :path/)
     end
 
     it 'rejects mappings with duplicate paths' do
@@ -241,7 +241,7 @@ describe 'Harvesting files' do
         recursive: true
       ))
 
-      expect_error(:unprocessable_entity, /Record could not be saved/, {
+      expect_error(:unprocessable_content, /Record could not be saved/, {
         mappings: [
           "Duplicate path in mappings: ''"
         ]
@@ -265,7 +265,7 @@ describe 'Harvesting files' do
         recursive: true
       ))
 
-      expect_error(:unprocessable_entity, /Record could not be saved/, {
+      expect_error(:unprocessable_content, /Record could not be saved/, {
         mappings: [
           "Duplicate path in mappings: 'abc'"
         ]
@@ -279,7 +279,7 @@ describe 'Harvesting files' do
         recursive: true
       })
 
-      expect_error(:unprocessable_entity, /Invalid mapping.*path is missing/)
+      expect_error(:unprocessable_content, /Invalid mapping.*path is missing/)
     end
 
     it 'rejects malformed mappings (extra field)' do
@@ -291,7 +291,7 @@ describe 'Harvesting files' do
         recursive: true
       })
 
-      expect_error(:unprocessable_entity, /found unpermitted parameter: :banana/)
+      expect_error(:unprocessable_content, /found unpermitted parameter: :banana/)
     end
   end
 

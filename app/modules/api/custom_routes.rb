@@ -21,7 +21,7 @@ module Api
         next if route.engine?
         next if route.verb.blank?
 
-        guessed_controller_name = (route.controller.camelize + 'Controller').safe_constantize
+        guessed_controller_name = "#{route.controller.camelize}Controller".safe_constantize
         next if !guessed_controller_name.nil? && guessed_controller_name.superclass.name == 'DeviseController'
 
         # next if route.controller =~ /^docs.*/
@@ -53,11 +53,11 @@ module Api
     private
 
     def matchable_routes(routes)
-      routes.collect { |r|
-        method = r.verb
+      routes.collect { |audio_recording|
+        method = audio_recording.verb
         method = '' if method.blank?
 
-        path = r.path[%r{/[^( ]*}]
+        path = audio_recording.path[%r{/[^( ]*}]
         path = '' if path.blank?
 
         ::Route.new(method, path)
@@ -72,12 +72,12 @@ module Api
 
     def collect_routes
       routes.collect do |route|
-        route = yield ActionDispatch::Routing::RouteWrapper.new(route)
+        yield ActionDispatch::Routing::RouteWrapper.new(route)
       end
     end
   end
 
-  class ::Route < Struct.new(:method, :path)
+  ::Route = Struct.new(:method, :path) do
     def eql?(other)
       hash == other.hash
     end

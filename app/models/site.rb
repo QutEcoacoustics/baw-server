@@ -32,7 +32,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...         (region_id => regions.id)
+#  fk_rails_...         (region_id => regions.id) ON DELETE => cascade
 #  sites_creator_id_fk  (creator_id => users.id)
 #  sites_deleter_id_fk  (deleter_id => users.id)
 #  sites_updater_id_fk  (updater_id => users.id)
@@ -42,14 +42,16 @@ class Site < ApplicationRecord
   include TimeZoneAttribute
 
   # relations
-  has_and_belongs_to_many :projects, -> { distinct }
-  has_many :audio_recordings, inverse_of: :site
+  has_many :projects_sites, dependent: :destroy, inverse_of: :site
+  has_many :projects, -> { distinct }, through: :projects_sites
 
-  belongs_to :region, foreign_key: :region_id, inverse_of: :sites, optional: true
+  has_many :audio_recordings, inverse_of: :site, dependent: :destroy
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites, optional: true
+  belongs_to :region, inverse_of: :sites, optional: true
+
+  belongs_to :creator, class_name: 'User', inverse_of: :created_sites
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_sites, optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_sites, optional: true
 
   has_attached_file :image,
     styles: {
@@ -71,8 +73,8 @@ class Site < ApplicationRecord
   JITTER_RANGE = 0.003
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :audio_recordings, batch: true
 
   # association validations
   #validates_associated :creator
@@ -105,16 +107,27 @@ class Site < ApplicationRecord
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
+  SAFE_NAME_REGEX = /[^A-Za-z0-9_]+/
+
   # get's a file system safe ([-A-Za-z0-9_]) version of the site name
   # @return [String]
   def safe_name
     name
       .gsub("'", '')
-      .gsub(/[^-_A-Za-z0-9]+/, '-')
+      .gsub(SAFE_NAME_REGEX, '-')
       .delete_prefix('-')
       .delete_suffix('-')
-      .squeeze('-')
   end
+
+  # get's a file system safe ([-A-Za-z0-9_]) version of the site name
+  # but is calculated on the database server as part of the query.
+  # Mirrors the logic in `safe_name`.
+  SAFE_NAME_AREL = Site
+    .arel_table[:name]
+    .replace("'", '')
+    .replace(SAFE_NAME_REGEX, '-')
+    .trim('-')
+    .freeze
 
   # The same as `safe_name` but appends site.id to ensure a unique name
   # @return [String]
@@ -133,13 +146,13 @@ class Site < ApplicationRecord
   def get_bookmark_or_recording
     bookmark = get_bookmark
     recording = most_recent_recording
-    if !bookmark.blank?
+    if bookmark.present?
       {
         audio_recording: bookmark.audio_recording,
         start_offset_seconds: bookmark.offset_seconds,
         source: :bookmark
       }
-    elsif !recording.blank?
+    elsif recording.present?
       {
         audio_recording: recording,
         start_offset_seconds: nil,
@@ -151,8 +164,8 @@ class Site < ApplicationRecord
   renders_markdown_for :description
 
   def custom_latitude
-    value = read_attribute(:latitude)
-    if location_obfuscated && !value.blank?
+    value = self[:latitude]
+    if location_obfuscated && value.present?
       Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX, location_jitter_seed)
     else
       value
@@ -160,8 +173,8 @@ class Site < ApplicationRecord
   end
 
   def custom_longitude
-    value = read_attribute(:longitude)
-    if location_obfuscated && !value.blank?
+    value = self[:longitude]
+    if location_obfuscated && value.present?
       Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed)
     else
       value

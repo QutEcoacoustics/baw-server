@@ -18,7 +18,7 @@ describe 'Harvesting streaming files' do
       post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
 
       expect_error(
-        :unprocessable_entity,
+        :unprocessable_content,
         'The request could not be understood: found unpermitted parameter: :status'
       )
     end
@@ -40,7 +40,7 @@ describe 'Harvesting streaming files' do
   end
 
   describe 'File system permissions' do
-    it 'cannot create a new directories in streaming mode' do
+    it 'cannot create new directories in streaming mode' do
       create_harvest(streaming: true)
       get_harvest
       expect_upload_slot_enabled
@@ -135,6 +135,11 @@ describe 'Harvesting streaming files' do
           )
         ])
       end
+
+      step 'there should be a analysis amend job enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        clear_pending_jobs
+      end
     end
 
     stepwise 'supports uploading multiple files' do
@@ -214,6 +219,10 @@ describe 'Harvesting streaming files' do
           items_invalid_not_fixable: 0
         )
       end
+
+      step 'there should be a analysis amend job enqueued' do
+        expect_performed_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+      end
     end
   end
 
@@ -280,6 +289,11 @@ describe 'Harvesting streaming files' do
           items_completed: 1
         )
       end
+
+      step 'there should be a analysis amend job enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        clear_pending_jobs
+      end
     end
 
     stepwise 'on completion a scan job is run' do
@@ -305,7 +319,7 @@ describe 'Harvesting streaming files' do
         # clear_pending_jobs also clears the queue and all statuses that were in the queue
         expect_jobs_to_be(completed: 0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
 
-        HarvestItem.all.delete_all
+        HarvestItem.delete_all
 
         expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
         expect(HarvestItem.count).to eq 0
@@ -338,6 +352,11 @@ describe 'Harvesting streaming files' do
           item = HarvestItem.first
           expect(item).to be_completed
         end
+      end
+
+      step 'there should be a analysis amend job enqueued' do
+        expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
+        clear_pending_jobs
       end
     end
   end

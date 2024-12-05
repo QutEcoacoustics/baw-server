@@ -4,7 +4,7 @@ describe BawWorkers::Jobs::IntroduceDelay do
   pause_all_jobs
 
   it 'checks we have patched ApplicationJob' do
-    expect(::BawWorkers::Jobs::ApplicationJob.ancestors).to include(BawWorkers::Jobs::IntroduceDelayPatch)
+    expect(BawWorkers::Jobs::ApplicationJob.ancestors).to include(BawWorkers::Jobs::IntroduceDelayPatch)
   end
 
   context 'with a paused jobs' do
@@ -12,18 +12,18 @@ describe BawWorkers::Jobs::IntroduceDelay do
       client_yield = nil
       waiter = introduce_delay(job_class: Fixtures::CheckPointJob, method: :some_work, delay: 1) {
         expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be true
-        client_yield = Time.now
+        client_yield = Time.zone.now
       }
       job = Fixtures::CheckPointJob.perform_later!
 
       expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be false
-      start = Time.now
+      start = Time.zone.now
 
       perform_jobs_immediately(count: 1)
       waiter.call
       wait_for_jobs
 
-      stop = Time.now
+      stop = Time.zone.now
       expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be false
       expect(BawWorkers::Jobs::IntroduceDelay.find_hook).to be_nil
 
@@ -44,18 +44,18 @@ describe BawWorkers::Jobs::IntroduceDelay do
       client_yield = nil
       waiter = introduce_delay(job_class: Fixtures::CheckPointJob, method: :some_work, delay: 1) {
         expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be true
-        client_yield = Time.now
+        client_yield = Time.zone.now
       }
 
       expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be false
-      start = Time.now
+      start = Time.zone.now
 
       job = Fixtures::CheckPointJob.perform_later!
 
       waiter.call
       wait_for_jobs
 
-      stop = Time.now
+      stop = Time.zone.now
       expect(BawWorkers::Jobs::IntroduceDelay.waiting?).to be false
       expect_jobs_to_be(completed: 1, of_class: Fixtures::CheckPointJob)
 
@@ -77,7 +77,10 @@ describe BawWorkers::Jobs::IntroduceDelay do
 
     # and we should see about a second of delay
     # the block is executed when we hit the target method
-    expect(client_yield - start).to be_within(0.3).of(0.5)
+
+    # this is the polling delay for the worker picking up the job
+    expect(client_yield - start).to be_within(0.3).of(0.1)
+    # then the time between dequeue and before (job setup etc)
     expect(client_yield - before).to be_within(0.1).of(0.1)
     # then delay happens before the target method
     expect(inside - client_yield).to be_within(0.2).of(1)
@@ -102,6 +105,6 @@ describe BawWorkers::Jobs::IntroduceDelay do
     match = message.match(regex)
     return nil unless match
 
-    Time.parse(match.captures[0])
+    Time.zone.parse(match.captures[0])
   end
 end

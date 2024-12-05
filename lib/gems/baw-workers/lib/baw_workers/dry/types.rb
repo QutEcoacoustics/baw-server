@@ -8,6 +8,7 @@ module BawWorkers
       # @!parse
       #   include Dry::Types
       include ::Dry.Types
+      include ::BawApp::Types
 
       ID = Strict::Integer.constrained(gteq: 0)
       NATURAL = Strict::Integer.constrained(gteq: 0)
@@ -25,15 +26,6 @@ module BawWorkers
       UtcOffsetString = Strict::String.constrained(format: BawWorkers::FileInfo::UTC_OFFSET_REGEX)
 
       StrictSymbolizingHash = Types::Hash.schema({}).strict.with_key_transform(&:to_sym)
-
-      Statuses = String.enum(
-        BawWorkers::ActiveJob::Status::STATUS_QUEUED,
-        BawWorkers::ActiveJob::Status::STATUS_WORKING,
-        BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
-        BawWorkers::ActiveJob::Status::STATUS_FAILED,
-        BawWorkers::ActiveJob::Status::STATUS_ERRORED,
-        BawWorkers::ActiveJob::Status::STATUS_KILLED
-      )
 
       # MediaJobTypes = Types::Coercible::Symbol.enum(
       #   :audio,
@@ -60,7 +52,7 @@ module BawWorkers
       UnixTime = Constructor(::Time) { |value|
         next nil if value.blank?
 
-        ::Time.at(value)
+        ::Time.zone.at(value)
       }
     end
   end

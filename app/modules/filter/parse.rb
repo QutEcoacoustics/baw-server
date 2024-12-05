@@ -27,20 +27,18 @@ module Filter
     # @param [Integer] max_items
     # @return [Hash] Paging parameters
     def parse_paging(params, default_page, default_items, max_items)
-      page, items, offset, limit = nil
-
       # qsp
       page = params[:page]
       items = params[:items]
       disable_paging = params[:disable_paging]
 
       # POST body
-      page = params[:paging][:page] if page.blank? && !params[:paging].blank?
-      items = params[:paging][:items] if items.blank? && !params[:paging].blank?
-      disable_paging = params[:paging][:disable_paging] if !params[:paging].blank? && disable_paging.blank?
+      page = params[:paging][:page] if page.blank? && params[:paging].present?
+      items = params[:paging][:items] if items.blank? && params[:paging].present?
+      disable_paging = params[:paging][:disable_paging] if params[:paging].present? && disable_paging.blank?
 
       # page and items are mutually exclusive with disable_paging
-      if (!page.blank? || !items.blank?) && !disable_paging.blank?
+      if (page.present? || items.present?) && disable_paging.present?
         raise CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging'
       end
 
@@ -66,7 +64,7 @@ module Filter
       limit = items
 
       # will always set all options
-      { offset: offset, limit: limit, page: page, items: items, disable_paging: disable_paging }
+      { offset:, limit:, page:, items:, disable_paging: }
     end
 
     # Parse sort parameters. Will use defaults if not specified.
@@ -80,22 +78,22 @@ module Filter
       direction = params[:direction]
 
       # POST body
-      order_by = params[:sorting][:order_by] if order_by.blank? && !params[:sorting].blank?
-      direction = params[:sorting][:direction] if direction.blank? && !params[:sorting].blank?
+      order_by = params[:sorting][:order_by] if order_by.blank? && params[:sorting].present?
+      direction = params[:sorting][:direction] if direction.blank? && params[:sorting].present?
 
       # set defaults if necessary
       order_by = default_order_by if order_by.blank?
       direction = default_direction if direction.blank?
 
       # ensure symbols
-      order_by = CleanParams.clean(order_by) unless order_by.blank?
-      direction = CleanParams.clean(direction) unless direction.blank?
+      order_by = CleanParams.clean(order_by) if order_by.present?
+      direction = CleanParams.clean(direction) if direction.present?
 
-      { order_by: order_by, direction: direction }
+      { order_by:, direction: }
     end
 
     def parse_projection(params)
-      return nil unless params.include?(:projection) && !params[:projection].blank?
+      return nil unless params.include?(:projection) && params[:projection].present?
 
       projection = params[:projection]
       projection[:include].map! { |x| CleanParams.clean(x) } if projection in {include: Array}
@@ -113,11 +111,11 @@ module Filter
     # @param [Array<Symbol>] text_fields
     # @return [Hash] filter items
     def parse_qsp_partial_match_text(params, key, text_fields)
-      value = params[key].blank? ? nil : params[key]
+      value = params[key].presence
 
       filter_items = {}
 
-      unless value.blank?
+      if value.present?
         text_fields.each do |text_field|
           filter_items[text_field] = { contains: value }
         end

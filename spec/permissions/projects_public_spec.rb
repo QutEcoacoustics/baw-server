@@ -1,4 +1,4 @@
-
+# frozen_string_literal: true
 
 # refresher:
 # our permission system has two options for non-user project permissions:

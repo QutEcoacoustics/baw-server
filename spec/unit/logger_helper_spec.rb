@@ -4,7 +4,7 @@ describe LoggerHelpers do
   logger.info { 'logger self test' }
 
   it 'can log in an example group' do
-    lines = `grep 'logger self test' log/rails.local.test.log`
+    lines = `grep --text 'logger self test' log/rails.local.test.log`
     expect(lines).to match(/.*I.*RSpec.*logger self test/)
   end
 

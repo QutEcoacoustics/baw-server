@@ -69,7 +69,7 @@ class TaggingsController < ApplicationController
       if tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
         tag = Tag.new(tagging_params[:tag_attributes])
-        render json: tag.errors, status: :unprocessable_entity and return unless tag.save
+        render json: tag.errors, status: :unprocessable_content and return unless tag.save
       end
       @tagging.tag = tag
     else
@@ -100,15 +100,8 @@ class TaggingsController < ApplicationController
     end
   end
 
-  ## DELETE /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-
-    @tagging.destroy
-
-    respond_destroy
-  end
+  # DELETE /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
+  # Handled in Archivable
 
   # GET|POST /taggings/filter
   def filter
@@ -142,6 +135,7 @@ class TaggingsController < ApplicationController
   end
 
   def tagging_params
-    params.require(:tagging).permit(:audio_event_id, :tag_id, tag_attributes: [:is_taxonomic, :text, :type_of_tag, :retired, :notes])
+    params.require(:tagging).permit(:audio_event_id, :tag_id,
+      tag_attributes: [:is_taxonomic, :text, :type_of_tag, :retired, :notes])
   end
 end

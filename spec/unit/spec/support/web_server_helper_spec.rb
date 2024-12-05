@@ -2,12 +2,12 @@
 
 describe 'WebServerHelper::ExampleGroup', type: :request do
   extend WebServerHelper::ExampleGroup
-  let(:origin) { "http://#{Settings.api.host}:#{Settings.api.port}" }
+  let(:origin) { "http://#{Settings.host.name}:#{Settings.host.port}" }
   let(:url) { "#{origin}/status.json" }
 
   def port_open?
     begin
-      TCPSocket.new('127.0.0.1', Settings.api.port)
+      TCPSocket.new('127.0.0.1', Settings.host.port)
     rescue Errno::ECONNREFUSED
       return false
     end
@@ -104,19 +104,19 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
     end
   end
 
-  context 'when accessing test state' do
+  context 'when accessing test state', :clean_by_truncation do
     prepare_users
     prepare_dataset
     create_anon_hierarchy
     expose_app_as_web_server
     it 'works for database records' do
-      all = AudioRecording.all.pick(:id)
+      all = AudioRecording.pick(:id)
 
       response = Faraday.get("#{origin}/audio_recordings")
       decoded = JSON.parse(response.body, { symbolize_names: true })
 
       expect(response.status).to eq 200
-      expect(decoded[:data].map { |x| x[:id] }).to contain_exactly(all)
+      expect(decoded[:data].pluck(:id)).to contain_exactly(all)
     end
 
     it 'can mock any instance of a class, and external http requests will work' do
@@ -126,7 +126,7 @@ describe 'WebServerHelper::ExampleGroup', type: :request do
       decoded = JSON.parse(response.body, { symbolize_names: true })
 
       expect(response.status).to eq 200
-      expect(decoded[:data].map { |x| x[:id] }).to contain_exactly(123_456)
+      expect(decoded[:data].pluck(:id)).to contain_exactly(123_456)
     end
   end
 end

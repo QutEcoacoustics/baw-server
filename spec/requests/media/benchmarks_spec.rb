@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :request, aggregate_failures: true do
+describe '/audio_recordings/:audio_recording_id/original(.:format)', :aggregate_failures do
   include_context 'shared_test_helpers'
 
   create_audio_recordings_hierarchy
@@ -48,7 +48,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       Settings.actions.media.cache_to_redis = true
     end
 
-    example 'generated media requests via disk cache are quick' do
+    it 'generated media requests via disk cache are quick' do
       expect {
         get media_url(0, 30), headers: media_request_headers(reader_token)
       }.to perform_under(4).sec.warmup(0)
@@ -65,7 +65,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.headers['X-Error-Message']).to be_nil
     end
 
-    example 'pre-generated media requests via disk cache are very quick' do
+    it 'pre-generated media requests via disk cache are very quick' do
       get media_url(0, 30), headers: media_request_headers(reader_token)
       expect_success
 
@@ -85,7 +85,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(response.headers['X-Error-Message']).to be_nil
     end
 
-    example 'generated media requests via disk cache are quick, even near the end of the file' do
+    it 'generated media requests via disk cache are quick, even near the end of the file' do
       expect {
         get media_url(6000, 6030), headers: media_request_headers(reader_token)
       }.to perform_under(4).sec.warmup(0)
@@ -112,7 +112,7 @@ describe '/audio_recordings/:audio_recording_id/original(.:format)', type: :requ
       expect(Settings.actions.media.cache_to_redis).to be true
     end
 
-    example 'generated media requests can be fetched from the fast cache' do
+    it 'generated media requests can be fetched from the fast cache' do
       expect {
         get media_url(0, 30), headers: media_request_headers(reader_token)
       }.to perform_under(4).sec.warmup(0)

@@ -320,7 +320,7 @@ resource 'AudioEvents' do
     end
 
     #standard_request_options(: ,'CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
-    example 'CREATE (with existing tag_ids as writer) - 201', document: true do
+    example 'CREATE (with existing tag_ids as writer) - 201', :document do
       tag_count = Tag.count
       request = do_request
 
@@ -644,7 +644,7 @@ resource 'AudioEvents' do
         start_time_seconds: 1.5, end_time_seconds: 2)
     end
 
-    example 'FILTER (overlapping start and end filter)', document: true do
+    example 'FILTER (overlapping start and end filter)', :document do
       do_request
       expect(status).to eq(200)
 
@@ -685,7 +685,7 @@ resource 'AudioEvents' do
           data_item_count: 10,
           response_body_content: [
             '"paging":{"page":2,"items":10,"total":30,"max_page":3',
-            '"previous":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1"'
+            '"previous":"http://web:3000/audio_events/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
           ]
         })
     end
@@ -707,7 +707,7 @@ resource 'AudioEvents' do
       {
         expected_json_path: 'data/0/taggings/0/audio_event_id',
         data_item_count: 1,
-        response_body_content: '"filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1"'
+        response_body_content: '"filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://web:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1'
       })
   end
 
@@ -724,7 +724,7 @@ resource 'AudioEvents' do
 
     standard_request_options(:post, 'FILTER (as anonymous user)', :ok, {
       remove_auth: true,
-      response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1","previous":null,"next":null}},"data":[]}'
+      response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://web:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1","previous":null,"next":null}},"data":[]}'
     })
   end
 

@@ -28,3 +28,8 @@ Mime::Type.register 'application/x-yaml', :yml, [
   'application/yml',
   'application/x-yml'
 ], ['yaml']
+Mime::Type.register 'text/plain', :log, [], []
+
+# other
+Mime::Type.register 'application/x-sqlite3', :sqlite3, [], []
+Mime::Type.register 'image/png', :png, [], []

@@ -13,7 +13,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id) ON DELETE => cascade
 #
 FactoryBot.define do
   factory :progress_event do

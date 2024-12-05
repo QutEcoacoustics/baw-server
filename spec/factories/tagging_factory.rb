@@ -20,7 +20,7 @@
 #
 # Foreign Keys
 #
-#  audio_events_tags_audio_event_id_fk  (audio_event_id => audio_events.id)
+#  audio_events_tags_audio_event_id_fk  (audio_event_id => audio_events.id) ON DELETE => cascade
 #  audio_events_tags_creator_id_fk      (creator_id => users.id)
 #  audio_events_tags_tag_id_fk          (tag_id => tags.id)
 #  audio_events_tags_updater_id_fk      (updater_id => users.id)
