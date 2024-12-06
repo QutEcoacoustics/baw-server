@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.1.1](https://github.com/QutEcoacoustics/baw-server/tree/9.1.1) (2022-12-05)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.3...9.1.1)
+
+**Fixed bugs:**
+
+- aborting a harvest in the new\_harvest state throws an exception [\#625](https://github.com/QutEcoacoustics/baw-server/issues/625)
+
 ## [9.0.3](https://github.com/QutEcoacoustics/baw-server/tree/9.0.3) (2022-10-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.2...9.0.3)
