@@ -31,7 +31,7 @@ module ApiSpecHelpers
     def self.extended(base); end
 
     attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model,
-      :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
+      :baw_factory, :baw_factory_args, :baw_model_schema, :baw_route_params, :baw_body_params
 
     # these tests document an API - they're not really for testing user access
     # Even if they were, the OAS specification has no concept of different
@@ -77,7 +77,7 @@ module ApiSpecHelpers
       self.baw_produces = ['application/json']
     end
 
-    def for_model(given_model, factory: nil)
+    def for_model(given_model, factory: nil, factory_args: nil)
       self.baw_model_name = baw_model_name = given_model.model_name.singular
       self.baw_factory = factory || baw_model_name
       # rswag expects let statements to be defined with the same name as the parameters,
@@ -90,6 +90,10 @@ module ApiSpecHelpers
       self.baw_body_name = baw_body_name = :"#{baw_model_name}_attributes"
 
       self.baw_model = given_model
+
+      raise 'factory_args must be a Proc' unless factory_args.nil? || factory_args.is_a?(Proc)
+
+      self.baw_factory_args = factory_args
 
       let(:model) { given_model }
       let(:model_name) { baw_model_name }
@@ -171,8 +175,11 @@ module ApiSpecHelpers
     # using attributes_for and filtering out readonly properties
     # from the hash, according to the given schema
     def auto_send_model(subset: nil)
+      baw_factory_args = get_parent_param :baw_factory_args
+
       let((get_parent_param :baw_body_name)) do
-        body_attributes_for(model_name, factory:, subset:)
+        factory_args = instance_exec(&baw_factory_args) if baw_factory_args
+        body_attributes_for(model_name, factory:, subset:, factory_args:)
       end
     end
 

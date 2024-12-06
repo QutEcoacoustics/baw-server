@@ -13,6 +13,7 @@
 #  image_file_name         :string
 #  image_file_size         :bigint
 #  image_updated_at        :datetime
+#  license                 :text
 #  name                    :string           not null
 #  notes                   :text
 #  urn                     :string
@@ -73,6 +74,10 @@ describe Project do
 
     expect(project_html.description).to eq(md)
     expect(project_html.description_html).to eq(html)
+  end
+
+  it 'validates license is not an empty string' do
+    expect(build(:project, license: '')).not_to be_valid
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

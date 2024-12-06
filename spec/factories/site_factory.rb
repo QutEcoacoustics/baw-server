@@ -45,6 +45,7 @@ FactoryBot.define do
 
     creator
     region
+    projects { [create(:project)] }
 
     trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"

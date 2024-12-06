@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.1](https://github.com/QutEcoacoustics/baw-server/tree/10.0.1) (2024-08-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.2.2...10.0.1)
+
+**Implemented enhancements:**
+
+- Add nullable license field to Projects model [\#669](https://github.com/QutEcoacoustics/baw-server/pull/669) ([hudson-newey](https://github.com/hudson-newey))
+
+**Fixed bugs:**
+
+- Incorrect association assignment for nested site routes [\#679](https://github.com/QutEcoacoustics/baw-server/issues/679)
+
+**Closed issues:**
+
+- Encode license and attribution information in project models [\#289](https://github.com/QutEcoacoustics/baw-server/issues/289)
+
+**Merged pull requests:**
+
+- Fixes multiple assignment bug [\#680](https://github.com/QutEcoacoustics/baw-server/pull/680) ([atruskie](https://github.com/atruskie))
+
+## [9.2.2](https://github.com/QutEcoacoustics/baw-server/tree/9.2.2) (2023-09-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.1.1...9.2.2)
+
+**Fixed bugs:**
+
+- Problem parsing EMU results [\#631](https://github.com/QutEcoacoustics/baw-server/issues/631)
+
 ## [9.1.1](https://github.com/QutEcoacoustics/baw-server/tree/9.1.1) (2022-12-05)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.0.3...9.1.1)

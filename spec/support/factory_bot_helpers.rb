@@ -15,7 +15,15 @@ module FactoryBotHelpers
       schema = model_name.to_s.classify.constantize.schema
       # was using attributes_for here but it doesn't include associations!
       # full = attributes_for(model_name)
-      full = build(factory || model_name, *traits, **(factory_args || {})).attributes.symbolize_keys
+      model = build(factory || model_name, *traits, **(factory_args || {}))
+      full = model.attributes.symbolize_keys
+
+      # still need to fetch many to many associations
+      model.class.reflect_on_all_associations(:has_and_belongs_to_many).each do |assoc|
+        foreign_key_name = "#{assoc.plural_name.singularize}_ids".to_sym
+        full[foreign_key_name] = model.send(foreign_key_name)
+      end
+
       writeable = schema[:properties]
                   .select { |_key, value| value.fetch(:readOnly, false) == false }
                   .keys

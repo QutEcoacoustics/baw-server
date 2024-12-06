@@ -66,7 +66,7 @@ ENV RAILS_ENV=production \
 
 
 # "Install" our metadata utility
-COPY --from=qutecoacoustics/emu:6.0.0 --chown==${app_user} /emu /emu
+COPY --from=qutecoacoustics/emu:7.0.3 --chown==${app_user} /emu /emu
 
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}
@@ -112,7 +112,7 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 # Thus there is no conflict here
 COPY --chown=${app_user}:${app_user} ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
-# asign permissions to special things
+# assign permissions to special things
 RUN <<EOF bash
   set -ex
 
@@ -123,7 +123,7 @@ RUN <<EOF bash
   # and write for assets compilation
   chmod -R g+ws ./public
 
-  # ensure execute permssions for scripts
+  # ensure execute permissions for scripts
   chmod a+x ./provision/*.sh
   chmod a+x ./bin/*
 

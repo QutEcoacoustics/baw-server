@@ -1457,7 +1457,8 @@ CREATE TABLE public.projects (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     allow_original_download character varying,
-    allow_audio_upload boolean DEFAULT false
+    allow_audio_upload boolean DEFAULT false,
+    license text
 );
 
 
@@ -4565,6 +4566,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20240828062256'),
 ('20240524011344'),
 ('20240524003721'),
+('20240110141130'),
 ('20230512055427'),
 ('20221219052856'),
 ('20221215000234'),
@@ -4641,4 +4643,5 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20130718000123'),
 ('20130715035926'),
 ('20130715022212');
+
 

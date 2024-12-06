@@ -13,6 +13,7 @@
 #  image_file_name         :string
 #  image_file_size         :bigint
 #  image_updated_at        :datetime
+#  license                 :text
 #  name                    :string           not null
 #  notes                   :text
 #  urn                     :string
@@ -87,6 +88,8 @@ class Project < ApplicationRecord
   validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 
+  validates :license, length: { minimum: 1 }, allow_nil: true
+
   # ensure allow original download is a permission level.
   # Do not add predicates to Project ( #reader?, #writer?, #owner? do not make sense when attached directly to Project).
   enumerize :allow_original_download, in: Permission::AVAILABLE_LEVELS, default: nil, predicates: false
@@ -104,7 +107,8 @@ class Project < ApplicationRecord
                      :updater_id,
                      :updated_at,
                      :deleter_id,
-                     :deleted_at],
+                     :deleted_at,
+                     :license],
       render_fields: [:id, :name, :description, :creator_id,
                       :created_at,
                       :updater_id,
@@ -113,7 +117,8 @@ class Project < ApplicationRecord
                       :deleted_at,
                       :notes,
                       :allow_original_download,
-                      :allow_audio_upload],
+                      :allow_audio_upload,
+                      :license],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection
@@ -211,13 +216,14 @@ class Project < ApplicationRecord
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
         **Api::Schema.all_user_stamps,
-        site_ids: Api::Schema.ids,
+        site_ids: Api::Schema.ids(read_only: true),
         region_ids: Api::Schema.ids(read_only: true),
         owner_ids: Api::Schema.ids(read_only: true),
         image_urls: Api::Schema.image_urls,
         access_level: Api::Schema.permission_levels,
         allow_original_download: Api::Schema.permission_levels,
-        allow_audio_upload: { type: 'boolean' }
+        allow_audio_upload: { type: 'boolean' },
+        license: { type: ['string', 'null'] }
       },
       required: [
         :id,
@@ -236,7 +242,8 @@ class Project < ApplicationRecord
         :site_ids,
         :region_ids,
         :image_urls,
-        :allow_original_download
+        :allow_original_download,
+        :license
       ]
     }.freeze
   end

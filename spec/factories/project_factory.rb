@@ -13,6 +13,7 @@
 #  image_file_name         :string
 #  image_file_size         :bigint
 #  image_updated_at        :datetime
+#  license                 :text
 #  name                    :string           not null
 #  notes                   :text
 #  urn                     :string
@@ -42,6 +43,7 @@ FactoryBot.define do
     sequence(:urn) { |n| "urn:project:example.org/project/#{n}" }
     sequence(:notes) { |n| "note number #{n}" }
     allow_audio_upload { false }
+    license { 'CC-BY-4.0' }
 
     creator
 

@@ -52,7 +52,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
     it 'works' do
       expect {
         enqueue_and_perform
-      }.to perform_under(5.6).sec.warmup(0)
+      }.to perform_under(7).sec.warmup(0)
 
       expect_jobs_to_be completed: 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob
       # @type [HarvestItem]

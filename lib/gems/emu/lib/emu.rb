@@ -63,7 +63,7 @@ module Emu
     end
 
     status&.exitstatus => exit_code
-    success = exit_code&.zero?
+    success = exit_code&.zero? || false
 
     # split output by line
     records = output

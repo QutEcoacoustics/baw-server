@@ -175,7 +175,7 @@ ORDER BY project_count ASC, s.name ASC")
   def project_params
     check_for_allow_audio_upload(params.require(:project)).permit(
       :description, :image, :name, :notes, :urn, :allow_original_download,
-      :allow_audio_upload
+      :allow_audio_upload, :license
     )
   end
 
