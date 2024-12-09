@@ -414,18 +414,20 @@ describe AudioEvent do
   end
 
   it 'excludes deleted projects, sites, audio_recordings, and audio_events from annotation download' do
+    AudioEvent.delete_all
     user = create(:user, user_name: 'owner user checking excluding deleted items in annotation download')
 
     # create combinations of deleted and not deleted for project, site, audio_recording, audio_event
-    expected_audio_recording = nil
+    expected_audio_event = nil
     2.times do |project_n|
       project = create(:project, creator: user)
       project.discard! if project_n == 1
 
+      region = create(:region, creator: user, project: project)
+
       2.times do |site_n|
-        site = create(:site, :with_lat_long, creator: user)
-        site.projects << project
-        site.save!
+        site = create(:site, :with_lat_long, creator: user, projects: [project], region:)
+
         site.discard! if site_n == 1
 
         2.times do |audio_recording_n|
@@ -437,7 +439,7 @@ describe AudioEvent do
             audio_event = create(:audio_event, creator: user, audio_recording:)
             audio_event.discard! if audio_event_n == 1
             if project_n == 0 && site_n == 0 && audio_recording_n == 0 && audio_event_n == 0
-              expected_audio_recording = audio_event
+              expected_audio_event = audio_event
             end
           end
         end
@@ -449,9 +451,9 @@ describe AudioEvent do
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
-    # expect(Project.with_discarded.count).to eq(2)
-    # expect(Project.count).to eq(1)
-    # expect(Project.discarded.count).to eq(1)
+    expect(Project.with_discarded.count).to eq(2)
+    expect(Project.count).to eq(1)
+    expect(Project.discarded.count).to eq(1)
 
     expect(Site.with_discarded.count).to eq(4)
     expect(Site.count).to eq(2)
@@ -465,7 +467,7 @@ describe AudioEvent do
     expect(AudioEvent.count).to eq(8)
     expect(AudioEvent.discarded.count).to eq(8)
 
-    expected_audio_events = [expected_audio_recording.id]
+    expected_audio_events = [expected_audio_event.id]
     actual_audio_event_ids = formatted_annotations.pluck('audio_event_id')
 
     expect(actual_audio_event_ids).to eq(expected_audio_events)

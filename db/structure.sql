@@ -678,8 +678,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    import_file_index integer,
-    audio_event_import_file_id bigint
+    audio_event_import_file_id integer,
+    import_file_index integer
 );
 
 
@@ -1826,19 +1826,6 @@ CREATE SEQUENCE public.sftpgo_admins_id_seq1
 
 
 --
--- Name: sftpgo_admins_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_admins_id_seq2
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
 -- Name: sftpgo_api_keys_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1856,19 +1843,6 @@ CREATE SEQUENCE public.sftpgo_api_keys_id_seq
 --
 
 CREATE SEQUENCE public.sftpgo_api_keys_id_seq1
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: sftpgo_api_keys_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_api_keys_id_seq2
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1902,18 +1876,6 @@ CREATE SEQUENCE public.sftpgo_defender_events_id_seq1
 
 
 --
--- Name: sftpgo_defender_events_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_defender_events_id_seq2
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
 -- Name: sftpgo_defender_hosts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1930,18 +1892,6 @@ CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq
 --
 
 CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq1
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: sftpgo_defender_hosts_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_defender_hosts_id_seq2
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1967,19 +1917,6 @@ CREATE SEQUENCE public.sftpgo_folders_id_seq
 --
 
 CREATE SEQUENCE public.sftpgo_folders_id_seq1
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: sftpgo_folders_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_folders_id_seq2
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -2015,19 +1952,6 @@ CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq1
 
 
 --
--- Name: sftpgo_folders_mapping_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_folders_mapping_id_seq2
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
 -- Name: sftpgo_schema_version_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -2045,19 +1969,6 @@ CREATE SEQUENCE public.sftpgo_schema_version_id_seq
 --
 
 CREATE SEQUENCE public.sftpgo_schema_version_id_seq1
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: sftpgo_schema_version_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_schema_version_id_seq2
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -2093,19 +2004,6 @@ CREATE SEQUENCE public.sftpgo_shares_id_seq1
 
 
 --
--- Name: sftpgo_shares_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_shares_id_seq2
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
 -- Name: sftpgo_users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -2123,19 +2021,6 @@ CREATE SEQUENCE public.sftpgo_users_id_seq
 --
 
 CREATE SEQUENCE public.sftpgo_users_id_seq1
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: sftpgo_users_id_seq2; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.sftpgo_users_id_seq2
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -4643,5 +4528,4 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20130718000123'),
 ('20130715035926'),
 ('20130715022212');
-
 

@@ -35,7 +35,17 @@ describe 'sites (shallow)', type: :request do
       model_sent_as_parameter_in_body
       response(201, 'successful') do
         schema_for_single
-        auto_send_model
+        send_model do
+          {
+            site: {
+              name: 'site name 2',
+              description: 'site description 2',
+              notes: 'note number 2',
+              region_id: region.id,
+              project_ids: [project.id]
+            }
+          }
+        end
         run_test!
       end
     end

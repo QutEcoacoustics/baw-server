@@ -36,7 +36,7 @@ describe 'Sites' do
     end
 
     # AT 2024: soft-deprecating the many to many project-site relationship
-    example 'can *NOT* create an a site that belongs to multiple projects' do
+    it 'can *NOT* create an a site that belongs to multiple projects' do
       second_project = create(:project)
       body = {
         site: {

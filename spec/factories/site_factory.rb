@@ -44,6 +44,8 @@ FactoryBot.define do
     sequence(:description) { |n| "site description #{n}" }
 
     creator
+    # careful! this will create another project that is different from the
+    # project in the projects association below
     region
     projects { [create(:project)] }
 

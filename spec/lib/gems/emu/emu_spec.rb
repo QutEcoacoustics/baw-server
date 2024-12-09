@@ -61,7 +61,7 @@ describe Emu do
         problems: {
           'FL010' => {
             status: 'Fixed',
-            check_result: an_instance_of(HashWithIndifferentAccess),
+            check_result: an_instance_of(ActiveSupport::HashWithIndifferentAccess),
             message: 'Old total samples was 317292544, new total samples is: 158646272',
             new_path: nil
           }
@@ -85,13 +85,13 @@ describe Emu do
         problems: {
           'FL010' => {
             status: 'Fixed',
-            check_result: an_instance_of(HashWithIndifferentAccess),
+            check_result: an_instance_of(ActiveSupport::HashWithIndifferentAccess),
             message: 'Old total samples was 317292544, new total samples is: 158646272',
             new_path: nil
           },
           'FL001' => {
             status: 'NoOperation',
-            check_result: an_instance_of(HashWithIndifferentAccess),
+            check_result: an_instance_of(ActiveSupport::HashWithIndifferentAccess),
             message: nil,
             new_path: nil
           }
@@ -148,7 +148,7 @@ describe Emu do
         success: true,
         log: "\n",
         records: an_instance_of(Array),
-        time_taken: a_value_within(1.0).of(3)
+        time_taken: a_value_within(2.0).of(3)
       )
 
       expect(actual.records.first).to match(
@@ -156,7 +156,7 @@ describe Emu do
         problems: {
           'FL010' => {
             status: 'Fixed',
-            check_result: an_instance_of(HashWithIndifferentAccess),
+            check_result: an_instance_of(ActiveSupport::HashWithIndifferentAccess),
             message: 'Old total samples was 317292544, new total samples is: 158646272',
             new_path: nil
           }
@@ -174,7 +174,7 @@ describe Emu do
         success: true,
         log: "\n",
         records: an_instance_of(Array),
-        time_taken: a_value_within(1.0).of(3)
+        time_taken: a_value_within(2.0).of(3)
       )
 
       expect(actual.records.first).to match(

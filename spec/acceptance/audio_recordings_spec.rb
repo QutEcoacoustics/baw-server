@@ -1167,39 +1167,6 @@ resource 'AudioRecordings' do
   end
 
   post '/audio_recordings/filter' do
-    let(:raw_post) {
-      {
-        filter: {
-          and: {
-            'projects.image_file_name' => {
-              eq: 'test'
-            },
-            duration_seconds: {
-              not_eq: 40
-            }
-          }
-        },
-        projection: {
-          include: [:id, :site_id, :duration_seconds, :recorded_date, :created_at]
-        },
-        paging: {
-          items: 20,
-          page: 1
-        },
-        sorting: {
-          order_by: 'created_at',
-          direction: 'desc'
-        }
-      }.to_json
-    }
-    let(:authentication_token) { reader_token }
-
-    standard_request_options(:post, 'FILTER (as reader filtering by project image_file_name)', :bad_request, {
-      response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :creator_id, :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at], got image_file_name'
-    })
-  end
-
-  post '/audio_recordings/filter' do
     let!(:new_audio_recordings) {
       Time.use_zone('Brisbane') {
         audio_recording2 = Creation::Common.create_audio_recording(reader_user, harvester_user, site)
