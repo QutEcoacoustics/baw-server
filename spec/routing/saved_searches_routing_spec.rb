@@ -18,7 +18,6 @@ describe SavedSearchesController, type: :routing do
     # used by client
     it { expect(get('/saved_searches/2')).to route_to('saved_searches#show', id: '2', format: 'json') }
 
-    it { expect(get('/saved_searches/filter')).to route_to('saved_searches#filter', format: 'json') }
-    it { expect(post('/saved_searches/filter')).to route_to('saved_searches#filter', format: 'json') }
+    it_behaves_like 'our api routing patterns', '/saved_searches', 'saved_searches', [:filterable]
   end
 end

@@ -15,9 +15,9 @@ class PermissionsController < ApplicationController
 
         case result
         when true
-          flash[:success] = 'Permissions successfully updated.'
+          flash.now[:success] = 'Permissions successfully updated.'
         when false
-          flash[:error] = 'There was an error updating permissions. Please try again or contact us.'
+          flash.now[:error] = 'There was an error updating permissions. Please try again or contact us.'
         end
 
         params[:page] ||= 'a-b'
@@ -90,16 +90,10 @@ class PermissionsController < ApplicationController
   end
 
   # DELETE /projects/:project_id/permissions/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_project
-    do_authorize_instance
-
-    @permission.destroy
-
-    respond_to do |format|
-      format.json { respond_destroy }
-    end
   end
 
   # GET|POST /projects/:project_id/permissions/filter
@@ -136,7 +130,7 @@ class PermissionsController < ApplicationController
   end
 
   def update_permissions
-    return nil if !params.include?(:project_wide) && !params.include?(:per_user)
+    return nil if params.exclude?(:project_wide) && params.exclude?(:per_user)
 
     request_params = update_permissions_params
 

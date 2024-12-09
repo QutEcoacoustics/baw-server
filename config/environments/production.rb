@@ -77,6 +77,7 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = Settings.mailer.smtp.to_h
+  config.action_mailer.deliver_later_queue_name = Settings.actions.active_job_default.queue
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -95,7 +96,7 @@ Rails.application.configure do
   #config.action_controller.action_on_unpermitted_parameters = :raise
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
-  config.log_formatter = ::Logger::Formatter.new
+  config.log_formatter = Logger::Formatter.new
 
   # Use a different logger for distributed setups.
   # require 'syslog/logger'

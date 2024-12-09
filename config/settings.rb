@@ -10,7 +10,7 @@ module BawWeb
     BAW_SERVER_VERSION_KEY = 'BAW_SERVER_VERSION'
 
     def sources
-      @config_sources.map { |s| s.instance_of?(Config::Sources::YAMLSource) ? s.path : s }
+      @config_sources.map { |script| script.instance_of?(Config::Sources::YAMLSource) ? script.path : script }
     end
 
     # Create or return an existing Api::Response.
@@ -59,9 +59,9 @@ module BawWeb
       info = version_info
       version = "#{info[:major]}.#{info[:minor]}.#{info[:patch]}"
 
-      version += "-#{info[:pre]}" unless info[:pre].blank?
+      version += "-#{info[:pre]}" if info[:pre].present?
 
-      version += "+#{info[:build]}" unless info[:build].blank?
+      version += "+#{info[:build]}" if info[:build].present?
 
       version
     end
@@ -79,7 +79,7 @@ module BawWeb
           value.each do |media_type|
             ext = media_type.downcase.trim('.', '')
             mime_type = Mime::Type.lookup_by_extension(ext)
-            @media_types[media_category].push mime_type unless mime_type.blank?
+            @media_types[media_category].push mime_type if mime_type.present?
           end
           #@media_types[media_category].sort { |a, b| a.to_s <=> b.to_s }
         end
@@ -110,6 +110,13 @@ module BawWeb
       else
         [:unknown, {}]
       end
+    end
+
+    def supported_audio_event_import_file_media_types
+      @supported_audio_event_import_file_media_types ||=
+        audio_event_imports
+          .acceptable_content_types
+          .map { |type| Mime::Type.lookup_by_extension(type) }
     end
 
     def process_media_locally?

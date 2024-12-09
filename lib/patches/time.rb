@@ -38,3 +38,4 @@ end
 
 Time.prepend(BawWeb::Time)
 DateTime.prepend(BawWeb::DateTime)
+ActiveSupport::TimeWithZone.prepend(BawWeb::Time)

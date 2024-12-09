@@ -21,23 +21,22 @@ module Filter
     # @raise [FilterArgumentError] if order_by is not valid
     # @return [void]
     def validate_sorting(order_by, valid_fields, direction)
-      if !order_by.blank? && !direction.blank?
-        # allow both to be nil, but if one is nil and the other is not, that is an error.
-        raise CustomErrors::FilterArgumentError, 'Order by must not be null' if order_by.blank?
-        raise CustomErrors::FilterArgumentError, 'Direction must not be null' if direction.blank?
-        raise CustomErrors::FilterArgumentError, 'Valid Fields must not be null' if valid_fields.blank?
+      return unless order_by.present? && direction.present?
+      # allow both to be nil, but if one is nil and the other is not, that is an error.
+      raise CustomErrors::FilterArgumentError, 'Order by must not be null' if order_by.blank?
+      raise CustomErrors::FilterArgumentError, 'Direction must not be null' if direction.blank?
+      raise CustomErrors::FilterArgumentError, 'Valid Fields must not be null' if valid_fields.blank?
 
-        direction_sym = direction.to_sym
-        order_by_sym = order_by.to_sym
-        valid_fields_sym = valid_fields.map(&:to_sym)
+      direction_sym = direction.to_sym
+      order_by_sym = order_by.to_sym
+      valid_fields_sym = valid_fields.map(&:to_sym)
 
-        unless valid_fields_sym.include?(order_by_sym)
-          raise CustomErrors::FilterArgumentError, "Order by must be in #{valid_fields_sym}, got #{order_by_sym}"
-        end
-        unless [:desc, :asc].include?(direction_sym)
-          raise CustomErrors::FilterArgumentError, "Direction must be asc or desc, got #{direction_sym}"
-        end
+      unless valid_fields_sym.include?(order_by_sym)
+        raise CustomErrors::FilterArgumentError, "Order by must be in #{valid_fields_sym}, got #{order_by_sym}"
       end
+      return if [:desc, :asc].include?(direction_sym)
+
+      raise CustomErrors::FilterArgumentError, "Direction must be asc or desc, got #{direction_sym}"
     end
 
     # Validate paging values.
@@ -62,12 +61,12 @@ module Filter
 
       value_i = value.to_i
 
-      if !min.blank? && value_i < min
+      if min.present? && value_i < min
         raise CustomErrors::FilterArgumentError, "Value must be #{min} or greater, got #{value_i}"
       end
-      if !max.blank? && value_i > max
-        raise CustomErrors::FilterArgumentError, "Value must be #{max} or less, got #{value_i}"
-      end
+      return unless max.present? && value_i > max
+
+      raise CustomErrors::FilterArgumentError, "Value must be #{max} or less, got #{value_i}"
     end
 
     # Check that value is a string.
@@ -105,9 +104,9 @@ module Filter
       unless models_allowed.is_a?(Array)
         raise CustomErrors::FilterArgumentError, "Models allowed must be an Array, got #{models_allowed}"
       end
-      unless models_allowed.include?(model)
-        raise CustomErrors::FilterArgumentError, "Model must be in #{models_allowed}, got #{model}"
-      end
+      return if models_allowed.include?(model)
+
+      raise CustomErrors::FilterArgumentError, "Model must be in #{models_allowed}, got #{model}"
     end
 
     # Validate query and hash values.
@@ -124,9 +123,9 @@ module Filter
     # @raise [FilterArgumentError] if table is not an Arel::Table
     # @return [void]
     def validate_table(table)
-      unless table.is_a?(Arel::Table)
-        raise CustomErrors::FilterArgumentError, "Table must be Arel::Table, got #{table.class}"
-      end
+      return if table.is_a?(Arel::Table)
+
+      raise CustomErrors::FilterArgumentError, "Table must be Arel::Table, got #{table.class}"
     end
 
     # Validate table value.
@@ -134,9 +133,9 @@ module Filter
     # @raise [FilterArgumentError] if query is not an Arel::Query
     # @return [void]
     def validate_query(query)
-      unless query.is_a?(ActiveRecord::Relation)
-        raise CustomErrors::FilterArgumentError, "Query must be ActiveRecord::Relation, got #{query.class}"
-      end
+      return if query.is_a?(ActiveRecord::Relation)
+
+      raise CustomErrors::FilterArgumentError, "Query must be ActiveRecord::Relation, got #{query.class}"
     end
 
     # Validate condition value.
@@ -144,9 +143,9 @@ module Filter
     # @raise [FilterArgumentError] if condition is not an Arel::Nodes::Node
     # @return [void]
     def validate_condition(condition)
-      if !condition.is_a?(Arel::Nodes::Node) && !condition.is_a?(String)
-        raise CustomErrors::FilterArgumentError, "Condition must be Arel::Nodes::Node or String, got #{condition}"
-      end
+      return unless !condition.is_a?(Arel::Nodes::Node) && !condition.is_a?(String)
+
+      raise CustomErrors::FilterArgumentError, "Condition must be Arel::Nodes::Node or String, got #{condition}"
     end
 
     # Validate projection value.
@@ -172,10 +171,10 @@ module Filter
 
     def validate_node_or_attribute(value)
       check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute) || value.is_a?(::Arel::Nodes::SqlLiteral)
-      unless check
-        raise CustomErrors::FilterArgumentError,
-          "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}"
-      end
+      return if check
+
+      raise CustomErrors::FilterArgumentError,
+        "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}"
     end
 
     # Validate name value.
@@ -195,9 +194,9 @@ module Filter
     # @raise [FilterArgumentError] if model is not an ActiveRecord::Base
     # @return [void]
     def validate_model(model)
-      unless model < ActiveRecord::Base
-        raise CustomErrors::FilterArgumentError, "Model must be an ActiveRecord::Base, got #{model.base_class}"
-      end
+      return if model < ActiveRecord::Base
+
+      raise CustomErrors::FilterArgumentError, "Model must be an ActiveRecord::Base, got #{model.base_class}"
     end
 
     # Validate an array.
@@ -206,9 +205,9 @@ module Filter
     # @return [void]
     def validate_array(value)
       raise CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.nil?
-      unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
-        raise CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value.class}"
-      end
+      return if value.is_a?(Array) || value.is_a?(Arel::SelectManager)
+
+      raise CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value.class}"
     end
 
     # Validate array items. Do not validate if value is not an Array.
@@ -222,30 +221,29 @@ module Filter
       end
 
       # if there are no items, let it through
-      if value.count.positive?
-        # all items must be the same type. Assume the first item is the correct type.
-        type_compare_item = value[0].class
-        type_compare = value.all? { |item| item.is_a?(type_compare_item) }
-        raise CustomErrors::FilterArgumentError, 'Array values must be a single consistent type.' unless type_compare
+      return unless value.count.positive?
 
-        # restrict length of strings
-        if type_compare_item.is_a?(String)
-          max_string_length = 120
-          string_length = value.all? { |item| item.size <= max_string_length }
-          unless string_length
-            raise CustomErrors::FilterArgumentError,
-              "Array values that are strings must be #{max_string_length} characters or less."
-          end
+      # all items must be the same type. Assume the first item is the correct type.
+      type_compare_item = value[0].class
+      type_compare = value.all? { |item| item.is_a?(type_compare_item) }
+      raise CustomErrors::FilterArgumentError, 'Array values must be a single consistent type.' unless type_compare
+
+      # restrict length of strings
+      if type_compare_item.is_a?(String)
+        max_string_length = 120
+        string_length = value.all? { |item| item.size <= max_string_length }
+        unless string_length
+          raise CustomErrors::FilterArgumentError,
+            "Array values that are strings must be #{max_string_length} characters or less."
         end
-
-        # array contents cannot be Arrays or Hashes
-        array_check = value.any? { |item| item.is_a?(Array) }
-        raise CustomErrors::FilterArgumentError, 'Array values cannot be arrays.' if array_check
-
-        hash_check = value.any? { |item| item.is_a?(Hash) }
-        raise CustomErrors::FilterArgumentError, 'Array values cannot be hashes.' if hash_check
-
       end
+
+      # array contents cannot be Arrays or Hashes
+      array_check = value.any? { |item| item.is_a?(Array) }
+      raise CustomErrors::FilterArgumentError, 'Array values cannot be arrays.' if array_check
+
+      hash_check = value.any? { |item| item.is_a?(Hash) }
+      raise CustomErrors::FilterArgumentError, 'Array values cannot be hashes.' if hash_check
     end
 
     # Validate a hash.
@@ -270,9 +268,9 @@ module Filter
         :week, :year
       ]
       raise CustomErrors::FilterArgumentError, 'Value for extract must not be null' if value.blank?
-      unless valid.include?(value.downcase.to_sym)
-        raise CustomErrors::FilterArgumentError, "Value for extract must be in #{valid}, got #{value}"
-      end
+      return if valid.include?(value.downcase.to_sym)
+
+      raise CustomErrors::FilterArgumentError, "Value for extract must be in #{valid}, got #{value}"
     end
 
     # Escape wildcards in like value..
@@ -350,10 +348,10 @@ module Filter
       value = hash[key]
       is_class = value.class === Class
       is_valid = value_types_normalised.any? { |value_type| is_class ? value < value_type : value.is_a?(value_type) }
-      unless is_valid
-        raise CustomErrors::FilterArgumentError,
-          "Hash key must be one of #{value_types_normalised}, got #{hash[key].class}."
-      end
+      return if is_valid
+
+      raise CustomErrors::FilterArgumentError,
+        "Hash key must be one of #{value_types_normalised}, got #{hash[key].class}."
     end
 
     def validate_closure(value, parameters = [])
@@ -362,13 +360,13 @@ module Filter
       end
 
       parameters_normalized = value
-                              .parameters
-                              .map(&:last)
-                              .map { |name| name.to_s.ltrim('_').to_sym }
-      unless parameters_normalized == parameters
-        raise CustomErrors::FilterArgumentError,
-          "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalized}."
-      end
+        .parameters
+        .map(&:last)
+        .map { |name| name.to_s.ltrim('_').to_sym }
+      return if parameters_normalized == parameters
+
+      raise CustomErrors::FilterArgumentError,
+        "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalized}."
     end
 
     # Validate the filter_settings for a model.
@@ -449,7 +447,7 @@ module Filter
         validate_hash_key(association, :on, Arel::Nodes::Node)
         validate_hash_key(association, :available, [TrueClass, FalseClass])
 
-        validate_filter_associations(association[:associations]) unless association[:associations].blank?
+        validate_filter_associations(association[:associations]) if association[:associations].present?
       end
     end
   end

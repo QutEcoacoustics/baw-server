@@ -24,6 +24,12 @@ module BawWorkers
           deserialized = super(value)
           return nil if ignore_nil && deserialized.nil?
 
+          begin
+            target_class.new(deserialized)
+          rescue StandardError
+            raise
+          end
+
           target_class.new(deserialized)
         end
 

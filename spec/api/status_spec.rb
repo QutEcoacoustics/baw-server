@@ -22,7 +22,8 @@ describe 'status', type: :request do
             database: { type: 'boolean' },
             redis: { type: 'string' },
             storage: { type: 'string' },
-            upload: { type: 'string' }
+            upload: { type: 'string' },
+            batch_analysis: { type: 'string' }
           }
         })
 

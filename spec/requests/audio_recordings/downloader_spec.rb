@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-describe '/audio_recordings/downloader' do
-  require 'support/shared_test_helpers'
+describe '/audio_recordings/downloader', :clean_by_truncation do
   extend WebServerHelper::ExampleGroup
 
   include_context 'shared_test_helpers'
@@ -38,8 +37,8 @@ describe '/audio_recordings/downloader' do
       get '/audio_recordings/downloader', headers: api_request_headers(reader_token)
       expect_success
 
-      expect(response.body).to include("Version #{Settings.version_string} from http://localhost:3000")
-      expect(response.body).to include('  $workbench_url = "http://localhost:3000"')
+      expect(response.body).to include("Version #{Settings.version_string} from http://web:3000")
+      expect(response.body).to include('  $workbench_url = "http://web:3000"')
     end
 
     it 'contains a default filter' do
@@ -152,7 +151,7 @@ describe '/audio_recordings/downloader' do
         expect_number_of_items(11)
       end
 
-      it 'downloads the files', web_server_timeout: 30 do
+      it 'downloads the files' do
         logger.measure_info('downloading script') do
           out_and_err, status = Open3.capture2e(
             'curl -JO localhost:3000/audio_recordings/downloader?items=2',
@@ -169,17 +168,11 @@ describe '/audio_recordings/downloader' do
           logger.tagged('download script output') do
             auth_token = User.find_by(roles_mask: 1).authentication_token
 
-            # we need a promise here to force the process wait onto another thread
-            # without it, our async web server (from expose_app_as_web_server above) crashes with
-            # Errno::EBADF:
-            #    Bad file descriptor - epoll_ctl(process_wait)
-            Concurrent::Promises.future {
-              script_output, status = Open3.capture2e(
-                "pwsh download_audio_files.ps1 -target downloader_test -auth_token #{auth_token}",
-                chdir: BawApp.tmp_dir
-              )
-              logger.info(script_output, status:)
-            }.run.wait!
+            script_output, status = Open3.capture2e(
+              "pwsh download_audio_files.ps1 -target downloader_test -auth_token #{auth_token}",
+              chdir: BawApp.tmp_dir
+            )
+            logger.info(script_output, status:)
           end
         end
 
@@ -194,7 +187,7 @@ describe '/audio_recordings/downloader' do
         expect(files.map(&:to_s)).to all(end_with('.mp3'))
       end
 
-      it 'downloads the files (with username and password)', web_server_timeout: 30 do
+      it 'downloads the files (with username and password)' do
         logger.measure_info('downloading script') do
           out_and_err, status = Open3.capture2e(
             'curl -JO localhost:3000/audio_recordings/downloader?items=2',
@@ -209,18 +202,12 @@ describe '/audio_recordings/downloader' do
 
         logger.measure_info('running download script') do
           logger.tagged('download script output') do
-            # we need a promise here to force the process wait onto another thread
-            # without it, our async web server (from expose_app_as_web_server above) crashes with
-            # Errno::EBADF:
-            #    Bad file descriptor - epoll_ctl(process_wait)
-            Concurrent::Promises.future {
-              script_output, status = Open3.capture2e(
-                'pwsh download_audio_files.ps1 -target downloader_test -user_name admin -password password',
-                chdir: BawApp.tmp_dir,
-                stdin_data: "password\n"
-              )
-              logger.info(script_output, status:)
-            }.run.wait!
+            script_output, status = Open3.capture2e(
+              'pwsh download_audio_files.ps1 -target downloader_test -user_name admin -password password',
+              chdir: BawApp.tmp_dir,
+              stdin_data: "password\n"
+            )
+            logger.info(script_output, status:)
           end
         end
 

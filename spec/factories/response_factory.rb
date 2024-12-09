@@ -15,7 +15,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id) ON DELETE => cascade
 #  fk_rails_...  (question_id => questions.id)
 #  fk_rails_...  (study_id => studies.id)
 #

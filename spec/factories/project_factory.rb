@@ -72,7 +72,7 @@ FactoryBot.define do
         raise 'Creator was blank' if evaluator.creator.blank?
 
         evaluator.saved_search_count.times do
-          project.saved_searches << FactoryBot.create(:saved_search_with_analysis_jobs, creator: evaluator.creator)
+          project.saved_searches << FactoryBot.create(:saved_search, creator: evaluator.creator)
         end
       end
     end

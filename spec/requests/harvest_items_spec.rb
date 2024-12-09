@@ -250,25 +250,25 @@ describe 'Harvest items info' do
   def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)
     validations = []
     fixable.times do
-      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+      validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
         status: :fixable,
         name: :wascally_wabbit,
         message: nil
       )
     end
     not_fixable.times do
-      validations << ::BawWorkers::Jobs::Harvest::ValidationResult.new(
+      validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
         status: :not_fixable,
         name: :kiww_the_wabbit,
         message: nil
       )
     end
 
-    info = ::BawWorkers::Jobs::Harvest::Info.new(
+    info = BawWorkers::Jobs::Harvest::Info.new(
       validations:
     )
 
-    path = generate_recording_name(Time.now)
+    path = generate_recording_name(Time.zone.now)
     path = File.join(*[harvest.upload_directory_name, sub_directories, path].compact)
 
     create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:, harvest:)

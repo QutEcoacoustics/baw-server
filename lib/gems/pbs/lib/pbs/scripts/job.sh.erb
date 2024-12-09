@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+# Acoustic workbench worker script
+# --------------------------------
+# This script is intended to be templated
+# Templated on <%= date %> for <%= instance_tag %>
+
+set -e
+
+# functions
+function log {
+  echo "$(date -Is) ${after_prefix}LOG: $*"
+}
+
+function report_start {
+  set -e
+  log "Reporting start"
+<% report_start_script.each do |line| -%>
+  <%= line %>
+<% end %>
+}
+
+
+function report_finish {
+  set -e
+  log "Reporting finish"
+<% report_finish_script.each do |line| -%>
+  <%= line %>
+<% end %>
+}
+
+<%#  neither trap is reliable in all scenarios %>
+<%#  so we make a runonce function either or both can call %>
+error_function_executed=0
+function report_error {
+  set -e
+
+  if [ $error_function_executed -eq 1 ]; then
+    return
+  fi
+  error_function_executed=1
+
+<% report_error_script.each do |line| -%>
+  <%= line %>
+<% end %>
+}
+
+function log_error {
+  set -e
+  log "ERR trap:$1: reporting error from $(caller)"
+
+  report_error
+}
+
+function log_term {
+  log "TERM trap: job killed or cancelled"
+  report_error
+}
+
+
+
+# traps
+trap 'log_error $?' ERR
+trap log_term TERM
+
+# script
+log "vars: PBS_JOBNAME=$PBS_JOBNAME PBS_JOBID=$PBS_JOBID PBS_O_WORKDIR=$PBS_O_WORKDIR TMPDIR=$TMPDIR"
+log "cd $PBS_O_WORKDIR"
+cd $PBS_O_WORKDIR
+
+log "Begin"
+report_start
+
+log "Begin custom portion"
+echo -e "\n"
+
+<%= script %>
+
+echo -e "\n"
+log "Finish custom portion"
+
+report_finish
+log "Success"

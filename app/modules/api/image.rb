@@ -34,7 +34,7 @@ module Api
 
       def options_for_attached(image, size)
         {
-          size: size,
+          size:,
           url: rails_storage_proxy_path(image, only_path: true),
           width: image.metadata['width'],
           height: image.metadata['height']
@@ -44,7 +44,7 @@ module Api
       def options_for_thumbnail(image, size)
         variant = image.variant(resize_to_fill: BawApp.attachment_thumb_size)
         {
-          size: size,
+          size:,
           url: rails_storage_proxy_path(variant, only_path: true),
           width: BawApp.attachment_thumb_size.first,
           height: BawApp.attachment_thumb_size.second

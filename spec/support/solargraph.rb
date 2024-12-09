@@ -36,6 +36,7 @@ RSpec.describe '', skip: true do
 
   include AudioHelper::Example
   include TempFileHelpers::Example
+  include PathHelpers::Example
 end
 
 RSpec.shared_examples 'nothing' do

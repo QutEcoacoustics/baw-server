@@ -2,37 +2,38 @@
 
 require "#{RSPEC_ROOT}/fixtures/jobs.rb"
 
+# rubocop:disable Rails/ActiveSupportOnLoad
 describe BawWorkers::ActiveJob::Status do
   let(:persistance) { BawWorkers::ActiveJob::Status::Persistance }
 
   context 'when including' do
     before do
       # get a copy of the class that is unmodified from the rails initializers
-      clone = ::ActiveJob::Base.const_get(:ACTIVE_JOB_BASE_BACKUP).clone
+      clone = ActiveJob::Base.const_get(:ACTIVE_JOB_BASE_BACKUP).clone
       stub_const('::ActiveJob::Base', clone)
     end
 
     # I have tried multiple ways of cracking this nut, this is the only one that works for both include and prepend!
     let(:crude_spy) do
-      unless BawWorkers::ActiveJob::Status::ClassMethods.private_instance_methods.include?(:status_setup)
-        throw 'cannot find status_setup method'
+      unless BawWorkers::ActiveJob::Status::ClassMethods.private_instance_methods.include?(:__status_setup)
+        throw 'cannot find __status_setup method'
       end
 
       Module.new do
         private
 
-        def status_setup
+        def __status_setup
           throw :spied
         end
       end
     end
 
     specify 'we are working with an unmodified ::ActiveJob::Base' do
-      expect(::ActiveJob::Base.ancestors).not_to include(BawWorkers::ActiveJob::Status)
+      expect(ActiveJob::Base.ancestors).not_to include(BawWorkers::ActiveJob::Status)
     end
 
     context 'when included' do
-      it 'calls :status_setup' do
+      it 'calls :__status_setup' do
         ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)
         stub_const('BawWorkers::ActiveJob::Status::ClassMethods', crude_spy)
 
@@ -42,12 +43,12 @@ describe BawWorkers::ActiveJob::Status do
       end
 
       it 'succeeds when included without identity' do
-        ::ActiveJob::Base.include(BawWorkers::ActiveJob::Status)
+        ActiveJob::Base.include(BawWorkers::ActiveJob::Status)
       end
     end
 
     context 'when prepended' do
-      it 'calls :status_setup' do
+      it 'calls :__status_setup' do
         ActiveJob::Base.prepend(BawWorkers::ActiveJob::Identity)
 
         stub_const('BawWorkers::ActiveJob::Status::ClassMethods', crude_spy)
@@ -58,7 +59,7 @@ describe BawWorkers::ActiveJob::Status do
       end
 
       it 'succeeds when prepended without identity' do
-        ::ActiveJob::Base.prepend(BawWorkers::ActiveJob::Status)
+        ActiveJob::Base.prepend(BawWorkers::ActiveJob::Status)
       end
     end
   end
@@ -134,7 +135,7 @@ describe BawWorkers::ActiveJob::Status do
       expect(persistance).to receive(:create).and_call_original
       expect(persistance).to receive(:remove).and_call_original
       result = impl.perform_later
-      expect(result).to eq false
+      expect(result).to be false
       expect(persistance.get_status_ids).to be_empty
       expect(persistance.marked_for_kill_ids).to be_empty
     end
@@ -154,7 +155,7 @@ describe BawWorkers::ActiveJob::Status do
       expect(persistance.marked_for_kill_ids).to be_empty
     end
 
-    it 'will fail to enqueue if job_id contains a space' do
+    it 'fails to enqueue if job_id contains a space' do
       expect {
         job = Fixtures::NeverQueuedJob.new('space in key')
         job.job_id = 'space in key'
@@ -165,7 +166,7 @@ describe BawWorkers::ActiveJob::Status do
 
   context 'when potential create race conditions occur' do
     pause_all_jobs
-    it 'will try to be resilient' do
+    it 'tries to be resilient' do
       # the basic flow goes:
       # job 1: is unique? yes
       # job 2: is unique? yes
@@ -309,7 +310,7 @@ describe BawWorkers::ActiveJob::Status do
           persistance.kill_set,
           'Fixtures::KillableJob:die_job_die'
         )
-      ).to eq true
+      ).to be true
 
       clear_pending_jobs
     end
@@ -495,7 +496,7 @@ describe BawWorkers::ActiveJob::Status do
   end
 
   describe 'retry', :slow do
-    let(:job) { Fixtures::RetryableJob.perform_later!("will_retry#{Time.now.strftime('%m%d%YT%H%M%S')}") }
+    let(:job) { Fixtures::RetryableJob.perform_later!("will_retry#{Time.zone.now.strftime('%m%d%YT%H%M%S')}") }
 
     it 'merges messages for retries' do
       # dereference to kick it it off
@@ -511,7 +512,7 @@ describe BawWorkers::ActiveJob::Status do
       perform_jobs(count: 3, timeout: 10)
 
       job.refresh_status!
-      job_refresh = ::ActiveJob::Base.deserialize(job.status.options.with_indifferent_access)
+      job_refresh = ActiveJob::Base.deserialize(job.status.options.with_indifferent_access)
 
       aggregate_failures {
         expect(job_refresh.executions).to eq 2
@@ -530,7 +531,7 @@ describe BawWorkers::ActiveJob::Status do
               a_string_matching(/Completed at/)
             )
           )
-        expect(job.status.time).to eq(original_time)
+        expect(job.status.time).to be_within(0.001.seconds).of(original_time)
       }
     end
   end

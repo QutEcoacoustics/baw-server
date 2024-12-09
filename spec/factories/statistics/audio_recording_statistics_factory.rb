@@ -4,6 +4,7 @@
 #
 # Table name: audio_recording_statistics
 #
+#  analyses_completed_count  :bigint           default(0)
 #  bucket                    :tsrange          not null, primary key
 #  original_download_count   :bigint           default(0)
 #  segment_download_count    :bigint           default(0)
@@ -17,7 +18,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #
 FactoryBot.define do
   factory :audio_recording_statistics, class: 'Statistics::AudioRecordingStatistics' do

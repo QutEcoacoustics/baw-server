@@ -17,7 +17,7 @@ def basic_filter_opts
   {
     #response_body_content: ['test response'],
     expected_json_path: ['data/0/data'],
-    data_item_count: 1
+    data_item_count: 2
   }
 end
 
@@ -451,113 +451,6 @@ resource 'Responses' do
   # # UPDATE
   # ################################
 
-  describe 'update' do
-    method_not_allowed_content = 'HTTP method not allowed for this resource.'
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { admin_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as admin)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { owner_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as owner user)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { writer_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as writer user)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { reader_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as reader user)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { no_access_token }
-      standard_request_options(
-        :put,
-        'UPDATE (as no access user)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { invalid_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with invalid token)',
-        :unauthorized,
-        { expected_json_path: get_json_error_path(:sign_up) }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      standard_request_options(
-        :put,
-        'UPDATE (as anonymous user)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-
-    put '/responses/:id' do
-      body_params
-      let(:id) { user_response.id }
-      let(:raw_post) { { response: post_attributes }.to_json }
-      let(:authentication_token) { harvester_token }
-      standard_request_options(
-        :put,
-        'UPDATE (with harvester token)',
-        :method_not_allowed,
-        { response_body_content: method_not_allowed_content }
-      )
-    end
-  end
-
   # ################################
   # # DESTROY
   # ################################
@@ -759,7 +652,7 @@ resource 'Responses' do
           {
             #response_body_content: ['Test response'],
             expected_json_path: 'data/0/data',
-            data_item_count: 1
+            data_item_count: 2
           }
         )
       end

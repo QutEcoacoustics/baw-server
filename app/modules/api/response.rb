@@ -9,7 +9,7 @@ module Api
     # @param [Symbol] status_symbol
     # @return [Fixnum] status code
     def status_code(status_symbol = :ok)
-      Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
+      Rack::Utils.status_code(status_symbol)
     end
 
     # Get the status symbol for a status code.
@@ -41,7 +41,7 @@ module Api
 
       # add new spec fields if filter_settings specifies a lambda for new_spec_fields
       new_spec_fields = filter_settings[:new_spec_fields]
-      new_spec_fields_is_lambda = !new_spec_fields.blank? && new_spec_fields.lambda?
+      new_spec_fields_is_lambda = new_spec_fields.present? && new_spec_fields.lambda?
       new_spec_fields_hash = {}
       if new_spec_fields_is_lambda && (item_new.nil? || item_new.id.nil?)
         new_spec_fields_hash = new_spec_fields.call(user)
@@ -53,19 +53,27 @@ module Api
     # Add custom fields to an item.
     # @param [Object] item A single item from the response.
     # @param [Object] user current_user
+    # @param [Hash] additional_data Additional data to be merged into the item.
     # @param [Hash] opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare(item, user, opts = {})
+    def prepare(item, user, additional_data, opts = {})
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
+
+      additional_data ||= {}
+      unless additional_data.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError, "Additional data must be a Hash, got #{additional_data.class}"
+      end
+
+      additional_data.deep_transform_keys!(&:to_s)
 
       filter_settings = item.class.filter_settings
       item_new = item
 
       # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
-      custom_fields_is_lambda = !custom_fields.blank? && custom_fields.lambda?
+      custom_fields_is_lambda = custom_fields.present? && custom_fields.lambda?
       custom_fields_hash = {}
       if custom_fields_is_lambda && !item_new.nil? && !item_new.id.nil?
         item_new, custom_fields_hash = custom_fields.call(item, user)
@@ -75,15 +83,16 @@ module Api
 
       # get newer sort of custom fields, and keep only string keys and transforms
       custom_fields_hash2 = filter_settings
-                            .fetch(:custom_fields2, {})
-                            # for calculated fields, they may not have a transform function, so skip those
-                            # and just use the value returned from the database
-                            .reject { |_key, value| value[:transform].nil? }
-                            .transform_values { |value| value[:transform] }
-                            .transform_keys(&:to_s)
+        .fetch(:custom_fields2, {})
+        # for calculated fields, they may not have a transform function, so skip those
+        # and just use the value returned from the database
+        .reject { |_key, value| value[:transform].nil? }
+        .transform_values { |value| value[:transform] }
+        .transform_keys(&:to_s)
 
       hashed_item = {}.merge(
         item_new&.as_json,
+        additional_data,
         custom_fields_hash,
         custom_fields_hash2
       )
@@ -101,7 +110,10 @@ module Api
           hashed_item.except(*projection[:exclude].map(&:to_s))
         end => hashed_item
       else
-        default_fields = filter_settings[:render_fields] + custom_fields_keys
+        default_fields = filter_settings[:render_fields] +
+                         custom_fields_keys +
+                         # rendered by default but not defined is filter settings
+                         additional_data.keys
         hashed_item = hashed_item.slice(*default_fields.map(&:to_s))
       end
 
@@ -138,7 +150,7 @@ module Api
     # @option opts [Hash] :filter_generic_keys ({}) Property/value pairs for equality filter.
     # @return [Hash] data
     def build(status_symbol = :ok, data = nil, opts = {})
-      # initialise with defaults
+      # initialize with defaults
       opts.reverse_merge!(
         {
           error_links: [], error_details: nil, error_info: nil,
@@ -158,20 +170,20 @@ module Api
         data:
       }
 
-      result[:meta][:warning] = opts[:warning] unless opts[:warning].blank?
+      result[:meta][:warning] = opts[:warning] if opts[:warning].present?
 
       # include projection/filter if given
-      result[:meta][:projection] = opts[:projection] unless opts[:projection].blank?
+      result[:meta][:projection] = opts[:projection] if opts[:projection].present?
 
-      result[:meta][:filter] = opts[:filter] unless opts[:filter].blank?
+      result[:meta][:filter] = opts[:filter] if opts[:filter].present?
 
       # error information
-      if !opts[:error_details].blank? || !opts[:error_links].blank? || !opts[:error_info].blank?
+      if opts[:error_details].present? || opts[:error_links].present? || opts[:error_info].present?
         result[:meta][:error] = response_error(opts)
       end
 
       # sort info
-      if !opts[:order_by].blank? && !opts[:direction].blank?
+      if opts[:order_by].present? && opts[:direction].present?
         result[:meta][:sorting] = {
           order_by: opts[:order_by],
           direction: opts[:direction]
@@ -179,7 +191,7 @@ module Api
       end
 
       # paging: page, items
-      if !opts[:page].blank? && !opts[:items].blank?
+      if opts[:page].present? && opts[:items].present?
         result[:meta][:paging] = {
           page: opts[:page],
           items: opts[:items]
@@ -187,13 +199,13 @@ module Api
       end
 
       # paging: count, total
-      unless opts[:total].blank?
+      if opts[:total].present?
         result[:meta][:paging] = {} unless result[:meta].include?(:paging)
         result[:meta][:paging][:total] = opts[:total]
       end
 
       # paging: max page
-      if !opts[:total].blank? && !opts[:items].blank?
+      if opts[:total].present? && opts[:items].present?
         items = opts[:items].to_f
         total = opts[:total].to_f
         # prevent divide by 0 error
@@ -217,16 +229,16 @@ module Api
       # render capabilities
       # TODO: optionally render capabilities based on request headers
       capabilities = opts.fetch(:capabilities, nil)
-      result[:meta][:capabilities] = capabilities unless capabilities.blank?
+      result[:meta][:capabilities] = capabilities if capabilities.present?
 
       result
     end
 
     def response_error(opts)
       error_hash = {}
-      error_hash[:details] = opts[:error_details] unless opts[:error_details].blank? # string
-      error_hash[:links] = response_error_links(opts[:error_links]) unless opts[:error_links].blank? # array
-      error_hash[:info] = opts[:error_info] unless [:error_info].blank? # hash or string or array
+      error_hash[:details] = opts[:error_details] if opts[:error_details].present? # string
+      error_hash[:links] = response_error_links(opts[:error_links]) if opts[:error_links].present? # array
+      error_hash[:info] = opts[:error_info] if [:error_info].present? # hash or string or array
       error_hash
     end
 
@@ -234,7 +246,7 @@ module Api
     #                         or a hash with the keys :text and :url
     def response_error_links(link_ids)
       result = {}
-      unless link_ids.blank?
+      if link_ids.present?
         error_links = error_links_hash
         link_ids.each do |id|
           link_info = if id.is_a?(Symbol)
@@ -324,7 +336,7 @@ module Api
     def response(params, query, model, filter_settings)
       # extract safe params and ensure we're dealing with a HWIA
       params = params.to_h if params.is_a? ActionController::Parameters
-      unless params.is_a? HashWithIndifferentAccess
+      unless params.is_a? ActiveSupport::HashWithIndifferentAccess
         raise ArgumentError, 'params needs to be HashWithIndifferentAccess or an ActionController::Parameters'
       end
 
@@ -336,9 +348,9 @@ module Api
       paged_sorted_query, opts = add_paging_and_sorting(new_query, filter_settings, filter_query)
 
       # build complete api response
-      opts[:filter] = filter_query.filter unless filter_query.filter.blank?
-      opts[:projection] = filter_query.projection unless filter_query.projection.blank?
-      opts[:capabilities] = filter_query.capabilities unless filter_query.capabilities.blank?
+      opts[:filter] = filter_query.filter if filter_query.filter.present?
+      opts[:projection] = filter_query.projection if filter_query.projection.present?
+      opts[:capabilities] = filter_query.capabilities if filter_query.capabilities.present?
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,
         :filter, :projection,
@@ -357,8 +369,8 @@ module Api
       param_action = filter_query.parameters[:action]
 
       opts = {
-        controller: param_controller.blank? ? filter_settings[:controller] : param_controller,
-        action: param_action.blank? ? filter_settings[:action] : param_action,
+        controller: param_controller.presence || filter_settings[:controller],
+        action: param_action.presence || filter_settings[:action],
         filter_text: filter_query.qsp_text_filter,
         filter_generic_keys: filter_query.qsp_generic_filters
       }
@@ -407,8 +419,8 @@ module Api
     def restrict_to_bounds(value, lower = 1, upper = nil)
       value_i = value.to_i
 
-      value_i = upper if !upper.blank? && value_i > upper
-      value_i = lower if !lower.blank? && value_i < lower
+      value_i = upper if upper.present? && value_i > upper
+      value_i = lower if lower.present? && value_i < lower
 
       value_i
     end
@@ -461,7 +473,7 @@ module Api
       controller = opts[:controller]
       action = opts[:action]
 
-      page = opts[:page]
+      opts[:page]
       items = opts[:items]
       max_page = opts[:max_page]
       page = restrict_to_bounds(opts[:page] + page_offset, 1, max_page)
@@ -472,23 +484,26 @@ module Api
       filter_generic_keys = opts[:filter_generic_keys]
       additional_params = opts[:additional_params]
 
+      # special case :with_archived
+      # we really don't want to
+
       order_by = opts[:order_by]
       direction = opts[:direction]
 
       link_params = {}
-      link_params[:controller] = controller unless controller.blank?
-      link_params[:action] = action unless action.blank?
-      link_params[:page] = page unless page.blank?
-      link_params[:items] = items unless items.blank?
-      link_params[:disable_paging] = disable_paging unless disable_paging.blank?
-      link_params[:filter_partial_match] = filter_text unless filter_text.blank?
-      link_params[:order_by] = order_by unless order_by.blank?
-      link_params[:direction] = direction unless direction.blank?
-      link_params.merge!(additional_params) unless additional_params.blank?
+      link_params[:controller] = controller if controller.present?
+      link_params[:action] = action if action.present?
+      link_params[:page] = page if page.present?
+      link_params[:items] = items if items.present?
+      link_params[:disable_paging] = disable_paging if disable_paging.present?
+      link_params[:filter_partial_match] = filter_text if filter_text.present?
+      link_params[:order_by] = order_by if order_by.present?
+      link_params[:direction] = direction if direction.present?
+      link_params.merge!(additional_params) if additional_params.present?
 
-      unless filter_generic_keys.blank?
+      if filter_generic_keys.present?
         filter_generic_keys.each do |key, value|
-          link_params["filter_#{key}".to_sym] = value
+          link_params[:"filter_#{key}"] = value
         end
       end
 

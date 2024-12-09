@@ -4,7 +4,7 @@ describe '/audio_recordings' do
   create_entire_hierarchy
 
   context 'when shown, provides a timezone along with recorded date' do
-    example 'when the timezone is present in the site' do
+    it 'when the timezone is present in the site' do
       site.tzinfo_tz = 'Australia/Sydney'
       site.save!
 
@@ -16,7 +16,7 @@ describe '/audio_recordings' do
       }))
     end
 
-    example 'when the timezone is nil in the site' do
+    it 'when the timezone is nil in the site' do
       site.tzinfo_tz = nil
       site.save!
 
@@ -29,7 +29,7 @@ describe '/audio_recordings' do
     end
   end
 
-  example 'returns a canonical_name' do
+  it 'returns a canonical_name' do
     site.tzinfo_tz = 'Australia/Sydney'
     site.save!
 
@@ -41,7 +41,7 @@ describe '/audio_recordings' do
     )
   end
 
-  example 'returns a canonical_name only when requested' do
+  it 'returns a canonical_name only when requested' do
     site.tzinfo_tz = 'Australia/Sydney'
     site.save!
 
@@ -60,7 +60,7 @@ describe '/audio_recordings' do
     }])
   end
 
-  example 'can return only the information needed for a task like downloading when requested' do
+  it 'can return only the information needed for a task like downloading when requested' do
     site.tzinfo_tz = 'Australia/Sydney'
     site.save!
 
@@ -83,7 +83,7 @@ describe '/audio_recordings' do
     }])
   end
 
-  example 'can filter by regions.id' do
+  it 'can filter by regions.id' do
     body = {
       projection: { include: [:id, :'regions.name', :'regions.id'] },
       filter: { 'regions.id': { eq: region.id } }
@@ -101,7 +101,7 @@ describe '/audio_recordings' do
     }])
   end
 
-  example 'it can retrieve recent audio recordings' do
+  it 'can retrieve recent audio recordings' do
     body = {
       projection: { include: [:id, :siteId, :durationSeconds, :recordedDate, :createdAt] },
       sorting: { orderBy: 'createdAt', direction: 'desc' }
@@ -121,7 +121,7 @@ describe '/audio_recordings' do
     }])
   end
 
-  example 'it can retrieve audio recordings entries for visualize' do
+  it 'can retrieve audio recordings entries for visualize' do
     body = {
       filter: { siteId: { in: [audio_recording.site_id] } },
       paging: { disablePaging: true },
@@ -184,8 +184,8 @@ describe '/audio_recordings' do
     around do |example|
       # need to freeze time so that these tests are reasonably interpreted
       # - shifting timezones with multiple timezones being tested is not fun
-      original_tz = ::Time.zone
-      Zonebie.backend.zone = ::ActiveSupport::TimeZone['UTC']
+      original_tz = Time.zone
+      Zonebie.backend.zone = ActiveSupport::TimeZone['UTC']
 
       example.run
 
@@ -560,7 +560,7 @@ describe '/audio_recordings' do
 
       expect(results.headers).to eq ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name']
       rows = results.map(&:to_h)
-      AudioRecording.all.each { |recording|
+      AudioRecording.find_each { |recording|
         expect(rows).to include(a_hash_including(
           'canonical_file_name' => recording.friendly_name,
           'id' => recording.id.to_s,

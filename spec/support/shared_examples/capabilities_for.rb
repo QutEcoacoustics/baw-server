@@ -8,7 +8,7 @@ RSpec.shared_context 'capabilities for' do |options|
 
   let(:user_token) {
     # lookup user token, e.g. reader_token, owner_token, ...
-    send("#{options[:user]}_token".to_sym)
+    send(:"#{options[:user]}_token")
   }
 
   def send_request(action, route, route_params)
@@ -18,11 +18,11 @@ RSpec.shared_context 'capabilities for' do |options|
     url = path.expand(route_params)
 
     # process is the generic base method for the get, post, put, etc.. methods
-    process(verb, url, **api_headers(user_token))
+    process(verb, url.to_s, **api_headers(user_token))
   end
 
   def validate_result(name, expected_can)
-    details = an_instance_of(String).or(eq(nil))
+    details = an_instance_of(String).or(be_nil)
     expect_has_capability(name, expected_can, details)
   end
 
@@ -34,9 +34,9 @@ RSpec.shared_context 'capabilities for' do |options|
              end
   context_name = "#{options[:name]} equivalent to #{can_text}"
   # again add metadata to allow filtering by action
-  context context_name, { options[:name] => true, :capabilities => true } do
+  context context_name, :capabilities, { options[:name] => true } do
     options[:actions].each do |action|
-      example "for the `#{options[:user]}` user, #{action}", { options[:user] => true } do
+      it "for the `#{options[:user]}` user, #{action}", { options[:user] => true } do
         # first build and issue request
         send_request(action, options[:route], route_params)
 

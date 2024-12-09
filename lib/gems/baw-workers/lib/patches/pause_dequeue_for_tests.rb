@@ -73,14 +73,14 @@ if BawApp.test?
             # Act like this plugin is not activated. Do nothing.
             logger.info('ran a job immediately because work is NOT paused', test_perform: should_dequeue)
             true
-          when ->(x) { !Integer(x, 10, exception: false).nil? }
+          when ->(x) { !x.to_i_strict.nil? }
             # We encountered a integer, indicating a number of jobs to complete
 
             # in this case, the integer will be above 0 or else we are in an invalid state
             to_do = should_dequeue.to_i
             if to_do <= 0
               raise ArgumentError,
-                    "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
+                "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}` should be greater than 0"
             end
 
             # decrement the counter by 1, to process one job for this pass
@@ -92,7 +92,7 @@ if BawApp.test?
             true
           else
             raise ArgumentError,
-                  "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
+              "BawWorkers::ResquePatch::PauseDequeueForTests encountered an unexpected value in its locking key: `#{should_dequeue}`"
           end
         end
       end
@@ -113,12 +113,12 @@ if BawApp.test?
       end
     end
   end
-  ::Resque.alias_method :__pop, :pop
+  Resque.alias_method :__pop, :pop
   # Patch all resque jobs (global so we can catch jobs defined by third parties like ActiveJob)
-  ::Resque.prepend(BawWorkers::ResquePatch::PauseDequeue)
-  puts 'Monkey patched Resque with BawWorkers::Resque::PauseDequeue'
+  Resque.prepend(BawWorkers::ResquePatch::PauseDequeue)
+  puts 'PATCH: BawWorkers::Resque::PauseDequeue applied to ::Resque'
 
-  raise 'Resque has not been patched for tests' unless ::Resque.include?(BawWorkers::ResquePatch::PauseDequeue)
+  raise 'Resque has not been patched for tests' unless Resque.include?(BawWorkers::ResquePatch::PauseDequeue)
 else
-  puts 'BawWorkers::ResquePatch::PauseDequeue loading skipped'
+  puts 'PATCH: BawWorkers::Resque::PauseDequeue NOT applied'
 end

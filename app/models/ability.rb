@@ -96,6 +96,7 @@ class Ability
       to_audio_recording(user, is_guest)
       to_audio_event(user, is_guest)
       to_audio_event_import(user, is_guest)
+      to_audio_event_import_file(user, is_guest)
       to_audio_event_comment(user, is_guest)
       to_bookmark(user, is_guest)
       to_analysis_job(user, is_guest)
@@ -104,6 +105,7 @@ class Ability
       to_dataset_item(user, is_guest)
       to_progress_event(user, is_guest)
       to_saved_search(user, is_guest)
+      to_provenance(user, is_guest)
       to_script(user, is_guest)
       to_tag(user, is_guest)
       to_tagging(user, is_guest)
@@ -166,6 +168,8 @@ class Ability
 
     # no one is allowed to change allow_audio_upload except an admin
     can [:allow_audio_upload], Project
+
+    can [:download_hidden_files], AnalysisJobsItem
   end
 
   def for_harvester
@@ -175,8 +179,8 @@ class Ability
     can [:index], :downloader
 
     # omitted: :new, :create,
-    # applied by default: :index, :show, :filter
-    can [:show, :update], AnalysisJobsItem
+    # applied by default: :index, :filter
+    can [:show, :invoke], AnalysisJobsItem
   end
 
   def create_guest_user
@@ -271,7 +275,7 @@ class Ability
     # GET|POST  /projects/:project_id/harvests/filter                                       harvests#filter {:format=>"json"}
     # and all of the above again with the shallow route
 
-    # only owner can access these actions.
+    # only owner of the project can access these actions.
     # Special action :harvest_audio used as validation in the harvester job
     can [:create, :update, :destroy, :show, :harvest_audio], Harvest do |harvest|
       check_model(harvest)
@@ -433,18 +437,40 @@ class Ability
     unless is_guest
       can [:create], AudioEventImport do |audio_event_import|
         check_model(audio_event_import)
-        # further permission checks are done for each audio_event import
-        # but that is not related to the permissions of this model
-        # (which is really just a tracking object)
+        # Any user can attempt to import events...
+        # But we won't import any that link to recordings they don't have write
+        # access to. This is checked in the controller action.
         true
       end
 
       # only creator can update, destroy, show their own audio_event_imports
-      can [:update, :destroy, :show], AudioEventImport, creator_id: user&.id
+      can [:update, :destroy, :show, :recover], AudioEventImport, creator_id: user&.id
     end
 
     # available to any user
     can [:index, :filter, :new], AudioEventImport
+  end
+
+  def to_audio_event_import_file(user, is_guest)
+    unless is_guest
+      can [:create], AudioEventImportFile do |audio_event_import_file|
+        check_model(audio_event_import_file)
+
+        # can only add a file if you made the import as well
+        next true if audio_event_import_file.audio_event_import.creator_id == user&.id
+
+        false
+      end
+
+      # only creator can update, destroy, show their own audio_event_import_files
+      can [:destroy, :show], AudioEventImportFile do |audio_event_import_file|
+        check_model(audio_event_import_file)
+        audio_event_import_file.audio_event_import.creator_id == user&.id
+      end
+    end
+
+    # available to any user
+    can [:index, :filter, :new], AudioEventImportFile
   end
 
   def to_audio_event_comment(user, is_guest)
@@ -509,28 +535,28 @@ class Ability
   end
 
   def to_analysis_job(user, _is_guest)
-    # must have read permission or higher on ANY saved_search.projects to create analysis job
-
-    can [:show, :create], AnalysisJob do |analysis_job|
+    can [:create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
-      raise CustomErrors::BadRequestError, 'Analysis Job must have a saved search.' if analysis_job.saved_search.nil?
 
-      projects = analysis_job.saved_search.projects
-      raise CustomErrors::BadRequestError, 'Saved search must have at least one project.' if projects.empty?
+      # only admins are authorized to make system_jobs
+      # no need to handle the true case, it is handle
+      # by the admin allow everything
+      next false if analysis_job.system_job
 
-      # can_any? because AnalysisJobsItem and analysis results can be accessed via AudioRecording. Any AnalysisJobsItem
-      # can be accessed if they user has access to the AudioRecording (and thus any project). can_any? here makes access
-      # consistent with AnalysisJobsItem.
-      Access::Core.can_any?(user, :reader, projects)
+      Access::Core.can?(user, :writer, analysis_job.project)
+    end
+
+    can [:show], AnalysisJob do |analysis_job|
+      check_model(analysis_job)
+
+      # anyone can view a system job
+      next true if analysis_job.system_job
+
+      Access::Core.can?(user, :reader, analysis_job.project)
     end
 
     # only creator can update, destroy their own analysis jobs
-    can [:update, :destroy], AnalysisJob, creator_id: user.id
-
-    # actions any logged in user can access
-    # AT: 2020 - disabled unless guest filter. Anyone should be able to new
-    #   I'm unsure why it was being excluded to guest
-    #can [:new], AnalysisJob #unless is_guest
+    can [:update, :destroy, :invoke], AnalysisJob, creator_id: user.id
 
     # available to any user, including guest
     can [:index, :filter, :new], AnalysisJob
@@ -601,11 +627,9 @@ class Ability
 
       # the dataset_item may not be valid and therefore may not be associated with a project
       audio_recording = progress_event.dataset_item.try(:audio_recording)
-      if audio_recording
-        Access::Core.can_any?(user, :reader, audio_recording.site.projects)
-      else
-        raise CustomErrors::UnprocessableEntityError, 'Invalid dataset item'
-      end
+      raise CustomErrors::UnprocessableEntityError, 'Invalid dataset item' unless audio_recording
+
+      Access::Core.can_any?(user, :reader, audio_recording.site.projects)
     end
 
     # must have read permissions or be creator to view
@@ -641,6 +665,13 @@ class Ability
 
     # available to any user, including guest
     can [:index, :filter], SavedSearch
+  end
+
+  def to_provenance(_user, is_guest)
+    # other actions are admin only
+
+    # available to any user, including guest
+    can [:show, :new, :index, :filter], Provenance
   end
 
   def to_script(_user, is_guest)

@@ -22,12 +22,12 @@ namespace :baw do
     # detect the rails constant and won't add the Rails railtie, and thus the settings
     # won't load! ... but only for workers and not the rails server!
     # We now force load the config railtie in application.rb!
-    require "#{__dir__}/../../../../../../config/application"
+    require(BawApp.root / 'config/application')
 
     # set time zone
     Time.zone = 'UTC'
 
-    BawWorkers::Config.set(is_resque_worker: is_worker, is_scheduler: is_scheduler)
+    BawWorkers::Config.set(is_resque_worker: is_worker, is_scheduler:)
 
     # Initialize the Rails application.
     Rails.application.initialize!
@@ -67,6 +67,20 @@ namespace :baw do
       require 'resque/scheduler/tasks'
       require 'resque-scheduler'
 
+      # import schedules for our application jobs
+      Resque::Scheduler.dynamic = true
+
+      # NOTE: we disable recurring jobs by default on our test scheduler
+      # because extra enqueued jobs while other tests are running would break
+      # so many things.
+      if BawApp.test?
+        Rails.logger.warn(
+          'Resque scheduler is running in test mode. JOB SCHEDULES HAVE NOT BEEN SET AUTOMATICALLY.'
+        )
+      else
+        BawWorkers::ResqueApi.create_all_schedules
+      end
+
       # invoke the resque rake task
       Rake::Task['resque:scheduler'].invoke
     end
@@ -100,35 +114,6 @@ namespace :baw do
     task :retry_failed, [:settings_file] do |_t, args|
       init(settings_file: args.settings_file)
       BawWorkers::ResqueApi.retry_failed
-    end
-  end
-
-  namespace :analysis do
-    namespace :resque do
-      desc 'Enqueue a file to analyse using Resque'
-      task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Job.action_enqueue_rake(args.analysis_config_file)
-      end
-
-      desc 'Enqueue files to analyse using Resque from a csv file'
-      task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Job.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
-      end
-    end
-    namespace :standalone do
-      desc 'Directly analyse an audio file'
-      task :from_files, [:settings_file, :analysis_config_file] do |_t, args|
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Job.action_perform_rake(args.analysis_config_file)
-      end
-
-      desc 'Directly analyse audio files from csv file'
-      task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |_t, args|
-        init(settings_file: args.settings_file)
-        BawWorkers::Jobs::Analysis::Job.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
-      end
     end
   end
 

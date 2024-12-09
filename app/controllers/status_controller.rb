@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Controller for the status endpoint
-class StatusController < ApiController
+class StatusController < ApplicationController
   skip_authorization_check only: [:index]
 
   # GET /status
@@ -12,19 +12,25 @@ class StatusController < ApiController
 
     timed_out = statuses.wait(10) == false
 
-    storage, redis, upload, database = statuses.value(0)
+    storage, redis, upload, database, batch_analysis = statuses.value(0)
+
     # check promise values contain healthy values for each check.
     # is any promise was rejected then #value returns nil
     status = [
-      !timed_out, statuses.fulfilled?,
-      storage&.fetch(:success, false), redis == 'PONG',
-      upload&.success?, upload&.fmap { |r| r.try(:data_provider).fetch(:error) == '' }&.value_or(false),
-      database
+      !timed_out,
+      statuses.fulfilled?,
+      storage&.fetch(:success, false),
+      redis == 'PONG',
+      upload&.success?, upload&.fmap { |audio_recording|
+                          audio_recording.try(:data_provider).fetch(:error) == ''
+                        }&.value_or(false),
+      database,
+      batch_analysis
     ].all?
 
     result = {
       status: status ? 'good' : 'bad',
-      timed_out: timed_out,
+      timed_out:,
       database: safe_result(statuses, index: 3),
       redis: safe_result(statuses, index: 1),
       storage: safe_result(statuses, index: 0) { |v| v[:message] },
@@ -35,10 +41,13 @@ class StatusController < ApiController
           [status.message, status.error].compact.join('. ')
         when SftpgoClient::ServicesStatus
           error = status.data_provider[:error]
-          error.blank? ? 'Alive' : error
+          error.presence || 'Alive'
         else
           status.to_s.strip
         end
+      },
+      batch_analysis: safe_result(statuses, index: 4) { |v|
+        v ? 'Connected' : 'Failed to connect'
       }
     }
 
@@ -63,8 +72,11 @@ class StatusController < ApiController
       },
       Concurrent::Promises::FactoryMethods.future {
         ActiveRecord::Base.connection_pool.with_connection do
-          ActiveRecord::Base.connection.active?
+          ActiveRecord::Base.connection.verify!
         end
+      },
+      Concurrent::Promises::FactoryMethods.future {
+        BawWorkers::Config.batch_analysis.remote_connected?
       }
     )
   end

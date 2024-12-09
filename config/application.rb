@@ -8,8 +8,8 @@ require 'csv'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.setup(*Rails.groups, :default, :server, :workers)
-Bundler.require(*Rails.groups, :server, :workers)
+Bundler.setup(*Rails.groups, :default)
+Bundler.require(*Rails.groups)
 
 # require things that aren't gems but are gem-like
 # Why do this and not rely on autoload magic? Because magic. I find it is simpler
@@ -23,9 +23,19 @@ require "#{__dir__}/../lib/gems/baw-app/lib/baw_app"
 # https://github.com/rubyconfig/config/blob/fe909388b5fc9426bae85480dd3c82f67731d381/lib/config.rb#L82
 require('config/integrations/rails/railtie')
 
+require "#{__dir__}/../lib/gems/discardable/lib/discardable"
 require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
-require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 require "#{__dir__}/../lib/gems/emu/lib/emu"
+require "#{__dir__}/../lib/gems/pbs/lib/pbs"
+require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
+
+# add patches
+# zeitwerk specifically does not deal with the concept of overrides,
+# so patches need to be required manually
+Dir.glob(BawApp.root / 'lib' / 'patches' / '**' / '*.rb').each do |override|
+  #puts "loading #{override}"
+  require override
+end
 
 # The main module for this application.
 module Baw
@@ -38,6 +48,7 @@ module Baw
       Pathname(Settings.logs.directory).expand_path / "#{log_name}#{tag}.#{Rails.env}.log"
     ]
 
+    # show the line that called the logger for certain level messages
     config.semantic_logger.backtrace_level = BawApp.dev_or_test? ? :debug : :error
     time_format = '%Y-%m-%dT%H:%M:%S.%#3N'
     if BawApp.dev_or_test?
@@ -50,6 +61,21 @@ module Baw
     else
       SemanticLogger::Formatters::Default.new(time_format:)
     end => format
+
+    # sometimes it is super frustrating to see which file a log message originates
+    # from but not the rest of the path. Do you know how many files are called
+    # log_subscriber.rb?!
+
+    #format.class.prepend(Module.new do
+    #  # patching: https://github.com/reidmorrison/semantic_logger/blob/fc53b000c0068b74afff39857af51de49d7ad06a/lib/semantic_logger/formatters/default.rb#L19
+    #  def file_name_and_line
+    #    file, line = log.file_name_and_line(false)
+    #    "#{file}:#{line}" if file
+    #  end
+    #end)
+
+    # sometimes dumping logs as json is useful, more information if more verbose
+    #format = SemanticLogger::Formatters::Json.new
 
     config.rails_semantic_logger.format = format
 
@@ -88,15 +114,13 @@ module Baw
     # we should never need to to autoload anything in ./app
     config.add_autoload_paths_to_load_path = false
 
-    #Rails.autoloaders.log! # debug only!
-
-    # add patches
-    # zeitwerk specifically does not deal with the concept of overrides,
-    # so patches need to be required manually
-    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).each do |override|
-      #puts "loading #{override}"
-      require override
+    config.after_initialize do
+      # trigger autoload for modules/Baw
+      Baw::Patch.apply
     end
+
+    # Zeitwerk logging
+    #Rails.autoloaders.log! # debug only!
 
     # This ensures our custom logging settings are defined before semantic loggers
     # railtie hook is invoked... but also after ruby-config loads and defines the
@@ -126,13 +150,12 @@ module Baw
     # config.time_zone = 'Central Time (US & Canada)'
     config.time_zone = 'UTC'
 
+    # The default locale is :en and al
     # config.active_record.default_timezone determines whether to use Time.local (if set to :local)
     # or Time.utc (if set to :utc) when pulling dates and times from the database.
     # The default is :utc.
-    #config.active_record.default_timezone = :utc
-
-    # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
-    config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
+    #config.active_record.default_timezl translations from config/locales/*.rb,yml are auto loaded.
+    config.i18n.load_path += Rails.root.glob('config/locales/**/*.{rb,yml}')
     config.i18n.default_locale = :en
     config.i18n.available_locales = [:en]
 
@@ -142,12 +165,13 @@ module Baw
       ErrorsController.action(:uncaught_error).call(env)
     }
 
-    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody',
-                                                       'colgroup'])
+    Rails::Html::SafeListSanitizer.allowed_tags.merge(
+      ['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup']
+    )
 
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
-    config.middleware.insert_before 0, Rack::Rewrite do
+    config.middleware.insert_before 0, ::Rack::Rewrite do
       # angular routing system will use the url that was originally requested
       # rails just needs to load the index.html
 
@@ -161,6 +185,10 @@ module Baw
       rewrite(%r{^/audio_analysis.*}i, '/listen_to/index.html')
       rewrite(%r{^/citsci.*}i, '/listen_to/index.html')
     end
+
+    # https://blog.saeloun.com/2022/02/23/rails-fiber-safe-connection-pools/
+    # we use fibers to simulate concurrency in our tests
+    #config.active_support.isolation_level = :fiber
 
     # Sanity check: test dependencies should not be loadable
     unless Rails.env.test?

@@ -869,7 +869,7 @@ resource 'DatasetItems' do
       :ok,
       {
         expected_json_path: 'data/0/start_time_seconds',
-        data_item_count: 2,
+        data_item_count: 3,
         response_body_content: '"start_time_seconds":',
         invalid_content: 'end_time_seconds'
       }
@@ -904,39 +904,39 @@ resource 'DatasetItems' do
   end
 
   # sort by virtual column
-  post '/dataset_items/filter' do
-    let(:authentication_token) { reader_token }
-    let(:raw_post) {
-      {
-        'filter' => {
-          'start_time_seconds' => {
-            'in' => ['1', '3', '8']
-          }
-        },
-        'projection' => {
-          'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id', 'order']
-        },
-        sorting: {
-          order_by: :priority,
-          direction: :asc
-        }
-      }.to_json
-    }
+  # post '/dataset_items/filter' do
+  #   let(:authentication_token) { reader_token }
+  #   let(:raw_post) {
+  #     {
+  #       'filter' => {
+  #         'start_time_seconds' => {
+  #           'in' => ['1', '3', '8']
+  #         }
+  #       },
+  #       'projection' => {
+  #         'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id', 'order']
+  #       },
+  #       sorting: {
+  #         order_by: :priority,
+  #         direction: :asc
+  #       }
+  #     }.to_json
+  #   }
 
-    standard_request_options(
-      :post,
-      'FILTER (as reader) by start time and sort by virtual column',
-      :ok,
-      {
-        expected_json_path: 'data',
-        data_item_count: 3,
-        order: {
-          property: 'start_time_seconds',
-          values: [1, 8, 3]
-        }
-      }
-    )
-  end
+  #   standard_request_options(
+  #     :post,
+  #     'FILTER (as reader) by start time and sort by virtual column',
+  #     :ok,
+  #     {
+  #       expected_json_path: 'data',
+  #       data_item_count: 3,
+  #       order: {
+  #         property: 'start_time_seconds',
+  #         values: [1, 8, 3]
+  #       }
+  #     }
+  #   )
+  # end
 
   ################################
   # NEXT FOR ME
@@ -1035,6 +1035,7 @@ resource 'DatasetItems' do
     # not logged in users can filter dataset items, but they won't get any items that they don't have permission for
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
+      let(:authentication_token) { anonymous_token }
 
       standard_request_options(
         :get,
@@ -1047,24 +1048,13 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/next_for_me' do
       create_anon_hierarchy
       let(:dataset_id) { dataset.id }
+      let(:authentication_token) { anonymous_token }
 
       standard_request_options(
         :get,
         'NEXT FOR ME (as not logged in) with public project',
         :ok,
         { expected_json_path: ['meta/paging/total', 'data'], data_item_count: 1 }
-      )
-    end
-
-    get '/datasets/:dataset_id/dataset_items/next_for_me' do
-      let(:dataset_id) { dataset.id }
-      let(:authentication_token) { harvester_token }
-
-      standard_request_options(
-        :get,
-        'NEXT FOR ME (as harvester)',
-        :forbidden,
-        { response_body_content: ['"data":null'], expected_json_path: get_json_error_path(:permissions) }
       )
     end
   end

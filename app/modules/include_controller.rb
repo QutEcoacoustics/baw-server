@@ -4,24 +4,11 @@
 module IncludeController
   extend ActiveSupport::Concern
 
-  include Api::ApiAuth
-
   included do
-    # custom authentication for api only
-    before_action :authenticate_user_custom!
-
     # devise strong params set up
     before_action :configure_permitted_parameters, if: :devise_controller?
 
-    # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
-    # devise's generated methods
-    before_action :current_user, unless: :devise_controller?
-    before_action :authenticate_user!, if: :devise_controller?
-
     before_action :validate_contains_post_params, only: [:create, :update]
-
-    # CanCan - always check authorization
-    check_authorization if: :should_check_authorization?
 
     # see routes.rb for the catch-all route for routing errors.
     # see application.rb for the exceptions_app settings.
@@ -35,32 +22,19 @@ module IncludeController
     rescue_from NotImplementedError, with: :not_implemented_response
     rescue_from ActionController::UnknownFormat, with: :unknown_format_response
     rescue_from ActionController::UnpermittedParameters, with: :unprocessable_entity_error_response
+    rescue_from ActionController::ParameterMissing, with: :unprocessable_entity_error_response
 
     # Custom errors - these use the message in the error
-    # RoutingArgumentError - error handling for routes that take a combination of attributes
-    rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_error_response
-    rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_error_response
-    rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error_response
-    rescue_from CustomErrors::MethodNotAllowedError, with: :method_not_allowed_error_response
-    rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
-    rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
-    rescue_from CustomErrors::RequestedMediaDurationInvalid, with: :unprocessable_entity_error_response
-    rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
-    rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
-    rescue_from CustomErrors::OrphanedSiteError, with: :orphan_site_error_response
+    rescue_from CustomErrors::CustomError, with: :custom_error_response
     rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
-    rescue_from AasmHelpers::NoTransitionAvailable, with: :unprocessable_entity_error_response
+    rescue_from Baw::Aasm::AasmError, with: :unprocessable_entity_error_response
 
     rescue_from BawWorkers::UploadService::UploadServiceError, with: :upload_service_error
     rescue_from Faraday::ServerError, with: :internal_server_error
 
-    # Don't rescue this, it is the base for 406 and 415
-    #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
-
-    rescue_from CustomErrors::BadRequestError, with: :bad_request_error_response
-
     # error handling for cancan authorization checks
     rescue_from CanCan::AccessDenied, with: :access_denied_response
+    rescue_from Api::ApiAuth::AccessDenied, with: :access_denied_response
 
     # Prevent CSRF attacks by raising an exception.
     # For APIs, you may want to use :null_session instead.
@@ -74,32 +48,13 @@ module IncludeController
     around_action :set_then_reset_user_stamper
 
     # update users last activity log every 10 minutes
-    before_action :set_last_seen_at,
-      if: proc {
-        user_signed_in? &&
-          (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
-      }
+    before_action :set_last_seen_at
 
     # We've had headers misbehave. Validating them here means we can email someone about the problem!
     after_action :validate_headers
-
-    # A dummy method to get rid of all the Rubymine errors.
-    # @return [User]
-
-    # A dummy method to get rid of all the Rubymine errors.
-    # @return [Boolean]
   end
 
   protected
-
-  # Add archived at header to HTTP response
-  # @param [ActiveRecord::Base] model
-  # @return [void]
-  def add_archived_at_header(model)
-    return if !model.respond_to?(:deleted_at) || model.deleted_at.blank?
-
-    response.headers['X-Archived-At'] = model.deleted_at.httpdate
-  end
 
   def add_header_length(length)
     response.headers['Content-Length'] = length.to_s
@@ -117,6 +72,7 @@ module IncludeController
   # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
     csrf_header_key = 'X-XSRF-TOKEN'
+
     super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
   end
 
@@ -154,7 +110,7 @@ module IncludeController
     can_access_audio_recording = can? action, audio_recording
 
     # Can't do anything if can't access audio recording and no audio event id given
-    has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?
+    has_any_permission = can_access_audio_recording || request_params[:audio_event_id].present?
     unless has_any_permission
       raise CanCan::AccessDenied,
         "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given."
@@ -220,10 +176,10 @@ module IncludeController
       raise CanCan::AccessDenied, msg1 + msg2 + msg3
     end
 
-    if end_offset > allowable_end_offset
-      msg2 = "end offset (#{end_offset}) was greater than allowable bounds (#{allowable_end_offset}) "
-      raise CanCan::AccessDenied, msg1 + msg2 + msg3
-    end
+    return unless end_offset > allowable_end_offset
+
+    msg2 = "end offset (#{end_offset}) was greater than allowable bounds (#{allowable_end_offset}) "
+    raise CanCan::AccessDenied, msg1 + msg2 + msg3
   end
 
   # TODO: Simplify Function
@@ -297,7 +253,7 @@ module IncludeController
       end
       format.html {
         status_code = Settings.api_response.status_code(status_symbol)
-        status_message = Settings.api_response.status_phrase(status_symbol).humanize
+        status_message = Settings.api_response.status_phrase(status_symbol)&.humanize
 
         response_links = Settings.api_response.response_error_links(options[:error_links])
 
@@ -356,8 +312,11 @@ module IncludeController
       message = 'Request body was empty'
       status = :bad_request
       # include link to 'new' endpoint if body was empty
-      options = { should_notify_error: true,
-                  error_links: [{ text: 'New Resource', url: send("new_#{resource_name}_path") }] }
+      url = respond_to?(:"new_#{resource_name}_path") ? send("new_#{resource_name}_path") : nil
+      options = {
+        should_notify_error: true,
+        error_links: [{ text: 'New Resource', url: }]
+      }
     else
       options = { should_notify_error: true }
       status = :unsupported_media_type
@@ -413,17 +372,6 @@ module IncludeController
     )
   end
 
-  def item_not_found_error_response(error)
-    # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
-    render_error(
-      :not_found,
-      "Could not find the requested item: #{error.message}",
-      error,
-      'item_not_found_error_response',
-      { should_notify_error: false }
-    )
-  end
-
   def record_not_unique_response(error)
     render_error(
       :conflict,
@@ -433,52 +381,19 @@ module IncludeController
     )
   end
 
-  def unsupported_media_type_error_response(error)
-    # 415 - Unsupported Media Type
-    # they sent what we don't want
-    # render json: {
-    #   code: 415,
-    #   phrase: 'Unsupported Media Type',
-    #   message: 'Requested format is invalid. It must be one of available_formats.',
-    #   available_formats: @available_formats
-    # }, status: :unsupported_media_type
+  def custom_error_response(error)
+    message = error.message
 
     render_error(
-      :unsupported_media_type,
-      "The format of the request is not supported: #{error.message}",
+      error.status_code,
+      message,
       error,
-      'unsupported_media_type_error_response',
-      { error_info: { available_formats: error.available_formats_info } }
-    )
-  end
-
-  def method_not_allowed_error_response(error)
-    # 405 - Method Not Allowed
-    # We don't allow that verb, for that request
-
-    request.format = :json
-
-    render_error(
-      :method_not_allowed,
-      "The method received the request is known by the server but not supported by the target resource: #{error.message}",
-      error,
-      'method_not_allowed_error_response',
-      { error_info: { available_methods: error.available_methods.map { |x| x.to_s.upcase } } }
-    )
-  end
-
-  def not_acceptable_error_response(error)
-    # 406 - Not Acceptable
-    # we can't send what they want
-
-    request.format = :json
-
-    render_error(
-      :not_acceptable,
-      "None of the acceptable response formats are available: #{error.message}",
-      error,
-      'not_acceptable_error_response',
-      { error_info: { available_formats: error.available_formats_info } }
+      'custom_error_response',
+      {
+        should_notify_error: error.should_notify_error,
+        error_info: error.info,
+        error_links: error.links
+      }
     )
   end
 
@@ -486,12 +401,13 @@ module IncludeController
     # don't email when someone has sent us bad parameters
     options = { should_notify_error: false }
 
-    if error.respond_to?(:additional_details) && !error.additional_details.nil?
-      options[:error_info] = error.additional_details
-    end
+    # Should no longer be needed: See CustomErrors::UnprocessableEntityError
+    # if error.respond_to?(:additional_details) && !error.additional_details.nil?
+    #   options[:error_info] = error.additional_details
+    # end
 
     render_error(
-      :unprocessable_entity,
+      :unprocessable_content,
       "The request could not be understood: #{error.message}",
       error,
       'unprocessable_entity_error_response',
@@ -531,7 +447,17 @@ module IncludeController
   end
 
   def access_denied_response(error)
-    if current_user&.confirmed?
+    if error.is_a?(::Api::ApiAuth::AccessDenied)
+      render_error(
+        :forbidden,
+        I18n.t('devise.failure.unauthorized'),
+        error,
+        'access_denied_response - JWT forbidden',
+        {
+          error_info: error.message
+        }
+      )
+    elsif current_user&.confirmed?
       render_error(
         :forbidden,
         I18n.t('devise.failure.unauthorized'),
@@ -548,66 +474,16 @@ module IncludeController
         'access_denied_response - unconfirmed',
         { error_links: [:confirm] }
       )
-
     else
-
       render_error(
         :unauthorized,
         I18n.t('devise.failure.unauthenticated'),
         error,
-        'access_denied_response - unauthorised',
+        'access_denied_response - unauthorized',
         { error_links: [:sign_in, :sign_up, :confirm] }
       )
 
     end
-  end
-
-  def routing_argument_error_response(error)
-    render_error(
-      :not_found,
-      "Could not find the requested page: #{error.message}",
-      error,
-      'routing_argument_error_response',
-      { error_info: { original_route: request.env['PATH_INFO'], original_http_method: request.method } }
-    )
-  end
-
-  def bad_request_error_response(error)
-    render_error(
-      :bad_request,
-      "The request was not valid: #{error.message}",
-      error,
-      'bad_request_error_response'
-    )
-  end
-
-  def filter_argument_error_response(error)
-    render_error(
-      :bad_request,
-      "Filter parameters were not valid: #{error.message}",
-      error,
-      'filter_argument_error_response',
-      { error_info: error.filter_segment }
-    )
-  end
-
-  def audio_generation_error_response(error)
-    render_error(
-      :internal_server_error,
-      "Audio generation failed: #{error.message}",
-      error,
-      'audio_generation_error_response',
-      { error_info: error.job_info }
-    )
-  end
-
-  def orphan_site_error_response(error)
-    render_error(
-      :bad_request,
-      error.message,
-      error,
-      'orphan_site_error_response'
-    )
   end
 
   def audio_tool_error_response(error)
@@ -687,24 +563,24 @@ module IncludeController
   end
 
   def set_last_seen_at
+    return unless user_signed_in?
+
+    set_recently = Time.zone.at((session[:last_seen_at] || 0).to_i) < 10.minutes.ago
+
+    return unless session[:last_seen_at].blank? || set_recently
+
     the_time = Time.zone.now
     current_user.update_attribute(:last_seen_at, the_time)
     session[:last_seen_at] = the_time.to_i
   end
 
-  def should_check_authorization?
-    return false if devise_controller?
-    return false if respond_to?(:admin_controller?) && admin_controller?
-
-    true
-  end
-
   def validate_headers
     if response.headers.key?('Content-Length') && response.headers['Content-Length'].to_i.negative?
-      raise CustomErrors::BadHeaderError
+      raise CustomErrors::NegativeContentLengthError
     end
-    if response.headers.key?(:content_length) && response.headers[:content_length].to_i.negative?
-      raise CustomErrors::BadHeaderError
-    end
+
+    return unless response.headers.key?(:content_length) && response.headers[:content_length].to_i.negative?
+
+    raise CustomErrors::NegativeContentLengthError
   end
 end

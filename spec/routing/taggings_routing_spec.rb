@@ -19,7 +19,8 @@ describe TaggingsController, type: :routing do
     it { expect(delete('/audio_recordings/3/audio_events/4/taggings/5')).to route_to('taggings#destroy', audio_recording_id: '3', audio_event_id: '4', id: '5', format: 'json') }
 
     it { expect(get('/user_accounts/1/taggings')).to route_to('taggings#user_index', user_id: '1', format: 'json') }
-    it { expect(get('/taggings/filter')).to route_to('taggings#filter', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/taggings', 'taggings', [:filterable]
 
     # used by client
     it { expect(get('/audio_recordings/3/audio_events/4/taggings')).to route_to('taggings#index', audio_recording_id: '3', audio_event_id: '4', format: 'json') }

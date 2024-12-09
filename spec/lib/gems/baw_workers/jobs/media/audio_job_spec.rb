@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Media::AudioJob do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   pause_all_jobs
@@ -68,7 +66,7 @@ describe BawWorkers::Jobs::Media::AudioJob do
       job1 = BawWorkers::Jobs::Media::AudioJob.perform_later!(test_payload)
 
       result = BawWorkers::Jobs::Media::AudioJob.try_perform_later(test_payload)
-      expect(result).to be_an_instance_of(::Dry::Monads::Failure)
+      expect(result).to be_an_instance_of(Dry::Monads::Failure)
       job2 = result.failure
       expect(job2.job_id).to eq job1.job_id
       expect(job2.unique?).to be false

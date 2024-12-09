@@ -3,8 +3,6 @@
 # our jobs need access to the database from different connections
 # thus we can't use our normal transaction cleaning method
 describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   prepare_users
@@ -18,7 +16,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
   context 'when checking basic job behaviour' do
     it 'works on the harvest queue' do
-      expect((BawWorkers::Jobs::Harvest::ScanJob.queue_name)).to eq(queue_name)
+      expect(BawWorkers::Jobs::Harvest::ScanJob.queue_name).to eq(queue_name)
     end
 
     it 'can enqueue' do
@@ -95,7 +93,7 @@ describe BawWorkers::Jobs::Harvest::ScanJob, :clean_by_truncation do
 
           # need to write a non-empty file to get past the empty file check in the harvest jobs
           if path.ends_with?('.wav')
-            dest = generate_audio(file_path.basename, directory: file_path.dirname, sine_frequency: 110 * i)
+            generate_audio(file_path.basename, directory: file_path.dirname, sine_frequency: 110 * i)
           else
             FileUtils.touch(file_path)
           end

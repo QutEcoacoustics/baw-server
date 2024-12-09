@@ -38,7 +38,7 @@ describe Filter::Query do
             filter_encoded: 'banana'
           }).query_full
         }.to raise_error(
-          CustomErrors::FilterArgumentError, 'filter_encoded was not a valid RFC 4648 base64url string'
+          CustomErrors::FilterArgumentError, 'Filter parameters were not valid: filter_encoded was not a valid RFC 4648 base64url string'
         )
       end
 
@@ -59,7 +59,7 @@ describe Filter::Query do
             filter_encoded: 'banana!'
           }).query_full
         }.to raise_error(
-          CustomErrors::FilterArgumentError, 'filter_encoded was not a valid RFC 4648 base64url string'
+          CustomErrors::FilterArgumentError, 'Filter parameters were not valid: filter_encoded was not a valid RFC 4648 base64url string'
         )
       end
 
@@ -81,7 +81,7 @@ describe Filter::Query do
           filter_encoded: test_filter_encoded
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."id", "audio_recordings"."recorded_date", "sites"."name"
           AS "sites.name", "audio_recordings"."site_id", "audio_recordings"."media_type"
           FROM "audio_recordings"
@@ -118,7 +118,7 @@ describe Filter::Query do
           filter_encoded: ''
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
           WHERE "audio_recordings"."deleted_at"
@@ -151,7 +151,7 @@ describe Filter::Query do
           filter_id: '1'
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."id", "audio_recordings"."recorded_date", "sites"."name"
           AS "sites.name", "audio_recordings"."site_id", "audio_recordings"."media_type"
           FROM "audio_recordings"
@@ -191,7 +191,7 @@ describe Filter::Query do
           filter: { id: { eq: 1 } }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."id", "audio_recordings"."recorded_date", "sites"."name"
           AS "sites.name", "audio_recordings"."site_id", "audio_recordings"."media_type"
           FROM "audio_recordings"

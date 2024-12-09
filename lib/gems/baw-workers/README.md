@@ -30,12 +30,6 @@ Runs checks on original audio recording files. This action checks an entire sing
 
  - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
 
-### Harvest
-
-Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system.
-
- - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
- - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
 
 ### Media
 
@@ -123,10 +117,6 @@ Every action has a `queue` setting.
 The `queue` is the name of the queue the action will add jobs to when running as a Resque enqueue worker.
 See the Actions section below for more information about action-specific settings.
 
-#### `settings.endpoints` and `settings.api`
-
-These settings must match the equivalent [baw-server](https://github.com/QutBioacoustics/baw-server) settings.
-
 #### `log_level` settings
 
 Each `log_level` setting is independent of the others.
@@ -138,8 +128,6 @@ Other parameters are described in the `Actions` section below.
 
 #### Standalone
 
-    bundle exec rake baw:analysis:standalone:from_files[settings_file,analysis_config_file]  # Analyse audio files directly
-    bundle exec rake baw:audio_check:standalone:from_csv[settings_file,csv_file]             # Enqueue audio recording file checks from a csv file to be processed directly
     bundle exec rake baw:harvest:standalone:from_files[settings_file,harvest_dir]            # Harvest audio files directly
     # media action can only be run as a Resque dequeue worker
 

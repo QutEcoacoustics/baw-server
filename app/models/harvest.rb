@@ -24,12 +24,12 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #  fk_rails_...  (updater_id => users.id)
 #
 class Harvest < ApplicationRecord
   include AASM
-  include AasmHelpers
+
   HARVEST_FOLDER_PREFIX = 'harvest_'
   HARVEST_ID_FROM_FOLDER_REGEX = %r{/#{HARVEST_FOLDER_PREFIX}(\d+)/}
 
@@ -41,10 +41,9 @@ class Harvest < ApplicationRecord
 
   belongs_to :project, inverse_of: :harvests
 
-  belongs_to :creator, class_name: User.name, foreign_key: :creator_id, inverse_of: :created_harvests
-  belongs_to :updater, class_name: User.name, foreign_key: :updater_id, inverse_of: :updated_harvests, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_harvests
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_harvests, optional: true
 
-  validates :project, presence: true
   validate :validate_uploads_enabled
   validate :validate_site_mappings_exist
   validate :validate_mapping_path_uniqueness
@@ -56,11 +55,11 @@ class Harvest < ApplicationRecord
   )
 
   def mark_mappings_change_at
-    self.last_mappings_change_at = Time.now if mappings_changed?
+    self.last_mappings_change_at = Time.zone.now if mappings_changed?
   end
 
   def set_default_name
-    return unless name.blank?
+    return if name.present?
 
     self.name = "#{created_at.strftime('%B')} #{created_at.day.ordinalize} Upload"
   end
@@ -80,7 +79,7 @@ class Harvest < ApplicationRecord
     return if mappings.blank?
 
     mappings.each do |mapping|
-      next unless mapping.site_id.present?
+      next if mapping.site_id.blank?
 
       next if Site.exists?(mapping.site_id)
 
@@ -276,8 +275,23 @@ class Harvest < ApplicationRecord
     # @!method may_finish?
     #   @return [Boolean]
     event :finish do
-      transitions from: :processing, to: :complete, guard: :processing_complete?
-      transitions from: :uploading, to: :complete, after: [:scan_upload_directory]
+      # Only amends analysis jobs if processing is complete successfully.
+      # Streaming harvests do an amend when each harvest job completes as well.
+      transitions(
+        from: :processing,
+        to: :complete,
+        guard: :processing_complete?,
+        success: [:enqueue_amend_analysis_jobs]
+      )
+
+      # this is a streaming only transition - it never goes through the other steps
+      # but can  be closed successfully without aborting
+      transitions(
+        from: :uploading,
+        to: :complete,
+        after: [:scan_upload_directory],
+        success: [:enqueue_amend_analysis_jobs]
+      )
     end
 
     # our state machine helpers allow for automated transitions if there is
@@ -304,7 +318,7 @@ class Harvest < ApplicationRecord
     end => permissions
 
     # either ? never expires : use default (7 days)
-    expiry = streaming_harvest? ? Time.at(0) : nil
+    expiry = streaming_harvest? ? Time.zone.at(0) : nil
 
     created_user = BawWorkers::Config.upload_communicator.create_upload_user(
       username: upload_user,
@@ -336,11 +350,11 @@ class Harvest < ApplicationRecord
   end
 
   def mark_last_upload_at
-    self.last_upload_at = Time.now
+    self.last_upload_at = Time.zone.now
   end
 
   def mark_last_metadata_review_at
-    self.last_metadata_review_at = Time.now
+    self.last_metadata_review_at = Time.zone.now
   end
 
   def create_harvest_dir
@@ -392,6 +406,12 @@ class Harvest < ApplicationRecord
     end
   end
 
+  def enqueue_amend_analysis_jobs
+    logger.measure_info('Amend analysis jobs') do
+      BawWorkers::Jobs::Analysis::AmendAfterHarvestJob.enqueue(self)
+    end
+  end
+
   def update_allowed?
     # if we're in a state where we are waiting for a computation to finish, we can't
     # allow a client to transition us to a different state
@@ -405,7 +425,7 @@ class Harvest < ApplicationRecord
 
     return metadata_review! if may_metadata_review?
 
-    return finish! if may_finish?
+    finish! if may_finish?
   end
 
   def metadata_extraction_complete?
@@ -428,7 +448,7 @@ class Harvest < ApplicationRecord
     expiry = BawWorkers::UploadService::Communicator::STANDARD_EXPIRY
     buffer = (expiry / 2).from_now.to_i
 
-    return if ((upload_user_expiry_at&.to_i || 0) - buffer).positive?
+    return if (upload_user_expiry_at.to_i - buffer).positive?
 
     begin
       # SFTPGO accepts a millisecond encoded integer, however it still seems to

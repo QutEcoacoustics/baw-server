@@ -90,7 +90,7 @@ module Filter
         )
       end
 
-      if !value.blank? && value.uniq.length != value.length
+      if value.present? && value.uniq.length != value.length
         raise CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', { key.to_s => value })
       end
 
@@ -184,8 +184,8 @@ module Filter
       validate_table(result_table)
       validate_table(filter_table)
 
-      validate_node_or_attribute(filter) unless filter.blank?
-      validate_hash(opts) unless opts.blank?
+      validate_node_or_attribute(filter) if filter.present?
+      validate_hash(opts) if opts.present?
 
       result_table_name = result_table.name.to_s
       result_table_id = opts[:result_table_id] || :id
@@ -194,8 +194,8 @@ module Filter
       filter_table_id = opts[:filter_table_id] || :id
 
       many_table = opts[:many_table] || Arel::Table.new([result_table_name, filter_table_name].sort.join('_').to_sym)
-      many_table_result_id = opts[:many_table_result_id] || "#{result_table_name.singularize}_id".to_sym
-      many_table_filter_id = opts[:many_table_filter_id] || "#{filter_table_name.singularize}_id".to_sym
+      many_table_result_id = opts[:many_table_result_id] || :"#{result_table_name.singularize}_id"
+      many_table_filter_id = opts[:many_table_filter_id] || :"#{filter_table_name.singularize}_id"
 
       # e.g. - build_exists(Site.arel_table, Project.arel_table)
 
@@ -230,8 +230,8 @@ module Filter
       # )
 
       query = filter_table
-              .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
-              .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
+        .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
+        .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
 
       query = query.where(filter) if filter
 
@@ -256,7 +256,7 @@ module Filter
           raise CustomErrors::FilterArgumentError.new("Filter hash must have at least 1 entry, got #{primary.size}.",
             { hash: primary })
         end
-        unless extra.blank?
+        if extra.present?
           raise CustomErrors::FilterArgumentError.new("Extra must be null when processing a hash, got #{extra}.",
             { hash: primary })
         end
@@ -348,10 +348,10 @@ module Filter
 
           condition_node(filter_name, field_node, filter_value)
         else
-          raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name: #{primary}."
+          raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name `#{primary}`."
         end
       else
-        raise CustomErrors::FilterArgumentError, "Unrecognized filter component: #{primary}."
+        raise CustomErrors::FilterArgumentError, "Unrecognized filter component `#{primary}`."
       end
     end
 
@@ -436,7 +436,7 @@ module Filter
         end
 
         # add relevant joins
-        joins, match = build_joins(model, @valid_associations)
+        joins, = build_joins(model, @valid_associations)
 
         joins.each do |j|
           table = j[:join]
@@ -491,8 +491,8 @@ module Filter
       parsed_field = field[(dot_index + 1)..field.length].to_sym
 
       associations = build_associations(@valid_associations, table)
-      models = associations.map { |a| a[:join] }
-      table_names = associations.map { |a| a[:join].table_name.to_sym }
+      models = associations.pluck(:join)
+      table_names = associations.map { |analysis_job| analysis_job[:join].table_name.to_sym }
 
       validate_name(parsed_table, table_names)
 
@@ -548,7 +548,7 @@ module Filter
     def json_column?(node)
       # we only patched for Arel::Attributes::Attribute, sometimes other nodes (like a grouping) are tested here,
       # hence the safe try call
-      return unless node.respond_to?(:type_caster)
+      return false unless node.respond_to?(:type_caster)
 
       column_type = node.type_caster.type
       [:json, :jsonb].include?(column_type)
@@ -593,17 +593,17 @@ module Filter
     # @param [Array<Hash>] joins
     # @return [Array<Hash>, Boolean] joins, match
     def build_joins(model, associations, joins = [])
-      associations.each do |a|
-        model_join = a[:join]
-        model_on = a[:on]
+      associations.each do |analysis_job|
+        model_join = analysis_job[:join]
+        model_on = analysis_job[:on]
 
         join = { join: model_join, on: model_on }
 
         return [[join], true] if model == model_join
 
-        next unless a.include?(:associations)
+        next unless analysis_job.include?(:associations)
 
-        assoc = a[:associations]
+        assoc = analysis_job[:associations]
         assoc_joins, match = build_joins(model, assoc, joins + [join])
 
         return [[join] + assoc_joins, true] if match

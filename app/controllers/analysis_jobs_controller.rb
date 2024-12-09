@@ -3,8 +3,6 @@
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
-  SYSTEM_JOB_ID = AnalysisJobsItem::SYSTEM_JOB_ID
-
   # GET /analysis_jobs
   def index
     do_authorize_class
@@ -19,9 +17,9 @@ class AnalysisJobsController < ApplicationController
   end
 
   # GET /analysis_jobs/1
+  # GET /analysis_jobs/system
   def show
-    return system_show if system_job?
-
+    # customized - see below
     do_load_resource
     do_authorize_instance
 
@@ -40,15 +38,17 @@ class AnalysisJobsController < ApplicationController
   # POST /analysis_jobs
   def create
     do_new_resource
-    do_set_attributes(analysis_job_create_params)
+    parameters = analysis_job_params(for_create: true)
+    transform_scripts(parameters)
+
+    do_set_attributes(parameters)
     do_authorize_instance
 
-    # runs first step in analysis_job workflow (`initialize_workflow`) and then saves
     if @analysis_job.save
-
       # now create and enqueue job items (which updates status attributes again)
       # needs to be called after save as it makes use of the analysis_job id.
-      @analysis_job.prepare!
+      # @type [AnalysisJob]
+      @analysis_job.process!
 
       respond_create_success
     else
@@ -57,20 +57,13 @@ class AnalysisJobsController < ApplicationController
   end
 
   # PUT|PATCH /analysis_jobs/1
+  # PUT|PATCH /analysis_jobs/system
   def update
-    return system_mutate if system_job?
-
+    # customized - see below
     do_load_resource
     do_authorize_instance
 
-    parameters = analysis_job_update_params
-
-    # allow the API to transition this analysis job to a new state.
-    # Used for suspending, resuming, and retrying an analysis_job
-    if parameters.key?(:overall_status)
-      @analysis_job.transition_to_state!(parameters[:overall_status].to_sym)
-      parameters = parameters.except(:overall_status)
-    end
+    parameters = analysis_job_params(for_create: false)
 
     if @analysis_job.update(parameters)
       respond_show
@@ -80,12 +73,9 @@ class AnalysisJobsController < ApplicationController
   end
 
   # DELETE /analysis_jobs/1
-  def destroy
-    return system_mutate if system_job?
-
-    do_load_resource
-    do_authorize_instance
-
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     # only allow deleting from suspended or completed states
     can_delete = @analysis_job.completed? || @analysis_job.suspended?
 
@@ -95,14 +85,9 @@ class AnalysisJobsController < ApplicationController
       @analysis_job.suspend!
     end
 
-    if can_delete
-      @analysis_job.destroy
-      add_archived_at_header(@analysis_job)
+    next if can_delete
 
-      respond_destroy
-    else
-      respond_error(:conflict, "Cannot be deleted while `overall_status` is `#{@analysis_job.overall_status}`")
-    end
+    respond_error(:conflict, "Cannot be deleted while `overall_status` is `#{@analysis_job.overall_status}`")
   end
 
   # GET|POST /analysis_jobs/filter
@@ -118,40 +103,79 @@ class AnalysisJobsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
-  private
-
-  # GET|HEAD /analysis_jobs/system
-  def system_show
-    raise NotImplementedError
+  # PUT|POST /analysis_jobs/:analysis_job_id/retry
+  # PUT|POST /analysis_jobs/:analysis_job_id/resume
+  # PUT|POST /analysis_jobs/:analysis_job_id/suspend
+  # PUT|POST /analysis_jobs/:analysis_job_id/amend
+  def invoke
+    # allow the API to transition this analysis job to a new state.
+    # Used for suspending, resuming, and retrying an analysis_job
+    do_invoke
   end
 
-  # PUT|PATCH|DELETE /analysis_jobs/system
-  def system_mutate
-    raise CustomErrors::MethodNotAllowedError.new('Cannot update a system job', [:post, :put, :patch, :delete])
+  private
+
+  def invoke_retry
+    @analysis_job.retry!
+  end
+
+  def invoke_resume
+    @analysis_job.resume!
+  end
+
+  def invoke_suspend
+    @analysis_job.suspend!
+  end
+
+  def invoke_amend
+    raise CustomErrors::UnprocessableEntityError, 'Cannot amend a non-ongoing job' unless @analysis_job.ongoing?
+
+    @analysis_job.amend!
   end
 
   def system_job?
-    params[:id] == 'system'
+    params[:id].to_s.downcase == AnalysisJob::SYSTEM_JOB_ID
   end
 
-  def analysis_job_create_params
-    # When Analysis jobs are created, they must have
-    # a script, saved search, name, and custom settings.
-    # May have a description.
-    params.require(:analysis_job).permit(
-      :script_id,
-      :saved_search_id,
-      :name,
-      :custom_settings,
-      :description,
-      :annotation_name
-    )
+  # load the current resource.
+  # Patched to handle the system route parameter.
+  # Warning: will fail to load custom properties for filter requests.
+  def do_load_resource
+    return set_resource(AnalysisJob.latest_system_analysis!) if system_job?
+
+    super
   end
 
-  def analysis_job_update_params
+  def analysis_job_params(for_create: true)
     # Only name and description can be updated via API.
     # Other properties are updated by the processing system.
-    params.require(:analysis_job).permit(:name, :description, :overall_status)
+
+    permitted = [
+      :name,
+      :description,
+      :ongoing
+    ]
+
+    permitted << :system_job if for_create
+    permitted << :project_id if for_create
+    permitted << { scripts: [:script_id, :custom_settings] } if for_create
+    permitted << { filter: {} } if for_create
+
+    params.require(:analysis_job).permit(*permitted)
+  end
+
+  # accepts_nested_attributes_for is ugly (you must have the _attributes suffix)
+  # and it also does too much (deletion and modification of existing records).
+  # We have a simpler use case - we only accept existing script records and
+  # only accept setting the relation on job creation.
+  def transform_scripts(parameters)
+    scripts = parameters.delete(:scripts)
+
+    scripts&.each do |script|
+      ajs = AnalysisJobsScript.new(script_id: script[:script_id])
+      ajs.custom_settings = script[:custom_settings] if script.key?(:custom_settings)
+      @analysis_job.analysis_jobs_scripts << ajs
+    end
   end
 
   def get_analysis_jobs

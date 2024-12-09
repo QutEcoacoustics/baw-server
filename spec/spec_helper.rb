@@ -141,4 +141,7 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 
   RSpec::Matchers.define_negated_matcher :not_eq, :eq
+  RSpec::Matchers.define_negated_matcher :exclude, :include
+  RSpec::Matchers.define_negated_matcher :a_hash_excluding, :include
+  RSpec::Matchers.define_negated_matcher :a_collection_excluding, :include
 end

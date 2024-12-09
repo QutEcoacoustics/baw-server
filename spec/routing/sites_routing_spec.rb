@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe SitesController, type: :routing do
+describe SitesController do
   describe :routing do
     it {
       expect(get('projects/1/sites/1/upload_instructions')).to route_to('sites#upload_instructions', id: '1',
@@ -32,6 +32,7 @@ describe SitesController, type: :routing do
     it { expect(put('sites/1')).to route_to('sites#update', format: 'json', id: '1') }
     it { expect(patch('sites/1')).to route_to('sites#update', format: 'json', id: '1') }
     it { expect(delete('sites/1')).to route_to('sites#destroy', format: 'json', id: '1') }
-    it { expect(post('sites/filter')).to route_to('sites#filter', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/sites', 'sites', [:filterable]
   end
 end

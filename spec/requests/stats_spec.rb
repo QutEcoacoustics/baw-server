@@ -5,12 +5,18 @@ describe '/stats' do
   prepare_project
   prepare_region
   prepare_site
+  prepare_provenance
+  prepare_script
+  prepare_analysis_job
+  prepare_analysis_jobs_item
+  prepare_audio_event_import
+  prepare_audio_event_import_file
   prepare_audio_event
   prepare_tag
   prepare_audio_events_tags
   prepare_dataset
   create_anon_hierarchy
-  let!(:reference_event) { create(:audio_event, is_reference: true) }
+  let!(:reference_event) { create(:audio_event, audio_recording:, is_reference: true) }
 
   it 'can fetch stats' do
     # anonymous request
@@ -23,16 +29,16 @@ describe '/stats' do
         users_online: an_instance_of(Integer),
         users_total: User.count,
         online_window_start: an_instance_of(String),
-        projects_total: 3,
+        projects_total: 2,
         regions_total: 1,
-        sites_total: 3,
+        sites_total: 2,
         annotations_total: 2,
         annotations_total_duration: 2.0,
         annotations_recent: 2,
-        audio_recordings_total: 3,
-        audio_recordings_recent: 3,
-        audio_recordings_total_duration: 180_000.0,
-        audio_recordings_total_size: 11_400,
+        audio_recordings_total: 2,
+        audio_recordings_recent: 2,
+        audio_recordings_total_duration: 120_000.0,
+        audio_recordings_total_size: 7600,
         tags_total: 1,
         tags_applied_total: 1,
         tags_applied_unique_total: 1

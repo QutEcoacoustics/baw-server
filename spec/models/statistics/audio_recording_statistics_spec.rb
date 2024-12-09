@@ -4,6 +4,7 @@
 #
 # Table name: audio_recording_statistics
 #
+#  analyses_completed_count  :bigint           default(0)
 #  bucket                    :tsrange          not null, primary key
 #  original_download_count   :bigint           default(0)
 #  segment_download_count    :bigint           default(0)
@@ -17,10 +18,10 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #
 
-RSpec.describe Statistics::AudioRecordingStatistics, type: :model do
+RSpec.describe Statistics::AudioRecordingStatistics do
   subject { build(:audio_recording_statistics) }
 
   it 'has a valid factory' do
@@ -33,6 +34,7 @@ RSpec.describe Statistics::AudioRecordingStatistics, type: :model do
   it { is_expected.to validate_numericality_of(:original_download_count).is_greater_than_or_equal_to(0).only_integer }
   it { is_expected.to validate_numericality_of(:segment_download_count).is_greater_than_or_equal_to(0).only_integer }
   it { is_expected.to validate_numericality_of(:segment_download_duration).is_greater_than_or_equal_to(0) }
+  it { is_expected.to validate_numericality_of(:analyses_completed_count).is_greater_than_or_equal_to(0).only_integer }
 
   context 'with fixtures' do
     create_audio_recordings_hierarchy
@@ -86,6 +88,26 @@ RSpec.describe Statistics::AudioRecordingStatistics, type: :model do
         expect(actual.segment_download_count).to eq 2
         expect(actual.segment_download_duration).to eq 42.5
       end
+
+      it 'can increment analysis count' do
+        Statistics::AudioRecordingStatistics.increment_analysis_count(audio_recording)
+
+        stats = Statistics::AudioRecordingStatistics.first
+        expect(stats.analyses_completed_count).to eq 1
+
+        Statistics::AudioRecordingStatistics.increment_analysis_count(audio_recording)
+
+        stats.reload
+        expect(stats.analyses_completed_count).to eq 2
+
+        audio_recording.reload_statistics
+        actual = audio_recording.statistics
+        expect(actual.analyses_completed_count).to eq 2
+      end
     end
+  end
+
+  it_behaves_like 'cascade deletes for', :audio_recording_statistic, {} do
+    create_entire_hierarchy
   end
 end

@@ -17,28 +17,28 @@ module GlobalMenuHelper
 
   def menu_new_link(key, href, model_name = nil)
     set_current_menu_item(key, {
-                            href: href,
-                            title: t('helpers.titles.new') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
-                            icon: 'plus'
-                          })
+      href: href,
+      title: "#{t('helpers.titles.new')} #{t("baw.shared.links.#{model_name}.title").downcase}",
+      icon: 'plus'
+    })
   end
 
   def menu_edit_link(key, href, model_name = nil)
-    editing_what = model_name.blank? ? '' : ' ' + t('baw.shared.links.' + model_name + '.title').downcase
+    editing_what = model_name.blank? ? '' : " #{t("baw.shared.links.#{model_name}.title").downcase}"
     set_current_menu_item(key, {
-                            href: href,
-                            title: t('helpers.titles.editing') + editing_what,
-                            icon: 'pencil'
-                          })
+      href: href,
+      title: t('helpers.titles.editing') + editing_what,
+      icon: 'pencil'
+    })
   end
 
   def menu_default_link(title, icon = nil)
     set_current_menu_item(title.to_sym, {
-                            href: request.original_fullpath,
-                            title: t('baw.shared.links.' + title + '.title'),
-                            tooltip: t('baw.shared.links.' + title + '.description'),
-                            icon: icon
-                          })
+      href: request.original_fullpath,
+      title: t("baw.shared.links.#{title}.title"),
+      tooltip: t("baw.shared.links.#{title}.description"),
+      icon: icon
+    })
   end
 
   def menu_definition
@@ -77,9 +77,7 @@ module GlobalMenuHelper
     }.flatten
 
     # lastly append any extra items
-    items = items.concat(extra_items.values)
-
-    items
+    items.concat(extra_items.values)
   end
 
   # title and tooltip are translate keys
@@ -87,7 +85,7 @@ module GlobalMenuHelper
   NAV_MENU = [
     {
       title: I18n.t('baw.shared.links.home.title'),
-      href: Api::UrlHelpers.root_path,
+      href: ->(_) { Api::UrlHelpers.root_path },
       tooltip: I18n.t('baw.shared.links.home.description'),
       icon: 'home'
     },
@@ -105,7 +103,7 @@ module GlobalMenuHelper
       href: ->(_) { Api::UrlHelpers.my_account_path },
       tooltip: I18n.t('baw.shared.links.profile.description'),
       icon: 'user',
-      predicate: ->(user) { !user.blank? }
+      predicate: ->(user) { user.present? }
     },
     {
       title: I18n.t('baw.shared.links.register.title'),
@@ -119,7 +117,7 @@ module GlobalMenuHelper
       href: ->(user) { Api::UrlHelpers.audio_events_user_account_path(user) },
       tooltip: I18n.t('baw.shared.links.annotations.description'),
       icon: 'baw-annotation',
-      predicate: ->(user) { !user.blank? }
+      predicate: ->(user) { user.present? }
     },
     {
       id: :projects,

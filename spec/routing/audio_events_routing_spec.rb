@@ -35,7 +35,6 @@ describe AudioEventsController, type: :routing do
     it { expect(get('/audio_events/library')).to route_to('errors#route_error', requested_route: 'audio_events/library') }
     it { expect(get('/audio_events/library/paged')).to route_to('errors#route_error', requested_route: 'audio_events/library/paged') }
 
-    it { expect(get('/audio_events/filter')).to route_to('audio_events#filter', format: 'json') }
-    it { expect(post('/audio_events/filter')).to route_to('audio_events#filter', format: 'json') }
+    it_behaves_like 'our api routing patterns', '/audio_events', 'audio_events', [:filterable]
   end
 end

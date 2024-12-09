@@ -22,7 +22,7 @@ describe Filter::Query do
 
   context 'when using arrays for combiners' do
     context 'with bad input will error' do
-      it 'will not accept an empty array' do
+      it 'does not accept an empty array' do
         expect {
           create_filter(
             {
@@ -32,10 +32,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Filter arrays must not be empty')
+          'Filter parameters were not valid: Filter arrays must not be empty')
       end
 
-      it 'will not accept an array with a nil value' do
+      it 'does not accept an array with a nil value' do
         expect {
           create_filter(
             {
@@ -45,10 +45,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Filter arrays can only contain other hashes; `` is not valid')
+          'Filter parameters were not valid: Filter arrays can only contain other hashes; `` is not valid')
       end
 
-      it 'will not accept an array with a string value' do
+      it 'does not accept an array with a string value' do
         expect {
           create_filter(
             {
@@ -58,10 +58,10 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Filter arrays can only contain other hashes; `hello` is not valid')
+          'Filter parameters were not valid: Filter arrays can only contain other hashes; `hello` is not valid')
       end
 
-      it 'will not accept an array with a numeric value' do
+      it 'does not accept an array with a numeric value' do
         expect {
           create_filter(
             {
@@ -71,12 +71,12 @@ describe Filter::Query do
             }
           ).query_full
         }.to raise_error(CustomErrors::FilterArgumentError,
-          'Filter arrays can only contain other hashes; `1` is not valid')
+          'Filter parameters were not valid: Filter arrays can only contain other hashes; `1` is not valid')
       end
     end
 
     context 'with arrays, combines entries' do
-      it 'will accept a root filter array, which is functionally equivalent to an AND operation' do
+      it 'accepts a root filter array, which is functionally equivalent to an AND operation' do
         params = {
           projection: {
             include: [
@@ -90,7 +90,7 @@ describe Filter::Query do
           ]
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -103,7 +103,7 @@ describe Filter::Query do
         compare_filter_sql(params, complex_result)
       end
 
-      it 'will accept filter arrays inside an `and` operator' do
+      it 'accepts filter arrays inside an `and` operator' do
         params = {
           projection: {
             include: [
@@ -121,7 +121,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -134,7 +134,7 @@ describe Filter::Query do
         compare_filter_sql(params, complex_result)
       end
 
-      it 'will accept filter arrays inside an `or` operator' do
+      it 'accepts filter arrays inside an `or` operator' do
         params = {
           projection: {
             include: [
@@ -152,7 +152,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -165,7 +165,7 @@ describe Filter::Query do
         compare_filter_sql(params, complex_result)
       end
 
-      it 'will accept multiple nested operators' do
+      it 'accepts multiple nested operators' do
         params = {
           projection: {
             include: [
@@ -193,7 +193,7 @@ describe Filter::Query do
           }
         }
 
-        complex_result = <<~SQL
+        complex_result = <<~SQL.squish
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)

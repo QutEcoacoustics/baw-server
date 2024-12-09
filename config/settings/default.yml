@@ -10,7 +10,7 @@ redis:
     password:
     db: 0
 host:
-  name: localhost
+  name: web
   port: 3000
   cors_origins:
     - !ruby/regexp '/\A(https?:\/\/)?localhost(:\d+)?\z/'
@@ -30,17 +30,22 @@ resque:
   # specify the Resque queues to watch.
   queues_to_process:
     - media_<%= BawApp.env %>
-    - harvest_scan_<%= BawApp.env %>
-    - harvest_<%= BawApp.env %>
     - active_storage_<%= BawApp.env %>
+    - harvest_scan_<%= BawApp.env %>
+    - analysis_cancel_items_<%= BawApp.env %>
+    - analysis_remote_enqueue_<%= BawApp.env %>
+    - analysis_status_check_<%= BawApp.env %>
+    - harvest_<%= BawApp.env %>
+    - analysis_amend_after_harvest_<%= BawApp.env %>
+    - analysis_import_results_<%= BawApp.env %>
     - maintenance_<%= BawApp.env %>
+    - analysis_stale_check_<%= BawApp.env %>
     - harvest_delete_<%= BawApp.env %>
     - default_<%= BawApp.env %>
-    - analysis_<%= BawApp.env %>
   connection: *redis_config
   namespace: resque
   log_level: "Logger::INFO"
-  polling_interval_seconds: 0.5
+  polling_interval_seconds: 0.1
   # specify background_pid_file to have a Resque worker run in the background
   # otherwise it will run in the foreground
   # We always want a worker to run in the foreground in a container
@@ -50,12 +55,38 @@ resque_scheduler:
   polling_interval_seconds: 5.0
 # these are the available background jobs that can be enqueued
 actions:
-  analysis:
-    queue: analysis_<%= BawApp.env %>
+  analysis_cancel_items:
+    queue: analysis_cancel_items_<%= BawApp.env %>
+  analysis_remote_enqueue:
+    queue: analysis_remote_enqueue_<%= BawApp.env %>
+    # a 6-star cron schedule used by resque-scheduler for regularly schedules jobs
+    # We use every 5 seconds for testing but production should probably be set to a
+    # larger value (every 5 minutes?)
+    schedule: "*/5 * * * * *"
+  analysis_stale_check:
+    queue: analysis_stale_check_<%= BawApp.env %>
+    # a 6-star cron schedule used by resque-scheduler for regularly schedules jobs
+    # We use every 5 seconds for testing but production should probably be set to a
+    # larger value (every 5 minutes?)
+    schedule: "*/5 * * * * *"
+    # the minimum age a analysis jobs item must be before we start polling the
+    # remote queue for a status update (assuming that in the nominal case the
+    # webhooks make this polling unnecessary). Polling is inefficient so we don't
+    # want to be polling jobs that could still finish successfully.
+    min_age_seconds: 43200 # 12 hours
+  analysis_status_check:
+    queue: analysis_status_check_<%= BawApp.env %>
+    # a 6-star cron schedule used by resque-scheduler for regularly schedules jobs
+    # We use every 5 seconds for testing but production should probably be set to a
+    # larger value (every 5 minutes?)
+    schedule: "*/5 * * * * *"
+  analysis_import_results:
+    queue: analysis_import_results_<%= BawApp.env %>
+  analysis_amend_after_harvest:
+    queue: analysis_amend_after_harvest_<%= BawApp.env %>
   harvest:
     queue: harvest_<%= BawApp.env %>
     to_do_path: /data/<%= BawApp.env %>/harvester_to_do
-    config_file_name: harvest.yml
   harvest_scan:
     queue: harvest_scan_<%= BawApp.env %>
   harvest_delete:
@@ -73,6 +104,32 @@ actions:
   active_job_default:
     queue: default_<%= BawApp.env %>
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
+# batch analysis needs a ssh connection to a head node on a PBS cluster
+batch_analysis:
+  connection:
+    host: analysis_test
+    port: 22
+    username: pbsuser
+    # we support password auth but prefer private key
+    password: ~ #password
+    key_file: ./provision/analysis/client_key
+  pbs:
+    default_queue:
+    # the project to set for submitted jobs - we use this as an identifier/tag
+    default_project: <%= BawApp.env %>
+    # the primary group:
+    #   qsub -W group_list=pbs_user job.sh
+    primary_group: pbsuser
+  # a safety limit that allows us to enqueue even less remote jobs if needed
+  remote_enqueue_limit: ~
+  # how long an issued jwt is valid for, 14 * 86400 = 1209600
+  auth_tokens_expire_in: 1209600
+  # the mapping between the data mount on the workbench and the mount on the cluster
+  # in most setups the workbench doesn't control the cluster - we're just a guest -
+  # which means the mounts are different
+  root_data_path_mapping:
+    workbench: /data/<%= BawApp.env %>
+    cluster: /data/<%= BawApp.env %>
 dbs:
   ######################################################
   # these values are read by config/database.yml
@@ -119,8 +176,6 @@ paths:
     - /data/<%= BawApp.env %>/cached_spectrogram
   cached_audios:
     - /data/<%= BawApp.env %>/cached_audio
-  analysis_scripts:
-    - /data/<%= BawApp.env %>/analysis_script
   cached_analysis_jobs:
     - /data/<%= BawApp.env %>/analysis_results
   worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
@@ -132,20 +187,6 @@ logs:
   # used to disambiguate log file refs in a multi instance scenario
   tag: 'local'
   directory: <%= BawApp.root %>/log
-# used by workers to contact a web-server
-endpoints:
-  login: /security
-  audio_recording: /audio_recordings/:id
-  audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
-  audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
-  audio_recording_update_status: /audio_recordings/:id/update_status
-  analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
-# used by workers to contact a web-server
-api:
-  host: web
-  port: 3000
-  user: harvester@example.com
-  password: password
 upload_service:
   admin_host: upload
   # same in dev but in prod our public host goes through a load balancer
@@ -160,7 +201,6 @@ internal:
   # can be any format that IPAddr.new supports
   allow_list:
     - 172.0.0.0/8
-
 harvester:
   email: harvester@example.com
   password: password
@@ -217,6 +257,13 @@ available_formats:
     - xlsx
     - csv
     - txt
+audio_event_imports:
+  # 10 Megabytes
+  max_file_size_bytes: 10485760
+  acceptable_content_types:
+    - csv
+    - txt
+    - json
 audio_tools:
   ffmpeg_executable: ffmpeg
   ffprobe_executable: ffprobe
@@ -235,6 +282,8 @@ audio_recording_max_overlap_sec: 5.0
 # min duration (default 10): must be larger than audio_recording_max_overlap_sec
 audio_recording_min_duration_sec: 10.0
 organisation_names:
+  # used to namespace technical things. Not user facing.
+  site_short_name: dev
   site_long_name: Acoustic Workbench
   organisation_name: Audio Group
   github_issues_url: "url to github issues page"

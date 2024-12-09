@@ -19,7 +19,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_recording_id => audio_recordings.id)
+#  fk_rails_...  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  fk_rails_...  (creator_id => users.id)
 #  fk_rails_...  (dataset_id => datasets.id)
 #

@@ -68,7 +68,8 @@ module BawWorkers
         case arg_type
         when :req then arguments[index]
         when :keyreq then arguments.last[name]
-        else raise "Unexpected argument type for job arguments: `#{arg_type}``, named: `#{name}`"
+        when :opt then arguments[index] || nil
+        else raise "Unexpected argument type for job arguments: `#{arg_type}`, named: `#{name}`"
         end => arg
 
         return if arg.nil? || types.any? { |t| arg.instance_of?(t) }

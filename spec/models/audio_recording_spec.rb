@@ -45,11 +45,11 @@
 #
 #  audio_recordings_creator_id_fk   (creator_id => users.id)
 #  audio_recordings_deleter_id_fk   (deleter_id => users.id)
-#  audio_recordings_site_id_fk      (site_id => sites.id)
+#  audio_recordings_site_id_fk      (site_id => sites.id) ON DELETE => cascade
 #  audio_recordings_updater_id_fk   (updater_id => users.id)
 #  audio_recordings_uploader_id_fk  (uploader_id => users.id)
 #
-describe AudioRecording, type: :model do
+describe AudioRecording do
   it 'has a valid factory' do
     ar = create(:audio_recording,
       recorded_date: Time.zone.now.advance(seconds: -20),
@@ -150,10 +150,10 @@ describe AudioRecording, type: :model do
   context 'validation' do
     subject { build(:audio_recording) }
 
-    it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-    it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-    it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
-    it { is_expected.to belong_to(:uploader).with_foreign_key(:uploader_id) }
+    it { is_expected.to belong_to(:creator) }
+    it { is_expected.to belong_to(:updater).optional }
+    it { is_expected.to belong_to(:deleter).optional }
+    it { is_expected.to belong_to(:uploader) }
 
     it { is_expected.to belong_to(:site) }
     it { is_expected.to have_many(:audio_events) }
@@ -208,7 +208,7 @@ describe AudioRecording, type: :model do
 
   context 'in same site' do
     it 'allows non overlapping dates - (first before second)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:03+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:51:03+10:00',
@@ -224,7 +224,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'allows non overlapping dates - (second before first)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:51:03+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:03+10:00',
@@ -240,7 +240,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'does not allow overlapping dates - exact' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:03+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:03+10:00',
@@ -261,7 +261,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'does not allow overlapping dates - shift forwards' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:48+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:04+10:00',
@@ -282,7 +282,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'does not allow overlapping dates - shift forwards (overlap both ends)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 30.0, recorded_date: '2014-02-07T17:50:20+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:10+10:00',
@@ -303,7 +303,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'does not allow overlapping dates - shift backwards' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:04+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:48+10:00',
@@ -324,7 +324,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'does not allow overlapping dates - shift backwards (1 sec overlap)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:00+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:59+10:00',
@@ -350,7 +350,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'allows overlapping dates - edges exact (first before second)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:00+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:51:00+10:00',
@@ -368,7 +368,7 @@ describe AudioRecording, type: :model do
     end
 
     it 'allows overlapping dates - edges exact (second before first)' do
-      site = create(:site, id: 1001)
+      create(:site, id: 1001)
       ar1 = create(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:51:00+10:00',
         site_id: 1001)
       ar2 = build(:audio_recording, duration_seconds: 60.0, recorded_date: '2014-02-07T17:50:00+10:00',
@@ -520,55 +520,99 @@ describe AudioRecording, type: :model do
     expect(actual).to eq("#{uuid}.wav")
   end
 
-  it 'can return a friendly file name for an audio recording' do
-    date = DateTime.parse('2018-02-26T22:29:30+10:00').utc
-    site = create(:site, name: "Ant's super cool site", tzinfo_tz: 'Australia/Brisbane')
-    ar = build(
-      :audio_recording,
-      site:,
-      id: 123_456,
-      recorded_date: date,
-      media_type: 'audio/wav'
-    )
+  describe 'friendly names' do
+    let!(:site) { create(:site) }
+    let!(:audio_recording) { create(:audio_recording, site:) }
 
-    actual = ar.friendly_name
+    [
+      # mime, extension
+      ['audio/mpeg', 'mp3'],
+      ['audio/mp3', 'mp3'],
+      ['audio/x-wv', 'wv'],
+      ['audio/x-ms-wma', 'asf'],
+      ['audio/x-flac', 'flac'],
+      ['audio/flac', 'flac'],
+      ['video/x-ms-asf', 'asf'],
+      ['audio/x-wav', 'wav'],
+      ['audio/wav', 'wav']
+    ].each do |mime, extension|
+      [
+        # site name, timezone, date, expected
+        ["Ant's super cool site", 'Australia/Brisbane', Time.parse('2018-02-26T12:29:30Z'),
+         '20180226T222930+1000_Ants-super-cool-site_%<audio_recording_id>s.%<extension>s'],
+        ['Ants super cool site', nil, Time.parse('2018-02-26T12:29:30Z'),
+         '20180226T122930Z_Ants-super-cool-site_%<audio_recording_id>s.%<extension>s'],
+        ['bZ_20', 'America/Chicago', Time.parse('2018-02-26T12:29:30Z'),
+         '20180226T062930-0600_bZ_20_%<audio_recording_id>s.%<extension>s'],
+        ['!@#@$%', 'UTC', Time.parse('2018-02-26T12:29:30Z'),
+         '20180226T122930Z_NONAME_%<audio_recording_id>s.%<extension>s'],
+        ['TesTing-This', 'Australia/Perth', Time.parse('2018-02-26T12:29:30Z'),
+         '20180226T202930+0800_TesTing-This_%<audio_recording_id>s.%<extension>s']
+        # TODO: dst example
+      ].each do |site_name, timezone, date, expected|
+        describe "for mime: #{mime}, expected: #{expected}" do
+          let(:expected_formatted) { format(expected, audio_recording_id: audio_recording.id, extension:) }
 
-    expect(actual).to eq('20180226T222930+1000_Ants-super-cool-site_123456.wav')
+          before do
+            site.name = site_name
+            site.tzinfo_tz = timezone
+            site.save!
+
+            audio_recording.recorded_date = date
+            audio_recording.media_type = mime
+            audio_recording.save!
+          end
+
+          it 'can return a friendly file name for an audio recording' do
+            actual = audio_recording.friendly_name
+
+            expect(actual).to eq(expected_formatted)
+          end
+
+          it 'has a friendly name AREL equivalent' do
+            actual = AudioRecording.where(id: audio_recording.id).pick(AudioRecording::FRIENDLY_NAME_AREL)
+
+            expect(actual).to eq(expected_formatted)
+          end
+        end
+      end
+    end
+
+    it 'has a friendly name regex' do
+      match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T222930+1000_Ants-super-cool-site_123456.wav')
+
+      expect(match).not_to be_nil
+      expect(match[:date]).to eq '20180226T222930+1000'
+      expect(match[:site_name]).to eq 'Ants-super-cool-site'
+      expect(match[:id]).to eq '123456'
+      expect(match[:extension]).to eq 'wav'
+    end
+
+    it 'has a friendly name regex (parses Z as well)' do
+      match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T122930Z_Ants-super-cool-site_123456.wav')
+
+      expect(match).not_to be_nil
+      expect(match[:date]).to eq '20180226T122930Z'
+      expect(match[:site_name]).to eq 'Ants-super-cool-site'
+      expect(match[:id]).to eq '123456'
+      expect(match[:extension]).to eq 'wav'
+    end
   end
 
-  it 'can return a friendly file name for an audio recording (site is missing a timezone)' do
-    date = DateTime.parse('2018-02-26T22:29:30+10:00').utc
-    site = create(:site, name: "Ant's super cool site", tzinfo_tz: nil)
-    ar = build(
-      :audio_recording,
-      site:,
-      id: 123_456,
-      recorded_date: date,
-      media_type: 'audio/wav'
-    )
-
-    actual = ar.friendly_name
-
-    expect(actual).to eq('20180226T122930Z_Ants-super-cool-site_123456.wav')
-  end
-
-  it 'has a friendly name regex' do
-    match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T222930+1000_Ants-super-cool-site_123456.wav')
-
-    expect(match).not_to be_nil
-    expect(match[:date]).to eq '20180226T222930+1000'
-    expect(match[:site_name]).to eq 'Ants-super-cool-site'
-    expect(match[:id]).to eq '123456'
-    expect(match[:extension]).to eq 'wav'
-  end
-
-  it 'has a friendly name regex (parses Z as well)' do
-    match = AudioRecording::FRIENDLY_NAME_REGEX.match('20180226T122930Z_Ants-super-cool-site_123456.wav')
-
-    expect(match).not_to be_nil
-    expect(match[:date]).to eq '20180226T122930Z'
-    expect(match[:site_name]).to eq 'Ants-super-cool-site'
-    expect(match[:id]).to eq '123456'
-    expect(match[:extension]).to eq 'wav'
+  it_behaves_like 'cascade deletes for', :audio_recording, {
+    audio_events: {
+      taggings: nil,
+      comments: nil
+    },
+    analysis_jobs_items: :audio_event_import_files,
+    bookmarks: nil,
+    dataset_items: {
+      progress_events: nil,
+      responses: nil
+    },
+    harvest_item: nil,
+    statistics: nil
+  } do
+    create_entire_hierarchy
   end
 end

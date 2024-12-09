@@ -24,10 +24,10 @@ def ensure_user(user_name:, email:, password:, roles:)
   user
 end
 
-puts 'Loading application seeds...'
+Rails.logger.debug '===> Loading application seeds...'
 
 # Main admin user must always exist, and must always have these values
-admin_user = ensure_user(
+admin = ensure_user(
   user_name: User::ADMIN_USER_NAME,
   email: Settings.admin_user.email,
   password: Settings.admin_user.password,
@@ -43,12 +43,6 @@ ensure_user(
 )
 
 # default dataset
-default_dataset = Dataset.default_dataset
-if default_dataset.blank?
-  default_dataset = Dataset.new(name: Dataset::DEFAULT_DATASET_NAME)
-  default_dataset.description = 'The default dataset'
-  default_dataset.creator_id = admin_user.id
-  default_dataset.save!(validate: false)
-end
+Dataset.find_or_create_default(admin)
 
-puts 'Finished loading application seeds!'
+Rails.logger.debug 'Finished loading application seeds!'

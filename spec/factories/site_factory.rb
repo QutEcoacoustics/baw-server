@@ -32,7 +32,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...         (region_id => regions.id)
+#  fk_rails_...         (region_id => regions.id) ON DELETE => cascade
 #  sites_creator_id_fk  (creator_id => users.id)
 #  sites_deleter_id_fk  (deleter_id => users.id)
 #  sites_updater_id_fk  (updater_id => users.id)
@@ -44,6 +44,9 @@ FactoryBot.define do
     sequence(:description) { |n| "site description #{n}" }
 
     creator
+    # careful! this will create another project that is different from the
+    # project in the projects association below
+    region
     projects { [create(:project)] }
 
     trait :with_lat_long do

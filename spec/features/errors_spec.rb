@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
-
-
 xdescribe 'checking reactions to errors', type: :feature do
   context 'production with exceptions_app' do
-    around(:each) do |example|
+    around do |example|
       stored_request_local = Rails.application.config.consider_all_requests_local
       Rails.application.config.consider_all_requests_local = false
 
       stored_show_exceptions = Rails.application.config.action_dispatch.show_exceptions
-      Rails.application.config.action_dispatch.show_exceptions = true
+      Rails.application.config.action_dispatch.show_exceptions = :all
       example.run
       Rails.application.config.consider_all_requests_local = stored_request_local
       Rails.application.config.action_dispatch.show_exceptions = stored_show_exceptions

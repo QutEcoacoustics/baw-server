@@ -41,7 +41,29 @@ module ApiSpecHelpers
     # Actual auth tests should be done in the requests specs.
     def with_authorization
       self.baw_security = [{ auth_token_header: [] }]
-      let(:Authorization) { admin_token }
+      let(:Authorization) {
+        admin_token
+      }
+    end
+
+    def with_cookie
+      self.baw_security = [{ cookie: [] }]
+      let(:cookie) {
+        password = Settings.admin_user.password
+        body = { user: { email: admin_user.email, password: } }
+        post '/security', params: body, headers: headers(post: true), as: :json
+        expect_success
+        response.headers['set-cookie'].split(';').select { |x| x.include?('_baw_session') }.first
+      }
+    end
+
+    def with_jwt
+      # see notes in with_authorization about token
+      self.baw_security = [{ jwt: [] }]
+      let(:Authorization) {
+        token = Api::Jwt.encode(subject: reader_user.id)
+        "Bearer #{token}"
+      }
     end
 
     def with_query_string_authorization
@@ -65,7 +87,7 @@ module ApiSpecHelpers
       # All this wouldn't be so bad except that let statements are dynamically scoped
       # and any redefinition is applied to all uses (it doesn't just hide the parent for
       # the current lexical scope!)
-      self.baw_body_name = baw_body_name = "#{baw_model_name}_attributes".to_sym
+      self.baw_body_name = baw_body_name = :"#{baw_model_name}_attributes"
 
       self.baw_model = given_model
 
@@ -80,7 +102,7 @@ module ApiSpecHelpers
     end
 
     def resolve_ref(ref)
-      swagger_doc = RSpec.configuration.swagger_docs.first[1]
+      swagger_doc = RSpec.configuration.openapi_specs.first[1]
       parts = ref.split('/').slice(1..).map(&:to_sym)
       schema = swagger_doc.dig(*parts)
 
@@ -92,14 +114,15 @@ module ApiSpecHelpers
     # all data returned should have the following schema
     # schema can be a hash style JSON-schema fragment
     # or a string ref to the components/schemas section of
-    # the root open api document (swagger_docs in code)
+    # the root open api document (openapi_specs in code)
     def which_has_schema(schema)
+      ref = nil
       if schema.key? '$ref'
         ref =  schema
         schema = resolve_ref(schema['$ref'])
       end
 
-      self.baw_model_schema = defined?(ref) ? ref : schema
+      self.baw_model_schema = (ref.presence || schema)
       let(:model_schema) {
         schema
       }
@@ -209,7 +232,7 @@ module ApiSpecHelpers
 
       # remove accept header if we are not sending a body
       verb = metadata[:operation][:verb]
-      if metadata[:operation][:consumes].blank? && ![:get, :head, :options].include?(verb)
+      if metadata[:operation][:consumes].blank? && [:get, :head, :options].exclude?(verb)
         metadata[:operation][:consumes] = get_parent_param :baw_consumes
       end
 

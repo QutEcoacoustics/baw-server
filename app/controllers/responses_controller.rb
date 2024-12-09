@@ -60,12 +60,7 @@ class ResponsesController < ApplicationController
   end
 
   # DELETE /responses/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-    @response.destroy
-    respond_destroy
-  end
+  # Handled in Archivable
 
   private
 

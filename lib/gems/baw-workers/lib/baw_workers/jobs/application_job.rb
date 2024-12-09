@@ -11,8 +11,12 @@ module BawWorkers
       #   prepend BawWorkers::ActiveJob::Status
       #   include BawWorkers::ActiveJob::Extensions
       #   include BawWorkers::ActiveJob::Arguments
+      #   include BawWorkers::ActiveJob::Concurrency
+      #   include BawWorkers::ActiveJob::Recurring
       #   extend BawWorkers::ActiveJob::Arguments::ClassMethods
       #   extend BawWorkers::ActiveJob::Extensions::ClassMethods
+      #   extend BawWorkers::ActiveJob::Concurrency::ClassMethods
+      #   extend BawWorkers::ActiveJob::Recurring::ClassMethods
       #   extend ::ActiveJob::Exceptions::ClassMethods
       #   include ::ActiveJob::QueueName
       #   extend ::ActiveJob::QueueName::ClassMethods
@@ -52,7 +56,7 @@ module BawWorkers
         # check we're enqueuing to a queue we know about
         next if Settings.queue_to_process_includes?(queue_name)
 
-        logger.warn("No workers are monitoring the queue `#{queue_name}` - the job may not run")
+        logger.error("No workers are monitoring the queue `#{queue_name}` - the job may not run")
 
         next unless BawApp.dev_or_test?
 

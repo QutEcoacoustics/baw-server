@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 def update_page(slug, text)
-  page = Comfy::Cms::Page.where(slug: slug).first
+  page = Comfy::Cms::Page.where(slug:).first
   fragment = page.fragments.where(identifier: 'content').first
   fragment.content = text
   fragment.save
@@ -11,7 +11,7 @@ describe '/credits', type: :request do
   create_standard_cms_pages
 
   before do
-    update_page('credits', t = <<~MARKDOWN
+    update_page('credits', <<~MARKDOWN
       ## If you like piña coladas
       **And getting caught in the** rain
       If you're not into yoga

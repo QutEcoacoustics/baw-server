@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 module Api
+  # Helpers for controllers that conform to our conventions
+  # rubocop:disable Metrics/ModuleLength
   module ControllerHelper
     extend ActiveSupport::Concern
-    include Api::DirectoryRenderer
 
     # based on https://codelation.com/blog/rails-restful-api-just-add-water
     private
@@ -12,6 +13,12 @@ module Api
     # @return [String]
     def resource_name
       @resource_name ||= controller_name.singularize
+    end
+
+    # The name of the controller including namespaces
+    # @return [String]
+    def resource_path
+      @resource_path ||= controller_path
     end
 
     # The plural name for the resource class based on the controller
@@ -56,15 +63,15 @@ module Api
     # @param [String, Symbol] attribute_name
     # @return [void]
     def set_user_id(attribute_name)
-      responds = get_resource.respond_to?("#{attribute_name}=".to_sym)
+      responds = get_resource.respond_to?(:"#{attribute_name}=")
       is_blank = responds ? get_resource.send(attribute_name.to_s.to_sym).blank? : false
-      current_user_valid = !current_user.blank?
-      get_resource.send("#{attribute_name}=".to_sym, current_user.id) if responds && is_blank && current_user_valid
+      current_user_valid = current_user.present?
+      get_resource.send(:"#{attribute_name}=", current_user.id) if responds && is_blank && current_user_valid
     end
 
     def respond_index(opts = {})
       items = get_resource_plural.map { |item|
-        Settings.api_response.prepare(item, current_user, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts)
       }
 
       Settings.api_response.add_capabilities!(opts, resource_class)
@@ -73,10 +80,10 @@ module Api
     end
 
     # also used for update_success and new
-    def respond_show
+    def respond_show(additional_data = nil)
       item_resource = get_resource
 
-      item = Settings.api_response.prepare(item_resource, current_user)
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
 
       opts = {}
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
@@ -98,30 +105,45 @@ module Api
       render json: built_response, status: :ok, layout: false
     end
 
-    def respond_create_success(location = nil)
+    def respond_create_success(location = nil, additional_data = nil)
       item_resource = get_resource
 
-      item = Settings.api_response.prepare(item_resource, current_user)
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
 
       opts = {}
 
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
 
       built_response = Settings.api_response.build(:created, item, opts)
-      render json: built_response, status: :created, location: location.blank? ? item_resource : location, layout: false
+      render json: built_response, status: :created, location: location.presence || item_resource, layout: false
     end
 
     # used for create fail and update fail
     def respond_change_fail
       built_response = Settings.api_response.build(
-        :unprocessable_entity,
+        :unprocessable_content,
         nil,
         {
           error_details: 'Record could not be saved',
           error_info: get_resource.errors
         }
       )
-      render json: built_response, status: :unprocessable_entity, layout: false
+      render json: built_response, status: :unprocessable_content, layout: false
+    end
+
+    def respond_change_fail_with_resource(additional_data = nil)
+      item_resource = get_resource
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
+
+      built_response = Settings.api_response.build(
+        :unprocessable_content,
+        item,
+        {
+          error_details: 'Record could not be saved',
+          error_info: item_resource.errors
+        }
+      )
+      render json: built_response, status: :unprocessable_content, layout: false
     end
 
     def respond_destroy
@@ -141,7 +163,7 @@ module Api
 
     def respond_filter(content, opts = {})
       items = content.map { |item|
-        Settings.api_response.prepare(item, current_user, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts)
       }
 
       Settings.api_response.add_capabilities!(opts, resource_class)
@@ -160,14 +182,26 @@ module Api
     def render_format(items, opts)
       respond_to do |format|
         format.json do
+          content_type = 'application/json'
           built_response = Settings.api_response.build(:ok, items, opts)
-          render json: built_response, status: :ok, content_type: 'application/json', layout: false
+
+          if request.head?
+            head :ok, { content_length: built_response.to_json.bytesize, content_type: }
+          else
+            render json: built_response, status: :ok, content_type:, layout: false
+          end
         end
         format.csv do
+          content_type = 'text/csv'
           headers['Content-Disposition'] = "attachment; filename=\"#{filename(opts, 'csv')}\""
 
           body = items.blank? ? '' : Api::Csv.dump(Array(items))
-          render body:, status: :ok, content_type: 'text/csv', layout: false
+
+          if request.head?
+            head :ok, { content_length: body.bytesize, content_type: }
+          else
+            render body:, status: :ok, content_type:, layout: false
+          end
         end
       end
     end
@@ -179,7 +213,7 @@ module Api
     def build_filter_response_as_filter_query(content, opts = {})
       # add custom fields
       items = content.map { |item|
-        Settings.api_response.prepare(item, current_user, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts)
       }
 
       # build out the normal response
@@ -188,7 +222,7 @@ module Api
       # choose a subset of response to format as a request filter
       # data is discarded here
       filter = filter_response[:meta].except(:status, :message, :paging, :capabilities)
-      if !opts[:page].blank? && !opts[:items].blank?
+      if opts[:page].present? && opts[:items].present?
         filter[:paging] = {
           items: opts[:items]
         }
@@ -205,6 +239,21 @@ module Api
     def api_filter_params
       # for filter api, all validation is done in modules rather than in strong parameters.
       params.permit!
+    end
+
+    # Filter out only paging parameters from the request.
+    # Used in endpoints that are not standard but still need paging.
+    # @param [Hash] route_parameters - additional route parameters to include in
+    #   the paging hash that might be needed to reconstruct the url.
+    def paging_only_params(route_parameters)
+      # also add in :controller and :action
+      # these are normally supplied by filter_params but don't tend to be used
+      # when this method is called because it some kind of custom endpoint.
+      Filter::Parse.parse_paging_only(api_filter_params).merge({
+        controller: controller_name,
+        action: action_name,
+        additional_params: route_parameters
+      })
     end
 
     # Replacement methods for CanCanCan authorize_resource, load_resource, load_and_authorize_resource.
@@ -231,20 +280,65 @@ module Api
     end
 
     def do_load_resource
+      # by default allow archived records to be loaded
+      # we can issue GONE responses if the record is archived
+      # If we're not allowed access `check_if_archived` will raise an error
+      parameters = { Archivable::ARCHIVE_ACCESS_PARAM => true }
+
       # we augment the query here to allow us to fetch information needed for custom fields
       # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
-      query = Filter::Single.new(resource_class, filter_settings).query
+      query = Filter::Single.new(parameters, resource_class, filter_settings).query
 
       resource = query.find(params[:id])
+
       set_resource(resource)
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
-      authorize! (custom_action_name || action_name).to_sym, (custom_resource || get_resource)
+      action = action_name_sym(custom_action_name)
+
+      do_authorize_jwt(action)
+
+      authorize! action, (custom_resource || get_resource)
+
+      # IFF someone sent the ARCHIVE_ACCESS_PARAM,
+      # and the resource is discardable,
+      # we check if we're allowed to access this archived record
+      check_if_archived!
     end
 
     def do_authorize_class(custom_action_name = nil, custom_class = nil)
-      authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
+      action = action_name_sym(custom_action_name)
+
+      do_authorize_jwt(action)
+
+      authorize! action, (custom_class || resource_class)
+
+      # IFF someone sent the ARCHIVE_ACCESS_PARAM,
+      # we check if we're allowed to access archived records
+      authorize_archived_access_for_class! if with_archived?
+    end
+
+    # Our JWT tokens can include claims that limit access to a resource or action.
+    # This does not allow any additional access (the cancan rules still apply), but
+    # it will short-circuit and fail if the JWT does not allow access.
+    def do_authorize_jwt(action)
+      # @type [::Api::Jwt::Token]
+      token = request.env.fetch(Api::AuthStrategies::Jwt::ENV_KEY, nil)
+
+      return if token.nil?
+
+      if token.resource && token.resource.to_s != controller_name
+        raise ::Api::ApiAuth::AccessDenied, 'JWT does not allow access to this resource'
+      end
+
+      return unless token.action && token.action.to_sym != action
+
+      raise ::Api::ApiAuth::AccessDenied, 'JWT does not allow access to this action'
+    end
+
+    def action_name_sym(custom_action_name = nil)
+      (custom_action_name || action_name).to_sym
     end
   end
 end

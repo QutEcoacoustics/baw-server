@@ -40,11 +40,11 @@ class Project < ApplicationRecord
   extend Enumerize
 
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_projects
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_projects, optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_projects, optional: true
 
-  has_many :permissions, inverse_of: :project
+  has_many :permissions, inverse_of: :project, dependent: :destroy
   # remove joins clause in next major rails version. See https://github.com/rails/rails/pull/39390/files
   has_many :readers, lambda {
                        joins(:permissions).where({ permissions: { level: 'reader' } }).distinct
@@ -55,11 +55,16 @@ class Project < ApplicationRecord
   has_many :owners, lambda {
                       joins(:permissions).where({ permissions: { level: 'owner' } }).distinct
                     }, through: :permissions, source: :user
-  has_and_belongs_to_many :sites, -> { distinct }
+
+  has_many :projects_sites, inverse_of: :project, dependent: :destroy
+  has_many :sites, -> { distinct }, through: :projects_sites
+
   has_many :regions, inverse_of: :project
   has_many :harvests, inverse_of: :project
-  has_and_belongs_to_many :saved_searches, inverse_of: :projects
-  has_many :analysis_jobs, through: :saved_searches
+
+  has_many :projects_saved_searches, inverse_of: :project
+  has_many :saved_searches, through: :projects_saved_searches
+  has_many :analysis_jobs, inverse_of: :project
 
   accepts_nested_attributes_for :permissions
 
@@ -69,8 +74,8 @@ class Project < ApplicationRecord
     default_url: '/images/project/project_:style.png'
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :regions, :analysis_jobs
 
   # association validations
   #validates_associated :creator
@@ -78,8 +83,8 @@ class Project < ApplicationRecord
   # attribute validations
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
-  validates_format_of :urn, with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z},
-    message: 'urn %<value>s is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
+  validates :urn, format: { with: %r{\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%/?#]+\z},
+                            message: 'urn %<value>s is not valid, must be in format urn:<name>:<path>', allow_blank: true }
   validates_attachment_content_type :image, content_type: %r{\Aimage/(jpg|jpeg|pjpeg|png|x-png|gif)\z},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 

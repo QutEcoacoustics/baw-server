@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-require_relative '../custom_types'
+require_relative '../types'
+# used by resque-scheduler to do cron string parsing
+require 'fugit'
 
 # The schema for our Settings files
 class BawConfigContract < Dry::Validation::Contract
@@ -24,9 +26,8 @@ class BawConfigContract < Dry::Validation::Contract
       required(:harvest).hash do
         required(:queue).filled(:string)
         required(:to_do_path).filled(
-          Baw::CustomTypes::CreatedDirPathname
+          BawApp::Types::CreatedDirPathname
         )
-        required(:config_file_name).filled(:string)
       end
 
       required(:harvest_scan).hash do
@@ -36,6 +37,34 @@ class BawConfigContract < Dry::Validation::Contract
       required(:harvest_delete).hash do
         required(:queue).filled(:string)
         required(:delete_after).filled(:integer, gt?: 0)
+      end
+
+      required(:analysis_cancel_items).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:analysis_remote_enqueue).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+      end
+
+      required(:analysis_stale_check).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+        required(:min_age_seconds).filled(:integer, gt?: 0)
+      end
+
+      required(:analysis_status_check).hash do
+        required(:queue).filled(:string)
+        required(:schedule).filled(:string)
+      end
+
+      required(:analysis_import_results).hash do
+        required(:queue).filled(:string)
+      end
+
+      required(:analysis_amend_after_harvest).hash do
+        required(:queue).filled(:string)
       end
     end
   }
@@ -53,7 +82,7 @@ class BawConfigContract < Dry::Validation::Contract
 
   InternalConfigSchema = Dry::Schema.define {
     required(:internal).hash do
-      required(:allow_list).array(Baw::CustomTypes::IPAddr)
+      required(:allow_list).array(BawApp::Types::IPAddr)
     end
   }
 
@@ -61,10 +90,9 @@ class BawConfigContract < Dry::Validation::Contract
     required(:paths).hash do
       required(:temp_dir).filled(:string)
       required(:programs_dir).filled(:string)
-      required(:cached_spectrograms).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:cached_audios).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:analysis_scripts).array(Baw::CustomTypes::CreatedDirPathname)
-      required(:cached_analysis_jobs).array(Baw::CustomTypes::CreatedDirPathname)
+      required(:cached_spectrograms).array(BawApp::Types::CreatedDirPathname)
+      required(:cached_audios).array(BawApp::Types::CreatedDirPathname)
+      required(:cached_analysis_jobs).array(BawApp::Types::CreatedDirPathname)
       required(:worker_log_file).filled(:string)
       required(:mailer_log_file).filled(:string)
       required(:audio_tools_log_file).filled(:string)
@@ -73,15 +101,65 @@ class BawConfigContract < Dry::Validation::Contract
     end
   }
 
+  BatchAnalysisSchema = Dry::Schema.define {
+    required(:batch_analysis).hash do
+      required(:connection).hash do
+        required(:host).filled(:string)
+        required(:port).value(:integer, gt?: 0)
+        required(:username).filled(:string)
+        required(:password).maybe(:string)
+        required(:key_file).maybe(BawApp::Types::PathExists)
+      end
+      required(:pbs).hash do
+        required(:default_queue).maybe(:string)
+        required(:default_project).filled(:string)
+        required(:primary_group).filled(:string)
+      end
+      required(:remote_enqueue_limit).maybe(:integer, gt?: 0)
+      required(:auth_tokens_expire_in).filled(:integer, gt?: 0)
+      required(:root_data_path_mapping).hash do
+        required(:workbench).filled(:string)
+        required(:cluster).filled(:string)
+      end
+    end
+  }
+
+  OrganizationNames = Dry::Schema.define {
+    required(:organisation_names).hash do
+      required(:site_short_name).filled(:string)
+      required(:site_long_name).filled(:string)
+      required(:organisation_name).filled(:string)
+      required(:github_issues_url).filled(:string)
+      required(:address).filled(:string)
+    end
+  }
+
+  AudioEventFileImport = Dry::Schema.define {
+    required(:audio_event_imports).hash do
+      required(:max_file_size_bytes).filled(:integer, gteq?: 0)
+      required(:acceptable_content_types).array(:string)
+    end
+  }
+
+  DEPRECATIONS = [
+    :api,
+    :endpoints
+  ].freeze
+
   # TODO: add more validation
   # Note: ruby config does not make use of values that may have been coerced during validation
+  # so type conversion is useless.
+  # See ../settings_module.rb for an example of how to strongly type settings.
   schema(
     ActionsConfigSchema,
     SftpgoConfigSchema,
     InternalConfigSchema,
-    PathsConfigSchema
+    PathsConfigSchema,
+    BatchAnalysisSchema,
+    OrganizationNames,
+    AudioEventFileImport
   ) do
-    required(:trusted_proxies).array(Baw::CustomTypes::IPAddr)
+    required(:trusted_proxies).array(BawApp::Types::IPAddr)
 
     required(:audio_recording_max_overlap_sec).value(:float)
     required(:audio_recording_min_duration_sec).value(:float)
@@ -94,13 +172,18 @@ class BawConfigContract < Dry::Validation::Contract
     required(:resque).hash do
       required(:connection).hash
       required(:namespace).filled(:string)
-      required(:log_level).filled(Baw::CustomTypes::LogLevel)
-      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
+      required(:log_level).filled(BawApp::Types::LogLevel)
+      required(:polling_interval_seconds).filled(BawApp::Types::Coercible::Float)
     end
 
     required(:resque_scheduler).hash do
-      required(:polling_interval_seconds).filled(Baw::CustomTypes::Coercible::Float)
-      required(:log_level).filled(Baw::CustomTypes::LogLevel)
+      required(:polling_interval_seconds).filled(BawApp::Types::Coercible::Float)
+      required(:log_level).filled(BawApp::Types::LogLevel)
+    end
+
+    # deprecations (validated below)
+    DEPRECATIONS.each do |key|
+      optional(key)
     end
   end
 
@@ -112,6 +195,25 @@ class BawConfigContract < Dry::Validation::Contract
       key.failure(message)
     end
   end
+
+  rule(actions: { analysis_remote_enqueue: :schedule }) do
+    # parse the cron string to check it is valid in the same way that
+    # resque-scheduler does.
+
+    next if Fugit.parse_cron(value)
+
+    # will raise on failure
+    key.failure("Could not parse cron schedule for value '#{value}'. Supported values are defined at https://github.com/floraison/fugit/#fugitcron")
+  end
+
+  # deprecations
+  DEPRECATIONS.each do |deprecation|
+    rule(deprecation) do
+      next if value.nil?
+
+      key.failure('is deprecated, please remove this settings section')
+    end
+  end
 end
 
 module ConfigExtensions
@@ -121,6 +223,9 @@ module ConfigExtensions
   end
 end
 Config.singleton_class.prepend ConfigExtensions
+
+require "#{__dir__}/../settings_module.rb"
+Config::Options.prepend(BawApp::SettingsModule)
 
 Config.setup do |config|
   # Name of the constant exposing loaded settings

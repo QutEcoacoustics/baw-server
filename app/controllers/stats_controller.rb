@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Controller for the stats endpoint
-class StatsController < ApiController
+class StatsController < ApplicationController
   skip_authorization_check only: [:index]
 
   # GET /stats
@@ -11,7 +11,7 @@ class StatsController < ApiController
 
     # Simplify the response, by mutation. Show only ids from active record models.
     result[:recent]
-      .transform_keys! { |key| "#{key.to_s[..-2]}_ids".to_sym }
+      .transform_keys! { |key| :"#{key.to_s[..-2]}_ids" }
       .transform_values! { |query| query.pluck(:id) }
 
     built_response = Settings.api_response.build(:ok, result)

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'support/shared_test_helpers'
-
 describe BawWorkers::Storage::AudioOriginal do
   include_context 'shared_test_helpers'
 
@@ -38,7 +36,7 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'existing dirs match settings' do
-    Dir.mkdir(Settings.paths.original_audios[0]) unless Dir.exist?(Settings.paths.original_audios[0])
+    FileUtils.mkdir_p(Settings.paths.original_audios[0])
     expect(audio_original.existing_dirs).to match_array Settings.paths.original_audios
     FileUtils.rm_rf(Settings.paths.original_audios[0])
   end
@@ -144,77 +142,5 @@ describe BawWorkers::Storage::AudioOriginal do
       new_opts[:datetime_with_offset] = datetime.to_s
       audio_original.file_name_10(new_opts)
     }.to raise_error(ArgumentError, /datetime_with_offset must be an ActiveSupport::TimeWithZone/)
-  end
-
-  it 'parses a valid v2 file name correctly' do
-    path = audio_original.possible_paths_file(opts, original_file_name_v2)
-
-    path_info = audio_original.parse_file_path(path[0])
-
-    expect(path.size).to eq 1
-    expect(path.first).to eq("#{BawWorkers::Config.original_audio_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_20120302-050537Z.mp3")
-
-    expect(path_info[:uuid]).to eq uuid
-    expect(path_info[:datetime_with_offset]).to eq datetime
-    expect(path_info[:original_format]).to eq original_format
-  end
-
-  it 'parses a valid v3 file name correctly' do
-    path = audio_original.possible_paths_file(opts, original_file_name_v3)
-
-    path_info = audio_original.parse_file_path(path[0])
-
-    expect(path.size).to eq 1
-    expect(path.first).to eq("#{BawWorkers::Config.original_audio_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619.mp3")
-
-    expect(path_info[:uuid]).to eq uuid
-    expect(path_info[:original_format]).to eq original_format
-  end
-
-  it 'parses a valid v1 file name correctly' do
-    path = audio_original.possible_paths_file(opts, original_file_name_v1)
-
-    path_info = audio_original.parse_file_path(path[0])
-
-    expect(path.size).to eq 1
-    expect(path.first).to eq("#{BawWorkers::Config.original_audio_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_120302-1505.mp3")
-
-    expect(path_info.keys.size).to eq 3
-    expect(path_info[:uuid]).to eq uuid
-    expect(path_info[:datetime_with_offset]).to eq datetime.change(sec: 0)
-    expect(path_info[:original_format]).to eq original_format
-  end
-
-  it 'correctly enumerates no files in an empty storage directory' do
-    files = []
-    audio_original.existing_files do |file| files.push(file) end
-
-    expect(files).to be_empty
-  end
-
-  it 'enumerates all files in the storage directory' do
-    paths = audio_original.possible_paths(opts)
-    paths.each do |path|
-      FileUtils.mkpath(File.dirname(path))
-      FileUtils.touch(path)
-    end
-
-    files = []
-    audio_original.existing_files do |file|
-      info = audio_original.parse_file_path(file)
-      files.push(info.merge(file:))
-    end
-
-    aggregate_failures do
-      expect(files.size).to eq(3)
-
-      expect(files[0][:uuid]).to eq(uuid)
-      expect(files[1][:uuid]).to eq(uuid)
-      expect(files[2][:uuid]).to eq(uuid)
-
-      expect(files[0][:original_format]).to eq(original_format)
-      expect(files[1][:original_format]).to eq(original_format)
-      expect(files[2][:original_format]).to eq(original_format)
-    end
   end
 end

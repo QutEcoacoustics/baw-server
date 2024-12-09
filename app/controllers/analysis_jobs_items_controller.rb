@@ -1,138 +1,115 @@
 # frozen_string_literal: true
 
+# Controller for analysis jobs items.
+# For analysis jobs results see AnalysisJobsResultsController
 class AnalysisJobsItemsController < ApplicationController
   include Api::ControllerHelper
-  include Api::AnalysisJobsItemsShared
 
-  # This controller merges the old `analysis_controller` functionality in with `analysis_jobs_items`. There were two
-  # choices here:
+  # analysis jobs items are exposed from two endpoints:
+  #  - /analysis_jobs/:analysis_job_id/results
+  #     - for results
+  #     - reads from disk
+  #  - /analysis_jobs/:analysis_job_id/items
+  #    - for items as a normal resource
+  #    - db only, no disk access
+  #    - handles jobs status updates
   #
-  #  - keep the results separate from the job items
-  #    e.g. /analysis_jobs/:analysis_job_id/results/:audio_recording_id/[/:path]                    <- disk data
-  #    and  /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id                    <- database
-  #  - or, merge the resources
-  #    e.g. /analysis_jobs/:analysis_job_id/audio_recordings
-  #
-  # We chose the former because:
-  #
-  # - Analysis workers need to poll the #show method. Requiring disk access in such cases slows down the response
-  #   and introduces disk based dependencies for a status API.
-  #
-  # System jobs are run automatically by the system. They don't have analysis_jobs_item records in the database. Rather
-  # we proxy requests to audio_recordings table.
-  #
-  # Warning: this controller does not expose any AnalysisJobsItems by the `id` primary key!
+  # This controller handles the second endpoint.
 
-  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/
+  # GET|HEAD /analysis_jobs/:analysis_job_id/items/
   def index
     do_authorize_class
-    do_get_opts
+    get_analysis_job(for_list_endpoint: true)
 
-    do_get_analysis_job
     @analysis_jobs_items, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      get_query,
+      list_permissions,
       AnalysisJobsItem,
-      AnalysisJobsItem.filter_settings(@is_system_job)
+      AnalysisJobsItem.filter_settings
     )
 
     respond_index(opts)
   end
 
-  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/
+  # GET|HEAD /analysis_jobs/:analysis_job_id/items/:id/
   def show
-    do_get_opts
-
     do_load_resource
+    get_analysis_job(for_list_endpoint: false)
     do_authorize_instance
 
     respond_show
   end
 
-  # Creation/deletion via API not needed at present time.
-  # May be needed if we designate saved search execution to a worker.
-  # GET /analysis_jobs/:analysis_job_id/audio_recordings/new
-  # POST /analysis_jobs/:analysis_job_id/audio_recordings
-  # DELETE /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
+  # PUT|PATCH /analysis_jobs/:analysis_job_id/items/:id
+  # Currently no fields supported for update.
+  #def update
+  #end
 
-  # PUT|PATCH /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
-  def update
-    do_get_opts
-
-    if @is_system_job
-      raise CustomErrors::MethodNotAllowedError.new(
-        'Cannot update a system job\'s analysis jobs items',
-        [:post, :put, :patch, :delete]
-      )
-    end
-
-    do_load_resource
-    do_get_analysis_job
-    do_authorize_instance
-
-    parameters = analysis_jobs_item_update_params
-    desired_state = parameters[:status].to_sym
-
-    client_cancelled = desired_state == :cancelled
-    should_cancel = @analysis_jobs_item.may_confirm_cancel?(desired_state)
-    valid_transition = @analysis_jobs_item.may_transition_to_state(desired_state)
-
-    if valid_transition
-      @analysis_jobs_item.transition_to_state!(desired_state)
-    elsif should_cancel
-      @analysis_jobs_item.confirm_cancel(desired_state)
-    end
-
-    saved = @analysis_jobs_item.save
-
-    if saved
-      # update progress statistics and check if job has been completed
-      @analysis_job.check_progress
-    end
-
-    if should_cancel && !client_cancelled && saved
-      # If someone tried to :cancelling-->:working instead of :cancelling-->:cancelled then it is an error
-      # However if client :cancelled when we expected :cancelling-->:cancelled then well behaved
-      respond_error(
-        :unprocessable_entity,
-        "This entity has been cancelled - can not set new state to `#{desired_state}`"
-      )
-
-    elsif !valid_transition
-      respond_error(
-        :unprocessable_entity,
-        "Cannot transition from `#{@analysis_jobs_item.status}` to `#{desired_state}`"
-      )
-    elsif saved
-      respond_show
-    else
-      respond_change_fail
-    end
-  end
-
-  # GET|POST  /analysis_jobs/:analysis_job_id/audio_recordings/
+  # GET|POST  /analysis_jobs/:analysis_job_id/items/filter
   def filter
     do_authorize_class
-    do_get_opts
+    get_analysis_job(for_list_endpoint: true)
 
-    do_get_analysis_job
     @analysis_jobs_items, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      get_query,
+      list_permissions,
       AnalysisJobsItem,
-      AnalysisJobsItem.filter_settings(@is_system_job)
+      AnalysisJobsItem.filter_settings
     )
 
     respond_index(opts)
   end
 
+  # PUT|POST /analysis_jobs/:analysis_job_id/items/:id/working
+  # PUT|POST /analysis_jobs/:analysis_job_id/items/:id/finish
+  def invoke
+    do_invoke
+  end
+
+  def self.resolve_job_from_route_parameter(analysis_job_id)
+    # replace the special route parameter 'system' with the latest system job
+    # We use with deleted here because we always need to be able to load
+    # AnalysisJobsItem even if the parent AnalysisJob has been deleted.
+    if analysis_job_id.to_s.downcase == AnalysisJob::SYSTEM_JOB_ID
+      AnalysisJob.with_discarded.latest_system_analysis!
+    else
+      AnalysisJob.with_discarded.find(analysis_job_id.to_i)
+    end
+  end
+
   private
 
-  SYSTEM_JOB_ID = AnalysisJobsItem::SYSTEM_JOB_ID
+  def invoke_finish
+    # graceful noop if current state is desired state - allows for webhooks
+    # that are fired multiple times to not cause issues
+    @analysis_jobs_item.transition_finish! if @analysis_jobs_item.may_finish?
+  end
+
+  def invoke_working
+    # graceful noop if current state is desired state - allows for webhooks
+    # that are fired multiple times to not cause issues
+    @analysis_jobs_item.work! if @analysis_jobs_item.may_work?
+  end
 
   def analysis_jobs_item_update_params
-    # Only status can be updated via API
-    # Other properties are updated by the model/initial processing system
-    params.require(:analysis_jobs_item).permit(:status)
+    # no fields can be updated via API
+  end
+
+  def get_analysis_job(for_list_endpoint: false)
+    # two cases:
+    # 1. nested list (:analysis_job_id)
+    # 2. nested show (:analysis_job_id, :id)
+    @analysis_job = AnalysisJobsItemsController.resolve_job_from_route_parameter(params[:analysis_job_id])
+
+    # we only need to check ids match in case 2: nested show
+    return if for_list_endpoint
+    return if @analysis_job.id == @analysis_jobs_item.analysis_job_id
+
+    raise CustomErrors::RoutingArgumentError,
+      'analysis_jobs_item_id does not belong to the analysis_job_id in route'
+  end
+
+  def list_permissions
+    Access::ByPermission.analysis_jobs_items(@analysis_job, current_user)
   end
 end

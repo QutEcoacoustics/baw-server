@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config|
@@ -30,6 +32,7 @@ Devise.setup do |config|
   # You can also supply a hash where the value is a boolean determining whether
   # or not authentication should be aborted when the value is not present.
   # see: /app/models/user.rb
+  # NOTE: we override how this works in the User model
   config.authentication_keys = [:login]
 
   # Configure parameters from the request object used for authentication. Each entry
@@ -232,6 +235,21 @@ Devise.setup do |config|
 
   config.warden do |manager|
     manager.failure_app = CustomFailureApp
+
+    manager.strategies.add(
+      Api::AuthStrategies::Token::NAME,
+      Api::AuthStrategies::Token
+    )
+
+    manager.strategies.add(
+      Api::AuthStrategies::Jwt::NAME,
+      Api::AuthStrategies::Jwt
+    )
+
+    manager.default_strategies(scope: :user).unshift(
+      Api::AuthStrategies::Token::NAME,
+      Api::AuthStrategies::Jwt::NAME
+    )
   end
 
   # ==> Mountable engine configurations

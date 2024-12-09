@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe PermissionsController, type: :routing do
+describe PermissionsController do
   describe :routing do
     it {
       expect(get('/user_accounts/1/permissions')).to route_to('errors#route_error',
@@ -68,5 +68,8 @@ describe PermissionsController, type: :routing do
         format: 'json'
       )
     }
+
+    it_behaves_like 'our api routing patterns', '/projects/1/permissions', 'permissions', [:filterable],
+      { project_id: '1' }
   end
 end

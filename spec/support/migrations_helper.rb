@@ -9,7 +9,7 @@ require 'find'
 # https://gitlab.com/gitlab-org/gitlab/-/blob/7d6547ce36361ef056e76e02d21f409e4b728ba6/spec/support/helpers/require_migration.rb
 class RequireMigration
   class AutoLoadError < RuntimeError
-    MESSAGE = "Can not find any migration file for `%{file_name}`!\n" \
+    MESSAGE = "Can not find any migration file for `%<file_name>s`!\n" \
               'You can try to provide the migration file name manually.'
 
     def initialize(file_name)
@@ -36,7 +36,7 @@ class RequireMigration
       migration_folders.flat_map do |path|
         migration_path = Rails.root.join(path).to_s
 
-        Find.find(migration_path).select { |m| migration_file_pattern.match? File.basename(m) }
+        Find.find(migration_path).select { |manager| migration_file_pattern.match? File.basename(manager) }
       end
     end
 
@@ -74,16 +74,14 @@ module MigrationsHelpers
   end
 
   def migrations_paths
-    active_record_base.connection.migrations_paths
+    active_record_base.connection_pool.migrations_paths
   end
 
   def migration_context
-    ActiveRecord::MigrationContext.new(migrations_paths, ActiveRecord::SchemaMigration)
+    ActiveRecord::MigrationContext.new(migrations_paths)
   end
 
-  def migrations
-    migration_context.migrations
-  end
+  delegate :migrations, to: :migration_context
 
   def clear_schema_cache!
     active_record_base.connection_pool.connections.each do |conn|
@@ -158,6 +156,9 @@ module MigrationsHelpers
       version = migration_schema_version
       logger.info('migrating database down!', to_version: version)
       migration_context.down(version)
+    rescue StandardError => e
+      logger.error("Failed to migrate down to version #{version}", error: e)
+      raise
     end
 
     reset_column_in_all_models

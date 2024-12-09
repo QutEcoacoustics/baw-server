@@ -72,15 +72,10 @@ class AudioEventsController < ApplicationController
   end
 
   # DELETE /audio_recordings/:audio_recording_id/audio_events/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_audio_recording
-    do_authorize_instance
-
-    @audio_event.destroy
-    add_archived_at_header(@audio_event)
-
-    respond_destroy
   end
 
   # GET|POST /audio_events/filter
@@ -108,7 +103,6 @@ class AudioEventsController < ApplicationController
     project = nil
     site = nil
     audio_recording = nil
-    start_offset = nil
     end_offset = nil
 
     # check which params are available to authorise this request
@@ -116,7 +110,7 @@ class AudioEventsController < ApplicationController
     # user id
     if params_cleaned[:user_id]
       user = User.where(id: params_cleaned[:user_id].to_i).first
-      unless user.blank?
+      if user.present?
         authorize! :audio_events, user
         is_authorized = true
       end
@@ -125,7 +119,7 @@ class AudioEventsController < ApplicationController
     # project id
     if params_cleaned[:project_id]
       project = Project.where(id: params_cleaned[:project_id].to_i).first
-      unless project.blank?
+      if project.present?
         authorize! :show, project
         is_authorized = true
       end
@@ -134,7 +128,7 @@ class AudioEventsController < ApplicationController
     # site id
     if params_cleaned[:site_id]
       site = Site.where(id: params_cleaned[:site_id].to_i).first
-      unless site.blank?
+      if site.present?
         authorize! :show, site
         is_authorized = true
       end
@@ -144,7 +138,7 @@ class AudioEventsController < ApplicationController
     audio_recording_id = params_cleaned[:audio_recording_id] || params_cleaned[:recording_id] || params_cleaned[:audiorecording_id] || nil
     if audio_recording_id
       audio_recording = AudioRecording.where(id: audio_recording_id.to_i).first
-      unless audio_recording.blank?
+      if audio_recording.present?
         authorize! :show, audio_recording
         is_authorized = true
       end
@@ -177,13 +171,13 @@ class AudioEventsController < ApplicationController
     file_name_append = time_now.strftime('%Y%m%d-%H%M%S').to_s
     file_name = 'annotations'
 
-    file_name = NameyWamey.create_user_name(user) unless user.blank?
+    file_name = NameyWamey.create_user_name(user) if user.present?
 
-    file_name = NameyWamey.create_project_name(project) unless project.blank?
+    file_name = NameyWamey.create_project_name(project) if project.present?
 
-    file_name = NameyWamey.create_site_name(site.projects.first, site) unless site.blank?
+    file_name = NameyWamey.create_site_name(site.projects.first, site) if site.present?
 
-    unless audio_recording.blank?
+    if audio_recording.present?
       file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset)
     end
 

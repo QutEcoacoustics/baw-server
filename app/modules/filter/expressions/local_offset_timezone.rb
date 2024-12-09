@@ -24,7 +24,7 @@ module Filter
       end
 
       def transform_query(model, column)
-        super_query = super(model, column)
+        super_query = super
 
         # create a CTE that pulls out the timezone offset
         lambda { |query|
@@ -32,28 +32,46 @@ module Filter
           query = super_query.call(query)
 
           # if our query already has our lookup cte then we can skip adding it again
-          return query if query.with_values.any? { |node| node&.left == UTC_OFFSET_TABLE }
+          return query if query.with_values.any? { |node|
+            # depending on which ctw library is being used, the node can be different
+            case node
+            in nil
+              false
+            in Arel::Nodes::As
+              node.left == UTC_OFFSET_TABLE
+            in Hash
+              node.key?(UTC_OFFSET_TABLE.name.to_sym)
+            else
+              raise "Unexpected node type: #{node.class}"
+            end
+          }
 
           tz_column = get_tz_node(model)
 
           # add a CTE to generate a table of offsets
-          offset_query = Arel::Nodes::As.new(
-            UTC_OFFSET_TABLE,
-            PG_TIMEZONE_NAMES
-              .project(
-                PG_TIMEZONE_NAMES[:name],
-                (PG_TIMEZONE_NAMES[:is_dst]
-                  .when(true).then(PG_TIMEZONE_NAMES[:utc_offset] - ONE_HOUR)
-                  .else(PG_TIMEZONE_NAMES[:utc_offset])
-                ).as(BASE_OFFSET.to_s)
-              )
-          )
+          #offset_query = #Arel::Nodes::As.new(
+          #UTC_OFFSET_TABLE,
+          offset_query = PG_TIMEZONE_NAMES
+            .project(
+              PG_TIMEZONE_NAMES[:name],
+              PG_TIMEZONE_NAMES[:is_dst]
+                .when(true).then(PG_TIMEZONE_NAMES[:utc_offset] - ONE_HOUR)
+                .else(PG_TIMEZONE_NAMES[:utc_offset])
+              .as(BASE_OFFSET.to_s)
+            )
+          #)
 
           # Join our lookup table to the tzinfo_tz column
           # This is made possible with the activerecord-cte gem
           query
-            .joins(model.arel_table.join(UTC_OFFSET_TABLE).on(tz_column.eq(UTC_OFFSET_TABLE[:name])).join_sources)
-            .with(offset_query)
+            .joins(
+              model
+                .arel_table
+                .join(UTC_OFFSET_TABLE)
+                .on(tz_column.eq(UTC_OFFSET_TABLE[:name]))
+                .join_sources
+            )
+            .with(UTC_OFFSET_TABLE.name.to_sym => offset_query)
         }
       end
     end

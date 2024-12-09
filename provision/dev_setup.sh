@@ -20,6 +20,12 @@ SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.
     && chown -R $USERNAME /commandhistory \
     && echo $SNIPPET >> "/home/$USERNAME/.bashrc"
 
+mkdir -p /home/$USERNAME/.vscode-server/extensions \
+        /home/$USERNAME/.vscode-server-insiders/extensions \
+    && chown -R $USERNAME \
+        /home/$USERNAME/.vscode-server \
+        /home/$USERNAME/.vscode-server-insiders
+
 git config --global core.editor "code --wait"
 
 # we're generating some powershell scripts from the server, thus we need powershell to test them

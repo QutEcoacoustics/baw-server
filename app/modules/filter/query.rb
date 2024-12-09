@@ -10,6 +10,18 @@ module Filter
     include Parse
     include Validate
     include Custom
+    include Archivable
+
+    DEFAULT_PAGE_NUMBER = 1
+    DEFAULT_PAGE_ITEMS = 25
+    DEFAULT_PAGE_MAX_ITEMS = 500
+    DEFAULT_PAGING = {
+      offset: 0,
+      limit: DEFAULT_PAGE_ITEMS,
+      page: DEFAULT_PAGE_NUMBER,
+      items: DEFAULT_PAGE_ITEMS,
+      disable_paging: false
+    }.freeze
 
     attr_reader :key_prefix, :max_items, :initial_query, :table,
       :valid_fields, :text_fields, :filter_settings,
@@ -30,6 +42,7 @@ module Filter
       @default_page = 1
       @default_items = 25
       @max_items = 500
+      @model = model
       @table = relation_table(model)
 
       # `.all' adds 'id' to the select!!
@@ -51,6 +64,7 @@ module Filter
       @default_sort_direction = filter_settings[:defaults][:direction]
       @custom_fields2 = filter_settings[:custom_fields2] || {}
       @capabilities = filter_settings[:capabilities] || {}
+      set_archived_param(parameters)
 
       @build = Build.new(@table, filter_settings)
 
@@ -59,7 +73,7 @@ module Filter
 
       @parameters = decode_payload(@parameters)
 
-      @filter = @parameters.include?(:filter) && !@parameters[:filter].blank? ? @parameters[:filter] : {}
+      @filter = @parameters.include?(:filter) && @parameters[:filter].present? ? @parameters[:filter] : {}
       @projection = parse_projection(@parameters)
 
       # remove key_partial_match key from parameters hash
@@ -85,10 +99,16 @@ module Filter
       @sorting = parse_sorting(@parameters, @default_sort_order, @default_sort_direction)
     end
 
+    def query_base
+      query = @initial_query.dup
+
+      query_with_archived_if_appropriate(query)
+    end
+
     # Get the query represented by the parameters sent in new.
     # @return [ActiveRecord::Relation] query
     def query_full
-      query = @initial_query.dup
+      query = query_base
 
       # restrict to select columns
       query = query_projection(query)
@@ -106,7 +126,7 @@ module Filter
     # Get the query represented by the parameters sent in new. DOES NOT include paging or sorting.
     # @return [ActiveRecord::Relation] query
     def query_without_paging_sorting
-      query = @initial_query.dup
+      query = query_base
 
       # restrict to select columns
       query = query_projection(query)
@@ -118,7 +138,7 @@ module Filter
     # Get the query represented by the parameters sent in new. DOES NOT include advanced filtering, paging or sorting.
     # @return [ActiveRecord::Relation] query
     def query_without_filter_paging_sorting
-      query = @initial_query.dup
+      query = query_base
 
       # restrict to select columns
       query_projection(query)
@@ -183,7 +203,7 @@ module Filter
     end
 
     def has_paging_params?
-      !@paging[:page].blank? && !@paging[:items].blank?
+      @paging[:page].present? && @paging[:items].present?
     end
 
     def is_paging_disabled?
@@ -191,15 +211,15 @@ module Filter
     end
 
     def has_sort_params?
-      !@sorting[:order_by].blank? && !@sorting[:direction].blank?
+      @sorting[:order_by].present? && @sorting[:direction].present?
     end
 
     def has_projection_params?
-      !@projection.blank?
+      @projection.present?
     end
 
     def has_filter_params?
-      !@filter.blank?
+      @filter.present?
     end
 
     private
@@ -263,7 +283,7 @@ module Filter
 
       more_than_one = additional.size > 1
       combiner_present = filter.include?(combiner)
-      item_without_combiner_exists = filter.keys.any? { |k| ![:and, :or, :not].include?(k) }
+      item_without_combiner_exists = filter.keys.any? { |k| [:and, :or, :not].exclude?(k) }
 
       additional.each do |key, value|
         match_at_top = filter.include?(key)

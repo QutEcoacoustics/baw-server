@@ -2,10 +2,6 @@
 
 # A custom scrubber we use to sanitize html
 class CustomScrubber < Rails::Html::PermitScrubber
-  def initialize
-    super
-  end
-
   def keep_node?(node)
     return false if node.name == 'script'
 
@@ -59,12 +55,21 @@ class CustomRender
     def convert(value, inline, words)
       return nil if value.blank?
 
+      case value
+      in ActionView::OutputBuffer
+        value.to_str
+      in String
+        value
+      else
+        value.to_s
+      end => value
+
       html = Kramdown::Document.new(value, KRAMDOWN_OPTIONS).to_html
 
       if inline
         sanitized = SANITIZER
-                    .sanitize(html, scrubber: inline_scrubber)
-                    .squish
+          .sanitize(html, scrubber: inline_scrubber)
+          .squish
         truncated = words.nil? ? sanitized : sanitized.truncate_words(words)
         # cleanup any unbalanced tags
         Nokogiri::HTML.fragment(truncated).to_html

@@ -17,7 +17,7 @@ describe ProjectsController, type: :routing do
     # used by client
     it { expect(get('/projects')).to route_to('projects#index') }
     it { expect(get('/projects/1')).to route_to('projects#show', id: '1') }
-    it { expect(get('/projects/filter')).to route_to('projects#filter', format: 'json') }
-    it { expect(post('/projects/filter')).to route_to('projects#filter', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/projects', 'projects', [:filterable]
   end
 end

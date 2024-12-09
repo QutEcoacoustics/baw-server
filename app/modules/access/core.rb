@@ -9,15 +9,15 @@ module Access
       # @return [Hash]
       def levels_hash
         {
-          owner: {
+          Permission::OWNER => {
             name: 'Owner',
             action: 'own'
           },
-          writer: {
+          Permission::WRITER => {
             name: 'Writer',
             action: 'write'
           },
-          reader: {
+          Permission::READER => {
             name: 'Reader',
             action: 'read'
           }
@@ -109,7 +109,7 @@ module Access
       # Normalize a level identifier.
       # @param [Object] level
       # @return [Symbol, nil] normalized level or nil
-      def normalise_level(level)
+      def normalize_level(level)
         return nil if level.blank?
 
         case level.to_s
@@ -121,7 +121,6 @@ module Access
           :owner
         end
       end
-      alias normalize_level normalise_level
 
       # Validate access level.
       # @param [Object] level
@@ -156,17 +155,15 @@ module Access
       # @param [Array<Symbol>] levels
       # @return [Array<Symbol>] levels
       def validate_level_combination(levels)
-        if levels.respond_to?(:each)
-          if (levels.include?(:none) || levels.include?('none')) && levels.size > 1
-            # none cannot be with other levels because this can be ambiguous, and points to a problem with how the
-            # permissions were obtained.
-            raise ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
-          else
-            levels
-          end
-        else
-          raise ArgumentError, "Must be an array of levels, got '#{levels.class}'."
+        raise ArgumentError, "Must be an array of levels, got '#{levels.class}'." unless levels.respond_to?(:each)
+        if (levels.include?(:none) || levels.include?('none')) && levels.size > 1
+          raise ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
         end
+
+        # none cannot be with other levels because this can be ambiguous, and points to a problem with how the
+        # permissions were obtained.
+
+        levels
       end
 
       # Validate Project.
@@ -193,7 +190,7 @@ module Access
       # @param [User] user
       # @return [User] user
       def validate_user(user)
-        raise ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+        raise ArgumentError, "User was not valid, got '#{user.class}'." if user.present? && !user.is_a?(User)
 
         user
       end
@@ -252,6 +249,17 @@ module Access
         analysis_job
       end
 
+      # Validate analysis jobs item.
+      # @param [AnalysisJobsItem] analysis_jobs_item
+      # @return [AnalysisJobsItem] analysis_jobs_item
+      def validate_analysis_jobs_item(analysis_jobs_item)
+        if analysis_jobs_item.blank? || !analysis_jobs_item.is_a?(AnalysisJobsItem)
+          raise ArgumentError, "AnalysisJobsItem was not valid, got '#{analysis_jobs_item.class}'."
+        end
+
+        analysis_jobs_item
+      end
+
       # Validate dataset.
       # @param [Array<Dataset>] dataset
       # @return [Array<Dataset>] dataset
@@ -269,12 +277,12 @@ module Access
       def equal_or_lower(level)
         level_sym = Access::Validate.level(level)
         case level_sym
-        when :owner
-          [:reader, :writer, :owner]
-        when :writer
-          [:reader, :writer]
-        when :reader
-          [:reader]
+        when Permission::OWNER
+          Permission::OWNER_OR_BELOW
+        when Permission::WRITER
+          Permission::WRITER_OR_BELOW
+        when Permission::READER
+          Permission::READER_OR_BELOW
         else
           raise ArgumentError,
             "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
@@ -287,12 +295,12 @@ module Access
       def equal_or_greater(level)
         level_sym = Access::Validate.level(level)
         case level_sym
-        when :owner
-          [:owner]
-        when :writer
-          [:writer, :owner]
-        when :reader
-          [:reader, :writer, :owner]
+        when Permission::OWNER
+          Permission::OWNER_OR_ABOVE
+        when Permission::WRITER
+          Permission::WRITER_OR_ABOVE
+        when Permission::READER
+          Permission::READER_OR_ABOVE
         else
           raise ArgumentError,
             "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
@@ -471,9 +479,9 @@ module Access
       def check_orphan_site!(site)
         return if site.nil?
 
-        if site.projects.empty?
-          raise CustomErrors::OrphanedSiteError, "Site #{site.name} (#{site.id}) is not in any projects."
-        end
+        return unless site.projects.empty?
+
+        raise CustomErrors::OrphanedSiteError, "Site #{site.name} (#{site.id}) is not in any projects."
       end
 
       # Get the access levels for this user to the project(s).
@@ -489,12 +497,12 @@ module Access
         projects = Access::Validate.projects([projects])
 
         # always restricted to specified project(s)
-        levels = Permission.where(project_id: projects)
+        levels = ::Permission.where(project_id: projects)
 
         if Access::Core.is_guest?(user)
           # a guest user's permissions are only specified by :allow_logged_in
           levels = levels.where(user: nil, allow_logged_in: false, allow_anonymous: true)
-        elsif !user.blank?
+        elsif user.present?
           # a logged in user can have their own permissions or
           # permissions specified by :allow_logged_in
           levels = levels.where('user_id = ? OR allow_logged_in IS TRUE', user.id)
@@ -517,9 +525,9 @@ module Access
         raise ArgumentError, 'Must provide a user, nil is not valid.' if Access::Core.is_guest?(user)
 
         levels = Permission
-                 .where(project_id: projects)
-                 .where('user_id = ?', user.id)
-                 .pluck(:level)
+          .where(project_id: projects)
+          .where(user_id: user.id)
+          .pluck(:level)
 
         Access::Validate.levels(levels)
       end
@@ -538,9 +546,9 @@ module Access
         projects = Access::Validate.projects([projects])
 
         levels = Permission
-                 .where(project_id: projects)
-                 .where('allow_logged_in IS TRUE')
-                 .pluck(:level)
+          .where(project_id: projects)
+          .where('allow_logged_in IS TRUE')
+          .pluck(:level)
 
         Access::Validate.levels(levels)
       end

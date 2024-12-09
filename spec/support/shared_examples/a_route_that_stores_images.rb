@@ -9,6 +9,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
   let(:current) { send(options[:current]) }
   let(:model_class) { current.class }
   let(:model_name) { options[:model_name] }
+  let(:is_discardable) { model_class.discardable? }
   let(:factory_args) { options[:factory_args] }
   let(:field_name) { options[:field_name] }
   let(:image) { Fixtures.bowra_image_jpeg }
@@ -20,34 +21,32 @@ RSpec.shared_examples 'a route that stores images' do |options|
   end
 
   # Need worker to be able to access database records, can't happen when a transaction is running
-  context 'maniuplating blobs', :clean_by_truncation do
+  context 'when manipulating blobs', :clean_by_truncation do
     pause_all_jobs
 
     after do
       key = current.send(field_name)&.key
-      if key.nil?
-        next
-      else
-        path = ActiveStorage::Blob.service.path_for(key)
-        expect(File.exist?(path)).to eq true
+      next if key.nil?
 
-        previously_completed = BawWorkers::ResqueApi.statuses(
-          statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
-          of_class: ActiveStorage::PurgeJob
-        ).count
+      path = ActiveStorage::Blob.service.path_for(key)
+      expect(File.exist?(path)).to be true
 
-        # Active record should remove the file when the blob is deleted
-        current.destroy!
+      previously_completed = BawWorkers::ResqueApi.statuses(
+        statuses: BawWorkers::ActiveJob::Status::STATUS_COMPLETED,
+        of_class: ActiveStorage::PurgeJob
+      ).count
 
-        purge_count = @purge_jobs_count || 1
-        perform_jobs(count: purge_count)
-        expect_jobs_to_be completed: (previously_completed + purge_count), of_class: ActiveStorage::PurgeJob
+      # Active record should remove the file when the blob is deleted
+      current.destroy!
 
-        expect(File.exist?(path)).to eq false
-      end
+      purge_count = @purge_jobs_count || 1
+      perform_jobs(count: purge_count)
+      expect_jobs_to_be completed: (previously_completed + purge_count), of_class: ActiveStorage::PurgeJob
+
+      expect(File.exist?(path)).to be false
     end
 
-    example 'uploading a new image when the model exists' do
+    it 'uploading a new image when the model exists' do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(image, mime)
       }, **form_multipart_headers(owner_token)
@@ -57,7 +56,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       common_expectations
     end
 
-    example 'uploading an updated image when the model exists' do
+    it 'uploading an updated image when the model exists' do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(image, mime)
       }, **form_multipart_headers(owner_token)
@@ -75,7 +74,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       common_expectations(2, 1)
     end
 
-    example 'delete an image when the model exists' do
+    it 'delete an image when the model exists' do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.bowra2_image_jpeg, mime)
       }, **form_multipart_headers(owner_token)
@@ -84,9 +83,9 @@ RSpec.shared_examples 'a route that stores images' do |options|
       expect_jobs_to_be(completed: 1)
       current.reload
       blob = current.send(field_name)
-      expect(blob.attached?).to eq true
+      expect(blob.attached?).to be true
       path = ActiveStorage::Blob.service.path_for(blob.key)
-      expect(File.exist?(path)).to eq true
+      expect(File.exist?(path)).to be true
 
       # now delete
       put "#{route}/#{current.id}", params: {
@@ -100,14 +99,14 @@ RSpec.shared_examples 'a route that stores images' do |options|
 
       blob = current.send(field_name)
       aggregate_failures do
-        expect(blob.attached?).to eq false
-        expect(File.exist?(path)).to eq false
+        expect(blob.attached?).to be false
+        expect(File.exist?(path)).to be false
 
         expect_performed_jobs 1, of_class: ActiveStorage::PurgeJob
       end
     end
 
-    example 'can create a new resource, with multipart JSON payload and image' do
+    it 'can create a new resource, with multipart JSON payload and image' do
       attributes = body_attributes_for(model_name, factory_args: instance_exec(&factory_args))[:region].except(:notes)
 
       body = {
@@ -128,7 +127,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       common_expectations(target: created)
     end
 
-    example 'can update a resource, with multipart JSON payload and image' do
+    it 'can update a resource, with multipart JSON payload and image' do
       attributes = body_attributes_for(model_name, factory_args: instance_exec(&factory_args))[:region].except(:notes)
 
       body = {
@@ -140,7 +139,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       put "#{route}/#{current.id}", params: body, **form_multipart_headers(owner_token)
 
       expect_success
-      id = api_data[:id]
+      api_data[:id]
       current.reload
       expect(current).to have_attributes(attributes)
 
@@ -149,13 +148,14 @@ RSpec.shared_examples 'a route that stores images' do |options|
       common_expectations
     end
 
-    example 'deleting a resource deletes the associated image' do
+    it 'deleting a resource has the desired effect' do
       # first upload an image
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.bowra2_image_jpeg, mime)
       }, **form_multipart_headers(owner_token)
+      expect_enqueued_jobs(1, of_class: ActiveStorage::AnalyzeJob)
       perform_jobs(count: 1)
-      common_expectations
+      path = common_expectations
 
       # now delete
 
@@ -163,28 +163,70 @@ RSpec.shared_examples 'a route that stores images' do |options|
 
       expect_success
 
-      perform_jobs(count: 1)
+      if is_discardable
+        expect_enqueued_jobs(0)
+      else
+        expect_enqueued_jobs(1, of_class: ActiveStorage::PurgeJob)
+        perform_jobs(count: 1)
+      end
+
       current.reload
 
       blob = current.send(field_name)
       aggregate_failures do
-        expect(blob.attached?).to eq false
-        expect(File.exist?(path)).to eq false
+        if is_discardable
+          # because the record is archived the blob is not purged
+          expect(blob.attached?).to be true
+          expect(File.exist?(path)).to be true
+        else
+          expect(blob.attached?).to be false
+          expect(File.exist?(path)).to be false
+          expect_performed_jobs 1, of_class: ActiveStorage::PurgeJob
+        end
+      end
+    end
 
+    it 'deleting a resource with destroy also purges the file' do
+      next unless is_discardable
+      next unless supports_destroy_action("#{route}/#{current.id}")
+
+      # first upload an image
+      put "#{route}/#{current.id}", params: {
+        "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.bowra2_image_jpeg, mime)
+      }, **form_multipart_headers(owner_token)
+      expect_enqueued_jobs(1, of_class: ActiveStorage::AnalyzeJob)
+      perform_jobs(count: 1)
+      path = common_expectations
+
+      # now delete
+
+      delete "#{route}/#{current.id}/destroy", **api_headers(owner_token)
+
+      expect_success
+
+      expect_enqueued_jobs(1, of_class: ActiveStorage::PurgeJob)
+      perform_jobs(count: 1)
+
+      current.reload
+
+      blob = current.send(field_name)
+      aggregate_failures do
+        expect(blob.attached?).to be false
+        expect(File.exist?(path)).to be false
         expect_performed_jobs 1, of_class: ActiveStorage::PurgeJob
       end
     end
 
-    example "it rejects images larger than #{BawApp.attachment_size_limit}" do
+    it "rejects images larger than #{BawApp.attachment_size_limit}" do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.a_very_large_image_jpeg, mime)
       }, **form_multipart_headers(owner_token)
 
-      expect_error(:unprocessable_entity, nil,
+      expect_error(:unprocessable_content, nil,
         { image: ['Image size 11 MB is greater than 10 MB, try a smaller file'] })
     end
 
-    example 'it can produce image variants automatically' do
+    it 'can produce image variants automatically' do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.bowra2_image_jpeg, mime)
       }, **form_multipart_headers(owner_token)
@@ -214,7 +256,7 @@ RSpec.shared_examples 'a route that stores images' do |options|
       @purge_jobs_count = 2
     end
 
-    example 'our API includes image urls in payload' do
+    it 'our API includes image urls in payload' do
       put "#{route}/#{current.id}", params: {
         "#{model_name}[#{field_name}]" => Rack::Test::UploadedFile.new(Fixtures.bowra2_image_jpeg, mime)
       }, **form_multipart_headers(owner_token)
@@ -252,22 +294,24 @@ RSpec.shared_examples 'a route that stores images' do |options|
       target ||= current
       target.reload
       blob = target.send(field_name)
-
+      path = nil
       aggregate_failures do
         expect(blob).to be_an_instance_of(ActiveStorage::Attached::One)
-        expect(blob.attached?).to eq true
+        expect(blob.attached?).to be true
         expect(blob.key).not_to be_blank
         expect(blob.signed_id).not_to be_blank
         expect(rails_blob_path(blob, only_path: true)).to start_with('/rails/active_storage/blobs')
 
         path = ActiveStorage::Blob.service.path_for(blob.key)
         expect(path).to include('public/system/active_storage')
-        expect(File.exist?(path)).to eq true
+        expect(File.exist?(path)).to be true
         expect_performed_jobs performed_count, of_class: ActiveStorage::AnalyzeJob
         expect_performed_jobs purged_count, of_class: ActiveStorage::PurgeJob
         expect_failed_jobs 0
         expect_enqueued_jobs 0
       end
+
+      path
     end
   end
 end

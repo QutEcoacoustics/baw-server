@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe 'CMS permissions' do
   prepare_users
   create_standard_cms_pages
@@ -34,15 +32,17 @@ describe 'CMS permissions' do
   #
   # Any user can read any page at any time. However, no mutation is available
   ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous,
-          can: [custom_index, custom_show],
-          cannot: [:create, :update, :destroy],
-          fails_with: :not_found
+    can: [custom_index, custom_show],
+    cannot: [:create, :update, :destroy],
+    fails_with: :not_found
 
   # invalid however triggers a middleware response the occurs before even the CMS module
   ensures :invalid,
-          can: [],
-          cannot: [custom_index, custom_show, :create, :update, :destroy],
-          fails_with: :unauthorized
+    can: [],
+    cannot: [custom_index, custom_show, :create, :update, :destroy],
+    fails_with: [:unauthorized, :not_found]
+
+  do_not_check_permissions_for(all_users, [:filter, :new])
 end
 
 describe 'CMS backend permissions' do
@@ -62,30 +62,29 @@ describe 'CMS backend permissions' do
     [{}, :json]
   end
 
-  custom_index = { path: '', verb: :get, expect: lambda { |_user, _action|
+  with_custom_action(:index, path: '', verb: :get, expect: lambda { |_user, _action|
     expect(response_body).to include("<body class='c-comfy-admin-cms-sites a-index' id='comfy'>")
-  }, action: :index }
+  })
 
   let(:request_accept) {
     '*/*'
   }
 
-  # The CMS API is provided by a third party service and does not conform to our standard API conventions.
-  # Thus we use  `ensures` to bypass the extra validation offered by the `the_user` method.
-  #
   # Only admin can see the backend
   ensures :admin,
-          can: [custom_index]
+    can: [:index]
 
   # invalid however triggers a middleware response the occurs before even the CMS module
   ensures :owner, :writer, :reader, :no_access, :harvester, :anonymous,
-          can: [],
-          cannot: [custom_index],
-          fails_with: :unauthorized
+    can: [],
+    cannot: [:index],
+    fails_with: :unauthorized
 
   # invalid however triggers a middleware response the occurs before even the CMS module
   ensures :invalid,
-          can: [],
-          cannot: [custom_index],
-          fails_with: :unauthorized
+    can: [],
+    cannot: [:index],
+    fails_with: :unauthorized
+
+  do_not_check_permissions_for(all_users, [:show, :create, :update, :destroy, :filter, :new])
 end

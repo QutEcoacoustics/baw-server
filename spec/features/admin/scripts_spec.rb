@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
-
-
-xdescribe 'MANAGE Scripts as admin user', type: :feature do
-  before(:each) do
-    admin = FactoryBot.create(:admin)
-    @script = FactoryBot.create(:script)
+xdescribe 'MANAGE Scripts as admin user' do
+  before do
+    admin = create(:admin)
+    @script = create(:script)
     login_as admin, scope: :user
   end
 
@@ -16,7 +14,7 @@ xdescribe 'MANAGE Scripts as admin user', type: :feature do
   end
 
   it 'shows script account details' do
-    script = FactoryBot.create(:script)
+    script = create(:script)
     visit admin_script_path(script)
     expect(page).to have_content(script.name)
   end
@@ -31,10 +29,9 @@ xdescribe 'MANAGE Scripts as admin user', type: :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
     fill_in 'script[executable_settings_media_type]', with: 'text/plain'
-    fill_in 'script[analysis_action_params]', with: '{}'
 
     click_button 'Submit'
-    expect(page).to_not have_content('Please review the problems below')
+    expect(page).not_to have_content('Please review the problems below')
     expect(page).to have_content('test name')
   end
 
@@ -46,7 +43,7 @@ xdescribe 'MANAGE Scripts as admin user', type: :feature do
   end
 
   it 'updates script when filling out form correctly' do
-    script = FactoryBot.create(:script)
+    script = create(:script)
     new_script_version = (script.version + 1).to_s
     visit edit_admin_script_path(script)
     fill_in 'script[name]', with: 'test name'
@@ -57,17 +54,16 @@ xdescribe 'MANAGE Scripts as admin user', type: :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
     fill_in 'script[executable_settings_media_type]', with: 'application/javascript'
-    fill_in 'script[analysis_action_params]', with: '{}'
 
     click_button 'Submit'
-    expect(page).to_not have_content('Please review the problems below')
+    expect(page).not_to have_content('Please review the problems below')
     expect(page).to have_content('test name')
     expect(page).to have_content(new_script_version)
     expect(page).to have_content('application/javascript')
   end
 
   it 'shows script account details' do
-    script = FactoryBot.create(:script)
+    script = create(:script)
     visit edit_admin_script_path(script)
     expect(page).to have_content(script.name)
   end
@@ -79,14 +75,14 @@ xdescribe 'MANAGE Scripts as admin user', type: :feature do
   #end
 end
 
-xdescribe 'MANAGE Scripts as user', type: :feature do
-  before(:each) do
-    user = FactoryBot.create(:user)
+xdescribe 'MANAGE Scripts as user' do
+  before do
+    user = create(:user)
     login_as user, scope: :user
   end
 
   it 'denies access' do
-    script = FactoryBot.create(:script)
+    script = create(:script)
     visit admin_scripts_path
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit admin_script_path(script)

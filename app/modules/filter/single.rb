@@ -11,10 +11,12 @@ module  Filter
     include CustomField
     include Projection
     include Validate
+    include Archivable
 
     attr_reader :table
 
-    def initialize(model, filter_settings)
+    def initialize(parameters, model, filter_settings)
+      @model = model
       @table = relation_table(model)
       @initial_query = relation_all(model)
       validate_filter_settings(filter_settings)
@@ -24,6 +26,7 @@ module  Filter
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       # and the custom fields
       @custom_fields2 = filter_settings[:custom_fields2] || {}
+      set_archived_param(parameters)
 
       # the intersection of the above is what we have to pull out of the db
     end
@@ -32,6 +35,8 @@ module  Filter
     # @return [ActiveRecord::Relation] query
     def query
       query = @initial_query.dup
+
+      query = query_with_archived_if_appropriate(query)
 
       query_additional_fields(query)
     end

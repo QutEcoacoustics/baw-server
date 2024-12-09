@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 describe BawWorkers::Jobs::Media::WorkHelper do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   let(:work_helper) {

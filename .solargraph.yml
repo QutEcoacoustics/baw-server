@@ -6,7 +6,9 @@ exclude:
 # - test/**/*
 - vendor/**/*
 - ".bundle/**/*"
-require: []
+require:
+  - semantic_logger
+  - redis
 domains: []
 reporters:
   - rubocop

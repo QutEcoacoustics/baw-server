@@ -7,7 +7,7 @@ RSpec.shared_examples 'permissions for' do |options|
   }
 
   let(:headers) {
-    token = "#{options[:user]}_token".to_sym
+    token = :"#{options[:user]}_token"
     {
       'ACCEPT' => defined?(request_accept) ? request_accept : 'application/json',
       'HTTP_AUTHORIZATION' => send(token)
@@ -27,28 +27,46 @@ RSpec.shared_examples 'permissions for' do |options|
     options[:expected_list_items_callback]
   }
 
-  def get_body(action, request_body_options)
-    case action
-    when :create
+  let(:before_request_callback) {
+    options[:before_request_callback]
+  }
+
+  def before_request_do(user, action, other_callback)
+    instance_exec(user, action, &before_request_callback) if before_request_callback.present?
+
+    return if other_callback.blank?
+
+    instance_exec(user, action, &other_callback)
+  end
+
+  def get_body(body_key, request_body_options)
+    case body_key
+    in Proc
+      instance_exec(&body_key)
+    in [body, as]
+      [body, as]
+    in :create
       instance_exec(&request_body_options[:create])
-    when :update
+    in :update
       instance_exec(&request_body_options[:update])
     else
       [nil, nil]
     end
   end
 
-  def send_request(action, headers, route_params, request_body_options)
+  def send_permissions_request(action, headers, route_params, request_body_options)
     verb = action[:verb]
     path = action[:path]
-    action = action[:action]
-    url = path.expand(route_params)
+    body_key = action[:body]
+
+    url = path.expand(route_params).to_s
 
     # some endpoints require a valid body is included
-    body, as = get_body(action, request_body_options)
+    body, as = get_body(body_key, request_body_options)
 
     # process is the generic base method for the get, post, put, etc.. methods
-    process(verb, url, headers: headers, params: body, as: as)
+
+    process(verb, url, headers:, params: body, as:)
   end
 
   def get_expected_list_items(user, action)
@@ -57,10 +75,11 @@ RSpec.shared_examples 'permissions for' do |options|
     Array(instance_exec(user, action, &expected_list_items_callback))
   end
 
-  def validate_result(user, action, expect)
+  def validate_permissions_result(user, action, expect)
     case expect
     when :nothing
       expect(api_result).to be_nil
+    # template is our name for a /new response and we just check a hash is emitted
     when :template
       expect_data_is_hash
     when :created
@@ -75,20 +94,34 @@ RSpec.shared_examples 'permissions for' do |options|
   end
 
   # add metadata so examples can be filtered by user
-  context "the `#{options[:user]}` user", { @user => true, :permissions => true } do
+  context "the `#{options[:user]}` user", :permissions, { @user => true } do
     options[:actions].each do |action|
-      example_name = "should #{action[:can] ? '' : 'NOT '}be able to #{action[:verb].upcase} #{action[:path].pattern}"
+      example_name = "should #{action[:can] ? '   ' : 'NOT'} be able to #{action[:verb].upcase} #{action[:path].pattern} (#{action[:action]})"
+
       # again add metadata to allow filtering by action
-      example example_name, { action[:action] => true } do
+      it example_name, { action[:action] => true } do
+        # allow a hook for modifying the subject before the request is sent
+        before_request_do(options[:user], action[:action], action[:before])
+
         # first build and issue request
-        send_request(action, headers, route_params, request_body_options)
+        send_permissions_request(action, headers, route_params, request_body_options)
 
         aggregate_failures 'Failures:' do
           expected = action[:expected_status]
-          expect(response).to have_http_status(expected)
+          if expected.is_a?(Array)
+            expected => [first, *rest]
+
+            rest
+              .reduce(have_http_status(first)) do |a, b|
+              a.or(have_http_status(b))
+            end => assertion
+            expect(response).to assertion
+          else
+            expect(response).to have_http_status(expected)
+          end
 
           # only validate results if we expect valid data
-          validate_result(options[:user], action[:action], action[:expect]) if action[:can]
+          validate_permissions_result(options[:user], action[:action], action[:expect]) if action[:can]
         end
       end
     end

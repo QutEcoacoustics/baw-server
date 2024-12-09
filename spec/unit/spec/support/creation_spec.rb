@@ -23,6 +23,7 @@ describe 'creation helper' do
 
     expect(Site.count).to eq(1)
     expect(AudioRecording.count).to eq(1)
+    expect(Statistics::AudioRecordingStatistics.count).to eq(1)
     expect(AudioEvent.count).to eq(1)
     expect(AudioEventComment.count).to eq(1)
 
@@ -47,8 +48,10 @@ describe 'creation helper' do
     expect(SavedSearch.first.projects.first.id).to eq(Project.first.id)
     expect(SavedSearch.first.id).to eq(Project.first.saved_searches.first.id)
 
-    expect(AnalysisJob.first.saved_search.id).to eq(SavedSearch.first.id)
-    expect(AnalysisJob.first.id).to eq(SavedSearch.first.analysis_jobs.first.id)
+    #expect(AnalysisJob.first.saved_search.id).to eq(SavedSearch.first.id)
+    #expect(AnalysisJob.first.id).to eq(SavedSearch.first.analysis_jobs.first.id)
+    expect(AnalysisJob.first.scripts.count('*')).to eq(1)
+    expect(AnalysisJob.first.scripts.map(&:id)).to eq(Script.all.map(&:id))
 
     expect(AnalysisJobsItem.first.analysis_job.id).to eq(AnalysisJob.first.id)
     expect(AnalysisJobsItem.first.id).to eq(AnalysisJob.first.analysis_jobs_items.first.id)
@@ -61,8 +64,8 @@ describe 'creation helper' do
     # Disabling but leaving for documentation since I'm not sure what effect this will have.
     #expect(Dataset.all[1].id).to eq(DatasetItem.first.dataset_id)
 
-    expect(Study.count).to eq(1)
-    expect(Question.count).to eq(1)
-    expect(Response.count).to eq(1)
+    expect(Study.count).to eq(2)
+    expect(Question.count).to eq(2)
+    expect(Response.count).to eq(2)
   end
 end

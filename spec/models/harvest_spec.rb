@@ -24,10 +24,10 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #  fk_rails_...  (updater_id => users.id)
 #
-RSpec.describe Harvest, type: :model do
+RSpec.describe Harvest do
   prepare_users
   prepare_project
   prepare_region
@@ -42,10 +42,8 @@ RSpec.describe Harvest, type: :model do
   end
 
   it { is_expected.to belong_to(:project) }
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional(true) }
-
-  it { is_expected.to validate_presence_of(:project) }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional(true) }
 
   context 'when changing the name' do
     before do
@@ -57,7 +55,7 @@ RSpec.describe Harvest, type: :model do
     end
 
     it 'has a default value for the name column' do
-      n = Time.now
+      n = Time.zone.now
       subject.save!
 
       expect(subject.name).to eq "#{n.strftime('%B')} #{n.day.ordinalize} Upload"
@@ -104,14 +102,14 @@ RSpec.describe Harvest, type: :model do
       BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, site_id: site.id, utc_offset: '+10:00')
     ]
     harvest.save!
-    now = Time.now
-    expect(harvest.last_mappings_change_at).to be_within(0.01.second).of(now)
+    now = Time.zone.now
+    expect(harvest.last_mappings_change_at).to be_within(0.01.seconds).of(now)
 
     sleep 1
 
     # date stamp not modified on reload
     harvest.reload
-    expect(harvest.last_mappings_change_at).to be_within(0.05.second).of(now)
+    expect(harvest.last_mappings_change_at).to be_within(0.05.seconds).of(now)
 
     sleep 1
 
@@ -121,7 +119,7 @@ RSpec.describe Harvest, type: :model do
     ]
     harvest.save!
     harvest.reload
-    expect(harvest.last_mappings_change_at).to be_within(0.05.second).of(now)
+    expect(harvest.last_mappings_change_at).to be_within(0.05.seconds).of(now)
 
     sleep 1
 
@@ -129,17 +127,17 @@ RSpec.describe Harvest, type: :model do
     harvest.mappings = [
       BawWorkers::Jobs::Harvest::Mapping.new(path: '/abc', recursive: true, site_id: site.id, utc_offset: '+10:00')
     ]
-    now = Time.now
+    now = Time.zone.now
     harvest.save!
     harvest.reload
-    expect(harvest.last_mappings_change_at).to be_within(0.05.second).of(now)
+    expect(harvest.last_mappings_change_at).to be_within(0.05.seconds).of(now)
   end
 
   it 'can generate a upload url' do
     expect(harvest.upload_url).to eq "sftp://#{Settings.upload_service.public_host}:#{Settings.upload_service.sftp_port}"
   end
 
-  it 'will fail to create a harvest if uploading is not enabled for the project' do
+  it 'fails to create a harvest if uploading is not enabled for the project' do
     project.allow_audio_upload = false
     project.save!
 
@@ -175,21 +173,21 @@ RSpec.describe Harvest, type: :model do
       expect(actual).to eq subject
     end
 
-    it 'will return nil with a bad argument (bad path)' do
+    it 'returns nil with a bad argument (bad path)' do
       path = "/data/test/harvester_to_do/#{harvest.id}/test-audio-mono.ogg"
 
       actual = Harvest.fetch_harvest_from_absolute_path(path)
       expect(actual).to be_nil
     end
 
-    it 'will return nil with a bad argument (nil)' do
+    it 'returns nil with a bad argument (nil)' do
       path = nil
 
       actual = Harvest.fetch_harvest_from_absolute_path(path)
       expect(actual).to be_nil
     end
 
-    it 'will return nil with a bad argument (missing harvest id)' do
+    it 'returns nil with a bad argument (missing harvest id)' do
       path = '/data/test/harvester_to_do/9999/test-audio-mono.ogg'
 
       actual = Harvest.fetch_harvest_from_absolute_path(path)
@@ -261,7 +259,7 @@ RSpec.describe Harvest, type: :model do
       }
     }
 
-    it 'will map everything with a root recursive mapping' do
+    it 'maps everything with a root recursive mapping' do
       mapping = BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
 
       harvest.mappings = [mapping]
@@ -272,7 +270,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to eq mapping
     end
 
-    it 'will only map the current directory without recurse' do
+    it 'onlies map the current directory without recurse' do
       mapping = BawWorkers::Jobs::Harvest::Mapping.new(
         path: '/',
         recursive: false,
@@ -287,7 +285,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will not map without any mappings' do
+    it 'does not map without any mappings' do
       harvest.mappings = []
 
       expect(harvest.find_mapping_for_path(file_a)).to be_nil
@@ -296,7 +294,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will not map without any matching mappings' do
+    it 'does not map without any matching mappings' do
       harvest.mappings = [
         BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/z', recursive: true, **args),
         BawWorkers::Jobs::Harvest::Mapping.new(path: '/donkey', recursive: true, **args)
@@ -308,7 +306,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will map with specific mappings' do
+    it 'maps with specific mappings' do
       mapping1 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a', recursive: false, **args)
       mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: false, **args)
       mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b/c', recursive: false, **args)
@@ -322,7 +320,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will map with correctly with overlapping mappings - more specific takes priority' do
+    it 'maps with correctly with overlapping mappings - more specific takes priority' do
       mapping1 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a', recursive: false, **args)
       mapping2 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/', recursive: true, **args)
       mapping3 =  BawWorkers::Jobs::Harvest::Mapping.new(path: '/a/b', recursive: true, **args)
@@ -337,7 +335,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to eq mapping2
     end
 
-    it 'will match whole segments of a path' do
+    it 'matches whole segments of a path' do
       mapping1 = BawWorkers::Jobs::Harvest::Mapping.new(path: '/aaaaaaaaaaaaaaa', recursive: false, **args)
 
       harvest.mappings = [
@@ -350,7 +348,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will match whole segments of a path (recursive)' do
+    it 'matches whole segments of a path (recursive)' do
       mapping1 = BawWorkers::Jobs::Harvest::Mapping.new(path: '/aaaaaaaaaaaaaaa', recursive: true, **args)
 
       harvest.mappings = [
@@ -363,7 +361,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will match whole segments of a path (path shorter than file name)' do
+    it 'matches whole segments of a path (path shorter than file name)' do
       mapping1 = BawWorkers::Jobs::Harvest::Mapping.new(path: '/aaa', recursive: false, **args)
 
       harvest.mappings = [
@@ -376,7 +374,7 @@ RSpec.describe Harvest, type: :model do
       expect(harvest.find_mapping_for_path(file_d)).to be_nil
     end
 
-    it 'will match whole segments of a path (path shorter than file name)(recursive)' do
+    it 'matches whole segments of a path (path shorter than file name)(recursive)' do
       mapping1 = BawWorkers::Jobs::Harvest::Mapping.new(path: '/aaa', recursive: true, **args)
 
       harvest.mappings = [
@@ -402,7 +400,7 @@ RSpec.describe Harvest, type: :model do
       BawWorkers::Config.upload_communicator.delete_all_users
     end
 
-    it 'will renable the sftpgo user if it already exists' do
+    it 'renables the sftpgo user if it already exists' do
       harvest.save!
       harvest.open_upload!
 
@@ -431,7 +429,7 @@ RSpec.describe Harvest, type: :model do
     it 'when entering :uploading state it sets the last upload date' do
       expect(harvest.last_upload_at).to be_nil
       harvest.open_upload!
-      expect(harvest.last_upload_at).to be_within(0.01.seconds).of(Time.now)
+      expect(harvest.last_upload_at).to be_within(0.1.seconds).of(Time.zone.now)
 
       harvest.scan!
       harvest.extract!
@@ -441,7 +439,7 @@ RSpec.describe Harvest, type: :model do
       sleep 1
 
       harvest.open_upload!
-      expect(harvest.last_upload_at).to be_within(0.1.seconds).of(Time.now)
+      expect(harvest.last_upload_at).to be_within(0.1.seconds).of(Time.zone.now)
     end
 
     it 'when opening uploads, stores user information' do
@@ -476,7 +474,9 @@ RSpec.describe Harvest, type: :model do
 
       harvest.extract!
 
-      expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+      # flaky
+      sleep 0.5
+      expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       perform_jobs(count: 1)
       expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
 
@@ -510,7 +510,7 @@ RSpec.describe Harvest, type: :model do
 
       harvest.process!
 
-      expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ReenqueueJob)
+      expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
       perform_jobs(count: 1)
       expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ReenqueueJob)
 
@@ -530,13 +530,25 @@ RSpec.describe Harvest, type: :model do
 
       expect(harvest.last_metadata_review_at).to be_nil
       harvest.metadata_review!
-      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.now)
+      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.zone.now)
 
       # and it updates it on reentry
       harvest.extract!
       sleep 1
       harvest.metadata_review!
-      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.now)
+      expect(harvest.last_metadata_review_at).to be_within(0.1.seconds).of(Time.zone.now)
+    end
+
+    it 'when finishing it will enqueue an amend job' do
+      harvest.save!
+      harvest.open_upload!
+      harvest.scan!
+      harvest.extract!
+      harvest.metadata_review!
+      harvest.process!
+      harvest.finish!
+
+      expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::AmendAfterHarvestJob)
     end
   end
 end

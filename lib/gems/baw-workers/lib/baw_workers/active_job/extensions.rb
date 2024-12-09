@@ -23,7 +23,6 @@ module BawWorkers
         # (see #perform_later)
         # The same as #perform_later except will raise if job was not successfully enqueued.
         # It also supports a block callback on failure to enqueue - which is missing in
-        # #perform_later until Rails 7.
         # @raise [StandardError] when the job fails to enqueue
         # @return [void]
         def perform_later!(...)

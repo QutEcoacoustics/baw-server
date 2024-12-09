@@ -16,9 +16,10 @@ module WebServerHelper
     def expose_app_as_web_server
       around do |example|
         current_example = RSpec.current_example
-        host_url = "http://0.0.0.0:#{Settings.api.port}"
+        host_url = "http://0.0.0.0:#{Settings.host.port}"
         timeout = example.metadata.fetch(:web_server_timeout, 30)
         timeout = 3600 if DEBUGGING
+        logger = SemanticLogger[Falcon]
 
         # start a web server
         task = Async { |inner|
@@ -38,8 +39,6 @@ module WebServerHelper
           serve_task = inner.async { |_inner|
             endpoint = Async::HTTP::Endpoint.parse(host_url)
             server = Falcon::Server.new(
-              # falcon logging to stderr leads to the following bug:
-              # https://github.com/socketry/async/issues/138
               Falcon::Server.middleware(
                 Rails.application,
                 verbose: false,
@@ -50,7 +49,11 @@ module WebServerHelper
             reactor = server.run
             logger.info('Test web server: started web server')
             ready.signal(true)
-            reactor.each(&:wait)
+            if reactor.respond_to?(:each)
+              reactor.each(&:wait)
+            else
+              reactor.wait
+            end
 
             #inner.children.each(&:wait)
           }

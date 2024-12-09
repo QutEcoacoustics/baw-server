@@ -15,22 +15,18 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id) ON DELETE => cascade
 #  fk_rails_...  (question_id => questions.id)
 #  fk_rails_...  (study_id => studies.id)
 #
 class Response < ApplicationRecord
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_responses
+  belongs_to :creator, class_name: 'User', inverse_of: :created_responses
   belongs_to :question
   belongs_to :study
   belongs_to :dataset_item
 
   # association validations
-  validates :creator, presence: true
-  validates :question, presence: true
-  validates :study, presence: true
-  validates :dataset_item, presence: true
   validates :data, presence: true
 
   # Response is associated with study directly and also via question
@@ -77,15 +73,12 @@ class Response < ApplicationRecord
   private
 
   def consistent_associations
-    if !study.nil? && !question.nil?
-      unless study.question_ids.include?(question.id)
-        errors.add(:question_id, 'parent question is not associated with parent study')
-      end
+    if !study.nil? && !question.nil? && study.question_ids.exclude?(question.id)
+      errors.add(:question_id, 'parent question is not associated with parent study')
     end
-    if !study.nil? && !dataset_item.nil?
-      if study.dataset_id != dataset_item.dataset_id
-        errors.add(:dataset_item_id, 'dataset item and study must belong to the same dataset')
-      end
-    end
+    return unless !study.nil? && !dataset_item.nil?
+    return unless study.dataset_id != dataset_item.dataset_id
+
+    errors.add(:dataset_item_id, 'dataset item and study must belong to the same dataset')
   end
 end

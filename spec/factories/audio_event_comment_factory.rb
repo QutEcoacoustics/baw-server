@@ -28,7 +28,7 @@
 #
 # Foreign Keys
 #
-#  audio_event_comments_audio_event_id_fk  (audio_event_id => audio_events.id)
+#  audio_event_comments_audio_event_id_fk  (audio_event_id => audio_events.id) ON DELETE => cascade
 #  audio_event_comments_creator_id_fk      (creator_id => users.id)
 #  audio_event_comments_deleter_id_fk      (deleter_id => users.id)
 #  audio_event_comments_flagger_id_fk      (flagger_id => users.id)

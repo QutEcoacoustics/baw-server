@@ -92,7 +92,7 @@ module Fixtures
   class KillableJob < FixtureJob
     def perform(_echo_id)
       logger.info { 'starting killable ' }
-      (0..100).each do |num|
+      101.times do |num|
         logger.info('progress killable ', num:)
         report_progress(num, 100, "At #{num} of 100")
         sleep(0.1)
@@ -160,53 +160,53 @@ module Fixtures
     end
   end
 
-  class FakeAnalysisJob < BawWorkers::Jobs::ApplicationJob
-    queue_as Settings.actions.analysis.queue
-    perform_expects Hash
+  module Concurrency
+    class NormalJobClass < BawWorkers::Jobs::ApplicationJob
+      queue_as Fixtures::FIXTURE_QUEUE
+      perform_expects [Numeric, Integer]
 
-    def perform(analysis_params)
-      status_updater = BawWorkers::Jobs::Analysis::Status.new(BawWorkers::Config.api_communicator)
-      mock_result = analysis_params[:mock_result]&.to_sym || :successful
-      skip_completion = analysis_params[:skip_completion] == true
-      good_cancel_behaviour = analysis_params.fetch(:good_cancel_behaviour, true) == true
-
-      # do the working status update call
-      begin
-        # check if should cancel
-        status_updater.begin(analysis_params)
-      rescue BawWorkers::Exceptions::ActionCancelledError
-        status_updater.end(analysis_params, :cancelled) if good_cancel_behaviour
-        return
+      def perform(sleep_amount)
+        count = 0
+        while count < sleep_amount
+          tick(count)
+          count += 0.1
+          sleep 0.1
+        end
+        puts 'i just work'
       end
 
-      duration = analysis_params.fetch(:sleep, 0.0)
-      BawWorkers::Config.logger_worker.info('sleep for', sleep: duration)
-      sleep duration
-
-      # do some work
-      work = {
-        resque_id: job_id,
-        analysis_params:,
-        result: Time.now
-      }
-
-      unless skip_completion
-        # simulate the complete call
-        status_updater.end(analysis_params, mock_result)
-
-        raise 'Fake analysis job failing on purpose' if mock_result == :failed
+      def name
+        @name ||= job_id
       end
 
-      work
+      def create_job_id
+        BawWorkers::ActiveJob::Identity::Generators.generate_uuid(self)
+      end
     end
 
-    def create_job_id
-      # duplicate jobs should be detected
-      ::BawWorkers::ActiveJob::Identity::Generators.generate_hash_id(self, 'fake_analysis_job')
+    class DiscardJobClass < NormalJobClass
+      limit_concurrency_to 1, on_limit: :discard
     end
 
-    def name
-      job_id
+    class RetryJobClass < NormalJobClass
+      limit_concurrency_to 1, on_limit: :retry
+    end
+
+    class MultipleJobClass < NormalJobClass
+      limit_concurrency_to 2, on_limit: :discard
+    end
+
+    class FaultyJobClass < NormalJobClass
+      limit_concurrency_to 1, on_limit: :discard
+      def perform(_sleep_amount)
+        raise 'I am faulty'
+      end
+    end
+
+    class ParameterizedJobClass < NormalJobClass
+      limit_concurrency_to 1, on_limit: :discard do |job|
+        job.arguments[0]
+      end
     end
   end
 end

@@ -25,7 +25,7 @@ describe '/projects/{project_id}/permissions' do
 
     # Assert the correct error is returned
     expect_json_response
-    expect_error(:unprocessable_entity, 'Record could not be saved', {
+    expect_error(:unprocessable_content, 'Record could not be saved', {
       allow_logged_in: ['is not exclusive: logged in users is true, anonymous users is true, '],
       allow_anonymous: ['is not exclusive: logged in users is true, anonymous users is true, ']
     })

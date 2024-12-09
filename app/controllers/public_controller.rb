@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
+# home pages and landing pages
 class PublicController < ApplicationController
-  skip_authorization_check only: [
+  SKIP_AUTH_FOR = [
     :index,
     :website_status,
     :credits,
@@ -14,7 +15,15 @@ class PublicController < ApplicationController
     :new_data_request, :create_data_request,
 
     :cors_preflight
-  ]
+  ].freeze
+
+  skip_authorization_check only: SKIP_AUTH_FOR
+
+  def should_authenticate_user?
+    return false if SKIP_AUTH_FOR.include?(action_sym)
+
+    super
+  end
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
@@ -31,7 +40,7 @@ class PublicController < ApplicationController
     json_data_file = "#{base_path}#{image_base}animals.json"
     sensor_tree = "#{base_path}#{image_base}sensor_tree.jpg"
     if File.exist?(json_data_file) && File.exist?(sensor_tree)
-      species_data = JSON.load(File.read(json_data_file))
+      species_data = JSON.parse(File.read(json_data_file))
       item_count = species_data['species'].size
       item_index = rand(item_count)
       # select a random image with audio and sensor tree
@@ -128,8 +137,8 @@ class PublicController < ApplicationController
         PublicMailer.contact_us_message(current_user, @contact_us, request).deliver_now
         format.html {
           redirect_to contact_us_path,
-                      notice: "Thank you for contacting us. If you've asked us to contact you or " \
-                              'we need more information, we will be in touch with you shortly.'
+            notice: "Thank you for contacting us. If you've asked us to contact you or " \
+                    'we need more information, we will be in touch with you shortly.'
         }
       else
         format.html {
@@ -164,7 +173,7 @@ class PublicController < ApplicationController
         PublicMailer.bug_report_message(current_user, @bug_report, request).deliver_now
         format.html {
           redirect_to bug_report_path,
-                      notice: 'Thank you, your report was successfully submitted.
+            notice: 'Thank you, your report was successfully submitted.
  If you entered an email address, we will let you know if the problems you describe are resolved.'
         }
       else
@@ -203,7 +212,7 @@ class PublicController < ApplicationController
         PublicMailer.data_request_message(current_user, @data_request, request).deliver_now
         format.html {
           redirect_to data_request_path,
-                      notice: 'Your request was successfully submitted. We will be in contact shortly.'
+            notice: 'Your request was successfully submitted. We will be in contact shortly.'
         }
       else
         format.html {
@@ -219,7 +228,7 @@ class PublicController < ApplicationController
     # it will not be used for valid OPTIONS requests
     # valid OPTIONS requests will be caught by the rails-cors gem (see application.rb)
     raise CustomErrors::BadRequestError,
-          "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
+      "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
   end
 
   def nav_menu
@@ -266,7 +275,7 @@ class PublicController < ApplicationController
 
     @annotation_download = nil
 
-    if !selected_project_id.blank? && !selected_site_id.blank?
+    if selected_project_id.present? && selected_site_id.present?
 
       # only accessible if current user has show access to project
       # and site is in specified project
@@ -285,12 +294,12 @@ class PublicController < ApplicationController
       raise CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
 
       @annotation_download = {
-        link: download_site_audio_events_path(project_id, site_id, selected_timezone_name: selected_timezone_name),
+        link: download_site_audio_events_path(project_id, site_id, selected_timezone_name:),
         name: site.name,
         timezone_name: selected_timezone_name
       }
 
-    elsif !selected_user_id.blank?
+    elsif selected_user_id.present?
 
       user_id = selected_user_id.to_i
       user = User.find(user_id)
@@ -300,7 +309,7 @@ class PublicController < ApplicationController
       raise CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Core.is_admin?(current_user) && !is_same_user
 
       @annotation_download = {
-        link: download_user_audio_events_path(user_id, selected_timezone_name: selected_timezone_name),
+        link: download_user_audio_events_path(user_id, selected_timezone_name:),
         name: user.user_name,
         timezone_name: selected_timezone_name
       }

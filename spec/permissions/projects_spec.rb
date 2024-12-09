@@ -39,49 +39,57 @@ describe 'Project permissions' do
   the_user :invalid, can_do: nothing, and_cannot_do: everything, fails_with: :unauthorized
 
   context 'with public project creation disabled' do
-    before do
-      allow(Settings.permissions).to receive(:any_user_can_create_projects).and_return(false)
-    end
+    with_custom_action(
+      :create_non_public_project,
+      path: '',
+      verb: :post,
+      expect: :created,
+      body: :create,
+      before: lambda { |_user, _action|
+        allow(Settings.permissions).to receive(:any_user_can_create_projects).and_return(false)
+      }
+    )
 
-    ensures :owner, :writer, :reader, :harvester, cannot: [:create]
-  end
-end
-
-# frozen_string_literal: true
-
-describe 'Project permissions (when modifying allow_audio_upload)' do
-  create_entire_hierarchy
-
-  given_the_route '/projects' do
-    {
-      id: project.id
-    }
+    ensures :owner, :writer, :reader, :harvester, :no_access, cannot: [:create_non_public_project]
+    ensures :anonymous, :invalid, cannot: [:create_non_public_project], fails_with: :unauthorized
+    ensures :admin, can: [:create_non_public_project]
   end
 
-  before do
-    project.allow_audio_upload = false
-    project.save!
-  end
-
-  context 'when updating' do
+  context 'when modifying allow_audio_upload: when updating' do
     # define a non-standard set of behaviors to test against - we don't usually send just a single property
-    send_update_body do
-      [{ project: { allow_audio_upload: true } }, :json]
-    end
+    with_custom_action(
+      :allow_audio_upload_update,
+      path: '{id}',
+      verb: :put,
+      expect: :single,
+      body: [{ project: { allow_audio_upload: true } }, :json],
+      before: lambda { |_user, _action|
+        project.allow_audio_upload = false
+        project.save!
+      }
+    )
 
-    ensures :admin, can: [:update]
-    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:update]
-    ensures :anonymous, :invalid, cannot: [:update], fails_with: :unauthorized
+    ensures :admin, can: [:allow_audio_upload_update]
+    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:allow_audio_upload_update]
+    ensures :anonymous, :invalid, cannot: [:allow_audio_upload_update], fails_with: :unauthorized
   end
 
-  context 'when creating' do
+  context 'when modifying allow_audio_upload: when creating' do
     # define a non-standard set of behaviors to test against - we don't usually send just a single property
-    send_create_body do
-      [body_attributes_for(:project, factory: :project_with_uploads_enabled), :json]
-    end
+    with_custom_action(
+      :allow_audio_upload_create,
+      path: '',
+      verb: :post,
+      expect: :created,
+      body: -> { [body_attributes_for(:project, factory: :project_with_uploads_enabled), :json] },
+      before: lambda { |_user, _action|
+        project.allow_audio_upload = false
+        project.save!
+      }
+    )
 
-    ensures :admin, can: [:create]
-    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:create]
-    ensures :anonymous, :invalid, cannot: [:create], fails_with: :unauthorized
+    ensures :admin, can: [:allow_audio_upload_create]
+    ensures :harvester, :owner, :writer, :reader, :no_access, cannot: [:allow_audio_upload_create]
+    ensures :anonymous, :invalid, cannot: [:allow_audio_upload_create], fails_with: :unauthorized
   end
 end

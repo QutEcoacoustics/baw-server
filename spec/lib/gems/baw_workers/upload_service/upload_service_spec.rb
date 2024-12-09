@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'upload_service_steps'
-require 'support/shared_test_helpers'
 
 describe BawWorkers::UploadService::Communicator do
   include UploadServiceSteps
@@ -103,7 +102,7 @@ describe BawWorkers::UploadService::Communicator do
     upload_service.server_version
 
     old_token = upload_service.client.token
-    expect(old_token).to be_an_instance_of(::SftpgoClient::Token)
+    expect(old_token).to be_an_instance_of(SftpgoClient::Token)
 
     # mutate the token to make it invalid
     new_expiry = 10.minutes.ago
@@ -112,7 +111,7 @@ describe BawWorkers::UploadService::Communicator do
     # reassign it to the client
     upload_service.client.instance_variable_set(
       :@token,
-      ::SftpgoClient::Token.new(access_token: new_token, expires_at: new_expiry)
+      SftpgoClient::Token.new(access_token: new_token, expires_at: new_expiry)
     )
 
     # reissue the request - our service should automatically renew the expired token
@@ -152,7 +151,7 @@ describe BawWorkers::UploadService::Communicator do
     end
 
     step 'then it should have good status' do
-      expect(@service_status).to be_an_instance_of(::Dry::Monads::Success)
+      expect(@service_status).to be_an_instance_of(Dry::Monads::Success)
       expect(@service_status.value!).to be_an_instance_of(SftpgoClient::ServicesStatus)
       expect(@service_status.value!.data_provider[:error]).to be_blank
     end

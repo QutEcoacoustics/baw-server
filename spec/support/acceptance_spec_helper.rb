@@ -44,14 +44,14 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], caller: do
+  example "#{http_method} #{description} - #{expected_status}", caller:, document: opts[:document] do
     # allow for modification of opts, provide context so let and let! values can be accessed
     opts_mod&.call(self, opts)
 
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
-    problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||
-              (!expected_error_class.blank? && expected_error_regexp.blank?)
+    problem = (expected_error_class.blank? && expected_error_regexp.present?) ||
+              (expected_error_class.present? && expected_error_regexp.blank?)
 
     raise 'Specify both expected_error_class and expected_error_regexp' if problem
 
@@ -65,7 +65,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
     current_metadata[:headers].delete(header_key) if is_remove_header && has_header
 
     begin
-      if !expected_error_class.blank? && !expected_error_regexp.blank?
+      if expected_error_class.present? && expected_error_regexp.present?
         expect {
           do_request
         }.to raise_error(expected_error_class, expected_error_regexp)
@@ -112,7 +112,7 @@ def media_request_options(http_method, description, expected_status, opts = {})
 
   # add better metadata for tests, get the caller information that invoked this method
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], caller: do
+  example "#{http_method} #{description} - #{expected_status}", caller:, document: opts[:document] do
     audio_file = if opts[:dont_copy_test_audio]
                    nil
                  else
@@ -170,6 +170,11 @@ def acceptance_checks_shared(request, opts = {})
   # don't document because it returns binary data that can't be json encoded
   #is_documentation_run = !!(ENV['GENERATE_DOC'])
 
+  begin
+    response_headers = Rack::Headers[(response_headers.nil? ? request.first[:response_headers] : response_headers)]
+  rescue StandardError
+    debugger
+  end
   actual_response = if http_method == :get && response_headers['Content-Transfer-Encoding'] == 'binary'
                       "#{response_body[0...100]} <TRIMMED>"
                     else
@@ -192,8 +197,8 @@ def acceptance_checks_shared(request, opts = {})
       actual_response_content_type: response_headers['Content-Type'],
 
       #actual_request_content_type: request_headers['Content-Type'],
-      actual_request_headers: request.nil? || request.empty? ? nil : request[0][:request_headers],
-      actual_request: request.nil? || request.empty? ? nil : request[0][:request_body],
+      actual_request_headers: request.blank? ? nil : request[0][:request_headers],
+      actual_request: request.blank? ? nil : request[0][:request_body],
 
       expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status])
     }
@@ -203,87 +208,88 @@ def acceptance_checks_shared(request, opts = {})
     "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{MiscHelper.pretty_hash(opts)}"
 
   # expectations
-  expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
-  expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
+  aggregate_failures do
+    expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
+    expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
 
-  #expect(opts[:expected_request_content_type]).to eq(opts[:actual_request_content_type]), "Mismatch: request content type. #{opts[:msg]}"
-  expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]),
-    "Mismatch: response has content. #{opts[:actual_response]} #{opts[:msg]}"
-  if opts[:actual_response_content_type].blank?
-    expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
-  elsif opts.include?(:actual_response_content_type)
-    if opts[:expected_response_content_type].nil?
-      expect(opts[:actual_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
-    else
-      expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]),
-        "Mismatch: response content type. #{opts[:msg]}"
-    end
-  end
-
-  unless opts[:actual_response_content_type].blank?
-
-    if opts[:actual_response_content_type] == 'application/json' || opts[:actual_response_headers].include?('X-Error-Type')
-      expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil,
-        "Mismatch: content transfer encoding. #{opts[:msg]}"
-      expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil,
-        "Mismatch: content disposition. #{opts[:msg]}"
+    #expect(opts[:expected_request_content_type]).to eq(opts[:actual_request_content_type]), "Mismatch: request content type. #{opts[:msg]}"
+    expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]),
+      "Mismatch: response has content. #{opts[:actual_response]} #{opts[:msg]}"
+    if opts[:actual_response_content_type].blank?
+      expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
+    elsif opts.include?(:actual_response_content_type)
+      if opts[:expected_response_content_type].nil?
+        expect(opts[:actual_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
+      else
+        expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]),
+          "Mismatch: response content type. #{opts[:msg]}"
+      end
     end
 
-    if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
-       !opts[:actual_response_headers].include?('X-Error-Type')
-      expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'),
-        "Mismatch: content transfer encoding. #{opts[:msg]}"
-      expect(opts[:actual_response_headers]['Content-Disposition']).to match(/(inline|attachment); filename=/),
-        "Mismatch: content disposition. #{opts[:msg]}"
-    end
-  end
+    if opts[:actual_response_content_type].present?
 
-  unless opts[:expected_request_header_values].blank?
-    expected_request_headers = opts[:expected_request_header_values]
-    actual_request_headers = opts[:actual_request_headers]
-    expected_request_headers.each do |key, value|
-      expect(actual_request_headers.keys).to include(key),
-        "Mismatch: Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
-      expect(actual_request_headers[key]).to eq(value),
-        "Mismatch: Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
-    end
+      if opts[:actual_response_content_type] == 'application/json' || opts[:actual_response_headers].include?('X-Error-Type')
+        expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil,
+          "Mismatch: content transfer encoding. #{opts[:msg]}"
+        expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil,
+          "Mismatch: content disposition. #{opts[:msg]}"
+      end
 
-    difference = actual_request_headers.keys - expected_request_headers.keys
-    expect(difference).to be_empty,
-      "Mismatch: request headers differ by #{difference}: \nExpected: #{expected_request_headers} \nActual: #{actual_request_headers}"
-
-  end
-
-  unless opts[:expected_partial_response_header_value].blank?
-    expected_response_headers = opts[:expected_partial_response_header_value]
-    actual_response_headers = opts[:actual_response_headers]
-
-    expected_response_headers.each do |key, value|
-      expect(actual_response_headers).to include(key),
-        "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
-      expect(actual_response_headers[key]).to include(value),
-        "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not include expected value #{value.inspect}."
-    end
-  end
-
-  unless opts[:expected_response_header_values].blank?
-    expected_response_headers = opts[:expected_response_header_values]
-    actual_response_headers = opts[:actual_response_headers]
-
-    expected_response_headers.each do |key, value|
-      expect(actual_response_headers).to include(key),
-        "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
-      expect(actual_response_headers[key]).to eq(value),
-        "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
+      if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
+         opts[:actual_response_headers].exclude?('X-Error-Type')
+        expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'),
+          "Mismatch: content transfer encoding. #{opts[:msg]}"
+        expect(opts[:actual_response_headers]['Content-Disposition']).to match(/(inline|attachment); filename=/),
+          "Mismatch: content disposition. #{opts[:msg]}"
+      end
     end
 
-    if opts[:expected_response_header_values_match]
-      difference = actual_response_headers.keys - expected_response_headers.keys
+    if opts[:expected_request_header_values].present?
+      expected_request_headers = opts[:expected_request_header_values]
+      actual_request_headers = opts[:actual_request_headers]
+      expected_request_headers.each do |key, value|
+        expect(actual_request_headers.keys).to include(key),
+          "Mismatch: Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
+        expect(actual_request_headers[key]).to eq(value),
+          "Mismatch: Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
+      end
+
+      difference = actual_request_headers.keys - expected_request_headers.keys
       expect(difference).to be_empty,
-        "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
+        "Mismatch: request headers differ by #{difference}: \nExpected: #{expected_request_headers} \nActual: #{actual_request_headers}"
+
+    end
+
+    if opts[:expected_partial_response_header_value].present?
+      expected_response_headers = opts[:expected_partial_response_header_value]
+      actual_response_headers = opts[:actual_response_headers]
+
+      expected_response_headers.each do |key, value|
+        expect(actual_response_headers).to include(key),
+          "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+        expect(actual_response_headers[key]).to include(value),
+          "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not include expected value #{value.inspect}."
+      end
+    end
+
+    if opts[:expected_response_header_values].present?
+      expected_response_headers = opts[:expected_response_header_values]
+      actual_response_headers = opts[:actual_response_headers]
+
+      expected_response_headers.each do |key, value|
+        expect(actual_response_headers).to include(key),
+          "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+        expect(actual_response_headers[key]).to eq(value),
+          "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
+      end
+
+      if opts[:expected_response_header_values_match]
+        difference = actual_response_headers.keys - expected_response_headers.keys
+        expect(difference).to be_empty,
+          "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
+      end
     end
   end
-
   opts
 end
 
@@ -313,13 +319,13 @@ def acceptance_checks_json(opts = {})
   )
 
   actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers.parse_json(opts[:actual_response])
-  data_present = !opts[:actual_response].blank? &&
-                 !actual_response_parsed.blank? &&
+  data_present = opts[:actual_response].present? &&
+                 actual_response_parsed.present? &&
                  actual_response_parsed.include?('data') &&
-                 !actual_response_parsed['data'].blank?
+                 actual_response_parsed['data'].present?
 
-  data_included = !opts[:actual_response].blank? &&
-                  !actual_response_parsed.blank? &&
+  data_included = opts[:actual_response].present? &&
+                  actual_response_parsed.present? &&
                   actual_response_parsed.include?('data')
 
   if data_included && actual_response_parsed['data'].is_a?(Array)
@@ -344,7 +350,7 @@ def acceptance_checks_json(opts = {})
       "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})"
   end
 
-  unless opts[:data_item_count].blank?
+  if opts[:data_item_count].present?
     expect(actual_response_parsed_size).to eq(opts[:data_item_count]),
       "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})"
   end
@@ -355,7 +361,7 @@ def acceptance_checks_json(opts = {})
 
   check_invalid_data_content(opts, message_prefix, actual_response_parsed)
 
-  unless opts[:expected_json_path].blank?
+  if opts[:expected_json_path].present?
     Array.wrap(opts[:expected_json_path]).each do |expected_json_path_item|
       expect(opts[:actual_response]).to have_json_path(expected_json_path_item),
         "#{message_prefix} to find '#{expected_json_path_item}' in '#{opts[:actual_response]}'"
@@ -364,7 +370,7 @@ def acceptance_checks_json(opts = {})
   end
 
   if defined?(expected_unordered_ids) &&
-     !expected_unordered_ids.blank? &&
+     expected_unordered_ids.present? &&
      expected_unordered_ids.is_a?(Array) &&
      data_present &&
      actual_response_parsed['data'].is_a?(Array)
@@ -430,18 +436,28 @@ def acceptance_checks_media(opts = {})
   expect(opts[:actual_response_headers]['Content-Length']).not_to be_blank, "Mismatch: content length. #{opts[:msg]}"
 
   if is_json
-    not_allowed_headers = MediaPoll::HEADERS_EXPOSED - ['Content-Length']
+    not_allowed_headers = (MediaPoll::HEADERS_EXPOSED - ['Content-Length']).map(&:downcase)
     actual_present = opts[:actual_response_headers].keys - (opts[:actual_response_headers].keys - not_allowed_headers)
     expect(opts[:actual_response_headers].keys).not_to include(*not_allowed_headers),
       "These headers were present when they should not be #{actual_present} #{opts[:msg]}"
-  elsif opts[:actual_response_headers].keys.include?('X-Error-Type')
+  elsif opts[:actual_response_headers].key?('X-Error-Type')
     # only use default expected headers for error if expected headers were not specified in opts
-    expected_headers = opts[:expected_headers] || (MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL,
-                                                                                 MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING])
+    expected_headers = opts[:expected_headers]
+    if expected_headers.blank?
+      expected_headers = (MediaPoll::HEADERS_EXPOSED - [
+        MediaPoll::HEADER_KEY_ELAPSED_TOTAL,
+        MediaPoll::HEADER_KEY_ELAPSED_PROCESSING,
+        MediaPoll::HEADER_KEY_ELAPSED_WAITING,
+        MediaPoll::HEADER_KEY_RESPONSE_FROM,
+        MediaPoll::HEADER_KEY_RESPONSE_START
+      ])
+    end
+
+    expected_headers = expected_headers.map(&:downcase)
     expect(opts[:actual_response_headers].keys).to include(*expected_headers),
       "Missing headers: #{expected_headers - opts[:actual_response_headers].keys} #{opts[:msg]}"
   else
-    expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED),
+    expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED.map(&:downcase)),
       "Missing headers: #{MediaPoll::HEADERS_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
   end
 
@@ -500,13 +516,13 @@ def acceptance_checks_media(opts = {})
         "Mismatch: actual media length #{actual_length} did not match recieved length of #{downloaded_length}. #{opts[:msg]}"
       )
     ensure
-      File.delete temp_file if File.exist? temp_file
+      FileUtils.rm_f temp_file
     end
   end
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
-  example "#{description} - #{expected_status}", document: false, caller: do
+  example "#{description} - #{expected_status}", caller:, document: false do
     do_request
     status.should eq(expected_status),
       "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
@@ -550,7 +566,6 @@ end
 
 def find_unexpected_entries(parent, hash, remaining_to_match, not_included)
   hash.each do |key, value|
-    new_parent = parent
     new_parent = if parent.nil?
                    key
                  else
@@ -608,7 +623,7 @@ end
 def create_media_options(audio_recording, test_audio_file = nil)
   options = {}
   options[:datetime] = audio_recording.recorded_date
-  unless audio_recording.original_file_name.blank?
+  if audio_recording.original_file_name.present?
     options[:original_format] = File.extname(audio_recording.original_file_name)
   end
   if options[:original_format].blank?

@@ -28,7 +28,7 @@
 #
 # Foreign Keys
 #
-#  audio_event_comments_audio_event_id_fk  (audio_event_id => audio_events.id)
+#  audio_event_comments_audio_event_id_fk  (audio_event_id => audio_events.id) ON DELETE => cascade
 #  audio_event_comments_creator_id_fk      (creator_id => users.id)
 #  audio_event_comments_deleter_id_fk      (deleter_id => users.id)
 #  audio_event_comments_flagger_id_fk      (flagger_id => users.id)
@@ -38,17 +38,16 @@ class AudioEventComment < ApplicationRecord
   extend Enumerize
 
   belongs_to :audio_event, inverse_of: :comments
-  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_event_comments
-  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_event_comments,
+  belongs_to :creator, class_name: 'User', inverse_of: :created_audio_event_comments
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_audio_event_comments,
     optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_event_comments,
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_audio_event_comments,
     optional: true
-  belongs_to :flagger, class_name: 'User', foreign_key: 'flagger_id', inverse_of: :flagged_audio_event_comments,
+  belongs_to :flagger, class_name: 'User', inverse_of: :flagged_audio_event_comments,
     optional: true
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
 
   # enums
   AVAILABLE_FLAGS_SYMBOLS = [:report].freeze

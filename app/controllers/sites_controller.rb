@@ -110,18 +110,10 @@ class SitesController < ApplicationController
 
   # DELETE /sites/:id
   # DELETE /projects/:project_id/sites/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_project_if_exists
-    do_authorize_instance
-
-    @site.destroy
-    add_archived_at_header(@site)
-
-    respond_to do |format|
-      format.html { redirect_to project_sites_url(@project) }
-      format.json { respond_destroy }
-    end
   end
 
   # GET /projects/:project_id/sites/:id/upload_instructions
@@ -157,7 +149,7 @@ class SitesController < ApplicationController
   def orphans
     do_authorize_class
 
-    @sites = Site.with_deleted.left_joins(:projects_sites).where('projects_sites.project_id IS NULL')
+    @sites = Site.with_discarded.left_joins(:projects_sites).where(projects_sites: { project_id: nil })
 
     respond_to { |format|
       format.html
@@ -234,7 +226,7 @@ class SitesController < ApplicationController
     project_id = params[:project_id].to_i
 
     # for show/edit/update, check that the site belongs to the project
-    if @site.present? && !@site.new_record? && !@site.project_ids.include?(project_id)
+    if @site.present? && !@site.new_record? && @site.project_ids.exclude?(project_id)
 
       # this site does not belong to the project in the route parameter
       raise ActiveRecord::RecordNotFound

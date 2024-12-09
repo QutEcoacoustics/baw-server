@@ -2,7 +2,7 @@
 
 require 'swagger_helper'
 
-describe 'sites (nested)', type: :request do
+describe 'sites (nested)' do
   create_entire_hierarchy
 
   sends_json_and_expects_json
@@ -100,7 +100,7 @@ describe 'sites (nested)', type: :request do
   end
 end
 
-describe 'sites (orphans)', type: :request do
+describe 'sites (orphans)' do
   create_entire_hierarchy
 
   sends_json_and_expects_json

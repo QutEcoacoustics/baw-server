@@ -4,36 +4,42 @@
 #
 # Table name: audio_events
 #
-#  id                    :integer          not null, primary key
-#  channel               :integer
-#  context               :jsonb
-#  deleted_at            :datetime
-#  end_time_seconds      :decimal(10, 4)
-#  high_frequency_hertz  :decimal(10, 4)
-#  is_reference          :boolean          default(FALSE), not null
-#  low_frequency_hertz   :decimal(10, 4)   not null
-#  start_time_seconds    :decimal(10, 4)   not null
-#  created_at            :datetime
-#  updated_at            :datetime
-#  audio_event_import_id :integer
-#  audio_recording_id    :integer          not null
-#  creator_id            :integer          not null
-#  deleter_id            :integer
-#  updater_id            :integer
+#  id                                                                              :integer          not null, primary key
+#  channel                                                                         :integer
+#  deleted_at                                                                      :datetime
+#  end_time_seconds                                                                :decimal(10, 4)
+#  high_frequency_hertz                                                            :decimal(10, 4)
+#  import_file_index(Index of the row/entry in the file that generated this event) :integer
+#  is_reference                                                                    :boolean          default(FALSE), not null
+#  low_frequency_hertz                                                             :decimal(10, 4)
+#  score(Score or confidence for this event.)                                      :decimal(, )
+#  start_time_seconds                                                              :decimal(10, 4)   not null
+#  created_at                                                                      :datetime
+#  updated_at                                                                      :datetime
+#  audio_event_import_file_id                                                      :integer
+#  audio_recording_id                                                              :integer          not null
+#  creator_id                                                                      :integer          not null
+#  deleter_id                                                                      :integer
+#  provenance_id(Source of this event)                                             :integer
+#  updater_id                                                                      :integer
 #
 # Indexes
 #
-#  index_audio_events_on_audio_recording_id  (audio_recording_id)
-#  index_audio_events_on_creator_id          (creator_id)
-#  index_audio_events_on_deleter_id          (deleter_id)
-#  index_audio_events_on_updater_id          (updater_id)
+#  index_audio_events_on_audio_event_import_file_id  (audio_event_import_file_id)
+#  index_audio_events_on_audio_recording_id          (audio_recording_id)
+#  index_audio_events_on_creator_id                  (creator_id)
+#  index_audio_events_on_deleter_id                  (deleter_id)
+#  index_audio_events_on_provenance_id               (provenance_id)
+#  index_audio_events_on_updater_id                  (updater_id)
 #
 # Foreign Keys
 #
-#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id)
+#  audio_events_audio_recording_id_fk  (audio_recording_id => audio_recordings.id) ON DELETE => cascade
 #  audio_events_creator_id_fk          (creator_id => users.id)
 #  audio_events_deleter_id_fk          (deleter_id => users.id)
 #  audio_events_updater_id_fk          (updater_id => users.id)
+#  fk_rails_...                        (audio_event_import_file_id => audio_event_import_files.id) ON DELETE => cascade
+#  fk_rails_...                        (provenance_id => provenances.id)
 #
 FactoryBot.define do
   factory :audio_event do

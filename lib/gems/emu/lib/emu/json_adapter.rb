@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'dry/transformer/all'
-require 'dry/transformer/class'
-require 'dry/transformer/recursion'
+require 'dry/transformer'
 
 module Emu
   # A dry transformer to convert a JSON string into a hash.
@@ -42,7 +40,7 @@ module Emu
 
           #symbolize_keys
 
-          constructor_inject(HashWithIndifferentAccess)
+          constructor_inject(ActiveSupport::HashWithIndifferentAccess)
         end
       end
     end

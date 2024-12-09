@@ -23,10 +23,10 @@ xdescribe AddPkToStatsTable, :migration do
         Statistics::UserStatistics,
         Statistics::AnonymousUserStatistics
       ].each do |klass|
-        allow(klass).to(receive(:upsert_counter).and_wrap_original { |m, *args|
+        allow(klass).to(receive(:upsert_counter).and_wrap_original { |manager, *args|
           attributes = args[0]
           attributes[:bucket] = ((Date.today.to_datetime + day)...(Date.today.to_datetime + 1.day + day))
-          m.call(attributes)
+          manager.call(attributes)
         })
       end
 

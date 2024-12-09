@@ -1,6 +1,8 @@
 ---
 require:
   - rubocop-rspec
+  - rubocop-rails
+  - rubocop-factory_bot
 AllCops:
   DisplayCopNames: true
   DisplayStyleGuide: true
@@ -8,26 +10,41 @@ AllCops:
     - "**/Rakefile"
     - "**/config.ru"
     - "**/*.rb"
+  Exclude:
+    - "bin/**/*"
   TargetRubyVersion: 3.1
   NewCops: enable
 # Bug in rubocop-rspec config merge: https://github.com/rubocop/rubocop-rspec/pull/1163
+# https://github.com/rubocop/rubocop-rspec/blob/master/config/default.yml
 RSpec:
   Language:
     ExampleGroups:
       Regular:
         # rswag example group aliases
         - path
-        - get
-        - push
-        - post
-        - delete
+        # our multistep test module
         - stepwise
+        # our permissions helpers
+        - ensures
+        - the_users
+        - the_user
     Examples:
       Regular:
         # custom dsl for permissions tests
         - the_users
         - the_user
+        - ensures
+        # our multistep test module
         - step
+        # rswag 'examples'
+        - get
+        - push
+        - post
+        - delete
+    Expectations:
+      # rswag test helper that runs expect
+      - run_test!
+      - run_test
 
 # Customized options
 Lint/DeprecatedOpenSSLConstant:
@@ -40,6 +57,8 @@ Lint/StructNewOverride:
   Enabled: true
 Layout/LineLength:
   Max: 120
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
 Layout/EmptyLinesAroundAttributeAccessor:
   Enabled: true
 Layout/EndOfLine:
@@ -82,6 +101,8 @@ Metrics/BlockLength:
     - Async
     - aasm
     - stepwise
+    - included
+    - class_eval
 Metrics/MethodLength:
   Max: 30
   AllowedMethods:
@@ -90,6 +111,10 @@ Metrics/ModuleLength:
   Max: 150
 Metrics/AbcSize:
   Max: 60
+Rails/Output:
+  Exclude:
+    # the rails logger isn't available when patches are running
+    - '**/patches/**'
 # https://github.com/rubocop/rubocop-rspec/issues/795
 RSpec/DescribedClass:
   EnforcedStyle: explicit
@@ -107,7 +132,7 @@ RSpec/NestedGroups:
 RSpec/MultipleMemoizedHelpers:
   Max: 10
 RSpec/VariableName:
-  IgnoredPatterns:
+  AllowedPatterns:
     # Variable named after http header required by rswag
     - ^Authorization$
 RSpec/NamedSubject:

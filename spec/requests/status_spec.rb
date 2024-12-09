@@ -7,7 +7,7 @@ describe '/status.json' do
     }
   end
 
-  example 'everything ok' do
+  it 'everything ok' do
     get '/status.json'
 
     expect_success
@@ -17,11 +17,12 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
+      upload: 'Alive',
+      batch_analysis: 'Connected'
     })
   end
 
-  example 'timeout (storage)' do
+  it 'timeout (storage)' do
     allow(AudioRecording).to receive(:check_storage) {
       # simulate timeout
       (1..120).each do |i|
@@ -39,11 +40,12 @@ describe '/status.json' do
       database: 'unknown',
       redis: 'unknown',
       storage: 'unknown',
-      upload: 'unknown'
+      upload: 'unknown',
+      batch_analysis: 'unknown'
     })
   end
 
-  example 'redis cant connect' do
+  it 'redis cant connect' do
     allow(BawWorkers::Config.redis_communicator).to \
       receive(:ping)
       .and_raise(Redis::CannotConnectError, 'message')
@@ -56,11 +58,12 @@ describe '/status.json' do
       database: true,
       redis: 'error: message',
       storage: '1 audio recording storage directory available.',
-      upload: 'Alive'
+      upload: 'Alive',
+      batch_analysis: 'Connected'
     })
   end
 
-  example 'upload service, bad storage' do
+  it 'upload service, bad storage' do
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_return(
         body: '{"data_provider":{"error": "error message"}}',
@@ -77,11 +80,12 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'error message'
+      upload: 'error message',
+      batch_analysis: 'Connected'
     })
   end
 
-  example 'upload service, somewhere in the middle error' do
+  it 'upload service, somewhere in the middle error' do
     # error generated due to bad config in prod, but we didn't handle it well, hence the test
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_return(body: "Client sent an HTTP request to an HTTPS server.\n", status: 400)
@@ -95,11 +99,12 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'Client sent an HTTP request to an HTTPS server.'
+      upload: 'Client sent an HTTP request to an HTTPS server.',
+      batch_analysis: 'Connected'
     })
   end
 
-  example 'upload service, time out' do
+  it 'upload service, time out' do
     stub_request(:get, 'upload.test:8080/api/v2/status')
       .to_timeout
 
@@ -112,7 +117,8 @@ describe '/status.json' do
       database: true,
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
-      upload: 'error: execution expired'
+      upload: 'error: execution expired',
+      batch_analysis: 'Connected'
     })
   end
 end

@@ -25,8 +25,8 @@ module SftpgoClient
       add_to_params(params, :order, order, &method(:valid_order))
       add_to_params(params, :username, username, &:string?)
 
-      wrap_response(@connection.get(USERS_PATH, params)).fmap { |r|
-        r.body.map(&SftpgoClient::User.method(:new))
+      wrap_response(@connection.get(USERS_PATH, params)).fmap { |audio_recording|
+        audio_recording.body.map(&SftpgoClient::User.method(:new))
       }
     end
 
@@ -37,8 +37,8 @@ module SftpgoClient
     def get_user(user_name:)
       validate_user_name(:user_name, user_name)
 
-      wrap_response(@connection.get(user_path(user_name))).fmap { |r|
-        SftpgoClient::User.new(r.body)
+      wrap_response(@connection.get(user_path(user_name))).fmap { |audio_recording|
+        SftpgoClient::User.new(audio_recording.body)
       }
     end
 
@@ -49,7 +49,7 @@ module SftpgoClient
       new_user = SftpgoClient::User.new(user)
       response = wrap_response(@connection.post(USERS_PATH, new_user))
 
-      response.fmap { |r| SftpgoClient::User.new(r.body) }
+      response.fmap { |audio_recording| SftpgoClient::User.new(audio_recording.body) }
     end
 
     # Update an existing user
@@ -60,7 +60,7 @@ module SftpgoClient
       validate_user_name(:user_name, user_name)
       response = wrap_response(@connection.put(user_path(user_name), user))
 
-      response.fmap { |r| SftpgoClient::ApiResponse.new(r.body) }
+      response.fmap { |audio_recording| SftpgoClient::ApiResponse.new(audio_recording.body) }
     end
 
     # Delete an existing user
@@ -69,7 +69,9 @@ module SftpgoClient
     def delete_user(user_name:)
       validate_user_name(:user_name, user_name)
 
-      wrap_response(@connection.delete(user_path(user_name))).fmap { |r| SftpgoClient::ApiResponse.new(r.body) }
+      wrap_response(@connection.delete(user_path(user_name))).fmap { |audio_recording|
+        SftpgoClient::ApiResponse.new(audio_recording.body)
+      }
     end
 
     private

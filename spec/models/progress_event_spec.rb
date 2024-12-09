@@ -13,7 +13,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (dataset_item_id => dataset_items.id)
+#  fk_rails_...  (dataset_item_id => dataset_items.id) ON DELETE => cascade
 #
 RSpec.describe ProgressEvent, type: :model do
   subject { FactoryBot.build(:progress_event) }

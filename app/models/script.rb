@@ -4,50 +4,151 @@
 #
 # Table name: scripts
 #
-#  id                             :integer          not null, primary key
-#  analysis_action_params         :json
-#  analysis_identifier            :string           not null
-#  description                    :string
-#  executable_command             :text             not null
-#  executable_settings            :text             not null
-#  executable_settings_media_type :string(255)      default("text/plain")
-#  name                           :string           not null
-#  verified                       :boolean          default(FALSE)
-#  version                        :decimal(4, 2)    default(0.1), not null
-#  created_at                     :datetime         not null
-#  creator_id                     :integer          not null
-#  group_id                       :integer
+#  id                                                                                                                   :integer          not null, primary key
+#  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
+#  description                                                                                                          :string
+#  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
+#  executable_command                                                                                                   :text             not null
+#  executable_settings                                                                                                  :text
+#  executable_settings_media_type                                                                                       :string(255)      default("text/plain")
+#  executable_settings_name                                                                                             :string
+#  name                                                                                                                 :string           not null
+#  resources(Resources required by this script in the PBS format.)                                                      :jsonb
+#  verified                                                                                                             :boolean          default(FALSE)
+#  version(Version of this script - not the version of program the script runs!)                                        :integer          default(1), not null
+#  created_at                                                                                                           :datetime         not null
+#  creator_id                                                                                                           :integer          not null
+#  group_id                                                                                                             :integer
+#  provenance_id                                                                                                        :integer
 #
 # Indexes
 #
-#  index_scripts_on_creator_id  (creator_id)
-#  index_scripts_on_group_id    (group_id)
+#  index_scripts_on_creator_id     (creator_id)
+#  index_scripts_on_group_id       (group_id)
+#  index_scripts_on_provenance_id  (provenance_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...           (provenance_id => provenances.id)
 #  scripts_creator_id_fk  (creator_id => users.id)
 #  scripts_group_id_fk    (group_id => scripts.id)
 #
 class Script < ApplicationRecord
-  # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
-  has_many :analysis_jobs, inverse_of: :script
+  # DEFAULT_SCRIPT_NAME = 'default'
+  # DEFAULT_SCRIPT_IDENTIFIER = 'default'
 
-  # association validations
-  #validates_associated :creator
+  # Allow only lowercase latin letters, numbers, hyphens and underscores.
+  # Must start an end with a letter or number.
+  VALID_ANALYSIS_IDENTIFIER = /\A[a-z0-9][-a-z0-9_]*(?<![-_])\z/
+
+  # relationships
+  belongs_to :creator, class_name: 'User', inverse_of: :created_scripts
+  belongs_to :provenance, inverse_of: :scripts, optional: true
+
+  has_many :analysis_jobs_scripts, dependent: :restrict_with_exception
+  has_many :analysis_jobs, through: :analysis_jobs_scripts, inverse_of: :scripts
+
+  has_many :analysis_jobs_items, inverse_of: :script, dependent: :restrict_with_exception
 
   # attribute validations
-  validates :analysis_action_params, json: { message: 'Must be valid JSON' }
-
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type,
+  validates :name, :analysis_identifier, :executable_command,
     presence: true, length: { minimum: 2 }
+  validates :executable_command, presence: true, length: { minimum: 2 }
+
+  validates :analysis_identifier,
+    presence: true,
+    format: { with: VALID_ANALYSIS_IDENTIFIER },
+    length: { in: 2..255 },
+    uniqueness: {
+      conditions: ->(script) { where.not(group_id: script.group_id) },
+      message: 'must be unique (can be the same within a group)'
+    }
+
+  validates :provenance, presence: true
+
+  #validates :resources, json: { message: ->(errors) { errors }, schema: Api::Schema::RESOURCES_PATH }
   validate :check_version_increase, on: :create
+
+  validate :check_executable_command
+
+  # A filesystem safe version of a name.
+  # E.g. "Analysis Programs Acoustic Indices" -> "ap-indices"
+  # @!attribute [rw] analysis_identifier
+  #   @return [String]
+
+  # override default attribute so we can use our struct as the default converter
+  # @!attribute [rw] resources
+  #   @return [::BawWorkers::BatchAnalysis::DynamicResourceList]
+  attribute :resources, ::BawWorkers::ActiveRecord::Type::DomainModelAsJson.new(
+    target_class: ::BawWorkers::BatchAnalysis::DynamicResourceList,
+    ignore_nil: false
+  )
 
   # for the first script in a group, make sure group_id is set to the script's id
   after_create :set_group_id
 
+  # # Return the default Script ID
+  # # @return [Integer]
+  # def self.default_script_id
+  #   @default_script_id ||= Script.where(name: DEFAULT_SCRIPT_NAME).pluck(:id).first
+  # end
+
+  # # Return the default Script
+  # # @return [Script]
+  # def self.default_script
+  #   @default_script ||= Script.where(name: DEFAULT_SCRIPT_NAME).first
+  # end
+
   def display_name
     "#{name} - v. #{version}"
+  end
+
+  def self.provenance_version_arel
+    @provenance_version_arel ||= Arel.grouping(
+      Provenance
+      .arel_table
+      .project(Provenance.arel_table[:version])
+      .where(Provenance.arel_table[:id].eq(Script.arel_table[:provenance_id]))
+      .ast
+    ).freeze
+  end
+
+  def self.analysis_identifier_and_version_arel
+    arel_table[:analysis_identifier]
+      .concat(Arel::Nodes.build_quoted('_'))
+      .concat(provenance_version_arel)
+  end
+
+  def self.analysis_identifier_and_latest_version_arel
+    arel_table[:analysis_identifier]
+      .concat(Arel::Nodes.build_quoted('_latest'))
+  end
+
+  def self.name_and_version_arel
+    arel_table[:name]
+      .concat(Arel::Nodes.build_quoted(' ('))
+      .concat(provenance_version_arel)
+      .concat(Arel::Nodes.build_quoted(')'))
+  end
+
+  def self.name_and_latest_version_arel
+    arel_table[:name].concat(' (latest)')
+  end
+
+  def self.latest_version_condition_arel
+    max_table = Arel::Table.new(arel_table.table_name, as: 'max_version_scripts')
+
+    arel_table[:version].eq(
+      max_table
+          .project(max_table[:version].maximum)
+          .where(max_table[:analysis_identifier].eq(arel_table[:analysis_identifier]))
+    )
+  end
+
+  def self.latest_version_case_statement_arel(true_case, false_case = Arel.null)
+    latest_version_condition_arel
+      .when(Arel.true).then(true_case)
+      .else(false_case)
   end
 
   def latest_version
@@ -67,11 +168,11 @@ class Script < ApplicationRecord
   def last_version
     if !@last_version && !has_attribute?(:last_version)
       @last_version = Script
-                      .where(group_id:)
-                      .maximum(:version)
+        .where(group_id:)
+        .maximum(:version)
     end
 
-    # prioritise value from db query
+    # prioritize value from db query
     read_attribute(:last_version) || @last_version
   end
 
@@ -82,11 +183,11 @@ class Script < ApplicationRecord
   def first_version
     if !@first_version && !has_attribute?(:first_version)
       @first_version = Script
-                       .where(group_id:)
-                       .minimum(:version)
+        .where(group_id:)
+        .minimum(:version)
     end
 
-    # prioritise value from db query
+    # prioritize value from db query
     read_attribute(:first_version) || @first_version
   end
 
@@ -96,7 +197,7 @@ class Script < ApplicationRecord
 
   # override the default query for the model
   def self.default_scope
-    query = <<-SQL
+    query = <<-SQL.squish
     INNER JOIN (
       SELECT "group_id", max("version") AS "last_version", min("version") AS "first_version"
       FROM "scripts"
@@ -104,7 +205,7 @@ class Script < ApplicationRecord
     ) s2 on ("scripts"."group_id" = "s2"."group_id")
     SQL
 
-    joins(query).select('"scripts".*, "s2"."last_version", "s2"."first_version"')
+    joins(query).select('"scripts".*', '"scripts".id', '"s2"."last_version"', '"s2"."first_version"')
   end
 
   # a fake reference to the aliased table defined in the default scope
@@ -117,13 +218,12 @@ class Script < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
-                     :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params,
-                     :is_last_version, :is_first_version],
+                     :version, :created_at, :creator_id, :is_last_version, :is_first_version,
+                     :is_last_version, :is_first_version, :event_import_glob],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
-                      :executable_settings_media_type, :version, :created_at, :creator_id, :analysis_action_params,
-                      :is_last_version, :is_first_version],
-      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
-                    :analysis_action_params],
+                      :executable_settings_media_type, :version, :created_at, :creator_id,
+                      :is_last_version, :is_first_version, :event_import_glob],
+      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
                          **item.render_markdown_for_api_for(:description)
@@ -187,11 +287,12 @@ class Script < ApplicationRecord
         **Api::Schema.creator_user_stamp,
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
-        analysis_action_params: { type: 'object' }
+        event_import_glob: { type: 'string', readOnly: true }
       },
       required: [
         :id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
-        :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params
+        :version, :created_at, :creator_id, :is_last_version, :is_first_version,
+        :event_import_glob
       ]
     }.freeze
   end
@@ -201,19 +302,40 @@ class Script < ApplicationRecord
   def check_version_increase
     matching_or_higher_versions =
       Script
-      .unscoped
-      .where(group_id:)
-      .where('version >= ?', version)
-    if matching_or_higher_versions.count.positive?
-      errors.add(:version,
-        "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})")
+        .unscoped
+        .where(group_id:)
+        .where(version: version..)
+
+    return unless matching_or_higher_versions.count.positive?
+
+    errors.add(
+      :version,
+      "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})"
+    )
+  end
+
+  def check_executable_command
+    # blank validation handled by other validators
+    return if executable_command.blank?
+
+    # just need to provide the values, they don't need to be real to validate
+    # the command value
+    values = BawWorkers::BatchAnalysis::CommandTemplater::ALL.index_with { |_| 'value' }
+
+    begin
+      BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+        executable_command,
+        values
+      )
+    rescue ArgumentError => e
+      errors.add(:executable_command, e.message)
     end
   end
 
   def set_group_id
-    if group_id.blank?
-      self.group_id = id
-      save!
-    end
+    return if group_id.present?
+
+    self.group_id = id
+    save!
   end
 end

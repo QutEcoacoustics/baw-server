@@ -33,8 +33,8 @@ class Tag < ApplicationRecord
   has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings
   has_many :tag_groups, inverse_of: :tag
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_tags
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_tags, optional: true
 
   #accepts_nested_attributes_for :audio_events
 
@@ -65,7 +65,7 @@ class Tag < ApplicationRecord
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
   # this lets a symbol be set, and it all still works
   def type_of_tag=(new_type_of_tag)
-    super new_type_of_tag.to_s
+    super(new_type_of_tag.to_s)
   end
 
   # order by number of audio recordings associated with a tag

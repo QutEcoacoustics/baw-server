@@ -64,8 +64,10 @@ class User < ApplicationRecord
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
+  # before and after methods
+  before_validation :ensure_user_role
   # user must always have an authentication token
-  before_save :ensure_authentication_token
+  after_create :ensure_authentication_token
 
   # Virtual attribute for authenticating by either :user_name or :email
   # This is in addition to real persisted fields.
@@ -100,6 +102,10 @@ class User < ApplicationRecord
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_audio_event_imports, class_name: 'AudioEventImport', foreign_key: :deleter_id, inverse_of: :delete
 
   has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id,
     inverse_of: :creator
@@ -149,6 +155,10 @@ class User < ApplicationRecord
 
   has_many :created_scripts, class_name: 'Script', foreign_key: :creator_id, inverse_of: :creator
 
+  has_many :created_provenances, class_name: 'Provenance', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_provenances, class_name: 'Provenance', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_provenances, class_name: 'Provenance', foreign_key: :deleter_id, inverse_of: :deleter
+
   has_many :created_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_sites, class_name: 'Site', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :deleter
@@ -173,17 +183,17 @@ class User < ApplicationRecord
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
-  scope :recently_seen,
+  scope(:recently_seen,
     lambda { |time|
       where(
         (arel_table[:last_seen_at] > time)
         .or(arel_table[:current_sign_in_at] > time)
         .or(arel_table[:last_sign_in_at] > time)
       )
-    }
+    })
 
   # store preferences as json in a text column
-  serialize :preferences, JSON
+  serialize :preferences, coder: JSON
 
   # validations
   validates :user_name,
@@ -213,10 +223,7 @@ class User < ApplicationRecord
 
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
-    message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
-
-  # before and after methods
-  before_validation :ensure_user_role
+    message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 
   after_create :special_after_create_actions
 
@@ -245,15 +252,6 @@ class User < ApplicationRecord
     Time.zone.now - created_at
   end
 
-  def ensure_authentication_token
-    self.authentication_token = generate_authentication_token if authentication_token.blank?
-  end
-
-  def reset_authentication_token!
-    self.authentication_token = generate_authentication_token
-    save
-  end
-
   def self.same_user?(user1, user2)
     if user1.blank? || user2.blank?
       false
@@ -279,21 +277,42 @@ class User < ApplicationRecord
   # allows you to redefine authentication at a specific point (such as token, LDAP or database).
   # Finally, if you override the find_first_by_auth_conditions method, you can customize
   # finder methods (such as authentication, account unlocking or password recovery).
+  # https://github.com/heartcombo/devise/wiki/How-To:-Allow-users-to-sign-in-using-their-username-or-email-address
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
-    login = conditions.delete(:login)
-    if login
-      where(conditions)
+    if (login = conditions.delete(:login))
+      where(conditions.to_h)
         .where(['lower(user_name) = :value OR lower(email) = :value', { value: login.downcase }])
         .first
     else
-      where(conditions).first
+      where(conditions.to_h).first
     end
   end
 
   # @see http://stackoverflow.com/a/19071745/31567
   def self.find_by_authentication_token(authentication_token = nil)
     where(authentication_token:).first if authentication_token
+  end
+
+  def after_database_authentication
+    # reset user token on valid sign in with username/password
+    reset_authentication_token!
+  end
+
+  def ensure_authentication_token
+    self.authentication_token = generate_authentication_token if authentication_token.blank?
+
+    authentication_token
+  end
+
+  def reset_authentication_token!
+    self.authentication_token = generate_authentication_token
+    save!
+  end
+
+  def clear_authentication_token!
+    self.authentication_token = nil
+    save!
   end
 
   # Store the current_user id in the thread so it can be accessed by models
@@ -310,13 +329,19 @@ class User < ApplicationRecord
   # Finds the admin user
   # @return [User]
   def self.admin_user
-    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
+    # caching these values screws up the tests - we relay on AR cache instead?
+    User.where(user_name: ADMIN_USER_NAME).first
   end
 
   # Finds the harvester user
   # @return [User]
   def self.harvester_user
-    @admin_user ||= User.where(user_name: ADMIN_USER_NAME).first
+    # caching these values screws up the tests - we relay on AR cache instead?
+    User.where(user_name: HARVESTER_USER_NAME).first
+  end
+
+  def admin?
+    Access::Core.is_admin?(self)
   end
 
   # Define filter api settings
@@ -376,9 +401,25 @@ class User < ApplicationRecord
   end
 
   def generate_authentication_token
-    loop do
-      token = Devise.friendly_token
-      break token unless User.where(authentication_token: token).first
-    end
+    # loop {
+    #   token = Devise.friendly_token
+    #   break token unless User.where(authentication_token: token).first
+    # }
+
+    # I decided that looping through the database to check a unique token was too slow.
+    # Thus we're generating a token, that is longer and all but guaranteed to be unique.
+    # Basic method lifted from
+    # https://github.com/heartcombo/devise/blob/6d32d2447cc0f3739d9732246b5a5bde98d9e032/lib/devise.rb#L500
+
+    # first create some seed data
+    uid = id.to_s
+    timestamp = (Process.clock_gettime(Process::CLOCK_MONOTONIC) * 1E9).to_i.to_s
+    random =  SecureRandom.urlsafe_base64
+
+    # then hash it
+    hashed = Digest::SHA2.digest(uid + timestamp + random)
+
+    # and finally encode it as url safe
+    Base64.urlsafe_encode64(hashed, padding: false)
   end
 end

@@ -6,7 +6,7 @@ module Api
     # Ensures some numbers are floats
     class BoolTransformer < KeyTransformer
       def initialize(*keys)
-        super(*keys, default: false)
+        super(*keys)
       end
 
       def transform(_key, value)

@@ -69,7 +69,15 @@ module BawWorkers
       STATUS_KILLED = 'killed'
       STATUS_ERRORED = 'errored'
 
-      STATUSES = ::BawWorkers::Dry::Types::Statuses.values.to_a.freeze
+      STATUSES_ENUM = ::BawWorkers::Dry::Types::String.enum(
+        STATUS_QUEUED,
+        STATUS_WORKING,
+        STATUS_COMPLETED,
+        STATUS_FAILED,
+        STATUS_ERRORED,
+        STATUS_KILLED
+      )
+      STATUSES = STATUSES_ENUM.values.to_a.freeze
       TERMINAL_STATUSES = [
         STATUS_COMPLETED,
         STATUS_FAILED,
@@ -81,22 +89,22 @@ module BawWorkers
       module ClassMethods
         private
 
-        def status_setup
+        def __status_setup
           around_enqueue :around_enqueue_check_and_create_status
           around_perform :around_perform_with_status
 
-          IntrumentationSubscriber.attach_to :active_job
+          InstrumentationSubscriber.attach_to :active_job
 
           discard_on BawWorkers::ActiveJob::Status::Killed
         end
       end
 
       prepended do
-        status_setup
+        __status_setup
       end
 
       included do
-        status_setup
+        __status_setup
       end
 
       attr_reader :status
@@ -125,7 +133,7 @@ module BawWorkers
         total = parse_decimal(total, 'total')
         progress = parse_decimal(progress, 'progress')
 
-        update_status(*messages, progress: progress, total: total)
+        update_status(*messages, progress:, total:)
 
         kill! if should_kill?
       end
@@ -157,7 +165,7 @@ module BawWorkers
       # @raise [Killed] will raise Killed to kill the job.
       # @return [void]
       def kill!
-        raise Killed.new("Killed at #{Time.now}", caller_locations(1, 1))
+        raise Killed.new("Killed at #{Time.zone.now}", caller_locations(1, 1))
       end
 
       # Marks the current job as failed but does not raise an exception.
@@ -211,10 +219,10 @@ module BawWorkers
       STATUS_TAG = '[Status]'
 
       # hook called by ActiveJob
-      def around_perform_with_status(&block)
+      def around_perform_with_status(&)
         ensure_status
 
-        safe_perform!(&block)
+        safe_perform!(&)
       end
 
       def safe_perform!(&block)
@@ -224,7 +232,7 @@ module BawWorkers
 
         result = catch(:halt) {
           block.call
-               .tap { update_status("Completed at #{Time.now}", status: STATUS_COMPLETED) }
+            .tap { update_status("Completed at #{Time.zone.now}", status: STATUS_COMPLETED) }
         }
 
         on_failure if @status.failed?
@@ -299,18 +307,18 @@ module BawWorkers
         # copy attributes to a new @status object (structs are readonly)
         old_status = @status.status
         @status = @status.new(
-          status: status,
-          messages: @status.messages + (messages || []),
+          status:,
+          messages: @status.messages + (messages&.map(&:to_s) || []),
           progress: progress || @status.progress,
           total: total || @status.total
         )
         logger.debug do
           {
             message: "#{STATUS_TAG} updating",
-            old_status: old_status,
-            status: status,
+            old_status:,
+            status:,
             percent_complete: @status.percent_complete,
-            messages: messages
+            messages:
           }
         end
         persistance.set(@status).tap do |successful|
@@ -337,7 +345,7 @@ module BawWorkers
       # discard_on is one-shot (multiple classes can't hook into it)
       # after_perform won't run?
       # around_perform is not reliable because order dictates we may miss some failures
-      class IntrumentationSubscriber < ActiveSupport::Subscriber
+      class InstrumentationSubscriber < ActiveSupport::Subscriber
         def discard(event)
           job = event.payload[:job]
           error = event.payload[:error]

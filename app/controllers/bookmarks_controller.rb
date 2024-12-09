@@ -59,13 +59,7 @@ class BookmarksController < ApplicationController
   end
 
   # DELETE /bookmarks/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-
-    @bookmark.destroy
-    respond_destroy
-  end
+  # Handled in Archivable
 
   # GET|POST /bookmarks/filter
   def filter

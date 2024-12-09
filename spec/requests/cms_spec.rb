@@ -5,12 +5,12 @@ describe 'CMS' do
   prepare_users
 
   # assets should always be available
-context 'when users have no credentials, they can fetch assets' do
+  context 'when users have no credentials, they can fetch assets' do
     let(:page) {
       Comfy::Cms::Page.where(slug: 'index').first
     }
 
-    example 'javascript' do
+    it 'javascript' do
       tag = ComfortableMexicanSofa::Content::Tag::Asset.new(
         context: page,
         params: ['default', { 'type' => 'js' }]
@@ -24,7 +24,7 @@ context 'when users have no credentials, they can fetch assets' do
       expect(response.content_type).to eq('application/javascript; charset=utf-8')
     end
 
-    example 'css' do
+    it 'css' do
       tag = ComfortableMexicanSofa::Content::Tag::Asset.new(
         context: page,
         params: ['default', { 'type' => 'css' }]
@@ -40,7 +40,7 @@ context 'when users have no credentials, they can fetch assets' do
   end
 
   context 'when a user is an admin they can access the backend' do
-    example 'access admin/cms' do
+    it 'access admin/cms' do
       get '/admin/cms', headers: api_request_headers(admin_token)
 
       expect(response).to have_http_status(:found)

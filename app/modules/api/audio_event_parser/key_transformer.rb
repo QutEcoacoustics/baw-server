@@ -5,9 +5,15 @@ module Api
   class AudioEventParser
     # Recognizes one of multiple keys from a hash and optionally transforms it
     class KeyTransformer
-      attr_accessor :keys, :multi, :default
+      include Dry::Monads[:maybe]
 
-      def initialize(*keys, multi: false, default: nil)
+      # @return [Set<Symbol>] the keys to look for
+      attr_accessor :keys
+
+      # @return [Boolean] whether to look for multiple keys
+      attr_reader :multi
+
+      def initialize(*keys, multi: false)
         # augment keys to allow us to look for different variants
         keys = keys.flat_map { |x|
           [
@@ -19,15 +25,15 @@ module Api
             x.to_s.titleize.to_sym,
             x.to_s.gsub(' ', '_').underscore.to_sym
           ]
-        }.uniq
-        @keys = keys
+        }
+        @keys = Set.new(keys)
         @multi = multi
-        @default = default
       end
 
       # Search a hash for any number of possible variants of a key.
       # If found remove the key from the hash.
-      # @return [Array(Hash,Symbol,(Object|Array<Object>))] the modified hash, the variant of the key found, and the value in that order
+      # @param [Hash] hash the hash to search
+      # @return [Maybe<Object>] the value of the key if found, otherwise `None`
       def extract_key(hash)
         key = nil
         values = []
@@ -44,15 +50,13 @@ module Api
           break unless multi
         end
 
-        values = [default] if values.blank?
+        return None() if values.blank?
 
-        values = values.flatten.compact
-
-        if multi
-          values.blank? ? default : values
-        else
-          values.first || default
-        end
+        values
+          .flatten
+          .compact
+          .if_then(!multi, &:first)
+          .then(&Some)
       end
 
       def transform(_key, value)

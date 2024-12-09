@@ -97,6 +97,26 @@ services:
         target: /var/lib/sftpgo
       - <<: *data_mount_test
 
+  analysis_test:
+    build:
+      context: provision/analysis/
+      dockerfile: ./Dockerfile
+    image: baw_server_analysis_mock
+    init: true
+    environment:
+      RAILS_ENV: test
+    networks:
+      - baw_network
+    ports:
+      # note this only changes host mapping
+      - "2024:22"
+    tty: true
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - <<: *data_mount_test
+
   workers: &worker
     <<: *gh_actions
     build:
@@ -109,6 +129,7 @@ services:
       - redis
     environment:
       RAILS_ENV: development
+      RUBY_YJIT_ENABLE: 1
     networks:
       - baw_network
     restart: on-failure
@@ -135,6 +156,9 @@ services:
       rerun -- bin/baw-workers baw:worker:run_scheduler
   scheduler_test:
     <<: *worker_test
+    # Note: we disable recurring jobs by default on our test scheduler
+    # because extra enqueued jobs while other tests are running would break
+    # so many things.
     command: >-
       rerun -- bin/baw-workers baw:worker:run_scheduler
     environment:
@@ -167,9 +191,11 @@ services:
       - workers_test
       - scheduler
       - scheduler_test
+      - analysis_test
     environment:
       RAILS_ENV: development
       MIGRATE_DB: "true"
+      RUBY_YJIT_ENABLE: 1
       # pass through values
       NEXT_VERSION: ~
       CHANGELOG_GITHUB_TOKEN: ~
@@ -182,9 +208,6 @@ services:
       - <<: *data_mount_test
     ports:
       - "3000:3000"
-      # rdebug-ide port
-      - "1234:1234"
-      - "26162:26162"
     networks:
       - baw_network
 networks:

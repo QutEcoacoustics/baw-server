@@ -7,5 +7,11 @@ class Pathname
   # creates the file
   def touch
     FileUtils.touch(self)
+
+    self
+  end
+
+  def hidden?
+    basename.to_s.start_with?('.')
   end
 end

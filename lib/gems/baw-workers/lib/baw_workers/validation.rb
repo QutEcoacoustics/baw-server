@@ -25,7 +25,7 @@ module BawWorkers
       # @return [Boolean] true for a real run, false for dry run.
       def is_real_run?(real_run)
         # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
-        if real_run.blank? || !['real_run', 'dry_run'].include?(real_run)
+        if real_run.blank? || ['real_run', 'dry_run'].exclude?(real_run)
           raise ArgumentError, "real_run must be 'dry_run' or 'real_run', given '#{real_run}'."
         end
 
@@ -37,7 +37,7 @@ module BawWorkers
       # @return [Boolean] true to copy on success, false to not copy.
       def should_copy_on_success?(copy_on_success)
         # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
-        if copy_on_success.blank? || !['no_copy', 'copy_on_success'].include?(copy_on_success)
+        if copy_on_success.blank? || ['no_copy', 'copy_on_success'].exclude?(copy_on_success)
           raise ArgumentError, "copy_on_success must be 'no_copy' or 'copy_on_success', given '#{copy_on_success}'."
         end
 
@@ -75,10 +75,10 @@ module BawWorkers
       # @param [Hash] hash
       # @return [void]
       def check_hash_contains(key, hash)
-        unless hash.include?(key)
-          msg = "Media type '#{key}' is not in list of valid media types '#{hash}'."
-          raise ArgumentError, msg
-        end
+        return if hash.include?(key)
+
+        msg = "Media type '#{key}' is not in list of valid media types '#{hash}'."
+        raise ArgumentError, msg
       end
 
       # methods that might raise errors and normalise/modify the parameters.
@@ -120,7 +120,7 @@ module BawWorkers
 
         safer_path = replace_char if ['.', '..'].include?(safer_path)
 
-        unless top_level_dir.blank?
+        if top_level_dir.present?
 
           # ensure top level dir does not have any path traversal or anything else
           safer_top_level_dir = normalise_path(top_level_dir)
@@ -132,7 +132,7 @@ module BawWorkers
           # ensure path starts with top_level_dir
           unless safer_path.start_with?(safer_top_level_dir)
             raise ArgumentError,
-                  "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
+              "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
           end
 
           raise ArgumentError, "Path must start with / but got #{safer_path}." unless safer_path.start_with?('/')
@@ -162,7 +162,7 @@ module BawWorkers
         end
 
         raise ArgumentError, "Could not parse ActiveSupport::TimeWithZone from #{value}." if result.blank?
-        unless parse_error.blank?
+        if parse_error.present?
           raise ArgumentError, "Error parsing #{value} to ActiveSupport::TimeWithZone: #{parse_error}."
         end
 
@@ -183,8 +183,8 @@ module BawWorkers
 
       def compare_array(actual, expected)
         exp = expected.clone
-        actual.each do |a|
-          index = exp.find_index { |e| compare(a, e) }
+        actual.each do |analysis_job|
+          index = exp.find_index { |e| compare(analysis_job, e) }
           return false if index.nil?
 
           exp.delete_at(index)
@@ -197,53 +197,6 @@ module BawWorkers
 
         actual.each { |key, value| return false unless compare(value, expected[key]) }
         true
-      end
-
-      # from ActiveSupport 4
-      # Returns a new hash with all keys converted to symbols, as long as
-      # they respond to +to_sym+. This includes the keys from the root hash
-      # and from all nested hashes and arrays.
-      #
-      #   hash = { 'person' => { 'name' => 'Rob', 'age' => '28' } }
-      #
-      #   hash.deep_symbolize_keys
-      #   # => {:person=>{:name=>"Rob", :age=>"28"}}
-      def deep_symbolize_keys(hash)
-        deep_transform_keys(hash) { |key|
-          begin
-            key.to_sym
-          rescue StandardError
-            key
-          end
-        }
-      end
-
-      # from ActiveSupport 4
-      # Returns a new hash with all keys converted by the block operation.
-      # This includes the keys from the root hash and from all
-      # nested hashes and arrays.
-      #
-      #  hash = { person: { name: 'Rob', age: '28' } }
-      #
-      #  hash.deep_transform_keys{ |key| key.to_s.upcase }
-      #  # => {"PERSON"=>{"NAME"=>"Rob", "AGE"=>"28"}}
-      def deep_transform_keys(hash, &block)
-        _deep_transform_keys_in_object(hash, &block)
-      end
-
-      # from ActiveSupport 4
-      # support methods for deep transforming nested hashes and arrays
-      def _deep_transform_keys_in_object(object, &block)
-        case object
-        when Hash
-          object.each_with_object({}) do |(key, value), result|
-            result[yield(key)] = _deep_transform_keys_in_object(value, &block)
-          end
-        when Array
-          object.map { |e| _deep_transform_keys_in_object(e, &block) }
-        else
-          object
-        end
       end
     end
   end

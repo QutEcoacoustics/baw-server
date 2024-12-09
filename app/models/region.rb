@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (creator_id => users.id)
 #  fk_rails_...  (deleter_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #  fk_rails_...  (updater_id => users.id)
 #
 class Region < ApplicationRecord
@@ -28,13 +28,13 @@ class Region < ApplicationRecord
   has_many :sites, inverse_of: :region
 
   belongs_to :project, inverse_of: :regions
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_regions
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_regions, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_regions, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_regions
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_regions, optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_regions, optional: true
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
+  acts_as_discardable
+  also_discards :sites
 
   # add model image
   has_one_attached :image
@@ -49,7 +49,9 @@ class Region < ApplicationRecord
   validates :image,
     size: {
       less_than_or_equal_to: BawApp.attachment_size_limit,
-      message: "%<attribute>s size %<file_size>s is greater than #{ActiveSupport::NumberHelper.number_to_human_size(BawApp.attachment_size_limit)}, try a smaller file"
+      # rubocop:disable Style/FormatStringToken
+      message: "%{attribute} size %{file_size} is greater than #{ActiveSupport::NumberHelper.number_to_human_size(BawApp.attachment_size_limit)}, try a smaller file"
+      # rubocop:enable Style/FormatStringToken
     },
     content_type: [:png, :jpg, :jpeg]
 

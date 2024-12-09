@@ -7,7 +7,7 @@ describe 'Studies' do
   create_study_hierarchy
 
   let(:study_attributes) {
-    FactoryBot.attributes_for(:study, { name: 'test study', dataset_id: dataset.id })
+    attributes_for(:study, { name: 'test study', dataset_id: dataset.id })
   }
 
   let(:update_study_attributes) {
@@ -28,8 +28,8 @@ describe 'Studies' do
       it 'finds all (1) study as admin' do
         get @study_url, params: nil, headers: @env
         expect(response).to have_http_status(:ok)
-        parsed_response = JSON.parse(response.body)
-        expect(parsed_response['data'].count).to eq(1)
+        parsed_response = response.parsed_body
+        expect(parsed_response['data'].count).to eq(2)
         expect(parsed_response['data'][0]['name']).to eq(study['name'])
       end
     end
@@ -38,8 +38,8 @@ describe 'Studies' do
       it 'finds all (1) study as admin' do
         get "#{@study_url}/filter", params: nil, headers: @env
         expect(response).to have_http_status(:ok)
-        parsed_response = JSON.parse(response.body)
-        expect(parsed_response['data'].count).to eq(1)
+        parsed_response = response.parsed_body
+        expect(parsed_response['data'].count).to eq(2)
         expect(parsed_response['data'][0]['name']).to eq(study['name'])
       end
     end
@@ -48,7 +48,7 @@ describe 'Studies' do
       it 'show study as admin' do
         get @study_url_with_id, params: nil, headers: @env
         expect(response).to have_http_status(:ok)
-        parsed_response = JSON.parse(response.body)
+        parsed_response = response.parsed_body
         expect(parsed_response['data']).to match(study.as_json)
       end
     end
@@ -58,7 +58,7 @@ describe 'Studies' do
     describe 'create study' do
       it 'creates a study' do
         post @study_url, params: study_attributes.to_json, headers: @env
-        parsed_response = JSON.parse(response.body)
+        parsed_response = response.parsed_body
         expect(response).to have_http_status(:created)
         expect(parsed_response['data']['dataset_id']).to eq(dataset.id)
       end
@@ -68,7 +68,7 @@ describe 'Studies' do
       it 'updates a study' do
         params = { study: { name: 'modified study name' } }.to_json
         put @study_url_with_id, params: params, headers: @env
-        parsed_response = JSON.parse(response.body)
+        parsed_response = response.parsed_body
         expect(response).to have_http_status(:ok)
         expect(parsed_response['data']['name']).to eq('modified study name')
       end
@@ -79,8 +79,8 @@ describe 'Studies' do
     it 'deletes a study and child responses' do
       delete @study_url_with_id, params: nil, headers: @env
       expect(response).to have_http_status(:no_content)
-      expect(Study.all.count).to eq(0)
-      expect(Response.all.count).to eq(0)
+      expect(Study.count).to eq(1)
+      expect(Response.count).to eq(1)
     end
   end
 end

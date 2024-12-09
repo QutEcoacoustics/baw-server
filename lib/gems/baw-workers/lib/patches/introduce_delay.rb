@@ -99,9 +99,9 @@ if BawApp.test?
   end
 
   ActiveSupport.on_load(:active_job) do
-    ::BawWorkers::Jobs::ApplicationJob.prepend(BawWorkers::Jobs::IntroduceDelayPatch)
+    BawWorkers::Jobs::ApplicationJob.prepend(BawWorkers::Jobs::IntroduceDelayPatch)
   end
-  puts 'BawWorkers::ApplicationJob patched with BawWorkers::Jobs::IntroduceDelay'
+  puts 'PATCH: BawWorkers::Jobs::IntroduceDelay applied to BawWorkers::ApplicationJob'
 else
-  puts 'BawWorkers::Jobs::IntroduceDelay loading skipped'
+  puts 'PATCH: BawWorkers::Jobs::IntroduceDelay NOT applied'
 end

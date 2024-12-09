@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe 'AudioEventImport permissions' do
+describe AudioEventImport do
   create_entire_hierarchy
 
   let!(:audio_event_import) { create(:audio_event_import) }
@@ -9,6 +9,10 @@ describe 'AudioEventImport permissions' do
     Creation::Common.create_user_token(audio_event_import.creator)
   }
 
+  with_custom_user :creator
+  is_archivable do
+    audio_event_import
+  end
   given_the_route '/audio_event_imports' do
     {
       id: audio_event_import.id
@@ -28,13 +32,15 @@ describe 'AudioEventImport permissions' do
 
   # these permissions are special, they're scoped to the user.
 
-  the_users :admin, :creator, can_do: everything
+  the_user :admin, can_do: everything
+
+  the_user :creator, can_do: everything - advanced_archiving
 
   # they can't access an instance created by someone else, but can create a new instance.
   # testing all our standard users is basically testing project permissions have no effect on this endpoint.
   the_users :owner, :writer, :reader, :no_access,
     can_do: listing + creation,
-    and_cannot_do: mutation + [:show]
+    and_cannot_do: mutation + [:show] + advanced_archiving + recovering
 
   the_user :harvester, can_do: nothing, and_cannot_do: everything
 

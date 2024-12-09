@@ -45,15 +45,15 @@ module BawWorkers
       module ClassMethods
         private
 
-        def unique_setup
+        def __unique_setup
           # active job hook:
           before_enqueue :enqueue_check_uniqueness, prepend: true
         end
       end
 
-      prepended { unique_setup }
+      prepended { __unique_setup }
 
-      included { unique_setup }
+      included { __unique_setup }
 
       # Was this job unique when enqueued?
       # @return [Boolean,nil] nil if uniqueness has not yet been evaluated
@@ -78,7 +78,7 @@ module BawWorkers
       # @return [void]
       #
       def abort
-        logger.debug { { message: 'BawWorkers::ActiveJob::Unique job already exists, aborting', job_id: job_id } }
+        logger.debug { { message: 'BawWorkers::ActiveJob::Unique job already exists, aborting', job_id: } }
         @unique = false
         throw :abort
       end

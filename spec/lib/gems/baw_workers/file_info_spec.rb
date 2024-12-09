@@ -40,8 +40,6 @@ def expect_correct_file_name(file_name, expected_hash)
 end
 
 describe BawWorkers::FileInfo do
-  require 'support/shared_test_helpers'
-
   include_context 'shared_test_helpers'
 
   let(:file_info) { BawWorkers::Config.file_info }
@@ -171,10 +169,10 @@ describe BawWorkers::FileInfo do
       {
         'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3' =>
             { raw: {
-              year: '2014', month: '03', day: '01',
-              hour: '08', min: '50', sec: '31',
-              offset: '+06:30', ext: 'mp3'
-            },
+                year: '2014', month: '03', day: '01',
+                hour: '08', min: '50', sec: '31',
+                offset: '+06:30', ext: 'mp3'
+              },
               utc_offset: '+06:30',
               recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
               recorded_date: Time.parse('2014-03-01T08:50:31.000+06:30'),
@@ -182,10 +180,10 @@ describe BawWorkers::FileInfo do
               extension: 'mp3' },
         'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3' =>
               { raw: {
-                year: '2014', month: '03', day: '01',
-                hour: '08', min: '50', sec: '31',
-                offset: '-0630', ext: 'mp3'
-              },
+                  year: '2014', month: '03', day: '01',
+                  hour: '08', min: '50', sec: '31',
+                  offset: '-0630', ext: 'mp3'
+                },
                 utc_offset: '-0630',
                 recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
                 recorded_date: Time.parse('2014-03-01T08:50:31.000-06:30'),
@@ -205,10 +203,10 @@ describe BawWorkers::FileInfo do
         #         extension: 'ext' },
         '20150727133138.wav' =>
               { raw: {
-                year: '2015', month: '07', day: '27',
-                hour: '13', min: '31', sec: '38',
-                offset: '', ext: 'wav'
-              },
+                  year: '2015', month: '07', day: '27',
+                  hour: '13', min: '31', sec: '38',
+                  offset: '', ext: 'wav'
+                },
                 utc_offset: '+00:00',
                 recorded_date_local: '2015-07-27T13:31:38.000+00:00',
                 recorded_date: '2015-07-27T13:31:38.000+00:00',
@@ -216,10 +214,10 @@ describe BawWorkers::FileInfo do
                 extension: 'wav' },
         'blah_T-suffix20140301085031:dncv*_-T&^%34jd.ext' =>
               { raw: {
-                year: '2014', month: '03', day: '01',
-                hour: '08', min: '50', sec: '31',
-                offset: '', ext: 'ext'
-              },
+                  year: '2014', month: '03', day: '01',
+                  hour: '08', min: '50', sec: '31',
+                  offset: '', ext: 'ext'
+                },
                 utc_offset: '+00:00',
                 recorded_date_local: '2014-03-01T08:50:31.000+00:00',
                 recorded_date: '2014-03-01T08:50:31.000+00:00',
@@ -227,10 +225,10 @@ describe BawWorkers::FileInfo do
                 extension: 'ext' },
         'SERF_20130314_000021_000.wav' =>
               { raw: {
-                year: '2013', month: '03', day: '14',
-                hour: '00', min: '00', sec: '21',
-                offset: '', ext: 'wav'
-              },
+                  year: '2013', month: '03', day: '14',
+                  hour: '00', min: '00', sec: '21',
+                  offset: '', ext: 'wav'
+                },
                 utc_offset: '+00:00',
                 recorded_date_local: '2013-03-14T00:00:21.000+00:00',
                 recorded_date: '2013-03-14T00:00:21.000+00:00',
@@ -238,10 +236,10 @@ describe BawWorkers::FileInfo do
                 extension: 'wav' },
         '20150727T133138Z.wav' =>
               { raw: {
-                year: '2015', month: '07', day: '27',
-                hour: '13', min: '31', sec: '38',
-                offset: 'Z', ext: 'wav'
-              },
+                  year: '2015', month: '07', day: '27',
+                  hour: '13', min: '31', sec: '38',
+                  offset: 'Z', ext: 'wav'
+                },
                 utc_offset: 'Z',
                 recorded_date_local: '2015-07-27T13:31:38.000+00:00',
                 recorded_date: '2015-07-27T13:31:38.000Z',

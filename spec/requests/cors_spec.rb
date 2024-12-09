@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe 'CORS requests' do
   expose_headers = (MediaPoll::HEADERS_EXPOSED + ['X-Archived-At', 'X-Error-Type']).join(', ')
   allow_methods = ['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'DELETE', 'OPTIONS'].join(', ')
@@ -109,7 +107,7 @@ describe 'CORS requests' do
     end
 
     context 'is invalid' do
-      example 'without Origin' do
+      it 'without Origin' do
         headers = {
           'Access-Control-Request-Method' => 'Origin, Content-Type, Accept, Authorization, Token',
           'Access-Control-Request-Headers' => 'PUT',
@@ -118,10 +116,11 @@ describe 'CORS requests' do
         options '/projects', headers: headers
 
         expect(response).to have_http_status(:bad_request)
-        expect_error(400, "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
+        expect_error(400,
+          "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
       end
 
-      example 'without Access-Control-Request-Method' do
+      it 'without Access-Control-Request-Method' do
         headers = {
           'Origin' => 'http://localhost:3000',
           'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
@@ -130,10 +129,11 @@ describe 'CORS requests' do
         options '/projects', headers: headers
 
         expect(response).to have_http_status(:bad_request)
-        expect_error(400, "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
+        expect_error(400,
+          "The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.")
       end
 
-      example 'with Origin that is not allowed' do
+      it 'with Origin that is not allowed' do
         headers = {
           'Origin' => 'http://localhost-not-allowed:3000',
           'Access-Control-Request-Method' => 'GET',

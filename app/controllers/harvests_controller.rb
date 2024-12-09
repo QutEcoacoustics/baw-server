@@ -85,7 +85,7 @@ class HarvestsController < ApplicationController
     # disallow any update if we're in a processing state
     unless @harvest.update_allowed?
       raise CustomErrors::MethodNotAllowedError.new(
-        "Cannot update a harvest while it is #{@harvest.status}",
+        "Cannot update a harvest while it is in state `#{@harvest.status}`",
         [:post, :put, :patch, :delete]
       )
     end
@@ -103,7 +103,7 @@ class HarvestsController < ApplicationController
     #@harvest.with_lock('FOR UPDATE') do end
 
     status = parameters.delete(:status)
-    @harvest.transition_to_state!(status.to_sym) unless status.nil?
+    @harvest.transition_to_state(status.to_sym) unless status.nil?
 
     if @harvest.update(parameters)
       respond_show
@@ -114,15 +114,10 @@ class HarvestsController < ApplicationController
 
   # DELETE /harvests/:id
   # DELETE /projects/:project_id/harvests/:id
-  def destroy
-    do_load_resource
+  # Handled in Archivable
+  # Using callback defined in Archivable
+  before_destroy do
     get_project_if_exists
-    do_authorize_instance
-
-    @harvest.destroy
-    add_archived_at_header(@harvest)
-
-    respond_destroy
   end
 
   # GET|POST /harvests/filter
@@ -150,6 +145,7 @@ class HarvestsController < ApplicationController
 
     raise '@harvest must be defined' unless defined?(@harvest)
 
+    # for create: link the harvest to the project
     if @harvest.project_id.nil?
       @harvest.project = @project
       return

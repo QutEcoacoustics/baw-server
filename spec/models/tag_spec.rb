@@ -26,7 +26,7 @@
 #  tags_creator_id_fk  (creator_id => users.id)
 #  tags_updater_id_fk  (updater_id => users.id)
 #
-describe Tag, type: :model do
+describe Tag do
   it 'has a valid factory' do
     t = create(:tag)
 
@@ -36,15 +36,16 @@ describe Tag, type: :model do
   it { is_expected.to have_many(:taggings) }
   it { is_expected.to have_many(:audio_events) }
 
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
+  it { is_expected.to belong_to(:creator) }
+  it { is_expected.to belong_to(:updater).optional }
 
   # .with_predicates(true).with_multiple(false)
   it { is_expected.to enumerize(:type_of_tag).in(*Tag::AVAILABLE_TYPE_OF_TAGS) }
 
-  it 'should not allow nil for is_taxonomic' do
+  it 'does not allow nil for is_taxonomic' do
     expect(build(:tag, is_taxonomic: nil)).not_to be_valid
   end
+
   it 'ensures is_taxonomic can be true or false' do
     t = build(:tag)
     expect(t).to be_valid
@@ -58,33 +59,35 @@ describe Tag, type: :model do
     expect(t).to be_valid
   end
 
-  it 'should not allow nil for text' do
+  it 'does not allow nil for text' do
     t = build(:tag, text: nil)
     expect(t).not_to be_valid
   end
-  it 'should not allow empty string though, for text' do
+
+  it 'does not allow empty string though, for text' do
     expect(build(:tag, text: '')).not_to be_valid
   end
-  it 'should ensure text is unique (case-insensitive)' do
+
+  it 'ensures text is unique (case-insensitive)' do
     create(:tag, text: 'Rabbit')
     t = build(:tag, text: 'rabbiT')
     expect(t).not_to be_valid
-    expect(t.valid?).to be_falsey
+    expect(t).not_to be_valid
     expect(t.errors[:text].size).to eq(1)
   end
 
-  it 'should be not valid without a type_of_tag field specified' do
+  it 'is not valid without a type_of_tag field specified' do
     expect(build(:tag, type_of_tag: nil)).not_to be_valid
   end
 
-  it 'should be not valid with an invalid type_of_tag field specified' do
+  it 'is not valid with an invalid type_of_tag field specified' do
     expect(build(:tag, type_of_tag: :this_is_not_valid)).not_to be_valid
   end
 
   type_of_tags = [:general, :common_name, :species_name, :looks_like, :sounds_like]
 
   type_of_tags.each do |tag_type|
-    expected_is_taxonomic_value = tag_type == :common_name || tag_type == :species_name
+    expected_is_taxonomic_value = [:common_name, :species_name].include?(tag_type)
     it "ensures type_of_tag can be set to #{tag_type}" do
       t = build(:tag)
       expect(t).to be_valid
@@ -93,7 +96,7 @@ describe Tag, type: :model do
       expect(t).to be_valid
 
       type_of_tags.each { |type_of_tag|
-        expect(t.send(type_of_tag.to_s + '?')).to eq(type_of_tag.to_s == t.type_of_tag)
+        expect(t.send("#{type_of_tag}?")).to eq(type_of_tag.to_s == t.type_of_tag)
       }
     end
 
@@ -111,11 +114,12 @@ describe Tag, type: :model do
     end
   end
 
-  it 'should not allow nil for retired' do
+  it 'does not allow nil for retired' do
     t = build(:tag)
     t.retired = nil
     expect(t).not_to be_valid
   end
+
   it 'ensures retired can be true or false' do
     t = build(:tag)
     expect(t).to be_valid

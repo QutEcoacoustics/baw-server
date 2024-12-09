@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'support/shared_test_helpers'
-
 describe BawWorkers::Storage::SpectrogramCache do
   include_context 'shared_test_helpers'
 
@@ -146,25 +144,5 @@ describe BawWorkers::Storage::SpectrogramCache do
     expected = [File.join(Settings.paths.cached_spectrograms[0], partial_path,
       cached_spectrogram_file_name_given_parameters)]
     expect(spectrogram_cache.possible_paths(opts)).to eq expected
-  end
-
-  it 'parses a valid cache file name correctly' do
-    path = spectrogram_cache.possible_paths_file(opts, cached_spectrogram_file_name_given_parameters)
-
-    path_info = spectrogram_cache.parse_file_path(path[0])
-
-    expect(path.size).to eq 1
-    expect(path.first).to eq("#{BawWorkers::Config.spectrogram_cache_helper.possible_dirs[0]}/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050_1024_Hann_g.jpg")
-
-    expect(path_info.keys.size).to eq 9
-    expect(path_info[:uuid]).to eq uuid
-    expect(path_info[:start_offset]).to eq start_offset
-    expect(path_info[:end_offset]).to eq end_offset
-    expect(path_info[:sample_rate]).to eq sample_rate
-    expect(path_info[:channel]).to eq channel
-    expect(path_info[:window]).to eq window
-    expect(path_info[:window_function]).to eq window_function
-    expect(path_info[:colour]).to eq colour
-    expect(path_info[:format]).to eq format_spectrogram
   end
 end

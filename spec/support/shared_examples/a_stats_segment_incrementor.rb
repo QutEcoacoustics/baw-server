@@ -8,7 +8,7 @@ RSpec.shared_examples 'a stats segment incrementor' do |options|
   let(:duration_key) { options[:duration_key] }
   let(:count_key) { options[:count_key] }
 
-  context 'when dealing with multiple connections', clean_by_truncation: true do
+  context 'when dealing with multiple connections', :clean_by_truncation do
     it 'works' do
       # I have no idea why but a concurrency of 3 (not 4 or 5) triggers the bug we're trying to reproduce here
       # Repeating this process seems to make failure more reliable
@@ -32,6 +32,8 @@ RSpec.shared_examples 'a stats segment incrementor' do |options|
                 ActiveRecord::Base.connection_pool.with_connection do
                   instance_exec(index, &increment)
                 end
+                # https://github.com/rails/rails/pull/50793
+                ActiveRecord::Base.connection_handler.clear_active_connections!(:all)
               }
 
               logger.info('child waiting', index:, super_index:)

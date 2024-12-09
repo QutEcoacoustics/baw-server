@@ -38,8 +38,16 @@ module BawWorkers
           job = event.payload[:job]
           ex = event.payload[:error]
 
+          # we assume discards are intentional errors and full stack traces
+          # are not required
+          # Note the full stack trace is still available in the exception
+          # and is printed in other log messages.
           error do
-            { message: "Discarded #{job.class} due to a #{ex.class}.", exception: ex }
+            {
+              message: "Discarded #{job.class} due to a #{ex.class}.",
+              reason: ex&.message,
+              location: ex&.backtrace&.first
+            }
           end
         end
       end

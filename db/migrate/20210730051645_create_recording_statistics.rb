@@ -46,6 +46,8 @@ module BucketHelper
   def alter_unique_constraint(table, column, with:, add: true)
     # SET UNLOGGED disables the write ahead log - that is writing to disk before finishing the transaction.
     # Greatly improves write speed but at the risk of losing the most recent entries if the database crashes.
+    # AT 2022 from the future: turns out this was a really bad idea:
+    #   https://github.com/QutEcoacoustics/baw-server/issues/635
     unique_name = "constraint_baw_#{table}_unique"
     with_unique = with.nil? ? '' : "#{with}, "
     if add

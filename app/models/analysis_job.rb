@@ -4,110 +4,240 @@
 #
 # Table name: analysis_jobs
 #
-#  id                           :integer          not null, primary key
-#  annotation_name              :string
-#  custom_settings              :text             not null
-#  deleted_at                   :datetime
-#  description                  :text
-#  name                         :string           not null
-#  overall_count                :integer          not null
-#  overall_data_length_bytes    :bigint           default(0), not null
-#  overall_duration_seconds     :decimal(14, 4)   not null
-#  overall_progress             :json             not null
-#  overall_progress_modified_at :datetime         not null
-#  overall_status               :string           not null
-#  overall_status_modified_at   :datetime         not null
-#  started_at                   :datetime
-#  created_at                   :datetime
-#  updated_at                   :datetime
-#  creator_id                   :integer          not null
-#  deleter_id                   :integer
-#  saved_search_id              :integer          not null
-#  script_id                    :integer          not null
-#  updater_id                   :integer
+#  id                                                                                                                                                                                      :integer          not null, primary key
+#  amend_count(Count of amendments)                                                                                                                                                        :integer          default(0), not null
+#  deleted_at                                                                                                                                                                              :datetime
+#  description                                                                                                                                                                             :text
+#  filter(API filter to include recordings in this job. If blank then all recordings are included.)                                                                                        :jsonb
+#  name                                                                                                                                                                                    :string           not null
+#  ongoing(If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.) :boolean          default(FALSE), not null
+#  overall_count                                                                                                                                                                           :integer          not null
+#  overall_data_length_bytes                                                                                                                                                               :bigint           default(0), not null
+#  overall_duration_seconds                                                                                                                                                                :decimal(14, 4)   not null
+#  overall_status                                                                                                                                                                          :string           not null
+#  overall_status_modified_at                                                                                                                                                              :datetime         not null
+#  resume_count(Count of resumptions)                                                                                                                                                      :integer          default(0), not null
+#  retry_count(Count of retries)                                                                                                                                                           :integer          default(0), not null
+#  started_at                                                                                                                                                                              :datetime
+#  suspend_count(Count of suspensions)                                                                                                                                                     :integer          default(0), not null
+#  system_job(If true this job is automatically run and not associated with a single project. We can have multiple system jobs.)                                                           :boolean          default(FALSE), not null
+#  created_at                                                                                                                                                                              :datetime
+#  updated_at                                                                                                                                                                              :datetime
+#  creator_id                                                                                                                                                                              :integer          not null
+#  deleter_id                                                                                                                                                                              :integer
+#  project_id(Project this job is associated with. This field simply influences which jobs are shown on a project page.)                                                                   :integer
+#  updater_id                                                                                                                                                                              :integer
 #
 # Indexes
 #
-#  analysis_jobs_name_uidx                 (name,creator_id) UNIQUE
-#  index_analysis_jobs_on_creator_id       (creator_id)
-#  index_analysis_jobs_on_deleter_id       (deleter_id)
-#  index_analysis_jobs_on_saved_search_id  (saved_search_id)
-#  index_analysis_jobs_on_script_id        (script_id)
-#  index_analysis_jobs_on_updater_id       (updater_id)
+#  analysis_jobs_name_uidx            (name,creator_id) UNIQUE
+#  index_analysis_jobs_on_creator_id  (creator_id)
+#  index_analysis_jobs_on_deleter_id  (deleter_id)
+#  index_analysis_jobs_on_project_id  (project_id)
+#  index_analysis_jobs_on_updater_id  (updater_id)
 #
 # Foreign Keys
 #
-#  analysis_jobs_creator_id_fk       (creator_id => users.id)
-#  analysis_jobs_deleter_id_fk       (deleter_id => users.id)
-#  analysis_jobs_saved_search_id_fk  (saved_search_id => saved_searches.id)
-#  analysis_jobs_script_id_fk        (script_id => scripts.id)
-#  analysis_jobs_updater_id_fk       (updater_id => users.id)
+#  analysis_jobs_creator_id_fk  (creator_id => users.id)
+#  analysis_jobs_deleter_id_fk  (deleter_id => users.id)
+#  analysis_jobs_updater_id_fk  (updater_id => users.id)
+#  fk_rails_...                 (project_id => projects.id) ON DELETE => cascade
 #
 class AnalysisJob < ApplicationRecord
+  # add the state machine
+  include StateMachine
 
-  # allow a state machine to work with this class
-  include AASM
-  include AasmHelpers
+  # job status values
+  AVAILABLE_JOB_STATUS_SYMBOLS = aasm.states.map(&:name)
+  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map(&:to_s)
 
-  OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
+  AVAILABLE_JOB_STATUS_DISPLAY = aasm.states.to_h { |x| [x.name, x.display_name] }
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs, optional: true
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_analysis_jobs, optional: true
+  ALLOWED_USER_TRANSITIONS = [
+    :retry,
+    :resume,
+    :suspend,
+    :amend
+  ].freeze
 
-  belongs_to :script, inverse_of: :analysis_jobs
-  belongs_to :saved_search, inverse_of: :analysis_jobs
-  has_many :projects, through: :saved_search
-  has_many :analysis_jobs_items, inverse_of: :analysis_job
+  SYSTEM_JOB_NAME = 'default'
+  SYSTEM_JOB_ID = 'system'
+
+  belongs_to :creator, class_name: 'User', inverse_of: :created_analysis_jobs
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_analysis_jobs,
+    optional: true
+  belongs_to :deleter, class_name: 'User', inverse_of: :deleted_analysis_jobs,
+    optional: true
+
+  belongs_to :project, inverse_of: :analysis_jobs, optional: true
+
+  has_many :analysis_jobs_scripts, dependent: :delete_all
+  has_many :scripts, through: :analysis_jobs_scripts, inverse_of: :analysis_jobs
+
+  has_many :analysis_jobs_items, inverse_of: :analysis_job, dependent: :delete_all
+  has_many :audio_event_imports, inverse_of: :analysis_job, dependent: :destroy
 
   # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
-
-  # association validations
-  validates_associated :script, :saved_search, :creator
+  acts_as_discardable
+  also_discards :audio_event_imports, batch: true
 
   # attribute validations
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
-  validates :custom_settings, :overall_progress, presence: true
+  validates :name, presence: true, length: { minimum: 2, maximum: 255 }
+  validates :name, uniqueness: {
+    scope: :creator_id,
+    case_sensitive: false,
+    message: 'each job creator user must have unique job names'
+  }
+
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
   validates :overall_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :overall_duration_seconds, presence: true,
     numericality: { only_integer: false, greater_than_or_equal_to: 0 }
-  validates :overall_status_modified_at, :overall_progress_modified_at,
-    presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
-  validates :started_at, allow_blank: true, allow_nil: true, timeliness: {
+  validates :started_at, allow_blank: true, timeliness: {
     on_or_before: -> { Time.zone.now }, type: :datetime
   }
   validates :overall_data_length_bytes, presence: true,
     numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
+  validates :analysis_jobs_scripts, presence: true
+
+  validate :filter_hash_is_valid
+
+  validate :project_id_set_for_non_system_jobs
+
+  #
+  # scopes
+  #
+
+  scope :system_analyses, -> { where(system_job: true).order(created_at: :desc) }
+  scope :ongoing, -> { where(ongoing: true) }
+  scope :not_completed, -> { where.not(overall_status: 'completed') }
+
+  # Return the latest system Analysis Job ID
+  # @return [Integer,nil] nil if not found
+  def self.latest_system_analysis_id
+    AnalysisJob.system_analyses.pick(:id)
+  end
+
+  # @return [AnalysisJob,nil] return the latest system analysis if found
+  def self.latest_system_analysis
+    AnalysisJob.system_analyses.first
+  end
+
+  # @return [AnalysisJob] return the latest system analysis or raises an error if not found
+  def self.latest_system_analysis!
+    AnalysisJob.system_analyses.first!
+  end
+
+  def self.build_system_job(owner)
+    # copy previous system job scripts
+    scripts = latest_system_analysis&.scripts || []
+
+    AnalysisJob.new(
+      name: SYSTEM_JOB_NAME,
+      description: 'A default analysis run on all audio',
+      creator: owner,
+      # don't know which ones should be added by default
+      scripts:,
+      system_job: true,
+      ongoing: true,
+      # i.e. all recordings
+      filter: nil
+    )
+  end
+
+  def self.arel_script_ids
+    aj = AnalysisJob.arel_table
+    ajs = Arel::Table.new(:analysis_jobs_scripts)
+
+    Arel::Nodes::NamedFunction.new(
+      'array',
+      [
+        ajs
+        # select script_id
+        # from analysis_jobs_scripts
+        .project(ajs[:script_id])
+        # where analysis_job_id = analysis_jobs.id
+        .where(aj[:id].eq(ajs[:analysis_job_id]))
+        # order by script_id asc
+        .order(ajs[:script_id].asc)
+      ]
+    )
+  end
+
+  def self.audio_event_import_ids
+    aj = AnalysisJob.arel_table
+    aei = AudioEventImport.arel_table
+
+    Arel::Nodes::NamedFunction.new(
+      'array',
+      [
+        aei
+        # select audio_event_import_id
+        # from audio_event_imports
+        .project(aei[:id])
+        # where analysis_job_id = analysis_jobs.id
+        .where(aj[:id].eq(aei[:analysis_job_id]))
+        # order by audio_event_import_id asc
+        .order(aei[:id].asc)
+      ]
+    )
+  end
+
   renders_markdown_for :description
 
   def self.filter_settings
     fields = [
-      :id, :name, :description, :annotation_name,
-      :custom_settings,
+      :id, :name, :description,
       :creator_id, :updater_id, :deleter_id,
       :created_at, :updated_at, :deleted_at,
-      :script_id, :saved_search_id,
+      :filter, :system_job, :ongoing, :project_id,
+      :retry_count, :amend_count, :suspend_count,
       :started_at,
       :overall_status, :overall_status_modified_at,
-      :overall_progress, :overall_progress_modified_at,
+      :overall_progress, :script_ids, :audio_event_import_ids,
       :overall_count, :overall_duration_seconds, :overall_data_length_bytes
     ]
 
     {
       valid_fields: fields,
-      render_fields: fields,
-      text_fields: [:name, :description, :annotation_name],
-      custom_fields: lambda { |item, _user|
-        [item, item.render_markdown_for_api_for(:description)]
+      render_fields: fields + [:description_html_tagline, :description_html],
+      text_fields: [:name, :description],
+      custom_fields2: {
+        **AnalysisJob.new_render_markdown_for_api_for(:description),
+        script_ids: {
+          query_attributes: [],
+          transform: nil,
+          arel: arel_script_ids,
+          type: :array
+        },
+        # history: this used to be a field we stored in the database because
+        # we didn't actually track analysis jobs items - we just sprayed all
+        # jobs at the remote queue and hoped for the best. Now we track items
+        # so now storing the progress is redundant (and a pain to maintain because
+        # it represents a cached value that can become stale).
+        overall_progress: {
+          query_attributes: [],
+          transform: nil,
+          arel: job_progress_arel,
+          type: :hash
+        },
+        audio_event_import_ids: {
+          query_attributes: [],
+          transform: nil,
+          arel: audio_event_import_ids,
+          type: :array
+        }
       },
       new_spec_fields: lambda { |_user|
                          {
-                           annotation_name: nil,
-                           custom_settings: nil
+                           name: nil,
+                           description: nil,
+                           project_id: nil,
+                           system_job: false,
+                           ongoing: false,
+                           scripts: [],
+                           filter: {}
                          }
                        },
       controller: :audio_events,
@@ -118,13 +248,20 @@ class AnalysisJob < ApplicationRecord
       },
       valid_associations: [
         {
-          join: SavedSearch,
-          on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
-          available: true
+          join: Arel::Table.new(:analysis_jobs_scripts),
+          on: AnalysisJob.arel_table[:id].eq(Arel::Table.new(:analysis_jobs_scripts)[:analysis_job_id]),
+          available: false,
+          associations: [
+            {
+              join: Script,
+              on: Arel::Table.new(:analysis_jobs_scripts)[:script_id].eq(Script.arel_table[:id]),
+              available: true
+            }
+          ]
         },
         {
-          join: Script,
-          on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
+          join: Project,
+          on: AnalysisJob.arel_table[:project_id].eq(Project.arel_table[:id]),
           available: true
         }
       ]
@@ -132,33 +269,61 @@ class AnalysisJob < ApplicationRecord
   end
 
   def self.schema
+    progress_properties = [
+      :status_new_count,
+      :status_queued_count,
+      :status_working_count,
+      :status_finished_count,
+      :transition_empty_count,
+      :transition_queue_count,
+      :transition_cancel_count,
+      :transition_retry_count,
+      :transition_finish_count,
+      :result_empty_count,
+      :result_success_count,
+      :result_failed_count,
+      :result_killed_count,
+      :result_cancelled_count
+    ].index_with { |_| { type: 'integer', readOnly: true } }
+
     {
       type: 'object',
       additionalProperties: false,
       properties: {
-        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        id: Api::Schema.id,
         name: { type: 'string' },
-        annotation_name: { type: ['string', 'null'] },
         **Api::Schema.rendered_markdown(:description),
-        custom_settings: { type: 'string' },
-        script_id: { '$ref' => '#/components/schemas/id' },
-        saved_search_id: { '$ref' => '#/components/schemas/id' },
+        filter: { type: 'object' },
+        system_job: { type: 'boolean' },
+        ongoing: { type: 'boolean' },
+        project_id: Api::Schema.id(nullable: true),
+        retry_count: { type: 'integer', readOnly: true },
+        amend_count: { type: 'integer', readOnly: true },
+        suspend_count: { type: 'integer', readOnly: true },
         started_at: { type: ['null', 'date'], readOnly: true },
         overall_status: { type: 'string', enum: [
-          :before_save,
-          :new,
           :preparing,
           :processing,
           :completed,
           :suspended
         ], readOnly: true },
         overall_status_modified_at: { type: ['null', 'date'], readOnly: true },
-        overall_progress: { type: 'object', readOnly: true },
-        overall_progress_modified_at: { type: ['null', 'date'], readOnly: true },
+        overall_progress: {
+          type: 'object',
+          properties: progress_properties,
+          readOnly: true
+        },
         overall_count: { type: 'integer', readOnly: true },
         overall_duration_seconds: { type: 'number', readOnly: true },
         overall_data_length_bytes: { type: 'integer', readOnly: true },
-        **Api::Schema.all_user_stamps
+        **Api::Schema.all_user_stamps,
+        script_ids: Api::Schema.ids(read_only: true),
+        audio_event_import_ids: Api::Schema.ids(read_only: true),
+        transition: {
+          type: 'string',
+          enum: ALLOWED_USER_TRANSITIONS,
+          writeOnly: true
+        }
       },
       required: [
         :id,
@@ -166,14 +331,18 @@ class AnalysisJob < ApplicationRecord
         :description,
         :description_html,
         :description_html_tagline,
-        :custom_settings,
-        :script_id,
-        :saved_search_id,
+        :filter,
+        :system_job,
+        :ongoing,
+        :retry_count,
+        :amend_count,
+        :suspend_count,
         :started_at,
         :overall_status,
         :overall_status_modified_at,
-        :overall_progress,
-        :overall_progress_modified_at,
+        # not required because https://github.com/QutEcoacoustics/baw-server/issues/691
+        #:overall_progress,
+        #:script_ids,
         :overall_count,
         :overall_duration_seconds,
         :overall_data_length_bytes
@@ -185,307 +354,163 @@ class AnalysisJob < ApplicationRecord
   # public methods
   #
 
-  def self.batch_size
-    1000
+  def system_job?
+    !!system_job
+  end
+
+  def ongoing?
+    !!ongoing
+  end
+
+  # Transforms a filter hash (of the format of the API filter objects)
+  # to an Arel. The result is an Arel object that returns the ids of
+  # the audio recordings that match the filter.
+  #
+  # The Arel expression includes a permissions check: only records that match
+  # the filter AND that the creator of this analysis job has access to will be
+  # returned.
+  # @return [ActiveRecord::Relation]
+  def filter_as_relation
+    # we assume the filter stored is just the conditional filter hash
+    whole_filter = {
+      projection: {
+        include: [:id]
+      },
+      filter:
+    }
+
+    # do not allow results wider than the selected project if this job
+    # is associated with a project.
+    # Conversely, if a system job, then allow access to everything.
+    if system_job?
+      raise 'system jobs cannot have a project id' if project_id.present?
+
+      AudioRecording.all
+    else
+      raise 'project id required' if project_id.blank?
+
+      # only allow the recordings the creator has *write* access to be returned
+      # - this is because importing results will create new audio events
+      # which is what the writer permission is for.
+      Access::ByPermission.audio_recordings(
+        creator,
+        levels: Access::Permission::WRITER_OR_ABOVE,
+        project_ids: [project_id]
+      )
+    end => base_scope
+
+    filter_query = Filter::Query.new(
+      whole_filter,
+      base_scope,
+      AudioRecording,
+      AudioRecording.filter_settings
+    )
+
+    filter_query.query_without_paging_sorting
+  end
+
+  # Queries current analysis jobs items and returns a hash of statistics for the
+  # associated recordings.
+  # @return [Hash<Symbol, Numeric>]
+  def overall_statistics_query
+    AnalysisJobsItem
+      .for_analysis_job(id)
+      .joins(:audio_recording)
+      .pick_hash({
+        overall_count: Arel.star.count.coalesce(0),
+        overall_duration_seconds:
+        AudioRecording.arel_table[:duration_seconds].cast('decimal').sum.coalesce(0),
+        overall_data_length_bytes:
+        AudioRecording.arel_table[:data_length_bytes].cast('bigint').sum.coalesce(0)
+      })
+  end
+
+  # Returns a arel grouping containing a postgres json object containing
+  # counts of the status, transition, and result of the analysis jobs items.
+  # @return [Arel::Nodes::Grouping]
+  def self.job_progress_arel
+    analysis_job = AnalysisJob.arel_table
+    items = AnalysisJobsItem.arel_table
+
+    [
+      ['status', AnalysisJobsItem::AVAILABLE_ITEM_STATUS],
+      ['transition', [nil, *AnalysisJobsItem::ALLOWED_TRANSITIONS]],
+      ['result', [nil, *AnalysisJobsItem::ALLOWED_RESULTS]]
+    ].flat_map { |(column, values)|
+      values.map do |value|
+        key = "#{column}_#{value || 'empty'}_count"
+        [key, Arel.star.count.filter(items[column].eq(value))]
+      end
+    }.to_h => key_value_pairs
+
+    items
+      .project(
+        Arel.json(key_value_pairs).as('overall_progress')
+      ).where(
+        items[:analysis_job_id].eq(analysis_job[:id])
+      ) => result
+
+    # return Arel::Nodes::SelectStatement rather than a Arel::SelectManager
+    Arel::Nodes::Grouping.new(result.ast)
+  end
+
+  # Returns a hash of statistics for the analysis jobs items in an analysis job.
+  # Counts of status, result, and transition are returned.
+  # @return [Hash<Symbol, Numeric>]
+  def job_progress_query
+    self.class
+      .pick(self.class.job_progress_arel)
+      .transform_keys(&:to_sym)
   end
 
   # Intended to be called when we know a change in status has happened -
   # i.e. when an analysis_jobs_item status has changed.
-  # Disabled caching idea because it looks like a premature optimization.
-  def check_progress
-    #if (Time.zone.now - analysis_job.overall_progress_modified_at) > OVERALL_PROGRESS_REFRESH_SECONDS
-
-    # https://github.com/ActsAsParanoid/acts_as_paranoid/issues/45
-    was_deleted = deleted?
-    if was_deleted
-      old_paranoid_value = paranoid_value
-      self.paranoid_value = nil
-    end
-
-    # skip validations and callbacks, and do not set updated_at, save value to database
-    update_columns(update_job_progress)
-
+  def check_progress!
     # finally, after each update, check if we can finally finish the job!
     complete! if may_complete?
-
-    self.paranoid_value = old_paranoid_value if was_deleted
-  end
-
-  # analysis_job lifecycle:
-  # 1. When a new analysis job is created, the state will be `before_save`.
-  #    The required attributes will be initialised by `initialize_workflow` and state will be transitioned to `new`.
-  #    The new analysis job should be saved at this point (and is saved if created via create action on controller).
-  #    Note: no AnalysisJobsItems have been made and no resque jobs have been enqueued.
-  # 2. Then the job must be prepared. Currently synchronous but designed to be asynchronous.
-  #    Do this by calling `prepare` which will transition from `new` to `preparing`.
-  #    Note: AnalysisJobsItems are enqueued progressively here. Some actions may be processed and even completed
-  #    before the AnalysisJob even finishes preparing!
-  # 3. Transition to `processing`
-  #    Note: the processing transition should be automatic
-  #    Once all resque jobs have been enqueued, the analysis job will transition to 'processing' status.
-  # 4. Resque jobs will update the analysis job (via analysis jobs items) as resque jobs change states.
-  #    `check_progress` is used to update progress and also is the callback that checks for job completion.
-  # 5. When all items have finished processing, the job transitions to `completed`. Users are notified with an email
-  #    and the job is marked as completed.
-  #
-  # Additional states:
-  # - Jobs can transition between processing and suspended. When suspended all analysis jobs items are marked as
-  #   `cancelling`. When resumed, all `cancelling` items are marked as `queued` again and all `cancelled` items are
-  #   re-added back to the queue.
-  #   Note: We can't add or remove items from the message queue, which is why we need the cancelling/cancelled
-  #   distinction.
-  # - Jobs can be retried. In this case, the failed items (only) are re-queued and the job is set to `processing`
-  #
-  # State transition map
-  #
-  # :before_save → :new → :preparing → :processing → :completed
-  #                           ↑           ↓   ↑          |
-  #                           |        :suspended        |
-  #                           ----------------------------
-  #
-  aasm column: :overall_status, no_direct_assignment: true, whiny_persistence: true do
-    # We don't need to explicitly set display_name - they get humanized by default
-    state :before_save, { initial: true, display_name: 'Before save' }
-    state :new, enter: [:initialise_job_tracking, :update_job_progress]
-    state :preparing, enter: :send_preparing_email, after_enter: [:prepare_job, :process!]
-    state :processing, enter: [:update_job_progress]
-    state :suspended, enter: [:suspend_job, :update_job_progress]
-
-    # completed just means all processing has finished, whether it succeeds or not.
-    state :completed, enter: [:update_job_progress], after_enter: :send_completed_email
-
-    event :initialize_workflow, unless: :has_status_timestamp? do
-      transitions from: :before_save, to: :new
-    end
-
-    # we send email here because initialize_workflow does not guarantee that an id is set.
-    event :prepare, guard: :has_id? do
-      transitions from: :new, to: :preparing
-    end
-
-    # you shouldn't need to call process manually
-    event :process, guard: :are_all_enqueued? do
-      transitions from: :preparing, to: :processing, unless: :all_job_items_completed?
-      transitions from: :preparing, to: :completed, guard: :all_job_items_completed?
-    end
-
-    event :suspend do
-      transitions from: :processing, to: :suspended
-    end
-
-    # Guard against race conditions. Do not allow to resume if there are still analysis_jobs_items that are :queued.
-    event :resume do
-      transitions from: :suspended, to: :processing, guard: :are_all_cancelled?, after: :resume_job
-    end
-
-    # https://github.com/aasm/aasm/issues/324
-    # event :api_update do
-    #   transitions from: :processing, to: :suspended
-    #   transitions from: :suspended, to: :processing, guard: :are_all_cancelled?
-    # end
-
-    event :complete do
-      transitions from: :processing, to: :completed, guard: :all_job_items_completed?
-    end
-
-    # retry just the failures
-    event :retry do
-      transitions from: :completed, to: :processing,
-        guard: :are_any_job_items_failed?, after: [:retry_job, :send_retry_email]
-    end
-
-    after_all_transitions :update_status_timestamp
-  end
-
-  # job status values
-  AVAILABLE_JOB_STATUS_SYMBOLS = aasm.states.map(&:name)
-  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map(&:to_s)
-
-  AVAILABLE_JOB_STATUS_DISPLAY = aasm.states.to_h { |x| [x.name, x.display_name] }
-
-  # hook active record callbacks into state machine
-  before_validation(on: :create) do
-    # if valid? is called twice, then overall_status already == :new and this will fail. So add extra may_*? check.
-    initialize_workflow if may_initialize_workflow?
-  end
-
-  private
-
-  #
-  # guards for the state machine
-  #
-
-  def has_status_timestamp?
-    !overall_status_modified_at.nil?
-  end
-
-  def has_id?
-    !id.nil?
-  end
-
-  def are_all_enqueued?
-    overall_count == AnalysisJobsItem.for_analysis_job(id).count
-  end
-
-  def are_all_cancelled?
-    AnalysisJobsItem.queued_for_analysis_job(id).count.zero?
-  end
-
-  def all_job_items_completed?
-    AnalysisJobsItem.for_analysis_job(id).count == AnalysisJobsItem.completed_for_analysis_job(id).count
-  end
-
-  def are_any_job_items_failed?
-    AnalysisJobsItem.failed_for_analysis_job(id).count.positive?
-  end
-
-  #
-  # callbacks for the state machine
-  #
-
-  def initialise_job_tracking
-    self.overall_count = 0
-    self.overall_duration_seconds = 0
-    self.overall_data_length_bytes = 0
-  end
-
-  def send_preparing_email
-    AnalysisJobMailer.new_job_message(self, nil).deliver_now
-  end
-
-  # Create payloads from audio recordings extracted from saved search.
-  # This method persists changes.
-  def prepare_job
-    user = Access::Validate.user(creator)
-
-    Rails.logger.info 'AnalysisJob::prepare_job: Begin.'
-
-    # TODO: This may need to be an async operation itself depending on how fast it runs
-
-    # counters
-    options = {
-      count: 0,
-      duration_seconds_sum: 0,
-      data_length_bytes_sum: 0,
-      queued_count: 0,
-      failed_count: 0,
-      results: [],
-      analysis_job: self
-    }
-
-    self.started_at = Time.zone.now
-    save!
-
-    # query associated saved_search to get audio_recordings
-    query = saved_search.audio_recordings_extract(user)
-
-    options = query
-              .find_in_batches(batch_size: AnalysisJob.batch_size)
-              .reduce(options, &method(:prepare_analysis_job_item))
-
-    # don't update progress - resque jobs may already be processing or completed
-    # the resque jobs can do the updating
-
-    self.overall_count = options[:count]
-    self.overall_duration_seconds = options[:duration_seconds_sum]
-    self.overall_data_length_bytes = options[:data_length_bytes_sum]
-    save!
-
-    Rails.logger.info "AnalysisJob::prepare_job: Complete. Queued: #{options[:queued_count]}"
-  end
-
-  # Suspends an analysis job by cancelling all queued items
-  def suspend_job
-    # get items
-    query = AnalysisJobsItem.queued_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:cancel!)
-    end
-  end
-
-  # Resumes an analysis job by converting cancelling or cancelled items to queued items
-  def resume_job
-    # get items
-    query = AnalysisJobsItem.cancelled_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:retry!)
-    end
-  end
-
-  def send_completed_email
-    AnalysisJobMailer.completed_job_message(self, nil).deliver_now
-  end
-
-  # Retry an analysis job by re-enqueuing all failed items
-  def retry_job
-    # get items
-    query = AnalysisJobsItem.failed_for_analysis_job(id)
-
-    # batch update
-    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each(&:retry!)
-    end
-  end
-
-  def send_retry_email
-    AnalysisJobMailer.retry_job_message(self, nil).deliver_now
-  end
-
-  # Update status timestamp whenever a transition occurs. Does not persist changes - happens before aasm save.
-  def update_status_timestamp
-    self.overall_status_modified_at = Time.zone.now
-  end
-
-  # Update progress and modified timestamp if changes are made. Does NOT persist changes.
-  # This callback happens after the AnalysisJob transitions to a new state or when `check_progress` is called.
-  # We want all transactions to finish before we update the progresses - since they run a query themselves.
-  # @return [void]
-  def update_job_progress
-    defaults = AnalysisJobsItem::AVAILABLE_ITEM_STATUS.product([0]).to_h
-    statuses = AnalysisJobsItem.where(analysis_job_id: id).group(:status).count
-    statuses[:total] = statuses.map(&:last).reduce(:+) || 0
-
-    statuses = defaults.merge(statuses)
-
-    self.overall_progress = statuses
-    self.overall_progress_modified_at = Time.zone.now
-
-    { overall_progress:, overall_progress_modified_at: }
   end
 
   #
   # other methods
   #
 
-  # Process a batch of audio_recordings
-  def prepare_analysis_job_item(options, audio_recordings)
-    audio_recordings.each do |audio_recording|
-      # update counters
-      options[:count] += 1
-      options[:duration_seconds_sum] += audio_recording.duration_seconds
-      options[:data_length_bytes_sum] += audio_recording.data_length_bytes
+  private
 
-      # create new analysis jobs item
-      item = AnalysisJobsItem.new
-      item.analysis_job = self
-      item.audio_recording = audio_recording
+  # system jobs are part of a chain of system run jobs. The special 'SYSTEM' token
+  # resolves to the latest result set of any of the system jobs.
+  # Thus it does not make sense for a project scoped job to be a system job...
+  # Since it isn't a) system wide or b) part of a chain of system jobs.
+  def project_id_set_for_non_system_jobs
+    # effectively xor: only one or the other can be true
+    return if system_job? ^ project_id.present?
 
-      item.save!
+    errors.add(:project_id, 'must be blank for system jobs') if system_job?
+    errors.add(:system_job, 'must be true if project_id is blank') if project_id.blank?
+  end
 
-      # now try to transition to queued state (and save if transition successful)
-      success = item.queue!
-      raise 'Could not queue AnalysisJobItem' unless success
+  def filter_hash_is_valid
+    return if filter.blank?
 
-      options[:queued_count] += 1 if item.enqueue_results[:result]
-      options[:failed_count] += 1 if item.enqueue_results[:error]
-
-      options[:results].push(item.enqueue_results)
+    unless filter.is_a?(Hash)
+      errors.add(:filter, 'must be a hash')
+      return
     end
 
-    options
+    outer_keys = [:filter, :projection, :paging, :sorting]
+
+    if filter.keys.map(&:to_sym).intersect?(outer_keys)
+      keys = outer_keys.map(&:to_s).join(', ')
+      errors.add(:filter, "must be an inner filter, cannot contain any of #{keys}")
+      return
+    end
+
+    # check the filter is valid
+    begin
+      # to sql avoid execution of the actual query but still allows our filter
+      # query construction to run and check for valid syntax
+      filter_as_relation.to_sql
+    rescue StandardError => e
+      errors.add(:filter, e.message.to_s)
+    end
   end
 end

@@ -10,7 +10,7 @@ module RequestSpecHelpers
         env_config = Rails.application.env_config
         original_show_exceptions = env_config['action_dispatch.show_exceptions']
         original_show_detailed_exceptions = env_config['action_dispatch.show_detailed_exceptions']
-        env_config['action_dispatch.show_exceptions'] = true
+        env_config['action_dispatch.show_exceptions'] = :all
         env_config['action_dispatch.show_detailed_exceptions'] = false
         example.call
       ensure
@@ -18,10 +18,52 @@ module RequestSpecHelpers
         env_config['action_dispatch.show_detailed_exceptions'] = original_show_detailed_exceptions
       end
     end
+
+    ActionDispatch::Integration::Session.prepend(Module.new do
+      mattr_accessor :shred_cookies
+
+      def process(...)
+        result = super
+        # after a request rails will save the cookie, clear it out after
+        # the test so that it doesn't affect other tests - we don't want to
+        # send cookies when we are testing other auth methods.
+        if shred_cookies
+          cookies.to_hash.keys.each do |x|
+            Rails.logger.warn('COOKIE JAR DISABLED, deleting cookie after response', cookie: x)
+
+            cookies.delete(x)
+          end
+        end
+
+        result
+      end
+    end)
+
+    # deletes cookies sent by set-cookie after each request.
+    def disable_cookie_jar
+      around do |example|
+        integration_session.shred_cookies = true
+        example.call
+      ensure
+        integration_session.shred_cookies = false
+      end
+    end
   end
 
   # config.include allows these methods to be used in specs/before/let
   module Example
+    def route_exists(path, environment = {})
+      result = Rails.application.routes.recognize_path(path, environment)
+
+      result[:controller] != 'errors'
+    rescue ActionController::RoutingError
+      false
+    end
+
+    def supports_destroy_action(path)
+      route_exists("#{path}/destroy", { method: :delete })
+    end
+
     def auth_header(token)
       {
         'HTTP_AUTHORIZATION' => token
@@ -42,6 +84,16 @@ module RequestSpecHelpers
         headers: {
           'ACCEPT' => accept,
           'HTTP_AUTHORIZATION' => token
+        },
+        as: :json
+      }
+    end
+
+    def jwt_headers(token, accept: 'application/json')
+      {
+        headers: {
+          'ACCEPT' => accept,
+          'HTTP_AUTHORIZATION' => "Bearer #{token}"
         },
         as: :json
       }
@@ -176,6 +228,11 @@ module RequestSpecHelpers
       expect(response.content_type).to eq('application/json; charset=utf-8')
     end
 
+    def expect_binary_response(mime: 'application/octet-stream')
+      expect(response.content_type).to eq(mime)
+      expect(response.body).not_to be_empty
+    end
+
     def expect_id_matches(expected)
       id = get_id(expected)
       expect(api_result).to include({ data: hash_including({ id: }) })
@@ -190,8 +247,8 @@ module RequestSpecHelpers
         expect(api_result[:data]).to match([])
       else
         inner = expected
-                .map { |x| hash_including({ id: get_id(x) }) }
-                .to_a
+          .map { |x| hash_including({ id: get_id(x) }) }
+          .to_a
 
         expect(api_result).to include(data: match_array(inner))
       end
@@ -282,8 +339,12 @@ module RequestSpecHelpers
       expect(response).to have_http_status(:created)
     end
 
-    def expect_error(status, details, info = nil)
-      status = Rack::Utils::SYMBOL_TO_STATUS_CODE[status] if status.is_a?(Symbol)
+    def expect_no_content
+      expect(response).to have_http_status(:no_content)
+    end
+
+    def expect_error(status, details, info = nil, with_data_matching: nil)
+      status = Rack::Utils.status_code(status) if status.is_a?(Symbol)
 
       raise "Status argument to expect_error is not acceptable: `#{status}`" unless status.is_a?(Integer)
 
@@ -303,12 +364,17 @@ module RequestSpecHelpers
             message:,
             error: hash_including(error_hash)
           }),
-          data: nil
+          data: with_data_matching.presence
         })
       end
     end
 
+    def expect_gone
+      expect_error(:gone, 'The requested item is no longer available')
+    end
+
     def expect_headers_to_include(expected)
+      expected = expected.transform_keys(&:downcase)
       expect(response.headers).to match(hash_including(expected))
     end
 
@@ -355,7 +421,7 @@ module RequestSpecHelpers
 
       return body if mime&.start_with?('application/json')
 
-      return '<binary payload>' if MIME::Types[mime]&.first&.binary?
+      return "<binary payload of size: #{request.body.size}>" if MIME::Types[mime]&.first&.binary?
 
       body.truncate(5_000)
     end

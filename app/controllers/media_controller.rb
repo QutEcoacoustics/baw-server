@@ -11,9 +11,9 @@ class MediaController < ApplicationController
 
   def show
     # start timing request
-    overall_start = Time.now
+    overall_start = Time.zone.now
 
-    # normalise params and get access to rails request instance
+    # normalize params and get access to rails request instance
     params.permit!
     request_params = CleanParams.perform(params.to_h)
 
@@ -67,7 +67,7 @@ class MediaController < ApplicationController
   # GET /audio_recordings/:id/original
   def original
     # start timing request
-    time_start = Time.now
+    time_start = Time.zone.now
 
     # unlike a standard media request, the only parameter we allow here is an audio recording id
     # (:format is irrelevant because return mime is whatever mime the original recording is)
@@ -121,7 +121,7 @@ class MediaController < ApplicationController
     # AT 2019-11-07: Public access will allow auth to progress past this point
     # where as it used to be if there was no user, we'd stop here.
     # I'm still going to make sure actual users are confirmed though.
-    raise CanCan::AccessDenied, 'Account not confirmed' if !user.blank? && !user.confirmed?
+    raise CanCan::AccessDenied, 'Account not confirmed' if user.present? && !user.confirmed?
 
     audio_recording = auth_custom_audio_recording(request_params, action_name.to_sym)
 
@@ -269,6 +269,7 @@ class MediaController < ApplicationController
 
     # add the data hash so downloads can be verified
     add_header_hash(audio_recording)
+    # assume first file of returned files is correct
     file_path = existing_files.first
     download_options = {
       media_type: audio_recording.media_type,
@@ -278,7 +279,6 @@ class MediaController < ApplicationController
       recording_duration: audio_recording.duration_seconds,
       recording_id: audio_recording.id,
       ext: Mime::Type.file_extension_of(audio_recording.media_type),
-      # assume first file of returned files is correct
       file_path:,
       file_size: File.size(file_path),
       start_offset: 0,
@@ -311,27 +311,29 @@ class MediaController < ApplicationController
     elsif existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
 
-      Rails.logger.debug "media_controller#create_media: Begin remote processing to create #{expected_files}"
+      Rails.logger.debug { "media_controller#create_media: Begin remote processing to create #{expected_files}" }
       result = create_media_resque(expected_files, media_category, generation_request)
 
-      time_start_waiting = Time.now
+      time_start_waiting = Time.zone.now
 
       if result[:in_memory_file]
-        Rails.logger.debug "media_controller#create_media: found file in fast cache #{expected_files}"
+        Rails.logger.debug { "media_controller#create_media: found file in fast cache #{expected_files}" }
         add_header_remote_and_fast_cache
         in_memory_file = result[:in_memory_file]
         return [[expected_files.first], time_start_waiting, in_memory_file]
       else
 
-        Rails.logger.debug "media_controller#create_media: Submitted processing job for #{expected_files}"
+        Rails.logger.debug { "media_controller#create_media: Submitted processing job for #{expected_files}" }
 
         # poll disk for audio
         # will throw with a timeout if file does not appear on disk
         existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
 
-        Rails.logger.debug "media_controller#create_media: Actual files from disk poll after remote processing #{existing_files}"
+        Rails.logger.debug {
+          "media_controller#create_media: Actual files from disk poll after remote processing #{existing_files}"
+        }
       end
-    elsif !existing_files.blank?
+    elsif existing_files.present?
       add_header_cache
       add_header_processing_elapsed(0)
     end
@@ -342,7 +344,9 @@ class MediaController < ApplicationController
     if existing_files.blank?
       # NB: this branch should never execute, as poll_media should throw if no files are found
       # and other branches make existing_file.blank? impossible
-      Rails.logger.debug "media_controller#create_media: No files matched, existing files: #{existing_files}, expected files: #{expected_files}"
+      Rails.logger.debug do
+        "media_controller#create_media: No files matched, existing files: #{existing_files}, expected files: #{expected_files}"
+      end
 
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"
@@ -350,7 +354,7 @@ class MediaController < ApplicationController
       raise BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3}"
     end
 
-    time_start_waiting = Time.now if time_start_waiting.nil?
+    time_start_waiting = Time.zone.now if time_start_waiting.nil?
     [existing_files, time_start_waiting, nil]
   end
 
@@ -359,9 +363,9 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-    start_time = Time.now
+    start_time = Time.zone.now
     target_existing_paths = make_job(media_category, generation_request).perform_now
-    end_time = Time.now
+    end_time = Time.zone.now
 
     add_header_processing_elapsed(end_time - start_time)
 
@@ -373,7 +377,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [Resque::Plugins::Status::Hash] job status
   def create_media_resque(expected_files, media_category, generation_request)
-    start_time = Time.now
+    start_time = Time.zone.now
     job = make_job(media_category, generation_request)
     case job.enqueue
     in ::BawWorkers::Jobs::ApplicationJob
@@ -396,7 +400,7 @@ class MediaController < ApplicationController
       Settings.audio_tools_timeout_sec,
       job_id:
     )
-    end_time = Time.now
+    end_time = Time.zone.now
 
     add_header_processing_elapsed(end_time - start_time)
 
@@ -419,7 +423,8 @@ class MediaController < ApplicationController
     end
   end
 
-  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request, time_start, time_waiting_start, in_memory_file:)
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request,
+                                 time_start, time_waiting_start, in_memory_file:)
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
@@ -432,7 +437,7 @@ class MediaController < ApplicationController
     add_header_length(content_length)
 
     # add overall time taken and waiting time elapsed header
-    time_stop = Time.now
+    time_stop = Time.zone.now
     add_header_total_elapsed(time_stop - time_start)
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 
@@ -459,7 +464,8 @@ class MediaController < ApplicationController
     end
   end
 
-  def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start, in_memory_file:)
+  def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request,
+                                   time_start, time_waiting_start, in_memory_file:)
     @audio_response_duration = generation_request[:end_offset] - generation_request[:start_offset]
     file_path = existing_files.first
     download_options = {
@@ -508,7 +514,7 @@ class MediaController < ApplicationController
     info[:response_has_content] = false if is_head_request
 
     # add overall time taken header
-    time_stop = Time.now
+    time_stop = Time.zone.now
     add_header_total_elapsed(time_stop - time_start)
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 

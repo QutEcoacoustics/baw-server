@@ -20,6 +20,7 @@ describe HarvestsController, type: :routing do
     it { expect(put('harvests/1')).to route_to('harvests#update', format: 'json', id: '1') }
     it { expect(patch('harvests/1')).to route_to('harvests#update', format: 'json', id: '1') }
     it { expect(delete('harvests/1')).to route_to('harvests#destroy', format: 'json', id: '1') }
-    it { expect(post('harvests/filter')).to route_to('harvests#filter', format: 'json') }
+
+    it_behaves_like 'our api routing patterns', '/harvests', 'harvests', [:filterable]
   end
 end

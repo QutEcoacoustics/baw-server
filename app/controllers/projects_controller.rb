@@ -123,20 +123,6 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-  # DELETE /projects/:id
-  def destroy
-    do_load_resource
-    do_authorize_instance
-
-    @project.destroy
-    add_archived_at_header(@project)
-
-    respond_to do |format|
-      format.html { redirect_to projects_url }
-      format.json { respond_destroy }
-    end
-  end
-
   # GET /projects/new_access_request
   def new_access_request
     do_authorize_class

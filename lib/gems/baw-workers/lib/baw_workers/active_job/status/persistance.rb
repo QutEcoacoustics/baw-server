@@ -20,17 +20,13 @@ module BawWorkers
           @redis
         end
 
-        #
         # Configure the persistance module. This module is a singleton.
-        #
         # @param [::Redis] redis The redis client to use
-        #
         # @return [Persistance] the configured Persistance Module
-        #
         def configure(redis)
           unless redis.class.ancestors.include?(::Redis)
             raise ArgumentError,
-                  "redis was not of type Redis, ancestors: #{redis.class.ancestors}"
+              "redis was not of type Redis, ancestors: #{redis.class.ancestors}"
           end
 
           @redis = redis
@@ -115,7 +111,7 @@ module BawWorkers
           [
             (redis.del(status_prefix(job_id)) <= 1),
             redis.zrem(known_statuses_set, job_id),
-            redis.srem(kill_set, job_id)
+            redis.srem?(kill_set, job_id)
           ].any?
         end
 
@@ -200,14 +196,14 @@ module BawWorkers
         # @param job_id [String]
         def mark_for_kill(job_id)
           check_job_id(job_id)
-          redis.sadd(kill_set, job_id)
+          redis.sadd?(kill_set, job_id)
         end
 
         # Remove the job at UUID from the kill list
         # @param job_id [String]
         def killed(job_id)
           check_job_id(job_id)
-          redis.srem(kill_set, job_id)
+          redis.srem?(kill_set, job_id)
         end
 
         # @return [Array<string>]
@@ -282,7 +278,7 @@ module BawWorkers
         end
 
         def check_job_id(job_id)
-          raise ArgumentError, 'job_id was not a non-blank string' unless job_id.is_a?(String) && !job_id.blank?
+          raise ArgumentError, 'job_id was not a non-blank string' unless job_id.is_a?(String) && job_id.present?
           raise ArgumentError, 'job_id cannot contain a space' if job_id.include?(' ')
 
           job_id
