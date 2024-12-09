@@ -1,5 +1,13 @@
 # Changelog
 
+## [12.0.0](https://github.com/QutEcoacoustics/baw-server/tree/12.0.0) (2024-12-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/10.0.1...12.0.0)
+
+**Merged pull requests:**
+
+- Redesigned the analysis jobs system [\#696](https://github.com/QutEcoacoustics/baw-server/pull/696) ([atruskie](https://github.com/atruskie))
+
 ## [10.0.1](https://github.com/QutEcoacoustics/baw-server/tree/10.0.1) (2024-08-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.2.2...10.0.1)
@@ -24,6 +32,10 @@
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/9.1.1...9.2.2)
 
+**Implemented enhancements:**
+
+- change statistics tables to logged [\#635](https://github.com/QutEcoacoustics/baw-server/issues/635)
+
 **Fixed bugs:**
 
 - Problem parsing EMU results [\#631](https://github.com/QutEcoacoustics/baw-server/issues/631)
@@ -35,6 +47,13 @@
 **Fixed bugs:**
 
 - aborting a harvest in the new\_harvest state throws an exception [\#625](https://github.com/QutEcoacoustics/baw-server/issues/625)
+- Login tokens not expiring after 24 hours [\#426](https://github.com/QutEcoacoustics/baw-server/issues/426)
+
+**Closed issues:**
+
+- Add JWT authentication [\#632](https://github.com/QutEcoacoustics/baw-server/issues/632)
+- Missing official login route [\#509](https://github.com/QutEcoacoustics/baw-server/issues/509)
+- Login route missing user id [\#433](https://github.com/QutEcoacoustics/baw-server/issues/433)
 
 ## [9.0.3](https://github.com/QutEcoacoustics/baw-server/tree/9.0.3) (2022-10-04)
 
