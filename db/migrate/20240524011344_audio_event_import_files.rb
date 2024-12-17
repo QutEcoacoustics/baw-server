@@ -45,7 +45,7 @@ class AudioEventImportFiles < ActiveRecord::Migration[7.0]
         # create a default audio_event_import_file for each audio_event_import
         query = <<~SQL.squish
           INSERT INTO audio_event_import_files (audio_event_import_id, created_at, path, file_hash)
-          SELECT id, created_at, 'default', null FROM audio_event_imports;
+          SELECT id, created_at, null, null FROM audio_event_imports;
         SQL
 
         execute(query)
