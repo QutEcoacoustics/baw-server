@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.0.1](https://github.com/QutEcoacoustics/baw-server/tree/12.0.1) (2024-12-17)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.0.0...12.0.1)
+
 ## [12.0.0](https://github.com/QutEcoacoustics/baw-server/tree/12.0.0) (2024-12-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/10.0.1...12.0.0)
