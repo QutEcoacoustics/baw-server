@@ -25,6 +25,7 @@
       "binmode",
       "binread",
       "binstub",
+      "binstubs",
       "birdnet",
       "Boobook",
       "boolify",
@@ -280,7 +281,7 @@
       "editor.defaultFormatter": "castwide.solargraph",
       //"editor.defaultFormatter": "rebornix.ruby"
     },
-    "cSpell.enableFiletypes": [
+    "cSpell.enabledFiletypes": [
       "ruby"
     ],
     "editor.minimap.size": "fill",

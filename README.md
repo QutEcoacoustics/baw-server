@@ -256,6 +256,6 @@ Other major credits go to:
 - [@Allcharles](https://github.com/Allcharles)
 - [@JessieLOliver](https://github.com/JessieLOliver) for design and user experience feedback
 
-## Licence
+## License
 
 Apache License, Version 2.0

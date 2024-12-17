@@ -568,7 +568,7 @@ CREATE TABLE public.audio_event_import_files (
     path character varying,
     additional_tag_ids integer[],
     created_at timestamp(6) without time zone NOT NULL,
-    file_hash text NOT NULL,
+    file_hash text,
     CONSTRAINT path_and_analysis_jobs_item CHECK ((((path IS NOT NULL) AND (analysis_jobs_item_id IS NOT NULL)) OR ((path IS NULL) AND (analysis_jobs_item_id IS NULL))))
 );
 

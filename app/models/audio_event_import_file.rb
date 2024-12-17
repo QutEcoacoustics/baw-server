@@ -6,7 +6,7 @@
 #
 #  id                                                                                             :bigint           not null, primary key
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
-#  file_hash(Hash of the file contents used for uniqueness checking)                              :text             not null
+#  file_hash(Hash of the file contents used for uniqueness checking)                              :text
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
 #  created_at                                                                                     :datetime         not null
 #  analysis_jobs_item_id                                                                          :integer

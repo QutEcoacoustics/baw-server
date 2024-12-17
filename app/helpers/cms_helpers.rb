@@ -20,7 +20,7 @@ module CmsHelpers
   def address(not_logged_in_message = '')
     return not_logged_in_message unless current_user
 
-    Settings&.organisation_names&.address || '<address not configured>'
+    Settings.organisation_names&.address || '<address not configured>'
   end
 
   def cms_page_label
