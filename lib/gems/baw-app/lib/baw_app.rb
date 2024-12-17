@@ -104,13 +104,23 @@ module BawApp
     true
   end
 
+  # Get the log level for the application.
+  # @param default [Integer] the default log level to use if not set
+  # @return [Integer] the log level
   def log_level(default = Logger::DEBUG)
     # The default Rails log level is warn in production env and info in any other env.
-    return ENV['RAILS_LOG_LEVEL'] if ENV.key?('RAILS_LOG_LEVEL')
+    return Logger::Severity.coerce(ENV['RAILS_LOG_LEVEL']) if ENV.key?('RAILS_LOG_LEVEL')
+
     return Logger::INFO if Rails.env.staging?
     return Logger::INFO if Rails.env.production?
 
-    default
+    Logger::Severity.coerce(default)
+  rescue ArgumentError
+    # rubocop:disable Rails/Output - the rails logger may not yet be initialized
+    puts "ERROR:\tInvalid log level: `#{ENV.fetch('RAILS_LOG_LEVEL', nil)}` or invalid default: `#{default}`"
+    # rubocop:enable Rails/Output
+
+    Logger::DEBUG
   end
 
   def http_scheme
