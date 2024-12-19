@@ -1,17 +1,33 @@
 # frozen_string_literal: true
 
-describe LoggerHelpers do
-  logger.info { 'logger self test' }
+describe 'Spec Logger Helpers' do
+  include_context 'with a logger spy'
 
   it 'can log in an example group' do
-    lines = `grep --text 'logger self test' log/rails.local.test.log`
-    expect(lines).to match(/.*I.*RSpec.*logger self test/)
+    example_group = RSpec.describe 'ss' do
+      logger.info { 'logger self test' }
+    end
+
+    example_group.run
+
+    expect_log_entries_to_include(
+      a_hash_including(
+        name: a_string_matching(/RSpec/),
+        level: 'info',
+        message: 'logger self test'
+      )
+    )
   end
 
   it 'can log in an example' do
     logger.warn { 'i\'m an example' }
-    lines = `tail -n 25 log/rails.local.test.log`
 
-    expect(lines).to match(/.*W.*RSpec.*i'm an example/)
+    expect_log_entries_to_include(
+      a_hash_including(
+        name: a_string_matching(/RSpec/),
+        level: 'warn',
+        message: 'i\'m an example'
+      )
+    )
   end
 end

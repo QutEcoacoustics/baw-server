@@ -260,6 +260,7 @@ RSpec.configure do |config|
   require "#{RSPEC_ROOT}/support/shared_context/baw_audio_tools_shared"
   require "#{RSPEC_ROOT}/support/shared_context/shared_test_helpers"
   require "#{RSPEC_ROOT}/support/shared_context/async_context"
+  require "#{RSPEC_ROOT}/support/shared_context/logger_spy"
 
   require_relative 'support/matchers/be_same_file_as'
 
@@ -331,19 +332,21 @@ RSpec.configure do |config|
     DatabaseCleaner[:active_record].strategy =
       if example.metadata[:clean_by_truncation]
         DELETION_CLEANING_STRATEGY
+      elsif example.metadata[:no_database_cleaning]
+        nil
       else
         DEFAULT_CLEANING_STRATEGY
       end
     example_logger.info("DatabaseCleaner[:active_record] strategy is: #{DatabaseCleaner[:active_record].strategy}")
 
     # start database cleaner
-    DatabaseCleaner.start
+    DatabaseCleaner.start unless example.metadata.key?(:no_database_cleaning)
   end
 
-  config.after do
+  config.after do |example|
     Temping.teardown
 
-    DatabaseCleaner.clean
+    DatabaseCleaner.clean unless example.metadata.key?(:no_database_cleaning)
     strategy = DatabaseCleaner[:active_record].strategy
     if strategy.is_a?(DatabaseCleaner::ActiveRecord::Truncation) || strategy.is_a?(DatabaseCleaner::ActiveRecord::Deletion)
       Rails.application.load_seed

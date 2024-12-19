@@ -159,4 +159,66 @@ describe PBS::SSH do
 
     ssh.remote_delete(path)
   end
+
+  # the NET:SSH module is _very_ chatty.
+  # We use a log level suppressor to force it's logs to a lower level.
+  # This did fail in the past, generating gigabytes of logs per minute on prod,
+  # so now we test!
+  describe 'log levels' do
+    include_context 'with a logger spy'
+
+    def fire!
+      # execute something that will purposely fail to test different log levels
+      exit_code, = ssh.execute('broken')
+      expect(exit_code).not_to eq 0
+    end
+
+    it 'outputs everything in trace mode', log_level: :trace do
+      fire!
+
+      expect_log_entries_to_include(
+        a_hash_including(level: 'trace', name: Net::SSH.name),
+        a_hash_including(level: 'debug', name: Net::SSH.name),
+        a_hash_including(level: 'debug', name: PBS::SSH.name),
+        a_hash_including(level: 'error', name: PBS::SSH.name)
+      )
+
+      expect_log_entries_to_not_include(
+        # because we have no examples of info
+        a_hash_including(level: 'info', name: PBS::SSH.name)
+      )
+    end
+
+    it 'does not emit lower logs at the debug level', log_level: :debug do
+      fire!
+
+      expect_log_entries_to_include(
+        a_hash_including(level: 'debug', name: PBS::SSH.name),
+        a_hash_including(level: 'error', name: PBS::SSH.name),
+        a_hash_including(level: 'debug', name: Net::SSH.name)
+      )
+
+      expect_log_entries_to_not_include(
+        a_hash_including(level: 'trace', name: Net::SSH.name),
+        # because we have no examples of info
+        a_hash_including(level: 'info', name: PBS::SSH.name)
+      )
+    end
+
+    it 'does not emit lower logs at the info level', log_level: :info do
+      fire!
+
+      expect_log_entries_to_include(
+        a_hash_including(level: 'error', name: PBS::SSH.name)
+      )
+
+      expect_log_entries_to_not_include(
+        a_hash_including(level: 'trace', name: Net::SSH.name),
+        a_hash_including(level: 'debug', name: Net::SSH.name),
+        a_hash_including(level: 'debug', name: PBS::SSH.name),
+        # because we have no examples of info
+        a_hash_including(level: 'info', name: PBS::SSH.name)
+      )
+    end
+  end
 end

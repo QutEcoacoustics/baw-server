@@ -79,6 +79,7 @@ module Baw
 
     config.rails_semantic_logger.format = format
 
+    config.semantic_logger.default_level = BawApp.log_level
     config.log_level = BawApp.log_level
 
     return unless BawApp.log_to_stdout?

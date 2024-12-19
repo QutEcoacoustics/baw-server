@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../../../baw-app/lib/suppressed_level_logger'
+
 module PBS
   # Controls the SSH transport for the connection to PBS
   #
@@ -9,25 +11,6 @@ module PBS
     include Dry::Monads[:result]
 
     class TransportError < StandardError; end
-
-    # forces all log messages into a lower level inspired by
-    # https://github.com/reidmorrison/semantic_logger/blob/v4.9.0/lib/semantic_logger/debug_as_trace_logger.rb
-    class SuppressedLevelLogger < ::SemanticLogger::Logger
-      def initialize(...)
-        @split = ::SemanticLogger::Levels.index(:info)
-        super(...)
-      end
-
-      def log_internal(level, *args, **keyword_args, &)
-        index = ::SemanticLogger::Levels.index(level)
-        if index <= @split
-          level = ::SemanticLogger::Levels.level(index - 1) if index.positive?
-          return super(level, *args, **keyword_args, &)
-        end
-
-        super
-      end
-    end
 
     private
 
@@ -41,7 +24,7 @@ module PBS
 
     # @return [SuppressedLevelLogger]
     def net_ssh_logger
-      @net_ssh_logger ||= SuppressedLevelLogger.new(Net::SSH.name)
+      @net_ssh_logger ||= BawApp::SuppressedLevelLogger.new(Net::SSH.name, split_level: :info)
     end
 
     # @return [String]
@@ -214,8 +197,12 @@ module PBS
         port: settings.connection.port,
         timeout: 10,
         # do not read from ssh-agent
-        use_agent: false,
-        verbose: BawApp.log_level
+        use_agent: false
+        # OK: there's no point setting `verbose`. All it does it set the `logger`
+        # level... which we can do outside.
+        # It also is particular about logger levels - it can't parse strings
+        # which causes problems when reading logger level from environment
+        #verbose:
       )
 
       @connection

@@ -105,22 +105,22 @@ module BawApp
   end
 
   # Get the log level for the application.
-  # @param default [Integer] the default log level to use if not set
-  # @return [Integer] the log level
-  def log_level(default = Logger::DEBUG)
+  # If no environment variable, or environment default applies,
+  # it will return `:trace`.
+  # @return [Symbol] the SemanticLogger log level symbol
+  def log_level
     # The default Rails log level is warn in production env and info in any other env.
-    return Logger::Severity.coerce(ENV['RAILS_LOG_LEVEL']) if ENV.key?('RAILS_LOG_LEVEL')
+    if ENV.key?('RAILS_LOG_LEVEL')
+      ENV.fetch('RAILS_LOG_LEVEL')
+    elsif Rails.env.staging?
+      Logger::INFO
+    elsif Rails.env.production?
+      Logger::INFO
+    else
+      :trace
+    end => level
 
-    return Logger::INFO if Rails.env.staging?
-    return Logger::INFO if Rails.env.production?
-
-    Logger::Severity.coerce(default)
-  rescue ArgumentError
-    # rubocop:disable Rails/Output - the rails logger may not yet be initialized
-    puts "ERROR:\tInvalid log level: `#{ENV.fetch('RAILS_LOG_LEVEL', nil)}` or invalid default: `#{default}`"
-    # rubocop:enable Rails/Output
-
-    Logger::DEBUG
+    coerce_logger_level(level) || :trace
   end
 
   def http_scheme
@@ -154,5 +154,40 @@ module BawApp
   # @return [ActiveSupport::TimeZone]
   def utc_tz
     @utc_tz ||= ActiveSupport::TimeZone['UTC']
+  end
+
+  # We use SemanticLogger so all log_levels
+  # get converted into one of their symbols here.
+  # We treat input as `Logger` levels and we return a `SemanticLogger` symbol
+  # level.
+  # @param level [String,Integer,Symbol,nil]
+  # @return Symbol
+  def coerce_logger_level(level)
+    return nil if level.nil?
+
+    case level
+    # We assume any incoming integer is a `Logger` level
+    in Integer
+      # we allow a Logger like integer level to have a trace level
+      if level == -1
+        0
+      else
+        SemanticLogger::Levels::MAPPED_LEVELS[level]
+      end
+    in Symbol
+      SemanticLogger::Levels::LEVELS.index(level)
+    in String if level.start_with?('Logger::')
+      # The Logger levels and the SemanticLogger levels are different
+      # Logger debug is 0, whilst SemanticLogger trace is 0.
+      SemanticLogger::Levels::MAPPED_LEVELS[Logger::Severity.coerce(level.delete_prefix('Logger::'))]
+    in String
+      SemanticLogger::Levels::LEVELS.index(level.downcase.to_sym)
+    else
+      nil
+    end => semantic_logger_index
+
+    raise "Could not parse logger level `#{level}`." if semantic_logger_index.nil?
+
+    SemanticLogger::Levels.level(semantic_logger_index)
   end
 end
