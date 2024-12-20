@@ -53,7 +53,11 @@ module ApiSpecHelpers
         body = { user: { email: admin_user.email, password: } }
         post '/security', params: body, headers: headers(post: true), as: :json
         expect_success
-        response.headers['set-cookie'].split(';').select { |x| x.include?('_baw_session') }.first
+        cookie = response.headers['set-cookie']&.split(';')&.select { |x| x.include?('_baw_session') }&.first
+
+        expect(cookie).not_to be_blank
+
+        cookie
       }
     end
 
