@@ -75,9 +75,6 @@ RAILS_VERSION = '~> 7.2.1'
 gem 'rack-cors', '~> 1.1.1', require: 'rack/cors'
 gem 'rails', RAILS_VERSION
 
-# deal with chrome and same site cookies
-gem 'rails_same_site_cookie'
-
 # bumping to latest RC because it has pre-compiled native binaries
 gem 'nokogiri'
 
