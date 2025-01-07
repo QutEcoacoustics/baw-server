@@ -7,6 +7,10 @@
 
 set -e
 set -x
+
+# Set nullglob to return empty when wildcard fails
+shopt -s nullglob
+
 rm --force .ready
 
 echo -e "\n== Debug container permissions  ==\n"
@@ -20,25 +24,22 @@ echo -e "== Checking bundler install ==\n"
 
 bundle check || bundle install
 
-if [[ "$RAILS_ENV" == "development" ]]
-then
+if [[ "$RAILS_ENV" == "development" ]]; then
     # reset passenger file
     cp ./provision/Passengerfile.development.json /home/baw_web/baw-server/Passengerfile.json
 
     echo -e "\n== Truncating log files ==\n"
-    for f in /home/baw_web/baw-server/log/*.log; do 
+    for f in /home/baw_web/baw-server/log/*.log; do
         # keep the last 10000 lines
-        echo "$(tail -n 10000 $f)" > $f
+        tail -n 10000 "$f" >tmp.log && mv tmp.log "$f"
     done
 fi
 
 echo -e "\n== Checking database ==\n"
 /home/baw_web/baw-server/bin/rake baw:db_prepare
 
-if [[ "$GENERATE_ASSETS" = "true" ]]
-then
-    if find /home/baw_web/baw-server/public/assets/ -name '*manifest*json' -printf 1 -quit -type f| grep -q 1
-    then
+if [[ "$GENERATE_ASSETS" = "true" ]]; then
+    if find /home/baw_web/baw-server/public/assets/ -name '*manifest*json' -printf 1 -quit -type f | grep -q 1; then
         echo -e "\n== Assets already generated, skipping generation =="
     else
         echo -e "\n== Generating assets ==\n"
@@ -52,6 +53,5 @@ fi
 echo -e "\n== Writing .ready ==\n"
 touch .ready
 
-echo -e "\n== Executing original command '$@' ==\n"
-exec "$@"
-
+echo -e "\n== Executing original command '" "${@}" "' ==\n"
+exec "${@}"
