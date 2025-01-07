@@ -123,7 +123,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     command: >-
-      rerun -- bin/baw-workers baw:worker:run
+      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run
     depends_on:
       - db
       - redis
@@ -153,14 +153,14 @@ services:
   scheduler:
     <<: *worker
     command: >-
-      rerun -- bin/baw-workers baw:worker:run_scheduler
+      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run_scheduler
   scheduler_test:
     <<: *worker_test
     # Note: we disable recurring jobs by default on our test scheduler
     # because extra enqueued jobs while other tests are running would break
     # so many things.
     command: >-
-      rerun -- bin/baw-workers baw:worker:run_scheduler
+      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run_scheduler
     environment:
       RAILS_ENV: test
 
