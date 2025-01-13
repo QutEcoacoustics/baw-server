@@ -2,12 +2,16 @@
 # the version is the latest schema defined by the docker compose specification.
 # https://github.com/compose-spec/compose-spec/blob/master/spec.md#Requirements-and-optional-attributes
 
-x-gh_actions:
-  # trial addtion for github actions
-  &gh_actions
+# Deal with the lack of uid/gid remappping in bind mounts
+# Every time a user with a non-1000 uid runs this file, we need to add their gid into this list
+x-gh_actions: &group_add
   group_add:
+    # postgres
     - "116"
+    # trial addtion for github actions
     - "1001"
+    # group for a local dev user
+    - "1002"
 
 # to closer mock production we mount all shared storage (NFS shares in prod) into the same spot
 # in all the containers. In this case /data should always be the internal path for this shared mount.
@@ -22,6 +26,14 @@ x-data-mount-test: &data_mount_test
   source: ./data/test
   target: /data/test
 
+# TODO: investigate docker watch
+# https://github.com/microsoft/vscode-remote-release/issues/9282
+# https://github.com/docker/compose/issues/11344
+# `--watch` is not a default - it has to be supplied. Bad DX?
+# No support yet in vscode devcontainers. Maybe `runArgs`?
+# We want sync+exec for workers and scheduler but only supported in latest version (not yet released)
+# Would allow us to ditch rerun.sh and just use docker-compose up --watch
+
 services:
   redis:
     image: redis:6-alpine
@@ -34,6 +46,9 @@ services:
     image: postgres:14
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./provision/db
+        target: /docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     networks:
@@ -43,14 +58,9 @@ services:
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
 
-  # Note: if the sftpgo service fails to start because a table already exists,
-  # it is because the database has the tables
-  # but none of the migration info in it. Delete the tables with
-  # `rails baw:truncate_sftpgo_tables`.
-  # Error from logs:
-  #   Unable to initialize/update the data provider: pq: relation "sftpgo_schema_version" already exists
+
   upload: &upload
-    <<: *gh_actions
+    <<: *group_add
     # Default command is `sftpgo serve`
     #command: sftpgo serve
     image: drakkan/sftpgo:v2.2.3-alpine
@@ -58,6 +68,7 @@ services:
       - db
     environment:
       RAILS_ENV: development
+      SFTPGO_DATA_PROVIDER__NAME: baw_development_sftpgo
       SFTPGO_DEFAULT_ADMIN_USERNAME: admin
       SFTPGO_DEFAULT_ADMIN_PASSWORD: password
     networks:
@@ -79,7 +90,7 @@ services:
     <<: *upload
     environment:
       RAILS_ENV: test
-      SFTPGO_DATA_PROVIDER__NAME: baw_local_test
+      SFTPGO_DATA_PROVIDER__NAME: baw_test_sftpgo
       SFTPGO_DEFAULT_ADMIN_USERNAME: admin
       SFTPGO_DEFAULT_ADMIN_PASSWORD: password
     networks:
@@ -98,6 +109,7 @@ services:
       - <<: *data_mount_test
 
   analysis_test:
+    <<: *group_add
     build:
       context: provision/analysis/
       dockerfile: ./Dockerfile
@@ -118,18 +130,18 @@ services:
       - <<: *data_mount_test
 
   workers: &worker
-    <<: *gh_actions
+    <<: *group_add
     build:
       context: .
       dockerfile: ./Dockerfile
-    command: >-
-      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run
+    command: ./provision/rerun.sh bin/baw-workers baw:worker:run
     depends_on:
       - db
       - redis
     environment:
       RAILS_ENV: development
-      RUBY_YJIT_ENABLE: 1
+      # pass through values
+      RERUN_FORCE_POLLING: ~
     networks:
       - baw_network
     restart: on-failure
@@ -149,23 +161,27 @@ services:
       - <<: *data_mount_test
     environment:
       RAILS_ENV: test
+      # pass through values
+      RERUN_FORCE_POLLING: ~
 
   scheduler:
     <<: *worker
-    command: >-
-      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run_scheduler
+    command: ./provision/rerun.sh bin/baw-workers baw:worker:run_scheduler
+  # Note: we disable recurring jobs by default on our test scheduler.
+  # For any testing of different orders of event, we have to control order
+  # of jobs being enqueued. A scheduler scheduling jobs would prevent that
+  # and result in flaky tests. See run_worker.rake for the disable.
+  # This scheduler is basically an idle component.
   scheduler_test:
     <<: *worker_test
-    # Note: we disable recurring jobs by default on our test scheduler
-    # because extra enqueued jobs while other tests are running would break
-    # so many things.
-    command: >-
-      ./provision/rerun.sh ${HOMEBREW_PREFIX} bin/baw-workers baw:worker:run_scheduler
+    command: ./provision/rerun.sh bin/baw-workers baw:worker:run_scheduler
     environment:
       RAILS_ENV: test
+      # pass through values
+      RERUN_FORCE_POLLING: ~
 
   web:
-    <<: *gh_actions
+    <<: *group_add
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -174,14 +190,8 @@ services:
     # file is only used for devleopment and we usually don't want a web server
     # just starting - particularly in CI where we need the port for tests
     # TODO: this seems to ignore signals and takes 10 seconds (the default timeout) to stop whenever docker stop is issues
-    command: sleep infinity
+    command: ./provision/web/dev_start.sh
     init: true
-    healthcheck:
-      test: test -f .ready
-      interval: 5s
-      timeout: 3s
-      retries: 12
-      start_period: 30s
     depends_on:
       - db
       - redis
@@ -195,7 +205,6 @@ services:
     environment:
       RAILS_ENV: development
       MIGRATE_DB: "true"
-      RUBY_YJIT_ENABLE: 1
       # pass through values
       NEXT_VERSION: ~
       CHANGELOG_GITHUB_TOKEN: ~

@@ -40,7 +40,10 @@ Install:
 
 ### MacOS
 
-Install Docker Desktop
+Install Docker Desktop.
+
+MacOS users will need to `export RERUN_FORCE_POLLING=true` to disable
+inotify polling for the rerun code reloading gem. This is because Docker Desktop for Mac does not support inotify through binds.
 
 ### Linux
 

@@ -55,7 +55,7 @@ sftpd:
 data_provider:
   driver: postgresql
   # from config/settings.default.yml
-  name: baw_local_development
+  #name:
   # docker-compose service name
   host: db
   port: 5432
