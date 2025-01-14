@@ -54,7 +54,7 @@ sftpd:
 #webdavd
 data_provider:
   driver: postgresql
-  # from config/settings.default.yml
+  # Name provided by environment variable in docker compose file
   #name:
   # docker-compose service name
   host: db
