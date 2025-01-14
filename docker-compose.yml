@@ -58,7 +58,6 @@ services:
       # Only use this in a dev environment
       POSTGRES_PASSWORD: password
 
-
   upload: &upload
     <<: *group_add
     # Default command is `sftpgo serve`
@@ -122,6 +121,8 @@ services:
     ports:
       # note this only changes host mapping
       - "2024:22"
+    # sometimes has trouble booting on a cold docker compose up
+    restart: on-failure:3
     tty: true
     volumes:
       - type: bind
