@@ -42,7 +42,8 @@ module BawWorkers
           BawWorkers::Config.logger_worker.info(
             'rake_task:baw:worker:run_scheduler adding recurring job',
             job_class: job_class.name,
-            schedule: job_class.recurring_cron_schedule
+            schedule: job_class.recurring_cron_schedule,
+            args: job_class.recurring_cron_schedule_args
           )
 
           # add the job to the resque scheduler
@@ -51,7 +52,8 @@ module BawWorkers
             {
               class: job_class.name,
               cron: job_class.recurring_cron_schedule,
-              queue: job_class.queue_name
+              queue: job_class.queue_name,
+              args: job_class.recurring_cron_schedule_args
               # We don't persist the schedule because we set it every time
               # we start up the scheduler (this very process).
               #persist:
@@ -70,10 +72,9 @@ module BawWorkers
     # Get all currently queued jobs.
     # @return [Array<Hash>]
     def jobs_queued
-      jobs = []
-      Resque.queues.each do |queue|
-        jobs.push(jobs_queued_in(queue))
-      end
+      jobs = Resque.queues.map { |queue|
+        jobs_queued_in(queue)
+      }
       jobs.flatten
     end
 
@@ -258,7 +259,7 @@ module BawWorkers
 
     def queue_names(env = BawApp.env)
       env_regex = Regexp.new(env)
-      Resque.queues.filter { |queue| queue =~ env_regex }
+      Resque.queues.grep(env_regex)
     end
 
     def clear_queues(env = BawApp.env)

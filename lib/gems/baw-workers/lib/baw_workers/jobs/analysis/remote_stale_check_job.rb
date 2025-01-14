@@ -13,7 +13,7 @@ module BawWorkers
         queue_as Settings.actions.analysis_stale_check.queue
         perform_expects [NilClass, Integer]
 
-        recurring_at Settings.actions.analysis_stale_check.schedule
+        recurring_at Settings.actions.analysis_stale_check.schedule, args: [nil]
 
         # only allow one of these to run at once.
         # constrained resource: don't want two of these running at once otherwise
@@ -29,7 +29,7 @@ module BawWorkers
           push_message(error.message)
         end
 
-        def perform(min_age_seconds = nil)
+        def perform(min_age_seconds)
           # first check if we can contact the remote queue
           failed!('Could not connect to remote queue.') unless batch.remote_connected?
 
