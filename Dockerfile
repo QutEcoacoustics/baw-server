@@ -24,9 +24,9 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   # the following are for nokogiri and the like
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
   # for the pg gem we need postgresql-client (also used by rails rake db commands)
-  && /provision/install_postgresql_client.sh \
+  && /provision/web/install_postgresql_client.sh \
   # install audio tools and other binaries
-  && /provision/install_audio_tools.sh
+  && /provision/web/install_audio_tools.sh
 
 RUN --mount=type=bind,source=./provision,target=/provision \
   # create a user for the app
@@ -45,7 +45,7 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   && mkdir -p /home/${app_user}/${app_name}/tmp \
   && mkdir /data \
   && chown -R 1000:1000 /data \
-  && (if [ "x${trimmed}" != "xtrue" ]; then /provision/dev_setup.sh ; fi)
+  && (if [ "x${trimmed}" != "xtrue" ]; then /provision/web/dev_setup.sh ; fi)
 
 
 ENV RAILS_ENV=production \
@@ -62,7 +62,8 @@ ENV RAILS_ENV=production \
   # must be done in context (i.e. in production for production, not in dev for production)
   # should not be done for workers and in dev/test environments
   GENERATE_ASSETS=false \
-  BINDING=0.0.0.0
+  BINDING=0.0.0.0 \
+  RUBY_YJIT_ENABLE=1
 
 
 # "Install" our metadata utility

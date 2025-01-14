@@ -54,8 +54,8 @@ sftpd:
 #webdavd
 data_provider:
   driver: postgresql
-  # from config/settings.default.yml
-  name: baw_local_development
+  # Name provided by environment variable in docker compose file
+  #name:
   # docker-compose service name
   host: db
   port: 5432

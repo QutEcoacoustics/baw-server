@@ -265,7 +265,6 @@
     "solargraph.checkGemVersion": true,
     "solargraph.logLevel": "debug",
     "editor.formatOnSave": true,
-    "rubyLsp.bundleGemfile": "./ruby-lsp/Gemfile",
     "ruby.useBundler": true, //run non-lint commands with bundle exec
     "ruby.useLanguageServer": false, // use the internal language server (see below)
     "ruby.intellisense": false,
