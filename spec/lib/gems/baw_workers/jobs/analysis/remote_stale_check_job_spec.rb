@@ -13,7 +13,6 @@ describe BawWorkers::Jobs::Analysis::RemoteStaleCheckJob do
   )
 
   pause_all_jobs
-
   submit_pbs_jobs_as_held
 
   def get_last_status(expected_count)
@@ -21,6 +20,16 @@ describe BawWorkers::Jobs::Analysis::RemoteStaleCheckJob do
       expected_count,
       of_class: BawWorkers::Jobs::Analysis::RemoteStaleCheckJob
     ).max_by(&:time)
+  end
+
+  it 'can be performed later' do
+    BawWorkers::Jobs::Analysis::RemoteStaleCheckJob.perform_later!(nil)
+
+    expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Analysis::RemoteStaleCheckJob)
+
+    perform_jobs(count: 1)
+
+    expect_performed_jobs(1, of_class: BawWorkers::Jobs::Analysis::RemoteStaleCheckJob)
   end
 
   stepwise 'can resolve stale jobs' do

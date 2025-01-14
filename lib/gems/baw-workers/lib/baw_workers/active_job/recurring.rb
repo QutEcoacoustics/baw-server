@@ -11,9 +11,11 @@ module BawWorkers
     # @example
     #   class MyJob < BawWorkers::Jobs::ApplicationJob
     #     queue_as :default
-    #     recurring_at '0 0 * * *' # every day at midnight
-    #     def perform(*args)
-    #       # do something
+    #     recurring_at '0 0 * * *', args: [ 1 ]
+    #
+    #     def perform(an_argument)
+    #       # prints `1` every day at midnight
+    #       puts an_argument
     #     end
     #   end
     #
@@ -32,14 +34,20 @@ module BawWorkers
         # @!attribute [rw] recurring_cron_schedule
         #   @return [string] The cron schedule for this recurring job.
 
+        # @!attribute [rw] recurring_cron_schedule_args
+        #  @return [Array] The arguments the job will be scheduled with
+
         # Sets the cron schedule for this job.
         # @param [String] cron_schedule the cron schedule for this job. This is a 6-star schedule.
+        # @param [Array] args the arguments the job will be scheduled with
         # @raise [ArgumentError] if cron_schedule is not a string
         # @return [void]
-        def recurring_at(cron_schedule)
+        def recurring_at(cron_schedule, args: [])
           raise ArgumentError, 'cron_schedule must be a string' unless cron_schedule.is_a?(String)
+          raise ArgumentError, 'args must be an array' unless args.is_a?(Array)
 
           self.recurring_cron_schedule = cron_schedule
+          self.recurring_cron_schedule_args = args
         end
 
         # override resque-scheduler's default behaviour to adapt it to work with active job.
@@ -54,6 +62,7 @@ module BawWorkers
 
         def __setup_recurring
           class_attribute :recurring_cron_schedule, instance_accessor: false
+          class_attribute :recurring_cron_schedule_args, instance_accessor: false
         end
       end
 
