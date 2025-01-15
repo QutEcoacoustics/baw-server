@@ -6,7 +6,7 @@ describe UserAccountsController do
   # make sure it can recover from bad input
   describe 'proper timezones data' do
     let(:user_bad_tz) {
-      user = FactoryBot.build(:user, tzinfo_tz: 'Australia - Sydney', rails_tz: 'Sydney')
+      user = build(:user, tzinfo_tz: 'Australia - Sydney', rails_tz: 'Sydney')
       user.save!(validate: false)
       user
     }
@@ -55,7 +55,7 @@ describe UserAccountsController do
 
   describe 'bad timezones data' do
     let(:user_bad_tz) {
-      user = FactoryBot.build(:user, tzinfo_tz: 'person@domain.com', rails_tz: 'person@domain.com')
+      user = build(:user, tzinfo_tz: 'person@domain.com', rails_tz: 'person@domain.com')
       user.save!(validate: false)
       user
     }
@@ -71,7 +71,7 @@ describe UserAccountsController do
         response = get :my_account, params: { format: :json }
         body = JSON.parse(response.body)
 
-        expect(body['timezone_information']).to be(nil)
+        expect(body['timezone_information']).to be_nil
 
         user_good_tz = User.find(user_bad_tz.id)
         new_values = [user_good_tz.tzinfo_tz, user_good_tz.rails_tz]

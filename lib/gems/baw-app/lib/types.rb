@@ -21,8 +21,15 @@ module BawApp
       begin
         p.mkpath
       rescue Errno::EACCES => e
-        Rails.logger.debug { "ERROR: Could not create directory #{p}, #{e}" }
+        # These errors happen before the logger is available, don't use rails logger
+        # rubocop:disable Rails/Output
+        puts "CreatedDirPathname ERROR: Could not create directory #{p}, #{e}"
+        # rubocop:enable Rails/Output
         raise e if BawApp.dev_or_test?
+      rescue StandardError => e
+        # rubocop:disable Rails/Output
+        puts "CreatedDirPathname ERROR:  #{e}"
+        # rubocop:enable Rails/Output
       end
       p
     }

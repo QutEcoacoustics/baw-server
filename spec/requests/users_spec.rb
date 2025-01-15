@@ -21,4 +21,41 @@ describe 'Users' do
       }))
     end
   end
+
+  it 'when shown, returns a contactable field' do
+    reader_user.contactable = 'consented'
+    reader_user.save!
+    get "/user_accounts/#{reader_user.id}", **api_headers(reader_token)
+    expect_success
+    expect(api_data).to include(contactable: 'consented')
+  end
+
+  it 'accepts a contactable field' do
+    body = {
+      user: {
+        contactable: 'consented'
+      }
+    }
+    patch "/user_accounts/#{reader_user.id}", params: body, **api_with_body_headers(reader_token)
+    expect_success
+    expect(reader_user.reload.contactable_consented?).to be true
+  end
+
+  it 'rejects an invalid contactable field' do
+    body = {
+      user: {
+        contactable: 'cucumber'
+      }
+    }
+    patch "/user_accounts/#{reader_user.id}", params: body, **api_with_body_headers(reader_token)
+    expect(response).to have_http_status(:unprocessable_content)
+  end
+
+  it 'accessing my_account returns a contactable field' do
+    reader_user.contactable = 'unconsented'
+    reader_user.save!
+    get '/my_account', **api_headers(reader_token)
+    expect_success
+    expect(api_data).to include(contactable: 'unconsented')
+  end
 end
