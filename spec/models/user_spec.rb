@@ -4,38 +4,39 @@
 #
 # Table name: users
 #
-#  id                     :integer          not null, primary key
-#  authentication_token   :string
-#  confirmation_sent_at   :datetime
-#  confirmation_token     :string
-#  confirmed_at           :datetime
-#  current_sign_in_at     :datetime
-#  current_sign_in_ip     :string
-#  email                  :string           not null
-#  encrypted_password     :string           not null
-#  failed_attempts        :integer          default(0)
-#  image_content_type     :string
-#  image_file_name        :string
-#  image_file_size        :bigint
-#  image_updated_at       :datetime
-#  invitation_token       :string
-#  last_seen_at           :datetime
-#  last_sign_in_at        :datetime
-#  last_sign_in_ip        :string
-#  locked_at              :datetime
-#  preferences            :text
-#  rails_tz               :string(255)
-#  remember_created_at    :datetime
-#  reset_password_sent_at :datetime
-#  reset_password_token   :string
-#  roles_mask             :integer
-#  sign_in_count          :integer          default(0)
-#  tzinfo_tz              :string(255)
-#  unconfirmed_email      :string
-#  unlock_token           :string
-#  user_name              :string           not null
-#  created_at             :datetime
-#  updated_at             :datetime
+#  id                                                                              :integer          not null, primary key
+#  authentication_token                                                            :string
+#  confirmation_sent_at                                                            :datetime
+#  confirmation_token                                                              :string
+#  confirmed_at                                                                    :datetime
+#  contactable(Is the user contactable - consent status re: email communications ) :enum             default("unknown"), not null
+#  current_sign_in_at                                                              :datetime
+#  current_sign_in_ip                                                              :string
+#  email                                                                           :string           not null
+#  encrypted_password                                                              :string           not null
+#  failed_attempts                                                                 :integer          default(0)
+#  image_content_type                                                              :string
+#  image_file_name                                                                 :string
+#  image_file_size                                                                 :bigint
+#  image_updated_at                                                                :datetime
+#  invitation_token                                                                :string
+#  last_seen_at                                                                    :datetime
+#  last_sign_in_at                                                                 :datetime
+#  last_sign_in_ip                                                                 :string
+#  locked_at                                                                       :datetime
+#  preferences                                                                     :text
+#  rails_tz                                                                        :string(255)
+#  remember_created_at                                                             :datetime
+#  reset_password_sent_at                                                          :datetime
+#  reset_password_token                                                            :string
+#  roles_mask                                                                      :integer
+#  sign_in_count                                                                   :integer          default(0)
+#  tzinfo_tz                                                                       :string(255)
+#  unconfirmed_email                                                               :string
+#  unlock_token                                                                    :string
+#  user_name                                                                       :string           not null
+#  created_at                                                                      :datetime
+#  updated_at                                                                      :datetime
 #
 # Indexes
 #
@@ -99,7 +100,7 @@ describe User do
     end
 
     KEYS.each { |key|
-      it "will show if #{key} is recent" do
+      it "shows if #{key} is recent" do
         user[key] = 1.day.ago
         user.save!
         expect(User.recently_seen(1.month.ago).to_a).to include(user)
@@ -118,5 +119,28 @@ describe User do
     user = build(:user, user_name: "!aNT's fully s!ck user name 1337;;\n)/)'")
 
     expect(user.safe_user_name).to eq('aNTs-fully-s-ck-user-name-1337')
+  end
+
+  it 'defaults to contactable: unasked' do
+    user = build(:user)
+    expect(user.contactable).to eq('unasked')
+    expect(user).to be_valid
+  end
+
+  it 'allows valid contactable values' do
+    expect(build(:user, contactable: 'consented')).to be_valid
+    expect(build(:user, contactable: 'unconsented')).to be_valid
+  end
+
+  it 'does not allow invalid contactable values' do
+    user = build(:user, contactable: 'donkey')
+    expect(user).not_to be_valid
+  end
+
+  it 'contactable status can be set and checked using scopes' do
+    user = build(:user)
+    user.contactable_consented!
+    expect(user.contactable_consented?).to be true
+    expect(user).to be_valid
   end
 end
