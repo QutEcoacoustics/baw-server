@@ -13,8 +13,8 @@ module BawWorkers
             FileExists,
             IsAFile,
             FileEmpty,
-            TargetType
-
+            TargetType,
+            ValidFileNameCharacters
           ]
         end
 
@@ -85,7 +85,7 @@ module BawWorkers
 
           def validate(harvest_item)
             size = harvest_item.absolute_path.size
-            return not_fixable("File has no content (#{size} bytes)") unless size.positive?
+            not_fixable("File has no content (#{size} bytes)") unless size.positive?
           end
         end
 
@@ -102,6 +102,36 @@ module BawWorkers
             return if path.basename.to_s == 'data'
 
             not_fixable("File has invalid extension `#{path.extname}`")
+          end
+        end
+
+        # Do match C control characters (Control, Format, Unassigned, Private Use, Surrogate)
+        # Also match the replacement character (�). In other parts of the code we have
+        # to scrub invalid UTF-8 sequences and replace them with this character.
+        # We do this so we can generate a database record for the invalid harvest item
+        # (we can't save invalid UTF-8 to the database). Otherwise the files are ignored
+        # without error.
+        INVALID_FILENAME_CHARACTERS = /[\p{C}�]/
+
+        class ValidFileNameCharacters < Validation
+          validation_name :invalid_filename_characters
+
+          def validate(harvest_item)
+            name = File.basename(harvest_item.path).force_encoding(Encoding::UTF_8)
+
+            unless name.valid_encoding?
+
+              name = name.scrub
+
+              return fixable("Filename has invalid characters. Remove problem characters where indicated `#{name}`")
+
+            end
+
+            # check for non-printable characters
+            changed = name.gsub!(INVALID_FILENAME_CHARACTERS, '�')
+            return if changed.nil?
+
+            fixable("Filename has invalid characters. Remove problem characters where indicated `#{name}`")
           end
         end
 
@@ -127,7 +157,7 @@ module BawWorkers
             # if there's no date at all there's no point in checking this
             return if recorded_date_local.blank?
 
-            return unless utc_offset.blank?
+            return if utc_offset.present?
 
             fixable('Only a local date/time was found, supply a UTC offset')
           end
@@ -143,7 +173,7 @@ module BawWorkers
             # (prior valiations should have already caught this)
             return if recorded_date.blank?
 
-            return if recorded_date <= Time.now
+            return if recorded_date <= Time.zone.now
 
             fixable('This file has a recorded date in the future')
           end
@@ -154,7 +184,7 @@ module BawWorkers
 
           def validate(harvest_item)
             duration = harvest_item.info.file_info[:duration_seconds]
-            return unless duration.blank?
+            return if duration.present?
 
             not_fixable('Could not find a duration for this file')
           end

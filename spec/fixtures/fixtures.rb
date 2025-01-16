@@ -24,6 +24,11 @@ module Fixtures
     '/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png' =>	100_993
   }.freeze
 
+  # A filename with some non-printable characters in it.
+  # https://github.com/QutEcoacoustics/baw-server/issues/702
+  # @return [String]
+  MIXED_ENCODING_FILENAME = "20231205T\xe2\x80\x8f\xe2\x80\x8e140158_TURTNEST22_n1_m1.wav"
+
   # @return [Pathname]
   def self.zip_fixture
     ensure_exists FILES_PATH / 'compressed.zip'

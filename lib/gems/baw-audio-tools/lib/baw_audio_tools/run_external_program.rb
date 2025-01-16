@@ -19,6 +19,8 @@ module BawAudioTools
     end
 
     # Execute an external program.
+    # Do not use if your program will write binary (non UTF-8 compatible) data to stdout or stderr.
+    # ! Can return invalid UTF-8 byte sequences.
     # @param [String] command
     # @param [Boolean] raise_exit_error
     # @return [Hash] result hash
@@ -44,7 +46,9 @@ module BawAudioTools
           pid = pid_inner
         end
       rescue StandardError => e
-        @logger.fatal(@class_name) do e end
+        @logger.fatal(@class_name) do
+          e
+        end
         raise e
       end
 
@@ -52,9 +56,10 @@ module BawAudioTools
       timeout_msg = "time_out_sec=#{@timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
       exceptions_msg = "exceptions=#{exceptions.inspect};"
       output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}\n\n"
+
       msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
 
-      if (!stderr_str.blank? && !status.success?) || timed_out || killed
+      if (stderr_str.present? && !status.success?) || timed_out || killed
         @logger.warn(@class_name) { msg }
       else
         @logger.debug(@class_name) { msg }
@@ -94,17 +99,19 @@ module BawAudioTools
       timeout = 60 if timeout.nil?
       cleanup_sleep = options[:cleanup_sleep]
 
-      output = ''
-      error = ''
+      # be specific about encoding to avoid encoding issues
+      # Note: external programs may output invalid UTF-8 byte sequences
+      output = String.new(encoding: Encoding::UTF_8)
+      error = String.new(encoding: Encoding::UTF_8)
 
       # Start task in another thread, which spawns a process
       Open3.popen3(*opts) do |_stdin, stdout, stderr, thread|
         # Get the pid of the spawned process
         pid = thread[:pid]
-        start = Time.now
+        start = Time.zone.now
 
         exceptions = []
-        while (time_remaining = (Time.now - start) < timeout) && thread.alive?
+        while (time_remaining = (Time.zone.now - start) < timeout) && thread.alive?
           exceptions.push read_to_stream(stdout, stderr, output, error, options)
         end
 
@@ -141,8 +148,8 @@ module BawAudioTools
       exceptions = []
 
       # Wait up to `tick` seconds for output/error data
-      readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
-      unless readables.blank?
+      readables, = Kernel.select([stdout, stderr], nil, nil, tick)
+      if readables.present?
         readables.each do |readable|
           stream = readable == stdout ? output : error
           begin
@@ -151,7 +158,7 @@ module BawAudioTools
             # Need to read all of both streams
             # Keep going until thread dies
             exceptions.push(e)
-          rescue EOFError => e
+          rescue EOFError
             # ignore EOFErrors
           end
         end
@@ -166,7 +173,11 @@ module BawAudioTools
     end
 
     def read_linux(stream, readable, buffer_size)
-      stream << readable.read_nonblock(buffer_size)
+      # Sometimes incompatible byte sequences are output by external programs.
+      # We want the encoding to stay UTF-8 so we don't get incompatible encoding errors
+      # on string operations. Invalid UTF-8 byte sequences aren't great but it's better
+      # than exceptions on normal operations.
+      stream << readable.read_nonblock(buffer_size).force_encoding(Encoding::UTF_8)
     end
   end
 end

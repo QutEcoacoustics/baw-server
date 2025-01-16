@@ -140,6 +140,7 @@
       "Railtie",
       "rakefile",
       "rdebug",
+      "readables",
       "realdirpath",
       "realpath",
       "recaptcha",

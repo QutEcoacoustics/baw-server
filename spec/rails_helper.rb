@@ -263,6 +263,7 @@ RSpec.configure do |config|
   require "#{RSPEC_ROOT}/support/shared_context/logger_spy"
 
   require_relative 'support/matchers/be_same_file_as'
+  require_relative 'support/matchers/string_to_have_encoding'
 
   # change the default creation strategy
   # Previous versions of factory bot would ensure associations used the :create
