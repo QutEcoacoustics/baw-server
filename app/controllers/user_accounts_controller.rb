@@ -105,8 +105,8 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_projects = Access::ByPermission.projects(@user).includes(:creator).references(:creator)
-                                         .order('projects.name ASC')
-                                         .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+      .order('projects.name ASC')
+      .page((paging_params[:page].presence || 1))
     respond_to do |format|
       format.html
     end
@@ -118,8 +118,8 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_sites = Access::ByPermission.sites(@user).includes(:creator, :projects).references(:creator, :project)
-                                      .order('sites.name ASC')
-                                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+      .order('sites.name ASC')
+      .page((paging_params[:page].presence || 1))
 
     respond_to do |format|
       format.html
@@ -132,8 +132,8 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_bookmarks = Access::ByUserModified.bookmarks(@user)
-                                            .order('bookmarks.updated_at DESC')
-                                            .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+      .order('bookmarks.updated_at DESC')
+      .page((paging_params[:page].presence || 1))
     respond_to do |format|
       format.html
     end
@@ -145,8 +145,8 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_audio_event_comments = Access::ByUserModified.audio_event_comments(@user)
-                                                       .order('audio_event_comments.updated_at DESC')
-                                                       .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+      .order('audio_event_comments.updated_at DESC')
+      .page((paging_params[:page].presence || 1))
     respond_to do |format|
       format.html
     end
@@ -160,8 +160,8 @@ ELSE last_sign_in_at END DESC')
     @user_annotations = Access::ByUserModified.audio_events(@user).includes(audio_recording: [:site]).references(
       :audio_recordings, :sites
     )
-                                              .order('audio_events.updated_at DESC')
-                                              .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+      .order('audio_events.updated_at DESC')
+      .page((paging_params[:page].presence || 1))
     respond_to do |format|
       format.html
     end
@@ -173,11 +173,11 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_saved_searches = Access::ByUserModified.saved_searches(@user)
-                                                 .order('saved_searches.created_at DESC')
-                                                 .paginate(
-                                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                                   per_page: 30
-                                                 )
+      .order('saved_searches.created_at DESC')
+      .paginate(
+        page: paging_params[:page].presence || 1,
+        per_page: 30
+      )
     respond_to do |format|
       format.html
     end
@@ -189,11 +189,11 @@ ELSE last_sign_in_at END DESC')
     do_authorize_instance
 
     @user_analysis_jobs = Access::ByUserModified.analysis_jobs(@user)
-                                                .order('analysis_jobs.updated_at DESC')
-                                                .paginate(
-                                                  page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                                  per_page: 30
-                                                )
+      .order('analysis_jobs.updated_at DESC')
+      .paginate(
+        page: paging_params[:page].presence || 1,
+        per_page: 30
+      )
     respond_to do |format|
       format.html
     end
@@ -223,7 +223,7 @@ ELSE last_sign_in_at END DESC')
     params.require(:user).permit(
       :user_name, :email, :password, :password_confirmation, :remember_me,
       :roles, :roles_mask, :preferences,
-      :image, :login
+      :image, :login, :contactable
     )
   end
 
@@ -231,7 +231,7 @@ ELSE last_sign_in_at END DESC')
     params.require(:user).permit(
       :id, :user_name, :email, :tzinfo_tz,
       :password, :password_confirmation,
-      :roles_mask, :image
+      :roles_mask, :image, :contactable
     )
   end
 

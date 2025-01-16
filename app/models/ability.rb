@@ -667,7 +667,7 @@ class Ability
     can [:index, :filter], SavedSearch
   end
 
-  def to_provenance(_user, is_guest)
+  def to_provenance(_user, _is_guest)
     # other actions are admin only
 
     # available to any user, including guest
@@ -722,7 +722,7 @@ class Ability
     # normal users edit their profile using devise/registrations#edit
 
     # users can only view their own:
-    can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
+    can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments, :update], User, id: user.id
 
     # users get their own account and preferences from these actions
     can [:my_account, :modify_preferences], User, id: user.id

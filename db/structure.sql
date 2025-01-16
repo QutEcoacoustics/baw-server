@@ -86,6 +86,17 @@ CREATE TYPE public.analysis_jobs_item_transition AS ENUM (
 
 
 --
+-- Name: consent; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.consent AS ENUM (
+    'unasked',
+    'yes',
+    'no'
+);
+
+
+--
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2004,8 +2015,16 @@ CREATE TABLE public.users (
     preferences text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255),
-    last_seen_at timestamp without time zone
+    last_seen_at timestamp without time zone,
+    contactable public.consent DEFAULT 'unasked'::public.consent NOT NULL
 );
+
+
+--
+-- Name: COLUMN users.contactable; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.users.contactable IS 'Is the user contactable for email communications';
 
 
 --
@@ -4216,6 +4235,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250113012304'),
 ('20241106015941'),
 ('20241004055117'),
 ('20240828062256'),

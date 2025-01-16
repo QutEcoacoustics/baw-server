@@ -4,38 +4,39 @@
 #
 # Table name: users
 #
-#  id                     :integer          not null, primary key
-#  authentication_token   :string
-#  confirmation_sent_at   :datetime
-#  confirmation_token     :string
-#  confirmed_at           :datetime
-#  current_sign_in_at     :datetime
-#  current_sign_in_ip     :string
-#  email                  :string           not null
-#  encrypted_password     :string           not null
-#  failed_attempts        :integer          default(0)
-#  image_content_type     :string
-#  image_file_name        :string
-#  image_file_size        :bigint
-#  image_updated_at       :datetime
-#  invitation_token       :string
-#  last_seen_at           :datetime
-#  last_sign_in_at        :datetime
-#  last_sign_in_ip        :string
-#  locked_at              :datetime
-#  preferences            :text
-#  rails_tz               :string(255)
-#  remember_created_at    :datetime
-#  reset_password_sent_at :datetime
-#  reset_password_token   :string
-#  roles_mask             :integer
-#  sign_in_count          :integer          default(0)
-#  tzinfo_tz              :string(255)
-#  unconfirmed_email      :string
-#  unlock_token           :string
-#  user_name              :string           not null
-#  created_at             :datetime
-#  updated_at             :datetime
+#  id                                                            :integer          not null, primary key
+#  authentication_token                                          :string
+#  confirmation_sent_at                                          :datetime
+#  confirmation_token                                            :string
+#  confirmed_at                                                  :datetime
+#  contactable(Is the user contactable for email communications) :enum             default("unasked"), not null
+#  current_sign_in_at                                            :datetime
+#  current_sign_in_ip                                            :string
+#  email                                                         :string           not null
+#  encrypted_password                                            :string           not null
+#  failed_attempts                                               :integer          default(0)
+#  image_content_type                                            :string
+#  image_file_name                                               :string
+#  image_file_size                                               :bigint
+#  image_updated_at                                              :datetime
+#  invitation_token                                              :string
+#  last_seen_at                                                  :datetime
+#  last_sign_in_at                                               :datetime
+#  last_sign_in_ip                                               :string
+#  locked_at                                                     :datetime
+#  preferences                                                   :text
+#  rails_tz                                                      :string(255)
+#  remember_created_at                                           :datetime
+#  reset_password_sent_at                                        :datetime
+#  reset_password_token                                          :string
+#  roles_mask                                                    :integer
+#  sign_in_count                                                 :integer          default(0)
+#  tzinfo_tz                                                     :string(255)
+#  unconfirmed_email                                             :string
+#  unlock_token                                                  :string
+#  user_name                                                     :string           not null
+#  created_at                                                    :datetime
+#  updated_at                                                    :datetime
 #
 # Indexes
 #
@@ -87,7 +88,7 @@ FactoryBot.define do
 
     trait :avatar_image do
       # this will be slow
-      image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
+      image { fixture_file_upload(Rails.public_path.join('images/user/user-512.png'), 'image/png') }
     end
 
     factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader, :flagger]
