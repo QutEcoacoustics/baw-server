@@ -91,8 +91,8 @@ CREATE TYPE public.analysis_jobs_item_transition AS ENUM (
 
 CREATE TYPE public.consent AS ENUM (
     'unasked',
-    'consented',
-    'unconsented'
+    'yes',
+    'no'
 );
 
 

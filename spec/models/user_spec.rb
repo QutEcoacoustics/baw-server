@@ -123,13 +123,14 @@ describe User do
 
   it 'defaults to contactable: unasked' do
     user = build(:user)
+
     expect(user.contactable).to eq('unasked')
     expect(user).to be_valid
   end
 
   it 'allows valid contactable values' do
-    expect(build(:user, contactable: 'consented')).to be_valid
-    expect(build(:user, contactable: 'unconsented')).to be_valid
+    expect(build(:user, contactable: 'yes')).to be_valid
+    expect(build(:user, contactable: 'no')).to be_valid
   end
 
   it 'does not allow invalid contactable values' do
@@ -137,10 +138,11 @@ describe User do
     expect(user).not_to be_valid
   end
 
-  it 'contactable status can be set and checked using scopes' do
+  it 'contactable status can be set and checked using enum predicates' do
     user = build(:user)
-    user.contactable_consented!
-    expect(user.contactable_consented?).to be true
+    user.contactable_yes!
+
+    expect(user.contactable?).to be true
     expect(user).to be_valid
   end
 end

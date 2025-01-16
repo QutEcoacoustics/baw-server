@@ -64,22 +64,38 @@ class User < ApplicationRecord
 
   # Defines a reusable mapping (CONSENT_ENUM) of consent constants
   CONSENT_UNASKED = 'unasked'
-  CONSENT_CONSENTED = 'consented'
-  CONSENT_UNCONSENTED = 'unconsented'
+  CONSENT_YES = 'yes'
+  CONSENT_NO = 'no'
 
   CONSENT_ENUM = {
     CONSENT_UNASKED => CONSENT_UNASKED,
-    CONSENT_CONSENTED => CONSENT_CONSENTED,
-    CONSENT_UNCONSENTED => CONSENT_UNCONSENTED
+    CONSENT_YES => CONSENT_YES,
+    CONSENT_NO => CONSENT_NO
   }.freeze
 
-  # enum :consent, {
-  #   CONSENT_UNASKED => CONSENT_UNASKED,
-  #   CONSENT_CONSENTED => CONSENT_CONSENTED,
-  #   CONSENT_UNCONSENTED => CONSENT_UNCONSENTED
-  # }, prefix: :consent
-
+  # @!method contactable_unasked?
+  #   @return [Boolean] true if the user has not been asked for consent
+  # @!method contactable_unasked!
+  #   @return [void] sets the user as unasked
+  # @!method contactable_yes?
+  #   @return [Boolean] true if the user has consented to be contacted
+  # @!method contactable_yes!
+  #   @return [void] sets the user as contactable
+  # @!method contactable_no?
+  #   @return [Boolean] true if the user has not consented to be contacted
+  # @!method contactable_no!
+  #   @return [void] sets the user as not contactable
   enum :contactable, CONSENT_ENUM, prefix: :contactable, validate: true
+
+  # @return [Boolean] true if the user has consented to be contacted
+  def contactable?
+    contactable == 'yes'
+  end
+
+  # @return [Boolean] true if the user has not been asked for consent
+  def unasked?
+    contactable == 'unasked'
+  end
 
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
