@@ -25,6 +25,7 @@ module BawWorkers
           # @return [Boolean] status of job enqueue, true if successful
           def enqueue_file(harvest, rel_path, should_harvest:, debounce_on_recent_metadata_extraction: false)
             rel_path = rel_path.to_s if rel_path.is_a?(Pathname)
+            rel_path = check_filename_encoding!(rel_path)
 
             # try and find an existing record
             item = existing_harvest_item(harvest, rel_path)
@@ -68,6 +69,24 @@ module BawWorkers
           end
 
           private
+
+          # Check if the path is valid UTF-8, if not rename the file to a scrubbed version
+          # replacing invalid characters with the unicode replacement character.
+          # @param rel_path [String]
+          # @return [String] the scrubbed rel_path
+          def check_filename_encoding!(rel_path)
+            return rel_path if rel_path.valid_encoding?
+
+            scrubbed = rel_path.scrub
+
+            # attempt to rename the file so we don't lose it
+            original = "#{Settings.root_to_do_path}/#{rel_path}"
+            new_path = "#{Settings.root_to_do_path}/#{scrubbed}"
+
+            File.rename(original, new_path)
+
+            scrubbed
+          end
 
           # @param harvest [Harvest]
           # @param rel_path [String] the path within harvester_to_do to process
