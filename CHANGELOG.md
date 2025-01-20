@@ -1,5 +1,28 @@
 # Changelog
 
+## [12.4.0](https://github.com/QutEcoacoustics/baw-server/tree/12.4.0) (2025-01-20)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.1.2...12.4.0)
+
+**Implemented enhancements:**
+
+- Add an Opt-in For Communications [\#692](https://github.com/QutEcoacoustics/baw-server/issues/692)
+
+**Fixed bugs:**
+
+- Error: incompatible character encodings: UTF-8 and ASCII-8BIT  [\#702](https://github.com/QutEcoacoustics/baw-server/issues/702)
+- Fix stale job scheduling [\#701](https://github.com/QutEcoacoustics/baw-server/pull/701) ([atruskie](https://github.com/atruskie))
+
+**Merged pull requests:**
+
+- Make harvester more resilient to bad paths [\#704](https://github.com/QutEcoacoustics/baw-server/pull/704) ([atruskie](https://github.com/atruskie))
+- Dev improvements [\#700](https://github.com/QutEcoacoustics/baw-server/pull/700) ([atruskie](https://github.com/atruskie))
+- macos dev compatability [\#699](https://github.com/QutEcoacoustics/baw-server/pull/699) ([andrew-1234](https://github.com/andrew-1234))
+
+## [12.1.2](https://github.com/QutEcoacoustics/baw-server/tree/12.1.2) (2024-12-20)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.1.1...12.1.2)
+
 ## [12.1.1](https://github.com/QutEcoacoustics/baw-server/tree/12.1.1) (2024-12-20)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.1.0...12.1.1)
