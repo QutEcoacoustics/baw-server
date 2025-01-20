@@ -52,7 +52,7 @@ describe CoerceTimezones, :migration do
     # We have corrective code for this problem already in our models
     # we avoid active record and execute raw queries instead
     ActiveRecord::Base.connection.execute(
-      <<~SQL
+      <<~SQL.squish
         DELETE FROM datasets;
         DELETE FROM sites;
         DELETE FROM users;
@@ -65,8 +65,12 @@ describe CoerceTimezones, :migration do
       SQL
     )
 
-    expect(User.count).to eq CASES.length
-    expect(Site.count).to eq CASES.length
+    # don't use model convenience methods because we're testing a migration
+    # where the model may not be correctly defined for the current schema
+    user_count = ApplicationRecord.connection.exec_query('select count(*) from users')[0]['count']
+    site_count = ApplicationRecord.connection.exec_query('select count(*) from sites')[0]['count']
+    expect(user_count).to eq CASES.length
+    expect(site_count).to eq CASES.length
   end
 
   it 'migrates data correctly for sites' do
@@ -74,7 +78,7 @@ describe CoerceTimezones, :migration do
 
     # again execute raw query to avoid corrective code
     results = ActiveRecord::Base.connection.execute(
-      <<~SQL
+      <<~SQL.squish
         SELECT id, tzinfo_tz FROM sites ORDER BY id ASC;
       SQL
     )
@@ -95,7 +99,7 @@ describe CoerceTimezones, :migration do
 
     # again execute raw query to avoid corrective code
     results = ActiveRecord::Base.connection.execute(
-      <<~SQL
+      <<~SQL.squish
         SELECT id, tzinfo_tz FROM users ORDER BY id ASC;
       SQL
     )

@@ -73,7 +73,7 @@ module IncludeController
   def verified_request?
     csrf_header_key = 'X-XSRF-TOKEN'
 
-    super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
+    super || valid_authenticity_token?(session, request.headers[csrf_header_key])
   end
 
   # from http://stackoverflow.com/a/94626

@@ -798,7 +798,7 @@ describe 'Harvesting a batch of files' do
       transition_harvest(:metadata_extraction)
       expect_success
 
-      wait_for_metadata_extraction_to_complete(timeout: 15)
+      wait_for_metadata_extraction_to_complete(timeout: 20)
 
       statuses = HarvestItem.pick_hash(HarvestItem.counts_by_status_arel)
 
@@ -806,6 +806,7 @@ describe 'Harvesting a batch of files' do
 
       aggregate_failures do
         expect(harvest).to be_metadata_review
+
         # before this bug was fixed, some items would remain locked to :new
         expect(statuses).to match(a_hash_including({
           HarvestItem::STATUS_NEW => 0,

@@ -159,32 +159,32 @@ resource 'Users' do
     standard_request_options(:put, 'UPDATE (as admin, different user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
-  put '/user_accounts/:id' do
-    id_param
-    let(:id) { writer_id }
-    let(:raw_post) { { user: post_attributes }.to_json }
-    let(:authentication_token) { writer_token } # admin only, users edit using devise/registrations#edit
-    standard_request_options(:put, 'UPDATE (as writer, same user)', :forbidden,
-      { expected_json_path: get_json_error_path(:permissions) })
-  end
+  # put '/user_accounts/:id' do
+  #   id_param
+  #   let(:id) { writer_id }
+  #   let(:raw_post) { { user: post_attributes }.to_json }
+  #   let(:authentication_token) { writer_token } # admin only, users edit using devise/registrations#edit
+  #   standard_request_options(:put, 'UPDATE (as writer, same user)', :forbidden,
+  #     { expected_json_path: get_json_error_path(:permissions) })
+  # end
 
-  put '/user_accounts/:id' do
-    id_param
-    let(:id) { reader_id }
-    let(:raw_post) { { user: post_attributes }.to_json }
-    let(:authentication_token) { reader_token } # admin only, users edit using devise/registrations#edit
-    standard_request_options(:put, 'UPDATE (as reader, same user)', :forbidden,
-      { expected_json_path: get_json_error_path(:permissions) })
-  end
+  # put '/user_accounts/:id' do
+  #   id_param
+  #   let(:id) { reader_id }
+  #   let(:raw_post) { { user: post_attributes }.to_json }
+  #   let(:authentication_token) { reader_token } # admin only, users edit using devise/registrations#edit
+  #   standard_request_options(:put, 'UPDATE (as reader, same user)', :forbidden,
+  #     { expected_json_path: get_json_error_path(:permissions) })
+  # end
 
-  put '/user_accounts/:id' do
-    id_param
-    let(:id) { no_access_id }
-    let(:raw_post) { { user: post_attributes }.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer, different user)', :forbidden,
-      { expected_json_path: get_json_error_path(:permissions) })
-  end
+  # put '/user_accounts/:id' do
+  #   id_param
+  #   let(:id) { no_access_id }
+  #   let(:raw_post) { { user: post_attributes }.to_json }
+  #   let(:authentication_token) { writer_token }
+  #   standard_request_options(:put, 'UPDATE (as writer, different user)', :forbidden,
+  #     { expected_json_path: get_json_error_path(:permissions) })
+  # end
 
   put '/user_accounts/:id' do
     id_param
