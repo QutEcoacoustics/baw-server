@@ -219,10 +219,10 @@ class Script < ApplicationRecord
     {
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
                      :version, :created_at, :creator_id, :is_last_version, :is_first_version,
-                     :is_last_version, :is_first_version, :event_import_glob],
+                     :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
                       :executable_settings_media_type, :version, :created_at, :creator_id,
-                      :is_last_version, :is_first_version, :event_import_glob],
+                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
       text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
@@ -287,12 +287,13 @@ class Script < ApplicationRecord
         **Api::Schema.creator_user_stamp,
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
-        event_import_glob: { type: 'string', readOnly: true }
+        event_import_glob: { type: 'string', readOnly: true },
+        provenance_id: Api::Schema.id(read_only: false)
       },
       required: [
         :id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
         :version, :created_at, :creator_id, :is_last_version, :is_first_version,
-        :event_import_glob
+        :event_import_glob, :provenance_id
       ]
     }.freeze
   end
