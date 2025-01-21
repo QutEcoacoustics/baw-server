@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe BawWorkers::BatchAnalysis::CommandTemplater do
-  it 'will complain if you use an an invalid placeholder' do
+  it 'complains if you use an an invalid placeholder' do
     expect {
       BawWorkers::BatchAnalysis::CommandTemplater.format_command(
         'test {invalid} placeholder',
@@ -13,7 +13,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     )
   end
 
-  it 'will complain if a placeholder is not in the options hash' do
+  it 'complains if a placeholder is not in the options hash' do
     expect {
       BawWorkers::BatchAnalysis::CommandTemplater.format_command(
         'test {source} placeholder',
@@ -25,16 +25,16 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     )
   end
 
-  it 'will not complain if a placeholders value is nil' do
+  it 'does not complain if a placeholders value is nil' do
     command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
       'test {source} placeholder {output_dir}',
       { source: nil, output_dir: nil }
     )
 
-    command.should eq('test "" placeholder ""')
+    command.should eq('test  placeholder ')
   end
 
-  it 'will complain in a required placeholder was not used' do
+  it 'complains in a required placeholder was not used' do
     expect {
       BawWorkers::BatchAnalysis::CommandTemplater.format_command(
         'test {id} placeholder',
@@ -48,7 +48,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
 
   it 'can template multiple placeholders' do
     command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
-      'test {source} placeholder {config} {source} {config} {output_dir}',
+      'test "{source}" placeholder "{config}" "{source}" "{config}" "{output_dir}"',
       {
         source: 'source',
         config: 'config',
@@ -65,6 +65,8 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
       {config_dir}
       {output_dir}
       {temp_dir}
+      {source_basename}
+      {config_basename}
       {source}
       {config}
       {latitude}
@@ -81,6 +83,8 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
         config_dir: 'cd',
         output_dir: 'od',
         temp_dir: 'td',
+        source_basename: 'sb',
+        config_basename: 'cb',
         source: 's',
         config: 'c',
         latitude: 123,
@@ -92,17 +96,19 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     )
 
     command.should eq(<<~BASH)
-      "sd"
-      "cd"
-      "od"
-      "td"
-      "s"
-      "c"
-      "123"
-      "456"
-      "2018-01-01T12:00:00+10:00"
-      "789"
-      "0a7f2f46-c715-4c0b-9b54-6ead382c7b17"
+      sd
+      cd
+      od
+      td
+      sb
+      cb
+      s
+      c
+      123
+      456
+      2018-01-01T12:00:00+10:00
+      789
+      0a7f2f46-c715-4c0b-9b54-6ead382c7b17
     BASH
   end
 end

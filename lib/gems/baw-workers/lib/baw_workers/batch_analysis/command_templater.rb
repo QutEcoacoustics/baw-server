@@ -8,7 +8,7 @@ module BawWorkers
     # SOURCE_DIR and OUTPUT tokens.
     #
     # The template uses curly brackets to identify placeholders. e.g.
-    # `analysis.exe {source} {output}`.
+    # `analysis.exe {source} {output_dir}`.
     #
     # Multiple substitutions can be made for a single placeholder.
     #
@@ -22,15 +22,19 @@ module BawWorkers
       OUTPUT_DIR = :output_dir
       # a directory to write temporary files to
       TEMP_DIR = :temp_dir
-      # the source audio file to process
+      # the basename of the source audio file
+      SOURCE_BASENAME = :source_basename
+      # the basename of the configuration file
+      CONFIG_BASENAME = :config_basename
+      # the source audio file to process - this is the full path to the file
       SOURCE = :source
-      # the configuration file to use
+      # the configuration file to use - this is the full path to the file
       CONFIG = :config
       # the latitude of the audio recording
       LATITUDE = :latitude
       # the longitude of the audio recording
       LONGITUDE = :longitude
-      # the timestamp of the audio recording
+      # the timestamp of the audio recording, ISO8601 format
       TIMESTAMP = :timestamp
       # the id of the audio recording
       ID = :id
@@ -42,6 +46,8 @@ module BawWorkers
         CONFIG_DIR,
         OUTPUT_DIR,
         TEMP_DIR,
+        SOURCE_BASENAME,
+        CONFIG_BASENAME,
         SOURCE,
         CONFIG,
         LATITUDE,
@@ -78,7 +84,7 @@ module BawWorkers
 
           value = convert(value)
 
-          "\"#{value}\""
+          value.to_s
         }
 
         validate_required(found.to_a)

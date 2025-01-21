@@ -14,14 +14,14 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
         echo "waiting for flag"
         sleep 1
       done
-      cat {config} > "settings_result.json"
-      echo 'some_binary --source {source_dir} --config {config_dir} --temp-dir {temp_dir} --output {output_dir}' > command_result.txt
-      stat -c '%s' {source} > "result.txt"
-      echo {latitude} >> "result.txt"
-      echo {longitude} >> "result.txt"
-      echo {timestamp} >> "result.txt"
-      echo {id} >> "result.txt"
-      echo {uuid} >> "result.txt"
+      cat "{config}" > "settings_result.json"
+      echo 'some_binary --source "{source_dir}" --config "{config_dir}" --temp-dir "{temp_dir}" --output "{output_dir}"' > command_result.txt
+      stat -c '%s' "{source}" > "result.txt"
+      echo "{latitude}" >> "result.txt"
+      echo "{longitude}" >> "result.txt"
+      echo "{timestamp}" >> "result.txt"
+      echo "{id}" >> "result.txt"
+      echo "{uuid}" >> "result.txt"
     BASH
   }
 

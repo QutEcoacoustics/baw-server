@@ -309,6 +309,8 @@ module BawWorkers
           config_dir: CONFIG_DIR,
           output_dir: output,
           temp_dir: TEMP_DIR,
+          source_basename: source_name,
+          config_basename: config_name,
           source: SOURCE_DIR / source_name,
           config: CONFIG_DIR / config_name,
           latitude: audio_recording.site.latitude,
