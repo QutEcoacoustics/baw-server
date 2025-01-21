@@ -212,6 +212,9 @@ class User < ApplicationRecord
 
   has_one :statistics, class_name: Statistics::UserStatistics.name
 
+  has_many :created_verifications, class_name: 'Verification', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_verifications, class_name: 'Verification', foreign_key: :updator_id, inverse_of: :updater
+
   # scopes
   scope :users, -> { where(roles_mask: 2) }
   scope(:recently_seen,
