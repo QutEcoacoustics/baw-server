@@ -2,6 +2,10 @@
 
 module Admin
   class BaseController < ApplicationController
+    # an unused named token to pass to cancancan
+    # We use it for all admin endpoints.
+    authorize_resource :admin
+
     before_action :verify_admin
 
     # Return true if it's an admin controller. false to all controllers unless

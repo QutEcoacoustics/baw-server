@@ -43,18 +43,16 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
-  def empty_message(align = 'center')
+  def empty_message(align = 'center', &block)
     haml_tag :p, class: ['text-muted', "text-#{align}"] do
       haml_tag :small do
-        haml_tag :em do
-          yield
-        end
+        haml_tag :em, &block
       end
     end
   end
 
   def insert_icon(icon_name)
-    icon = icon_name && ('fa-' + icon_name) || ''
+    icon = (icon_name && "fa-#{icon_name}") || ''
     haml_tag :i, class: ['fa', 'fa-fw', icon]
   end
 
@@ -65,7 +63,7 @@ module ApplicationHelper
   def destroy_button(href, model_name, icon = 'trash')
     render partial: 'shared/nav_button', locals: {
       href: href,
-      title: t('helpers.titles.destroy') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+      title: "#{t('helpers.titles.destroy')} #{t("baw.shared.links.#{model_name}.title").downcase}",
       tooltip: t('helpers.tooltips.destroy', model: model_name),
       icon: icon,
       method: :delete,
@@ -74,11 +72,11 @@ module ApplicationHelper
   end
 
   def edit_link(href, model_name, icon = 'pencil')
-    model_text = t('baw.shared.links.' + model_name + '.title').downcase
+    model_text = t("baw.shared.links.#{model_name}.title").downcase
     words = model_text.split.size == 1 && model_text.singularize == model_text ? 1 : 2
     render partial: 'shared/nav_item', locals: {
       href: href,
-      title: t('helpers.titles.edit', count: words) + ' ' + model_text,
+      title: "#{t('helpers.titles.edit', count: words)} #{model_text}",
       tooltip: t('helpers.tooltips.edit', model: model_name),
       icon: icon
     }
@@ -87,7 +85,7 @@ module ApplicationHelper
   def new_link(href, model_name, icon = 'plus')
     render partial: 'shared/nav_item', locals: {
       href: href,
-      title: t('helpers.titles.new') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+      title: "#{t('helpers.titles.new')} #{t("baw.shared.links.#{model_name}.title").downcase}",
       tooltip: t('helpers.tooltips.new', model: model_name),
       icon: icon
     }
@@ -95,7 +93,12 @@ module ApplicationHelper
 
   def listen_link(site)
     play_details = site.get_bookmark_or_recording
-    play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+    play_link = if play_details.blank?
+                  nil
+                else
+                  make_listen_path(play_details[:audio_recording],
+                    play_details[:start_offset_seconds])
+                end
 
     return nil if play_link.blank?
 
