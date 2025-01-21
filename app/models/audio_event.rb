@@ -54,6 +54,7 @@ class AudioEvent < ApplicationRecord
   belongs_to :updater, class_name: 'User', inverse_of: :updated_audio_events, optional: true
   belongs_to :deleter, class_name: 'User', inverse_of: :deleted_audio_events, optional: true
   has_many :comments, class_name: 'AudioEventComment', inverse_of: :audio_event, dependent: :delete_all
+  has_many :verifications, inverse_of: :audio_event, dependent: :destroy
 
   # AT 2021: disabled. Nested associations are extremely complex,
   # and as far as we are aware, they are not used anywhere in production

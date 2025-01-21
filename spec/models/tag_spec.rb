@@ -145,4 +145,11 @@ describe Tag do
     t.notes = { comment: 'testing' }
     expect(t).to be_valid
   end
+
+  it_behaves_like 'cascade deletes for', :tag, {
+    verifications: nil,
+    taggings: nil
+  } do
+    create_entire_hierarchy
+  end
 end

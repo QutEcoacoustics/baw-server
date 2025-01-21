@@ -62,6 +62,6 @@ describe 'Users' do
     get '/my_account', **api_headers(reader_token)
 
     expect_success
-    expect(api_data).to include(contactable: 'no')
+    expect(api_data).to include(contactable: User::CONSENT_NO)
   end
 end
