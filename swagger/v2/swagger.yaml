@@ -1209,6 +1209,7 @@ paths:
                   is_last_version: true
                   is_first_version: true
                   event_import_glob: "*.csv"
+                  provenance_id: 17
                   description_html: "<p>script description 17</p>\n"
                   description_html_tagline: script description 17
               schema:
@@ -1263,6 +1264,7 @@ paths:
                   is_last_version: true
                   is_first_version: true
                   event_import_glob: "*.csv"
+                  provenance_id: 18
                   description_html: "<p>script description 18</p>\n"
                   description_html_tagline: script description 18
               schema:
@@ -1320,6 +1322,7 @@ paths:
                   is_last_version: true
                   is_first_version: true
                   event_import_glob: "*.csv"
+                  provenance_id: 19
                   description_html: "<p>script description 19</p>\n"
                   description_html_tagline: script description 19
               schema:
@@ -1461,7 +1464,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.4.0 from http://web:3000.
+                  Version 12.4.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1501,7 +1504,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.4.0"
+                Write-Information "Acoustic Workbench downloader script version 12.4.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1683,7 +1686,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.4.0 from http://web:3000.
+                  Version 12.4.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1723,7 +1726,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.4.0"
+                Write-Information "Acoustic Workbench downloader script version 12.4.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4063,7 +4066,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: e4eiJ6W_EtBQ1IjA6Z3vW607neZ__r4cLlU0m0wSBrw
+                  auth_token: NR3Av25AN0iPdkS-MSfoz6snf5TE2G-Spdw9kuovkH8
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4119,7 +4122,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: ce7nDdZFEMTZVQSOvESpGE0wT4opATextn-EnKS_TJI
+                  auth_token: aNd_NJFzsbh9EDVEHQOIhlcDAbtkupgLvhStDnVkzgo
                   user_name: Admin
                   user_id: 1
               schema:
@@ -10596,6 +10599,9 @@ components:
         event_import_glob:
           type: string
           readOnly: true
+        provenance_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: false
       required:
       - id
       - group_id
@@ -10609,6 +10615,7 @@ components:
       - is_last_version
       - is_first_version
       - event_import_glob
+      - provenance_id
     site:
       type: object
       additionalProperties: false
