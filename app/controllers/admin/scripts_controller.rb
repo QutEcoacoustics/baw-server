@@ -100,7 +100,7 @@ module Admin
         :version, :verified,
         :executable_command,
         :executable_settings, :executable_settings_media_type,
-        :executable_settings_name, :provenance_id,
+        :executable_settings_name, :provenance_id, :event_import_glob,
         resources: {}
       )
     end

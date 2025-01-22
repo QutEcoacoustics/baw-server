@@ -18,6 +18,7 @@ describe 'Scripts' do
         executable_settings_media_type: 'application/yaml',
         executable_settings_name: 'settings.yaml',
         provenance_id: provenance.id,
+        event_import_glob: '*.csv',
         resources: {
           ncpus: 1
         }

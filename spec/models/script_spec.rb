@@ -208,6 +208,31 @@ describe Script do
         'Invalid placeholder `invalid` in command'
       )
     end
+
+    it 'allows new lines and tabs in the command' do
+      script = build(:script)
+      script.executable_command = "echo \"hello\nwo\trld\" {source_dir} {output_dir}"
+
+      expect(script).to be_valid
+    end
+
+    [
+      "\0",
+      "\x01",
+      "\r\n",
+      "\r",
+      "\u0099"
+    ].each do |bad_character|
+      it "rejects bad characters in the command like #{bad_character.dump}" do
+        script = build(:script)
+        script.executable_command = "echo \"hello#{bad_character}world\""
+
+        expect(script).not_to be_valid
+        expect(script.errors[:executable_command]).to include(
+          'contains unsafe characters'
+        )
+      end
+    end
   end
 
   describe 'resources' do

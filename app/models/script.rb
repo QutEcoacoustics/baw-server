@@ -70,6 +70,7 @@ class Script < ApplicationRecord
   validate :check_version_increase, on: :create
 
   validate :check_executable_command
+  validate :executable_command_has_safe_characters
 
   # A filesystem safe version of a name.
   # E.g. "Analysis Programs Acoustic Indices" -> "ap-indices"
@@ -331,6 +332,18 @@ class Script < ApplicationRecord
     rescue ArgumentError => e
       errors.add(:executable_command, e.message)
     end
+  end
+
+  # all control characters except for tab and newline
+  # Window style new-lines in particular will break the bash scripts that run the
+  # commands.
+  UNSAFE_EXECUTABLE_COMMAND_CHARACTERS = /(?![\n\t])[\p{Cc}\p{Cf}\p{Cn}\p{Co}]/
+  def executable_command_has_safe_characters
+    return if executable_command.blank?
+
+    return unless executable_command.match?(UNSAFE_EXECUTABLE_COMMAND_CHARACTERS)
+
+    errors.add(:executable_command, 'contains unsafe characters')
   end
 
   def set_group_id
