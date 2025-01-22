@@ -70,4 +70,42 @@ class Verification < ApplicationRecord
   # @!method confirmed_skip!
   #   @return [void] sets the verification as skip
   enum :confirmed, CONFIRMATION_ENUM, prefix: :confirmed, validate: true
+
+  def self.filter_settings
+    fields = [
+      :id, :confirmed, :audio_event_id, :tag_id, :creator_id,
+      :updater_id, :created_at, :updated_at
+    ]
+
+    {
+      valid_fields: fields,
+      render_fields: fields,
+      text_fields: [:confirmed],
+      new_spec_fields: lambda { |_user|
+        {
+          confirmed: nil,
+          audio_event_id: nil,
+          tag_id: nil
+        }
+      },
+      controller: :verifications,
+      action: :filter,
+      defaults: {
+        order_by: :created_at,
+        direction: :desc
+      },
+      valid_associations: [
+        {
+          join: AudioEvent,
+          on: Verification.arel_table[:audio_event_id].eq(AudioEvent.arel_table[:id]),
+          available: true
+        },
+        {
+          join: Tag,
+          on: Verification.arel_table[:tag_id].eq(Tag.arel_table[:id]),
+          available: true
+        }
+      ]
+    }
+  end
 end

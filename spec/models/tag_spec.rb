@@ -26,7 +26,7 @@
 #  tags_creator_id_fk  (creator_id => users.id)
 #  tags_updater_id_fk  (updater_id => users.id)
 #
-describe Tag, :andrew do
+describe Tag do
   it 'has a valid factory' do
     t = create(:tag)
 

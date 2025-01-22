@@ -41,7 +41,7 @@
 #  fk_rails_...                        (audio_event_import_file_id => audio_event_import_files.id) ON DELETE => cascade
 #  fk_rails_...                        (provenance_id => provenances.id)
 #
-describe AudioEvent, :andrew do
+describe AudioEvent do
   subject { build(:audio_event) }
 
   it 'has a valid factory' do

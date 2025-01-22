@@ -45,7 +45,7 @@
 #  index_users_on_email                 (email) UNIQUE
 #  users_user_name_unique               (user_name) UNIQUE
 #
-describe User, :andrew do
+describe User do
   it 'errors on invalid timezone' do
     expect {
       create(:user, tzinfo_tz: 'blah')
