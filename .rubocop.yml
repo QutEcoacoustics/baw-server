@@ -12,7 +12,7 @@ AllCops:
     - "**/*.rb"
   Exclude:
     - "bin/**/*"
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.2.2
   NewCops: enable
 # Bug in rubocop-rspec config merge: https://github.com/rubocop/rubocop-rspec/pull/1163
 # https://github.com/rubocop/rubocop-rspec/blob/master/config/default.yml
