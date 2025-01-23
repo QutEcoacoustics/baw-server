@@ -219,12 +219,16 @@ class Script < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
+                     :executable_settings_name, :executable_command, :executable_settings,
                      :version, :created_at, :creator_id, :is_last_version, :is_first_version,
                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
-                      :executable_settings_media_type, :version, :created_at, :creator_id,
+                      :executable_settings_media_type,
+                      :executable_settings_name, :executable_command,
+                      :version, :created_at, :creator_id,
                       :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
-      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
+      text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
+                    :executable_settings_name, :executable_command, :executable_settings],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
                          **item.render_markdown_for_api_for(:description)
@@ -282,7 +286,9 @@ class Script < ApplicationRecord
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
         analysis_identifier: { type: 'string' },
+        executable_command: { type: 'string' },
         executable_settings: { type: 'string' },
+        executable_settings_name: { type: 'string' },
         executable_settings_media_type: { type: 'string' },
         version: { type: 'number' },
         **Api::Schema.creator_user_stamp,
@@ -293,8 +299,9 @@ class Script < ApplicationRecord
       },
       required: [
         :id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
+        :executable_settings_name, :executable_command, :executable_settings,
         :version, :created_at, :creator_id, :is_last_version, :is_first_version,
-        :event_import_glob, :provenance_id
+        :event_import_glob, :provenance_id, :executable_command
       ]
     }.freeze
   end
