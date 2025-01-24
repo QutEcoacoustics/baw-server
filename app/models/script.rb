@@ -226,7 +226,7 @@ class Script < ApplicationRecord
                       :executable_settings_media_type,
                       :executable_settings_name, :executable_command,
                       :version, :created_at, :creator_id,
-                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
+                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id, :resources],
       text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
                     :executable_settings_name, :executable_command, :executable_settings],
       custom_fields: lambda { |item, _user|
@@ -295,7 +295,8 @@ class Script < ApplicationRecord
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
         event_import_glob: { type: 'string', readOnly: true },
-        provenance_id: Api::Schema.id(read_only: false)
+        provenance_id: Api::Schema.id(read_only: false),
+        resources: { '$ref' => '#/components/schemas/resources' }
       },
       required: [
         :id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,

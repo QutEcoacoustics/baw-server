@@ -307,6 +307,40 @@ module Api
               },
               additionalProperties: false
             },
+            polynomial: {
+              type: 'object',
+              properties: {
+                coefficients: {
+                  description: 'The coefficients of the polynomial in descending order of exponent.',
+                  type: 'array',
+                  items: {
+                    type: 'number'
+                  },
+                  property: {
+                    type: 'string',
+                    enum: ['size', 'duration']
+                  }
+                },
+                additionalProperties: false,
+                required: ['coefficients', 'property']
+              }
+            },
+            constant_or_polynomial: {
+              oneOf: [
+                { type: 'null' },
+                { '$ref' => '#/components/schemas/polynomial' },
+                { type: 'number' }
+              ]
+            },
+            resources: {
+              type: 'object',
+              properties: {
+                ncpus: { '$ref' => '#/components/schemas/constant_or_polynomial' },
+                mem: { '$ref' => '#/components/schemas/constant_or_polynomial' },
+                walltime: { '$ref' => '#/components/schemas/constant_or_polynomial' },
+                ngpus: { '$ref' => '#/components/schemas/constant_or_polynomial' }
+              }
+            },
             project: Project.schema,
             analysis_job: AnalysisJob.schema,
             analysis_jobs_item: AnalysisJobsItem.schema,
