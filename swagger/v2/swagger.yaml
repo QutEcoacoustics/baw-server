@@ -1203,6 +1203,9 @@ paths:
                   analysis_identifier: script_name_17
                   executable_settings: executable settings 17
                   executable_settings_media_type: text/plain
+                  executable_settings_name: config.txt
+                  executable_command: echo 'some_binary --source {source_dir} --config
+                    {config_dir} --temp-dir {temp_dir} --output {output_dir}  17'
                   version: 17
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
@@ -1258,6 +1261,9 @@ paths:
                   analysis_identifier: script_name_18
                   executable_settings: executable settings 18
                   executable_settings_media_type: text/plain
+                  executable_settings_name: config.txt
+                  executable_command: echo 'some_binary --source {source_dir} --config
+                    {config_dir} --temp-dir {temp_dir} --output {output_dir}  18'
                   version: 18
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
@@ -1316,6 +1322,9 @@ paths:
                   analysis_identifier: script_name_19
                   executable_settings: executable settings 19
                   executable_settings_media_type: text/plain
+                  executable_settings_name: config.txt
+                  executable_command: echo 'some_binary --source {source_dir} --config
+                    {config_dir} --temp-dir {temp_dir} --output {output_dir}  19'
                   version: 19
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
@@ -1464,7 +1473,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.6.1 from http://web:3000.
+                  Version 12.6.2 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1504,7 +1513,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.6.1"
+                Write-Information "Acoustic Workbench downloader script version 12.6.2"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1686,7 +1695,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.6.1 from http://web:3000.
+                  Version 12.6.2 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1726,7 +1735,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.6.1"
+                Write-Information "Acoustic Workbench downloader script version 12.6.2"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4066,7 +4075,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: oFfcEi5r9jAThW-tO7uTI5S7Y0Lw-ahnc-O5ejFCdp8
+                  auth_token: 3dDfKiI9BUQEWBjv_Lx8QRgpGimrTD6zda-zjBgLXFQ
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4122,7 +4131,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: u5pAbf7zpK7NzwqLTA3Ea729q6i4VddC5UKV7WMfvsQ
+                  auth_token: xbraXxlugauRHrLlZM3F0dRK8hmDhNtZI0qIfbtzE6g
                   user_name: Admin
                   user_id: 1
               schema:
@@ -10577,7 +10586,11 @@ components:
           readOnly: true
         analysis_identifier:
           type: string
+        executable_command:
+          type: string
         executable_settings:
+          type: string
+        executable_settings_name:
           type: string
         executable_settings_media_type:
           type: string
@@ -10609,6 +10622,9 @@ components:
       - description
       - analysis_identifier
       - executable_settings_media_type
+      - executable_settings_name
+      - executable_command
+      - executable_settings
       - version
       - created_at
       - creator_id
@@ -10616,6 +10632,7 @@ components:
       - is_first_version
       - event_import_glob
       - provenance_id
+      - executable_command
     site:
       type: object
       additionalProperties: false
