@@ -182,7 +182,7 @@ module PBS
 
       # template command, see resources from README.md
       command = template_qsub_command(
-        working_directory:,
+        working_directory: remote_working_directory,
         script_path: script_remote_path,
         job_name:,
         options:

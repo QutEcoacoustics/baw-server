@@ -574,6 +574,27 @@ describe PBS::Connection do
         expect(working_directory / '.test_job').to be_exist
         expect(working_directory / '.test_job.log').to be_exist
       end
+
+      it 'correctly maps the working directory to a remote directory' do
+        # the data path mapping is identical in the this test environment.
+        # To test the transform is actually done we set the path to an invalid value
+        # and don't worry about running it.
+        allow(Settings.batch_analysis.root_data_path_mapping)
+          .to receive(:cluster).and_return('/data/test/some_path_that_should_not_exist')
+
+        connection = PBS::Connection.new(Settings.batch_analysis, 'tag')
+        result = connection.submit_job(
+          'echo "We were on the verge of greatness."',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job = connection.fetch_status(result.value!).value!
+
+        expect(job.submit_arguments).to include('/data/test/some_path_that_should_not_exist')
+        expect(job.error_path).to include('/data/test/some_path_that_should_not_exist')
+        expect(job.output_path).to include('/data/test/some_path_that_should_not_exist')
+      end
     end
   end
 end
