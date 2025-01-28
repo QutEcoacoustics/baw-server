@@ -11,13 +11,13 @@ describe PBS::Connection do
     expect(connection.inspect).not_to include('key_file')
   end
 
-  it 'will throw without valid settings' do
+  it 'throws without valid settings' do
     expect {
       PBS::Connection.new(nil)
     }.to raise_error(ArgumentError)
   end
 
-  it 'will throw without valid settings (tag)' do
+  it 'throws without valid settings (tag)' do
     expect {
       PBS::Connection.new(Settings.batch_analysis, nil)
     }.to raise_error(ArgumentError)
@@ -41,7 +41,7 @@ describe PBS::Connection do
     expect(connection.test_connection).to be true
   end
 
-  it 'will prioritize private key over password' do
+  it 'prioritizes private key over password' do
     settings = Settings.batch_analysis.new(connection: Settings.batch_analysis.connection.new(
       password: 'obviously incorrect password',
       key_file: './provision/analysis/client_key'
@@ -203,8 +203,52 @@ describe PBS::Connection do
       expect(connection.fetch_max_queued).to eq Success(10)
     end
 
+    it 'can fetch max queue size if the value is not set' do
+      stdout = <<~OUTPUT
+        Server pbs
+
+      OUTPUT
+      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+
+      expect(connection.fetch_max_queued).to eq Success(nil)
+    end
+
+    it 'can fetch max queue size if the value is set to 0' do
+      stdout = <<~OUTPUT
+        Server pbs
+          max_queued = [u:PBS_GENERIC=0]
+
+
+      OUTPUT
+      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+
+      expect(connection.fetch_max_queued).to eq Success(nil)
+    end
+
     it 'can fetch max array size' do
       expect(connection.fetch_max_array_size).to eq Success(10_000)
+    end
+
+    it 'can fetch max array size if the value is not set' do
+      stdout = <<~OUTPUT
+        Server pbs
+
+      OUTPUT
+      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+
+      expect(connection.fetch_max_array_size).to eq Success(nil)
+    end
+
+    it 'can fetch max array size if the value is set to 0' do
+      stdout = <<~OUTPUT
+        Server pbs
+          max_array_size = 0
+
+
+      OUTPUT
+      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+
+      expect(connection.fetch_max_array_size).to eq Success(nil)
     end
 
     context 'when submitting jobs' do
@@ -298,7 +342,7 @@ describe PBS::Connection do
         expect(log).to include('LOG: TERM trap: job killed or cancelled')
       end
 
-      it 'will accept custom job hooks' do
+      it 'accepts custom job hooks' do
         result = connection.submit_job(
           'echo "hello tests my pwd is $(pwd)" && touch i_was_here',
           working_directory,
@@ -421,7 +465,7 @@ describe PBS::Connection do
         end
       end
 
-      it 'will let us set environment variables' do
+      it 'lets us set environment variables' do
         script = <<~BASH
           echo "$K2SO"
           echo "$Krennic"
@@ -446,7 +490,7 @@ describe PBS::Connection do
         expect(log).to include('We were on the verge of greatness.')
       end
 
-      it 'will let us select resources' do
+      it 'lets us select resources' do
         result = connection.submit_job(
           'echo "I’m capable of running my own diagnostics, thank you very much."',
           working_directory,
@@ -468,7 +512,7 @@ describe PBS::Connection do
         expect(job.resource_list.walltime).to eq 60
       end
 
-      it 'will set the primary group by default' do
+      it 'sets the primary group by default' do
         result = connection.submit_job(
           'echo "I’m capable of running my own diagnostics, thank you very much."',
           working_directory

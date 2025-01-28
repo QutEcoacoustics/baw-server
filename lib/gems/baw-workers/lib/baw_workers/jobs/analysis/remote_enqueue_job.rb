@@ -41,7 +41,9 @@ module BawWorkers
           # per analysis jobs item
           # e.g. 5000 pbs jobs, 1000 enqueued, 1 per submit
           #     5000 - 1000 = 4000
-          submittable = (max - current)
+          # If not limit is set, we'll just use the current count - i.e. we can enqueue
+          # as many as we like.
+          submittable = max.nil? ? current : (max - current)
 
           completed!('Remote queue cannot accept any further jobs') if submittable < 1
 

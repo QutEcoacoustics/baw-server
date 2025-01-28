@@ -72,7 +72,8 @@ module BawWorkers
       end
 
       # Count the maximum allowed number of jobs that are allowed to be queued.
-      # @return [::Dry::Monads::Result<Integer>]
+      # `nil` is returned if the limit is unknown, or not set.
+      # @return [::Dry::Monads::Result<Integer,nil>]
       def maximum_queued_jobs
         connection.fetch_max_queued
       end

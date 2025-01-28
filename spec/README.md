@@ -18,7 +18,7 @@ Specs for the API come in a few forms:
 - those that test specific functionality
   - modelled as request spec in the `spec/requests` folder
 - those that document and validate the API
-  - in the `/spec/api folder
+  - in the `/spec/api` folder
 
 API docs test API responses, and validate API request and response
 bodies according to schemas. These are supported by the

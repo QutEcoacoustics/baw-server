@@ -266,8 +266,8 @@ module PBS
     end
 
     # Gets max_queued from qmgr.
-    # Returns an integer where 0 represents an unset value.
-    # @return [::Dry::Monads::Result<Integer>]
+    # Returns an integer where nil represents an unrestricted or unset value.
+    # @return [::Dry::Monads::Result<Integer, nil>] the max_queued value, if set
     def fetch_max_queued
       # https://help.altair.com/2022.1.0/PBS%20Professional/PBSReferenceGuide2022.1.pdf page #368
       # the `u:PBS_GENERIC` is a limit for generic users
@@ -281,17 +281,19 @@ module PBS
 
       max_value = parse_qmgr_list(stdout, 'max_queued')
 
-      return Failure('qmgr did not return the max_queued value') if max_value.blank?
+      # the value hasn't been set
+      return Success(nil) if max_value.blank?
 
       # 🚨DODGY ALERT:🚨 find the first number and assume it is a limit
       number = max_value.match(/\d+/)&.values_at(0)&.first
 
-      Success(number.to_i)
+      parsed = number.to_i
+      Success(parsed.zero? ? nil : parsed)
     end
 
     # Gets max_array_size from qmgr.
-    # Returns an integer where 0 represents an unset value.
-    # @return [::Dry::Monads::Result<Integer>]
+    # Returns an integer where `nil` represents an unset value.
+    # @return [::Dry::Monads::Result<Integer,nil>]
     def fetch_max_array_size
       #set server max_array_size = 20000
       command = "qmgr -c 'list server max_array_size'"
@@ -300,7 +302,8 @@ module PBS
 
       return Failure("status was non-zero: #{status}") unless status&.zero?
 
-      Success(parse_qmgr_list(stdout, 'max_array_size').to_i)
+      parsed = parse_qmgr_list(stdout, 'max_array_size').to_i
+      Success(parsed.zero? ? nil : parsed)
     end
 
     # @return [Boolean] true if the connection was established
