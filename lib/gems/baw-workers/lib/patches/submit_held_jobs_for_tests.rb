@@ -38,17 +38,17 @@ if BawApp.test?
           JOB_HELD = AmazingPrint::Colors.yellow(' JOB HELD')
 
           # The patch for {PBS::Connection#submit_job}
-          def submit_job(*args, **keyword_args)
+          def submit_job(*, **keyword_args)
             if SubmitHeldJobsForTests.paused?
 
               keyword_args[:hold] = true
-              result = super(*args, **keyword_args)
+              result = super
               logger.warn("#{SUBMIT_HELD_LOGGER_PREFIX} submit_job modified: #{JOB_HELD}", job_id: result.fmap(&:first))
               return result
             end
 
             logger.debug("#{SUBMIT_HELD_LOGGER_PREFIX} submit_job not modified: submitting as normal")
-            super(*args, **keyword_args)
+            super
           end
         end
       end

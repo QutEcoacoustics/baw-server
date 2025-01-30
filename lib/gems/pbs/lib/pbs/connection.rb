@@ -19,6 +19,7 @@ module PBS
     ENV_TMPDIR = 'TMPDIR'
 
     JOB_ID_REGEX = /(\d+)(\.[-\w]+)?/
+    JOB_FINISHED_REGEX = /Job has finished/
 
     JSON_PARSER_OPTIONS = {
       allow_nan: true,
@@ -210,9 +211,12 @@ module PBS
       options += ' -W force' if force
       command = "qdel #{options} #{job_id}"
 
-      command += " && while qstat '#{job_id}' &> /dev/null; do echo 'waiting' ; sleep 0.5; done" if wait
+      command += " && while qstat '#{job_id}' &> /dev/null; do echo 'waiting' ; sleep 0.1; done" if wait
 
       execute_safe(command, fail_message: "deleting job #{job_id}")
+        # if the job has already finished by the time we get up to cancelling it
+        # we don't want to consider it an error. Just be graceful - it has ended.
+        .or { |stdout, stderr| stdout =~ JOB_FINISHED_REGEX ? Success(stdout) : Failure([stdout, stderr]) }
     end
 
     # Releases a job identified by a job id

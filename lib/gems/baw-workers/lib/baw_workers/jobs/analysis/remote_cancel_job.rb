@@ -81,6 +81,7 @@ module BawWorkers
         end
 
         def cancel_item(id)
+          # @type [AnalysisJobsItem]
           item = AnalysisJobsItem.find(id)
 
           if item.may_cancel?

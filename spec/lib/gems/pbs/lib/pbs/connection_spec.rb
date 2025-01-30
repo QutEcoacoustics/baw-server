@@ -342,6 +342,28 @@ describe PBS::Connection do
         expect(log).to include('LOG: TERM trap: job killed or cancelled')
       end
 
+      it 'can cancel a job that has already finished' do
+        # arrange
+        result = connection.submit_job(
+          'echo "hello tests my pwd is $(pwd)"',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+
+        job = wait_for_pbs_job(job_id)
+        expect(job).to be_finished
+
+        # act
+        result = connection.cancel_job(job_id, wait: true)
+
+        expect(result).to be_success
+        stdout, = result.value!
+        expect(stdout).to match(/Job has finished/)
+        expect(stdout).not_to match(/waiting/)
+      end
+
       it 'accepts custom job hooks' do
         result = connection.submit_job(
           'echo "hello tests my pwd is $(pwd)" && touch i_was_here',
