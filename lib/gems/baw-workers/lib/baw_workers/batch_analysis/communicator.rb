@@ -236,6 +236,9 @@ module BawWorkers
         # https://curl.se/docs/manpage.html
         # write-out '\\n' is required to get a newline after the output otherwise
         # the next command will be appended to the end of the output
+        # ! Will not follow redirects.
+        # We don't expect redirects are needed but if they are here curl semantics mean
+        # it would fire a GET instead of a POST after redirect unless we customize the behaviour.
         # rubocop:disable Style/FormatStringToken
         command = <<~SHELL
           curl
@@ -261,6 +264,7 @@ module BawWorkers
         # https://curl.se/docs/manpage.html
         # write-out '\\n' is required to get a newline after the output otherwise
         # the next command will be appended to the end of the output
+        # Will follow redirects, retry on all errors, and retry 3 times.
         # rubocop:disable Style/FormatStringToken
         command = <<~SHELL
           curl
@@ -270,6 +274,7 @@ module BawWorkers
           --output-dir "#{source_dir}"
           --output "#{canonical_name}"
           --http1.1 --retry #{DOWNLOAD_ATTEMPTS} --retry-all-errors --fail --retry-delay #{DOWNLOAD_RETRY}
+          --location
           --write-out '\\nFile downloaded: %{http_code} (exitcode: %{exitcode}) %{filename_effective} %{size_download} bytes %{speed_download} bytes/s %{time_total} seconds\\n'
           "#{endpoint}"
         SHELL
