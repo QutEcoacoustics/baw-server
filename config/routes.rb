@@ -762,7 +762,7 @@ Rails.application.routes.draw do
   resources :tags, only: [:index, :show, :create, :new], defaults: { format: 'json' }, concerns: [:filterable]
 
   # API verifications
-  resources :verifications, except: [:new, :edit],
+  resources :verifications, except: [:edit],
     as: 'shallow_verifications',
     defaults: { format: 'json' },
     concerns: [:filterable]

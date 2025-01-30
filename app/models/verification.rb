@@ -108,4 +108,31 @@ class Verification < ApplicationRecord
       ]
     }
   end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: Api::Schema.id,
+        confirmed: {
+          type: 'string',
+          enum: CONFIRMATION_ENUM.values
+        },
+        audio_event_id: Api::Schema.id(read_only: false),
+        tag_id: Api::Schema.id(read_only: false),
+        **Api::Schema.updater_and_creator_user_stamps
+      },
+      required: [
+        :id,
+        :confirmed,
+        :audio_event_id,
+        :tag_id,
+        :creator_id,
+        :created_at,
+        :updater_id,
+        :updated_at
+      ]
+    }.freeze
+  end
 end

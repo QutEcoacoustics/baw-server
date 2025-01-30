@@ -27,10 +27,10 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 FactoryBot.define do
-  factory :verification do |_f|
+  factory :verification do
+    creator
     audio_event
     tag
-    creator
     confirmed { Verification::CONFIRMATION_TRUE }
   end
 end
