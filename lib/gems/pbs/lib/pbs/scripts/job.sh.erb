@@ -5,7 +5,12 @@
 # This script is intended to be templated
 # Templated on <%= date %> for <%= instance_tag %>
 
-set -e
+<%# https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html %>
+set -o errexit
+set -o errtrace
+<% unless BawApp.production? %>
+set -o xtrace
+<% end %>
 
 # functions
 function log {
