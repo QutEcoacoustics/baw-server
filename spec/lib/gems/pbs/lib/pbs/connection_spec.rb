@@ -547,6 +547,19 @@ describe PBS::Connection do
         expect(job.group_list).to eq Settings.batch_analysis.pbs.primary_group
       end
 
+      it 'sets a reader/group umask by default' do
+        result = connection.submit_job(
+          'echo "I’m capable of running my own diagnostics, thank you very much."',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+        job = wait_for_pbs_job(job_id)
+
+        expect(job.submit_arguments).to match(/-W [\w=,]*umask=0002/)
+      end
+
       it 'can submit a held job' do
         result = connection.submit_job(
           'echo "I’m capable of running my own diagnostics, thank you very much."',

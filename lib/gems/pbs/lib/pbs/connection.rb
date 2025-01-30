@@ -462,7 +462,8 @@ module PBS
 
     def default_additional_attributes
       {
-        'group_list' => settings.pbs.primary_group
+        'group_list' => settings.pbs.primary_group,
+        'umask' => '0002'
       }
     end
 
