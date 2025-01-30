@@ -74,8 +74,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
     link_original_audio_to_audio_recordings(audio_recording, target: Fixtures.audio_file_mono)
   end
 
-  after do |example|
-    debugger if example.exception
+  after do |_example|
     clear_original_audio
     clear_analysis_cache
   end
@@ -83,6 +82,23 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
   pause_all_jobs
   submit_pbs_jobs_as_held
   expose_app_as_web_server
+
+  it 'uses the correct url generation settings' do
+    allow(Rails.configuration.action_mailer).to receive(:default_url_options).and_return(
+      {
+        host: 'banana',
+        port: 6969,
+        protocol: 'monkey'
+      }
+    )
+
+    communicator = BawWorkers::BatchAnalysis::Communicator.new
+    communicator.submit_job(analysis_jobs_item).value!
+
+    templated_script = analysis_jobs_item.results_job_path.read
+
+    expect(templated_script).to include('monkey://banana:6969')
+  end
 
   # ok what are we testing here?
   #  - A job is submitted to the batch queue

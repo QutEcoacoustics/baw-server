@@ -38,7 +38,9 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options =
     {
-      host: "#{Settings.host.name}:#{Settings.host.port}"
+      host: Settings.host.name,
+      port: Settings.host.port,
+      protocol: BawApp.http_scheme
     }
 
   config.action_mailer.delivery_method = :test

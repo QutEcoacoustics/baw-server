@@ -68,7 +68,8 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options =
     {
-      host: Settings.host.name
+      host: Settings.host.name,
+      protocol: BawApp.http_scheme
     }
 
   config.action_mailer.delivery_method = :smtp

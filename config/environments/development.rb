@@ -19,7 +19,9 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options =
     {
-      host: "#{Settings.host.name}:#{Settings.host.port}"
+      host: Settings.host.name,
+      protocol: BawApp.http_scheme,
+      port: Settings.host.port
     }
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings =

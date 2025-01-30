@@ -464,7 +464,7 @@ class AnalysisJobsItem < ApplicationRecord
   #
 
   # Checks the job status according to the remote queue.
-  # !Warning: this method is slow because it must contact the remote queue.
+  # ! Warning: this method is slow because it must contact the remote queue.
   # It will transition this item to the appropriate state if failure is detected.
   # No save is done.
   # The purpose of this is to poll the remote queue to check if the job has
@@ -546,6 +546,7 @@ class AnalysisJobsItem < ApplicationRecord
   end
 
   # The path to the job script that was run to produce results
+  # ! inferred by convention. May not be accurate
   # @return [Pathname]
   def results_job_path
     # Inferred from the convention in PBS::Connection.submit_job
@@ -554,6 +555,7 @@ class AnalysisJobsItem < ApplicationRecord
   end
 
   # The path to the log file emitted by the job
+  # # ! inferred by convention. May not be accurate
   # @return [Pathname]
   def results_job_log_path
     # Inferred from the convention in PBS::Connection.submit_job
