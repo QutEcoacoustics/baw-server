@@ -3868,7 +3868,7 @@ ALTER TABLE ONLY public.studies
 --
 
 ALTER TABLE ONLY public.verifications
-    ADD CONSTRAINT fk_rails_49a28586af FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id);
+    ADD CONSTRAINT fk_rails_49a28586af FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id) ON DELETE CASCADE;
 
 
 --
@@ -4350,6 +4350,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250203074104'),
 ('20250120064731'),
 ('20250113012304'),
 ('20241106015941'),

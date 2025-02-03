@@ -510,7 +510,8 @@ describe AudioEvent do
 
   it_behaves_like 'cascade deletes for', :audio_event, {
     taggings: nil,
-    comments: nil
+    comments: nil,
+    verifications: nil
   } do
     create_entire_hierarchy
   end

@@ -25,7 +25,7 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (audio_event_id => audio_events.id)
+#  fk_rails_...  (audio_event_id => audio_events.id) ON DELETE => cascade
 #  fk_rails_...  (creator_id => users.id)
 #  fk_rails_...  (tag_id => tags.id)
 #  fk_rails_...  (updater_id => users.id)
