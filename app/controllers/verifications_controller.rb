@@ -8,10 +8,7 @@ class VerificationsController < ApplicationController
   # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/verifications
   def index
     do_authorize_class
-
     @audio_event = AudioEvent.find(params[:audio_event_id]) if params&.key?(:audio_event_id)
-    do_authorize_instance(:show, @audio_event) if @audio_event
-
     query = Access::ByPermission.audio_event_verifications(current_user, audio_event: @audio_event)
 
     @verifications, opts = Settings.api_response.response_advanced(
