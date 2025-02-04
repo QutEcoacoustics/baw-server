@@ -56,12 +56,14 @@ module BawWorkers
         def perform(analysis_job_id)
           analysis_job = AnalysisJob.find(analysis_job_id)
 
+          total = 0
           loop do
+            total_before_this_batch = total
             logger.debug('querying for items to change state')
 
             # @type [Array<Integer>]
             batch = AnalysisJobsItem.fetch_cancellable(analysis_job).pluck(:id)
-            total = batch.count
+            total += batch.count
 
             if batch.empty?
               completed!('Nothing found to cancel')
@@ -75,7 +77,7 @@ module BawWorkers
             batch.each_with_index do |id, index|
               cancel_item(id)
 
-              report_progress(index, total)
+              report_progress(total_before_this_batch + (index + 1), total)
             end
           end
         end
