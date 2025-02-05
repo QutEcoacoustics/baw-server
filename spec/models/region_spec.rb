@@ -54,7 +54,8 @@ describe Region, type: :model do
       audio_recordings: {
         audio_events: {
           taggings: nil,
-          comments: nil
+          comments: nil,
+          verifications: nil
         },
         analysis_jobs_items: :audio_event_import_files,
         bookmarks: nil,

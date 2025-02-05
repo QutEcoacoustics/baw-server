@@ -827,7 +827,6 @@ class Ability
     # only admin can update or delete responses
   end
 
-  ################################################################################
   def to_verification(user, _is_guest)
     # admin can do anything, see #for_admin
 
