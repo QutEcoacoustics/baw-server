@@ -342,7 +342,7 @@ describe PBS::Connection do
         expect(log).to include('LOG: TERM trap: job killed or cancelled')
       end
 
-      it 'can cancel a job that has already finished' do
+      it 'is graceful when canceling a job that has already finished' do
         # arrange
         result = connection.submit_job(
           'echo "hello tests my pwd is $(pwd)"',
@@ -358,9 +358,38 @@ describe PBS::Connection do
         # act
         result = connection.cancel_job(job_id, wait: true)
 
+        # assert
         expect(result).to be_success
-        stdout, = result.value!
-        expect(stdout).to match(/Job has finished/)
+        stdout, stderr = result.value!
+        expect(stderr).to match(/Job has finished/)
+        expect(stdout).not_to match(/waiting/)
+      end
+
+      it 'is graceful when canceling a job that is not in the job history' do
+        # arrange
+        result = connection.submit_job(
+          'echo "hello tests my pwd is $(pwd)"',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+
+        job = wait_for_pbs_job(job_id)
+        expect(job).to be_finished
+
+        # we're simulating a completed job being cleared from history
+        result = connection.cancel_job(job_id, wait: true, force: true, completed: true)
+        expect(result).to be_success
+
+        # act - now we try to cancel the job again
+        result = connection.cancel_job(job_id, wait: true)
+
+        # assert
+        expect(result).to be_success
+
+        stdout, stderr = result.value!
+        expect(stderr).to match(/Unknown Job Id/)
         expect(stdout).not_to match(/waiting/)
       end
 

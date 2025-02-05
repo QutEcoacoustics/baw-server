@@ -20,6 +20,9 @@ module PBS
 
     JOB_ID_REGEX = /(\d+)(\.[-\w]+)?/
     JOB_FINISHED_REGEX = /Job has finished/
+    JOB_FINISHED_STATUS = 35
+    UNKNOWN_JOB_ID_STATUS = 153
+    QDEL_GRACEFUL_STATUSES = [0, JOB_FINISHED_STATUS, UNKNOWN_JOB_ID_STATUS].freeze
 
     JSON_PARSER_OPTIONS = {
       allow_nan: true,
@@ -200,7 +203,10 @@ module PBS
         .fmap { |stdout, _stderr| stdout.strip }
     end
 
-    # Deletes a job identified by a job id
+    # Deletes a job identified by a job id.
+    # Fails gracefully if the job has already finished or the job history has cleared the ID (unknown).
+    # Generally we're cancelling here to clean or sync our state with the cluster. So if the job is already
+    # gone/done we don't care.
     # @param job_id [String] the job id
     # @param wait [Boolean] whether to wait for the job to be finish
     # @param completed [Boolean] whether to delete the job from the completed queue
@@ -213,10 +219,10 @@ module PBS
 
       command += " && while qstat '#{job_id}' &> /dev/null; do echo 'waiting' ; sleep 0.1; done" if wait
 
-      execute_safe(command, fail_message: "deleting job #{job_id}")
-        # if the job has already finished by the time we get up to cancelling it
-        # we don't want to consider it an error. Just be graceful - it has ended.
-        .or { |stdout, stderr| stdout =~ JOB_FINISHED_REGEX ? Success(stdout) : Failure([stdout, stderr]) }
+      # if the job has already finished by the time we get up to cancelling it
+      # we don't want to consider it an error. Just be graceful - it has ended.
+      # Same thing for a job that's been cleared from the cluster's history:
+      execute_safe(command, fail_message: "deleting job #{job_id}", success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
     # Releases a job identified by a job id

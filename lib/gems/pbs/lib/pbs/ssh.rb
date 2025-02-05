@@ -10,6 +10,8 @@ module PBS
   module SSH
     include Dry::Monads[:result]
 
+    SUCCESS_STATUSES = [0].freeze
+
     class TransportError < StandardError; end
 
     private
@@ -34,9 +36,10 @@ module PBS
 
     # Execute a command
     # @param command [String]
+    # @param success_statuses [Array(Integer)] the statuses that are considered successful. Only affects logging level.
     # @return [Array((Integer,nil),String,String)] a tuple of
     #   status, stdout, stderr. stdout and stderr are NOT split into lines.
-    def execute(command)
+    def execute(command, success_statuses: SUCCESS_STATUSES)
       stdout = ''
       stderr = ''
       status = {}
@@ -56,7 +59,7 @@ module PBS
       exit_code = status.fetch(:exit_code, nil)
 
       ssh_logger.log(
-        exit_code&.zero? ? :debug : :error,
+        success_statuses.include?(status) ? :debug : :error,
         command:, exit_code:, stdout:, stderr:
       )
 
@@ -68,10 +71,10 @@ module PBS
     # @param fail_message [String] a message to add to the failure if the command fails
     # @return [::Dry::Monads::Result<Array(String,String)>] a tuple of
     #   stdout, stderr, each of which is NOT split into lines.
-    def execute_safe(command, fail_message: '')
-      status, stdout, stderr = execute(command)
+    def execute_safe(command, fail_message: '', success_statuses: SUCCESS_STATUSES)
+      status, stdout, stderr = execute(command, success_statuses:)
 
-      unless status&.zero?
+      unless success_statuses.include?(status)
         fail_message = fail_message.blank? ? '' : " when #{fail_message}"
         return Failure("Command failed with status `#{status}`#{fail_message}: \n#{stdout}\n#{stderr}")
       end
