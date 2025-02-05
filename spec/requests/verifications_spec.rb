@@ -3,44 +3,40 @@
 describe 'Verifications' do
   create_entire_hierarchy
 
-  it 'a reader can list verifications' do
-    create(:verification)
-    get '/verifications', **api_headers(reader_token)
-    expect(response).to have_http_status(:ok)
+  before do
+    create(:verification, audio_event:, creator: owner_user, confirmed: 'true')
+    create(:verification, audio_event:, creator: writer_user, confirmed: 'false')
   end
 
-  context 'when filtering' do
-    before do
-      create(:verification, creator: reader_user, confirmed: 'true')
-      create(:verification, creator: reader_user, confirmed: 'false')
-    end
+  it 'a reader can list verifications' do
+    get '/verifications', **api_headers(reader_token)
+    expect(response).to have_http_status(:ok)
+    expect_at_least_one_item
+  end
 
-    let(:verification_skip) { create(:verification, creator: writer_user, confirmed: 'skip') }
-
-    it 'can filter verifications by confirmed' do
-      filter = {
-        filter: {
-          confirmed: { eq: verification_skip.confirmed }
-        }
+  it 'can filter verifications by confirmed status' do
+    filter = {
+      filter: {
+        confirmed: { eq: 'true' }
       }
-      get '/verifications/filter', params: filter, **api_headers(reader_token)
+    }
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
 
-      expect(response).to have_http_status(:ok)
-      expect_number_of_items(1)
-      expect(api_data).to include(a_hash_including(confirmed: verification_skip.confirmed))
-    end
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(2)
+    expect(api_data).to include(a_hash_including(confirmed: 'true'))
+  end
 
-    it 'can filter verifications by creator' do
-      filter = {
-        filter: {
-          creator_id: { not_eq: verification_skip.creator_id }
-        }
+  it 'can filter verifications by creator' do
+    filter = {
+      filter: {
+        creator_id: { not_eq: owner_user.id }
       }
-      get '/verifications/filter', params: filter, **api_headers(reader_token)
+    }
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
 
-      expect(response).to have_http_status(:ok)
-      expect_number_of_items(2)
-      expect(api_data).to include(a_hash_including(creator_id: reader_user.id))
-    end
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(2)
+    expect(api_data).to include(a_hash_including(creator_id: writer_user.id))
   end
 end

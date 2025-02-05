@@ -4350,7 +4350,6 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20250203074104'),
 ('20250120064731'),
 ('20250113012304'),
 ('20241106015941'),

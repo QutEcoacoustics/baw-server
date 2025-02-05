@@ -5,7 +5,7 @@ class CreateVerifications < ActiveRecord::Migration[7.2]
     create_enum :confirmation, ['true', 'false', 'unsure', 'skip']
 
     create_table :verifications do |t|
-      t.references :audio_event, null: false, foreign_key: true
+      t.references :audio_event, null: false, foreign_key: { on_delete: :cascade }
       t.references :tag, null: false, foreign_key: true
       t.column :creator_id, :integer, null: false
       t.column :updater_id, :integer

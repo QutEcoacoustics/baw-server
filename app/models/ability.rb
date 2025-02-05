@@ -840,27 +840,21 @@ class Ability
       check_audio_event(user, verification.audio_event.audio_recording.site, verification.audio_event)
     end
 
-    # beware: code smell below. duplication of logic across the blocks. e.g.
-    # both update and create require :writer level permissions, but only update
-    # requires creator_id to match user_id. Because creator_id doesn't exist
-    # during the check, it fails if included, hence, separate blocks.
-
-    # the the `reader` user should NOT be able to POST /verifications/ (create)
-    # the `writer` user SHOULD be able to POST /verifications/ (create)
-    can [:create], Verification do |verification|
+    can [:create, :update], Verification do |verification|
       check_model(verification)
       Access::Core.check_orphan_site!(verification.audio_event.audio_recording.site)
-      Access::Core.can_any?(user, :writer,
-        verification.audio_event.audio_recording.site.projects)
-    end
 
-    # the `writer` user SHOULD be able to POST /verifications/{id} (update) IF they
-    # are the creator (this is `:another_writer` in the verifications_spec)
-    can [:update], Verification do |verification|
-      check_model(verification)
-      Access::Core.check_orphan_site!(verification.audio_event.audio_recording.site)
-      Access::Core.can_any?(user, :writer,
-        verification.audio_event.audio_recording.site.projects) && verification.creator_id == user&.id
+      has_writer_access = Access::Core.can_any?(
+        user, :writer,
+        verification.audio_event.audio_recording.site.projects
+      )
+
+      # only check creator_id for persisted records (updates)
+      if verification.persisted?
+        has_writer_access && verification.creator_id == user&.id
+      else
+        has_writer_access
+      end
     end
 
     # 1. Are you an owner?
@@ -871,11 +865,9 @@ class Ability
       next false if user_level.blank? || user_level.compact.blank?
 
       actual_highest = Access::Core.highest(user_level)
-      case actual_highest
-      when :owner
-        Access::Core.can_any?(user, :writer,
-          verification.audio_event.audio_recording.site.projects)
-      when :writer
+      if actual_highest == :owner
+        true
+      elsif actual_highest == :writer
         verification.creator_id == user&.id
       else
         false
@@ -883,4 +875,3 @@ class Ability
     end
   end
 end
-# indent

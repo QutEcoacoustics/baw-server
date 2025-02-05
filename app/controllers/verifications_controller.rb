@@ -84,8 +84,6 @@ class VerificationsController < ApplicationController
 
   private
 
-  # Required parameters for verification
-  # @return [ActionController::Parameters, ActionController::ParameterMissing]
   def verification_params
     params.require(:verification).permit(
       :confirmed, :audio_event_id, :tag_id, :creator_id, :updater_id
