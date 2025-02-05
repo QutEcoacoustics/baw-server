@@ -59,7 +59,7 @@ module PBS
       exit_code = status.fetch(:exit_code, nil)
 
       ssh_logger.log(
-        success_statuses.include?(status) ? :debug : :error,
+        success_statuses.include?(exit_code) ? :debug : :error,
         command:, exit_code:, stdout:, stderr:
       )
 
