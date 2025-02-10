@@ -602,7 +602,8 @@ describe AudioRecording do
   it_behaves_like 'cascade deletes for', :audio_recording, {
     audio_events: {
       taggings: nil,
-      comments: nil
+      comments: nil,
+      verifications: nil
     },
     analysis_jobs_items: :audio_event_import_files,
     bookmarks: nil,

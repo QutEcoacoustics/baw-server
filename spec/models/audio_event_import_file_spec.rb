@@ -113,7 +113,8 @@ describe AudioEventImportFile do
   it_behaves_like 'cascade deletes for', :audio_event_import_file, {
     audio_events: {
       taggings: nil,
-      comments: nil
+      comments: nil,
+      verifications: nil
     }
   } do
     create_entire_hierarchy

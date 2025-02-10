@@ -86,6 +86,18 @@ CREATE TYPE public.analysis_jobs_item_transition AS ENUM (
 
 
 --
+-- Name: confirmation; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.confirmation AS ENUM (
+    'correct',
+    'incorrect',
+    'unsure',
+    'skip'
+);
+
+
+--
 -- Name: consent; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -689,8 +701,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    audio_event_import_file_id integer,
-    import_file_index integer
+    import_file_index integer,
+    audio_event_import_file_id bigint
 );
 
 
@@ -2048,6 +2060,41 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: verifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.verifications (
+    id bigint NOT NULL,
+    audio_event_id bigint NOT NULL,
+    tag_id bigint NOT NULL,
+    creator_id integer NOT NULL,
+    updater_id integer,
+    confirmed public.confirmation NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: verifications_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.verifications_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: verifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.verifications_id_seq OWNED BY public.verifications.id;
+
+
+--
 -- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2325,6 +2372,13 @@ ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: verifications id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications ALTER COLUMN id SET DEFAULT nextval('public.verifications_id_seq'::regclass);
 
 
 --
@@ -2712,6 +2766,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: verifications verifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications
+    ADD CONSTRAINT verifications_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: analysis_jobs_name_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2772,6 +2834,13 @@ CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON public.bookmarks USING btr
 --
 
 CREATE INDEX dataset_items_idx ON public.dataset_items USING btree (start_time_seconds, end_time_seconds);
+
+
+--
+-- Name: idx_on_audio_event_id_tag_id_creator_id_f944f25f20; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_on_audio_event_id_tag_id_creator_id_f944f25f20 ON public.verifications USING btree (audio_event_id, tag_id, creator_id);
 
 
 --
@@ -3398,6 +3467,20 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
+-- Name: index_verifications_on_audio_event_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_verifications_on_audio_event_id ON public.verifications USING btree (audio_event_id);
+
+
+--
+-- Name: index_verifications_on_tag_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_verifications_on_tag_id ON public.verifications USING btree (tag_id);
+
+
+--
 -- Name: permissions_project_allow_anonymous_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3781,6 +3864,14 @@ ALTER TABLE ONLY public.studies
 
 
 --
+-- Name: verifications fk_rails_49a28586af; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications
+    ADD CONSTRAINT fk_rails_49a28586af FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id) ON DELETE CASCADE;
+
+
+--
 -- Name: analysis_jobs_items fk_rails_50c0011a46; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3829,11 +3920,27 @@ ALTER TABLE ONLY public.harvest_items
 
 
 --
+-- Name: verifications fk_rails_6e0145be93; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications
+    ADD CONSTRAINT fk_rails_6e0145be93 FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
 -- Name: audio_recording_statistics fk_rails_6f222e0805; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audio_recording_statistics
     ADD CONSTRAINT fk_rails_6f222e0805 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
+
+
+--
+-- Name: verifications fk_rails_77cbfa06a3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications
+    ADD CONSTRAINT fk_rails_77cbfa06a3 FOREIGN KEY (tag_id) REFERENCES public.tags(id) ON DELETE CASCADE;
 
 
 --
@@ -3994,6 +4101,14 @@ ALTER TABLE ONLY public.dataset_items
 
 ALTER TABLE ONLY public.progress_events
     ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: verifications fk_rails_d2dd3abbbb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verifications
+    ADD CONSTRAINT fk_rails_d2dd3abbbb FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
@@ -4235,6 +4350,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250120064731'),
 ('20250113012304'),
 ('20241106015941'),
 ('20241004055117'),

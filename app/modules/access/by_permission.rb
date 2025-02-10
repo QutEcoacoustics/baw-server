@@ -184,6 +184,17 @@ module Access
         end
       end
 
+      # Get all verifications for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @param [AudioEvent] audio_event
+      # @return [ActiveRecord::Relation] verifications
+      def audio_event_verifications(user, levels: Access::Core.levels, audio_event: nil)
+        query = Verification.joins(audio_event: [{ audio_recording: [:site] }])
+        query = query.where(audio_event_id: audio_event.id) if audio_event
+        permission_sites(user, levels, query)
+      end
+
       # Get all saved searches for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe StudiesController, type: :routing do
   describe :routing do
     it { expect(get('/studies')).to route_to('studies#index', format: 'json') }

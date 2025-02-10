@@ -6,7 +6,7 @@ module Api
   module ControllerHelper
     extend ActiveSupport::Concern
 
-    # based on https://codelation.com/blog/rails-restful-api-just-add-water
+    # based on https://codelation.com/restful-rails-api-just-add-water/
     private
 
     # The singular name for the resource class based on the controller

@@ -34,6 +34,8 @@ module Creation
       prepare_audio_events_tags
       prepare_audio_event_comment
 
+      prepare_verification
+
       prepare_harvest
       prepare_harvest_item
 
@@ -77,7 +79,7 @@ module Creation
       }
     end
 
-    # creates an project with public (allow anon) permissions
+    # creates a project with public (allow anon) permissions
     # as well as a site, audio recording and dataset item
     def create_anon_hierarchy
       prepare_users
@@ -406,6 +408,10 @@ module Creation
       }
     end
 
+    def prepare_verification
+      let!(:verification) { Common.create_verification(writer_user, audio_event, tag) }
+    end
+
     # creates a whole lot of progress events for filter testing
     def prepare_many_progress_events
       let!(:progress_events_stats) {
@@ -475,6 +481,10 @@ module Creation
 
       def create_tag(creator)
         FactoryBot.create(:tag, creator:)
+      end
+
+      def create_verification(creator, audio_event, tag)
+        FactoryBot.create(:verification, creator:, audio_event:, tag:)
       end
 
       def create_provenance(creator)

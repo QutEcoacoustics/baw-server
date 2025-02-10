@@ -24,7 +24,9 @@
 #
 class AudioEventImportFile < ApplicationRecord
   # associations
-  has_many :audio_events, -> { includes :taggings }, inverse_of: :audio_event_import_file, dependent: :destroy
+  has_many :audio_events, lambda {
+    includes [:taggings, :verifications]
+  }, inverse_of: :audio_event_import_file, dependent: :destroy
 
   belongs_to :audio_event_import, inverse_of: :audio_event_import_files
   belongs_to :analysis_jobs_item, inverse_of: :audio_event_import_files, optional: true
