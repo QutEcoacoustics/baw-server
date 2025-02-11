@@ -19,16 +19,20 @@ describe '/security' do
     headers['CONTENT_TYPE'] = 'application/json' if post
     headers['HTTP_AUTHORIZATION'] = "Token token=\"#{token}\"" if token
     headers['HTTP_AUTHORIZATION'] = "Bearer #{jwt}" if jwt
-    # the retrieve_set_cookie method includes the name of the cookie
+    # the baw_session_cookie method includes the name of the cookie
     headers['Cookie'] = cookie.to_s if cookie
 
     headers
   end
 
-  disable_cookie_jar
+  def parse_set_cookie
+    Array(response.headers['set-cookie']).to_h { |x|
+      x.split('=', 2)
+    }
+  end
 
-  def retrieve_set_cookie
-    response.headers['set-cookie'].split(';').select { |x| x.include?(cookie_name) }.first
+  def baw_session_cookie
+    parse_set_cookie['_baw_session']
   end
 
   def assert_session_info_response
@@ -48,9 +52,15 @@ describe '/security' do
     reader_user.password = password
     reader_user.password_confirmation = password
     reader_user.save!
+
+    owner_user.password = password
+    owner_user.password_confirmation = password
+    owner_user.save!
   end
 
   describe 'authorization' do
+    disable_cookie_jar
+
     describe 'sign in' do
       it 'can sign in (with email)' do
         body = {
@@ -63,7 +73,7 @@ describe '/security' do
 
         assert_session_info_response
 
-        expect(retrieve_set_cookie).to match(/#{cookie_name}=.+/)
+        expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
       end
 
       it 'can sign in (with login)' do
@@ -77,7 +87,7 @@ describe '/security' do
 
         assert_session_info_response
 
-        expect(retrieve_set_cookie).to match(/#{cookie_name}=.+/)
+        expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
       end
 
       describe 'backwards compatibility for API calls' do
@@ -87,7 +97,7 @@ describe '/security' do
 
           assert_session_info_response
 
-          expect(retrieve_set_cookie).to match(/#{cookie_name}=.+/)
+          expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
         end
 
         it 'can sign in (with login)' do
@@ -96,7 +106,7 @@ describe '/security' do
 
           assert_session_info_response
 
-          expect(retrieve_set_cookie).to match(/#{cookie_name}=.+/)
+          expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
         end
       end
 
@@ -155,9 +165,9 @@ describe '/security' do
       post '/security', params: body, headers: headers(post: true), as: :json
 
       expect_success
-      retrieve_set_cookie
+      baw_session_cookie
 
-      get "/projects/#{project.id}", headers: headers(cookie: retrieve_set_cookie), as: :json
+      get "/projects/#{project.id}", headers: headers(cookie: baw_session_cookie), as: :json
 
       expect_success
     end
@@ -200,7 +210,7 @@ describe '/security' do
       post '/security', params: body, headers: headers(post: true), as: :json
       assert_session_info_response
 
-      get '/security/user', headers: headers(cookie: retrieve_set_cookie), as: :json
+      get '/security/user', headers: headers(cookie: baw_session_cookie), as: :json
       assert_session_info_response
     end
 
@@ -218,7 +228,7 @@ describe '/security' do
         post '/security', params: body, headers: headers(post: true), as: :json
         expect_success
 
-        delete '/security', headers: headers(cookie: retrieve_set_cookie)
+        delete '/security', headers: headers(cookie: baw_session_cookie)
         expect_success
 
         reader_user.reload
@@ -229,13 +239,13 @@ describe '/security' do
         post '/security', params: body, headers: headers(post: true), as: :json
         expect_success
 
-        cookie = retrieve_set_cookie
+        cookie = baw_session_cookie
 
         # NOTE: the old cookie is not invalidated, it will still work until it
         # expires. However, a new Set-Cookie header will be sent with a new
         # cookie which basically represents an anonymous session.
         delete '/security', headers: headers(cookie:)
-        new_cookie = retrieve_set_cookie
+        new_cookie = baw_session_cookie
 
         expect(new_cookie).not_to eq cookie
 
@@ -443,6 +453,32 @@ describe '/security' do
 
         expect_error(:unauthorized, 'You need to log in or register before continuing.')
       end
+    end
+  end
+
+  describe 'CSRF' do
+    create_audio_recordings_hierarchy
+
+    with_csrf_protection
+
+    it 'sets the CSRF cookie' do
+      # mock production so we can test secure is working
+      allow(BawApp).to receive(:dev_or_test?).and_return(false)
+
+      body = {
+        user: {
+          email: owner_user.email,
+          password:
+        }
+      }
+      post '/security', params: body, headers: headers(post: true).merge(
+        # pretend we're using https so that the secure cookie is sent in response headers
+        'X-Forwarded-Proto' => 'https'
+      ), as: :json
+
+      expect_success
+
+      expect(parse_set_cookie['XSRF-TOKEN']).to match(%r{.+; path=/; secure; samesite=none})
     end
   end
 end

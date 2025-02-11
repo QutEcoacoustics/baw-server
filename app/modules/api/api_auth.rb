@@ -23,7 +23,14 @@ module Api
     # http://stackoverflow.com/questions/7600347/rails-api-design-without-disabling-csrf-protection
     def set_csrf_cookie
       csrf_cookie_key = 'XSRF-TOKEN'
-      cookies[csrf_cookie_key] = form_authenticity_token if protect_against_forgery? && current_user
+      return unless protect_against_forgery? && current_user
+
+      cookies[csrf_cookie_key] = {
+        value: form_authenticity_token,
+        # ? make sure these values mirror the settings in config/initializers/session_store.rb
+        secure: !BawApp.dev_or_test?,
+        same_site: BawApp.dev_or_test? ? :lax : :none
+      }
     end
 
     # Simply calls current_user to trigger authentication.

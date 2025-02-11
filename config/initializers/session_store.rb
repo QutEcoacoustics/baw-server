@@ -5,6 +5,7 @@
 Rails.application.config.session_store(
   :cookie_store,
   key: '_baw_session',
+  # ? Make sure these values mirror the settings in app/modules/api/api_auth.rb
   # secure will only mark a cookie as secure if the connection is also https,
   # which it is not in dev/test.
   # It must be secure or else the samesite=none attribute fails.
