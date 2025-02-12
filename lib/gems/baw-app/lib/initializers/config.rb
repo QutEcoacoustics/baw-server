@@ -112,7 +112,6 @@ class BawConfigContract < Dry::Validation::Contract
       end
       required(:pbs).hash do
         required(:default_queue).maybe(:string)
-        required(:default_project).filled(:string)
         required(:primary_group).filled(:string)
       end
       required(:remote_enqueue_limit).maybe(:integer, gt?: 0)

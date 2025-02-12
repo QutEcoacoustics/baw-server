@@ -169,7 +169,7 @@ describe AnalysisJobsItem do
 
         expect(item).to be_result_cancelled
         # cancel started at is not modified by the state machine but rather it's
-        # set by the batch_cancel_items_for_job method.
+        # set by the batch_mark_items_to_cancel_for_job method.
         expect(item.cancel_started_at).to be_nil
         expect(item.finished_at).to be_within(1.second).of Time.zone.now
 

@@ -75,7 +75,7 @@ class AnalysisJobsItem
     # by processing these records one by one.
     # @param analysis_job [AnalysisJob]
     # @return [Integer] the number of records updated
-    def batch_cancel_items_for_job(analysis_job)
+    def batch_mark_items_to_cancel_for_job(analysis_job)
       check_job(analysis_job)
 
       # select all not terminal
@@ -91,6 +91,31 @@ class AnalysisJobsItem
         "Bulk update analysis job items to cancel for analysis job #{analysis_job.id}",
         binds
       )
+    end
+
+    # Marks all items for a job as cancelled.
+    # Designed to be run after a batch deletion of jobs on the remote queue has
+    # been completed.
+    # @param analysis_job [AnalysisJob]
+    # @return [Integer] the number of records updated
+    def batch_mark_items_as_cancelled_for_job(analysis_job)
+      AnalysisJobsItem
+        .where(analysis_job_id: analysis_job.id)
+        # we don't want to update anything that's already transitioned to something else
+        # so only update things that are still set to transition cancel
+        .where(transition: AnalysisJobsItem::TRANSITION_CANCEL)
+        .update_all(
+          # see `clear_transition_cancel`
+          transition: nil,
+          # see `set_result_cancelled`
+          result: RESULT_CANCELLED,
+          # see `set_finished_at`
+          finished_at: Time.zone.now,
+          # see `clear_queue_id`
+          queue_id: nil,
+          # this is the state machines's backing field
+          status: AnalysisJobsItem::STATUS_FINISHED
+        )
     end
 
     # Updates all failed, killed, or cancelled analysis job items for a job to

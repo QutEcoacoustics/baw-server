@@ -318,9 +318,11 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       expect(analysis_jobs_item).to be_result_cancelled
     end
 
-    step 'the job has received a stats for the run job' do
-      expect(analysis_jobs_item.used_walltime_seconds).to be >= 0
-      expect(analysis_jobs_item.used_memory_bytes).to be >= 0
+    step 'the job has received no stats for the run job' do
+      # we used to get stats for cancelled jobs but it's not really useful
+      # and it makes it hard to do batch cancelling
+      expect(analysis_jobs_item.used_walltime_seconds).to be_nil
+      expect(analysis_jobs_item.used_memory_bytes).to be_nil
       # error is only for unexpected errors - cancelling is purposeful
       expect(analysis_jobs_item.error).to be_nil
     end

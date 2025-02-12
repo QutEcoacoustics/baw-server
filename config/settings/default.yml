@@ -115,8 +115,6 @@ batch_analysis:
     key_file: ./provision/analysis/client_key
   pbs:
     default_queue:
-    # the project to set for submitted jobs - we use this as an identifier/tag
-    default_project: <%= BawApp.env %>
     # the primary group:
     #   qsub -W group_list=pbs_user job.sh
     primary_group: pbsuser

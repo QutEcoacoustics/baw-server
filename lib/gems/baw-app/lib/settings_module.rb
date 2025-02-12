@@ -32,10 +32,6 @@ module BawApp
       #   @return [String,nil]
       attribute :default_queue, ::BawApp::Types::String.optional
 
-      # @!attribute [r] default_project
-      #   @return [String,nil]
-      attribute :default_project, ::BawApp::Types::String
-
       # @!attribute [r] primary_group
       #   @return [String,nil]
       attribute :primary_group, ::BawApp::Types::String

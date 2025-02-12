@@ -3,7 +3,7 @@
 module BawWorkers
   module Jobs
     module Analysis
-      # Removes items from the remote queue for an analysis job.
+      # Removes *all* items from the remote queue for an analysis job.
       class RemoteCancelJob < BawWorkers::Jobs::ApplicationJob
         queue_as Settings.actions.analysis_cancel_items.queue
         perform_expects Integer
@@ -56,30 +56,46 @@ module BawWorkers
         def perform(analysis_job_id)
           analysis_job = AnalysisJob.find(analysis_job_id)
 
+          result = fast_cancel(analysis_job)
+          if result.success?
+            count = result.value!
+            report_progress(count, count)
+            completed!("Batch cancelled #{result.value!} items")
+          end
+
+          push_message('Failed to batch cancel. Slow cancelling items one by one.')
+
           total = 0
+          counter = 0
           loop do
-            total_before_this_batch = total
             logger.debug('querying for items to change state')
 
             # @type [Array<Integer>]
             batch = AnalysisJobsItem.fetch_cancellable(analysis_job).pluck(:id)
             total += batch.count
+            report_progress(counter, total)
 
-            if batch.empty?
-              completed!('Nothing found to cancel')
-
-              # this break should be redundant since the above throws
-              break
-            end
+            completed!('Nothing found to cancel') if batch.empty?
 
             push_message("Found batch of items to cancel, count: #{total}")
 
-            batch.each_with_index do |id, index|
+            batch.each do |id|
               cancel_item(id)
 
-              report_progress(total_before_this_batch + (index + 1), total)
+              counter += 1
+
+              report_progress(counter, total) if (counter % 100).zero?
             end
+
+            report_progress(counter, total)
           end
+        end
+
+        # Cancels all analysis job items in a job.
+        # @param [AnalysisJob] analysis_job
+        # @return [Dry::Monads::Result]
+        def fast_cancel(analysis_job)
+          AnalysisJobsItem.cancel_items!(analysis_job)
         end
 
         def cancel_item(id)
@@ -89,7 +105,7 @@ module BawWorkers
           if item.may_cancel?
             # slow warning: contacting remote system!
             item.cancel!
-          elsif item.cancelled?
+          else
             # we're already in our desired state
             item.clear_transition_cancel
             item.save!

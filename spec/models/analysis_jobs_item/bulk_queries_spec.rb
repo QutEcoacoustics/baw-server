@@ -93,7 +93,7 @@ describe AnalysisJobsItem do
         end
 
         it 'can cancel all items for a job' do
-          AnalysisJobsItem.batch_cancel_items_for_job(analysis_job)
+          AnalysisJobsItem.batch_mark_items_to_cancel_for_job(analysis_job)
           analysis_job.reload
 
           # 3 items were respectively :new, :queued, and :working, so those should

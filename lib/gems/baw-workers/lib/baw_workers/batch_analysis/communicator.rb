@@ -78,6 +78,13 @@ module BawWorkers
         connection.fetch_max_queued
       end
 
+      # Does the job exist on the cluster queue?
+      # @param analysis_job_item [::AnalysisJobsItem]
+      # @return [::Dry::Monads::Result<Boolean>] true if the job exists, false if not
+      def job_exists?(analysis_job_item)
+        connection.job_exists?(analysis_job_item.queue_id)
+      end
+
       # Removes a job from the cluster queue.
       # Will wait for the job to be cancelled. Potentially a slow operation,
       # e.g. 10 seconds plus.
@@ -87,6 +94,19 @@ module BawWorkers
         return Success('Nothing to cancel') if analysis_job_item.queue_id.nil?
 
         connection.cancel_job(analysis_job_item.queue_id, wait: true)
+      end
+
+      # Cancel all jobs from the cluster queue.
+      # Will not wait. May result in a mix of cancelled and not cancelled jobs.
+      # @param analysis_job_items [Array<::AnalysisJobsItem>]
+      # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+      def cancel_all_jobs!(analysis_job)
+        raise ArgumentError, 'analysis_job must be an instance of AnalysisJob' unless analysis_job.is_a?(AnalysisJob)
+        raise ArgumentError, 'Analysis job must have an id' if analysis_job.id.nil?
+
+        job_id = analysis_job.id
+
+        connection.cancel_jobs_by_project!(job_id)
       end
 
       # Remove a job from the job history on the cluster.
@@ -127,6 +147,15 @@ module BawWorkers
         analysis_job = analysis_job_item.analysis_job
         audio_recording = analysis_job_item.audio_recording
         script = analysis_job_item.script
+
+        raise ArgumentError, 'analysis_job_item must have an AnalysisJob' unless analysis_job.is_a?(AnalysisJob)
+
+        unless audio_recording.is_a?(AudioRecording)
+          raise ArgumentError,
+            'analysis_job_item must have an AudioRecording'
+        end
+        raise ArgumentError, 'analysis_job_item must have a Script' unless script.is_a?(Script)
+
         # But we use harvester to download audio and update job status
         #   - because if we used user for status, then users could update the status of the
         #     jobs improperly by any valid api call
@@ -182,7 +211,8 @@ module BawWorkers
             },
             resources:,
             # hide the job script from the results endpoint by making it a dot file
-            hidden: true
+            hidden: true,
+            project_suffix: analysis_job.id
           )
       end
 
@@ -304,7 +334,7 @@ module BawWorkers
         analysis_job
           .analysis_jobs_scripts
           .find_by(script_id: script.id)
-          .custom_settings => custom_settings
+          &.custom_settings => custom_settings
         encoded_config = format_config(
           (custom_settings.presence || script.executable_settings),
           config_name

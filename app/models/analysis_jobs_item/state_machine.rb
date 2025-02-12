@@ -160,6 +160,8 @@ class AnalysisJobsItem
         end
 
         # @!method cancel!
+        #  Cancels the job item.
+        #  ! Must be kept in sync with AnalysisJobsItem.cancel_items!
         #  @return [Boolean]
         # @!method may_cancel?
         #  @return [Boolean] true if the item can be cancelled

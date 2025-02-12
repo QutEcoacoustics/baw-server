@@ -217,7 +217,7 @@ class AnalysisJob
 
     # Suspends an analysis job by cancelling all queued items
     def suspend_job
-      AnalysisJobsItem.batch_cancel_items_for_job(self)
+      AnalysisJobsItem.batch_mark_items_to_cancel_for_job(self)
 
       # do the cancelling on the background
       BawWorkers::Jobs::Analysis::RemoteCancelJob.enqueue(self)

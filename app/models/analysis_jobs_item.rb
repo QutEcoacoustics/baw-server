@@ -459,6 +459,30 @@ class AnalysisJobsItem < ApplicationRecord
       .take(limit)
   end
 
+  # Cancels all items for an analysis job.
+  # Should be identical to invoking `cancel!` on each item but is more efficient
+  # because it batches operations to the remote cluster and database.
+  # ! Warning: this method is slow because it must contact the remote queue.
+  # ! Must be kept in sync with cancel!
+  # ! And yet is still different from cancel! because it will cancel every item
+  # ! in the remote queue, despite it's status.
+  # @param analysis_job [AnalysisJob] the analysis job to cancel items for
+  # @return [::Dry::Monads::Result<Integer>] the number of items cancelled
+  def self.cancel_items!(analysis_job)
+    raise ArgumentError, 'analysis_job must be an AnalysisJob' unless analysis_job.is_a?(AnalysisJob)
+
+    BawWorkers::Config.batch_analysis.cancel_all_jobs!(analysis_job)
+      # only update the database if the remote queue was successfully updated
+      .fmap { |_|
+        # now update the database
+        batch_mark_items_as_cancelled_for_job(analysis_job)
+      }
+      .alt_map { |error|
+        Rails.logger.error("Failed to batch cancel all items for analysis job #{analysis_job.id}", error: error)
+        error
+      }
+  end
+
   #
   # public methods
   #
@@ -476,7 +500,8 @@ class AnalysisJobsItem < ApplicationRecord
         'batch_status must be a BatchAnalysis::Models::JobStatus'
     end
 
-    return if queue_id.blank?
+    # this can happen if the job was never queued, or if it was cancelled
+    return if queue_id.blank? || result_cancelled?
 
     batch_status = BawWorkers::Config.batch_analysis.job_status(self) if batch_status.nil?
     batch_result = batch_status.result&.to_s
@@ -485,7 +510,7 @@ class AnalysisJobsItem < ApplicationRecord
     # If the job doesn't have a result and we've previously marked this as
     # cancelled then we should keep the cancelled result.
     # We don't have to worry about this
-    self.result = batch_result unless batch_result.nil? && result_cancelled?
+    self.result = batch_result unless batch_result.nil?
 
     # other attributes
     self.used_walltime_seconds = batch_status.used_walltime_seconds || used_walltime_seconds

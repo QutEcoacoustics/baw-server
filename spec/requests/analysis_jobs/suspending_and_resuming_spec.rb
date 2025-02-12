@@ -63,6 +63,12 @@ describe 'AnalysisJobs', :clean_by_truncation do
       expect_pbs_jobs(0)
     end
 
+    step 'and we see the batch cancel was in effect' do
+      status = expect_performed_jobs(1, of_class: BawWorkers::Jobs::Analysis::RemoteCancelJob).first
+      expect(status).to be_completed
+      expect(status.messages).to include('Batch cancelled 20 items')
+    end
+
     step 'and we see all items are cancelled' do
       assert_job_progress(
         status_finished_count: 20,

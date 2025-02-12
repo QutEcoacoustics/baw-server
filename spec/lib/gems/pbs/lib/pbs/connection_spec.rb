@@ -260,7 +260,8 @@ describe PBS::Connection do
         result = connection.submit_job(
           'echo "hello tests my pwd is $(pwd)" && touch i_was_here',
           working_directory,
-          job_name: 'test_job'
+          job_name: 'test_job',
+          project_suffix: "she's alive!"
         )
 
         expect(result).to be_success
@@ -273,7 +274,7 @@ describe PBS::Connection do
 
         aggregate_failures do
           expect(job.job_name).to eq 'dev_test_job'
-          expect(job.project).to eq BawApp.env
+          expect(job.project).to eq("#{Settings.organisation_names.site_short_name}_she_s_alive")
 
           # the default queue for our test PBS cluster is `workq`
           expect(job.queue).to eq 'workq'
@@ -310,6 +311,19 @@ describe PBS::Connection do
 
           expect(job.exit_status).to eq 0
         end
+      end
+
+      it 'can check if a job exists' do
+        result = connection.submit_job(
+          'echo "hello tests my pwd is $(pwd)"',
+          working_directory
+        )
+
+        expect(result).to be_success
+        job_id = result.value!
+
+        expect(connection.job_exists?(job_id)).to be_success.and(have_attributes(value!: true))
+        expect(connection.job_exists?('9999')).to be_success.and(have_attributes(value!: false))
       end
 
       it 'can cancel a job (and wait for it)' do
@@ -391,6 +405,88 @@ describe PBS::Connection do
         stdout, stderr = result.value!
         expect(stderr).to match(/Unknown Job Id/)
         expect(stdout).not_to match(/waiting/)
+      end
+
+      it 'can batch cancel jobs', :slow do
+        # arrange
+        job_ids = []
+        5.times do
+          result = connection.submit_job(
+            'sleep 30',
+            working_directory
+          )
+
+          expect(result).to be_success
+          job_ids << result.value!
+        end
+
+        # pick a job to complete - to test graceful handling
+        job = wait_for_pbs_job(job_ids[1])
+        expect(job).to be_finished
+
+        # pick a job to cancel - to test graceful handling
+        connection.cancel_job(job_ids[2])
+
+        # pick a job to delete history for - to test graceful handling
+        wait_for_pbs_job(job_ids[3])
+        connection.cancel_job(job_ids[3], wait: true, force: true, completed: true)
+        expect(connection.job_exists?(job_ids[3])).to be_success.and(have_attributes(value!: false))
+
+        # act
+        result = connection.cancel_jobs!(job_ids)
+
+        # assert
+        expect(result).to be_success
+        expect(job_ids).to be_empty
+      end
+
+      it 'can batch cancel jobs based on project_suffix', :slow do
+        # arrange
+        job_ids = []
+        5.times do
+          result = connection.submit_job(
+            'sleep 30',
+            working_directory,
+            project_suffix: 'test'
+          )
+
+          expect(result).to be_success
+          job_ids << result.value!
+        end
+
+        # test correct selection
+        other_job = connection.submit_job(
+          'sleep 30',
+          working_directory,
+          project_suffix: 'other'
+        ).value!
+
+        # pick a job to complete - to test graceful handling
+        job = wait_for_pbs_job(job_ids[1])
+        expect(job).to be_finished
+
+        # pick a job to cancel - to test graceful handling
+        connection.cancel_job(job_ids[2])
+
+        # pick a job to delete history for - to test graceful handling
+        wait_for_pbs_job(job_ids[3])
+        connection.cancel_job(job_ids[3], wait: true, force: true, completed: true)
+        expect(connection.job_exists?(job_ids[3])).to be_success.and(have_attributes(value!: false))
+
+        # act
+        result = connection.cancel_jobs_by_project!('test')
+
+        # assert
+        expect(result).to be_success
+        job_ids.each do |job_id|
+          expect(connection.job_exists?(job_id)).to be_success.and(have_attributes(value!: false))
+        end
+
+        expect(connection.job_exists?(other_job)).to be_success.and(have_attributes(value!: true))
+      end
+
+      it 'works cancelling no jobs based on project_suffix', :slow do
+        expect(connection.cancel_jobs_by_project!('test')).to be_success
       end
 
       it 'accepts custom job hooks' do

@@ -12,6 +12,8 @@ module PBS
     inspector excludes: [:@settings, :@key_file, :@logger, :@net_ssh_logger, :@ssh_logger, :@connection,
                          :@status_transformer, :@queue_transformer]
 
+    SAFE_NAME_REGEX = /[^_A-Za-z0-9.]+/
+
     ENV_PBS_O_WORKDIR = 'PBS_O_WORKDIR'
     ENV_PBS_O_QUEUE = 'PBS_O_QUEUE'
     ENV_PBS_JOBNAME = 'PBS_JOBNAME'
@@ -144,6 +146,7 @@ module PBS
     #   This path will get translated from a local path to a remote path
     # @param options [Hash] job_name, hook points, resource list, & env vars for the job
     # @option options [String] :job_name a name for the job - should not include an extension
+    # @option options [String] :project_suffix a suffix to append onto the PBS project tag
     # @option options [String] :report_error_script The script to execute on failure
     # @option options [String] :report_finish_script The script to execute on finishing
     # @option options [String] :report_start_script The script to execute on starting
@@ -158,9 +161,8 @@ module PBS
       raise ArgumentError, 'working_directory is not a Pathname' unless working_directory.is_a?(Pathname)
 
       now = Time.now.utc
-      options
-        .fetch(:job_name, now.strftime('job_%Y%m%dT%H%M%S%z'))
-        .gsub(/[^_A-Za-z0-9.]+/, '_') => name
+      name = options.fetch(:job_name, now.strftime('job_%Y%m%dT%H%M%S%z'))
+      name = safe_name(name)
 
       # job name can't be a parsable number, because PBS will emit the job name
       # as a plain number rather than a string. In the case of `.1` for example,
@@ -203,6 +205,19 @@ module PBS
         .fmap { |stdout, _stderr| stdout.strip }
     end
 
+    # Check if the cluster knows about a job id or not.
+    # @param job_id [String] the job id
+    # @return [::Dry::Monads::Result<Boolean>] true if the job exists, false if not
+    def job_exists?(job_id)
+      command = "qstat -x #{job_id} > /dev/null"
+      status, stdout, stderr = execute(command, success_statuses: [0, UNKNOWN_JOB_ID_STATUS])
+
+      return Success(true) if status&.zero?
+      return Success(false) if status == UNKNOWN_JOB_ID_STATUS
+
+      Failure("Command failed with status `#{status}`#{fail_message}: \n#{stdout}\n#{stderr}")
+    end
+
     # Deletes a job identified by a job id.
     # Fails gracefully if the job has already finished or the job history has cleared the ID (unknown).
     # Generally we're cancelling here to clean or sync our state with the cluster. So if the job is already
@@ -223,6 +238,45 @@ module PBS
       # we don't want to consider it an error. Just be graceful - it has ended.
       # Same thing for a job that's been cleared from the cluster's history:
       execute_safe(command, fail_message: "deleting job #{job_id}", success_statuses: QDEL_GRACEFUL_STATUSES)
+    end
+
+    # Cancels multiple jobs identified by job ids
+    # Graceful, like `cancel_job`, if the job has already finished or the job history has cleared t`he ID (unknown).
+    # Designed to send fewer commands to the cluster.
+    # Does not wait.
+    # Clears job history.
+    # ! This method will mutate the job_ids array in place !
+    # @param job_ids [Array<String>] the job ids. The array must not be empty and will be mutated in place as a subset
+    #   of the job ids will be used in each invocation
+    # @return [::Dry::Monads::Result<Array<(String,String>>] std out and std err
+    def cancel_jobs!(job_ids)
+      raise ArgumentError, 'job_ids must not be empty' if job_ids.empty?
+
+      subset = job_ids.slice!(0, 100)
+
+      command = "qdel -x -W force #{subset.join(' ')}"
+
+      execute_safe(command, fail_message: "deleting jobs #{subset}", success_statuses: QDEL_GRACEFUL_STATUSES)
+    end
+
+    # Cancels all jobs that belong to the same project.
+    # Graceful like `cancel_job`, if the job has already finished or the job history has cleared the ID (unknown).
+    # Designed to send fewer commands to the cluster.
+    # Does not wait.
+    # Clears job history.
+    # @param project_suffix [String] the project suffix
+    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    def cancel_jobs_by_project!(project_suffix)
+      raise ArgumentError, 'project_suffix must not be empty' if project_suffix.blank?
+
+      project = project_name(project_suffix)
+
+      # we don't select finished jobs (-x)
+      # but we still allow qdel to deleted them to avoid races
+      command = "qselect -x -P #{project} -u #{settings.connection.username} | xargs --no-run-if-empty qdel -x -W force"
+
+      execute_safe(command, fail_message: "deleting jobs by project #{project}",
+        success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
     # Releases a job identified by a job id
@@ -424,16 +478,18 @@ module PBS
         job_name:,
         resources:,
         additional_attributes:,
-        env:
+        env:,
+        project_suffix: options.fetch(:project_suffix, nil)
       )
 
       qsub = "#{qsub_base} #{output} #{hold_string} #{script_path}"
       "#{cd} && #{qsub}"
     end
 
-    def qsub_common_command(job_name:, resources:, additional_attributes:, env:)
+    def qsub_common_command(job_name:, resources:, additional_attributes:, env:, project_suffix:)
       queue = settings.pbs.default_queue
-      project = settings.pbs.default_project
+      # loosely group jobs together without any formal dependencies - they just share a project which is just a tag
+      project = project_name(project_suffix)
 
       # -q <queue_name>
       queue_string = queue.blank? ? '' : "-q #{queue}"
@@ -481,6 +537,23 @@ module PBS
     # @return [String]
     def log_name(script_path)
       "#{script_path.basename}.log"
+    end
+
+    # Creates a project name from the instance tag and a suffix
+    # @param project_suffix [String]
+    # @return [String]
+    def project_name(project_suffix)
+      project_suffix = safe_name(project_suffix)
+      instance_tag + (project_suffix.present? ? "_#{project_suffix}" : '')
+    end
+
+    # Sanitizes a name, leaving only alphanumeric characters, underscores, and dots.
+    # Repeated illegal characters are compacted into a single underscore.
+    # Leading and trailing illegal characters are removed.
+    # @param name [String]
+    # @return [String]
+    def safe_name(name)
+      name&.to_s&.gsub(SAFE_NAME_REGEX, '_')&.trim('_')
     end
 
     def split_into_lines(string)
