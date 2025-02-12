@@ -54,7 +54,7 @@ class HarvestItem < ApplicationRecord
   # If the file has fixable mistakes they can be changed by the user here
   # (e.g. missing utc offset / site_id for a folder)
   STATUS_METADATA_GATHERED = :metadata_gathered
-  # the file is not valid for some reason we now about (missing utc offset which the user didn't fix)
+  # the file is not valid for some reason we know about (missing utc offset which the user didn't fix)
   STATUS_FAILED = :failed
   # successfully harvested the file, there will be an audio_recording that is available now
   STATUS_COMPLETED = :completed

@@ -66,10 +66,12 @@ FactoryBot.define do
     status { 'ready' }
 
     creator
+
     uploader do
       # admin user
       User.find_by(roles_mask: 1)
     end
+
     site
 
     trait :status_new do
