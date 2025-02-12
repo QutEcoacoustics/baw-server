@@ -19,7 +19,7 @@
 #
 #  index_harvest_items_on_harvest_id  (harvest_id)
 #  index_harvest_items_on_info        (info) USING gin
-#  index_harvest_items_on_path        (path)
+#  index_harvest_items_on_path        (path) UNIQUE
 #  index_harvest_items_on_status      (status)
 #
 # Foreign Keys
@@ -221,11 +221,11 @@ RSpec.describe HarvestItem do
       end
 
       it 'can query the root path' do
-        results = HarvestItem.project_directory_listing(HarvestItem.all, '').as_json
+        results = HarvestItem.project_directory_listing(HarvestItem.all, harvest.upload_directory_name).as_json
 
         expect(results).to match(a_collection_containing_exactly(
-          assert(nil, 'a', 5, 2, 1),
-          assert(nil, 'z', 1, 1, 0),
+          assert(nil, "#{harvest.upload_directory_name}/a", 5, 2, 1),
+          assert(nil, "#{harvest.upload_directory_name}/z", 1, 1, 0),
           assert(@hi1.id, @hi1.path, 1, 0, 1),
           assert(@hi2.id, @hi2.path, 1, 0, 1),
           assert(@hi3.id, @hi3.path, 1, 1, 0)
@@ -233,26 +233,27 @@ RSpec.describe HarvestItem do
       end
 
       it 'can query a sub directory "a"' do
-        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a').as_json
+        results = HarvestItem.project_directory_listing(HarvestItem.all, "#{harvest.upload_directory_name}/a").as_json
 
         expect(results).to match(a_collection_containing_exactly(
-          assert(nil, 'a/b', 5, 2, 1)
+          assert(nil, "#{harvest.upload_directory_name}/a/b", 5, 2, 1)
         ))
       end
 
       it 'can query a sub directory "a/b"' do
-        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a/b').as_json
+        results = HarvestItem.project_directory_listing(HarvestItem.all, "#{harvest.upload_directory_name}/a/b").as_json
 
         expect(results).to match(a_collection_containing_exactly(
-          assert(nil, 'a/b/c', 2, 0, 1),
-          assert(nil, 'a/b/d', 1, 0, 0),
+          assert(nil, "#{harvest.upload_directory_name}/a/b/c", 2, 0, 1),
+          assert(nil, "#{harvest.upload_directory_name}/a/b/d", 1, 0, 0),
           assert(@hi7.id, @hi7.path, 1, 1, 0),
           assert(@hi8.id, @hi8.path, 1, 1, 0)
         ))
       end
 
       it 'can query a deep directory "a/b/c"' do
-        results = HarvestItem.project_directory_listing(HarvestItem.all, 'a/b/c').as_json
+        results = HarvestItem.project_directory_listing(HarvestItem.all,
+          "#{harvest.upload_directory_name}/a/b/c").as_json
 
         expect(results).to match(a_collection_containing_exactly(
           assert(@hi4.id, @hi4.path, 1, 0, 1),
@@ -267,33 +268,6 @@ RSpec.describe HarvestItem do
 
         expect(results).to eq []
       end
-    end
-
-    def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)
-      validations = []
-      fixable.times do
-        validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
-          status: :fixable,
-          name: :wascally_wabbit,
-          message: nil
-        )
-      end
-      not_fixable.times do
-        validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
-          status: :not_fixable,
-          name: :kiww_the_wabbit,
-          message: nil
-        )
-      end
-
-      info = BawWorkers::Jobs::Harvest::Info.new(
-        validations:
-      )
-
-      path = generate_recording_name(Time.zone.now)
-      path = File.join(sub_directories, path) if sub_directories.present?
-
-      create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:, harvest:)
     end
   end
 end

@@ -19,7 +19,7 @@
 #
 #  index_harvest_items_on_harvest_id  (harvest_id)
 #  index_harvest_items_on_info        (info) USING gin
-#  index_harvest_items_on_path        (path)
+#  index_harvest_items_on_path        (path) UNIQUE
 #  index_harvest_items_on_status      (status)
 #
 # Foreign Keys
@@ -30,7 +30,7 @@
 #
 FactoryBot.define do
   factory :harvest_item do
-    path { "#{harvest.upload_directory_name}/some/relative/path.mp3" }
+    sequence(:path) { |n| "#{harvest.upload_directory_name}/some/relative/path_#{n}.mp3" }
 
     info { {} }
     status { :new }

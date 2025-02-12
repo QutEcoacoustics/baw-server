@@ -36,7 +36,12 @@ module BawWorkers
             end
 
             # otherwise create a new one
-            item = new_harvest_item(harvest, rel_path) if item.nil?
+            begin
+              item = new_harvest_item(harvest, rel_path) if item.nil?
+            rescue ::ActiveRecord::RecordNotUnique
+              logger.warn('Failed to create harvest item; path already exists in the database', rel_path: rel_path)
+              return false
+            end
 
             # we never want to harvest a completed item again
             if is_completed?(item)

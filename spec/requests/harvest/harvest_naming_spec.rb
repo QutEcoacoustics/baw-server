@@ -16,7 +16,7 @@ describe 'Harvesting files', :clean_by_truncation do
       Timecop.return
     end
 
-    let(:default_name) { "#{Time.now.strftime('%B')} #{Time.now.day.ordinalize} Upload" }
+    let(:default_name) { "#{Time.zone.now.strftime('%B')} #{Time.zone.now.day.ordinalize} Upload" }
 
     context 'when streaming' do
       it 'can set a name on create' do
@@ -130,7 +130,7 @@ describe 'Harvesting files', :clean_by_truncation do
         end
 
         step 'transition to :metadata_extraction' do
-          expect_enqueued_jobs(1, of_class: ::BawWorkers::Jobs::Harvest::ScanJob)
+          expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
           perform_jobs(count: 1)
           expect_jobs_to_be(completed: 1, of_class: BawWorkers::Jobs::Harvest::ScanJob)
         end

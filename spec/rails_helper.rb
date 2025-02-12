@@ -193,6 +193,9 @@ RSpec.configure do |config|
   require_relative 'support/audio_helper'
   config.include AudioHelper::Example
 
+  require_relative 'support/harvest_item_helpers'
+  config.include HarvestItemHelper::Example
+
   require_relative 'support/migrations_helper'
   config.include MigrationsHelpers, :migration
 

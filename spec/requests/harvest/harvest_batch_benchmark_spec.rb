@@ -35,8 +35,7 @@ describe 'Harvesting a batch of files' do
       expect(harvest).to be_metadata_review
 
       # now duplicate the rows to simulate a really large harvest!
-      duplicate_rows
-
+      duplicate_rows_but_with_nonexistent_path
       expect(harvest.harvest_items.count).to eq(duplicates + 1)
     end
 
@@ -76,17 +75,17 @@ describe 'Harvesting a batch of files' do
       expect_enqueued_jobs(duplicates + 1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
     end
 
-    def duplicate_rows
+    def duplicate_rows_but_with_nonexistent_path
       columns = (HarvestItem.column_names - ['id']).join(', ')
-
-      duplicate_rows_query = <<~SQL
+      columns_without_path = (HarvestItem.column_names - ['id', 'path']).join(', ')
+      duplicate_rows_query = <<~SQL.squish
         INSERT INTO harvest_items (#{columns})
         (
-          SELECT  #{columns}
+          SELECT  path || series.index, #{columns_without_path}
           FROM  (
             SELECT #{columns} FROM harvest_items ORDER BY id DESC LIMIT 1
           ) AS t
-          CROSS JOIN LATERAL generate_series(1,#{duplicates})
+          CROSS JOIN LATERAL generate_series(1,#{duplicates}) series(index)
         )
       SQL
       ActiveRecord::Base.connection.execute(duplicate_rows_query)
