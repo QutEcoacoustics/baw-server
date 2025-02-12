@@ -35,6 +35,10 @@ describe '/security' do
     parse_set_cookie['_baw_session']
   end
 
+  def baw_session_cookie_value
+    "_baw_session=#{baw_session_cookie.split(';').first}"
+  end
+
   def assert_session_info_response
     expect_success
 
@@ -73,7 +77,7 @@ describe '/security' do
 
         assert_session_info_response
 
-        expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
+        expect(baw_session_cookie).to match(%r{.+; path=/; httponly; samesite=lax})
       end
 
       it 'can sign in (with login)' do
@@ -87,7 +91,7 @@ describe '/security' do
 
         assert_session_info_response
 
-        expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
+        expect(baw_session_cookie).to match(%r{.+; path=/; httponly; samesite=lax})
       end
 
       describe 'backwards compatibility for API calls' do
@@ -97,7 +101,7 @@ describe '/security' do
 
           assert_session_info_response
 
-          expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
+          expect(baw_session_cookie).to match(%r{.+; path=/; httponly; samesite=lax})
         end
 
         it 'can sign in (with login)' do
@@ -106,7 +110,7 @@ describe '/security' do
 
           assert_session_info_response
 
-          expect(baw_session_cookie).to match(/#{cookie_name}=.+/)
+          expect(baw_session_cookie).to match(%r{.+; path=/; httponly; samesite=lax})
         end
       end
 
@@ -167,7 +171,7 @@ describe '/security' do
       expect_success
       baw_session_cookie
 
-      get "/projects/#{project.id}", headers: headers(cookie: baw_session_cookie), as: :json
+      get "/projects/#{project.id}", headers: headers(cookie: baw_session_cookie_value), as: :json
 
       expect_success
     end
@@ -210,7 +214,7 @@ describe '/security' do
       post '/security', params: body, headers: headers(post: true), as: :json
       assert_session_info_response
 
-      get '/security/user', headers: headers(cookie: baw_session_cookie), as: :json
+      get '/security/user', headers: headers(cookie: baw_session_cookie_value), as: :json
       assert_session_info_response
     end
 
@@ -228,7 +232,7 @@ describe '/security' do
         post '/security', params: body, headers: headers(post: true), as: :json
         expect_success
 
-        delete '/security', headers: headers(cookie: baw_session_cookie)
+        delete '/security', headers: headers(cookie: baw_session_cookie_value)
         expect_success
 
         reader_user.reload
