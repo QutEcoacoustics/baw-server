@@ -97,7 +97,8 @@ describe AnalysisJobsItem do
     audio_event_import_files: {
       audio_events: {
         taggings: nil,
-        comments: nil
+        comments: nil,
+        verifications: nil
       }
     }
   } do

@@ -110,6 +110,7 @@ class Ability
       to_tag(user, is_guest)
       to_tagging(user, is_guest)
       to_user(user, is_guest)
+      to_verification(user, is_guest)
 
       to_analysis(user, is_guest)
       to_media(user, is_guest)
@@ -717,10 +718,11 @@ class Ability
   end
 
   def to_user(user, is_guest)
-    # admin only: :index, :edit, :update
+    # admin only: :index, :edit
     # :edit and :update are the Admin interface for editing any user
     # normal users edit their profile using devise/registrations#edit
 
+    # users can :update their own attributes on the user model via api
     # users can only view their own:
     can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments, :update], User, id: user.id
 
@@ -824,5 +826,53 @@ class Ability
     can [:index, :filter, :show], Response, creator_id: user.id unless is_guest
 
     # only admin can update or delete responses
+  end
+
+  def to_verification(user, _is_guest)
+    # admin can do anything, see #for_admin
+
+    # available to any user, including guest
+    can [:index, :filter, :new], Verification
+
+    # any user, including guest, with reader permissions on project can #show a verification
+    can [:show], Verification do |verification|
+      check_model(verification)
+      check_audio_event(user, verification.audio_event.audio_recording.site, verification.audio_event)
+    end
+
+    can [:create, :update], Verification do |verification|
+      check_model(verification)
+      Access::Core.check_orphan_site!(verification.audio_event.audio_recording.site)
+
+      has_writer_access = Access::Core.can_any?(
+        user, :writer, verification.audio_event.audio_recording.site.projects
+      )
+
+      # anyone with writer access can create a verification,
+      # but only users who created the verifications can update them
+      # (and only if they still have access to the project)
+      if verification.persisted?
+        has_writer_access && verification.creator_id == user&.id
+      else
+        has_writer_access
+      end
+    end
+
+    # 1. Are you an owner?
+    # 2. Are you a writer?
+    # -> 2.1. Are you the creator?
+    can [:destroy], Verification do |verification|
+      user_level = Access::Core.user_levels(user, verification.audio_event.audio_recording.site.projects)
+      next false if user_level.blank? || user_level.compact.blank?
+
+      actual_highest = Access::Core.highest(user_level)
+      if actual_highest == :owner
+        true
+      elsif actual_highest == :writer
+        verification.creator_id == user&.id
+      else
+        false
+      end
+    end
   end
 end

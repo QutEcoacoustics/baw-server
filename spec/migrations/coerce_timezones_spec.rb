@@ -82,7 +82,6 @@ describe CoerceTimezones, :migration do
         SELECT id, tzinfo_tz FROM sites ORDER BY id ASC;
       SQL
     )
-
     # after migration everything should be nice
     aggregate_failures do
       CASES.each_with_index do |example, index|

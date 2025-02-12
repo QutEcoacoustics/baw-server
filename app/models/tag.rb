@@ -30,9 +30,11 @@ class Tag < ApplicationRecord
   extend Enumerize
 
   # relations
-  has_many :taggings, inverse_of: :tag
+  has_many :taggings, inverse_of: :tag, dependent: :destroy
   has_many :audio_events, through: :taggings
   has_many :tag_groups, inverse_of: :tag
+  has_many :verifications, inverse_of: :tag, dependent: :destroy
+
   belongs_to :creator, class_name: 'User', inverse_of: :created_tags
   belongs_to :updater, class_name: 'User', inverse_of: :updated_tags, optional: true
 
@@ -72,7 +74,7 @@ class Tag < ApplicationRecord
   #Tag.joins(:taggings).select('tags.*, count(tag_id) as "tag_count"').group(:tag_id).order(' tag_count desc')
 
   def taxonomic_enforced
-    if type_of_tag == 'common_name' || type_of_tag == 'species_name'
+    if ['common_name', 'species_name'].include?(type_of_tag)
       errors.add(:is_taxonomic, "must be true for #{type_of_tag}") unless is_taxonomic
     elsif is_taxonomic
       errors.add(:is_taxonomic, "must be false for #{type_of_tag}")
