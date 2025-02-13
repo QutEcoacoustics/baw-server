@@ -8,24 +8,15 @@ describe 'Harvest items info' do
   prepare_harvest
 
   before do
-    @hi1 = create_with_validations(fixable: 3, not_fixable: 1,
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi2 = create_with_validations(fixable: 0, not_fixable: 1,
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi3 = create_with_validations(fixable: 1, not_fixable: 0,
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi4 = create_with_validations(fixable: 0, not_fixable: 1, sub_directories: 'a/b/c',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi5 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/c',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi6 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/d',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi7 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi8 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
-    @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b',
-      audio: create(:audio_recording, site: site, creator: owner_user, uploader: admin_user))
+    @hi1 = create_with_validations(fixable: 3, not_fixable: 1, audio: true)
+    @hi2 = create_with_validations(fixable: 0, not_fixable: 1, audio: true)
+    @hi3 = create_with_validations(fixable: 1, not_fixable: 0, audio: true)
+    @hi4 = create_with_validations(fixable: 0, not_fixable: 1, sub_directories: 'a/b/c', audio: true)
+    @hi5 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/c', audio: true)
+    @hi6 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/d', audio: true)
+    @hi7 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b', audio: true)
+    @hi8 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b', audio: true)
+    @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b', audio: true)
   end
 
   it 'can query for harvest items (root path)' do
@@ -164,9 +155,9 @@ describe 'Harvest items info' do
   context 'with lots of items' do
     before do
       50.times do
-        create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a')
+        create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a', audio: false)
 
-        create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'e')
+        create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'e', audio: false)
       end
     end
 
@@ -256,7 +247,7 @@ describe 'Harvest items info' do
     end
   end
 
-  def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil, audio: nil)
+  def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil, audio: false)
     validations = []
     fixable.times do
       validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
@@ -279,13 +270,16 @@ describe 'Harvest items info' do
 
     path = generate_recording_name(Time.zone.now)
     path = File.join(*[harvest.upload_directory_name, sub_directories, path].compact)
+
+    recording = (create(:audio_recording, site: site, creator: owner_user, uploader: admin_user) if audio)
     create(
       :harvest_item,
       path:,
       status: HarvestItem::STATUS_METADATA_GATHERED,
-      info:, harvest:,
+      info:,
+      harvest:,
       uploader: owner_user,
-      audio_recording: audio
+      audio_recording: recording
     )
   end
 end

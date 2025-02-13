@@ -1,180 +1,121 @@
 # frozen_string_literal: true
 
-# matches against the migration name
-# require_migration!
-
-describe 'AddPathUniqueToHarvestItem' do
-  let(:user) do
-    {
-      id: 1,
-      user_name: 'user1',
-      email: 'user1@example.com',
-      encrypted_password: 'drowssap'
-    }
-  end
-
-  let(:project) do
-    {
-      id: 1,
-      name: 'project1',
-      creator_id: 1
-    }
-  end
-
-  let(:site) do
-    {
-      id: 1,
-      name: 'site1',
-      creator_id: 1
-    }
-  end
-
-  let(:audio_recording) do
-    {
-      id: 1,
-      data_length_bytes: 1000,
-      duration_seconds: 100.0,
-      file_hash: 'hash1',
-      media_type: 'flac',
-      recorded_date: '2025-02-11 09:21:10.782309000 +0200',
-      uuid: 'uuid1',
-      creator_id: 1,
-      site_id: 1,
-      uploader_id: 1
-    }
-  end
-
-  let(:harvest) do
-    {
-      id: 1,
-      project_id: 1,
-      created_at: '2025-02-12 12:21:10+1000',
-      updated_at: '2025-02-12 12:21:10+1000'
-    }
+require_migration!
+describe AddPathUniqueToHarvestItems, :migration do
+  let(:longer_blob) do
+    { error: 'null', fixes: [{ version: 1, problems: { FL001: { status: 'NoOperation' } } }] }
   end
 
   before do
-    stub_const('USER', user)
-    stub_const('PROJECT', project)
-    stub_const('SITE', site)
-    stub_const('AUDIO_RECORDING', audio_recording)
-    stub_const('HARVEST', harvest)
+    HARVEST_ITEMS = create_harvest_items
 
-    ActiveRecord::Base.connection.execute(
-      <<~SQL.squish
-        BEGIN;
-
-        DELETE FROM users;
-        DELETE FROM projects;
-        DELETE FROM sites;
-        DELETE FROM audio_recordings;
-        DELETE FROM harvests;
-        DELETE FROM harvest_items;
-
-        INSERT INTO users (id, user_name, email, encrypted_password)
-        VALUES (
-          #{USER[:id]},
-          #{ActiveRecord::Base.connection.quote(USER[:user_name])},
-          #{ActiveRecord::Base.connection.quote(USER[:email])},
-          #{ActiveRecord::Base.connection.quote(USER[:encrypted_password])});
-
-        INSERT INTO projects (id, name, creator_id)
-        VALUES (
-          #{PROJECT[:id]},
-          #{ActiveRecord::Base.connection.quote(PROJECT[:name])},
-          #{PROJECT[:creator_id]});
-
-        INSERT INTO sites (id, name, creator_id)
-        VALUES (
-          #{SITE[:id]},
-          #{ActiveRecord::Base.connection.quote(SITE[:name])},
-          #{SITE[:creator_id]});
-
-        INSERT INTO audio_recordings (
-          id, data_length_bytes, duration_seconds, file_hash,
-          media_type, recorded_date, uuid, creator_id,
-          site_id, uploader_id
-        )
-        VALUES (
-          #{AUDIO_RECORDING[:id]},
-          #{AUDIO_RECORDING[:data_length_bytes]},
-          #{AUDIO_RECORDING[:duration_seconds]},
-          #{ActiveRecord::Base.connection.quote(AUDIO_RECORDING[:file_hash])},
-          #{ActiveRecord::Base.connection.quote(AUDIO_RECORDING[:media_type])},
-          #{ActiveRecord::Base.connection.quote(AUDIO_RECORDING[:recorded_date])},
-          #{ActiveRecord::Base.connection.quote(AUDIO_RECORDING[:uuid])},
-          #{AUDIO_RECORDING[:creator_id]},
-          #{AUDIO_RECORDING[:site_id]},
-          #{AUDIO_RECORDING[:uploader_id]}
-        );
-
-        INSERT INTO harvests (id, project_id, created_at, updated_at)
-        VALUES (
-          #{HARVEST[:id]},
-          #{HARVEST[:project_id]},
-          #{ActiveRecord::Base.connection.quote(HARVEST[:created_at])},
-          #{ActiveRecord::Base.connection.quote(HARVEST[:updated_at])});
-
-        COMMIT;
-      SQL
-    )
-
-    stub_const('HARVEST_ITEMS', create_harvest_items)
-
+    # forat the harvest items into a string of values for insertion
     harvest_values = ''
     HARVEST_ITEMS.each.with_index(1) do |example, index|
       delimit = index == HARVEST_ITEMS.length ? '' : ",\n"
       harvest_values += "(#{example})#{delimit}"
     end
+    harvest_values.freeze
 
-    ActiveRecord::Base.connection.execute(
+    ActiveRecord::Base.transaction do
+      ActiveRecord::Base.connection.execute(
+        <<~SQL.squish
+          DELETE FROM harvest_items;
+          INSERT INTO users (user_name, email, encrypted_password)
+          VALUES ( 'user1', 'user1@example.com', 'drowssap');
+
+          INSERT INTO projects (name, creator_id)
+          VALUES ('project1', (SELECT id FROM users LIMIT 1));
+
+          INSERT INTO sites (name, creator_id)
+          VALUES ( 'site1', (SELECT id FROM users LIMIT 1));
+
+          INSERT INTO audio_recordings (data_length_bytes, duration_seconds,
+          file_hash, media_type, recorded_date, uuid, creator_id, site_id, uploader_id)
+          VALUES ( 1234, 100.0, 'hash1', 'flac', '2025-02-12 12:21:10+1000', 'uuid1',
+            (SELECT id FROM users LIMIT 1),
+            (SELECT id FROM sites LIMIT 1),
+            (SELECT id FROM users LIMIT 1));
+
+          INSERT INTO harvests (project_id, created_at, updated_at)
+          VALUES ((SELECT id FROM projects LIMIT 1), '2025-02-12 12:21:10+1000', '2025-02-12 12:21:10+1000');
+        SQL
+      )
+      ActiveRecord::Base.connection.execute(
+        <<~SQL.squish
+          INSERT INTO harvest_items (path, status, info, audio_recording_id,
+          uploader_id, harvest_id, deleted, created_at, updated_at)
+          VALUES #{harvest_values};
+        SQL
+      )
+    end
+
+    # check that the data was inserted correctly
+    expect(select_count_from('harvest_items')).to eq HARVEST_ITEMS.length
+  end
+
+  it 'removes duplicates correctly' do
+    migrate!
+    results = ActiveRecord::Base.connection.execute(
       <<~SQL.squish
-        INSERT INTO harvest_items (id, path, status, info, audio_recording_id, uploader_id, harvest_id, deleted, created_at, updated_at)
-        VALUES #{harvest_values};
+        SELECT path, audio_recording_id, info FROM harvest_items ORDER BY id ASC;
       SQL
     )
+    expect(results.ntuples).to eq(3)
+    expect(results.values).to eq(
+      [
+        ['harvest_1/path/one', nil,
+         '{"error": "null", "fixes": [{"version": 1, "problems": {"FL001": {"status": "NoOperation"}}}]}'],
+        ['harvest_1/path/two', nil,
+         '{"error": "null", "fixes": [{"version": 1, "problems": {"FL001": {"status": "NoOperation"}}}]}'],
+        ['harvest_1/path/three', 1, '{"error": "null"}']
+      ]
+    )
+    # select from harvest_items and expect that the harvest values match the
+    # expected values
+    # compare info to longer blob
   end
 
-  it 'has an irrelevant test' do
-    hi = create(:harvest_item)
-
-    expect(hi).to be_valid
-  end
-
-  # Create duplicate harvest items for combinations of status and path
-  # @param entries_per_combination [Integer]
-  # @param blob [Hash] the jsonb data to be stored in the info column
+  # Create harvest items for combinations of status and path
   # @return [Array<String>] values for each harvest item
-  def create_harvest_items(entries_per_combination: 3, blob: { error: 'null' })
-    statuses = [
-      "'metadata_gathered'",
-      "'failed'",
-      "'failed'"
-    ]
-    paths = [
-      "'harvest_1/path/one'",
-      "'harvest_1/path/two'",
-      "'harvest_1/path/three'"
-    ]
-
-    json_data = ActiveRecord::Base.connection.quote(blob.to_json)
+  def create_harvest_items
+    json_blob = ActiveRecord::Base.connection.quote({ error: 'null' }.to_json)
+    longer_json_blob = ActiveRecord::Base.connection.quote(
+      longer_blob.to_json
+    )
     datetime = ActiveRecord::Base.sanitize_sql_array(["'#{Time.zone.now}'"])
 
-    cases = statuses.zip(paths).flat_map { |status, path|
-      Array.new(entries_per_combination) {
-        # path, status, info, audio_recording_id, uploader_id, harvest_id, deleted, created_at, updated_at
-        [path, status, json_data, 'NULL', 1, 1, false, datetime, datetime]
-      }
+    samples = [
+      ["'metadata_gathered'", "'harvest_1/path/one'", json_blob],
+      ["'metadata_gathered'", "'harvest_1/path/one'", json_blob],
+      ["'metadata_gathered'", "'harvest_1/path/one'", longer_json_blob], # keep
+      ["'failed'", "'harvest_1/path/two'", json_blob],
+      ["'failed'", "'harvest_1/path/two'", json_blob],
+      ["'failed'", "'harvest_1/path/two'", longer_json_blob], # keep
+      ["'failed'", "'harvest_1/path/three'", json_blob],
+      ["'failed'", "'harvest_1/path/three'", longer_json_blob]
+    ]
+
+    # keep
+    sample_completed = [
+      "'harvest_1/path/three'", "'completed'", json_blob, '(SELECT id FROM audio_recordings LIMIT 1)',
+      '(SELECT id FROM users LIMIT 1)', '(SELECT id FROM harvests LIMIT 1)', true, datetime, datetime
+    ]
+
+    cases = samples.map { |sample|
+      sample => [status, path, blob]
+      [path, status, blob, 'NULL', '(SELECT id FROM users LIMIT 1)',
+       '(SELECT id FROM harvests LIMIT 1)', false, datetime, datetime]
     }
 
-    # append a status 'completed' harvest as a duplicate
-    cases << ["'harvest_1/path/three'", "'completed'", json_data, 1, 1, 1, true, datetime, datetime]
+    cases << sample_completed
+    cases.map! { _1.join(', ') }
+  end
 
-    # prepend a value for 'id' to each sub-array (representing a harvest 'item')
-    # collapse each 'item', into a single string
-    cases.map!.with_index(1) { |item, index|
-      item.unshift(index)
-      item.join(', ')
-    }.freeze
+  # Count the number of rows in a table
+  # @param table [String]
+  # @return [Integer] the number of rows in the table
+  def select_count_from(table)
+    ActiveRecord::Base.connection.exec_query("select count(*) from #{table}")[0]['count']
   end
 end

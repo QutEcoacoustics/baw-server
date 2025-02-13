@@ -3260,7 +3260,7 @@ CREATE INDEX index_harvest_items_on_info ON public.harvest_items USING gin (info
 -- Name: index_harvest_items_on_path; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_harvest_items_on_path ON public.harvest_items USING btree (path);
+CREATE UNIQUE INDEX index_harvest_items_on_path ON public.harvest_items USING btree (path);
 
 
 --
