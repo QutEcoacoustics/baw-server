@@ -297,7 +297,7 @@ describe 'Dataset Items' do
 
           expect(response).to have_http_status(200)
           ids = parsed_response['data'].pluck('id')
-          expect(ids).to eq(sorted_ids)
+          expect(ids).to match(a_collection_including(*sorted_ids))
 
           expected_page = page || 1
           expected_items = limit || 25

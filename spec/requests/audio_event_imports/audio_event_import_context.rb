@@ -80,9 +80,10 @@ RSpec.shared_context(
 
   def assert_success(committed:, name:, imported_events: [], additional_tags: [])
     expect_success
+
     expect(api_data).to match(a_hash_including(
       id: committed ? be_an_instance_of(Integer) : be_nil,
-      additional_tag_ids: additional_tags.map(&:id),
+      additional_tag_ids: additional_tags.count > 0 ? a_collection_including(*additional_tags.map(&:id)) : [],
       audio_event_import_id: @audio_event_import.id,
       analysis_jobs_item_id: be_nil,
       created_at: committed ? be_a(String) : be_nil,

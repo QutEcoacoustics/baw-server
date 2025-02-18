@@ -46,6 +46,18 @@ describe 'Common behaviour' do
     )
   end
 
+  describe 'unpermitted parameters' do
+    create_audio_recordings_hierarchy
+    it 'unpermitted parameters should return a useful error message' do
+      post '/projects', params: { project: { donkey: 'kong' } }, **api_with_body_headers(writer_token)
+
+      expect_error(
+        :unprocessable_entity,
+        'The request could not be understood: found unpermitted parameter: :donkey'
+      )
+    end
+  end
+
   describe 'filtering tests' do
     create_entire_hierarchy
 
@@ -135,7 +147,7 @@ describe 'Common behaviour' do
 
       get '/sites', **jwt_headers(jwt)
       expect_success
-      expect_has_ids(*Site.all.pluck(:id))
+      expect_has_ids(*Site.pluck(:id))
     end
 
     it 'can restrict a JWT to a single resource' do
@@ -157,7 +169,7 @@ describe 'Common behaviour' do
         'JWT does not allow access to this resource')
 
       get '/sites', **jwt_headers(jwt)
-      expect_has_ids(*Site.all.pluck(:id))
+      expect_has_ids(*Site.pluck(:id))
     end
 
     it 'can restrict a JWT to a single action' do
@@ -179,7 +191,7 @@ describe 'Common behaviour' do
         'JWT does not allow access to this action')
 
       get '/sites', **jwt_headers(jwt)
-      expect_has_ids(*Site.all.pluck(:id))
+      expect_has_ids(*Site.pluck(:id))
     end
 
     it 'can restrict a JWT to a single resource and action' do
@@ -205,7 +217,7 @@ describe 'Common behaviour' do
         'JWT does not allow access to this resource')
 
       get '/sites', **jwt_headers(jwt)
-      expect_has_ids(*Site.all.pluck(:id))
+      expect_has_ids(*Site.pluck(:id))
 
       get "/sites/#{site.id}", **jwt_headers(jwt)
       expect_error(:forbidden, 'You do not have sufficient permissions.',

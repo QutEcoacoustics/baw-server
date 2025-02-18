@@ -75,6 +75,19 @@ module CustomErrors
     end
   end
 
+  class InvalidParameterError < CustomError
+    def initialize(parameter_name, parameter_error)
+      raise ArgumentError, 'parameter_name must be a string' unless parameter_name.is_a?(String)
+      raise ArgumentError, 'parameter_error must be a string' unless parameter_error.is_a?(String)
+
+      super(nil)
+      @status_code = :unprocessable_content
+      @prefix = 'The request has an invalid parameter'
+      # looks like the same format as validation errors
+      @info = { parameter_name => parameter_error }
+    end
+  end
+
   # For dealing with custom routing logic
   # error handling for routes that take a combination of attributes
   class RoutingArgumentError < CustomError

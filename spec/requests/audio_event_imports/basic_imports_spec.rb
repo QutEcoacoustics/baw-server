@@ -52,7 +52,7 @@ describe '/audio_event_imports' do
     expect(events.all.flat_map(&:tags).map(&:text)).not_to include(machine_generated_tag.text)
   end
 
-  it 'will not commit if commit is false' do
+  it 'does not commit if commit is false' do
     create_import
     submit(raven_example, commit: false)
     assert_success(committed: false, name: raven_filename, imported_events: [
@@ -111,6 +111,39 @@ describe '/audio_event_imports' do
     events = AudioEvent.by_import(@audio_event_import.id)
     expect(events.count).to eq 2
     expect(events.all.to_a).to all(have_attributes(tags: include(machine_generated_tag)))
+  end
+
+  it 'can accept multiple additional tags' do
+    create_import
+    another_tag = create(:tag, text: 'They Cannot Crucify You If Your Hands Is In A Fist')
+    submit(raven_example, commit: true, additional_tags: [machine_generated_tag, another_tag])
+    assert_success(
+      committed: true,
+      name: raven_filename,
+      imported_events: [
+        a_hash_including(
+          id: be_an_instance_of(Integer),
+          errors: [],
+          start_time_seconds: be_within(0.001).of(6.709509878),
+          tags: a_collection_including(
+            a_hash_including(text: 'Birb'),
+            a_hash_including(id: machine_generated_tag.id, text: machine_generated_tag.text),
+            a_hash_including(id: another_tag.id, text: another_tag.text)
+          )
+        ),
+        a_hash_including(
+          id: be_an_instance_of(Integer),
+          errors: [],
+          start_time_seconds: be_within(0.001).of(29.383026016),
+          tags: a_collection_including(
+            a_hash_including(text: 'donkey'),
+            a_hash_including(id: machine_generated_tag.id, text: machine_generated_tag.text),
+            a_hash_including(id: another_tag.id, text: another_tag.text)
+          )
+        )
+      ],
+      additional_tags: [machine_generated_tag, another_tag]
+    )
   end
 
   stepwise 'can accept multiple files after creation' do

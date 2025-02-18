@@ -361,6 +361,29 @@ module IncludeController
     raise CustomErrors::UnprocessableEntityError, "#{field} must have a root JSON object (not a scalar or an array)."
   end
 
+  # checks a value form params is an array of integers that can be IDs
+  # Nil and empty arrays are allowed. Nil is normalized to an empty array.
+  # @param name [String] name of the parameter
+  # @param value [Object] value of the parameter
+  # @return [Array<Integer>] the array of IDs
+  def validate_params_array_of_ids(name:, value:)
+    return [] if value.nil?
+    raise CustomErrors::InvalidParameterError.new(name, 'must be an array') unless value.is_a?(Array)
+
+    value.map do |x|
+      case x
+      when String
+        x.to_i_strict || (raise CustomErrors::InvalidParameterError.new(name, "Invalid integer string: `#{x}`"))
+      when Integer && x.positive?
+        x
+      when Integer
+        raise CustomErrors::InvalidParameterError.new(name, "Invalid ID: #{x}")
+      else
+        raise CustomErrors::InvalidParameterError.new(name, "Invalid ID type: #{x.class}")
+      end
+    end
+  end
+
   private
 
   def record_not_found_response(error)
@@ -534,7 +557,7 @@ module IncludeController
 
   def resource_representation_caching_fixes
     # send Vary: Accept for all text/html and application/json responses
-    return unless response.content_type == 'text/html' || response.content_type == 'application/json'
+    return unless ['text/html', 'application/json'].include?(response.content_type)
 
     response.headers['Vary'] = 'Accept'
   end

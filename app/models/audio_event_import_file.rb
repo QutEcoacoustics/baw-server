@@ -40,7 +40,10 @@ class AudioEventImportFile < ApplicationRecord
   # attributes
 
   def additional_tag_ids=(value)
-    super(value&.map { |x| x.try(:to_i) }&.reject(&:blank?)&.reject(&:zero?))
+    raise 'additional_tag_ids must be an array' unless value.is_a?(Array)
+    raise 'additional_tag_ids must be an array of integers' unless value.all? { |v| v.is_a?(Integer) }
+
+    super
   end
 
   def additional_tags

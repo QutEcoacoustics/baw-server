@@ -268,8 +268,8 @@ group :test do
   # for use in rspec HTML reports
   gem 'coderay'
   gem 'timecop'
+
   # better diffs
-  # 0.8.0 causes ifinite hangs during some specs (spec/requests/media/edge_cases_spec.rb)
   gem 'super_diff'
 
   # allow for temporary tables in tests for anonymous models

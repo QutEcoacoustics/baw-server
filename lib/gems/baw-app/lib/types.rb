@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'dry/monads'
 require 'dry-types'
 require 'dry/inflector'
 

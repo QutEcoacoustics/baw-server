@@ -142,6 +142,9 @@ class AudioEventImportFilesController < ApplicationController
       .reverse_merge({ additional_tag_ids: [] })
       .permit(:file, :audio_event_import_id, additional_tag_ids: [])
 
+    import_params[:additional_tag_ids] =
+      validate_params_array_of_ids(name: 'additional_tag_ids', value: import_params[:additional_tag_ids])
+
     return import_params.to_h if import_params[:file].is_a? ActionDispatch::Http::UploadedFile
 
     raise ActionController::BadRequest, 'the file must be a file uploaded by multipart/form-data'
