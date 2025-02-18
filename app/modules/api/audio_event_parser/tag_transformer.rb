@@ -15,10 +15,18 @@ module Api
       # parses values like `63:Crickets|74:Eastern Bristlebird|147:Pied Currawong`
       # or `,595:unsure:general|1142:overlap:general`
       def transform(key, value)
-        return transform_baw_format(key, value) if value =~ BAW_TAG
-        return transform_semicolon_list(key, value) if value =~ LIST_OF_TAGS
+        return None() if value.blank?
 
-        value
+        case value
+        in BAW_TAG
+          transform_baw_format(key, value)
+        in LIST_OF_TAGS
+          transform_semicolon_list(key, value)
+        else
+          value
+        end => new_value
+
+        Some(new_value)
       end
 
       def transform_baw_format(_key, value)

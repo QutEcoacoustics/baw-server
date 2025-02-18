@@ -24,7 +24,7 @@ class String
   # @param [Integer] base the base to use for conversion. Defaults to `10`.
   # @param [Boolean] exception whether to raise an exception if the conversion fails.
   #   Defaults to `false`.
-  # @return [Integer] the converted integer, or nil if the conversion fails and
+  # @return [Integer,nil] the converted integer, or nil if the conversion fails and
   #   `exception` is `false`.
   # @raise [ArgumentError] if the conversion fails and `exception` is `true`.
   def to_i_strict(base: 10, exception: false)

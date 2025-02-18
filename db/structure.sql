@@ -701,8 +701,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    import_file_index integer,
-    audio_event_import_file_id bigint
+    audio_event_import_file_id integer,
+    import_file_index integer
 );
 
 

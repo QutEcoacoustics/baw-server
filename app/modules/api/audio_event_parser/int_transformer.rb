@@ -6,7 +6,9 @@ module Api
     # Ensures some numbers are floats
     class IntTransformer < KeyTransformer
       def transform(_key, value)
-        value.to_i
+        return None() if value.blank?
+
+        Some.coerce(Integer(value, exception: false))
       end
     end
   end

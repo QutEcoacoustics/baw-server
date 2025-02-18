@@ -3,7 +3,6 @@
 require 'dry/validation'
 require 'dry/monads'
 require 'dry/monads/do'
-require 'set'
 
 Dry::Validation.load_extensions(:monads)
 
@@ -11,8 +10,12 @@ module Api
   # A class used to parse audio events
   class AudioEventParser
     KEY_MAPPINGS = {
-      audio_recording_id: KeyTransformer.new(:audio_recording_id, :recording_id, :RecordingID),
-      channel: IntTransformer.new(:channel),
+      audio_recording_id: EitherTransformer.new(
+        KeyTransformer.new(:audio_recording_id, :recording_id, :RecordingID),
+        FriendlyAudioRecordingNameTransformer.new(:filename, :Filename, :'IN FILE')
+      ),
+      channel: IntTransformer.new(:channel, :CHANNEL),
+      duration: FloatTransformer.new(:duration, :DURATION),
       end_time_seconds: FloatTransformer.new(
         :end_offset_seconds,
         :event_end_seconds,
@@ -23,9 +26,9 @@ module Api
         :end_offset,
         :end
       ),
-      high_frequency_hertz: FloatTransformer.new(:high_frequency_hertz, :'High Freq (Hz)'),
+      high_frequency_hertz: FloatTransformer.new(:high_frequency_hertz, :'High Freq (Hz)', :Fmax, allow_nil: true),
       is_reference: BoolTransformer.new(:is_reference),
-      low_frequency_hertz: FloatTransformer.new(:low_frequency_hertz, :'Low Freq (Hz)'),
+      low_frequency_hertz: FloatTransformer.new(:low_frequency_hertz, :'Low Freq (Hz)', :Fmin, allow_nil: true),
       start_time_seconds: FloatTransformer.new(
         :start_offset_seconds,
         :start_time_seconds,
@@ -34,7 +37,8 @@ module Api
         :'start time',
         :'Start (s)',
         :'Begin Time (s)',
-        :start
+        :start,
+        :OFFSET
       ),
       score: FloatTransformer.new(
         :score,
@@ -52,7 +56,9 @@ module Api
         :'Scientific name',
         :'Common name',
         :other_tags,
-        :label
+        :label,
+        :'MANUAL ID',
+        :'AUTO-ID'
       )
     }.freeze
 
@@ -393,6 +399,8 @@ module Api
         }
         .to_h => values
 
+      normalize_duration_to_end_time(values)
+
       tags = values.delete(:tags) || []
 
       # add additional tags
@@ -408,6 +416,7 @@ module Api
         provenance_id: provenance&.id,
         creator_id: creator.id,
         audio_recording_id:,
+        tags: tags.map(&:text),
         **values
       }
 
@@ -415,10 +424,24 @@ module Api
 
       @any_error = true if result.failure?
 
-      @audio_events[index] = result.to_h
+      final = result.to_h.except(:tags)
+
+      @audio_events[index] = final
       @tag_list[index] = tags
       @errors[index] = result
-      @audio_recording_ids.add(audio_recording_id)
+
+      # don't want to add extra validation messages if the audio recording id is already invalid
+      @audio_recording_ids.add(audio_recording_id) unless result.error?(:audio_recording_id)
+    end
+
+    def normalize_duration_to_end_time(values)
+      return if values.key?(:start_time_seconds) && values.key?(:end_time_seconds)
+
+      return unless values.key?(:duration)
+
+      values.delete(:duration) => duration
+
+      values[:end_time_seconds] = values[:start_time_seconds] + duration
     end
 
     # Choose an audio recording ID to use for an audio event.
@@ -431,10 +454,24 @@ module Api
 
       return override_audio_recording_id if override_audio_recording_id
 
-      (item_id || default_audio_recording_id)&.to_i
+      converted_id = item_id&.to_i_strict
+      converted_default_audio_recording_id = default_audio_recording_id&.to_i_strict
+
+      # return the first valid converted value we find
+      return converted_id if converted_id
+      return converted_default_audio_recording_id if converted_default_audio_recording_id
+
+      # if we can't convert the values, return the original value
+      # so the validation can catch it
+      return item_id if item_id
+
+      default_audio_recording_id
     end
 
     def validate_audio_recording_ids_exist_and_we_have_permission
+      # can happen if all audio recording ids are invalid (non-integers)
+      return if @audio_recording_ids.empty?
+
       # Get the set of audio recording IDs to check
       # Check which ones actually exist and which one don't
       does_not_exist = 1

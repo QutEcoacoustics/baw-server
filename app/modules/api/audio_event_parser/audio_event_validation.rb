@@ -29,6 +29,7 @@ module Api
         optional(:is_reference).filled(:bool)
         # created_at is still set by rails
         required(:creator_id).filled(:integer, gt?: 0)
+        optional(:tags).array(:str?, :filled?)
       end
 
       rule(:audio_event_import_file_id) do

@@ -6,9 +6,13 @@ require 'dry/inflector'
 require_relative 'sexagesimal'
 require_relative 'byte_format'
 
+extend Dry::Monads[:result, :maybe]
+Dry::Types.load_extensions(:monads, :maybe)
+
 module BawApp
   module Types
     include Dry.Types()
+
     #inflector = Dry::Inflector.new
 
     Pathname = Constructor(::Pathname)

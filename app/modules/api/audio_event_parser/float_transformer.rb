@@ -3,10 +3,12 @@
 module Api
   # A class used to parse audio events
   class AudioEventParser
-    # Ensures some numbers are floats
+    # Ensures some numbers are floats if they're valid
     class FloatTransformer < KeyTransformer
       def transform(_key, value)
-        value.to_f
+        return None() if value.blank?
+
+        Some.coerce(Float(value, exception: false))
       end
     end
   end
