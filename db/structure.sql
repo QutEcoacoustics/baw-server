@@ -3260,7 +3260,7 @@ CREATE INDEX index_harvest_items_on_info ON public.harvest_items USING gin (info
 -- Name: index_harvest_items_on_path; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_harvest_items_on_path ON public.harvest_items USING btree (path);
+CREATE UNIQUE INDEX index_harvest_items_on_path ON public.harvest_items USING btree (path);
 
 
 --
@@ -4350,6 +4350,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250211012005'),
 ('20250120064731'),
 ('20250113012304'),
 ('20241106015941'),

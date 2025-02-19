@@ -8,15 +8,15 @@ describe 'Harvest items info' do
   prepare_harvest
 
   before do
-    @hi1 = create_with_validations(fixable: 3, not_fixable: 1)
-    @hi2 = create_with_validations(fixable: 0, not_fixable: 1)
-    @hi3 = create_with_validations(fixable: 1, not_fixable: 0)
-    @hi4 = create_with_validations(fixable: 0, not_fixable: 1, sub_directories: 'a/b/c')
-    @hi5 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/c')
-    @hi6 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/d')
-    @hi7 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b')
-    @hi8 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b')
-    @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b')
+    @hi1 = create_with_validations(fixable: 3, not_fixable: 1, audio: true)
+    @hi2 = create_with_validations(fixable: 0, not_fixable: 1, audio: true)
+    @hi3 = create_with_validations(fixable: 1, not_fixable: 0, audio: true)
+    @hi4 = create_with_validations(fixable: 0, not_fixable: 1, sub_directories: 'a/b/c', audio: true)
+    @hi5 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/c', audio: true)
+    @hi6 = create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'a/b/d', audio: true)
+    @hi7 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b', audio: true)
+    @hi8 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a/b', audio: true)
+    @hi9 = create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'z/b', audio: true)
   end
 
   it 'can query for harvest items (root path)' do
@@ -140,7 +140,7 @@ describe 'Harvest items info' do
 
       expect(results.headers).to eq ['id', 'harvest_id', 'path', 'status', 'audio_recording_id']
       rows = results.map(&:to_h)
-      HarvestItem.all.each { |item|
+      HarvestItem.find_each { |item|
         expect(rows).to include(a_hash_including(
           'id' => item.id.to_s,
           'harvest_id' => item.harvest_id.to_s,
@@ -155,9 +155,9 @@ describe 'Harvest items info' do
   context 'with lots of items' do
     before do
       50.times do
-        create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a')
+        create_with_validations(fixable: 1, not_fixable: 0, sub_directories: 'a', audio: false)
 
-        create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'e')
+        create_with_validations(fixable: 0, not_fixable: 0, sub_directories: 'e', audio: false)
       end
     end
 
@@ -245,32 +245,5 @@ describe 'Harvest items info' do
 
       expect_has_paging(page: 1, total: 50)
     end
-  end
-
-  def create_with_validations(fixable: 0, not_fixable: 0, sub_directories: nil)
-    validations = []
-    fixable.times do
-      validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
-        status: :fixable,
-        name: :wascally_wabbit,
-        message: nil
-      )
-    end
-    not_fixable.times do
-      validations << BawWorkers::Jobs::Harvest::ValidationResult.new(
-        status: :not_fixable,
-        name: :kiww_the_wabbit,
-        message: nil
-      )
-    end
-
-    info = BawWorkers::Jobs::Harvest::Info.new(
-      validations:
-    )
-
-    path = generate_recording_name(Time.zone.now)
-    path = File.join(*[harvest.upload_directory_name, sub_directories, path].compact)
-
-    create(:harvest_item, path:, status: HarvestItem::STATUS_METADATA_GATHERED, info:, harvest:)
   end
 end

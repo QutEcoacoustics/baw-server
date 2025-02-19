@@ -132,18 +132,44 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
       )
     end
 
-    def enqueue_and_perform(should_harvest:, completed: 1)
-      enqueued = BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
+    def enqueue(should_harvest:)
+      BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(
         harvest,
         @paths.harvester_relative_path,
         should_harvest:
       )
+    end
 
+    def enqueue_and_perform(should_harvest:, completed: 1)
+      enqueued = enqueue(should_harvest: should_harvest)
       expect(enqueued).to be true
       expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
 
       perform_jobs(count: 1)
       expect_jobs_to_be completed:, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+    end
+
+    context 'when simulating enqueue race condition' do
+      it 'database unique constraint is upheld gracefully' do
+        enqueue(should_harvest: true).tap do |enqueued|
+          expect(enqueued).to be true
+          expect(HarvestItem.count).to eq 1
+        end
+
+        # the race condition happens between the existence check and the record insertion
+        # so to simulate, we make the existence check return false, as if it would during a race
+        allow(BawWorkers::Jobs::Harvest::HarvestJob).to receive(
+          :existing_harvest_item
+        ).and_return(nil)
+
+        # before this test, an ::ActiveRecord::RecordNotUnique would have been thrown here
+        enqueue(should_harvest: true).tap do |enqueued|
+          expect(enqueued).to be false
+          expect(HarvestItem.count).to eq 1
+        end
+
+        clear_pending_jobs
+      end
     end
 
     context 'when getting metadata from a file' do
@@ -224,7 +250,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         expect_delayed_jobs(1)
       end
 
-      it 'will delete the harvest file after a period of time' do
+      it 'deletes the harvest file after a period of time' do
         enqueue_and_perform(should_harvest: true)
 
         # @type [HarvestItem]

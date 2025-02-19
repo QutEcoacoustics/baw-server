@@ -831,11 +831,11 @@ describe 'Harvesting a batch of files' do
       duplicate_rows_query = <<~SQL.squish
         INSERT INTO harvest_items (#{columns})
         (
-          SELECT  'idontexist' AS "path", #{columns_without_path}
+          SELECT  path || series.index, #{columns_without_path}
           FROM  (
             SELECT #{columns} FROM harvest_items ORDER BY id DESC LIMIT 1
           ) AS t
-          CROSS JOIN LATERAL generate_series(1,#{duplicates})
+          CROSS JOIN LATERAL generate_series(1,#{duplicates}) series(index)
         )
       SQL
       ActiveRecord::Base.connection.execute(duplicate_rows_query)
