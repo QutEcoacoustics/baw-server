@@ -1,5 +1,26 @@
 # Changelog
 
+## [12.8.4](https://github.com/QutEcoacoustics/baw-server/tree/12.8.4) (2025-02-19)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.6.13...12.8.4)
+
+**Implemented enhancements:**
+
+- Adds a Verification API [\#713](https://github.com/QutEcoacoustics/baw-server/pull/713) ([andrew-1234](https://github.com/andrew-1234))
+
+**Fixed bugs:**
+
+- Importing multiple additional tags only imports the first tag [\#716](https://github.com/QutEcoacoustics/baw-server/issues/716)
+- Parsing audio event CSV incorrectly recognizes date/time as recording ID [\#715](https://github.com/QutEcoacoustics/baw-server/issues/715)
+
+**Closed issues:**
+
+- Changes to annotation upload api [\#664](https://github.com/QutEcoacoustics/baw-server/issues/664)
+
+## [12.6.13](https://github.com/QutEcoacoustics/baw-server/tree/12.6.13) (2025-02-05)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.6.12...12.6.13)
+
 ## [12.6.12](https://github.com/QutEcoacoustics/baw-server/tree/12.6.12) (2025-02-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.6.11...12.6.12)
@@ -35,6 +56,10 @@
 ## [12.6.0](https://github.com/QutEcoacoustics/baw-server/tree/12.6.0) (2025-01-21)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.4.1...12.6.0)
+
+**Implemented enhancements:**
+
+- Verification API endpoint [\#705](https://github.com/QutEcoacoustics/baw-server/issues/705)
 
 ## [12.4.1](https://github.com/QutEcoacoustics/baw-server/tree/12.4.1) (2025-01-21)
 
