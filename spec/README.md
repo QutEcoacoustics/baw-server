@@ -53,6 +53,30 @@ when opportunities arrive.
 The `factory_bot` gem is used to create test data. Factories are defined in the
 `spec/factories` folder.
 
+`create_entire_hierarchy` is a helper method that creates a complete data
+hierarchy, with all necessary associations (e.g. an audio recording that
+belongs to a site that belongs to a region that belongs to a project).
+
+Factory cascading creation may result in unneccesary branches which could slow
+down tests. This can be avoided by specifying a value for the assocation upon
+creation.
+
+E.g. The items that will be created using the `audio_recording` factory with no
+arguments:
+
+                            audio_recording
+                            /             \
+                          site             user
+                       /    |    \
+                      /     |      user
+                region    project
+               /      \          \
+              user     \          user
+                     project
+                         \
+                        user
+
+
 Run the `rake factory_bot:lint` task to lint factories.
 
 [^1]: Refer to `app/modules/api/schema.rb` for the OpenAPI schema definitions;

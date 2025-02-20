@@ -201,6 +201,7 @@ class AudioEventsController < ApplicationController
       :start_time_seconds, :end_time_seconds,
       :low_frequency_hertz, :high_frequency_hertz,
       :is_reference,
+      :channel,
       # AT 2021: disabled. Nested associations are extremely complex,
       # and as far as we are aware, they are not used anywhere in production
       # TODO: remove on passing test suite
