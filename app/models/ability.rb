@@ -413,8 +413,8 @@ class Ability
     # GET       /projects/:project_id/sites/:site_id/audio_events/download  audio_events#download {:format=>"csv"}
     # GET       /user_accounts/:user_id/audio_events/download               audio_events#download {:format=>"csv"}
 
-    # any user, including guest, with reader permissions on project can #show an audio_event or access #new
-    can [:show, :new], AudioEvent do |audio_event|
+    # any user, including guest, with reader permissions on project can #show an audio_event
+    can [:show], AudioEvent do |audio_event|
       check_model(audio_event)
       check_audio_event(user, audio_event.audio_recording.site, audio_event)
     end
@@ -431,7 +431,7 @@ class Ability
     can [:download], AudioEvent unless is_guest
 
     # available to any user, including guest
-    can [:index, :filter], AudioEvent
+    can [:index, :filter, :new], AudioEvent
   end
 
   def to_audio_event_import(user, is_guest)

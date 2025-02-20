@@ -151,6 +151,17 @@ class AudioEvent < ApplicationRecord
           type: :decimal
         }
       },
+      new_spec_fields: lambda { |_user|
+        {
+          audio_recording_id: nil,
+          start_time_seconds: nil,
+          end_time_seconds: nil,
+          low_frequency_hertz: nil,
+          high_frequency_hertz: nil,
+          is_reference: nil,
+          tags: []
+        }
+      },
       controller: :audio_events,
       action: :filter,
       defaults: {
