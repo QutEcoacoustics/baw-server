@@ -17,7 +17,6 @@ module Api
       end
 
       def map_tags(tags)
-        # TODO: cache tag lookup
         tags.map do |tag_text|
           next @cache[tag_text] if @cache.key?(tag_text)
 

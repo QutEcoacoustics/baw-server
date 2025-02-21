@@ -40,5 +40,32 @@ describe Api::AudioEventParser do
         ]
       ))
     end
+
+    [true, false].each do |value|
+      it "automatically de-duplicates tags (commit=#{value})" do
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          additional_tags: [tag_crickets, tag_crickets]
+        )
+
+        csv = <<~CSV
+          file path,channel,start time,end time,tag,score
+          tests/files/audio/100sec.wav,1,20.0,25.0,negative;crickets;koala;crickets,12.739699
+        CSV
+        filename = audio_recording.friendly_name
+
+        result = value ? parser.parse_and_commit(csv, filename) : parser.parse(csv, filename)
+
+        aggregate_failures do
+          expect(result).to be_success
+          events = parser.serialize_audio_events
+
+          expect(events.size).to eq(1)
+          expect(events.first[:tags].pluck(:text)).to match(a_collection_containing_exactly('negative', 'crickets',
+            'koala'))
+        end
+      end
+    end
   end
 end

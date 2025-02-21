@@ -405,7 +405,7 @@ module Api
 
       # add additional tags
       # load as Tag models
-      tags = tag_cache.map_tags(tags) + additional_tags
+      tags = deduplicate_tags(tag_cache.map_tags(tags) + additional_tags)
 
       # extract an audio recording id, or use a default from a filename if not found
       audio_recording_id = choose_audio_recording_id(values, default_audio_recording_id)
@@ -442,6 +442,21 @@ module Api
       values.delete(:duration) => duration
 
       values[:end_time_seconds] = values[:start_time_seconds] + duration
+    end
+
+    def deduplicate_tags(tags)
+      # we have two cases:
+      # 1. Tag models that have been loaded from the database, they have an idea
+      # 2. New tags that have been created in this import, they don't have an id
+      existing, new = tags.partition(&:persisted?)
+
+      # first deduplicate the existing tags
+      existing = existing.uniq(&:id)
+
+      # then deduplicate the new tags
+      new = new.uniq(&:text)
+
+      existing + new
     end
 
     # Choose an audio recording ID to use for an audio event.
