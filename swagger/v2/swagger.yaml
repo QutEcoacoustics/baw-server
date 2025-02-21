@@ -1488,7 +1488,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.6.13 from http://web:3000.
+                  Version 12.8.4 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1528,7 +1528,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.6.13"
+                Write-Information "Acoustic Workbench downloader script version 12.8.4"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1710,7 +1710,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.6.13 from http://web:3000.
+                  Version 12.8.4 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1750,7 +1750,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.6.13"
+                Write-Information "Acoustic Workbench downloader script version 12.8.4"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3498,7 +3498,7 @@ paths:
                 data:
                 - id: 54
                   deleted: false
-                  path: some/relative/path.mp3
+                  path: some/relative/path_54.mp3
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
                   harvest_id: 54
@@ -4090,7 +4090,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: wDFd9ONBbZQG_J8pFCgvZKAP8ITRHpIw-4V2tKVlBnM
+                  auth_token: 7SVLk1XpmAd6VIz9Pxyy56Du5_SoP3-gCmCMC5Qf6mk
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4146,7 +4146,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: KthU90f_cMJwTewltmEznYWgVU_OcaJsZgZCnS-DNxA
+                  auth_token: ioS7e5r0DpuKzioYFUoQAqLXuRuhNy5d8jfCpqQDH-U
                   user_name: Admin
                   user_id: 1
               schema:
@@ -4205,7 +4205,7 @@ paths:
                 data:
                 - id: 64
                   deleted: false
-                  path: some/relative/path.mp3
+                  path: some/relative/path_63.mp3
                   status: new
                   created_at: '2020-01-02T03:04:05.677Z'
                   harvest_id: 64
@@ -5293,10 +5293,10 @@ paths:
                     provenance_id: 
                     creator_id: 1
                     tags:
-                    - id: 84
-                      text: Birb
                     - id: 83
                       text: tag text 83
+                    - id: 84
+                      text: Birb
                     errors: []
                     id: 84
                   committed: true
@@ -5373,10 +5373,10 @@ paths:
                     provenance_id: 
                     creator_id: 1
                     tags:
-                    - id: 
-                      text: Birb
                     - id: 85
                       text: tag text 84
+                    - id: 
+                      text: Birb
                     errors:
                     - audio_recording_id:
                       - does not exist

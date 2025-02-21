@@ -446,7 +446,7 @@ module Api
 
     def deduplicate_tags(tags)
       # we have two cases:
-      # 1. Tag models that have been loaded from the database, they have an idea
+      # 1. Tag models that have been loaded from the database, they have an id
       # 2. New tags that have been created in this import, they don't have an id
       existing, new = tags.partition(&:persisted?)
 

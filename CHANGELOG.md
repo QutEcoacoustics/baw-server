@@ -1,11 +1,20 @@
 # Changelog
 
+## [12.9.1](https://github.com/QutEcoacoustics/baw-server/tree/12.9.1) (2025-02-21)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.8.4...12.9.1)
+
+**Implemented enhancements:**
+
+- Adds unique constraint to path on harvest\_items [\#718](https://github.com/QutEcoacoustics/baw-server/pull/718) ([andrew-1234](https://github.com/andrew-1234))
+
 ## [12.8.4](https://github.com/QutEcoacoustics/baw-server/tree/12.8.4) (2025-02-19)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.6.13...12.8.4)
 
 **Implemented enhancements:**
 
+- Add a unique constraint to `path` on `harvest_items` [\#660](https://github.com/QutEcoacoustics/baw-server/issues/660)
 - Adds a Verification API [\#713](https://github.com/QutEcoacoustics/baw-server/pull/713) ([andrew-1234](https://github.com/andrew-1234))
 
 **Fixed bugs:**
