@@ -11,7 +11,7 @@ module BawWorkers
           check_job_id(job_id)
 
           # 4 cases (+ race conditions)
-          old_status = persistance.get(job_id)
+          old_status = persistence.get(job_id)
 
           case old_status
           in nil
@@ -22,7 +22,7 @@ module BawWorkers
             merge_existing_job(old_status)
           in StatusData if executions.zero? && status&.terminal?
             # status does exist, and is old: delete, then create
-            raise BawWorkers::ActiveJob::EnqueueError, 'failed to remove old status' unless persistance.remove(job_id)
+            raise BawWorkers::ActiveJob::EnqueueError, 'failed to remove old status' unless persistence.remove(job_id)
 
             create
           else
@@ -42,20 +42,20 @@ module BawWorkers
 
             unless result
               logger.error("#{STATUS_TAG} removed after aborted creation", job_id:)
-              persistance.remove(job_id)
+              persistence.remove(job_id)
             end
 
             result
           rescue StandardError => e
             logger.error("#{STATUS_TAG} removed after error raised during creation", job_id:)
-            persistance.remove(job_id)
+            persistence.remove(job_id)
 
             raise e
           rescue Async::Stop => e
             # this was added during a debugging session where this was being raised but not handled
             logger.error("#{STATUS_TAG} removed after stop raised during creation", job_id:,
               message: e.message, exception: e)
-            persistance.remove(job_id)
+            persistence.remove(job_id)
             raise e
           end
         end
@@ -63,7 +63,7 @@ module BawWorkers
         private
 
         def delay_ttl
-          now = @status&.time || Time.now
+          now = @status&.time || Time.zone.now
           [0, ((scheduled_at || now).to_i - now.to_i)].max
         end
 
@@ -95,7 +95,7 @@ module BawWorkers
             { message: "#{STATUS_TAG}: creating", job_id:, name: }
           end
 
-          persistance.create(@status, delay_ttl:)
+          persistence.create(@status, delay_ttl:)
         end
 
         def handle_bad_create_result
@@ -104,21 +104,21 @@ module BawWorkers
           # 2: a race condition has happened where the previous safe guards have completed,
           #    but in the meantime another thread has completed safe guards and has been enqueued.
           # For 2: check if the status that was preventing us from enqueuing is valid, and suppress error.
-          duplicate_status = persistance.get(job_id)
+          duplicate_status = persistence.get(job_id)
           logger.warn("#{STATUS_TAG}: creating failed, duplicate status detected", job_id:)
-          if duplicate_status.queued? || duplicate_status.working?
-            # probably the same job, has the same id and status
-            logger.warn(
-              "#{STATUS_TAG}: duplicate status is similar, aborting instead of throwing",
-              job_id:,
-              status: @status
-            )
-            # if the unique module is included indicate why we failed
-            @unique = false if defined?(@unique)
-            @status = duplicate_status
-          else
+          unless duplicate_status.queued? || duplicate_status.working?
             raise BawWorkers::ActiveJob::EnqueueError, "failed to create status: #{@status.inspect}"
           end
+
+          # probably the same job, has the same id and status
+          logger.warn(
+            "#{STATUS_TAG}: duplicate status is similar, aborting instead of throwing",
+            job_id:,
+            status: @status
+          )
+          # if the unique module is included indicate why we failed
+          @unique = false if defined?(@unique)
+          @status = duplicate_status
         end
 
         def merge_existing_job(status)
@@ -148,7 +148,7 @@ module BawWorkers
             }
           end
 
-          result = persistance.set(@status)
+          result = persistence.set(@status)
 
           raise BawWorkers::ActiveJob::EnqueueError, 'failed to merge status' unless result
 

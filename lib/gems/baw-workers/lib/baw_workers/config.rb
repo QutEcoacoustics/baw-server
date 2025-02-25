@@ -224,8 +224,8 @@ module BawWorkers
       def configure_resque(settings)
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         Resque.redis.namespace = Settings.resque.namespace
-        BawWorkers::ActiveJob::Status::Persistance.configure(Resque.redis.redis)
-        BawWorkers::ActiveJob::Concurrency::Persistance.configure(Resque.redis.redis)
+        BawWorkers::ActiveJob::Status::Persistence.configure(Resque.redis.redis)
+        BawWorkers::ActiveJob::Concurrency::Persistence.configure(Resque.redis.redis)
 
         # Logger set automatically by SemanticLogger RailTie
         raise 'Resque logger not configured' unless Resque.logger.is_a?(SemanticLogger::Logger)
@@ -328,7 +328,7 @@ module BawWorkers
           },
           active_job: {
             status: {
-              expire_in: BawWorkers::ActiveJob::Status::Persistance.expire_values
+              expire_in: BawWorkers::ActiveJob::Status::Persistence.expire_values
             }
           },
           logging: {

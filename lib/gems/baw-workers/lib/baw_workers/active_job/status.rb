@@ -113,7 +113,7 @@ module BawWorkers
       # @return [StatusData]
       def refresh_status!
         logger.measure_debug("#{STATUS_TAG} fetching for #{job_id}") do
-          @status = persistance.get(job_id)
+          @status = persistence.get(job_id)
         end
       end
 
@@ -121,7 +121,7 @@ module BawWorkers
       # The next `tick` or `report_progress` done by the remote job will check
       # for this job's ID in the kill list and will #kill! if necessary.
       def mark_for_kill!
-        persistance.mark_for_kill(job_id)
+        persistence.mark_for_kill(job_id)
       end
 
       protected
@@ -157,7 +157,7 @@ module BawWorkers
 
       # Should only be called by a worker.
       def should_kill?
-        persistance.should_kill?(job_id)
+        persistence.should_kill?(job_id)
       end
 
       # Kills the current job by raising BawWorkers::ActiveJob::Status::Killed
@@ -248,7 +248,7 @@ module BawWorkers
       # @param [Killed] kill_error
       def handle_kill(kill_error)
         logger.warn("#{STATUS_TAG} job killed", location: kill_error.kill_location)
-        persistance.killed(job_id)
+        persistence.killed(job_id)
         on_killed
       ensure
         update_status(kill_error.message, status: STATUS_KILLED)
@@ -321,7 +321,7 @@ module BawWorkers
             messages:
           }
         end
-        persistance.set(@status).tap do |successful|
+        persistence.set(@status).tap do |successful|
           next if successful
 
           logger.error { 'Failed to update status ' }
@@ -335,9 +335,9 @@ module BawWorkers
           "#{name} was `#{input}` which is not a valid number: #{e.message}.\n#{e.backtrace.slice(5)}\n<snip>"
       end
 
-      # @return [Module<BawWorkers::ActiveJob::Status::Persistance>]
-      def persistance
-        @persistance ||= BawWorkers::ActiveJob::Status::Persistance
+      # @return [Module<BawWorkers::ActiveJob::Status::Persistence>]
+      def persistence
+        @persistence ||= BawWorkers::ActiveJob::Status::Persistence
       end
 
       # https://github.com/rails/rails/blob/30033e6a1d25dcd80ec235af820ba3f780e9e2ff/activesupport/lib/active_support/rescuable.rb#L164

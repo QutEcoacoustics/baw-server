@@ -84,9 +84,9 @@ module BawWorkers
       end
 
       def id_unique?(id_to_test)
-        return true unless persistance.exists?(id_to_test)
+        return true unless persistence.exists?(id_to_test)
 
-        @status = persistance.get(id_to_test)
+        @status = persistence.get(id_to_test)
 
         # race conditions could mean we fail to get status after existence test
         if @status.nil? || @status.terminal?
@@ -100,9 +100,9 @@ module BawWorkers
         false
       end
 
-      # @return [Module<BawWorkers::ActiveJob::Status::Persistance>]
-      def persistance
-        @persistance ||= BawWorkers::ActiveJob::Status::Persistance
+      # @return [Module<BawWorkers::ActiveJob::Status::Persistence>]
+      def persistence
+        @persistence ||= BawWorkers::ActiveJob::Status::Persistence
       end
     end
   end

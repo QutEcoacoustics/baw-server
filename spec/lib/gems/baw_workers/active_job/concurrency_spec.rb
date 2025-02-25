@@ -133,7 +133,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency limit is still 1' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::DiscardJobClass.name,
         nil
       )).to eq 1
@@ -142,7 +142,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     step 'resets count after job is finished' do
       @j1.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::DiscardJobClass.name,
         nil
       )).to eq 0
@@ -192,7 +192,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency limit is still 1' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::RetryJobClass.name,
         nil
       )).to eq 1
@@ -201,7 +201,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     step 'resets count after job is finished' do
       @j1.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::RetryJobClass.name,
         nil
       )).to eq 0
@@ -244,7 +244,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency limit is still 2' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::MultipleJobClass.name,
         nil
       )).to eq 2
@@ -253,7 +253,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     step 'resets count after job is finished' do
       @j1.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::MultipleJobClass.name,
         nil
       )).to eq 1
@@ -262,7 +262,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
       @j2.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::MultipleJobClass.name,
         nil
       )).to eq 0
@@ -304,7 +304,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency limit is 0' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::FaultyJobClass.name,
         nil
       )).to eq 0
@@ -335,15 +335,15 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency count' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::DiscardJobClass.name,
         nil
       )).to eq 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::MultipleJobClass.name,
         nil
       )).to eq 2
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::RetryJobClass.name,
         nil
       )).to eq 1
@@ -353,15 +353,15 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
       @jobs.each(&:mark_for_kill!)
       sleep 1
 
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::DiscardJobClass.name,
         nil
       )).to eq 0
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::MultipleJobClass.name,
         nil
       )).to eq 0
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::RetryJobClass.name,
         nil
       )).to eq 0
@@ -391,7 +391,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency count' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::NormalJobClass.name,
         nil
       )).to eq 0
@@ -401,7 +401,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
       @jobs.each(&:mark_for_kill!)
       sleep 1
 
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::NormalJobClass.name,
         nil
       )).to eq 0
@@ -449,10 +449,10 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks the concurrency limit is still 1 for 2 instances' do
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::ParameterizedJobClass.name, 10
       )).to eq 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::ParameterizedJobClass.name, 20
       )).to eq 1
     end
@@ -460,7 +460,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     step 'resets count after job is finished' do
       @j1.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::ParameterizedJobClass.name, 20
       )).to eq 0
 
@@ -468,7 +468,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
       @j2.mark_for_kill!
       sleep 1
-      expect(BawWorkers::ActiveJob::Concurrency::Persistance.current_count(
+      expect(BawWorkers::ActiveJob::Concurrency::Persistence.current_count(
         Fixtures::Concurrency::ParameterizedJobClass.name, 10
       )).to eq 0
 

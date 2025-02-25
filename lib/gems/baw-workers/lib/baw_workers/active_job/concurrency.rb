@@ -131,7 +131,7 @@ module BawWorkers
         parameter = concurrency_parameters&.call(self)
 
         # increment and check current instance count
-        count = Persistance.increment(self.class.name, parameter)
+        count = Persistence.increment(self.class.name, parameter)
 
         # if greater than limit (if set) then perform throttle action
         if count > concurrency_limit
@@ -152,17 +152,17 @@ module BawWorkers
         # set expiry for concurrency counter
         # we do this after the increment so that if the job fails to run because the counter is greater than the limit
         # then the counter will expire and the job can be run again.
-        Persistance.set_expire(self.class.name, parameter)
+        Persistence.set_expire(self.class.name, parameter)
 
         # perform
         yield
       ensure
         # and finally unlock job
-        Persistance.decrement(self.class.name, parameter)
+        Persistence.decrement(self.class.name, parameter)
       end
 
       # Singleton persistence module for tracking concurrency.
-      module Persistance
+      module Persistence
         # number of seconds for which to keep track of concurrency
         # this is to prevent a job class from being locked forever in case of a race condition
         # Note: incr and decr don't modify the ttl
@@ -173,14 +173,14 @@ module BawWorkers
 
         # @return [::Redis::Client] the redis client to use
         def redis
-          raise 'redis is nil, Persistance singleton must be configured before use' if @redis.nil?
+          raise 'redis is nil, Persistence singleton must be configured before use' if @redis.nil?
 
           @redis
         end
 
-        # Configure the persistance module. This module is a singleton.
+        # Configure the persistence module. This module is a singleton.
         # @param redis [::Redis]  The redis client to use
-        # @return [Module<Persistance>] the configured Persistance Module
+        # @return [Module<Persistence>] the configured Persistence Module
         def configure(redis)
           unless redis.class.ancestors.include?(::Redis)
             raise ArgumentError,

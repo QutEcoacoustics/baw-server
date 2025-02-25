@@ -7,7 +7,7 @@ module BawWorkers
       # '_statuses' - is a set of all statuses, useful for bulk operations
       # '_kill' - a set of jobs to kill
       # 'status:{job_id}' - one key/value pair per status
-      module Persistance
+      module Persistence
         PENDING_EXPIRE_IN = 86_400 * 7
         TERMINAL_EXPIRE_IN = 86_400
 
@@ -15,14 +15,14 @@ module BawWorkers
 
         # @return [::Redis]
         def redis
-          raise 'redis is nil, Persistance singleton must be configured before use' if @redis.nil?
+          raise 'redis is nil, Persistence singleton must be configured before use' if @redis.nil?
 
           @redis
         end
 
-        # Configure the persistance module. This module is a singleton.
+        # Configure the persistence module. This module is a singleton.
         # @param [::Redis] redis The redis client to use
-        # @return [Persistance] the configured Persistance Module
+        # @return [Persistence] the configured Persistence Module
         def configure(redis)
           unless redis.class.ancestors.include?(::Redis)
             raise ArgumentError,
@@ -130,7 +130,7 @@ module BawWorkers
         # @param range_end [Integer] - an index into the set, sorted by score, high to low, !inclusive!
         # @return [Array<String>]
         # @example retuning the last 20 statuses
-        #   Persistance.get_status_ids(0, 20)
+        #   Persistence.get_status_ids(0, 20)
         def get_status_ids(range_start = nil, range_end = nil)
           # Because we want a reverse chronological order, we need to get a range starting
           # by the highest negative number.
@@ -145,7 +145,7 @@ module BawWorkers
         # @param range_end [Integer] - an index into the set, sorted by score, high to low, !inclusive!
         # @return [Array<StatusData>]
         # @example retuning the last 20 statuses
-        #   Persistance.statuses(0, 20)
+        #   Persistence.statuses(0, 20)
         def get_statuses(range_start = nil, range_end = nil)
           ids = get_status_ids(range_start, range_end)
           return [] if ids.empty?

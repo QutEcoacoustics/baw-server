@@ -4,7 +4,7 @@ require "#{RSPEC_ROOT}/fixtures/jobs.rb"
 
 # rubocop:disable Rails/ActiveSupportOnLoad
 describe BawWorkers::ActiveJob::Status do
-  let(:persistance) { BawWorkers::ActiveJob::Status::Persistance }
+  let(:persistence) { BawWorkers::ActiveJob::Status::Persistence }
 
   context 'when including' do
     before do
@@ -76,7 +76,7 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'adds the job_id to statuses' do
-      expect(persistance.get_status_ids).to contain_exactly('Fixtures::BasicJob:creating')
+      expect(persistence.get_status_ids).to contain_exactly('Fixtures::BasicJob:creating')
     end
 
     it 'has our custom job id' do
@@ -98,12 +98,12 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has a TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix('Fixtures::BasicJob:creating'))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::PENDING_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix('Fixtures::BasicJob:creating'))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::PENDING_EXPIRE_IN)
     end
 
     it 'is not in the kill list' do
-      expect(persistance.marked_for_kill_ids).to be_empty
+      expect(persistence.marked_for_kill_ids).to be_empty
     end
   end
 
@@ -132,12 +132,12 @@ describe BawWorkers::ActiveJob::Status do
         end
       end
 
-      expect(persistance).to receive(:create).and_call_original
-      expect(persistance).to receive(:remove).and_call_original
+      expect(persistence).to receive(:create).and_call_original
+      expect(persistence).to receive(:remove).and_call_original
       result = impl.perform_later
       expect(result).to be false
-      expect(persistance.get_status_ids).to be_empty
-      expect(persistance.marked_for_kill_ids).to be_empty
+      expect(persistence.get_status_ids).to be_empty
+      expect(persistence.marked_for_kill_ids).to be_empty
     end
 
     it 'removes a status if enqueuing fails' do
@@ -146,13 +146,13 @@ describe BawWorkers::ActiveJob::Status do
         .to receive(:enqueue)
         .and_raise(StandardError)
 
-      expect(persistance).to receive(:create).and_call_original
-      expect(persistance).to receive(:remove).and_call_original
+      expect(persistence).to receive(:create).and_call_original
+      expect(persistence).to receive(:remove).and_call_original
       expect {
         abort_fail_enqueue.perform_later('don\'t create')
       }.to raise_error(StandardError)
-      expect(persistance.get_status_ids).to be_empty
-      expect(persistance.marked_for_kill_ids).to be_empty
+      expect(persistence.get_status_ids).to be_empty
+      expect(persistence.marked_for_kill_ids).to be_empty
     end
 
     it 'fails to enqueue if job_id contains a space' do
@@ -228,11 +228,11 @@ describe BawWorkers::ActiveJob::Status do
 
     it 'does not add the job to the queue' do
       expect_enqueued_jobs(0)
-      expect(persistance.redis.zcard('resque:delayed_queue_schedule')).to eq(1)
+      expect(persistence.redis.zcard('resque:delayed_queue_schedule')).to eq(1)
     end
 
     it 'adds the job_id to statuses' do
-      expect(persistance.get_status_ids).to contain_exactly('Fixtures::BasicJob:later')
+      expect(persistence.get_status_ids).to contain_exactly('Fixtures::BasicJob:later')
     end
 
     it 'has our custom job id' do
@@ -252,12 +252,12 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has a TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix('Fixtures::BasicJob:later'))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::PENDING_EXPIRE_IN + 10.minutes.to_i)
+      ttl = persistence.redis.ttl(persistence.status_prefix('Fixtures::BasicJob:later'))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::PENDING_EXPIRE_IN + 10.minutes.to_i)
     end
 
     it 'is not in the kill list' do
-      expect(persistance.marked_for_kill_ids).to be_empty
+      expect(persistence.marked_for_kill_ids).to be_empty
     end
   end
 
@@ -292,8 +292,8 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has terminal TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix(@job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(@job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -304,10 +304,10 @@ describe BawWorkers::ActiveJob::Status do
 
     example 'the kill list has one job' do
       job.mark_for_kill!
-      expect(persistance.redis.scard(persistance.kill_set)).to eq(1)
+      expect(persistence.redis.scard(persistence.kill_set)).to eq(1)
       expect(
-        persistance.redis.sismember(
-          persistance.kill_set,
+        persistence.redis.sismember(
+          persistence.kill_set,
           'Fixtures::KillableJob:die_job_die'
         )
       ).to be true
@@ -322,11 +322,11 @@ describe BawWorkers::ActiveJob::Status do
       expect(status).to be_killed
       expect(status.messages).to contain_exactly(/Killed/, 'on kill called')
       # no jobs left to kill
-      expect(persistance.redis.scard(persistance.kill_set)).to eq(0)
+      expect(persistence.redis.scard(persistence.kill_set)).to eq(0)
     end
 
     it 'can kill the job while it is working' do
-      expect(persistance.redis.scard(persistance.kill_set)).to eq(0)
+      expect(persistence.redis.scard(persistence.kill_set)).to eq(0)
       perform_all_jobs_immediately do
         # dereference job from let to actually start it :-/
         job
@@ -342,14 +342,14 @@ describe BawWorkers::ActiveJob::Status do
       expect(status.messages).to include('At 0 of 100')
       expect(status.progress).to be > 0
       # no jobs left to kill
-      expect(persistance.redis.scard(persistance.kill_set)).to eq(0)
+      expect(persistence.redis.scard(persistence.kill_set)).to eq(0)
     end
 
     it 'has terminal TTL' do
       job.mark_for_kill!
       perform_jobs(count: 1)
-      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -374,8 +374,8 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has terminal TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -403,8 +403,8 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has terminal TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -432,8 +432,8 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has terminal TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -457,8 +457,8 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has terminal TTL' do
-      ttl = persistance.redis.ttl(persistance.status_prefix(job.job_id))
-      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistance::TERMINAL_EXPIRE_IN)
+      ttl = persistence.redis.ttl(persistence.status_prefix(job.job_id))
+      expect(ttl).to be_within(10).of(BawWorkers::ActiveJob::Status::Persistence::TERMINAL_EXPIRE_IN)
     end
   end
 
@@ -485,7 +485,7 @@ describe BawWorkers::ActiveJob::Status do
     end
 
     it 'has removes the status from the known statuses list' do
-      expect(persistance.get_status_ids).to be_empty
+      expect(persistence.get_status_ids).to be_empty
     end
 
     it 'throws instead with perform_later!' do
@@ -556,7 +556,7 @@ describe BawWorkers::ActiveJob::Status do
       # unlike other jobs, we have the instance of the job that
       # performed the work... so fetch from redis to see if it
       # really got updates
-      remote_status = BawWorkers::ActiveJob::Status::Persistance.get(job.job_id)
+      remote_status = BawWorkers::ActiveJob::Status::Persistence.get(job.job_id)
       expect(remote_status).not_to be_nil
       expect(remote_status).to be_completed
       expect(remote_status.messages).to include(/Completed at/)

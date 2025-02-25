@@ -275,7 +275,7 @@ module BawWorkers
         "Clearing queue #{queue}..."
       end
       Resque.remove_queue(queue)
-      BawWorkers::ActiveJob::Status::Persistance.clear
+      BawWorkers::ActiveJob::Status::Persistence.clear
     end
 
     # Clear resque stats
@@ -341,14 +341,14 @@ module BawWorkers
     # @param [String] unique_key - the key that uniquely identifies this action. Typically a uuid.
     # @return [BawWorkers::ActiveJob::Status::StatusData] status
     def status_by_key(unique_key)
-      BawWorkers::ActiveJob::Status::Persistance.get(unique_key)
+      BawWorkers::ActiveJob::Status::Persistence.get(unique_key)
     end
 
     # Get a resque:status' key expire time
     # @return [Integer] the TTL of the key
     def status_ttl(unique_key)
-      key = BawWorkers::ActiveJob::Status::Persistance.status_key(unique_key)
-      BawWorkers::ActiveJob::Status::Persistance.redis.ttl(key)
+      key = BawWorkers::ActiveJob::Status::Persistence.status_key(unique_key)
+      BawWorkers::ActiveJob::Status::Persistence.redis.ttl(key)
     end
 
     # Get a list of statuses.
@@ -360,7 +360,7 @@ module BawWorkers
       of_class ||= klass
 
       statuses = Array(statuses)
-      results = BawWorkers::ActiveJob::Status::Persistance.get_statuses
+      results = BawWorkers::ActiveJob::Status::Persistence.get_statuses
       results = results.filter { |script| statuses.include?(script.status) } if statuses.present?
 
       unless of_class.nil?
@@ -377,11 +377,11 @@ module BawWorkers
     end
 
     def statuses_count
-      BawWorkers::ActiveJob::Status::Persistance.count
+      BawWorkers::ActiveJob::Status::Persistence.count
     end
 
     def statuses_clear
-      BawWorkers::ActiveJob::Status::Persistance.clear
+      BawWorkers::ActiveJob::Status::Persistence.clear
     end
 
     def check_class(klass)

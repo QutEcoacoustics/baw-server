@@ -35,14 +35,14 @@ class MediaPoll
       #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
 
       poll_locations = prepare_locations(expected_files)
-      Rails.logger.debug "MediaPoll#poll_media: Before polling for files #{expected_files}"
+      Rails.logger.debug { "MediaPoll#poll_media: Before polling for files #{expected_files}" }
 
       existing_files = []
 
       poll_result = poll(wait_max, poll_delay) {
         existing_files = get_existing_files(poll_locations)
 
-        Rails.logger.debug "MediaPoll#poll_media: Poll matched files #{existing_files}"
+        Rails.logger.debug { "MediaPoll#poll_media: Poll matched files #{existing_files}" }
 
         # return true if polling is complete, false to continue polling.
         !existing_files.empty?
@@ -58,7 +58,9 @@ class MediaPoll
         raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
-      Rails.logger.debug "MediaPoll#poll_media: POST-poll matched file #{existing_files} after #{poll_result[:actual_poll_time]}"
+      Rails.logger.debug do
+        "MediaPoll#poll_media: POST-poll matched file #{existing_files} after #{poll_result[:actual_poll_time]}"
+      end
       existing_files
     end
 
@@ -74,7 +76,7 @@ class MediaPoll
       status = nil
 
       poll_result = poll(wait_max, poll_delay) {
-        status = BawWorkers::ActiveJob::Status::Persistance.get(job_id)
+        status = BawWorkers::ActiveJob::Status::Persistence.get(job_id)
         #current_status = status.status # e.g. Resque::Plugins::Status::STATUS_QUEUED
 
         # the accuracy of the polling time is the poll_delay
@@ -86,10 +88,10 @@ class MediaPoll
         # status.queued? || status.working? # job in progress - continue polling or time out
 
         # job completed successfully?
-        !status.blank? && status.completed?
+        status.present? && status.completed?
       }
 
-      Rails.logger.debug "MediaPoll#poll_resque: Result from resque poll was #{status}."
+      Rails.logger.debug { "MediaPoll#poll_resque: Result from resque poll was #{status}." }
 
       # raise error if polling did not return a result
       if poll_result[:result].nil?
@@ -97,8 +99,8 @@ class MediaPoll
 
         msg = "Resque did not complete media request within #{wait_max} seconds, result was '#{resque_task_status}'."
         job_info = poll_result.merge({
-          uuid: status.nil? ? nil : status.uuid,
-          time: status.nil? ? nil : status.time,
+          uuid: status&.uuid,
+          time: status&.time,
           status: resque_task_status
         })
         raise CustomErrors::AudioGenerationError.new(msg, job_info)
@@ -123,7 +125,7 @@ class MediaPoll
       Rails.logger.debug { { message: 'fast cache', should_check_redis_cache: should_check_redis_cache } }
 
       poll_result = poll(wait_max, poll_delay) {
-        resque_status = BawWorkers::ActiveJob::Status::Persistance.get(job_id)
+        resque_status = BawWorkers::ActiveJob::Status::Persistence.get(job_id)
 
         # check redis cache
         if should_check_redis_cache
@@ -137,7 +139,7 @@ class MediaPoll
         # return true if polling is complete, false to continue polling.
         completed = false
 
-        completed = true if !resque_status.blank? && resque_status.completed?
+        completed = true if resque_status.present? && resque_status.completed?
         completed = true unless existing_files.empty?
 
         #Rails.logger.debug('polling data', existing_files: existing_files, resque_status: resque_status)
@@ -151,8 +153,8 @@ class MediaPoll
 
         msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay with resque job status '#{resque_task_status}'. Could not find media files."
         job_info = poll_result.merge({
-          uuid: resque_status.nil? ? nil : resque_status.job_id,
-          time: resque_status.nil? ? nil : resque_status.time,
+          uuid: resque_status&.job_id,
+          time: resque_status&.time,
           status: resque_task_status,
           poll_locations: poll_locations,
           existing_files: existing_files
@@ -216,15 +218,15 @@ class MediaPoll
         ######system "ls -la \"#{file}\""
 
         # once one file exists, break out of this loop and return true
-        Rails.logger.debug "MediaPoll#get_existing_files: checking #{file}"
+        Rails.logger.debug { "MediaPoll#get_existing_files: checking #{file}" }
         next unless File.exist?(file) && File.file?(file)
 
-        Rails.logger.debug "MediaPoll#get_existing_files: FOUND #{file}"
+        Rails.logger.debug { "MediaPoll#get_existing_files: FOUND #{file}" }
         existing_files.push(file)
         break
       end
 
-      existing_files.reject(&:blank?)
+      existing_files.compact_blank
     end
 
     private
@@ -238,7 +240,7 @@ class MediaPoll
     # @return the return value of the passed block
     def poll(seconds = 2.0, delay = 0.1)
       seconds ||= 2.0 # overall patience
-      poll_start_time = Time.now
+      poll_start_time = Time.zone.now
       give_up_at = poll_start_time + seconds # pick a time to stop being patient
       delay ||= 0.1 # wait a tenth of a second before re-attempting
 
@@ -249,19 +251,19 @@ class MediaPoll
         delay: delay
       }
 
-      while Time.now < give_up_at
+      while Time.zone.now < give_up_at
         result = yield
 
         if result
           result_value[:result] = result
-          result_value[:actual_poll_time] = Time.now - poll_start_time
+          result_value[:actual_poll_time] = Time.zone.now - poll_start_time
           return result_value
         end
 
         sleep delay
       end
 
-      result_value[:actual_poll_time] = Time.now - poll_start_time
+      result_value[:actual_poll_time] = Time.zone.now - poll_start_time
 
       result_value
     end
