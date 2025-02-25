@@ -105,7 +105,7 @@ class AudioEventsController < ApplicationController
     audio_recording = nil
     end_offset = nil
 
-    # check which params are available to authorise this request
+    # check which params are available to authorize this request
 
     # user id
     if params_cleaned[:user_id]

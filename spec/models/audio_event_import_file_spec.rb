@@ -80,17 +80,17 @@ describe AudioEventImportFile do
     expect(built.absolute_path).to be_nil
   end
 
-  it 'filters out or converts non-integers' do
-    subject.additional_tag_ids = [
-      nil,
-      'not an integer',
-      0,
-      "'--; DROP TABLE users; --",
-      '0asbc',
-      true
-    ]
-
-    expect(subject.additional_tag_ids).to eq([])
+  it 'raises an exception if additional_tag_ids are not an array of integers' do
+    expect {
+      subject.additional_tag_ids = [
+        nil,
+        'not an integer',
+        0,
+        "'--; DROP TABLE users; --",
+        '0asbc',
+        true
+      ]
+    }.to raise_error(ArgumentError, 'additional_tag_ids must be an array of integers')
   end
 
   it 'can set additional_tag_ids to an array of integers' do

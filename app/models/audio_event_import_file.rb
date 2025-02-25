@@ -40,8 +40,8 @@ class AudioEventImportFile < ApplicationRecord
   # attributes
 
   def additional_tag_ids=(value)
-    raise 'additional_tag_ids must be an array' unless value.is_a?(Array)
-    raise 'additional_tag_ids must be an array of integers' unless value.all? { |v| v.is_a?(Integer) }
+    raise ArgumentError, 'additional_tag_ids must be an array' unless value.is_a?(Array)
+    raise ArgumentError, 'additional_tag_ids must be an array of integers' unless value.all? { |v| v.is_a?(Integer) }
 
     super
   end

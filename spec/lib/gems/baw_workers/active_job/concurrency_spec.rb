@@ -38,21 +38,56 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     cleanup(@barrier) if defined?(@barrier)
   end
 
-  it 'experiments' do
-    value = nil
+  # Testing my understanding of ruby - we use ensure to decrement the
+  # concurrency counter. Testing that it handles exceptions and throws.
+  describe 'experiments' do
+    it 'can ensure after a throw' do
+      value = nil
 
-    throw_value = catch('error') {
-      begin
-        throw 'error'
-      ensure
-        value = 'ensure'
-      end
+      throw_value = catch('error') {
+        begin
+          throw 'error'
+        ensure
+          value = 'ensure'
+        end
 
-      123
-    }
+        123
+      }
 
-    expect(value).to eq('ensure')
-    expect(throw_value).to be_nil
+      expect(value).to eq('ensure')
+      expect(throw_value).to be_nil
+    end
+
+    it 'ensures on an uncaught throw' do
+      value = nil
+
+      expect {
+        begin
+          throw 'error'
+        ensure
+          value = 'ensure'
+        end
+      }.to raise_error(UncaughtThrowError, /uncaught throw/)
+
+      expect(value).to eq('ensure')
+    end
+  end
+
+  it 'does not create a record for jobs that do not have a concurrency limit' do
+    Fixtures::Concurrency::NormalJobClass.perform_now(1)
+
+    expect_performed_jobs(1, of_class: Fixtures::Concurrency::NormalJobClass)
+
+    key = BawWorkers::ActiveJob::Concurrency::Persistence.key_prefix(
+      Fixtures::Concurrency::NormalJobClass.name,
+      nil
+    )
+
+    expect(BawWorkers::ActiveJob::Concurrency::Persistence.redis.exists?(key)).to be false
+  end
+
+  it 'can increment and decrement a counter' do
+    Fixtures::Concurrency::DiscardJobClass.perform_now(1)
   end
 
   [
@@ -117,13 +152,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
     step 'checks job 2 and 3 failed because of concurrency limit' do
       expect(@j2.status.messages).to contain_exactly(
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::DiscardJobClass.*/,
-        'The job was discarded: Concurrency limit of 1 reached for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass.*/,
+        'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
       )
 
       expect(@j3.status.messages).to contain_exactly(
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::DiscardJobClass.*/,
-        'The job was discarded: Concurrency limit of 1 reached for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass.*/,
+        'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
       )
     end
 
@@ -175,13 +210,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     step 'checks job 2 and 3 failed because of concurrency limit' do
       expect(@j2.status.messages).to contain_exactly(
         'Attempt 1',
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::RetryJobClass.*/,
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::RetryJobClass.*/,
         'Attempt 2'
       )
 
       expect(@j3.status.messages).to contain_exactly(
         'Attempt 1',
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::RetryJobClass.*/,
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::RetryJobClass.*/,
         'Attempt 2'
       )
     end
@@ -233,8 +268,8 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
     step 'checks job 3 failed because of concurrency limit' do
       expect(@j3.status.messages).to contain_exactly(
-        /The job failed because of an error: Concurrency limit of 2 reached for Fixtures::Concurrency::MultipleJobClass.*/,
-        'The job was discarded: Concurrency limit of 2 reached for Fixtures::Concurrency::MultipleJobClass is registered by discard_on'
+        /The job failed because of an error: Concurrency count 3 reached for limit 2 for Fixtures::Concurrency::MultipleJobClass.*/,
+        'The job was discarded: Concurrency count 3 reached for limit 2 for Fixtures::Concurrency::MultipleJobClass is registered by discard_on'
       )
     end
 
@@ -433,13 +468,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
     step 'checks job 3 and 4 failed because of concurrency limit' do
       expect(@j3.status.messages).to contain_exactly(
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::ParameterizedJobClass:20.*/,
-        'The job was discarded: Concurrency limit of 1 reached for Fixtures::Concurrency::ParameterizedJobClass:20 is registered by discard_on'
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:20.*/,
+        'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:20 is registered by discard_on'
       )
 
       expect(@j4.status.messages).to contain_exactly(
-        /The job failed because of an error: Concurrency limit of 1 reached for Fixtures::Concurrency::ParameterizedJobClass:10.*/,
-        'The job was discarded: Concurrency limit of 1 reached for Fixtures::Concurrency::ParameterizedJobClass:10 is registered by discard_on'
+        /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:10.*/,
+        'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:10 is registered by discard_on'
       )
     end
 

@@ -52,9 +52,9 @@ module BawWorkers
           raise ArgumentError, 'opts must be a non-empty hash' unless opts.is_a?(Hash) && opts.length.positive?
 
           key = DeepSort
-                .deep_sort(opts, sort_enum: true)
-                .map { |k, v| "#{k}=#{v.to_s.gsub(/[^-a-zA-z0-9_]+/, '-')}" }
-                .join(':')
+            .deep_sort(opts, sort_enum: true)
+            .map { |k, v| "#{k}=#{v.to_s.gsub(/[^-a-zA-z0-9_]+/, '-')}" }
+            .join(':')
           key = "#{class_name(job, prefix)}:#{key}"
 
           raise ArgumentError, "Generated key '#{key}'is too long" if key.length > 1024
@@ -67,7 +67,9 @@ module BawWorkers
         end
 
         def self.class_name(job, prefix)
-          prefix.nil? ? job.class.name : prefix
+          # redis convention is to use ':' as a separator, class name emits '::'
+          # for namespaces
+          prefix.nil? ? job.class.name&.squeeze(':') : prefix
         end
       end
     end

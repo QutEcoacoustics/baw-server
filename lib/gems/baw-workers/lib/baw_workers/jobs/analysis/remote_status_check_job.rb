@@ -37,6 +37,8 @@ module BawWorkers
           item_ids = AnalysisJobsItem
             .transition_finish
             .order(created_at: :asc)
+            # don't do too many at once - dodgy memory management
+            .take(BATCH_SIZE)
             # delay loading items until we need them
             .pluck(:id)
             .to_a
@@ -48,11 +50,11 @@ module BawWorkers
 
           # then for each job item check it
           item_ids.each_with_index do |item_id, index|
-            logger.debug("Attempting to finish analysis job item #{item_id}") do
+            logger.measure_debug("Attempting to finish analysis job item #{item_id}") do
               check_item(item_id)
             end
 
-            report_progress(index, total)
+            report_progress(index, total) if (index % 10).zero?
           end
 
           completed!("Finished #{total} jobs, sleeping now")
@@ -63,7 +65,12 @@ module BawWorkers
         def check_item(item_id)
           item = AnalysisJobsItem.find(item_id)
 
-          item.finish!
+          if item.may_finish?
+            item.finish!
+          else
+            item.clear_transition_finish
+            item.save!
+          end
         end
 
         # @return [BawWorkers::BatchAnalysis::Communicator]

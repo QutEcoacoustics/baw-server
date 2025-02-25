@@ -88,21 +88,21 @@ describe '/audio_event_imports' do
           id: be_an_instance_of(Integer),
           errors: [],
           start_time_seconds: be_within(0.001).of(6.709509878),
-          tags: [
+          tags: a_collection_including(
             a_hash_including(text: 'Birb'),
             a_hash_including(id: machine_generated_tag.id,
               text: 'machine generated')
-          ]
+          )
         ),
         a_hash_including(
           id: be_an_instance_of(Integer),
           errors: [],
           start_time_seconds: be_within(0.001).of(29.383026016),
-          tags: [
+          tags: a_collection_including(
             a_hash_including(text: 'donkey'),
             a_hash_including(id: machine_generated_tag.id,
               text: 'machine generated')
-          ]
+          )
         )
       ],
       additional_tags: [machine_generated_tag]

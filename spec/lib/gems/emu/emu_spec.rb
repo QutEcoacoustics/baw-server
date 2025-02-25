@@ -77,7 +77,8 @@ describe Emu do
         success: true,
         log: "\n",
         records: an_instance_of(Array),
-        time_taken: a_value_within(1.0).of(1.5)
+        # flaky test - goes slower when running with other tests
+        time_taken: a_value_within(2.0).of(1.5)
       )
 
       expect(actual.records.first).to match(

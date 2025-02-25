@@ -136,7 +136,7 @@ module BawWorkers
         # if greater than limit (if set) then perform throttle action
         if count > concurrency_limit
           key = self.class.name + (parameter ? ":#{parameter}" : '')
-          message = "Concurrency limit of #{concurrency_limit} reached for #{key}"
+          message = "Concurrency count #{count} reached for limit #{concurrency_limit} for #{key}"
           # either discard job or retry later
           if concurrency_action == :discard
             logger.warn("Discarding job. #{message}")
@@ -156,9 +156,10 @@ module BawWorkers
 
         # perform
         yield
+      # ensure should handle exceptions, throws, and normal completion
       ensure
-        # and finally unlock job
-        Persistence.decrement(self.class.name, parameter)
+        # and finally unlock job (but only for jobs that have a limit)
+        Persistence.decrement(self.class.name, parameter) unless concurrency_limit.nil?
       end
 
       # Singleton persistence module for tracking concurrency.
@@ -233,7 +234,10 @@ module BawWorkers
 
         def key_prefix(class_name, parameter)
           parameter = parameter.blank? ? '' : ":#{parameter}"
-          "active_job:concurrency:#{class_name}#{parameter}:count"
+
+          # redis convention is to use ':' as a separator, class name emits '::'
+          # for namespaces
+          "active_job:concurrency:#{class_name.squeeze(':')}#{parameter}:count"
         end
       end
     end
