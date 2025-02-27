@@ -63,9 +63,50 @@ describe '/audio_events' do
   #   end
   # end
 
+  describe 'Updating an audio event' do
+    it 'accepts valid time and frequency values' do
+      body = {
+        audio_event: {
+          start_time_seconds: 5.0,
+          end_time_seconds: 10.0,
+          low_frequency_hertz: 1000,
+          high_frequency_hertz: 2000
+        }
+      }
+      patch "/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}",
+        params: body, **api_with_body_headers(writer_token)
+      expect_success
+    end
+
+    it 'accepts a reference field' do
+      body = {
+        audio_event: {
+          is_reference: true
+        }
+      }
+      patch "/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}",
+        params: body, **api_with_body_headers(writer_token)
+      expect_success
+    end
+
+    it 'accepts a channel field' do
+      body = {
+        audio_event: {
+          channel: 2
+        }
+      }
+
+      patch "/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}",
+        params: body, **api_with_body_headers(writer_token)
+
+      expect_success
+      expect(audio_event.reload.channel).to eq(2)
+    end
+  end
+
   context 'when filtering' do
     let(:audio_event_import) {
-      create(:audio_event_import)
+      create(:audio_event_import, creator: reader_user, updater: reader_user)
     }
 
     let(:audio_event_import_file) {
@@ -73,7 +114,7 @@ describe '/audio_events' do
     }
 
     let(:second_audio_recording) {
-      create(:audio_recording, creator: reader_user, recorded_date: audio_recording.recorded_date + 1.day)
+      create(:audio_recording, creator: reader_user, site:, recorded_date: audio_recording.recorded_date + 1.day)
     }
 
     before do
@@ -141,6 +182,27 @@ describe '/audio_events' do
       ]
     end
 
+    it 'can filter by with an overlapping start and end time' do
+      body = {
+        filter: {
+          'start_time_seconds' => {
+            lt: 5
+          },
+          'end_time_seconds' => {
+            gt: 4
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8, is_reference: true)
+      ]
+    end
+
     it 'can filter by audio_recording.recorded_end_date' do
       pending 'Depends on a feature we haven not made yet https://github.com/QutEcoacoustics/baw-server/issues/689'
       next
@@ -162,6 +224,46 @@ describe '/audio_events' do
         a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8),
         a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8)
       ]
+    end
+  end
+
+  context('reference events') do
+    let(:another_user) {
+      create(:user, user_name: 'bob dole')
+    }
+
+    let(:another_audio_recording) {
+      create(:audio_recording, creator: another_user, site:)
+    }
+
+    before do
+      [true, true, false].each do |is_reference|
+        create(
+          :audio_event,
+          creator: another_user, audio_recording: another_audio_recording, is_reference: is_reference
+        )
+      end
+    end
+
+    it 'are accessible with a no access user' do
+      body = {
+        filter: {
+          'start_time_seconds' => {
+            gt: 0
+          },
+          'end_time_seconds' => {
+            lt: 10
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(no_access_user)
+
+      expect_success
+      expect_number_of_items(2)
+      expect(api_data).to include(
+        a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8, is_reference: true)
+      ).exactly(2).times
     end
   end
 end
