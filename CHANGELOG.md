@@ -1,5 +1,22 @@
 # Changelog
 
+## [12.10.1](https://github.com/QutEcoacoustics/baw-server/tree/12.10.1) (2025-02-28)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.9.3...12.10.1)
+
+**Implemented enhancements:**
+
+- audio\_event `channel` property should be writable [\#717](https://github.com/QutEcoacoustics/baw-server/issues/717)
+- Adds channel to audio event permitted params [\#720](https://github.com/QutEcoacoustics/baw-server/pull/720) ([andrew-1234](https://github.com/andrew-1234))
+
+**Closed issues:**
+
+- New provenance model & route [\#651](https://github.com/QutEcoacoustics/baw-server/issues/651)
+
+## [12.9.3](https://github.com/QutEcoacoustics/baw-server/tree/12.9.3) (2025-02-25)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.9.1...12.9.3)
+
 ## [12.9.1](https://github.com/QutEcoacoustics/baw-server/tree/12.9.1) (2025-02-21)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.8.4...12.9.1)
