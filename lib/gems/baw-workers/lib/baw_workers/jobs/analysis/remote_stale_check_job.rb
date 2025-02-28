@@ -50,7 +50,7 @@ module BawWorkers
           # then for each job item check it
           stale_count = 0
           item_ids.each_with_index do |item_id, index|
-            stale = logger.debug("Checking analysis job item #{item_id}") {
+            stale = logger.measure_debug("Checking analysis job item #{item_id}") {
               check_item(item_id)
             }
 
