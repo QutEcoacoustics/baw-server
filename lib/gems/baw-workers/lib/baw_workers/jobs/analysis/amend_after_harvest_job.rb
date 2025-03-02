@@ -35,7 +35,7 @@ module BawWorkers
           ].flatten
 
           jobs.each_with_index do |analysis_job, index|
-            report_progress(index, jobs.size)
+            report_progress(index + 1, jobs.size)
             amend_job(analysis_job)
           end
         end

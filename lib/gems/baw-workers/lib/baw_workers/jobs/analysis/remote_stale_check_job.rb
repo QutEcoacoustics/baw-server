@@ -56,7 +56,7 @@ module BawWorkers
 
             stale_count += 1 if stale
 
-            report_progress(index, total)
+            report_progress(index + 1, total)
           end
 
           completed!("Checked #{total} jobs, #{stale_count} were marked as finished, sleeping now")

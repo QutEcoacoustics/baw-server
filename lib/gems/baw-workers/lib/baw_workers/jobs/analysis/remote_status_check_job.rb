@@ -54,7 +54,7 @@ module BawWorkers
               check_item(item_id)
             end
 
-            report_progress(index, total) if (index % 10).zero?
+            report_progress(index + 1, total) if (index % 10).zero?
           end
 
           completed!("Finished #{total} jobs, sleeping now")
