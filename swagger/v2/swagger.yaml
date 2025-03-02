@@ -1652,7 +1652,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.9.3 from http://web:3000.
+                  Version 12.10.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1692,7 +1692,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.9.3"
+                Write-Information "Acoustic Workbench downloader script version 12.10.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1874,7 +1874,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.9.3 from http://web:3000.
+                  Version 12.10.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1914,7 +1914,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.9.3"
+                Write-Information "Acoustic Workbench downloader script version 12.10.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4722,7 +4722,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: blPW_cxz7ptIYn8llnno1t07gH8e5elyfRnH7O84YKE
+                  auth_token: FEqVHxVxf6uIqpaGSiaKx_ArpwDDU8FgHQtReknwtn4
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4778,7 +4778,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: v5TAaWCEycT-ADigyi-Vtv9aDRayAIXgUHMcc6UoCJ0
+                  auth_token: LHTPR-p8k4uStWLagBgZcW1Lmk9bFDj17_SD_QrBsms
                   user_name: Admin
                   user_id: 1
               schema:
