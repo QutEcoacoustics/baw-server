@@ -24,7 +24,7 @@ module BawWorkers
       TEMP_DIR = :temp_dir
       # the basename of the source audio file
       SOURCE_BASENAME = :source_basename
-      # the basename of the configuration file
+      # the basename of the configuration file.
       CONFIG_BASENAME = :config_basename
       # the source audio file to process - this is the full path to the file
       SOURCE = :source
@@ -60,6 +60,12 @@ module BawWorkers
       REQUIRED_COMMAND_PLACEHOLDERS = [
         [SOURCE_DIR, SOURCE],
         [OUTPUT_DIR]
+      ].freeze
+
+      CONFIG_PLACEHOLDERS = [
+        CONFIG_DIR,
+        CONFIG_BASENAME,
+        CONFIG
       ].freeze
 
       module_function

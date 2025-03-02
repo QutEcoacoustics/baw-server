@@ -72,6 +72,9 @@ class Script < ApplicationRecord
   validate :check_executable_command
   validate :executable_command_has_safe_characters
 
+  validate :settings_are_consistent
+  validate :executable_command_does_not_use_settings_when_not_provided
+
   # A filesystem safe version of a name.
   # E.g. "Analysis Programs Acoustic Indices" -> "ap-indices"
   # @!attribute [rw] analysis_identifier
@@ -352,6 +355,30 @@ class Script < ApplicationRecord
     return unless executable_command.match?(UNSAFE_EXECUTABLE_COMMAND_CHARACTERS)
 
     errors.add(:executable_command, 'contains unsafe characters')
+  end
+
+  def executable_command_does_not_use_settings_when_not_provided
+    return if executable_settings.present?
+
+    config_tokens = BawWorkers::BatchAnalysis::CommandTemplater::CONFIG_PLACEHOLDERS
+
+    regex = "{#{config_tokens.join('|')}}"
+
+    return unless executable_command.match?(regex)
+
+    errors.add(:executable_command,
+      "contains one of #{config_tokens.format_inline_list} but no settings are provided")
+  end
+
+  def settings_are_consistent
+    if executable_settings.present? && executable_settings_name.present? && executable_settings_media_type.present?
+      return
+    end
+
+    # we want to allow empty but present settings, but the others must have non-blank values
+    return if executable_settings.nil? && executable_settings_name.blank? && executable_settings_media_type.blank?
+
+    errors.add(:base, 'executable settings, name, and media type must all be present or all be blank')
   end
 
   def set_group_id

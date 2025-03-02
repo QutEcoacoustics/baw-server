@@ -61,6 +61,27 @@ describe Script do
   it { is_expected.to validate_length_of(:analysis_identifier).is_at_least(2).is_at_most(255) }
   it { is_expected.to validate_length_of(:executable_command).is_at_least(2) }
 
+  describe 'settings' do
+    it 'validates that if settings name is nil, then settings and media type is also nil' do
+      script = build(:script, executable_settings_name: nil, executable_settings_media_type: nil,
+        executable_settings: 'some settings')
+      expect(script).not_to be_valid
+      expect(script.errors[:base]).to eq ['executable settings, name, and media type must all be present or all be blank']
+    end
+
+    it 'validates that if settings name is nil, then a command that uses a config template placeholder will not be considered valid' do
+      script = build(
+        :script,
+        executable_settings_name: nil,
+        executable_settings_media_type: nil,
+        executable_settings: nil,
+        executable_command: 'echo "{config}" "{source}" "{output_dir}"'
+      )
+      expect(script).not_to be_valid
+      expect(script.errors[:executable_command]).to eq ['contains one of `config_dir`, `config_basename`, `config` but no settings are provided']
+    end
+  end
+
   describe 'analysis identifier' do
     [
       ['aa', true],

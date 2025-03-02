@@ -348,7 +348,7 @@ module BawWorkers
           source_basename: source_name,
           config_basename: config_name,
           source: SOURCE_DIR / source_name,
-          config: CONFIG_DIR / config_name,
+          config: config_name.nil? ? nil : CONFIG_DIR / config_name,
           latitude: audio_recording.site.latitude,
           longitude: audio_recording.site.longitude,
           timestamp: audio_recording.recorded_date,
@@ -387,10 +387,13 @@ module BawWorkers
       # @param name [String]
       # @return [String]
       def format_config(config, name)
-        return '' if config.blank?
+        # important distinction:
+        #   if name is set and config is nil, we still want to create an empty file
+        #   only if name is nil, then we don't want to create a file
+        return '' if name.blank?
 
         # embed the config in a safe way - you can't break out of an encoding
-        encoded = Base64.encode64(config)
+        encoded = Base64.encode64(config || '')
         config_delimiter = "CONFIG#{Random.alphanumeric(64)}"
 
         # https://linuxize.com/post/bash-heredoc/

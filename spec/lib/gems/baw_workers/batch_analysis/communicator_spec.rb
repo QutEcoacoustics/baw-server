@@ -100,6 +100,49 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
     expect(templated_script).to include('monkey://banana:6969')
   end
 
+  describe 'settings' do
+    before do
+      AnalysisJobsScript
+        .where(script_id: analysis_jobs_item.script_id, analysis_job_id: analysis_jobs_item.analysis_job_id)
+        .first
+        .delete
+    end
+
+    it 'writes an empty config file if the settings are nil' do
+      executable_command = <<~BASH
+        echo '{source_dir} {output_dir}'
+        test -f "{config}" && echo 'config exists' || echo 'config does not exist'
+        echo "config file size: $(stat -c '%s' "{config}")"
+      BASH
+      script.update!(executable_settings: nil, executable_command: executable_command)
+
+      communicator = BawWorkers::BatchAnalysis::Communicator.new
+      id = communicator.submit_job(analysis_jobs_item).value!
+      release_all_held_pbs_jobs
+      wait_for_pbs_job(id)
+
+      log = analysis_jobs_item.results_job_log_path.read
+      expect(log).to include('config exist')
+      expect(log).to include('config file size: 0')
+    end
+
+    it 'omits the settings file if the name is nil' do
+      executable_command = <<~BASH
+        echo '{source_dir} {output_dir}'
+        test -f "{config}" && echo 'config exists' || echo 'config does not exist'
+      BASH
+      script.update!(executable_settings_name: nil, executable_command:)
+
+      communicator = BawWorkers::BatchAnalysis::Communicator.new
+      id = communicator.submit_job(analysis_jobs_item).value!
+      release_all_held_pbs_jobs
+      wait_for_pbs_job(id)
+
+      log = analysis_jobs_item.results_job_log_path.read
+      expect(log).to include('config does not exist')
+    end
+  end
+
   # ok what are we testing here?
   #  - A job is submitted to the batch queue
   #  - The job is enqueued according to the batch queue
