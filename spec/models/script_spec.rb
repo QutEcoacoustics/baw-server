@@ -69,6 +69,18 @@ describe Script do
       expect(script.errors[:base]).to eq ['executable settings, name, and media type must all be present or all be blank']
     end
 
+    it 'allows an empty settings file' do
+      script = build(:script, executable_settings_name: 'settings.txt', executable_settings_media_type: 'text/plain',
+        executable_settings: '')
+
+      expect(script).to be_valid
+
+      script.executable_settings = nil
+
+      expect(script).not_to be_valid
+      expect(script.errors[:base]).to eq ['executable settings, name, and media type must all be present or all be blank']
+    end
+
     it 'validates that if settings name is nil, then a command that uses a config template placeholder will not be considered valid' do
       script = build(
         :script,

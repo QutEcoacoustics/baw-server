@@ -358,22 +358,20 @@ class Script < ApplicationRecord
   end
 
   def executable_command_does_not_use_settings_when_not_provided
-    return if executable_settings.present?
+    return unless executable_settings.nil?
 
     config_tokens = BawWorkers::BatchAnalysis::CommandTemplater::CONFIG_PLACEHOLDERS
 
     regex = "{#{config_tokens.join('|')}}"
 
-    return unless executable_command.match?(regex)
+    return unless executable_command&.match?(regex)
 
     errors.add(:executable_command,
       "contains one of #{config_tokens.format_inline_list} but no settings are provided")
   end
 
   def settings_are_consistent
-    if executable_settings.present? && executable_settings_name.present? && executable_settings_media_type.present?
-      return
-    end
+    return if !executable_settings.nil? && executable_settings_name.present? && executable_settings_media_type.present?
 
     # we want to allow empty but present settings, but the others must have non-blank values
     return if executable_settings.nil? && executable_settings_name.blank? && executable_settings_media_type.blank?
