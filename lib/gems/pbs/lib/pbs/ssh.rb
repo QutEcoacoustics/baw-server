@@ -184,6 +184,13 @@ module PBS
         check_host_ip: false,
         # do not read any config from system config files
         config: false,
+        # the host key algorithm (or algorithms) to use
+        host_key: [
+          # speculative fix for connecting to aqua
+          'rsa-sha2-512',
+          'rsa-sha2-256',
+          'ssh-rsa'
+        ],
         # set to true to send a keepalive packet to the SSH server when there's no traffic between the SSH server and
         # Net::SSH client for the keepalive_interval seconds. Defaults to false.
         keepalive: true,
