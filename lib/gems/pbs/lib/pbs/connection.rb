@@ -46,6 +46,9 @@ module PBS
 
     attr_reader :instance_tag
 
+    # @return [Pathname]
+    attr_reader :bin_path
+
     # @param settings [BawApp::BatchAnalysisSettings]
     # @param instance_tag [String] a tag to identify this instance of the acoustic workbench
     def initialize(settings, instance_tag)
@@ -59,6 +62,7 @@ module PBS
       @settings = settings
       @logger = SemanticLogger[PBS::Connection]
       @instance_tag = instance_tag
+      @bin_path = Pathname(settings.pbs.bin_path || '')
     end
 
     # Fetches all statuses for the connection user.
@@ -68,11 +72,11 @@ module PBS
       raise ArgumentError, '`take` must be positive Integer' unless take.nil? || (take.is_a?(Integer) && take.positive?)
 
       username = settings.connection.username
-      qselect = "qselect -x -u #{username}"
+      qselect = "#{pbs_bin('qselect')} -x -u #{username}"
       skip = skip.present? ?  " | tail -n +#{skip + 1}" : ''
       take = take.present? ?  " | head -n #{take}" : ''
       filter = qselect + skip + take
-      command = "qstat -x -f -F JSON $(#{filter})"
+      command = "#{pbs_bin('qstat')} -x -f -F JSON $(#{filter})"
 
       execute_safe(command).fmap { |stdout, _stderr|
         parse_status_payload(stdout)
@@ -86,7 +90,7 @@ module PBS
     def fetch_status(job_id_or_name)
       raise ArgumentError, 'job_id_or_name must be a String' unless job_id_or_name.is_a?(String)
 
-      command = "qstat -x -f -F JSON #{job_id_or_name}"
+      command = "#{pbs_bin('qstat')} -x -f -F JSON #{job_id_or_name}"
 
       execute_safe(command).fmap { |stdout, _stderr|
         job_list = parse_status_payload(stdout)
@@ -104,7 +108,7 @@ module PBS
     # Fetches information about the queues currently running on the cluster
     # @return [::Dry::Monads::Result<::PBS::Models::QueueList>]
     def fetch_all_queue_statuses
-      command = 'qstat -Q -f -F JSON'
+      command = "#{pbs_bin('qstat')} -Q -f -F JSON"
 
       execute_safe(command).fmap { |stdout, _stderr|
         queue_transformer.call(stdout)
@@ -209,7 +213,7 @@ module PBS
     # @param job_id [String] the job id
     # @return [::Dry::Monads::Result<Boolean>] true if the job exists, false if not
     def job_exists?(job_id)
-      command = "qstat -x #{job_id} > /dev/null"
+      command = "#{pbs_bin('qstat')} -x #{job_id} > /dev/null"
       status, stdout, stderr = execute(command, success_statuses: [0, UNKNOWN_JOB_ID_STATUS])
 
       return Success(true) if status&.zero?
@@ -230,9 +234,9 @@ module PBS
     def cancel_job(job_id, wait: false, completed: false, force: false)
       options = completed ? '-x' : ''
       options += ' -W force' if force
-      command = "qdel #{options} #{job_id}"
+      command = "#{pbs_bin('qdel')} #{options} #{job_id}"
 
-      command += " && while qstat '#{job_id}' &> /dev/null; do echo 'waiting' ; sleep 0.1; done" if wait
+      command += " && while #{pbs_bin('qstat')} '#{job_id}' &> /dev/null; do echo 'waiting' ; sleep 0.1; done" if wait
 
       # if the job has already finished by the time we get up to cancelling it
       # we don't want to consider it an error. Just be graceful - it has ended.
@@ -254,7 +258,7 @@ module PBS
 
       subset = job_ids.slice!(0, 100)
 
-      command = "qdel -x -W force #{subset.join(' ')}"
+      command = "#{pbs_bin('qdel')} -x -W force #{subset.join(' ')}"
 
       execute_safe(command, fail_message: "deleting jobs #{subset}", success_statuses: QDEL_GRACEFUL_STATUSES)
     end
@@ -273,7 +277,7 @@ module PBS
 
       # we don't select finished jobs (-x)
       # but we still allow qdel to deleted them to avoid races
-      command = "qselect -x -P #{project} -u #{settings.connection.username} | xargs --no-run-if-empty qdel -x -W force"
+      command = "#{pbs_bin('qselect')} -x -P #{project} -u #{settings.connection.username} | xargs --no-run-if-empty #{pbs_bin('qdel')} -x -W force"
 
       execute_safe(command, fail_message: "deleting jobs by project #{project}",
         success_statuses: QDEL_GRACEFUL_STATUSES)
@@ -283,7 +287,7 @@ module PBS
     # @param job_id [String] the job id
     # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
     def release_job(job_id)
-      command = "qrls #{job_id}"
+      command = "#{pbs_bin('qrls')} #{job_id}"
 
       execute_safe(command, fail_message: "releasing job #{job_id}")
     end
@@ -293,7 +297,7 @@ module PBS
     def clean_all_jobs
       # select jobs, including historical, by user which we're connecting with
       # then delete each, including historical
-      command = "qselect -x -u #{settings.connection.username} | xargs --no-run-if-empty qdel -x -W force"
+      command = "#{pbs_bin('qselect')} -x -u #{settings.connection.username} | xargs --no-run-if-empty #{pbs_bin('qdel')} -x -W force"
 
       execute_safe(command, fail_message: 'cleaning all jobs')
     end
@@ -302,7 +306,7 @@ module PBS
     # Even finished jobs are counted against user limits
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_enqueued_count
-      command = "qselect -u #{settings.connection.username} | wc -l"
+      command = "#{pbs_bin('qselect')} -u #{settings.connection.username} | wc -l"
 
       execute_safe(command).fmap { |stdout, _stderr|
         stdout&.strip.to_i
@@ -312,7 +316,7 @@ module PBS
     # Gets the number of jobs currently in the queued states
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_queued_count
-      command = "qselect -s Q -u #{settings.connection.username} | wc -l"
+      command = "#{pbs_bin('qselect')} -s Q -u #{settings.connection.username} | wc -l"
 
       execute_safe(command).fmap { |stdout, _stderr|
         stdout&.strip.to_i
@@ -322,7 +326,7 @@ module PBS
     # Gets the number of jobs currently running for the connection user
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_running_count
-      command = "qselect -s R -u #{settings.connection.username} | wc -l"
+      command = "#{pbs_bin('qselect')} -s R -u #{settings.connection.username} | wc -l"
 
       execute_safe(command).fmap { |stdout, _stderr|
         stdout&.strip.to_i
@@ -337,7 +341,7 @@ module PBS
       # the `u:PBS_GENERIC` is a limit for generic users
       # TODO: do I need to cater for different sorts of limits?
       #set server max_queued = [u:PBS_GENERIC=50000]
-      command = "qmgr -c 'list server max_queued'"
+      command = "#{pbs_bin('qmgr')} -c 'list server max_queued'"
 
       status, stdout, _stderr = execute(command)
 
@@ -360,7 +364,7 @@ module PBS
     # @return [::Dry::Monads::Result<Integer,nil>]
     def fetch_max_array_size
       #set server max_array_size = 20000
-      command = "qmgr -c 'list server max_array_size'"
+      command = "#{pbs_bin('qmgr')} -c 'list server max_array_size'"
 
       status, stdout, _stderr = execute(command)
 
@@ -519,7 +523,7 @@ module PBS
 
       # -P <project_name>
       # -N <job_name>
-      "qsub -N '#{job_name}' -P #{project} #{queue_string} #{io} #{mail} #{resource_string} #{additional_attributes_string} #{env_string}"
+      "#{pbs_bin('qsub')} -N '#{job_name}' -P #{project} #{queue_string} #{io} #{mail} #{resource_string} #{additional_attributes_string} #{env_string}"
     end
 
     def default_additional_attributes
@@ -537,6 +541,10 @@ module PBS
     # @return [String]
     def log_name(script_path)
       "#{script_path.basename}.log"
+    end
+
+    def pbs_bin(command)
+      @bin_path / command
     end
 
     # Creates a project name from the instance tag and a suffix

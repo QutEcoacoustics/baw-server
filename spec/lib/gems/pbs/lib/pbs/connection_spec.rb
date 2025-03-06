@@ -50,6 +50,26 @@ describe PBS::Connection do
     expect(connection.test_connection).to be true
   end
 
+  describe 'bin_path' do
+    it 'does not append a path prefix if bin_path is nil' do
+      settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(bin_path: nil))
+      connection = PBS::Connection.new(settings, 'tag')
+
+      allow(connection).to receive(:execute_safe).and_return(Dry::Monads::Result.pure(['0', '']))
+      connection.fetch_queued_count
+      expect(connection).to have_received(:execute_safe).with('qselect -s Q -u pbsuser | wc -l')
+    end
+
+    it 'appends a path prefix if bin_path is set' do
+      settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(bin_path: '/opt/pbs/bin'))
+      connection = PBS::Connection.new(settings, 'tag')
+
+      allow(connection).to receive(:execute_safe).and_return(Dry::Monads::Result.pure(['0', '']))
+      connection.fetch_queued_count
+      expect(connection).to have_received(:execute_safe).with('/opt/pbs/bin/qselect -s Q -u pbsuser | wc -l')
+    end
+  end
+
   describe 'commands' do
     include Dry::Monads[:result]
     include_context 'shared_test_helpers'

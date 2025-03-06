@@ -35,6 +35,11 @@ module BawApp
       # @!attribute [r] primary_group
       #   @return [String,nil]
       attribute :primary_group, ::BawApp::Types::String
+
+      # @!attribute [r] bin_path
+      #   @return [String,nil]
+      #   @example '/opt/pbs/bin'
+      attribute :bin_path, ::BawApp::Types::String.optional
     end
 
     # @!attribute [r] connection
