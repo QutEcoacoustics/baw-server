@@ -238,12 +238,12 @@ module Api
       error_hash = {}
       error_hash[:details] = opts[:error_details] if opts[:error_details].present? # string
       error_hash[:links] = response_error_links(opts[:error_links]) if opts[:error_links].present? # array
-      error_hash[:info] = opts[:error_info] if [:error_info].present? # hash or string or array
+      error_hash[:info] = opts[:error_info] if opts[:error_info].present? # hash or string or array
       error_hash
     end
 
-    # @param [mixed] link_ids either a symbol that corresponds to predefined links
-    #                         or a hash with the keys :text and :url
+    # @param [Symbol, Hash] link_ids either a symbol that corresponds to
+    # predefined links or a hash with the keys :text and :url
     def response_error_links(link_ids)
       result = {}
       if link_ids.present?
