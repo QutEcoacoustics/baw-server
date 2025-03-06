@@ -58,6 +58,31 @@ describe 'Common behaviour' do
     end
   end
 
+  describe 'conflicting parameters' do
+    create_entire_hierarchy
+
+    let(:payload) {
+      {
+        verification: {
+          tag_id: tag.id,
+          audio_event_id: audio_event.id,
+          confirmed: Verification::CONFIRMATION_TRUE
+        }
+      }
+    }
+
+    before do
+      create(:verification, audio_event:, creator: writer_user, confirmed: Verification::CONFIRMATION_TRUE)
+    end
+
+    it 'conflicting parameters should return a useful error message' do
+      post '/verifications', params: payload, **api_with_body_headers(writer_token)
+
+      error_info = { unique_violation: { audio_event_id: audio_event.id, tag_id: tag.id, creator_id: writer_user.id } }
+      expect_error(:conflict, 'The item must be unique.', error_info)
+    end
+  end
+
   describe 'filtering tests' do
     create_entire_hierarchy
 

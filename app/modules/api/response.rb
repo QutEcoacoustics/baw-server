@@ -242,8 +242,8 @@ module Api
       error_hash
     end
 
-    # @param [mixed] link_ids either a symbol that corresponds to predefined links
-    #                         or a hash with the keys :text and :url
+    # @param [Symbol, Hash] link_ids either a symbol that corresponds to
+    # predefined links or a hash with the keys :text and :url
     def response_error_links(link_ids)
       result = {}
       if link_ids.present?
