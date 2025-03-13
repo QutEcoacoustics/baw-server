@@ -40,6 +40,37 @@ describe 'verifications' do
           run_test!
         end
       end
+
+      put('create or update verification') do
+        model_sent_as_parameter_in_body
+
+        response(201, 'successful') do
+          schema_for_single
+          auto_send_model
+          run_test!
+        end
+
+        response(200, 'successful') do
+          schema_for_single
+
+          let(:existing_verification) {
+            create(:verification, audio_event:, tag:, creator: admin_user)
+          }
+
+          send_model do
+            {
+              'verification' => {
+                audio_event_id: existing_verification.audio_event_id,
+                tag_id: existing_verification.tag_id,
+                confirmed: Verification::CONFIRMATION_FALSE
+              }
+            }
+          end
+          run_test! do
+            expect_id_matches(existing_verification)
+          end
+        end
+      end
     end
 
     path '/verifications/new' do

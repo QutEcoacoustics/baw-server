@@ -3,13 +3,16 @@
 # Example
 #        it_behaves_like 'our api routing patterns', '/bookmarks', 'bookmarks', [:filterable, :capable, :invocable, :statistical]
 RSpec.shared_examples 'our api routing patterns' do |path, controller, concerns, extra_options = {}, example_invocable = 'start'|
-  raise 'unknown concerns' if (concerns - [:filterable, :capable, :invocable, :statistical, :archivable]).count > 0
+  raise 'unknown concerns' if (
+    concerns - [:filterable, :capable, :invocable, :statistical, :archivable, :upsertable]
+  ).count > 0
 
   let(:filterable) { concerns.include?(:filterable) ? :to : :not_to }
   let(:capable) { concerns.include?(:capable) ? :to : :not_to }
   let(:invocable) { concerns.include?(:invocable) ? :to : :not_to }
   let(:statistical) { concerns.include?(:statistical) ? :to : :not_to }
   let(:archivable) { concerns.include?(:archivable) ? :to : :not_to }
+  let(:upsertable) { concerns.include?(:upsertable) ? :to : :not_to }
 
   it {
     expect(get("#{path}/filter")).send(filterable, route_to(
@@ -74,6 +77,12 @@ RSpec.shared_examples 'our api routing patterns' do |path, controller, concerns,
   it {
     expect(post("#{path}/1/recover")).send(archivable, route_to(
       controller:, action: 'recover', id: '1', format: 'json', **extra_options
+    ))
+  }
+
+  it {
+    expect(put(path)).send(upsertable, route_to(
+      controller:, action: 'create_or_update', format: 'json', **extra_options
     ))
   }
 end

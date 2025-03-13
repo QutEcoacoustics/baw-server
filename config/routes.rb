@@ -536,6 +536,11 @@ Rails.application.routes.draw do
     post 'recover', on: :member, defaults: { format: 'json' }
   end
 
+  # https://github.com/QutEcoacoustics/baw-server/wiki/API:-Spec#upsert
+  concern :upsertable do
+    put '', on: :collection, defaults: { format: 'json' }, action: :create_or_update
+  end
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
@@ -765,7 +770,7 @@ Rails.application.routes.draw do
   resources :verifications, except: [:edit],
     as: 'shallow_verifications',
     defaults: { format: 'json' },
-    concerns: [:filterable]
+    concerns: [:filterable, :upsertable]
 
   # API audio_event create
   resources :audio_events, only: [], defaults: { format: 'json' }, concerns: [:filterable] do

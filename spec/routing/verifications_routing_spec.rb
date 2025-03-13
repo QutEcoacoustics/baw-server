@@ -65,9 +65,8 @@ describe VerificationsController, type: :routing do
 
     # negative cases
     it { expect(post('/verifications/1')).to route_to('errors#route_error', requested_route: 'verifications/1') }
-    it { expect(put('/verifications')).to route_to('errors#route_error', requested_route: 'verifications') }
     it { expect(delete('/verifications')).to route_to('errors#route_error', requested_route: 'verifications') }
 
-    it_behaves_like 'our api routing patterns', '/verifications', 'verifications', [:filterable]
+    it_behaves_like 'our api routing patterns', '/verifications', 'verifications', [:filterable, :upsertable]
   end
 end

@@ -66,6 +66,7 @@ describe 'Verification permissions (shallow)' do
     #  creating a new tag to satisfy uniqueness constraint
     { audio_event_id: audio_event.id, tag_id: create(:tag).id }
   }
+
   send_update_body do
     [{
       'verification' => {
@@ -105,16 +106,34 @@ describe 'Verification permissions (shallow)' do
     end
   end
 
+  with_custom_action(
+    :create_or_update,
+    path: '',
+    verb: :put,
+    body: lambda {
+      [{
+        'verification' => {
+          confirmed: Verification::CONFIRMATION_TRUE,
+          audio_event_id: audio_event.id,
+          tag_id: create(:tag).id
+        }
+      }, :json]
+    },
+    expect: lambda { |_user, _action|
+      expect(api_response).to include({
+        summary: a_hash
+      })
+    }
+  )
   # `writer` user SHOULD be able to DELETE (because they are the verification creator)
   # `writer` user SHOULD be able to PUT (update) (because they are the verification creator)
-  the_users :admin, :writer,
-    can_do: everything
+  the_users :admin, :writer, can_do: everything
 
   # `another_writer` user should NOT be able to DELETE (because they are not the verification creator)
   # `another_writer` user should NOT be able to PUT (update) (because they are not the verification creator)
-  the_user :another_writer, can_do: (reading + creation)
+  the_user :another_writer, can_do: (reading + creation + [:create_or_update])
 
-  the_user :reader, can_do: reading, and_cannot_do: writing
+  the_user :reader, can_do: reading, and_cannot_do: (writing + [:create_or_update])
 
   # `owner` user SHOULD be able to DELETE (writer user's verification), (because they are a project owner)
   # `owner` user NOT be able to PUT (update) (writer user's verification), (because they are NOT the creator)
