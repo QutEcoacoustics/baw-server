@@ -164,6 +164,8 @@ Style/RedundantRegexpCharacterClass:
   Enabled: true
 Style/RedundantRegexpEscape:
   Enabled: true
+Style/SafeNavigationChainLength:
+  Enabled: false
 Style/SlicingWithRange:
   Enabled: true
 Style/SymbolArray:

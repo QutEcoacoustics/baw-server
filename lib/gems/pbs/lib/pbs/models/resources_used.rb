@@ -13,28 +13,28 @@ module PBS
     #   },
     class ResourcesUsed < BaseStruct
       # @!attribute [r] cpupercent
-      #   @return [Time]
-      attribute :cpupercent, ::BawApp::Types::Coercible::Float
+      #   @return [Time,nil]
+      attribute :cpupercent, ::BawApp::Types::Coercible::Float.optional.default(nil)
 
       # @!attribute [r] cput
       #   @return [Float]
-      attribute :cput, ::BawApp::Types::Sexagesimal
+      attribute :cput, ::BawApp::Types::Sexagesimal.optional.default(nil)
 
       # @!attribute [r] mem
       #   @return [Integer]
-      attribute :mem, ::BawApp::Types::PbsByteFormat
+      attribute :mem, ::BawApp::Types::PbsByteFormat.optional.default(nil)
 
       # @!attribute [r] ncpus
       #   @return [String]
-      attribute :ncpus, ::BawApp::Types::Strict::Integer
+      attribute :ncpus, ::BawApp::Types::Strict::Integer.optional.default(nil)
 
       # @!attribute [r] vmem
       #   @return [Integer]
-      attribute :vmem, ::BawApp::Types::PbsByteFormat
+      attribute :vmem, ::BawApp::Types::PbsByteFormat.optional.default(nil)
 
       # @!attribute [r] walltime
       #   @return [Float]
-      attribute :walltime, ::BawApp::Types::Sexagesimal
+      attribute :walltime, ::BawApp::Types::Sexagesimal.optional.default(nil)
     end
   end
 end

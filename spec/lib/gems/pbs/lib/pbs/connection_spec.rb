@@ -107,6 +107,41 @@ describe PBS::Connection do
       expect(result.value!).to be_finished
     end
 
+    # https://github.com/QutEcoacoustics/baw-server/issues/729
+    it 'can handle fetching a job status which does not tell us about all the resources used' do
+      submit = connection.send(:execute_safe, 'echo "/usr/bin/sleep 2 && echo \'hello\'" | qsub -')
+      expect(submit).to be_success
+
+      submit_id = submit.value!.first.strip
+      wait_for_pbs_job(submit_id)
+
+      allow(connection).to receive(:execute_safe).and_wrap_original do |m, *args, **keyword_args|
+        original_result = m.call(*args, **keyword_args)
+
+        next original_result unless args.first.include?('qstat')
+
+        expect(original_result).to be_success
+        stdout, stderr = original_result.value!
+
+        # in production, we found instances where ncpus, vmem, and walltime were not reported by qstat under some conditions
+        stdout = stdout.gsub(
+          /"resources_used":{[^}]+}/,
+          '"resources_used":{"cpupercent":0,"cput":"00:00:00","mem":"0b"}'
+        )
+
+        Success([stdout, stderr])
+      end
+      result = connection.fetch_status(submit_id)
+
+      # @type [::PBS::Models::Job]
+      job = result.value!
+
+      expect(job.resources_used.ncpus).to be_nil
+      expect(job.resources_used.vmem).to be_nil
+      expect(job.resources_used.walltime).to be_nil
+      expect(job.resources_used.cpupercent).to eq 0
+    end
+
     it 'can handle searching for a job that does not exist' do
       result = connection.fetch_status('9999')
 
