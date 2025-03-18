@@ -294,6 +294,29 @@ module Api
       set_resource(resource)
     end
 
+    # Find or create a resource and set its attributes using the provided parameters.
+    # For existing resources, updates attributes excluding find_keys.
+    # For new resources, sets all provided attributes.
+    # @param [ActionController::Parameters] upsert_params
+    # @param [Array<Symbol>] find_keys The keys to use from upsert_params for finding the resource
+    def do_load_or_new_resource(upsert_params, find_keys:)
+      raise ArgumentError, 'find_keys must not be empty' if find_keys.blank?
+      raise ArgumentError, 'find_keys must contain symbols' unless find_keys.all?(Symbol)
+
+      parameters = { Archivable::ARCHIVE_ACCESS_PARAM => true }
+      query = Filter::Single.new(parameters, resource_class, filter_settings).query
+
+      resource = query.find_by(upsert_params.slice(*find_keys))
+
+      if resource.nil?
+        do_new_resource
+        do_set_attributes(upsert_params)
+      else
+        set_resource(resource)
+        do_set_attributes(upsert_params.except(*find_keys))
+      end
+    end
+
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
       action = action_name_sym(custom_action_name)
 

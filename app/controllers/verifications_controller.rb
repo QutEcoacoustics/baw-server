@@ -64,6 +64,20 @@ class VerificationsController < ApplicationController
     end
   end
 
+  # PUT /verifications
+  def create_or_update
+    do_load_or_new_resource(verification_params, find_keys: [:audio_event_id, :tag_id])
+    do_authorize_instance
+
+    return respond_change_fail unless @verification.save
+
+    if @verification.previously_new_record?
+      respond_create_success(shallow_verification_url(@verification))
+    else
+      respond_show
+    end
+  end
+
   # Handled in Archivable
   # DELETE /verifications/:id
 

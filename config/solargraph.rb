@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Instructions: https://solargraph.org/guides/rails
 # sourced from: https://gist.githubusercontent.com/castwide/28b349566a223dfb439a337aea29713e/raw/d1d4462b92f411b378d87a39482b830e012513bd/rails.rb
 
@@ -13,6 +14,8 @@
 # @!parse
 #   class ActionController::Base
 #     include ActionController::MimeResponds
+#     include ActionController::Parameters
+#     include ActionController::StrongParameters
 #     extend ActiveSupport::Callbacks::ClassMethods
 #     extend AbstractController::Callbacks::ClassMethods
 #   end

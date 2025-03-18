@@ -840,7 +840,7 @@ class Ability
       check_audio_event(user, verification.audio_event.audio_recording.site, verification.audio_event)
     end
 
-    can [:create, :update], Verification do |verification|
+    can [:create, :update, :create_or_update], Verification do |verification|
       check_model(verification)
       Access::Core.check_orphan_site!(verification.audio_event.audio_recording.site)
 
