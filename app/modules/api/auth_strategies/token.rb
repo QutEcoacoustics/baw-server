@@ -16,6 +16,10 @@ module Api
       #   but our tests use all sorts of random strings and I don't want to fix every
       #   variant we have....
       HEADER_FORMAT = /Token token="(.+)"/
+      HEADER_KEY = /Token/i
+      INVALID_TOKEN = 'Invalid authentication token'
+      INCORRECT_FORMAT = 'Incorrect token format'
+      EXPIRED_TOKEN = 'Expired authentication token'
 
       def valid?
         !parse_token.nil?
@@ -23,21 +27,24 @@ module Api
 
       def authenticate!
         token = parse_token
-        return if token.nil?
+        return token unless token.is_a?(String)
 
-        return fail!('Invalid authentication token') if token.blank?
+        return fail!(INVALID_TOKEN) if token.blank?
 
-        user = User.find_by(authentication_token: token)
+        user = User.where.not(authentication_token: nil).find_by(authentication_token: token)
 
         # intentionally obscure here, this is a public message.
-        return fail!('Invalid authentication token') if user.nil?
+        return fail!(INVALID_TOKEN) if user.nil?
 
         # Notice how we use Devise.secure_compare to compare the token
         # in the database with the token given in the params, mitigating
         # timing attacks.
         comparison = Devise.secure_compare(user.authentication_token, token)
 
-        return fail!('Invalid authentication token') unless comparison
+        return fail!(INVALID_TOKEN) unless comparison
+
+        # allow access within a rolling window
+        return fail!(EXPIRED_TOKEN) if user.expired_authentication_token?
 
         success! user
       end
@@ -60,14 +67,19 @@ module Api
         request.headers['Authorization']&.to_s
       end
 
-      # @return [String,nil] the bearer token if valid, or nil if the header is not
+      # @return [String,nil,Symbol]
+      #   the bearer token if valid,
+      #   or nil if the header is not
+      #   or a symbol if the header is malformed
       #   in the right format
       def parse_header(header)
         match = HEADER_FORMAT.match(header)
 
-        return nil unless match
+        return match[1] if match
 
-        match[1]
+        return fail!(INCORRECT_FORMAT) if HEADER_KEY.match(header)
+
+        nil
       end
     end
   end

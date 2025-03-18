@@ -73,11 +73,22 @@ module BawApp
     end
   end
 
+  # Strongly typed settings for the authentication section of our config
+  class AuthenticationSettings < ::Dry::Struct
+    # @!attribute [r] token_rolling_expiration
+    #   @return [Integer]
+    attribute :token_rolling_expiration, ::BawApp::Types::Duration
+  end
+
   # Extensions the Config::Options class and hence also the Settings constant
   module SettingsModule
     # @return [::BawApp::BatchAnalysisSettings]
     def batch_analysis
       @batch_analysis ||= BatchAnalysisSettings.new(super)
+    end
+
+    def authentication
+      @authentication ||= AuthenticationSettings.new(super)
     end
   end
 end
@@ -85,6 +96,8 @@ end
 # For go to definition support in IDE
 # @!parse
 #   class Settings
+#     include BawApp::SettingsModule
+#     extend BawApp::SettingsModule
 #     include BawApp::SettingsModule
 #     extend BawApp::SettingsModule
 #   end
