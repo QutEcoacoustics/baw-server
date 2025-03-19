@@ -172,8 +172,8 @@ devise:
 ##secret_token: some long secret token - at least 30 chars, all random
 ##secret_key_base: some long secret token - at least 30 chars, all random
 authentication:
-#   # how long a user can be inactive before their token expires
-#   # Any auth method will refresh the expiration time.
+   # how long a user can be inactive before their token expires
+   # Any auth method will refresh the expiration time.
    token_rolling_expiration: 86400
 paths:
   original_audios:

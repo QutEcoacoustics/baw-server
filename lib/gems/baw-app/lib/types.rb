@@ -3,6 +3,7 @@
 require 'dry/monads'
 require 'dry-types'
 require 'dry/inflector'
+require 'active_support/duration'
 
 require_relative 'sexagesimal'
 require_relative 'byte_format'
@@ -91,10 +92,10 @@ module BawApp
       ::BawApp::Sexagesimal.parse(value)
     }
 
-    Duration = Constructor(ActiveSupport::Duration) { |value|
+    Duration = Constructor(::ActiveSupport::Duration) { |value|
       next nil if value.blank?
 
-      ActiveSupport::Duration.seconds(value.to_i_strict)
+      ::ActiveSupport::Duration.seconds(value.to_i_strict)
     }
 
     PbsByteFormat = Constructor(Numeric) { |value|
