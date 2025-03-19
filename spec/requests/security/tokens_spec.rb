@@ -175,6 +175,8 @@ describe 'authorization' do
         jwt = Api::Jwt.encode(subject: reader_user.id, expiration: 1.year)
         cookie = baw_session_cookie_value
 
+        start = Time.zone.now
+
         100.times do |i|
           Timecop.travel(increment)
 
@@ -195,6 +197,9 @@ describe 'authorization' do
         end
 
         # by the time we're here, we're already many times past the original expiration time
+        expect(Time.zone.now - start).to be > (Settings.authentication.token_rolling_expiration * 2)
+
+        # but the token is still valid!
         get '/security/user', headers: headers(token: @token), as: :json
         current_token = assert_session_info_response
 

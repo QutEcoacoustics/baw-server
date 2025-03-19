@@ -41,5 +41,10 @@ describe 'authorization' do
       get '/security/user', headers: headers(cookie: baw_session_cookie_value), as: :json
       assert_session_info_response
     end
+
+    it 'errors if using an invalid cookie' do
+      get '/security/user', headers: headers(cookie: '_baw_session=invalid'), as: :json
+      expect_error(:unauthorized, 'You need to log in or register before continuing.')
+    end
   end
 end

@@ -80,7 +80,7 @@ module BawApp
     attribute :token_rolling_expiration, ::BawApp::Types::Duration
   end
 
-  # Extensions the Config::Options class and hence also the Settings constant
+  # Extensions to the Config::Options class and hence also the Settings constant
   module SettingsModule
     # @return [::BawApp::BatchAnalysisSettings]
     def batch_analysis
@@ -96,8 +96,6 @@ end
 # For go to definition support in IDE
 # @!parse
 #   class Settings
-#     include BawApp::SettingsModule
-#     extend BawApp::SettingsModule
 #     include BawApp::SettingsModule
 #     extend BawApp::SettingsModule
 #   end

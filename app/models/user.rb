@@ -350,7 +350,8 @@ class User < ApplicationRecord
 
     last_activity = [current_sign_in_at, last_sign_in_at, last_seen_at].compact.max
 
-    return false if last_activity.blank?
+    # we can have no activity for brand new users, in which case the token is not expired
+    return false if last_activity.nil?
 
     time_since = Time.zone.now - last_activity
     time_since > Settings.authentication.token_rolling_expiration
