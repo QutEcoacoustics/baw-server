@@ -1651,7 +1651,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.10.6 from http://web:3000.
+                  Version 12.12.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1691,7 +1691,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.10.6"
+                Write-Information "Acoustic Workbench downloader script version 12.12.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1873,7 +1873,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.10.6 from http://web:3000.
+                  Version 12.12.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1913,7 +1913,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.10.6"
+                Write-Information "Acoustic Workbench downloader script version 12.12.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2177,6 +2177,7 @@ paths:
                   error: 
                   attempts: 0
                   status: new
+                  result: 
                   transition: queue
                   import_success: 
                   audio_event_import_file_ids:
@@ -2282,6 +2283,7 @@ paths:
                   error: 
                   attempts: 0
                   status: new
+                  result: 
                   transition: queue
                   import_success: 
                   audio_event_import_file_ids:
@@ -2343,6 +2345,7 @@ paths:
                   error: 
                   attempts: 0
                   status: queued
+                  result: 
                   transition: queue
                   import_success: 
                   audio_event_import_file_ids:
@@ -4719,7 +4722,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: gR--XqjpcFimiv9O0cGPbqnGOpcANmdaI7CCYeUvK_o
+                  auth_token: 64YLb7VRLPdVLvknOPe8Uf3wim84mB1tbQCLA64TfAA
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4775,7 +4778,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: Q_0rFfO7hKs65Zz3Tz8PHmU47o4I5fwN2oAZdd83KBo
+                  auth_token: fsxrFVKUFI51ofQu4VxgjmCyQgEkTqK0E9_OX53yOS4
                   user_name: Admin
                   user_id: 1
               schema:
@@ -11637,6 +11640,23 @@ components:
           - cancel
           - retry
           - finish
+          readOnly: true
+        result:
+          type:
+          - 'null'
+          - string
+          enum:
+          - success
+          - failed
+          - killed
+          - cancelled
+          - 
+          readOnly: true
+        used_walltime_seconds:
+          type: integer
+          readOnly: true
+        used_memory_bytes:
+          type: integer
           readOnly: true
         audio_event_import_file_ids:
           type:
