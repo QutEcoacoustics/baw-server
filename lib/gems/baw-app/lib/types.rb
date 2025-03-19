@@ -91,6 +91,12 @@ module BawApp
       ::BawApp::Sexagesimal.parse(value)
     }
 
+    Duration = Constructor(ActiveSupport::Duration) { |value|
+      next nil if value.blank?
+
+      ActiveSupport::Duration.seconds(value.to_i_strict)
+    }
+
     PbsByteFormat = Constructor(Numeric) { |value|
       next nil if value.blank?
 

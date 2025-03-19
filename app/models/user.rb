@@ -323,14 +323,10 @@ class User < ApplicationRecord
     end
   end
 
-  # @see http://stackoverflow.com/a/19071745/31567
-  def self.find_by_authentication_token(authentication_token = nil)
-    where(authentication_token:).first if authentication_token
-  end
-
   def after_database_authentication
-    # reset user token on valid sign in with username/password
-    reset_authentication_token!
+    # Generate a new authentication token if the current one is expired.
+    # We're only here after a successful login from other means.
+    reset_authentication_token! if expired_authentication_token?
   end
 
   def ensure_authentication_token
@@ -347,6 +343,18 @@ class User < ApplicationRecord
   def clear_authentication_token!
     self.authentication_token = nil
     save!
+  end
+
+  def expired_authentication_token?
+    return true if authentication_token.blank?
+
+    last_activity = [current_sign_in_at, last_sign_in_at, last_seen_at].compact.max
+
+    # we can have no activity for brand new users, in which case the token is not expired
+    return false if last_activity.nil?
+
+    time_since = Time.zone.now - last_activity
+    time_since > Settings.authentication.token_rolling_expiration
   end
 
   # Store the current_user id in the thread so it can be accessed by models

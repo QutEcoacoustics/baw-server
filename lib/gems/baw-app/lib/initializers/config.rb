@@ -141,6 +141,12 @@ class BawConfigContract < Dry::Validation::Contract
     end
   }
 
+  Authentication = Dry::Schema.define {
+    required(:authentication).hash do
+      required(:token_rolling_expiration).filled(:integer, gt?: 0)
+    end
+  }
+
   DEPRECATIONS = [
     :api,
     :endpoints
@@ -157,7 +163,8 @@ class BawConfigContract < Dry::Validation::Contract
     PathsConfigSchema,
     BatchAnalysisSchema,
     OrganizationNames,
-    AudioEventFileImport
+    AudioEventFileImport,
+    Authentication
   ) do
     required(:trusted_proxies).array(BawApp::Types::IPAddr)
 

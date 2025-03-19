@@ -9,6 +9,8 @@ module Api
       ENV_KEY = :api_auth_strategies_jwt
       HEADER = 'Authorization'
       HEADER_FORMAT = /Bearer ([-_.A-Za-z0-9]+)/
+      HEADER_KEY = /Bearer/i
+      INCORRECT_FORMAT = 'Incorrect bearer format'
 
       def valid?
         !parse_token.nil?
@@ -17,7 +19,7 @@ module Api
       def authenticate!
         token = parse_token
 
-        return if token.nil?
+        return token unless token.is_a?(String)
 
         jwt = ::Api::Jwt.decode(token)
         unless jwt.valid?
@@ -41,7 +43,7 @@ module Api
 
       protected
 
-      # @return [String,nil] the bearer token if valid, or nil if the header is not
+      # @return [String,nil,Symbol] the bearer token if valid, or nil if the header is not
       def parse_token
         header = authorization_header
 
@@ -54,14 +56,19 @@ module Api
         request.headers['Authorization']&.to_s
       end
 
-      # @return [String,nil] the bearer token if valid, or nil if the header is not
+      # @return [String,nil,Symbol]
+      #   the bearer token if valid,
+      #   or nil if the header is not
+      #   or a symbol if the header is malformed
       #   in the right format
       def parse_header(header)
         match = HEADER_FORMAT.match(header)
 
-        return nil unless match
+        return match[1] if match
 
-        match[1]
+        return fail!(INCORRECT_FORMAT) if HEADER_KEY.match(header)
+
+        nil
       end
     end
   end
