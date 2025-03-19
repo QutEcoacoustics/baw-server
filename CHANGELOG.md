@@ -1,5 +1,26 @@
 # Changelog
 
+## [12.12.1](https://github.com/QutEcoacoustics/baw-server/tree/12.12.1) (2025-03-19)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.10.6...12.12.1)
+
+**Fixed bugs:**
+
+- Crash while parsing pbs status in analysis jobs [\#729](https://github.com/QutEcoacoustics/baw-server/issues/729)
+- Makes auth token expire only if not used after a while [\#730](https://github.com/QutEcoacoustics/baw-server/pull/730) ([atruskie](https://github.com/atruskie))
+
+**Closed issues:**
+
+- Upsert api route for current user verifications [\#724](https://github.com/QutEcoacoustics/baw-server/issues/724)
+
+**Merged pull requests:**
+
+- Verification upsert api route [\#726](https://github.com/QutEcoacoustics/baw-server/pull/726) ([andrew-1234](https://github.com/andrew-1234))
+
+## [12.10.6](https://github.com/QutEcoacoustics/baw-server/tree/12.10.6) (2025-03-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.10.5...12.10.6)
+
 ## [12.10.5](https://github.com/QutEcoacoustics/baw-server/tree/12.10.5) (2025-03-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.10.4...12.10.5)
