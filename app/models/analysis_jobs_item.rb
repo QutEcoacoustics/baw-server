@@ -179,7 +179,7 @@ class AnalysisJobsItem < ApplicationRecord
       :id, :analysis_job_id, :audio_recording_id, :script_id,
       :created_at, :queued_at, :work_started_at, :finished_at,
       :queue_id, :error, :attempts,
-      :status, :transition, :import_success, :audio_event_import_file_ids
+      :status, :result, :transition, :import_success, :audio_event_import_file_ids
     ]
 
     {
@@ -299,6 +299,9 @@ class AnalysisJobsItem < ApplicationRecord
         attempts: { type: 'integer', readOnly: true },
         status: { type: 'string', enum: AVAILABLE_ITEM_STATUS, readOnly: true },
         transition: { type: 'string', enum: ALLOWED_TRANSITIONS, readOnly: true },
+        result: { type: ['null', 'string'], enum: ALLOWED_RESULTS + [nil], readOnly: true },
+        used_walltime_seconds: { type: 'integer', readOnly: true },
+        used_memory_bytes: { type: 'integer', readOnly: true },
         audio_event_import_file_ids: Api::Schema.ids(nullable: true, read_only: true),
         import_success: { type: ['null', 'boolean'], readOnly: true }
       },
