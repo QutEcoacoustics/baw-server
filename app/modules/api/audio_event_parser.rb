@@ -9,6 +9,9 @@ Dry::Validation.load_extensions(:monads)
 module Api
   # A class used to parse audio events
   class AudioEventParser
+    # we don't allow a user to set index, only our code can set it
+    # Using a random symbol should almost guarantee no possible path for a user to set it
+    CUSTOM_INDEX = SecureRandom.uuid.to_sym
     KEY_MAPPINGS = {
       audio_recording_id: EitherTransformer.new(
         KeyTransformer.new(:audio_recording_id, :recording_id, :RecordingID),
@@ -319,6 +322,54 @@ module Api
         .map(&:to_h)
     end
 
+    def avianz?(content)
+      # Need to differentiate from other JSON formats
+      # there's been a reviewer key in the JSON for nearly 6 years
+      # https://github.com/smarsland/AviaNZ/blame/794343335b81d5fa6a3be299930eab8ba5a139cd/Segment.py#L391
+      content&.start_with?('[') && content.include?('Reviewer')
+    end
+
+    def parse_avianz(contents)
+      interim = parse_json(contents)
+
+      # need to normalize the data to an array of hashes
+      # The AviaNZ format is:
+      # [
+      #   { /* A metadata object */ },
+      #   ...{
+      #     /* An array of audio events */
+      #     [ start, end, low, high, [
+      #       { /* A tag object */ },
+      #       ]
+      #     ]
+      #   }
+      # ]
+
+      interim => [metadata, *audio_events]
+
+      audio_events.each_with_index.flat_map { |event, index|
+        event => [start_time, end_time, low, high, tags]
+        tags.map { |tag|
+          {
+            start_time_seconds: start_time,
+            end_time_seconds: end_time,
+            low_frequency_hertz: low,
+            high_frequency_hertz: high,
+            score: tag[:certainty],
+            # We expand multiple tags into multiple events,
+            # So they should have the same import index
+            CUSTOM_INDEX => index,
+            tags: [
+              tag[:species]
+            ],
+            # we don't parse these fields currently, but maybe in the future
+            creator: metadata[:operator],
+            verifier: metadata[:reviewer]
+          }
+        }
+      }
+    end
+
     def parse_json(contents)
       JSON.parse(contents, { symbolize_names: true })
     end
@@ -361,6 +412,9 @@ module Api
         parse_raven(contents)
       elsif tsv?(contents)
         parse_tsv(contents)
+      # AviaNZ is a JSON format but it needs a transform, make sure it's detected
+      elsif avianz?(contents)
+        parse_avianz(contents)
       elsif json?(contents)
         parse_json(contents)
       else
@@ -389,6 +443,8 @@ module Api
     # @param hash [Hash] the hash to convert
     # @param default_audio_recording_id [Integer] the default audio recording id to use
     def transform(index, hash, default_audio_recording_id, will_commit:)
+      raise 'hash must be a Hash' unless hash.is_a?(Hash)
+
       # pick out the keys and transform the values
       KEY_MAPPINGS
         .filter_map { |key, transformer|
@@ -412,7 +468,7 @@ module Api
 
       audio_event = {
         audio_event_import_file_id: audio_event_import_file.id,
-        import_file_index: index,
+        import_file_index: hash.fetch(CUSTOM_INDEX, index),
         provenance_id: provenance&.id,
         creator_id: creator.id,
         audio_recording_id:,
@@ -437,7 +493,7 @@ module Api
     def normalize_duration_to_end_time(values)
       return if values.key?(:start_time_seconds) && values.key?(:end_time_seconds)
 
-      return unless values.key?(:duration)
+      return unless values.key?(:duration) && values.key?(:start_time_seconds)
 
       values.delete(:duration) => duration
 
