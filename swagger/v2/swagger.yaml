@@ -1651,7 +1651,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.12.1 from http://web:3000.
+                  Version 12.12.3 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1691,7 +1691,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.12.1"
+                Write-Information "Acoustic Workbench downloader script version 12.12.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1873,7 +1873,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.12.1 from http://web:3000.
+                  Version 12.12.3 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1913,7 +1913,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.12.1"
+                Write-Information "Acoustic Workbench downloader script version 12.12.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4722,7 +4722,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: 64YLb7VRLPdVLvknOPe8Uf3wim84mB1tbQCLA64TfAA
+                  auth_token: 2mkpjeRY1r159Z7a8DPGTXepyOm8B8y_DC9oowWtYHA
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -4778,7 +4778,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: fsxrFVKUFI51ofQu4VxgjmCyQgEkTqK0E9_OX53yOS4
+                  auth_token: Ve-tMJUaHc7fRtRad3TJsnaPEuoHCZs_RmJIyxK805I
                   user_name: Admin
                   user_id: 1
               schema:
@@ -5981,7 +5981,7 @@ paths:
                   id: 98
                   additional_tag_ids:
                   - 99
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhjRGRtZURCbGEzaDFjMlZwZW1sdmVEVnJOV3BvY1c5MGRIRXdOZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVldGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSm5aVzVsY21salgyVjRZVzF3YkdVdVkzTjJJanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWRuWlc1bGNtbGpYMlY0WVcxd2JHVXVZM04yQmpzR1ZEb1JZMjl1ZEdWdWRGOTBlWEJsU1NJTmRHVjRkQzlqYzNZR093WlVPaEZ6WlhKMmFXTmxYMjVoYldVNkNteHZZMkZzIiwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--73db61d19dee6708d0be840efaa40cf0dbc7317a/generic_example.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhOV3MxWlhoeGIzUjBkV2w2TjJsdGVHWXhkV3BvY1hnd05uSXpiQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVldGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSm5aVzVsY21salgyVjRZVzF3YkdVdVkzTjJJanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWRuWlc1bGNtbGpYMlY0WVcxd2JHVXVZM04yQmpzR1ZEb1JZMjl1ZEdWdWRGOTBlWEJsU1NJTmRHVjRkQzlqYzNZR093WlVPaEZ6WlhKMmFXTmxYMjVoYldVNkNteHZZMkZzIiwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--3c0314bd0c7ff05b673c71db81fd8020cd15ed67/generic_example.csv
                   name: generic_example.csv
                   audio_event_import_id: 98
                   analysis_jobs_item_id: 

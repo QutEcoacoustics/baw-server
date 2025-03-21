@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.13.1](https://github.com/QutEcoacoustics/baw-server/tree/12.13.1) (2025-03-21)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.12.3...12.13.1)
+
+**Implemented enhancements:**
+
+- Adds support for importing avianz annotations [\#735](https://github.com/QutEcoacoustics/baw-server/pull/735) ([atruskie](https://github.com/atruskie))
+
+## [12.12.3](https://github.com/QutEcoacoustics/baw-server/tree/12.12.3) (2025-03-19)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.12.1...12.12.3)
+
 ## [12.12.1](https://github.com/QutEcoacoustics/baw-server/tree/12.12.1) (2025-03-19)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.10.6...12.12.1)
