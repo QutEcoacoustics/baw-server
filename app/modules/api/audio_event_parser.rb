@@ -9,9 +9,13 @@ Dry::Validation.load_extensions(:monads)
 module Api
   # A class used to parse audio events
   class AudioEventParser
+    # Regex used to match at least one AviaNZ event structure
+    AVIANZ_EVENT = /\[([\d.-]+,\s*){4}/
+
     # we don't allow a user to set index, only our code can set it
     # Using a random symbol should almost guarantee no possible path for a user to set it
     CUSTOM_INDEX = SecureRandom.uuid.to_sym
+
     KEY_MAPPINGS = {
       audio_recording_id: EitherTransformer.new(
         KeyTransformer.new(:audio_recording_id, :recording_id, :RecordingID),
@@ -324,9 +328,9 @@ module Api
 
     def avianz?(content)
       # Need to differentiate from other JSON formats
-      # there's been a reviewer key in the JSON for nearly 6 years
-      # https://github.com/smarsland/AviaNZ/blame/794343335b81d5fa6a3be299930eab8ba5a139cd/Segment.py#L391
-      content&.start_with?('[') && content.include?('Reviewer')
+      # there's been a Operator key in the JSON for nearly 6 years
+      # https://github.com/smarsland/AviaNZ/blame/794343335b81d5fa6a3be299930eab8ba5a139cd/Segment.py#L276-L284
+      content&.start_with?('[') && content.include?('Operator') && content.match?(AVIANZ_EVENT)
     end
 
     def parse_avianz(contents)
