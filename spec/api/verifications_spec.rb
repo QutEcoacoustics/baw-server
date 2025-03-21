@@ -53,7 +53,7 @@ describe 'verifications' do
         response(200, 'successful') do
           schema_for_single
 
-          let(:existing_verification) {
+          let!(:existing_verification) {
             create(:verification, audio_event:, tag:, creator: admin_user)
           }
 
