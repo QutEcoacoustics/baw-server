@@ -251,7 +251,7 @@ class AudioEvent < ApplicationRecord
   # @param [Float] end_offset
   # @param [String] timezone_name
   # @return [Arel:SelectManager]
-  def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
+  def self.csv_query(user, project, region, site, audio_recording, start_offset, end_offset, timezone_name)
     # NOTE: if other modifications are made to the default_scope (like acts_as_discardable does),
     # manually constructed queries like this need to be updated to match
     # (search for ':deleted_at' to find the relevant places)
@@ -264,6 +264,7 @@ class AudioEvent < ApplicationRecord
     users = User.arel_table
     audio_recordings = AudioRecording.arel_table
     sites = Site.arel_table
+    regions = Region.arel_table
     projects = Project.arel_table
     projects_sites = Arel::Table.new(:projects_sites)
     audio_events_tags = Tagging.arel_table
@@ -347,6 +348,8 @@ class AudioEvent < ApplicationRecord
         .where(audio_recordings[:deleted_at].eq(nil))
         .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
         .where(sites[:deleted_at].eq(nil))
+        .join(regions).on(regions[:id].eq(sites[:region_id]))
+        .where(regions[:deleted_at].eq(nil))
         .order(audio_events[:id].desc)
         .project(
           audio_events[:id].as('audio_event_id'),
@@ -365,6 +368,8 @@ class AudioEvent < ApplicationRecord
           function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
             format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
           projects_aggregate.as('projects'),
+          regions[:id].as('region_id'),
+          regions[:name].as('region_name'),
           sites[:id].as('site_id'),
           sites[:name].as('site_name'),
           function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
@@ -421,6 +426,8 @@ class AudioEvent < ApplicationRecord
 
       query = query.where(sites[:id].in(site_ids))
     end
+
+    query = query.where(regions[:id].eq(region.id)) if region
 
     query = query.where(sites[:id].eq(site.id)) if site
 

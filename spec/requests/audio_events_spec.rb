@@ -14,7 +14,7 @@ describe '/audio_events' do
       expect(response).to have_http_status(:ok)
       column_headers = 'audio_event_id,audio_recording_id,audio_recording_uuid,audio_recording_start_date_utc_00_00,' \
                        'audio_recording_start_time_utc_00_00,audio_recording_start_datetime_utc_00_00,event_created_at_date_utc_00_00,' \
-                       'event_created_at_time_utc_00_00,event_created_at_datetime_utc_00_00,projects,site_id,site_name,' \
+                       'event_created_at_time_utc_00_00,event_created_at_datetime_utc_00_00,projects,region_id,region_name,site_id,site_name,' \
                        'event_start_date_utc_00_00,event_start_time_utc_00_00,event_start_datetime_utc_00_00,event_start_seconds,' \
                        'event_end_seconds,event_duration_seconds,low_frequency_hertz,high_frequency_hertz,is_reference,created_by,' \
                        'updated_by,common_name_tags,common_name_tag_ids,species_name_tags,species_name_tag_ids,other_tags,' \

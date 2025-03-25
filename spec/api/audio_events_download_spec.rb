@@ -32,6 +32,7 @@ describe 'download audio_events', type: :request do
     for_model AudioEvent
 
     let(:project_id) { project.id }
+    let(:region_id) { region.id }
     let(:site_id) { site.id }
 
     path '/projects/{project_id}/audio_events/download' do
@@ -50,6 +51,20 @@ describe 'download audio_events', type: :request do
     path '/projects/{project_id}/sites/{site_id}/audio_events/download' do
       with_route_parameter :project_id
       with_route_parameter :site_id
+
+      get('download project audio events') do
+        consumes nil
+        produces 'text/csv'
+
+        response(200, 'successful') do
+          run_test!
+        end
+      end
+    end
+
+    path '/projects/{project_id}/regions/{region_id}/audio_events/download' do
+      with_route_parameter :project_id
+      with_route_parameter :region_id
 
       get('download project audio events') do
         consumes nil

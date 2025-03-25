@@ -123,8 +123,7 @@ describe AudioEvent do
   end
 
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
-
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     sql = <<~SQL.squish
       SELECT"audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
@@ -151,7 +150,9 @@ describe AudioEvent do
       WHERE "projects"."deleted_at"
       IS
       NULL
-      AND "projects_sites"."site_id" = "sites"."id") "projects", "sites"."id"
+      AND "projects_sites"."site_id" = "sites"."id") "projects", "regions"."id"
+      AS "region_id", "regions"."name"
+      AS "region_name", "sites"."id"
       AS "site_id", "sites"."name"
       AS "site_name",to_char("audio_recordings"."recorded_date" +
       CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
@@ -235,6 +236,9 @@ describe AudioEvent do
       INNER
       JOIN "sites"
       ON "sites"."id" = "audio_recordings"."site_id"
+      INNER
+      JOIN "regions"
+      ON "regions"."id" = "sites"."region_id"
       WHERE "audio_events"."deleted_at"
       IS
       NULL
@@ -242,6 +246,9 @@ describe AudioEvent do
       IS
       NULL
       AND "sites"."deleted_at"
+      IS
+      NULL
+      AND "regions"."deleted_at"
       IS
       NULL
       AND "sites"."id"
@@ -270,7 +277,7 @@ describe AudioEvent do
   it 'constructs the expected sql for annotation download (timezone:
  Brisbane)' do
     query =
-      AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, 'Brisbane')
+      AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane')
 
     sql = <<~SQL.squish
       SELECT "audio_events"."id"
@@ -298,7 +305,9 @@ describe AudioEvent do
       WHERE "projects"."deleted_at"
       IS
       NULL
-      AND "projects_sites"."site_id" = "sites"."id") "projects", "sites"."id"
+      AND "projects_sites"."site_id" = "sites"."id") "projects", "regions"."id"
+      AS "region_id", "regions"."name"
+      AS "region_name", "sites"."id"
       AS "site_id", "sites"."name"
       AS "site_name",to_char("audio_recordings"."recorded_date" +
       CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
@@ -382,6 +391,9 @@ describe AudioEvent do
       INNER
       JOIN "sites"
       ON "sites"."id" = "audio_recordings"."site_id"
+      INNER
+      JOIN "regions"
+      ON "regions"."id" = "sites"."region_id"
       WHERE "audio_events"."deleted_at"
       IS
       NULL
@@ -389,6 +401,9 @@ describe AudioEvent do
       IS
       NULL
       AND "sites"."deleted_at"
+      IS
+      NULL
+      AND "regions"."deleted_at"
       IS
       NULL
       AND "sites"."id"
@@ -424,7 +439,7 @@ describe AudioEvent do
       project.discard! if project_n == 1
 
       region = create(:region, creator: user, project: project)
-
+      region.discard! if project_n == 1
       2.times do |site_n|
         site = create(:site, :with_lat_long, creator: user, projects: [project], region:)
 
@@ -447,13 +462,17 @@ describe AudioEvent do
     end
 
     # check that AudioEvent.csv_query returns only non-deleted items
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
     expect(Project.with_discarded.count).to eq(2)
     expect(Project.count).to eq(1)
     expect(Project.discarded.count).to eq(1)
+
+    expect(Region.with_discarded.count).to eq(2)
+    expect(Region.count).to eq(1)
+    expect(Region.discarded.count).to eq(1)
 
     expect(Site.with_discarded.count).to eq(4)
     expect(Site.count).to eq(2)
@@ -495,7 +514,7 @@ describe AudioEvent do
     end
 
     # check that AudioEvent.csv_query returns unique audio events
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
