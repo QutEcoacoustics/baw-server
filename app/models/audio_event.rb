@@ -259,7 +259,6 @@ class AudioEvent < ApplicationRecord
     # NOTE: tried using Arel from ActiveRecord
     # e.g. AudioEvent.all.ast.cores[0].wheres
     # but was more trouble to use than directly constructing Arel
-    #
     audio_events = AudioEvent.arel_table
     users = User.arel_table
     audio_recordings = AudioRecording.arel_table
