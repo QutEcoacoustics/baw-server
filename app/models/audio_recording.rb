@@ -184,6 +184,7 @@ class AudioRecording < ApplicationRecord
                                      })
   scope :total_data_bytes, -> { sum(arel_table[:data_length_bytes].cast('bigint')) }
   scope :total_duration_seconds, -> { sum(arel_table[:duration_seconds].cast('bigint')) }
+  scope :status_ready, -> { where(status: STATUS_READY) }
 
   # Allows this model to infer its timezone when included with larger queries
   # constructed by filter args.
@@ -385,7 +386,10 @@ class AudioRecording < ApplicationRecord
       action: :filter,
       defaults: {
         order_by: :recorded_date,
-        direction: :desc
+        direction: :desc,
+        filter: lambda {
+          Current.user&.admin? ? {} : { status: { eq: STATUS_READY } }
+        }
       },
       capabilities: {
         original_download: {

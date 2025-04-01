@@ -139,6 +139,18 @@ describe AnalysisJob do
 
       # there are a total of 10 recordings - the nine above and the default one
       # created by create_audio_recordings_hierarchy
+
+      # AT 2025: updated filter_as_relation to only return recordings that are
+      # are :ready, so all these tests should not include this extra test case.
+      create(:audio_recording, status: :aborted, site:)
+
+      # mock current user because our default scope uses it
+      # and we want to test that the scope always filters out not ready recordings
+      Current.user = admin_user
+    end
+
+    after do
+      ActiveSupport::CurrentAttributes.reset_all
     end
 
     let(:analysis_job) {
@@ -255,6 +267,7 @@ describe AnalysisJob do
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
           #{permissions_sql}
+          AND ("audio_recordings"."status" = 'ready')
         SQL
       )
 
@@ -273,6 +286,7 @@ describe AnalysisJob do
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
           #{permissions_sql}
+          AND ("audio_recordings"."status" = 'ready')
         SQL
       )
 
@@ -295,6 +309,7 @@ describe AnalysisJob do
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
           #{permissions_sql}
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."duration_seconds" >= 300.0)
         SQL
       )
@@ -327,6 +342,7 @@ describe AnalysisJob do
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
           #{permissions_sql}
+          AND ("audio_recordings"."status" = 'ready')
           AND ((("audio_recordings"."duration_seconds" = 10.0) OR ("audio_recordings"."duration_seconds" = 3600.0)))
         SQL
       )
@@ -348,6 +364,7 @@ describe AnalysisJob do
         SELECT "audio_recordings"."id"
         FROM "audio_recordings"
         #{permissions_sql}
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"

@@ -399,11 +399,19 @@ class AnalysisJob < ApplicationRecord
       )
     end => base_scope
 
+    # never allow non-ready recordings to be included in the filter
+    base_scope = base_scope.status_ready
+
+    # additionally, since we enforce the ready check in the scope, we don't
+    # need to duplicate the condition that comes from the filter defaults
+    filter_settings = AudioRecording.filter_settings.dup
+    filter_settings[:defaults].delete(:filter)
+
     filter_query = Filter::Query.new(
       whole_filter,
       base_scope,
       AudioRecording,
-      AudioRecording.filter_settings
+      filter_settings
     )
 
     filter_query.query_without_paging_sorting

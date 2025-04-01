@@ -349,6 +349,7 @@ module Api
 
       # build complete api response
       opts[:filter] = filter_query.filter if filter_query.filter.present?
+      opts[:filter_without_defaults] = filter_query.supplied_filter if filter_query.supplied_filter.present?
       opts[:projection] = filter_query.projection if filter_query.projection.present?
       opts[:capabilities] = filter_query.capabilities if filter_query.capabilities.present?
       opts[:additional_params] = filter_query.parameters.except(

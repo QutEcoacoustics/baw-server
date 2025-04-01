@@ -10,5 +10,11 @@ module SqlHelpers
       b_mod = expected.gsub(/\s*([A-Z][A-Z]+)/, "\n\\1").gsub(/(\t| )+/, ' ').trim('\n')
       expect(a_mod).to eq(b_mod)
     end
+
+    def contains_sql(actual, expected)
+      a_mod = actual.gsub(/\s*([A-Z][A-Z]+)/, "\n\\1").gsub(/(\t| )+/, ' ').trim('\n')
+      b_mod = expected.gsub(/\s*([A-Z][A-Z]+)/, "\n\\1").gsub(/(\t| )+/, ' ').trim('\n')
+      expect(a_mod).to include(b_mod)
+    end
   end
 end

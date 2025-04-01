@@ -174,7 +174,10 @@ module Api
     def filename(opts, format)
       # a rudimentary way of encoding filtering parameters into a filename
       # e.g. {id: {in: [1,2,3]}, name: {eq: '\n'}}  ==> id_in_1_2_3_name_eq_n
-      filter = opts[:filter]
+      # AT 2025: I decided not to include default filters in the filename
+      # because they don't add enough new information and just bloat otherwise
+      # simple filter file names
+      filter = opts[:filter_without_defaults]
       filter_part = filter.blank? ? '' : "_#{filter.to_json.gsub(/["{}\\\[\]]/, '').gsub(/:|,/, '_')}"
       "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}_#{resource_name_plural}#{filter_part}.#{format}"
     end

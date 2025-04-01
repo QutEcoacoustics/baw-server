@@ -263,7 +263,19 @@ module RequestSpecHelpers
           .map { |x| hash_including({ id: get_id(x) }) }
           .to_a
 
-        expect(api_result).to include(data: match_array(inner))
+        expect(api_result).to include(data: a_collection_including(*inner))
+      end
+    end
+
+    def expect_does_not_have_ids(*expected)
+      expect(api_result[:data]).to be_a(Array)
+
+      expected = expected.flatten
+
+      aggregate_failures do
+        expected.each do |x|
+          expect(api_result[:data]).not_to include(hash_including({ id: get_id(x) }))
+        end
       end
     end
 

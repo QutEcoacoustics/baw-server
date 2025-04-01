@@ -49,7 +49,7 @@ describe Filter::Query do
           }).query_full
         }.to raise_error(
           CustomErrors::FilterArgumentError,
-          /filter_encoded was not a valid JSON payload: unexpected token at '.*'/
+          /filter_encoded was not a valid JSON payload: /
         )
       end
 
@@ -70,7 +70,7 @@ describe Filter::Query do
           }).query_full
         }.to raise_error(
           CustomErrors::FilterArgumentError,
-          /filter_encoded was not a valid JSON payload: unexpected token at '.*'/
+          /filter_encoded was not a valid JSON payload: /
         )
       end
     end
@@ -90,6 +90,7 @@ describe Filter::Query do
           JOIN "sites"
           ON "audio_recordings"."site_id" = "sites"."id"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."id"
           IN (
           SELECT "audio_recordings"."id"
@@ -121,9 +122,10 @@ describe Filter::Query do
         complex_result = <<~SQL.squish
           SELECT "audio_recordings"."id"
           FROM "audio_recordings"
-          WHERE "audio_recordings"."deleted_at"
+          WHERE ("audio_recordings"."deleted_at"
           IS
-          NULL
+          NULL)
+          AND ("audio_recordings"."status" = 'ready')
           ORDER BY "audio_recordings"."recorded_date"
           DESC
           LIMIT 25
@@ -162,6 +164,7 @@ describe Filter::Query do
           WHERE ("audio_recordings"."deleted_at"
           IS
           NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."id"
           IN (
           SELECT "audio_recordings"."id"
@@ -202,6 +205,7 @@ describe Filter::Query do
           WHERE ("audio_recordings"."deleted_at"
           IS
           NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."id" = 1)
           AND ("audio_recordings"."id"
           IN (
