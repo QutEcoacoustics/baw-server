@@ -418,17 +418,6 @@ class AudioEvent < ApplicationRecord
               .as('library_url')
         )
 
-    # query = query.project(
-    #   verification_cte_table[:verifications],
-    #   verification_cte_table[:verification_counts],
-    #   verification_cte_table[:verification_correct],
-    #   verification_cte_table[:verification_incorrect],
-    #   verification_cte_table[:verification_skip],
-    #   verification_cte_table[:verification_unsure],
-    #   verification_cte_table[:verification_decisions],
-    #   verification_cte_table[:verification_consensus]
-    # ).with(verification_cte)
-
     # ensure deleted projects are not included
     site_ids_for_live_project_ids = projects
       .where(projects[:deleted_at].eq(nil))
