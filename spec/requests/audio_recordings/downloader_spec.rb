@@ -47,7 +47,7 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},#{core_projection}}
+        {"filter":{"status":{"eq":"ready"}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},#{core_projection}}
         '@
       POWERSHELL
     end
@@ -59,7 +59,7 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"filter":{"or":{"media_type":{"contains":"mp3"},"status":{"contains":"mp3"},"original_file_name":{"contains":"mp3"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":5},#{core_projection}}
+        {"filter":{"status":{"eq":"ready"},"or":{"media_type":{"contains":"mp3"},"status":{"contains":"mp3"},"original_file_name":{"contains":"mp3"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":5},#{core_projection}}
         '@
       POWERSHELL
     end
@@ -85,7 +85,7 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
 
       expect(response.body).to include <<~POWERSHELL
         $filter = @'
-        {"filter":{"id":{"gt":2},"duration_seconds":{"range":{"interval":"[1800, 3600]"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":10},#{core_projection}}
+        {"filter":{"status":{"eq":"ready"},"id":{"gt":2},"duration_seconds":{"range":{"interval":"[1800, 3600]"}}},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":10},#{core_projection}}
         '@
       POWERSHELL
     end

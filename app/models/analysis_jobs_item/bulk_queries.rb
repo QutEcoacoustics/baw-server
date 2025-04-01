@@ -48,7 +48,9 @@ class AnalysisJobsItem
             script.id,
             analysis_job.id,
             Time.zone.now,
-            AnalysisJobsItem::TRANSITION_QUEUE
+            AnalysisJobsItem::TRANSITION_QUEUE,
+            # where status is ready
+            AudioRecording::STATUS_READY
           ]
 
           # we use exec_update instead of exec_insert because we want a count of

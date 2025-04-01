@@ -125,9 +125,9 @@ module Filter
     # @param [Array<Arel::Nodes::Node>] conditions
     # @return [Arel::Nodes::Node] condition
     def combiner_one(combiner, conditions)
-      if conditions.blank? || conditions.size < 2
+      if conditions.blank?
         raise CustomErrors::FilterArgumentError,
-          "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}."
+          "Combiner '#{combiner}' must have at least 1 entry, got #{conditions.size}."
       end
 
       transforms_collection = []

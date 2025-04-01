@@ -143,6 +143,56 @@ describe '/audio_recordings' do
     }])
   end
 
+  describe 'automatic filtering of non-ready audio recordings' do
+    let!(:not_ready_recording) { create(:audio_recording, status: AudioRecording::STATUS_ABORTED, site: site) }
+
+    it 'does not return non-ready audio recordings for index' do
+      get '/audio_recordings', **api_headers(reader_token)
+
+      expect_success
+      expect_at_least_one_item
+      expect_does_not_have_ids(not_ready_recording)
+    end
+
+    it 'does not return non-ready audio recordings for filter' do
+      post '/audio_recordings/filter', params: {}, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_at_least_one_item
+      expect_does_not_have_ids(not_ready_recording)
+    end
+
+    it 'does return the non-ready audio recording for normal users, if overridden' do
+      params = {
+        filter: {
+          status: nil
+        }
+      }
+
+      post '/audio_recordings/filter', params: params, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(site.audio_recordings.count)
+      expect_has_ids(not_ready_recording)
+    end
+
+    it 'returns the non-ready audio recording for admin users, for index' do
+      get '/audio_recordings', **api_headers(admin_token)
+
+      expect_success
+      expect_number_of_items(AudioRecording.count)
+      expect_has_ids(not_ready_recording)
+    end
+
+    it 'returns the non-ready audio recording for admin users, for filter' do
+      post '/audio_recordings/filter', params: {}, **api_with_body_headers(admin_token)
+
+      expect_success
+      expect_number_of_items(AudioRecording.count)
+      expect_has_ids(not_ready_recording)
+    end
+  end
+
   context 'when filtering by time of day' do
     let(:perth) {
       perth_site = create(:site)

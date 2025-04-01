@@ -29,6 +29,10 @@ module Filter
       :qsp_generic_filters, :paging, :sorting, :build,
       :custom_fields2, :capabilities
 
+    # Returns the filter provided by a request, before being merged onto the default filter
+    # @return [Hash] filter
+    attr_reader :supplied_filter
+
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
     # @param [ActiveRecord::Relation] query
@@ -55,13 +59,16 @@ module Filter
         raise ArgumentError, "query was not an ActiveRecord::Relation. Query: #{query}"
       end
 
-      validate_filter_settings(filter_settings)
+      reraise_as_internal_error do
+        validate_filter_settings(filter_settings)
+      end
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @filter_settings = filter_settings
       @default_sort_order = filter_settings[:defaults][:order_by]
       @default_sort_direction = filter_settings[:defaults][:direction]
+      @default_filter = filter_settings[:defaults].fetch(:filter, nil)
       @custom_fields2 = filter_settings[:custom_fields2] || {}
       @capabilities = filter_settings[:capabilities] || {}
       set_archived_param(parameters)
@@ -73,20 +80,28 @@ module Filter
 
       @parameters = decode_payload(@parameters)
 
-      @filter = @parameters.include?(:filter) && @parameters[:filter].present? ? @parameters[:filter] : {}
+      @supplied_filter = @parameters.include?(:filter) && @parameters[:filter].present? ? @parameters[:filter] : {}
       @projection = parse_projection(@parameters)
 
       # remove key_partial_match key from parameters hash
       parameters_for_generic = @parameters.dup
       parameters_for_generic.delete(key_partial_match) if parameters_for_generic.include?(key_partial_match)
 
+      # ensure filter is a hash
+      @supplied_filter, was_normalized = normalize_filter_root_array(@supplied_filter)
+
       # merge filters from qsp partial text match into POST body filter
       partial_match_filters = parse_qsp_partial_match_text(@parameters, key_partial_match, @text_fields)
-      @filter = add_qsp_to_filter(@filter, partial_match_filters, :or)
+      @supplied_filter = add_qsp_to_filter(@supplied_filter, partial_match_filters, :or)
 
       # merge filters from qsp generic equality match into POST body filter
       qsp_generic_filters = parse_qsp(nil, parameters_for_generic, key_prefix)
-      @filter = add_qsp_to_filter(@filter, qsp_generic_filters, :and)
+      @supplied_filter = add_qsp_to_filter(@supplied_filter, qsp_generic_filters, :and)
+
+      # merge default filter into the rest of the filter
+      reraise_as_internal_error do
+        @filter = merge_filters(@supplied_filter.dup, @default_filter, was_normalized:)
+      end
 
       # populate properties with qsp filter spec
       @qsp_text_filter = @parameters[key_partial_match]
@@ -207,7 +222,7 @@ module Filter
     end
 
     def is_paging_disabled?
-      @paging[:disable_paging] == 'true' || @paging[:disable_paging] == true
+      ['true', true].include?(@paging[:disable_paging])
     end
 
     def has_sort_params?
@@ -223,6 +238,18 @@ module Filter
     end
 
     private
+
+    # rebrand the error to be more specific and generate a better error message
+    def reraise_as_internal_error
+      yield
+    rescue CustomErrors::FilterArgumentError => e
+      # TODO: this is a bit of a hack, we should split the params validators out
+      # from the settings validators rather than doing dodgy error wrapping
+      # and re-raising
+      error = CustomErrors::FilterSettingsError.new(e.message)
+      error.set_backtrace(e.backtrace)
+      raise error
+    end
 
     def decode_payload(parameters)
       return parameters unless parameters.include?(:filter_encoded)
@@ -257,6 +284,16 @@ module Filter
       parameters
     end
 
+    # normalize a root filter array - the root array syntax is just syntactic sugar
+    # for a keyed "and" filter, so we convert it to that
+    # @param [Hash,Array] filter
+    # @return [Array(Hash,Boolean)]
+    def normalize_filter_root_array(filter)
+      return [{ and: filter }, true] if filter.is_a?(Array)
+
+      [filter, false]
+    end
+
     # Add qsp spec to filter
     # @param [Hash,Array] filter
     # @param [Hash] additional
@@ -264,14 +301,11 @@ module Filter
     # @return [Hash,Array]
     def add_qsp_to_filter(filter, additional, combiner)
       raise 'Additional filter items must be a hash.' unless additional.is_a?(Hash)
-      raise 'Filter must be a hash or array.' unless filter.is_a?(Hash) || filter.is_a?(Array)
+      raise 'Filter must be a hash.' unless filter.is_a?(Hash)
       raise 'Combiner should not be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
 
       # don't do anything unless we need to
       #return filter if additional.size.zero?
-
-      # normalize a root filter array
-      filter = { and: filter } if filter.is_a?(Array)
 
       # return a merge of existing filter and qsp filters
       # {
@@ -308,6 +342,60 @@ module Filter
       end
 
       filter
+    end
+
+    # Merge default filter into supplied filter.
+    # @param [Hash,Array] filter
+    # @param [Hash,Proc,nil] default
+    # @param [Boolean] was_normalized
+    #   true if the filter was normalized from a root array
+    # @return [Hash,Array]
+    def merge_filters(filter, default, was_normalized:)
+      return filter if default.blank?
+
+      # @type [Hash]
+      default = default.call if default.is_a?(Proc)
+
+      return filter if default.nil? || default.try(:empty?)
+
+      validate_hash(default)
+
+      # convert default filter to an array, if supplied filter is also an array
+      if was_normalized
+        default = default.map { |key, value| { key => value } }
+        # @type [Array]
+        merged = default + filter[:and]
+
+        # remove any entries if there are knockouts
+        merged.each_with_index do |rule, i|
+          # we're not up to the stage where supplied filters have been validated yet
+          next unless rule.is_a?(Hash)
+
+          # is any value in the rule a knockout (nil)?
+          rule.each do |key, value|
+            next unless value.nil?
+
+            # remove the knockout sigil
+            rule.delete(key)
+
+            # and search back for the given key in previous entries
+            # to do the actual knockout
+            merged[0..i].reverse_each do |previous|
+              previous.delete(key) if previous.is_a?(Hash) && previous.include?(key)
+            end
+          end
+        end
+
+        # finally remove any empty entries
+        merged.reject! do |rule|
+          rule.is_a?(Hash) && rule.empty?
+        end
+
+        filter.merge(and: merged)
+      else
+        # merge default filter into filter
+        default.deep_merge(filter).compact
+      end
     end
 
     # Add conditions to a query.

@@ -42,20 +42,23 @@ describe Filter::Query do
         'Filter parameters were not valid: Unrecognized combiner or field name `not_a_real_filter`.')
     end
 
-    it 'occurs when or has only 1 entry' do
-      expect {
-        create_filter(
-          {
-            filter: {
-              or: {
-                recorded_date: {
-                  contains: 'Hello'
-                }
+    # we used to not allow this, but it's easier to just normalize one entry combiners
+    # especially when we started merging filters with default filters.
+    it 'DOES NOT error when `or` has only 1 entry' do
+      query = create_filter(
+        {
+          filter: {
+            or: {
+              original_file_name: {
+                contains: 'Hello'
               }
             }
           }
-        ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Combiner 'or' must have at least 2 entries, got 1/)
+        }
+      ).query_full
+
+      expect(query.to_sql).not_to include(' OR ')
+      expect(query.to_sql).to include('"audio_recordings"."original_file_name" ILIKE \'%Hello%\'')
     end
 
     it 'occurs when not has no entries' do
@@ -352,6 +355,7 @@ describe Filter::Query do
         SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."site_id" = 5)
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -369,6 +373,7 @@ describe Filter::Query do
         SELECT  "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."recorded_date", "audio_recordings"."media_type"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id" = #{audio_recording.id})
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -388,6 +393,7 @@ describe Filter::Query do
         AS "recorded_end_date"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id" = #{audio_recording.id})
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -419,6 +425,7 @@ describe Filter::Query do
         JOIN "projects"
         ON "projects_sites"."project_id" = "projects"."id"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id" = #{audio_recording.id})
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -445,6 +452,7 @@ describe Filter::Query do
         JOIN "regions"
         ON  "sites"."region_id" = "regions"."id"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id" = #{audio_recording.id})
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -485,6 +493,7 @@ describe Filter::Query do
         SELECT "audio_recordings"."id", "audio_recordings"."duration_seconds"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."site_id" = 5)
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
@@ -616,6 +625,9 @@ describe Filter::Query do
       }
 
       expected_filter = {
+        status: {
+          eq: :ready
+        },
         and: {
           site_id: {
             less_than: 123_456,
@@ -738,6 +750,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
+        AND ("audio_recordings"."status" = 'ready')
         AND ((("audio_recordings"."site_id" < 123456)
         AND ("audio_recordings"."site_id" > 9876)
         AND ("audio_recordings"."site_id"
@@ -837,6 +850,7 @@ describe Filter::Query do
         WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
@@ -918,6 +932,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
+        AND ("audio_recordings"."status" = 'ready')
         AND ("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
@@ -1002,6 +1017,7 @@ describe Filter::Query do
         WHERE ("audio_recordings"."deleted_at"
         IS
         NULL)
+        AND ("audio_recordings"."status" = 'ready')
         AND ((("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
@@ -1065,6 +1081,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =#{' '}
         TRUE)))))
+        AND ("audio_recordings"."status" = 'ready')
         AND ((("audio_recordings"."id"
         IN (
         SELECT "audio_recordings"."id"
@@ -1405,6 +1422,7 @@ describe Filter::Query do
         AND (("permissions"."user_id" = #{user_id})
         OR ("permissions"."allow_logged_in" =
         TRUE)))))
+        AND ("audio_recordings"."status" = 'ready')
         AND (("audio_recordings"."recorded_date" +
         CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) < '2016-03-01T02:00:00')
         AND (("audio_recordings"."recorded_date" +
@@ -1855,12 +1873,16 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
-                                    or: {
-                                      media_type: { contains: 'mp3' },
-                                      status: { contains: 'mp3' },
-                                      original_file_name: { contains: 'mp3' }
-                                    } })
+      expect(filter.filter).to eq({
+        status: { eq: :ready },
+        duration_seconds: { eq: 120 },
+
+        or: {
+          media_type: { contains: 'mp3' },
+          status: { contains: 'mp3' },
+          original_file_name: { contains: 'mp3' }
+        }
+      })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]
@@ -1890,12 +1912,15 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expect(filter.filter).to eq({ duration_seconds: { eq: 120 },
-                                    or: {
-                                      media_type: { contains: 'mp3' },
-                                      status: { contains: 'mp3' },
-                                      original_file_name: { contains: 'mp3' }
-                                    } })
+      expect(filter.filter).to eq({
+        status: { eq: :ready },
+        duration_seconds: { eq: 120 },
+        or: {
+          media_type: { contains: 'mp3' },
+          status: { contains: 'mp3' },
+          original_file_name: { contains: 'mp3' }
+        }
+      })
 
       ids_actual = filter.query_full.pluck(:id)
       ids_expected = [audio_recording.id]
@@ -1972,7 +1997,7 @@ describe Filter::Query do
         AudioRecording.filter_settings
       )
 
-      expect(filter.filter).to eq(filter_hash[:filter])
+      expect(filter.filter).to eq(filter_hash[:filter].merge({ status: { eq: :ready } }))
 
       query = filter.query_full
       expect(query.pluck(:id)).to be_empty

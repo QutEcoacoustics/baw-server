@@ -251,7 +251,7 @@ module Filter
     # @raise [FilterArgumentError] if value is not a valid Hash.
     # @return [void]
     def validate_hash(value)
-      raise CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
+      raise CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.nil?
       raise CustomErrors::FilterArgumentError, "value must be a Hash, got #{value}" unless value.is_a?(Hash)
     end
 
@@ -396,6 +396,17 @@ module Filter
       end
       unless value[:defaults][:direction].is_a?(Symbol)
         raise CustomErrors::FilterArgumentError, 'Direction must be a symbol.'
+      end
+
+      if value[:defaults].include?(:filter)
+        case value[:defaults][:filter]
+        when Proc
+          validate_closure(value[:defaults][:filter])
+        when nil
+          # do nothing
+        else
+          validate_hash(value[:defaults][:filter])
+        end
       end
 
       # advanced filter settings

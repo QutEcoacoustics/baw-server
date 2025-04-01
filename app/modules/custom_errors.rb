@@ -234,6 +234,16 @@ module CustomErrors
     end
   end
 
+  # 500 for invalid filter settings - these are not user errors
+  # but errors in the filter settings.
+  class FilterSettingsError < CustomError
+    def initialize(message = nil)
+      super
+      @status_code = :internal_server_error
+      @prefix = 'Filter settings invalid'
+    end
+  end
+
   class AudioGenerationError < RuntimeError
     attr_reader :job_info
 

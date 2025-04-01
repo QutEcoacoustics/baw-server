@@ -94,7 +94,8 @@ describe Filter::Query do
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
-          AND ((("audio_recordings"."recorded_date" = '2022-02-02 22:22:00')
+          AND ((("audio_recordings"."status" = 'ready')
+          AND ("audio_recordings"."recorded_date" = '2022-02-02 22:22:00')
           AND ("audio_recordings"."recorded_date" = '2022-02-03 22:22:00')
           AND ("audio_recordings"."site_id" = 3)))
           ORDER BY "audio_recordings"."recorded_date" DESC
@@ -125,6 +126,7 @@ describe Filter::Query do
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."recorded_date" = '2022-02-02 22:22:00')
           AND ((("audio_recordings"."id" > 0)
           AND ("audio_recordings"."site_id" = 3)))
@@ -156,6 +158,7 @@ describe Filter::Query do
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."recorded_date" = '2022-02-02 22:22:00')
           AND ((("audio_recordings"."id" > 0)
           OR ("audio_recordings"."site_id" = 3)))
@@ -197,6 +200,7 @@ describe Filter::Query do
           SELECT "audio_recordings"."recorded_date"
           FROM "audio_recordings"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
+          AND ("audio_recordings"."status" = 'ready')
           AND ("audio_recordings"."recorded_date" = '2022-02-02 22:22:00')
           AND ((((("audio_recordings"."id" > 0) AND ("audio_recordings"."site_id" = 3)))
           OR ((("audio_recordings"."id" > 1) OR ("audio_recordings"."site_id" = 4)))))
