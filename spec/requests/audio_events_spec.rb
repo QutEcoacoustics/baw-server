@@ -17,8 +17,10 @@ describe '/audio_events' do
                        'event_created_at_time_utc_00_00,event_created_at_datetime_utc_00_00,projects,region_id,region_name,site_id,site_name,' \
                        'event_start_date_utc_00_00,event_start_time_utc_00_00,event_start_datetime_utc_00_00,event_start_seconds,' \
                        'event_end_seconds,event_duration_seconds,low_frequency_hertz,high_frequency_hertz,is_reference,created_by,' \
-                       'updated_by,common_name_tags,common_name_tag_ids,species_name_tags,species_name_tag_ids,other_tags,' \
-                       "other_tag_ids,listen_url,library_url\n"
+                       'updated_by,common_name_tags,common_name_tag_ids,species_name_tags,species_name_tag_ids,other_tags,other_tag_ids,' \
+                       'verifications,verification_counts,verification_correct,verification_incorrect,verification_skip,verification_unsure,' \
+                       'verification_decisions,verification_consensus,' \
+                       "listen_url,library_url\n"
       expect(response.body).to start_with(column_headers)
     end
   end

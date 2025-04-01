@@ -125,6 +125,84 @@ describe AudioEvent do
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
     query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     sql = <<~SQL.squish
+      WITH"verification_cte_table"\n
+      AS(\n
+      SELECT"verification_table"."audio_event_id",string_agg(
+      CAST("verification_table"."tag_id"asvarchar)||':'||"tag_text",'|')
+      AS"verifications",string_agg(
+      CAST("verification_table"."verification_counts"asvarchar),'|')
+      AS"verification_counts",string_agg(
+      CAST("verification_table"."verification_correct"asvarchar),'|')
+      AS"verification_correct",string_agg(
+      CAST("verification_table"."verification_incorrect"asvarchar),'|')
+      AS"verification_incorrect",string_agg(
+      CAST("verification_table"."verification_skip"asvarchar),'|')
+      AS"verification_skip",string_agg(
+      CAST("verification_table"."verification_unsure"asvarchar),'|')
+      AS"verification_unsure",string_agg("verification_table"."verification_decisions",'|')
+      AS"verification_decisions",string_agg(
+      CAST("verification_table"."verification_consensus"asvarchar),'|')
+      AS"verification_consensus"
+      FROM(
+      SELECT"verification_subquery".*,
+      CASE
+      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")
+      WHEN"verification_subquery"."verification_correct"
+      THEN'correct'
+      WHEN"verification_subquery"."verification_incorrect"
+      THEN'incorrect'
+      WHEN"verification_subquery"."verification_skip"
+      THEN'skip'
+      WHEN"verification_subquery"."verification_unsure"
+      THEN'unsure'
+      ELSE
+      NULL
+      END
+      AS"verification_decisions",
+      ROUND(
+      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")*1.0/"verification_subquery"."verification_counts",2)
+      AS"verification_consensus"
+      FROM(
+      SELECT"verifications"."audio_event_id","verifications"."tag_id","tags"."text"
+      AS"tag_text",
+      COUNT("verifications"."confirmed")
+      AS"verification_counts",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='correct'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_correct",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='incorrect'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_incorrect",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='skip'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_skip",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='unsure'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_unsure"
+      FROM"verifications"
+      INNER
+      JOIN"tags"
+      ON"verifications"."tag_id"="tags"."id"
+      GROUP
+      BY"verifications"."audio_event_id","verifications"."tag_id","tags"."text")"verification_subquery")"verification_table"
+      GROUP
+      BY"verification_table"."audio_event_id")
       SELECT"audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
       AS "audio_recording_id","audio_recordings"."uuid"
@@ -223,10 +301,14 @@ describe AudioEvent do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids",'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus", 'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
       AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
+      LEFT
+      OUTER
+      JOIN"verification_cte_table"
+      ON"audio_events"."id"="verification_cte_table"."audio_event_id"
       INNER
       JOIN "users"
       ON "users"."id" = "audio_events"."creator_id"
@@ -280,6 +362,84 @@ describe AudioEvent do
       AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane')
 
     sql = <<~SQL.squish
+      WITH"verification_cte_table"\n
+      AS(\n
+      SELECT"verification_table"."audio_event_id",string_agg(
+      CAST("verification_table"."tag_id"asvarchar)||':'||"tag_text",'|')
+      AS"verifications",string_agg(
+      CAST("verification_table"."verification_counts"asvarchar),'|')
+      AS"verification_counts",string_agg(
+      CAST("verification_table"."verification_correct"asvarchar),'|')
+      AS"verification_correct",string_agg(
+      CAST("verification_table"."verification_incorrect"asvarchar),'|')
+      AS"verification_incorrect",string_agg(
+      CAST("verification_table"."verification_skip"asvarchar),'|')
+      AS"verification_skip",string_agg(
+      CAST("verification_table"."verification_unsure"asvarchar),'|')
+      AS"verification_unsure",string_agg("verification_table"."verification_decisions",'|')
+      AS"verification_decisions",string_agg(
+      CAST("verification_table"."verification_consensus"asvarchar),'|')
+      AS"verification_consensus"
+      FROM(
+      SELECT"verification_subquery".*,
+      CASE
+      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")
+      WHEN"verification_subquery"."verification_correct"
+      THEN'correct'
+      WHEN"verification_subquery"."verification_incorrect"
+      THEN'incorrect'
+      WHEN"verification_subquery"."verification_skip"
+      THEN'skip'
+      WHEN"verification_subquery"."verification_unsure"
+      THEN'unsure'
+      ELSE
+      NULL
+      END
+      AS"verification_decisions",
+      ROUND(
+      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")*1.0/"verification_subquery"."verification_counts",2)
+      AS"verification_consensus"
+      FROM(
+      SELECT"verifications"."audio_event_id","verifications"."tag_id","tags"."text"
+      AS"tag_text",
+      COUNT("verifications"."confirmed")
+      AS"verification_counts",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='correct'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_correct",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='incorrect'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_incorrect",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='skip'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_skip",
+      SUM(
+      CASE
+      WHEN"verifications"."confirmed"='unsure'
+      THEN1
+      ELSE0
+      END)
+      AS"verification_unsure"
+      FROM"verifications"
+      INNER
+      JOIN"tags"
+      ON"verifications"."tag_id"="tags"."id"
+      GROUP
+      BY"verifications"."audio_event_id","verifications"."tag_id","tags"."text")"verification_subquery")"verification_table"
+      GROUP
+      BY"verification_table"."audio_event_id")
       SELECT "audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
       AS "audio_recording_id","audio_recordings"."uuid"
@@ -378,10 +538,14 @@ describe AudioEvent do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids",'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus", 'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
       AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
+      LEFT
+      OUTER
+      JOIN"verification_cte_table"
+      ON"audio_events"."id"="verification_cte_table"."audio_event_id"
       INNER
       JOIN "users"
       ON "users"."id" = "audio_events"."creator_id"
@@ -527,6 +691,82 @@ describe AudioEvent do
     expect(actual_audio_event_ids).to eq(expected_audio_event_ids)
   end
 
+  describe 'verifications query for annotation downloads' do
+    create_entire_hierarchy
+
+    let(:event_one) { create(:audio_event, creator: writer_user, audio_recording:) }
+
+    let(:tag_one) { create(:tag_taxonomic_true_common, creator: writer_user) }
+    let(:tag_two) { create(:tag_taxonomic_true_common, creator: writer_user) }
+
+    let(:tagging_one) {
+      create(:tagging,
+        audio_event_id: event_one.id,
+        tag_id: tag_one.id,
+        creator: writer_user)
+    }
+    let(:tagging_two) {
+      create(:tagging,
+        audio_event_id: event_one.id,
+        tag_id: tag_two.id,
+        creator: writer_user)
+    }
+
+    let(:choices_one) { { 'correct' => 4, 'incorrect' => 3, 'skip' => 2, 'unsure' => 1 } }
+    let(:choices_two) { { 'correct' => 1, 'incorrect' => 4, 'skip' => 3, 'unsure' => 2 } }
+
+    before do
+      event_verifications_for_tagging(tagging_one, choices_one)
+      event_verifications_for_tagging(tagging_two, choices_two)
+    end
+
+    it 'aggregates verifications correctly' do
+      verification_cte_table, query_cte = AudioEvent.verification_summary_cte
+
+      query = AudioEvent.arel_table.join(verification_cte_table)
+        .on(AudioEvent.arel_table[:id].eq(verification_cte_table[:audio_event_id]))
+        .project(verification_cte_table[Arel.star])
+        .with(query_cte)
+
+      formatted_annotations = AudioEvent.connection.select_all(query.to_sql)
+
+      expect(formatted_annotations.pluck('verifications')).to eq([
+        "#{tag.id}:#{tag.text}",
+        "#{tag_one.id}:#{tag_one.text}|#{tag_two.id}:#{tag_two.text}"
+      ])
+
+      combined_counts = [choices_one.values.sum, choices_two.values.sum].join('|')
+      combined_correct = combine_for_key('correct', choices_one, choices_two)
+      combined_incorrect = combine_for_key('incorrect', choices_one, choices_two)
+      combined_skip = combine_for_key('skip', choices_one, choices_two)
+      combined_unsure = combine_for_key('unsure', choices_one, choices_two)
+
+      combined_decisions = [
+        majority_decision(choices_one),
+        majority_decision(choices_two)
+      ].join('|')
+
+      combined_consensus = [
+        consensus_for(choices_one),
+        consensus_for(choices_two)
+      ].join('|')
+
+      aggregated_fields = {
+        'verification_counts' => ['1', combined_counts],
+        'verification_correct' => ['1', combined_correct],
+        'verification_incorrect' => ['0', combined_incorrect],
+        'verification_skip' => ['0', combined_skip],
+        'verification_unsure' => ['0', combined_unsure],
+        'verification_decisions' => ['correct',    combined_decisions],
+        'verification_consensus' => ['1.00',       combined_consensus]
+      }
+
+      aggregated_fields.each do |field_name, expected|
+        expect(formatted_annotations.pluck(field_name)).to eq(expected)
+      end
+    end
+  end
+
   it_behaves_like 'cascade deletes for', :audio_event, {
     taggings: nil,
     comments: nil,
@@ -534,4 +774,30 @@ describe AudioEvent do
   } do
     create_entire_hierarchy
   end
+end
+
+def event_verifications_for_tagging(tagging, choices)
+  choices.each do |choice, number|
+    number.times do |_i|
+      create(:verification,
+        audio_event_id: tagging.audio_event_id,
+        tag_id: tagging.tag_id,
+        creator: create(:user),
+        confirmed: choice)
+    end
+  end
+end
+
+def majority_decision(choices)
+  choices.max_by { |_k, v| v }.first
+end
+
+def consensus_for(choices)
+  total     = choices.values.sum.to_f
+  max_value = choices.values.max
+  format('%.2f', (max_value / total))
+end
+
+def combine_for_key(key, *choices_hashes)
+  choices_hashes.pluck(key).join('|')
 end

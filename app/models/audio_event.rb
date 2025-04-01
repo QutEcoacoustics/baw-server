@@ -259,7 +259,7 @@ class AudioEvent < ApplicationRecord
     # NOTE: tried using Arel from ActiveRecord
     # e.g. AudioEvent.all.ast.cores[0].wheres
     # but was more trouble to use than directly constructing Arel
-
+    #
     audio_events = AudioEvent.arel_table
     users = User.arel_table
     audio_recordings = AudioRecording.arel_table
@@ -340,8 +340,12 @@ class AudioEvent < ApplicationRecord
     tags_others_aggregate = tags_others.clone.project(other_tags_agg)
     tags_others_ids = tags_others.clone.project(other_tags_ids)
 
+    verification_cte_table, verification_cte = verification_summary_cte
+
     query =
       audio_events
+        .join(verification_cte_table, Arel::Nodes::OuterJoin)
+        .on(audio_events[:id].eq(verification_cte_table[:audio_event_id]))
         .where(audio_events[:deleted_at].eq(nil))
         .join(users).on(users[:id].eq(audio_events[:creator_id]))
         .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
@@ -351,6 +355,7 @@ class AudioEvent < ApplicationRecord
         .join(regions).on(regions[:id].eq(sites[:region_id]))
         .where(regions[:deleted_at].eq(nil))
         .order(audio_events[:id].desc)
+        .with(verification_cte)
         .project(
           audio_events[:id].as('audio_event_id'),
           audio_recordings[:id].as('audio_recording_id'),
@@ -393,6 +398,14 @@ class AudioEvent < ApplicationRecord
           tags_species_ids.as('species_name_tag_ids'),
           tags_others_aggregate.as('other_tags'),
           tags_others_ids.as('other_tag_ids'),
+          verification_cte_table[:verifications],
+          verification_cte_table[:verification_counts],
+          verification_cte_table[:verification_correct],
+          verification_cte_table[:verification_incorrect],
+          verification_cte_table[:verification_skip],
+          verification_cte_table[:verification_unsure],
+          verification_cte_table[:verification_decisions],
+          verification_cte_table[:verification_consensus],
           Arel::Nodes::SqlLiteral.new(
             "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
                              '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
@@ -404,6 +417,17 @@ class AudioEvent < ApplicationRecord
           )
               .as('library_url')
         )
+
+    # query = query.project(
+    #   verification_cte_table[:verifications],
+    #   verification_cte_table[:verification_counts],
+    #   verification_cte_table[:verification_correct],
+    #   verification_cte_table[:verification_incorrect],
+    #   verification_cte_table[:verification_skip],
+    #   verification_cte_table[:verification_unsure],
+    #   verification_cte_table[:verification_decisions],
+    #   verification_cte_table[:verification_consensus]
+    # ).with(verification_cte)
 
     # ensure deleted projects are not included
     site_ids_for_live_project_ids = projects
@@ -511,5 +535,123 @@ class AudioEvent < ApplicationRecord
 
   def self.infix_operation(operation, value1, value2)
     Arel::Nodes::InfixOperation.new(operation, value1, value2)
+  end
+
+  # Construct verification summary, aggregated by audio event and tag, returned
+  # as a common table expression.
+  # @return [Array<Arel::Table, Arel::Nodes::As>]
+  def self.verification_summary_cte
+    verifications = Verification.arel_table
+    tags = Tag.arel_table
+
+    verification_tags_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."tag_id" as varchar) || \':\' || "tag_text", \'|\')'
+    ).as('verifications')
+    verification_decisions_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg("verification_table"."verification_decisions", \'|\')'
+     ).as('verification_decisions')
+    verification_consensus_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."verification_consensus" as varchar), \'|\')'
+    ).as('verification_consensus')
+    verification_count_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."verification_counts" as varchar), \'|\')'
+    ).as('verification_counts')
+    verification_correct_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_correct" as varchar), \'|\')'
+     ).as('verification_correct')
+    verification_incorrect_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_incorrect" as varchar), \'|\')'
+     ).as('verification_incorrect')
+    verification_unsure_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_unsure" as varchar), \'|\')'
+     ).as('verification_unsure')
+    verification_skip_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_skip" as varchar), \'|\')'
+     ).as('verification_skip')
+
+    correct_case = Arel::Nodes::Case.new
+      .when(verifications[:confirmed].eq('correct')).then(1)
+      .else(0)
+
+    incorrect_case = Arel::Nodes::Case.new
+      .when(verifications[:confirmed].eq('incorrect')).then(1)
+      .else(0)
+
+    skip_case = Arel::Nodes::Case.new
+      .when(verifications[:confirmed].eq('skip')).then(1)
+      .else(0)
+
+    unsure_case = Arel::Nodes::Case.new
+      .when(verifications[:confirmed].eq('unsure')).then(1)
+      .else(0)
+
+    sum_correct = Arel::Nodes::NamedFunction.new('SUM', [correct_case])
+    sum_incorrect = Arel::Nodes::NamedFunction.new('SUM', [incorrect_case])
+    sum_skip = Arel::Nodes::NamedFunction.new('SUM', [skip_case])
+    sum_unsure = Arel::Nodes::NamedFunction.new('SUM', [unsure_case])
+
+    verification_subquery = verifications
+      .join(tags).on(verifications[:tag_id].eq(tags[:id]))
+      .group(verifications[:audio_event_id], verifications[:tag_id], tags[:text])
+      .project(
+        verifications[:audio_event_id],
+        verifications[:tag_id],
+        tags[:text].as('tag_text'),
+        verifications[:confirmed].count.as('verification_counts'),
+        sum_correct.as('verification_correct'),
+        sum_incorrect.as('verification_incorrect'),
+        sum_skip.as('verification_skip'),
+        sum_unsure.as('verification_unsure')
+      )
+      .as('verification_subquery')
+
+    verification_table_alias = Arel::Table.new(:verification_subquery)
+
+    greatest_function = Arel::Nodes::NamedFunction.new('GREATEST', [
+      verification_table_alias[:verification_correct],
+      verification_table_alias[:verification_incorrect],
+      verification_table_alias[:verification_skip],
+      verification_table_alias[:verification_unsure]
+    ])
+
+    which_max = Arel::Nodes::Case.new(greatest_function)
+      .when(verification_table_alias[:verification_correct]).then('correct')
+      .when(verification_table_alias[:verification_incorrect]).then('incorrect')
+      .when(verification_table_alias[:verification_skip]).then('skip')
+      .when(verification_table_alias[:verification_unsure]).then('unsure')
+      .else(nil)
+
+    verification_consensus = ((greatest_function * 1.00) / verification_table_alias[:verification_counts])
+
+    verification_outer_query = Arel::SelectManager.new
+      .from(verification_subquery)
+      .project(
+        verification_table_alias[Arel.star],
+        which_max.as('verification_decisions'),
+        verification_consensus.round(2).as('verification_consensus')
+      )
+      .as('verification_table')
+
+    verification_table = Arel::Table.new(:verification_table)
+
+    verification_select = Arel::SelectManager.new
+      .from(verification_outer_query)
+      .group(verification_table[:audio_event_id])
+      .project(
+        verification_table[:audio_event_id],
+        verification_tags_agg,
+        verification_count_agg,
+        verification_correct_agg,
+        verification_incorrect_agg,
+        verification_skip_agg,
+        verification_unsure_agg,
+        verification_decisions_agg,
+        verification_consensus_agg
+      )
+
+    verification_cte_table = Arel::Table.new(:verification_cte_table)
+    verification_cte = Arel::Nodes::As.new(verification_cte_table, verification_select)
+
+    [verification_cte_table, verification_cte]
   end
 end
