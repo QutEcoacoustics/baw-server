@@ -347,7 +347,7 @@ module Filter
     # Merge default filter into supplied filter.
     # @param [Hash,Array] filter
     # @param [Hash,Proc,nil] default
-    # # @param [Boolean] was_normalized
+    # @param [Boolean] was_normalized
     #   true if the filter was normalized from a root array
     # @return [Hash,Array]
     def merge_filters(filter, default, was_normalized:)
