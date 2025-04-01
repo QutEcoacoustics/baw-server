@@ -69,8 +69,7 @@ describe ApplicationController, type: :controller do
         {
           'error' =>
           {
-            'details' => details,
-            'info' => nil
+            'details' => details
           },
           'message' => message,
           'status' => status

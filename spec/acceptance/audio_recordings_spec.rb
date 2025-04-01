@@ -1133,40 +1133,6 @@ resource 'AudioRecordings' do
   end
 
   post '/audio_recordings/filter' do
-    let(:raw_post) {
-      {
-        filter: {
-          and: {
-            'projects.id' => {
-              less_than: 123_456
-            },
-            duration_seconds: {
-              not_eq: 40
-            }
-          }
-        },
-        projection: {
-          include: [:id, :site_id, :duration_seconds, :recorded_date, :created_at]
-        },
-        paging: {
-          items: 20,
-          page: 1
-        },
-        sorting: {
-          order_by: 'created_at',
-          direction: 'desc'
-        }
-      }.to_json
-    }
-    let(:authentication_token) { reader_token }
-
-    standard_request_options(:post, 'FILTER (as reader filtering by project id)', :ok, {
-      response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://web:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1',
-      data_item_count: 1
-    })
-  end
-
-  post '/audio_recordings/filter' do
     let!(:new_audio_recordings) {
       Time.use_zone('Brisbane') {
         audio_recording2 = Creation::Common.create_audio_recording(reader_user, harvester_user, site)

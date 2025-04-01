@@ -114,7 +114,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
         test -f "{config}" && echo 'config exists' || echo 'config does not exist'
         echo "config file size: $(stat -c '%s' "{config}")"
       BASH
-      script.update!(executable_settings: nil, executable_command: executable_command)
+      script.update!(executable_settings: '', executable_command: executable_command)
 
       communicator = BawWorkers::BatchAnalysis::Communicator.new
       id = communicator.submit_job(analysis_jobs_item).value!
@@ -129,9 +129,14 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
     it 'omits the settings file if the name is nil' do
       executable_command = <<~BASH
         echo '{source_dir} {output_dir}'
-        test -f "{config}" && echo 'config exists' || echo 'config does not exist'
+        ls -la $TMPDIR/config
       BASH
-      script.update!(executable_settings_name: nil, executable_command:)
+      script.update!(
+        executable_settings_name: nil,
+        executable_command:,
+        executable_settings_media_type: nil,
+        executable_settings: nil
+      )
 
       communicator = BawWorkers::BatchAnalysis::Communicator.new
       id = communicator.submit_job(analysis_jobs_item).value!
@@ -139,7 +144,8 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       wait_for_pbs_job(id)
 
       log = analysis_jobs_item.results_job_log_path.read
-      expect(log).to include('config does not exist')
+
+      expect(log).to include(%r{ls -la /var/tmp.*/config\ntotal 8\n.*\.\n.*\.\.\n\+})
     end
   end
 

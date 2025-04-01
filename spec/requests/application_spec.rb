@@ -81,6 +81,7 @@ describe 'Common behaviour' do
       expect_number_of_items(1)
       expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
+        status: { eq: 'ready' },
         id: { gt: 0 }
       })
     end
@@ -95,6 +96,7 @@ describe 'Common behaviour' do
       expect_number_of_items(1)
       expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
+        status: { eq: 'ready' },
         id: { gt: 0 }
       })
     end
@@ -111,6 +113,7 @@ describe 'Common behaviour' do
       expect_number_of_items(1)
       expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
+        status: { eq: 'ready' },
         id: { gt: 0 }
       })
     end
