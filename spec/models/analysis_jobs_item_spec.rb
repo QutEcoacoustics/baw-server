@@ -93,6 +93,13 @@ describe AnalysisJobsItem do
     expect(analysis_jobs_item).not_to be_valid
   end
 
+  it 'allows large numbers for used_memory_bytes' do
+    analysis_jobs_item.used_memory_bytes = 128.gigabytes
+    expect(analysis_jobs_item).to be_valid
+
+    expect(analysis_jobs_item.save).to be true
+  end
+
   it_behaves_like 'cascade deletes for', :analysis_jobs_item, {
     audio_event_import_files: {
       audio_events: {

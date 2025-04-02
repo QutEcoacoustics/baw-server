@@ -408,7 +408,7 @@ CREATE TABLE public.analysis_jobs_items (
     result public.analysis_jobs_item_result,
     error text,
     used_walltime_seconds integer,
-    used_memory_bytes integer,
+    used_memory_bytes bigint,
     import_success boolean
 );
 
@@ -701,8 +701,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    audio_event_import_file_id integer,
-    import_file_index integer
+    import_file_index integer,
+    audio_event_import_file_id bigint
 );
 
 
@@ -4350,6 +4350,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250402025432'),
 ('20250211012005'),
 ('20250120064731'),
 ('20250113012304'),
