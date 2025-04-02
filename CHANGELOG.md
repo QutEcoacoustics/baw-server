@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.14.1](https://github.com/QutEcoacoustics/baw-server/tree/12.14.1) (2025-04-02)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.13.1...12.14.1)
+
+**Fixed bugs:**
+
+- Ensure aborted recordings are filtered out of common scenarios [\#736](https://github.com/QutEcoacoustics/baw-server/issues/736)
+
+**Merged pull requests:**
+
+- Filters out not-ready recordings from audio recording endpoints [\#749](https://github.com/QutEcoacoustics/baw-server/pull/749) ([atruskie](https://github.com/atruskie))
+
 ## [12.13.1](https://github.com/QutEcoacoustics/baw-server/tree/12.13.1) (2025-03-21)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.12.3...12.13.1)
