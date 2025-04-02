@@ -351,7 +351,7 @@ class AudioEvent < ApplicationRecord
         .where(audio_recordings[:deleted_at].eq(nil))
         .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
         .where(sites[:deleted_at].eq(nil))
-        .join(regions).on(regions[:id].eq(sites[:region_id]))
+        .join(regions, Arel::Nodes::OuterJoin).on(regions[:id].eq(sites[:region_id]))
         .where(regions[:deleted_at].eq(nil))
         .order(audio_events[:id].desc)
         .with(verification_cte)
@@ -609,7 +609,7 @@ class AudioEvent < ApplicationRecord
       .when(verification_table_alias[:verification_unsure]).then('unsure')
       .else(nil)
 
-    verification_consensus = ((greatest_function * 1.00) / verification_table_alias[:verification_counts])
+    verification_consensus = (greatest_function / verification_table_alias[:verification_counts].cast('numeric'))
 
     verification_outer_query = Arel::SelectManager.new
       .from(verification_subquery)

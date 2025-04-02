@@ -691,6 +691,18 @@ describe AudioEvent do
     expect(actual_audio_event_ids).to eq(expected_audio_event_ids)
   end
 
+  it 'includes events from sites that have no region in annotation download' do
+    user = create(:user)
+    other_site = create(:site, region: nil, creator: user)
+    other_audio_recording = create(:audio_recording, site: other_site, creator: user)
+    other_audio_event = create(:audio_event, audio_recording: other_audio_recording, creator: user)
+
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil).to_sql
+    returned_event_ids = AudioEvent.connection.select_all(query).pluck('audio_event_id')
+
+    expect(returned_event_ids).to eq([other_audio_event.id])
+  end
+
   describe 'verifications query for annotation downloads' do
     create_entire_hierarchy
 
