@@ -557,27 +557,6 @@ class AudioEvent < ApplicationRecord
        'string_agg(CAST("verification_table"."verification_skip" as varchar), \'|\')'
      ).as('verification_skip')
 
-    correct_case = Arel::Nodes::Case.new
-      .when(verifications[:confirmed].eq('correct')).then(1)
-      .else(0)
-
-    incorrect_case = Arel::Nodes::Case.new
-      .when(verifications[:confirmed].eq('incorrect')).then(1)
-      .else(0)
-
-    skip_case = Arel::Nodes::Case.new
-      .when(verifications[:confirmed].eq('skip')).then(1)
-      .else(0)
-
-    unsure_case = Arel::Nodes::Case.new
-      .when(verifications[:confirmed].eq('unsure')).then(1)
-      .else(0)
-
-    sum_correct = Arel::Nodes::NamedFunction.new('SUM', [correct_case])
-    sum_incorrect = Arel::Nodes::NamedFunction.new('SUM', [incorrect_case])
-    sum_skip = Arel::Nodes::NamedFunction.new('SUM', [skip_case])
-    sum_unsure = Arel::Nodes::NamedFunction.new('SUM', [unsure_case])
-
     verification_subquery = verifications
       .join(tags).on(verifications[:tag_id].eq(tags[:id]))
       .group(verifications[:audio_event_id], verifications[:tag_id], tags[:text])
@@ -586,10 +565,10 @@ class AudioEvent < ApplicationRecord
         verifications[:tag_id],
         tags[:text].as('tag_text'),
         verifications[:confirmed].count.as('verification_counts'),
-        sum_correct.as('verification_correct'),
-        sum_incorrect.as('verification_incorrect'),
-        sum_skip.as('verification_skip'),
-        sum_unsure.as('verification_unsure')
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_TRUE)).as('verification_correct'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_FALSE)).as('verification_incorrect'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_SKIP)).as('verification_skip'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_UNSURE)).as('verification_unsure')
       )
       .as('verification_subquery')
 
@@ -602,14 +581,23 @@ class AudioEvent < ApplicationRecord
       verification_table_alias[:verification_unsure]
     ])
 
-    which_max = Arel::Nodes::Case.new(greatest_function)
-      .when(verification_table_alias[:verification_correct]).then('correct')
-      .when(verification_table_alias[:verification_incorrect]).then('incorrect')
-      .when(verification_table_alias[:verification_skip]).then('skip')
-      .when(verification_table_alias[:verification_unsure]).then('unsure')
-      .else(nil)
-
     verification_consensus = (greatest_function / verification_table_alias[:verification_counts].cast('numeric'))
+
+    which_max = Arel.sql(
+            <<~SQL.squish
+              (
+              SELECT label
+               FROM (VALUES
+                   ('correct', verification_subquery.verification_correct),
+                   ('incorrect', verification_subquery.verification_incorrect),
+                   ('skip', verification_subquery.verification_skip),
+                   ('unsure', verification_subquery.verification_unsure)
+               ) AS v(label, count)
+               ORDER BY count DESC
+               LIMIT 1
+               )
+            SQL
+          )
 
     verification_outer_query = Arel::SelectManager.new
       .from(verification_subquery)
@@ -639,7 +627,6 @@ class AudioEvent < ApplicationRecord
 
     verification_cte_table = Arel::Table.new(:verification_cte_table)
     verification_cte = Arel::Nodes::As.new(verification_cte_table, verification_select)
-
     [verification_cte_table, verification_cte]
   end
 end

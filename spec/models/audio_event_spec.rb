@@ -125,85 +125,69 @@ describe AudioEvent do
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
     query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     sql = <<~SQL.squish
-      WITH"verification_cte_table"\n
-      AS(\n
-      SELECT"verification_table"."audio_event_id",string_agg(
-      CAST("verification_table"."tag_id"asvarchar)||':'||"tag_text",'|')
-      AS"verifications",string_agg(
-      CAST("verification_table"."verification_counts"asvarchar),'|')
-      AS"verification_counts",string_agg(
-      CAST("verification_table"."verification_correct"asvarchar),'|')
-      AS"verification_correct",string_agg(
-      CAST("verification_table"."verification_incorrect"asvarchar),'|')
-      AS"verification_incorrect",string_agg(
-      CAST("verification_table"."verification_skip"asvarchar),'|')
-      AS"verification_skip",string_agg(
-      CAST("verification_table"."verification_unsure"asvarchar),'|')
-      AS"verification_unsure",string_agg("verification_table"."verification_decisions",'|')
-      AS"verification_decisions",string_agg(
-      CAST("verification_table"."verification_consensus"asvarchar),'|')
-      AS"verification_consensus"
+      WITH "verification_cte_table"
+      AS(
+      SELECT "verification_table"."audio_event_id", string_agg(
+      CAST("verification_table"."tag_id" as varchar) ||':'|| "tag_text",'|')
+      AS "verifications", string_agg(
+      CAST("verification_table"."verification_counts" as varchar),'|')
+      AS "verification_counts", string_agg(
+      CAST("verification_table"."verification_correct" as varchar),'|')
+      AS "verification_correct", string_agg(
+      CAST("verification_table"."verification_incorrect" as varchar),'|')
+      AS "verification_incorrect", string_agg(
+      CAST("verification_table"."verification_skip" as varchar),'|')
+      AS "verification_skip", string_agg(
+      CAST("verification_table"."verification_unsure" as varchar),'|')
+      AS "verification_unsure", string_agg("verification_table"."verification_decisions",'|')
+      AS "verification_decisions", string_agg(
+      CAST("verification_table"."verification_consensus" as varchar),'|')
+      AS "verification_consensus"
       FROM(
-      SELECT"verification_subquery".*,
-      CASE
-      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")
-      WHEN"verification_subquery"."verification_correct"
-      THEN'correct'
-      WHEN"verification_subquery"."verification_incorrect"
-      THEN'incorrect'
-      WHEN"verification_subquery"."verification_skip"
-      THEN'skip'
-      WHEN"verification_subquery"."verification_unsure"
-      THEN'unsure'
-      ELSE
-      NULL
-      END
-      AS"verification_decisions",
+      SELECT"verification_subquery".*,(
+      SELECT label
+      FROM(
+      VALUES('correct',verification_subquery.verification_correct),('incorrect',verification_subquery.verification_incorrect),('skip',verification_subquery.verification_skip),('unsure',verification_subquery.verification_unsure))
+      AS v(label,count)
+      ORDER BY count
+      DESC
+      LIMIT 1)
+      AS "verification_decisions",
       ROUND(
-      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")*1.0/"verification_subquery"."verification_counts",2)
-      AS"verification_consensus"
+      GREATEST ("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")/
+      CAST("verification_subquery"."verification_counts"
+      AS numeric), 2)
+      AS "verification_consensus"
       FROM(
-      SELECT"verifications"."audio_event_id","verifications"."tag_id","tags"."text"
-      AS"tag_text",
+      SELECT "verifications"."audio_event_id","verifications"."tag_id","tags"."text"
+      AS "tag_text",
       COUNT("verifications"."confirmed")
-      AS"verification_counts",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='correct'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_correct",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='incorrect'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_incorrect",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='skip'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_skip",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='unsure'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_unsure"
-      FROM"verifications"
+      AS "verification_counts",(
+      COUNT (*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'correct'))
+      AS "verification_correct",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'incorrect'))
+      AS "verification_incorrect",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'skip'))
+      AS "verification_skip",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed"='unsure'))
+      AS "verification_unsure"
+      FROM "verifications"
       INNER
-      JOIN"tags"
-      ON"verifications"."tag_id"="tags"."id"
-      GROUP
-      BY"verifications"."audio_event_id","verifications"."tag_id","tags"."text")"verification_subquery")"verification_table"
-      GROUP
-      BY"verification_table"."audio_event_id")
-      SELECT"audio_events"."id"
+      JOIN "tags"
+      ON "verifications"."tag_id" = "tags"."id"
+      GROUP BY
+      "verifications"."audio_event_id","verifications"."tag_id","tags"."text") "verification_subquery") "verification_table"
+      GROUP BY
+      "verification_table"."audio_event_id")
+      SELECT "audio_events"."id"
       AS "audio_event_id","audio_recordings"."id"
       AS "audio_recording_id","audio_recordings"."uuid"
       AS "audio_recording_uuid",to_char("audio_recordings"."recorded_date" +
@@ -318,7 +302,7 @@ describe AudioEvent do
       INNER
       JOIN "sites"
       ON "sites"."id" = "audio_recordings"."site_id"
-      INNER
+      LEFT OUTER
       JOIN "regions"
       ON "regions"."id" = "sites"."region_id"
       WHERE "audio_events"."deleted_at"
@@ -362,75 +346,59 @@ describe AudioEvent do
       AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane')
 
     sql = <<~SQL.squish
-      WITH"verification_cte_table"\n
-      AS(\n
-      SELECT"verification_table"."audio_event_id",string_agg(
+      WITH "verification_cte_table"\n
+      AS (\n
+      SELECT "verification_table"."audio_event_id", string_agg(
       CAST("verification_table"."tag_id"asvarchar)||':'||"tag_text",'|')
-      AS"verifications",string_agg(
-      CAST("verification_table"."verification_counts"asvarchar),'|')
-      AS"verification_counts",string_agg(
-      CAST("verification_table"."verification_correct"asvarchar),'|')
-      AS"verification_correct",string_agg(
-      CAST("verification_table"."verification_incorrect"asvarchar),'|')
-      AS"verification_incorrect",string_agg(
-      CAST("verification_table"."verification_skip"asvarchar),'|')
-      AS"verification_skip",string_agg(
-      CAST("verification_table"."verification_unsure"asvarchar),'|')
-      AS"verification_unsure",string_agg("verification_table"."verification_decisions",'|')
-      AS"verification_decisions",string_agg(
-      CAST("verification_table"."verification_consensus"asvarchar),'|')
-      AS"verification_consensus"
+      AS "verifications", string_agg(
+      CAST("verification_table"."verification_counts"as varchar),'|')
+      AS "verification_counts", string_agg(
+      CAST("verification_table"."verification_correct"as varchar),'|')
+      AS "verification_correct", string_agg(
+      CAST("verification_table"."verification_incorrect"as varchar),'|')
+      AS "verification_incorrect", string_agg(
+      CAST("verification_table"."verification_skip"as varchar),'|')
+      AS "verification_skip", string_agg(
+      CAST("verification_table"."verification_unsure"as varchar),'|')
+      AS "verification_unsure", string_agg("verification_table"."verification_decisions",'|')
+      AS "verification_decisions", string_agg(
+      CAST("verification_table"."verification_consensus"as varchar),'|')
+      AS "verification_consensus"
       FROM(
-      SELECT"verification_subquery".*,
-      CASE
-      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")
-      WHEN"verification_subquery"."verification_correct"
-      THEN'correct'
-      WHEN"verification_subquery"."verification_incorrect"
-      THEN'incorrect'
-      WHEN"verification_subquery"."verification_skip"
-      THEN'skip'
-      WHEN"verification_subquery"."verification_unsure"
-      THEN'unsure'
-      ELSE
-      NULL
-      END
-      AS"verification_decisions",
+      SELECT"verification_subquery".*,(
+      SELECT label
+      FROM(
+      VALUES('correct',verification_subquery.verification_correct),('incorrect',verification_subquery.verification_incorrect),('skip',verification_subquery.verification_skip),('unsure',verification_subquery.verification_unsure))
+      AS v(label,count)
+      ORDER BY count
+      DESC
+      LIMIT 1)
+      AS "verification_decisions",
       ROUND(
-      GREATEST("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")*1.0/"verification_subquery"."verification_counts",2)
-      AS"verification_consensus"
+      GREATEST ("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")/
+      CAST("verification_subquery"."verification_counts"
+      AS numeric), 2)
+      AS "verification_consensus"
       FROM(
-      SELECT"verifications"."audio_event_id","verifications"."tag_id","tags"."text"
-      AS"tag_text",
+      SELECT "verifications"."audio_event_id","verifications"."tag_id","tags"."text"
+      AS "tag_text",
       COUNT("verifications"."confirmed")
-      AS"verification_counts",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='correct'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_correct",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='incorrect'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_incorrect",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='skip'
-      THEN1
-      ELSE0
-      END)
-      AS"verification_skip",
-      SUM(
-      CASE
-      WHEN"verifications"."confirmed"='unsure'
-      THEN1
-      ELSE0
-      END)
+      AS "verification_counts",(
+      COUNT (*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'correct'))
+      AS "verification_correct",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'incorrect'))
+      AS "verification_incorrect",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed" = 'skip'))
+      AS "verification_skip",(
+      COUNT(*)
+      FILTER(
+      WHERE "verifications"."confirmed"='unsure'))
       AS"verification_unsure"
       FROM"verifications"
       INNER
@@ -555,7 +523,7 @@ describe AudioEvent do
       INNER
       JOIN "sites"
       ON "sites"."id" = "audio_recordings"."site_id"
-      INNER
+      LEFT OUTER
       JOIN "regions"
       ON "regions"."id" = "sites"."region_id"
       WHERE "audio_events"."deleted_at"
@@ -706,6 +674,7 @@ describe AudioEvent do
   describe 'verifications query for annotation downloads' do
     create_entire_hierarchy
 
+    # set up a new event, with two tags and taggings
     let(:event_one) { create(:audio_event, creator: writer_user, audio_recording:) }
 
     let(:tag_one) { create(:tag_taxonomic_true_common, creator: writer_user) }
@@ -724,15 +693,29 @@ describe AudioEvent do
         creator: writer_user)
     }
 
-    let(:choices_one) { { 'correct' => 4, 'incorrect' => 3, 'skip' => 2, 'unsure' => 1 } }
-    let(:choices_two) { { 'correct' => 1, 'incorrect' => 4, 'skip' => 3, 'unsure' => 2 } }
+    # the number of verifications to create for each `confirmed` value, for each tag
+    let(:choices_one) {
+      { Verification::CONFIRMATION_TRUE => 4,
+        Verification::CONFIRMATION_FALSE => 3,
+        Verification::CONFIRMATION_SKIP => 2,
+        Verification::CONFIRMATION_UNSURE => 1 }
+    }
+    let(:choices_two) {
+      { Verification::CONFIRMATION_TRUE => 1,
+        Verification::CONFIRMATION_FALSE => 4,
+        Verification::CONFIRMATION_SKIP => 3,
+        Verification::CONFIRMATION_UNSURE => 2 }
+    }
 
+    # for the single audio_event `event_one`, with two tags / annotations:
+    # create 10 verifications of tag one, and 10 verifications of tag two
+    # each verification coming from a different user
     before do
       event_verifications_for_tagging(tagging_one, choices_one)
       event_verifications_for_tagging(tagging_two, choices_two)
     end
 
-    it 'aggregates verifications correctly' do
+    it 'aggregates verifications from multiple tags correctly' do
       verification_cte_table, query_cte = AudioEvent.verification_summary_cte
 
       query = AudioEvent.arel_table.join(verification_cte_table)
@@ -740,42 +723,41 @@ describe AudioEvent do
         .project(verification_cte_table[Arel.star])
         .with(query_cte)
 
-      formatted_annotations = AudioEvent.connection.select_all(query.to_sql)
+      results = AudioEvent.connection.select_all(query.to_sql)
 
-      expect(formatted_annotations.pluck('verifications')).to eq([
+      expect(results.pluck('verifications')).to eq([
         "#{tag.id}:#{tag.text}",
         "#{tag_one.id}:#{tag_one.text}|#{tag_two.id}:#{tag_two.text}"
       ])
 
-      combined_counts = [choices_one.values.sum, choices_two.values.sum].join('|')
-      combined_correct = combine_for_key('correct', choices_one, choices_two)
-      combined_incorrect = combine_for_key('incorrect', choices_one, choices_two)
-      combined_skip = combine_for_key('skip', choices_one, choices_two)
-      combined_unsure = combine_for_key('unsure', choices_one, choices_two)
+      expect(results.pluck('verification_counts')).to eq([
+        audio_event.verifications.count.to_s,
+        [event_one.verifications.where(tag: tag_one.id).count.to_s,
+         event_one.verifications.where(tag: tag_two.id).count.to_s].join('|')
+      ])
 
-      combined_decisions = [
-        majority_decision(choices_one),
-        majority_decision(choices_two)
-      ].join('|')
-
-      combined_consensus = [
-        consensus_for(choices_one),
-        consensus_for(choices_two)
-      ].join('|')
-
-      aggregated_fields = {
-        'verification_counts' => ['1', combined_counts],
-        'verification_correct' => ['1', combined_correct],
-        'verification_incorrect' => ['0', combined_incorrect],
-        'verification_skip' => ['0', combined_skip],
-        'verification_unsure' => ['0', combined_unsure],
-        'verification_decisions' => ['correct',    combined_decisions],
-        'verification_consensus' => ['1.00',       combined_consensus]
-      }
-
-      aggregated_fields.each do |field_name, expected|
-        expect(formatted_annotations.pluck(field_name)).to eq(expected)
+      [
+        Verification::CONFIRMATION_TRUE,
+        Verification::CONFIRMATION_FALSE,
+        Verification::CONFIRMATION_SKIP,
+        Verification::CONFIRMATION_UNSURE
+      ].each do |value|
+        eq([audio_event.verifications.where(confirmed: value).count.to_s,
+            [event_one.verifications.where(tag: tag_one.id, confirmed: value).count,
+             event_one.verifications.where(tag: tag_two.id, confirmed: value).count].map(&:to_s).join('|')])
       end
+
+      expect(results.pluck('verification_decisions')).to eq([
+        verification.confirmed,
+        [choices_one.max_by { |_k, v| v }.first,
+         choices_two.max_by { |_k, v| v }.first].join('|')
+      ])
+
+      expect(results.pluck('verification_consensus')).to eq([
+        '1.00',
+        [format('%.2f', (choices_one.values.max / choices_one.values.sum.to_f)),
+         format('%.2f', (choices_two.values.max / choices_two.values.sum.to_f))].join('|')
+      ])
     end
   end
 
@@ -798,18 +780,4 @@ def event_verifications_for_tagging(tagging, choices)
         confirmed: choice)
     end
   end
-end
-
-def majority_decision(choices)
-  choices.max_by { |_k, v| v }.first
-end
-
-def consensus_for(choices)
-  total     = choices.values.sum.to_f
-  max_value = choices.values.max
-  format('%.2f', (max_value / total))
-end
-
-def combine_for_key(key, *choices_hashes)
-  choices_hashes.pluck(key).join('|')
 end
