@@ -21,6 +21,7 @@ describe AudioEventsController, type: :routing do
     it { expect(get('/audio_events/new')).to route_to('errors#route_error', requested_route: 'audio_events/new') }
 
     it { expect(get('/projects/1/audio_events/download')).to route_to('audio_events#download', project_id: '1', format: 'csv') }
+    it { expect(get('/projects/1/regions/2/audio_events/download')).to route_to('audio_events#download', project_id: '1', region_id: '2', format: 'csv') }
     it { expect(get('/projects/1/sites/2/audio_events/download')).to route_to('audio_events#download', project_id: '1', site_id: '2', format: 'csv') }
 
     it { expect(get('/user_accounts/1/audio_events/download')).to route_to('audio_events#download', user_id: '1', format: 'csv') }

@@ -93,6 +93,7 @@ class AudioEventsController < ApplicationController
 
   # GET /audio_recordings/:audio_recording_id/audio_events/download
   # GET /projects/:project_id/audio_events/download
+  # GET /projects/:project_id/regions/:region_id/audio_events/download
   # GET /projects/:project_id/sites/:site_id/audio_events/download
   def download
     params_cleaned = CleanParams.perform(audio_event_download_params)
@@ -121,6 +122,15 @@ class AudioEventsController < ApplicationController
       project = Project.where(id: params_cleaned[:project_id].to_i).first
       if project.present?
         authorize! :show, project
+        is_authorized = true
+      end
+    end
+
+    # region id
+    if params_cleaned[:region_id]
+      region = Region.where(id: params_cleaned[:region_id].to_i).first
+      if region.present?
+        authorize! :show, region
         is_authorized = true
       end
     end
@@ -163,7 +173,7 @@ class AudioEventsController < ApplicationController
 
     unless is_authorized
       raise CustomErrors::RoutingArgumentError,
-        'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
+        'must provide existing audio_recording_id, start_offset, and end_offset or project_id or or region_id or site_id or user_id'
     end
 
     # create file name
@@ -183,7 +193,7 @@ class AudioEventsController < ApplicationController
 
     # create query
 
-    query = AudioEvent.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
+    query = AudioEvent.csv_query(user, project, region, site, audio_recording, start_offset, end_offset, timezone_name)
     query_sql = query.to_sql
     @formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
@@ -223,6 +233,7 @@ class AudioEventsController < ApplicationController
       :user_id, :userId,
       :project_id, :projectId,
       :site_id, :siteId,
+      :region_id, :regionId,
       :start_offset, :startOffset,
       :end_offset, :endOffset,
       :selected_timezone_name, :selectedTimezoneName,
