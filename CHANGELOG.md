@@ -1,5 +1,20 @@
 # Changelog
 
+## [12.14.2](https://github.com/QutEcoacoustics/baw-server/tree/12.14.2) (2025-04-04)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.14.1...12.14.2)
+
+**Implemented enhancements:**
+
+- Allow filtering by region id for audio event download endpoint [\#740](https://github.com/QutEcoacoustics/baw-server/issues/740)
+- Add verification data to annotation download CSV [\#739](https://github.com/QutEcoacoustics/baw-server/issues/739)
+- Update audio event csv download [\#748](https://github.com/QutEcoacoustics/baw-server/pull/748) ([andrew-1234](https://github.com/andrew-1234))
+
+**Fixed bugs:**
+
+- Analysis jobs never set started\_at [\#751](https://github.com/QutEcoacoustics/baw-server/issues/751)
+- analysis jobs item used\_memory\_bytes should be a bigint [\#712](https://github.com/QutEcoacoustics/baw-server/issues/712)
+
 ## [12.14.1](https://github.com/QutEcoacoustics/baw-server/tree/12.14.1) (2025-04-02)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.13.1...12.14.1)
