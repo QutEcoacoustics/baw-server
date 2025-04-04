@@ -477,6 +477,7 @@ describe AnalysisJob do
 
     it 'defines the process event' do
       expect(analysis_job).to transition_from(:preparing).to(:processing).on_event(:process)
+      expect(analysis_job.started_at).not_to be_nil
     end
 
     it 'defines the suspend event' do

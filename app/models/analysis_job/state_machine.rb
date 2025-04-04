@@ -86,7 +86,7 @@ class AnalysisJob
           transitions(
             from: :preparing,
             to: :processing,
-            after: [:generate_analysis_job_items, :update_overall_stats],
+            after: [:update_started_at, :generate_analysis_job_items, :update_overall_stats],
             success: :send_new_job_email
           )
         end
@@ -244,6 +244,10 @@ class AnalysisJob
 
     def send_retry_email
       AnalysisJobMailer.retry_job_message(self, nil).deliver_later
+    end
+
+    def update_started_at
+      self.started_at = Time.zone.now
     end
 
     # Update status timestamp whenever a transition occurs.

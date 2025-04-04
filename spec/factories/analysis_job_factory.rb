@@ -67,10 +67,9 @@ FactoryBot.define do
     overall_duration_seconds  { 60 }
     overall_data_length_bytes { 1024 }
 
-    started_at { Time.zone.now }
-
     # should be set by the state machine
     #overall_status_modified_at { Time.zone.now }
+    #started_at { Time.zone.now }
 
     filter { {} }
   end
