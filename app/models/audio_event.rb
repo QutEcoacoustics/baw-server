@@ -251,7 +251,7 @@ class AudioEvent < ApplicationRecord
   # @param [Float] end_offset
   # @param [String] timezone_name
   # @return [Arel:SelectManager]
-  def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
+  def self.csv_query(user, project, region, site, audio_recording, start_offset, end_offset, timezone_name)
     # NOTE: if other modifications are made to the default_scope (like acts_as_discardable does),
     # manually constructed queries like this need to be updated to match
     # (search for ':deleted_at' to find the relevant places)
@@ -259,11 +259,11 @@ class AudioEvent < ApplicationRecord
     # NOTE: tried using Arel from ActiveRecord
     # e.g. AudioEvent.all.ast.cores[0].wheres
     # but was more trouble to use than directly constructing Arel
-
     audio_events = AudioEvent.arel_table
     users = User.arel_table
     audio_recordings = AudioRecording.arel_table
     sites = Site.arel_table
+    regions = Region.arel_table
     projects = Project.arel_table
     projects_sites = Arel::Table.new(:projects_sites)
     audio_events_tags = Tagging.arel_table
@@ -339,15 +339,22 @@ class AudioEvent < ApplicationRecord
     tags_others_aggregate = tags_others.clone.project(other_tags_agg)
     tags_others_ids = tags_others.clone.project(other_tags_ids)
 
+    verification_cte_table, verification_cte = verification_summary_cte
+
     query =
       audio_events
+        .join(verification_cte_table, Arel::Nodes::OuterJoin)
+        .on(audio_events[:id].eq(verification_cte_table[:audio_event_id]))
         .where(audio_events[:deleted_at].eq(nil))
         .join(users).on(users[:id].eq(audio_events[:creator_id]))
         .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
         .where(audio_recordings[:deleted_at].eq(nil))
         .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
         .where(sites[:deleted_at].eq(nil))
+        .join(regions, Arel::Nodes::OuterJoin).on(regions[:id].eq(sites[:region_id]))
+        .where(regions[:deleted_at].eq(nil))
         .order(audio_events[:id].desc)
+        .with(verification_cte)
         .project(
           audio_events[:id].as('audio_event_id'),
           audio_recordings[:id].as('audio_recording_id'),
@@ -365,6 +372,8 @@ class AudioEvent < ApplicationRecord
           function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
             format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
           projects_aggregate.as('projects'),
+          regions[:id].as('region_id'),
+          regions[:name].as('region_name'),
           sites[:id].as('site_id'),
           sites[:name].as('site_name'),
           function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
@@ -388,6 +397,14 @@ class AudioEvent < ApplicationRecord
           tags_species_ids.as('species_name_tag_ids'),
           tags_others_aggregate.as('other_tags'),
           tags_others_ids.as('other_tag_ids'),
+          verification_cte_table[:verifications],
+          verification_cte_table[:verification_counts],
+          verification_cte_table[:verification_correct],
+          verification_cte_table[:verification_incorrect],
+          verification_cte_table[:verification_skip],
+          verification_cte_table[:verification_unsure],
+          verification_cte_table[:verification_decisions],
+          verification_cte_table[:verification_consensus],
           Arel::Nodes::SqlLiteral.new(
             "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
                              '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
@@ -421,6 +438,8 @@ class AudioEvent < ApplicationRecord
 
       query = query.where(sites[:id].in(site_ids))
     end
+
+    query = query.where(regions[:id].eq(region.id)) if region
 
     query = query.where(sites[:id].eq(site.id)) if site
 
@@ -504,5 +523,110 @@ class AudioEvent < ApplicationRecord
 
   def self.infix_operation(operation, value1, value2)
     Arel::Nodes::InfixOperation.new(operation, value1, value2)
+  end
+
+  # Construct verification summary, aggregated by audio event and tag, returned
+  # as a common table expression.
+  # @return [Array<Arel::Table, Arel::Nodes::As>]
+  def self.verification_summary_cte
+    verifications = Verification.arel_table
+    tags = Tag.arel_table
+
+    verification_tags_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."tag_id" as varchar) || \':\' || "tag_text", \'|\')'
+    ).as('verifications')
+    verification_decisions_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg("verification_table"."verification_decisions", \'|\')'
+     ).as('verification_decisions')
+    verification_consensus_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."verification_consensus" as varchar), \'|\')'
+    ).as('verification_consensus')
+    verification_count_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("verification_table"."verification_counts" as varchar), \'|\')'
+    ).as('verification_counts')
+    verification_correct_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_correct" as varchar), \'|\')'
+     ).as('verification_correct')
+    verification_incorrect_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_incorrect" as varchar), \'|\')'
+     ).as('verification_incorrect')
+    verification_unsure_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_unsure" as varchar), \'|\')'
+     ).as('verification_unsure')
+    verification_skip_agg = Arel::Nodes::SqlLiteral.new(
+       'string_agg(CAST("verification_table"."verification_skip" as varchar), \'|\')'
+     ).as('verification_skip')
+
+    verification_subquery = verifications
+      .join(tags).on(verifications[:tag_id].eq(tags[:id]))
+      .group(verifications[:audio_event_id], verifications[:tag_id], tags[:text])
+      .project(
+        verifications[:audio_event_id],
+        verifications[:tag_id],
+        tags[:text].as('tag_text'),
+        verifications[:confirmed].count.as('verification_counts'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_TRUE)).as('verification_correct'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_FALSE)).as('verification_incorrect'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_SKIP)).as('verification_skip'),
+        Arel.star.count.filter(verifications[:confirmed].eq(Verification::CONFIRMATION_UNSURE)).as('verification_unsure')
+      )
+      .as('verification_subquery')
+
+    verification_table_alias = Arel::Table.new(:verification_subquery)
+
+    greatest_function = Arel::Nodes::NamedFunction.new('GREATEST', [
+      verification_table_alias[:verification_correct],
+      verification_table_alias[:verification_incorrect],
+      verification_table_alias[:verification_skip],
+      verification_table_alias[:verification_unsure]
+    ])
+
+    verification_consensus = (greatest_function / verification_table_alias[:verification_counts].cast('numeric'))
+
+    which_max = Arel.sql(
+            <<~SQL.squish
+              (
+              SELECT label
+               FROM (VALUES
+                   ('correct', verification_subquery.verification_correct),
+                   ('incorrect', verification_subquery.verification_incorrect),
+                   ('skip', verification_subquery.verification_skip),
+                   ('unsure', verification_subquery.verification_unsure)
+               ) AS v(label, count)
+               ORDER BY count DESC
+               LIMIT 1
+               )
+            SQL
+          )
+
+    verification_outer_query = Arel::SelectManager.new
+      .from(verification_subquery)
+      .project(
+        verification_table_alias[Arel.star],
+        which_max.as('verification_decisions'),
+        verification_consensus.round(2).as('verification_consensus')
+      )
+      .as('verification_table')
+
+    verification_table = Arel::Table.new(:verification_table)
+
+    verification_select = Arel::SelectManager.new
+      .from(verification_outer_query)
+      .group(verification_table[:audio_event_id])
+      .project(
+        verification_table[:audio_event_id],
+        verification_tags_agg,
+        verification_count_agg,
+        verification_correct_agg,
+        verification_incorrect_agg,
+        verification_skip_agg,
+        verification_unsure_agg,
+        verification_decisions_agg,
+        verification_consensus_agg
+      )
+
+    verification_cte_table = Arel::Table.new(:verification_cte_table)
+    verification_cte = Arel::Nodes::As.new(verification_cte_table, verification_select)
+    [verification_cte_table, verification_cte]
   end
 end
