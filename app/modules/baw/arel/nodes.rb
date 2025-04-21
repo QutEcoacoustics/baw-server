@@ -57,6 +57,12 @@ module Baw
         end
       end
 
+      class ArrayToJson < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('array_to_json', expr)
+        end
+      end
+
       class Unnest < ::Arel::Nodes::NamedFunction
         def initialize(expr)
           super('unnest', expr)

@@ -7,9 +7,10 @@ class AudioEventReportsController < ApplicationController
   def filter
     # @audio_event_report = AudioEventReporter::AudioEventReport.new
     do_authorize_class(:filter, :audio_event_reports)
-    report = AudioEventReporter::Report.new(api_filter_params, base_scope)
-    query = report.generate
-    result = ActiveRecord::Base.connection.execute(query).as_json
+
+    # NOTE: api_filter_params is permit! all validation done in modules
+    report = Report::AudioEventReport.new(api_filter_params, base_scope)
+    result = report.generate
     render json: result, status: :ok
   end
 
