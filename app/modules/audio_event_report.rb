@@ -84,7 +84,6 @@ module AudioEventReport
   end
 
   def generate
-    debugger
     @query
       .with(@cte)
       .project(aggregate_distinct(:site_ids))

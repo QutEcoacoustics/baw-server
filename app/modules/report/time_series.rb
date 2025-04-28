@@ -5,6 +5,8 @@ module Report
   module TimeSeries
     module_function
 
+    include Report::ArelHelpers
+
     BUCKET_ENUM = {
       'day' => '1 day',
       'week' => '1 week',
@@ -63,6 +65,8 @@ module Report
         }
       end
 
+      # don't truncate end times into the future
+      # don't error on future start date - emit warning in the UI
       def self.validate_start_end_time(time_range)
         start_time, end_time = time_range
         raise ArgumentError, 'start_time must be before the current date.' unless start_time < Time.zone.now
@@ -87,6 +91,31 @@ module Report
         Rails.logger.warn("#{message} Defaulting to 'day'.")
         'day'
       end
+    end
+
+    def string_as_timestamp_node(date)
+      Arel.sql('?::timestamp', Arel::Nodes.build_quoted(date))
+    end
+
+    # @param start_date [String] Start date in ISO format
+    # @param end_date [String] End date in ISO format
+    # @param bucket_interval [String] PostgreSQL interval string e.g. '1 hour'
+    # @return [Query] A query object with the time boundaries
+    def time_boundaries(start_date, end_date, bucket_interval)
+      start_quoted = Arel.sql('?::timestamp', Arel::Nodes.build_quoted(start_date))
+      end_quoted = Arel.sql('?::timestamp', Arel::Nodes.build_quoted(end_date))
+      bucket_interval_quoted = Arel.sql('INTERVAL ?', Arel::Nodes.build_quoted(bucket_interval))
+
+      select = Arel::SelectManager.new
+        .project(
+          start_quoted.as('report_start_time'),
+          end_quoted.as('report_end_time'),
+          bucket_interval_quoted.as('bucket_interval')
+        )
+
+      table = Arel::Table.new(:time_boundaries)
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
     end
 
     def cte_time_boundaries(start_date, end_date, bucket_interval)
@@ -133,6 +162,31 @@ module Report
     )
     end
 
+    def bucket_start_time
+      Arel.sql(
+        <<~SQL.squish
+          (SELECT min_value FROM calculated_settings) +
+                          ((#{generate_series(1, select_ceiling_bucket_count)} - 1) *
+                          (SELECT bucket_interval FROM time_boundaries))
+        SQL
+      )
+    end
+
+    def bucket_end_time
+      Arel.sql(
+        <<~SQL.squish
+          (SELECT min_value FROM calculated_settings) +
+          (#{generate_series(1, select_ceiling_bucket_count)} *
+          (SELECT bucket_interval FROM time_boundaries))
+        SQL
+      )
+    end
+
+    def bucket_count_default(start_column, end_column, interval_column)
+      # extract(epoch from ?)
+      (end_column.extract('epoch') - start_column.extract('epoch')) / interval_column.extract('epoch')
+    end
+
     def expr_bucket_count_default
       Arel.sql(
         <<~SQL.squish
@@ -148,6 +202,16 @@ module Report
       # subtracting a timestamp truncated to month from itself gives the
       # remainder of days + hours:minutes:seconds. if the end time remainder is
       # greater than the start time, there is a partial month, so add 1
+      # Alternative: AGE() function accepts two TIMESTAMP values. It subtracts
+      # the second argument from the first one and returns an interval as a
+      # result.
+      # SELECT date_part ('year', report_age) * 12 +
+      #   date_part ('month', report_age)
+      #   FROM age (report_start_time, report_end, time) AS report_age
+      #  select.new
+      #   .project(report_age.date_part('year') * 12 +
+      #      report_age.date_part('month'))
+      #   .from(table.age).as('report_age')
       Arel.sql(
       <<~SQL.squish
         (SELECT
@@ -207,12 +271,42 @@ module Report
       calculated_settings = cte_calculated_settings(bucket_count_case)
       all_buckets = cte_all_buckets
       Arel.sql(
-      <<~SQL.squish
-        #{time_boundaries},
-        #{calculated_settings},
-        #{all_buckets}
-      SQL
-    )
+       <<~SQL.squish
+         #{time_boundaries},
+         #{calculated_settings},
+         #{all_buckets}
+       SQL
+     )
+    end
+
+    def width_bucket
+      Arel.sql(
+        <<~SQL.squish
+          WIDTH_BUCKET(
+            EXTRACT(EPOCH FROM start_time_absolute),
+            EXTRACT(EPOCH FROM (SELECT min_value FROM calculated_settings)),
+            EXTRACT(EPOCH FROM (SELECT max_value FROM calculated_settings)),
+            (SELECT CEILING(bucket_count)::integer FROM calculated_settings)
+          )
+        SQL
+      )
+    end
+
+    def datetime_range_to_array(start_field, end_field)
+      Arel::Nodes::SqlLiteral.new("
+          array_to_json(ARRAY[
+            to_char(#{start_date}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
+            to_char(#{end_date}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')
+          ])
+        ").as('range')
     end
   end
 end
+
+# problem with epoch for buckets
+# probably need a parameter for the report - what time zone do you want the
+# report in
+# e.g. state boundaries - need to know one or the other
+
+# if report start provided by user, this should be the epoch we use - no rounding
+# without start date, have to calculate the epoch e.g.

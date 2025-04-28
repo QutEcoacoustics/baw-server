@@ -130,6 +130,54 @@ describe Report::TimeSeries do
     end
   end
 
+  describe 'cte tables' do
+    it 'expr bucket count default returns the expected SQL for bucket count' do
+      expected_sql = <<~SQL.squish
+        (SELECT (EXTRACT(EPOCH FROM report_end_time) - EXTRACT(EPOCH FROM report_start_time)) /
+          EXTRACT(EPOCH FROM bucket_interval) FROM time_boundaries)
+      SQL
+
+      result = subject.expr_bucket_count_default
+      expect(result).to match(expected_sql)
+    end
+
+    it '#time_boundaries works' do
+      # insert start_date and end_date into the table
+      # Arel::Nodes::NamedFunction.new('date_trunc', [Arel::Nodes.build_quoted('day'), User.arel_table[:created_at]])
+      # date_trunc('day', "users"."created_at")
+      # extract = Arel::Nodes::NamedFunction.new('EXTRACT', [expr])
+      query = subject.time_boundaries('2025-01-01T00:00:00Z', '2025-01-08T00:00:00Z', '1 day')
+
+      expected_sql = <<~SQL.squish
+        "time_boundaries" AS (SELECT
+            '2025-01-01T00:00:00Z'::timestamp AS "report_start_time",
+            '2025-01-08T00:00:00Z'::timestamp AS "report_end_time",
+            INTERVAL '1 day' AS "bucket_interval")
+      SQL
+
+      result = execute_query(query)
+      result = result[0].to_h
+
+      expect(query.cte.to_sql).to match(expected_sql)
+      expect(result['report_start_time']).to eq('2025-01-01T00:00:00Z')
+      expect(result['report_end_time']).to eq('2025-01-08T00:00:00Z')
+      expect(result['bucket_interval']).to eq('P1D')
+    end
+
+    it 'bucket count default works' do
+      t = Arel::Table.new(:table)
+      start = t[:start_column]
+      ends = t[:end_column]
+      interval = t[:interval]
+      out = subject.bucket_count_default(start, ends, interval)
+      expected_sql = <<~SQL.squish
+        (EXTRACT(EPOCH FROM "table"."end_column") - EXTRACT(EPOCH FROM "table"."start_column")) /
+          EXTRACT(EPOCH FROM "table"."interval")
+      SQL
+      expect(out.to_sql).to match(expected_sql)
+    end
+  end
+
   describe Report::TimeSeries::StartEndTime do
     let(:valid_parameters) {
       {
@@ -361,3 +409,26 @@ describe Report::TimeSeries do
     end
   end
 end
+
+# Helper method to execute a CTE query and return the result
+# @param query [Report::TimeSeries::Query] The CTE query to execute
+def execute_query(query)
+  select = Arel::SelectManager.new
+    .with(query.cte)
+    .project(Arel.star)
+    .from(query.table)
+  ActiveRecord::Base.connection.execute(select.to_sql)
+end
+
+# report over a defined range
+# important for the regular sizing of buckets
+# different from filtering any object in our database, because want to return
+# empty sections
+# report apis will accept additional two parameters in same scope as the bucket
+# start end of report (range)
+# either can be NULL not supplied, infer start end automatically based on
+# start equals min recorded at floored to midnight => extract date (start bucket
+# counting from) e.g. 1400 for a day, bucket starts at 00:00 on said date
+# end time would be the opposite (recorded at max nearest day)
+
+# if report range, and no filter dates, filter base data to report range

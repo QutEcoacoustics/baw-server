@@ -56,7 +56,7 @@ describe Report::AudioEventReport do
           ARRAY_AGG(DISTINCT provenance_ids)
         FROM "base_table"
       SQL
-      query = report.send(:build_query)
+      query = report.build_query
       sql = query.to_sql
 
       expect(sql).to match(expected_sql)
@@ -65,7 +65,7 @@ describe Report::AudioEventReport do
 
   describe '#attributes' do
     it 'returns an array of Arel attributes' do
-      attributes = report.send(:attributes)
+      attributes = report.attributes
       expect(attributes).to be_an(Array)
       expect(attributes.length).to eq(8)
     end
@@ -76,7 +76,7 @@ describe Report::AudioEventReport do
       # Create an Arel::SelectManager to use as query
       query = Arel::SelectManager.new
 
-      result = report.send(:add_joins, query)
+      result = report.add_joins(query)
       sql = result.to_sql
 
       expect(sql).to include('JOIN "taggings"')

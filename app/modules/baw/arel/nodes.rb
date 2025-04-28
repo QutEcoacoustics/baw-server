@@ -63,6 +63,18 @@ module Baw
         end
       end
 
+      class JsonAgg < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('json_agg', expr)
+        end
+      end
+
+      class RowToJson < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('row_to_json', expr)
+        end
+      end
+
       class Unnest < ::Arel::Nodes::NamedFunction
         def initialize(expr)
           super('unnest', expr)

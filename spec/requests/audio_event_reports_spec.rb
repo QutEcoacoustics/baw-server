@@ -2,10 +2,11 @@
 
 describe 'Audio Event Reports' do
   # create unique users that will be available to confirm events
-  let(:users) { create_list(:user, 3) }
+  let(:users) { create_list(:user, 4) }
   let(:creator) { users.first }
   let(:provenance) { create(:provenance, creator: creator) }
-  let(:start_date) { DateTime.parse('2025-01-01T00:00:00Z', nil) }
+  let(:start_date_string) { '2025-01-01T00:00:00Z' }
+  let(:start_date) { DateTime.parse(start_date_string, nil) }
   let(:tags) {
     tag_keys = [:koala, :whip_bird, :honeyeater, :magpie]
     tag_keys.index_with { |tag_name| create(:tag, text: tag_name) }
@@ -16,28 +17,30 @@ describe 'Audio Event Reports' do
   let(:site_one) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
   let(:site_two) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
 
-  let(:data) {
+  let!(:data) {
     { project: project,
       sites: [site_one, site_two],
       recordings: [
         with_recording(site: site_one, creator: creator, date: start_date) { |recording|
-          with_event(recording:, start: 5, tag: tags[:koala])
-          with_event(recording:, start: 3600, tag: tags[:koala])
-          with_event(recording:, start: 7600, tag: tags[:whip_bird],
+          with_event(creator: creator, provenance: provenance, recording:, start: 5, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 3600, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 7600, tag: tags[:whip_bird],
             confirmations: ['correct', 'correct'], users: users)
         },
         with_recording(site: site_two, creator: creator, date: start_date + 2.days) { |recording|
-          with_event(recording:, start: 5, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 5, tag: tags[:koala])
         },
         with_recording(site: site_one, creator: creator, date: start_date + 2.days) { |recording|
-          with_event(recording:, start: 18_000, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 18_000, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 20_000, tag: tags[:koala],
+            confirmations: ['correct', 'correct', 'correct', 'incorrect'], users: users)
         },
-        with_recording(site: site_one, creator: creator, date: start_date + 4.days),
         with_recording(site: site_one, creator: creator, date: start_date + 6.days) { |recording|
-          with_event(recording:, start: 5, tag: tags[:koala])
-          with_event(recording:, start: 3600, tag: tags[:whip_bird])
-          with_event(recording:, start: 7600, tag: tags[:honeyeater])
-          with_event(recording:, start: 18_000, tag: tags[:magpie],
+          with_event(creator: creator, provenance: provenance, recording:, start: 5, tag: tags[:koala])
+          with_event(creator: creator, provenance: provenance, recording:, start: 3600, tag: tags[:whip_bird],
+            confirmations: ['incorrect', 'incorrect'], users: users) # whip bird should have average of 1 consensus; verifiers are always in agreement
+          with_event(creator: creator, provenance: provenance, recording:, start: 7600, tag: tags[:honeyeater])
+          with_event(creator: creator, provenance: provenance, recording:, start: 18_000, tag: tags[:magpie],
             confirmations: ['correct', 'incorrect', 'incorrect'], users: users)
         }
       ] }
@@ -49,29 +52,24 @@ describe 'Audio Event Reports' do
       filter: {},
       options: {
         bucket_size: 'day',
-        start_date: start_date,
-        end_date: start_date + 7.days
+        start_time: start_date,
+        end_time: start_date + 7.days
       }
     }
   }
 
-  it 'default entry' do
-    expect(data).to include(:project)
-    debugger
-  end
-
-  it 'accepts a bucket size option param' do
+  it 'returns expected values' do
+    # to get two different tags on one audio event and we expect to see sum of
+    # counts for event summaries to be greater than the number of actual audio events
+    create(:tagging, audio_event: AudioEvent.last)
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
-
     expect(response).to have_http_status(:ok)
-  end
+    debugger
+    expected_site_ids = data[:sites].pluck(:id).join(',')
+    expect(api_result.first[:site_ids]).to match(expected_site_ids)
 
-  it 'returns events a user has permission to view' do
-    not_my_recording_and_site = create(:audio_recording) { |recording|
-      create(:audio_event_with_tags, audio_recording: recording, creator: recording.creator)
-    }
-
-    post '/audio_event_reports', params: { filter: {} }, **api_with_body_headers(writer_token)
+    expected_recording_ids = data[:recordings].pluck(:id).join(',')
+    expect(api_result.first[:audio_recording_ids]).to match(expected_recording_ids)
   end
 end
 

@@ -52,7 +52,7 @@ module Report
     # Default implementation for applying filters to get the base query
     # @return [Arel::SelectManager] query with filters applied
     # @raise [NotImplementedError] if not implemented
-    def filter_as_relation
+    def filter_as_relation(parameters, base_scope)
       raise NotImplementedError, 'missing implementation'
     end
 
