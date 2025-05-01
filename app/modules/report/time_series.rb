@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 module Report
-  # Provides functionality for generating time series reports with properly bucketed time intervals
+  # Provides functionality for analysing and reporting time series data.
   module TimeSeries
     module_function
 
     extend Report::ArelHelpers
     include Report::ArelHelpers
 
+    # A hash mapping of valid bucket size strings (keys) for reporting
+    #   and their corresponding PostgreSQL interval strings (values).
     BUCKET_ENUM = {
       'day' => '1 day',
       'week' => '1 week',
@@ -16,43 +18,25 @@ module Report
       'year' => '1 year'
     }.freeze
 
-    # Get the interval string for the given bucket from BUCKET_ENUM
+    # Get the interval string for a bucket from BUCKET_ENUM
     # @param bucket [String] the bucket size
     # @return [String] the bucket interval string
     def bucket_interval(bucket_size)
       BUCKET_ENUM[bucket_size] || '1 day'
     end
 
-    def parse_time_range
-      lambda { |parameters|
-        start_time = parameters.dig(:options, :start_time)
-        end_time = parameters.dig(:options, :end_time)
-        [start_time, end_time]
-      }
-    end
-
-    def parse_bucket_size
-      lambda { |parameters|
-        bucket = parameters.dig(:options, :bucket_size)
-        bucket
-      }
-    end
-
-    def string_to_iso8601(datetime_string)
-      begin
-        datetime = DateTime.iso8601(datetime_string)
-      rescue ArgumentError
-        raise ArgumentError, 'time string must be valid ISO 8601 dates.'
-      end
-      datetime
-    end
-
+    # Return a validated hash of time series reporting values from params
     class StartEndTime
+      # @param [Hash] parameters to parse
+      # @param [Proc] time_range_parser a proc that returns an array of the
+      #   report start and end datetime strings from the input parameters.
+      # @param [Proc] bucket_size_parser a proc that returns a valid bucket size
+      #   string from the input parameters
+      # @return [Hash] with keys :start_time, :end_time, :bucket_size, :interval
       def self.call(parameters,
                     time_range_parser: TimeSeries.parse_time_range,
                     bucket_size_parser: TimeSeries.parse_bucket_size)
         time_range = time_range_parser.call(parameters)
-        time_range = time_range.map { |time| TimeSeries.string_to_iso8601(time) }
         start_time, end_time = validate_start_end_time(time_range)
 
         parsed_bucket = bucket_size_parser.call(parameters)
@@ -66,18 +50,17 @@ module Report
         }
       end
 
-      # don't truncate end times into the future
-      # don't error on future start date - emit warning in the UI
+      # Reports allow future dates; requests will emit empty results but can be
+      # reused to show data as it becomes available.
       def self.validate_start_end_time(time_range)
-        start_time, end_time = time_range
-        raise ArgumentError, 'start_time must be before the current date.' unless start_time < Time.zone.now
-        raise ArgumentError, 'end_time must be before the current date.' unless start_time < Time.zone.now
-        raise ArgumentError, 'start_time must be before end_time.' unless start_time < end_time
+        start_time, end_time = time_range.map { |time| TimeSeries.string_to_iso8601(time) }
 
-        return [start_time, end_time] unless end_time > Time.zone.now
+        raise ArgumentError, "invalid time range, #{start_time} is > #{end_time}" unless start_time < end_time
 
-        Rails.logger.warn('end_time is in the future, defaulting to current time.')
-        [start_time, Time.zone.now]
+        Rails.logger.warn('future start time') if start_time > Time.zone.now
+        Rails.logger.warn('future end time') if end_time > Time.zone.now
+
+        [start_time, end_time]
       end
 
       def self.validate_bucket_size(bucket)
@@ -94,10 +77,34 @@ module Report
       end
     end
 
+    def string_to_iso8601(datetime_string)
+      begin
+        datetime = DateTime.iso8601(datetime_string)
+      rescue ArgumentError
+        raise ArgumentError, 'time string must be valid ISO 8601 dates.'
+      end
+      datetime
+    end
+
+    def parse_time_range_from_request_params
+      lambda { |parameters|
+        start_time = parameters.dig(:options, :start_time)
+        end_time = parameters.dig(:options, :end_time)
+        [start_time, end_time]
+      }
+    end
+
+    def parse_bucket_size_from_request_params
+      lambda { |parameters|
+        bucket = parameters.dig(:options, :bucket_size)
+        bucket
+      }
+    end
+
     # @param start_date [String] Start date in ISO format
     # @param end_date [String] End date in ISO format
     # @param bucket_interval [String] PostgreSQL interval string e.g. '1 hour'
-    # @return [Query] A query object with the time boundaries
+    # @return [Query] A query object with the time boundaries as a tsrange
     def time_range_and_interval_query(time_series_config)
       start_date = time_series_config[:start_time]
       end_date = time_series_config[:end_time]
@@ -131,6 +138,9 @@ module Report
       )
     end
 
+    # Generate a cte to calculate the minimum number of buckets required to
+    #   cover a given time range and interval (e.g. 1 day, 1 month, etc.)
+    # @param [Query] time_range_and_interval cte returning tsrange
     # @param [string] interval the bucket interval is used to determine
     #   how the number of buckets will be calculated
     def number_of_buckets_query(time_range_and_interval, interval)
@@ -156,10 +166,15 @@ module Report
       ReportQuery.new(table, cte)
     end
 
+    # no built in upper method unlike lower?
     def upper(expr)
       Arel::Nodes::NamedFunction.new('upper', [expr])
     end
 
+    # Default method to calculate number of buckets needed to cover a time range
+    # @param time_range_and_interval [Query] cte returning tsrange
+    # @param interval [String] the bucket interval
+    # #return [Arel::SelectManager] query
     def count_number_of_buckets_default(time_range_and_interval, interval)
       t = time_range_and_interval.table
       max = upper(t[:time_range]).extract('epoch')
@@ -169,10 +184,16 @@ module Report
       t.project(difference / bin)
     end
 
+    # Truncate a date to the specified interval
     def date_trunc(interval, expr)
       Arel::Nodes::NamedFunction.new('date_trunc', [Arel.quoted(interval), expr])
     end
 
+    # Calculate number of buckets needed to cover a time range for special case
+    #   of month interval
+    # @param time_range_and_interval [Query] cte returning tsrange
+    # @param interval [String] the bucket interval
+    # #return [Arel::SelectManager] query
     def count_number_of_buckets_monthly(time_range_and_interval, interval)
       t = time_range_and_interval.table
 
@@ -197,6 +218,11 @@ module Report
       t.project(((end_year - start_year) * 12) + (end_month - start_month) + partial_bucket)
     end
 
+    # Calculate number of buckets needed to cover a time range for special case
+    #   of year interval
+    # @param time_range_and_interval [Query] cte returning tsrange
+    # @param interval [String] the bucket interval
+    # #return [Arel::SelectManager] query
     def count_number_of_buckets_yearly(time_range_and_interval, interval)
       t = time_range_and_interval.table
 
@@ -215,6 +241,11 @@ module Report
       t.project(end_year - start_year + partial_bucket)
     end
 
+    # Generate a series of tsrange values, one for each bucket, that will be used
+    #   to group the data in the report
+    # @param number_of_buckets [Query] cte returning number of buckets column
+    # @return [Query] A query object with the bucketed time series
+    #   and the bucket number
     def bucketed_time_series_query(number_of_buckets)
       # generate the series of integers from 1 to the number of buckets, which
       # will cross join with the report's tsrange
@@ -276,6 +307,8 @@ module Report
       Arel::Nodes::NamedFunction.new('EXTRACT', ['EPOCH', expr])
     end
 
+    # Use the width_bucket function to return a cte that categorises input data
+    #  by bucket number
     def allocate_bucket_based_on_start_time_abosolute(base_table, number_of_buckets)
       nb_table = number_of_buckets.table
       width_bucket_expr = Arel::Nodes::NamedFunction.new('width_bucket', [
@@ -299,6 +332,8 @@ module Report
       ReportQuery.new(table, cte)
     end
 
+    # To get an accumulated count of unique tags, we first need to know where
+    # the tag is first seem (at which bucket).
     def tag_first_appearance_query(data_with_allocated_bucket)
       t = data_with_allocated_bucket.table
       window = Arel::Nodes::Window.new.partition(t[:tag_id]).order(t[:bucket])
@@ -316,6 +351,7 @@ module Report
       ReportQuery.new(table, cte)
     end
 
+    # get the sum of new unique tags in each bucket
     def sum_unique_tags_by_bucket_query(tag_first_appearance)
       t = tag_first_appearance.table
 
@@ -330,6 +366,11 @@ module Report
       ReportQuery.new(table, cte)
     end
 
+    # Use the sum of new unique tags in each bucket to get the cumulative
+    # count of unique tags in each bucket.
+    # @return [ReportQuery] A query object with the cumulative unique tag series
+    #   and the bucket number, with the tsrange for each bucket and the
+    #   corresponding cumulative count of unique tags
     def cumulative_unique_tag_series_query(bucketed_time_series, sum_unique_tags_by_bucket)
       t = bucketed_time_series.table
 
