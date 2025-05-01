@@ -2,7 +2,6 @@
 
 module Report
   extend ActiveSupport::Concern
-
   class Base
     def initialize(filter_params, base_scope)
       @filter_params = filter_params
@@ -46,7 +45,7 @@ module Report
     # @param results [ActiveRecord::Result] the result of the query
     # @return [Hash] the formatted results
     def format_results(results)
-      results.as_json
+      raise NotImplementedError, 'missing implementation'
     end
 
     # Default implementation for applying filters to get the base query

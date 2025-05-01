@@ -5,6 +5,7 @@ module Report
   module TimeSeries
     module_function
 
+    extend Report::ArelHelpers
     include Report::ArelHelpers
 
     BUCKET_ENUM = {
@@ -93,166 +94,158 @@ module Report
       end
     end
 
-    def string_as_timestamp_node(date)
-      Arel.sql('?::timestamp', Arel::Nodes.build_quoted(date))
-    end
-
     # @param start_date [String] Start date in ISO format
     # @param end_date [String] End date in ISO format
     # @param bucket_interval [String] PostgreSQL interval string e.g. '1 hour'
     # @return [Query] A query object with the time boundaries
-    def time_boundaries(start_date, end_date, bucket_interval)
-      start_quoted = Arel.sql('?::timestamp', Arel::Nodes.build_quoted(start_date))
-      end_quoted = Arel.sql('?::timestamp', Arel::Nodes.build_quoted(end_date))
-      bucket_interval_quoted = Arel.sql('INTERVAL ?', Arel::Nodes.build_quoted(bucket_interval))
+    def time_range_and_interval_query(time_series_config)
+      start_date = time_series_config[:start_time]
+      end_date = time_series_config[:end_time]
 
-      select = Arel::SelectManager.new
+      # cast(:datetime) => AS timestamp without time zone by default
+      start_date = Arel.quoted(start_date).cast(:datetime)
+      end_date = Arel.quoted(end_date).cast(:datetime)
+
+      bucket_interval = time_series_config[:interval]
+      bucket_interval_quoted = Arel.sql('INTERVAL ?', Arel.quoted(bucket_interval))
+
+      select = manager
         .project(
-          start_quoted.as('report_start_time'),
-          end_quoted.as('report_end_time'),
+          time_range_expression(start_date, end_date).as('time_range'),
           bucket_interval_quoted.as('bucket_interval')
         )
 
-      table = Arel::Table.new(:time_boundaries)
+      table = Arel::Table.new(:time_range_and_interval)
       cte = Arel::Nodes::As.new(table, select)
       ReportQuery.new(table, cte)
     end
 
-    def cte_time_boundaries(start_date, end_date, bucket_interval)
-      Arel.sql(
-      <<~SQL.squish
-        time_boundaries AS (
-            SELECT
-                '#{start_date}'::timestamp AS report_start_time,
-                '#{end_date}'::timestamp AS report_end_time,
-                interval '#{bucket_interval}' AS bucket_interval
-        )
-      SQL
-    )
-    end
-
-    def cte_calculated_settings(bucket_count_case)
-      Arel.sql(
-      <<~SQL.squish
-        calculated_settings AS (
-          SELECT #{bucket_count_case} AS bucket_count,
-          (SELECT report_start_time FROM time_boundaries) AS min_value,
-          (SELECT report_end_time FROM time_boundaries) AS max_value
-        )
-      SQL
-    )
-    end
-
-    def cte_all_buckets
-      Arel.sql(
-      <<~SQL.squish
-         all_buckets AS (
-            SELECT
-                #{generate_series(1, select_ceiling_bucket_count)} AS bucket_number,
-
-                (SELECT min_value FROM calculated_settings) +
-                ((#{generate_series(1, select_ceiling_bucket_count)} - 1) *
-                (SELECT bucket_interval FROM time_boundaries)) AS bucket_start_time,
-
-                (SELECT min_value FROM calculated_settings) +
-                (#{generate_series(1, select_ceiling_bucket_count)} *
-                (SELECT bucket_interval FROM time_boundaries)) AS bucket_end_time
-        )
-      SQL
-    )
-    end
-
-    def bucket_start_time
-      Arel.sql(
-        <<~SQL.squish
-          (SELECT min_value FROM calculated_settings) +
-                          ((#{generate_series(1, select_ceiling_bucket_count)} - 1) *
-                          (SELECT bucket_interval FROM time_boundaries))
-        SQL
+    # closed open time range from [start_date, end_date)
+    def time_range_expression(start_date, end_date)
+      Arel::Nodes::NamedFunction.new(
+        'tsrange', [
+          start_date,
+          end_date,
+          Arel.quoted('[)')
+        ]
       )
     end
 
-    def bucket_end_time
-      Arel.sql(
-        <<~SQL.squish
-          (SELECT min_value FROM calculated_settings) +
-          (#{generate_series(1, select_ceiling_bucket_count)} *
-          (SELECT bucket_interval FROM time_boundaries))
-        SQL
-      )
+    # @param [string] interval the bucket interval is used to determine
+    #   how the number of buckets will be calculated
+    def number_of_buckets_query(time_range_and_interval, interval)
+      bucket_count_expr = case interval
+                          when '1 month'
+                            TimeSeries.count_number_of_buckets_monthly(time_range_and_interval, interval)
+                          when '1 year'
+                            TimeSeries.count_number_of_buckets_yearly(time_range_and_interval, interval)
+                          else
+                            TimeSeries.count_number_of_buckets_default(time_range_and_interval, interval)
+                          end
+
+      select = Arel::SelectManager.new
+        .project(
+          time_range_and_interval.table[:time_range],
+          time_range_and_interval.table[:bucket_interval],
+          bucket_count_expr.as('bucket_count')
+        )
+        .from(time_range_and_interval.table)
+
+      table = Arel::Table.new('number_of_buckets')
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
+    end
+
+    def upper(expr)
+      Arel::Nodes::NamedFunction.new('upper', [expr])
+    end
+
+    def count_number_of_buckets_default(time_range_and_interval, interval)
+      t = time_range_and_interval.table
+      max = upper(t[:time_range]).extract('epoch')
+      min = t[:time_range].lower.extract('epoch')
+      bin = t[:bucket_interval].extract('epoch')
+      difference = max - min
+      t.project(difference / bin)
+    end
+
+    def date_trunc(interval, expr)
+      Arel::Nodes::NamedFunction.new('date_trunc', [Arel.quoted(interval), expr])
+    end
+
+    def count_number_of_buckets_monthly(time_range_and_interval, interval)
+      t = time_range_and_interval.table
+
+      end_time = upper(t[:time_range])
+      start_time = t[:time_range].lower
+
+      end_year = end_time.extract('year')
+      start_year = start_time.extract('year')
+
+      end_month = end_time.extract('month')
+      start_month = start_time.extract('month')
+
+      # subtracting a timestamp truncated to month from itself gives the
+      # remainder of days + hours:minutes:seconds. if the end time remainder is
+      # greater than the start time, there is a partial month, so add 1
+      end_remainder = end_time - date_trunc('month', end_time)
+      start_remainder = start_time - date_trunc('month', start_time)
+
+      partial_bucket = Arel::Nodes::Case.new
+        .when(end_remainder > start_remainder).then(1).else(0)
+
+      t.project(((end_year - start_year) * 12) + (end_month - start_month) + partial_bucket)
+    end
+
+    def count_number_of_buckets_yearly(time_range_and_interval, interval)
+      t = time_range_and_interval.table
+
+      end_time = upper(t[:time_range])
+      start_time = t[:time_range].lower
+
+      end_year = end_time.extract('year')
+      start_year = start_time.extract('year')
+
+      end_remainder = end_time - date_trunc('year', end_time)
+      start_remainder = start_time - date_trunc('year', start_time)
+
+      partial_bucket = Arel::Nodes::Case.new
+        .when(end_remainder > start_remainder).then(1).else(0)
+
+      t.project(end_year - start_year + partial_bucket)
+    end
+
+    def bucketed_time_series_query(number_of_buckets)
+      # generate the series of integers from 1 to the number of buckets, which
+      # will cross join with the report's tsrange
+      series = TimeSeries.generate_series(number_of_buckets.table[:bucket_count].ceil).to_sql
+      series_alias = Arel.sql('bucket_number')
+
+      # create a ts range for each bucket in the generated series
+      range_from = Arel.sql('lower(time_range) + ((? - 1) * bucket_interval)', series_alias)
+      range_to = Arel.sql('lower(time_range) + (? * bucket_interval)', series_alias)
+      ts_range = Arel.sql('tsrange(?, ?)', range_from, range_to).as('time_bucket')
+
+      query = manager.project(series_alias, ts_range)
+        .from(number_of_buckets.table)
+        .join(Arel.sql("CROSS JOIN #{series} AS #{series_alias}"))
+
+      table = Arel::Table.new('bucketed_time_series')
+
+      cte = Arel::Nodes::As.new(table, query)
+      ReportQuery.new(table, cte)
+    end
+
+    # Generate a series of integers from 1 to the specified end
+    # @param stop_expr [String] Stop expression for the series
+    # @return [Arel::Nodes::NamedFunction]
+    def generate_series(expr)
+      Arel::Nodes::NamedFunction.new('generate_series', [1, expr])
     end
 
     def bucket_count_default(start_column, end_column, interval_column)
       # extract(epoch from ?)
       (end_column.extract('epoch') - start_column.extract('epoch')) / interval_column.extract('epoch')
-    end
-
-    def expr_bucket_count_default
-      Arel.sql(
-        <<~SQL.squish
-          (SELECT
-            (EXTRACT(EPOCH FROM report_end_time) - EXTRACT(EPOCH FROM report_start_time)) /
-            EXTRACT(EPOCH FROM bucket_interval)
-            FROM time_boundaries)
-        SQL
-      )
-    end
-
-    def expr_bucket_count_month
-      # subtracting a timestamp truncated to month from itself gives the
-      # remainder of days + hours:minutes:seconds. if the end time remainder is
-      # greater than the start time, there is a partial month, so add 1
-      # Alternative: AGE() function accepts two TIMESTAMP values. It subtracts
-      # the second argument from the first one and returns an interval as a
-      # result.
-      # SELECT date_part ('year', report_age) * 12 +
-      #   date_part ('month', report_age)
-      #   FROM age (report_start_time, report_end, time) AS report_age
-      #  select.new
-      #   .project(report_age.date_part('year') * 12 +
-      #      report_age.date_part('month'))
-      #   .from(table.age).as('report_age')
-      Arel.sql(
-      <<~SQL.squish
-        (SELECT
-          ((DATE_PART('year', report_end_time) - DATE_PART('year', report_start_time)) * 12 +
-           (DATE_PART('month', report_end_time) - DATE_PART('month', report_start_time))) +
-          (CASE WHEN
-            (report_end_time - DATE_TRUNC('month', report_end_time)) >
-            (report_start_time - DATE_TRUNC('month', report_start_time))
-          THEN 1 ELSE 0 END) FROM time_boundaries)
-      SQL
-    )
-    end
-
-    def expr_bucket_count_year
-      Arel.sql(
-      <<~SQL.squish
-        (SELECT
-          ((DATE_PART('year', report_end_time) - DATE_PART('year', report_start_time)))
-           +
-          (CASE WHEN
-            (report_end_time - DATE_TRUNC('year', report_end_time)) >
-            (report_start_time - DATE_TRUNC('year', report_start_time))
-          THEN 1 ELSE 0 END) FROM time_boundaries)
-      SQL
-    )
-    end
-
-    def select_ceiling_bucket_count
-      Arel.sql(
-        <<~SQL.squish
-          (SELECT CEILING(bucket_count) FROM calculated_settings)
-        SQL
-      )
-    end
-
-    # Generate a series of integers
-    # @param start_expr [String] Start expression for the series
-    # @param stop_expr [String] Stop expression for the series
-    # @return [Arel::Nodes::SqlLiteral] SQL literal node
-    def generate_series(start_expr, stop_expr)
-      Arel.sql("generate_series(#{start_expr}, #{stop_expr}::integer)")
     end
 
     # Generate bucket time series sql
@@ -279,17 +272,86 @@ module Report
      )
     end
 
-    def width_bucket
-      Arel.sql(
-        <<~SQL.squish
-          WIDTH_BUCKET(
-            EXTRACT(EPOCH FROM start_time_absolute),
-            EXTRACT(EPOCH FROM (SELECT min_value FROM calculated_settings)),
-            EXTRACT(EPOCH FROM (SELECT max_value FROM calculated_settings)),
-            (SELECT CEILING(bucket_count)::integer FROM calculated_settings)
-          )
-        SQL
-      )
+    def extract_epoch(expr)
+      Arel::Nodes::NamedFunction.new('EXTRACT', ['EPOCH', expr])
+    end
+
+    def allocate_bucket_based_on_start_time_abosolute(base_table, number_of_buckets)
+      nb_table = number_of_buckets.table
+      width_bucket_expr = Arel::Nodes::NamedFunction.new('width_bucket', [
+        base_table[:start_time_absolute].extract('epoch'),
+        nb_table.project(nb_table[:time_range].lower.extract('epoch')),
+        nb_table.project(TimeSeries.upper(nb_table[:time_range]).extract('epoch')),
+        nb_table.project(nb_table[:bucket_count].ceil.cast('int'))
+      ])
+
+      select = Arel::SelectManager.new
+        .project([
+          width_bucket_expr.as('bucket'),
+          base_table[:tag_id],
+          base_table[:score]
+        ])
+        .from(base_table)
+
+      table = Arel::Table.new('data_with_allocated_bucket')
+      cte = Arel::Nodes::As.new(table, select)
+
+      ReportQuery.new(table, cte)
+    end
+
+    def tag_first_appearance_query(data_with_allocated_bucket)
+      t = data_with_allocated_bucket.table
+      window = Arel::Nodes::Window.new.partition(t[:tag_id]).order(t[:bucket])
+      tag_first_appearance = Arel::Nodes::Case.new
+        .when(Arel::Nodes::NamedFunction.new('row_number', []).over(window).eq(1))
+        .then(1).else(0)
+
+      select = Arel::SelectManager.new
+        .project(t[:bucket], t[:tag_id], t[:score], tag_first_appearance.as('is_first_time'))
+        .from(t)
+        .where(t[:bucket].eq(nil).invert)
+
+      table = Arel::Table.new('tag_first_appearance')
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
+    end
+
+    def sum_unique_tags_by_bucket_query(tag_first_appearance)
+      t = tag_first_appearance.table
+
+      # get the sum of new unique tags in each bucket
+      select = manager.project(
+        t[:is_first_time].sum.as('sum_new_tags'),
+        t[:bucket]
+      ).group(t[:bucket]).from(t)
+
+      table = Arel::Table.new('sum_groups')
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
+    end
+
+    def cumulative_unique_tag_series_query(bucketed_time_series, sum_unique_tags_by_bucket)
+      t = bucketed_time_series.table
+
+      # create a sum over window ordered by the time series bucket numbers
+      window = Arel::Nodes::Window.new.order(t[:bucket_number])
+      sum_unique_tags_over_window = sum_unique_tags_by_bucket.table[:sum_new_tags].sum.over(window)
+
+      select = Arel::SelectManager.new
+        .project(
+          t[:bucket_number],
+          t[:time_bucket].as('range'),
+          sum_unique_tags_over_window.coalesce(0).cast('int').as('count')
+        ).from(t)
+        # outer join the sums with the full bucket time series to get all
+        # bins as data points
+        .join(sum_unique_tags_by_bucket.table, Arel::Nodes::OuterJoin)
+        .on(t[:bucket_number].eq(sum_unique_tags_by_bucket.table[:bucket]))
+        .order(t[:bucket_number].asc)
+
+      table = Arel::Table.new('cumulative_unique_tag_series')
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
     end
 
     def datetime_range_to_array(start_field, end_field)

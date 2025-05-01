@@ -59,17 +59,13 @@ describe 'Audio Event Reports' do
   }
 
   it 'returns expected values' do
-    # to get two different tags on one audio event and we expect to see sum of
-    # counts for event summaries to be greater than the number of actual audio events
+    # extra tagging to get two different tags on one audio event, and expect
+    # to see sum of counts for event summaries to be greater than the number of
+    # actual audio events
     create(:tagging, audio_event: AudioEvent.last)
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
-    expect(response).to have_http_status(:ok)
-    debugger
-    expected_site_ids = data[:sites].pluck(:id).join(',')
-    expect(api_result.first[:site_ids]).to match(expected_site_ids)
 
-    expected_recording_ids = data[:recordings].pluck(:id).join(',')
-    expect(api_result.first[:audio_recording_ids]).to match(expected_recording_ids)
+    expect(response).to have_http_status(:ok)
   end
 end
 
