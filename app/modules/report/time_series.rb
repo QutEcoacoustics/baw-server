@@ -34,8 +34,8 @@ module Report
       #   string from the input parameters
       # @return [Hash] with keys :start_time, :end_time, :bucket_size, :interval
       def self.call(parameters,
-                    time_range_parser: TimeSeries.parse_time_range,
-                    bucket_size_parser: TimeSeries.parse_bucket_size)
+                    time_range_parser: TimeSeries.parse_time_range_from_request_params,
+                    bucket_size_parser: TimeSeries.parse_bucket_size_from_request_params)
         time_range = time_range_parser.call(parameters)
         start_time, end_time = validate_start_end_time(time_range)
 
