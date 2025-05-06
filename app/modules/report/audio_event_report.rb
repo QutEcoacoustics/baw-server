@@ -13,16 +13,25 @@ module Report
       base_table = Arel::Table.new('base_table')
       base_cte = Arel::Nodes::As.new(base_table, base_query_joined)
 
+      # the problem with this is that I can't easily re-use the intermediate
+      # tables without indexing on the cte array and using `.left`
       accumulation_series_ctes, accumulation_series_aggregate = TimeSeries::Accumulation.accumulation_series_result(
         base_table, @parameters
       )
 
       event_summary_ctes, event_summaries_aggregate = event_summary_result(base_table)
 
-      all_ctes = [base_cte]
-      all_ctes += accumulation_series_ctes + event_summary_ctes
+      # hack. access the table using .left
+      bucketed_time_series = accumulation_series_ctes.find { _1.left.name == 'bucketed_time_series' }
+      base_verification = event_summary_ctes.find { _1.left.name == 'verification_base' }
 
-      Arel::SelectManager.new
+      composition_series = composition_series_aggregate(bucketed_time_series, base_table, base_verification)
+      composition_series_aggregate = composition_series_aggregated_for_main_query(composition_series)
+
+      all_ctes = [base_cte]
+      all_ctes += accumulation_series_ctes + event_summary_ctes + [composition_series.cte]
+
+      final = Arel::SelectManager.new
         .with(all_ctes)
         .project(
           aggregate_distinct(base_table, :site_ids).as('site_ids'),
@@ -33,12 +42,15 @@ module Report
           base_table[:audio_event_id].count(distinct = true).as('audio_events_count'),
           # accum_subquery.as('accumulation_series'),
           accumulation_series_aggregate.as('accumulation_series'),
-          event_summaries_aggregate.as('event_summaries')
+          event_summaries_aggregate.as('event_summaries'),
+          composition_series_aggregate.as('composition_series')
         )
         .from(base_table)
 
-      # output = ActiveRecord::Base.connection.execute(final.to_sql)
-      # AudioEventReport.format(output)
+      debugger
+
+      output = ActiveRecord::Base.connection.execute(final.to_sql)
+      AudioEventReport.format(output)
     end
 
     # ==> things to be aware for the report output: in the uncommon case, there
@@ -59,7 +71,7 @@ module Report
       verification_counts_per_tag_provenance = verification_counts_per_tag_provenance(verification_counts_per_tag_provenance_event)
 
       event_summaries = event_summaries_report_query(verification_counts_per_tag_provenance)
-      event_summaries_aggregate = event_summaries_aggreated_for_main_query(event_summaries)
+      event_summaries_aggregate = event_summaries_aggregated_for_main_query(event_summaries)
       event_summary_ctes = [
         verification_base.cte,
         verification_counts.cte,
@@ -223,11 +235,126 @@ module Report
         .group(verification_base.table[:tag_id])
     end
 
-    def event_summaries_aggreated_for_main_query(event_summaries)
+    def event_summaries_aggregated_for_main_query(event_summaries)
       event_summaries_aliased = event_summaries.table.as('e')
       event_summaries_json = Arel::SelectManager.new
         .project(event_summaries_aliased.right.json_agg)
         .from(event_summaries_aliased)
+    end
+
+    def verification_consensus_by_event_tag(base_verification_table)
+      base_verification_window_audio_event_tag = Arel::Nodes::Window.new.partition(
+        base_verification_table[:audio_event_id],
+        base_verification_table[:tag_id]
+      )
+      base_verification_total_over_window = base_verification_table[:verification_id].count.sum.over(base_verification_window_audio_event_tag)
+      base_verification_ratio = base_verification_table[:verification_id].count.cast('float') / base_verification_total_over_window
+
+      # Per audio_event and tag_id and confirmed value, count the number of confirmed values (number of correct, incorrect etc)
+      # Per audio_event and tag_id, count the total verifications
+      # Per audio event and tag_id, get the ratio of count of confirmed value / total count
+      # {"audio_event_id"=>10, "tag_id"=>4, "confirmed"=>"correct", "confirmed_count"=>1, "total_count"=>0.3e1, "ratio"=>0.3333333333333333},
+      # {"audio_event_id"=>10, "tag_id"=>4, "confirmed"=>"incorrect", "confirmed_count"=>2, "total_count"=>0.3e1, "ratio"=>0.6666666666666666}
+      subquery_one = base_verification_table
+        .project(
+          base_verification_table[:audio_event_id],
+          base_verification_table[:tag_id],
+          base_verification_table[:confirmed],
+          base_verification_ratio.as('ratio')
+        )
+        .from(base_verification_table)
+        .group(
+          base_verification_table[:audio_event_id],
+          base_verification_table[:tag_id],
+          base_verification_table[:confirmed]
+        )
+        .where(base_verification_table[:confirmed].not_eq(nil))
+
+      subquery_one_alias = Arel::Nodes::TableAlias.new(subquery_one, 'subquery_one')
+
+      subquery_two = manager
+        .project(
+          subquery_one_alias[:audio_event_id],
+          subquery_one_alias[:tag_id],
+          subquery_one_alias[:confirmed],
+          subquery_one_alias[:ratio],
+          Arel::Nodes::SqlLiteral.new('ROW_NUMBER() OVER (PARTITION BY tag_id, audio_event_id ORDER BY ratio DESC)').as('row_number')
+        ).from(subquery_one_alias)
+
+      subquery_two_alias = Arel::Nodes::TableAlias.new(subquery_two, 'subquery_two')
+
+      # average of the consensus ratios (the consensus ratio is the highest
+      # ratio value for an audio_event/tag_id; row_number = 1) per audio_event
+      # and tag_id
+      # not discriminating by confirmed value for now
+      subquery_three = manager.project(
+        subquery_two_alias[:audio_event_id],
+        subquery_two_alias[:tag_id],
+        # subquery_two_alias[:confirmed],
+        subquery_two_alias[:ratio].average.as('consensus')
+      ).from(subquery_two_alias)
+        .where(subquery_two_alias[:row_number].eq(1))
+        .group(
+          subquery_two_alias[:audio_event_id],
+          subquery_two_alias[:tag_id],
+          subquery_two_alias[:row_number]
+        )
+
+      subquery_three_alias = Arel::Nodes::TableAlias.new(subquery_three, 'subquery_three')
+    end
+
+    # Time series aggregation across dimensions (time, tag_id) that counts
+    # distinct audio events and verifications per group. Expect nrows to be
+    # equal to the number of tags * number of buckets.
+    def composition_series_aggregate(bucketed_time_series, base_table, base_verification)
+      base_verification_table = base_verification.left
+      consensus_ratios = verification_consensus_by_event_tag(base_verification_table)
+
+      distinct_tags_table = Arel::Table.new('distinct_tags')
+      distinct_tags_sql = Arel::Nodes::SqlLiteral.new('CROSS JOIN (SELECT DISTINCT tag_id FROM base_table) distinct_tags')
+
+      window = Arel::Nodes::Window.new.partition(bucketed_time_series.left[:bucket_number])
+      window_bucket_count = base_table[:audio_event_id].count(distinct = true).sum.over(window)
+
+      select = manager
+        .project(
+          bucketed_time_series.left[:bucket_number],
+          bucketed_time_series.left[:time_bucket].as('range'),
+          Arel.sql('distinct_tags.tag_id'),
+          base_table[:audio_event_id].count(distinct = true).as('count'), # count of events per tag per bucket
+          window_bucket_count.as('total_tags_in_bin'),
+          base_verification_table[:verification_id].count.as('verifications'),
+          consensus_ratios[:consensus].as('consensus')
+        )
+        .from(bucketed_time_series.left)
+        .join(distinct_tags_sql)
+        .join(base_table, Arel::Nodes::OuterJoin)
+        .on(bucketed_time_series.left[:time_bucket].contains(base_table[:start_time_absolute])
+        .and(base_table[:tag_id].eq(distinct_tags_table[:tag_id])))
+        .join(base_verification_table, Arel::Nodes::OuterJoin)
+        .on(base_table[:audio_event_id].eq(base_verification_table[:audio_event_id])
+        .and(base_table[:tag_id].eq(base_verification_table[:tag_id])))
+        .join(consensus_ratios, Arel::Nodes::OuterJoin)
+        .on(consensus_ratios[:audio_event_id].eq(base_verification_table[:audio_event_id])
+        .and(consensus_ratios[:tag_id].eq(base_verification_table[:tag_id])))
+        .group(
+          bucketed_time_series.left[:bucket_number],
+          bucketed_time_series.left[:time_bucket],
+          distinct_tags_table[:tag_id],
+          consensus_ratios[:consensus]
+        )
+        .order(distinct_tags_table[:tag_id], bucketed_time_series.left[:bucket_number])
+
+      table = Arel::Table.new('composition_series')
+      cte = Arel::Nodes::As.new(table, select)
+      ReportQuery.new(table, cte)
+    end
+
+    def composition_series_aggregated_for_main_query(composition_series)
+      composition_series_aliased = composition_series.table.as('c')
+      composition_series_json = Arel::SelectManager.new
+        .project(composition_series_aliased.right.json_agg)
+        .from(composition_series_aliased)
     end
 
     # @param filter_params [ActionController::Parameters] the filter parameters
@@ -307,9 +434,19 @@ module Report
       event_summaries = decoded_event_summaries.map { |item| transform_event_summary(item) }
 
       decoded_accumulation_series = json_decoder.decode(result['accumulation_series'])
-      accumulation_series = decoded_accumulation_series.map { |bucket|
-        transform_bucket_tsrange(bucket, as_date_time: true)
+      accumulation_series = decoded_accumulation_series.map { |row|
+        transform_bucket_tsrange(row, as_date_time: true)
       }
+
+      decoded_composition_series = json_decoder.decode(result['composition_series'])
+      composition_series = decoded_composition_series.map { |row|
+        AudioEventReport.transform_composition_series(
+          row,
+          AudioEventReport.transform_composition_options
+        ).tap { |r| AudioEventReport.transform_bucket_tsrange(r, as_date_time: true) }
+      }
+      # row_date_formatted = AudioEventReport.transform_bucket_tsrange(row, as_date_time: true)
+      # row_date_formatted.merge(row_with_tag_ratio)
 
       {
         site_ids: array_decoder.decode(result['site_ids']).map(&:to_i),
@@ -321,8 +458,29 @@ module Report
         audio_events_count: result['audio_events_count'],
         audio_recording_ids: array_decoder.decode(result['audio_recording_ids']).map(&:to_i),
         event_summaries: event_summaries,
-        accumulation_series: accumulation_series
+        accumulation_series: accumulation_series,
+        composition_series: composition_series
+
       }
+    end
+
+    def self.transform_composition_options
+      {
+        count_key: 'count',
+        total_key: 'total_tags_in_bin',
+        ratio_key: 'ratio',
+        fields: ['range', 'tag_id', 'ratio'],
+        events_hash_fields: ['count', 'verifications', 'consensus']
+      }
+    end
+
+    def self.transform_composition_series(row, opts)
+      count = row.fetch(opts[:count_key], 0)
+      total = row.fetch(opts[:total_key], 0)
+      ratio = total.zero? ? 0.to_f : (count.to_f / total).round(2)
+      row_with_ratio = row.merge(opts[:ratio_key] => ratio)
+
+      row_with_ratio.slice(*opts[:fields]).merge('events' => row_with_ratio.slice(*opts[:events_hash_fields]))
     end
 
     # experiemntal not in use
@@ -343,17 +501,17 @@ module Report
       parsed_row = result[0] # Already decoded
     end
 
-    def self.transform_bucket_tsrange(bucket, as_date_time: false)
-      matches = bucket['range'].match(/\("([^"]+)","([^"]+)"\]/)
-      return bucket unless matches
+    def self.transform_bucket_tsrange(row, as_date_time: false)
+      matches = row['range'].match(/\["([^"]+)","([^"]+)"\)/)
+      return row unless matches
 
-      bucket['range'] = if as_date_time
-                          [DateTime.parse(matches[1]), DateTime.parse(matches[2])]
-                        else
-                          [matches[1], matches[2]]
-                        end
+      row['range'] = if as_date_time
+                       [DateTime.parse(matches[1]), DateTime.parse(matches[2])]
+                     else
+                       [matches[1], matches[2]]
+                     end
 
-      bucket
+      row
     end
 
     # extract the events object from the array unneccesary array wrapper and
