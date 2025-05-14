@@ -36,6 +36,7 @@ module Report
       def self.call(parameters,
                     time_range_parser: TimeSeries.parse_time_range_from_request_params,
                     bucket_size_parser: TimeSeries.parse_bucket_size_from_request_params)
+        scaling_factor = parameters.dig(:options, :scaling_factor) || 1920
         time_range = time_range_parser.call(parameters)
         start_time, end_time = validate_start_end_time(time_range)
 
@@ -46,7 +47,8 @@ module Report
           start_time: start_time,
           end_time: end_time,
           bucket_size: bucket_size,
-          interval: TimeSeries.bucket_interval(bucket_size)
+          interval: TimeSeries.bucket_interval(bucket_size),
+          scaling_factor: scaling_factor
         }
       end
 
@@ -81,7 +83,7 @@ module Report
       begin
         datetime = DateTime.iso8601(datetime_string)
       rescue ArgumentError
-        raise ArgumentError, 'time string must be valid ISO 8601 dates.'
+        raise ArgumentError, "time string (#{datetime_string}) must be valid ISO 8601"
       end
       datetime
     end
@@ -175,7 +177,7 @@ module Report
     # @param time_range_and_interval [Query] cte returning tsrange
     # @param interval [String] the bucket interval
     # #return [Arel::SelectManager] query
-    def count_number_of_buckets_default(time_range_and_interval, interval)
+    def count_number_of_buckets_default(time_range_and_interval, _interval)
       t = time_range_and_interval.table
       max = upper(t[:time_range]).extract('epoch')
       min = t[:time_range].lower.extract('epoch')
@@ -194,7 +196,7 @@ module Report
     # @param time_range_and_interval [Query] cte returning tsrange
     # @param interval [String] the bucket interval
     # #return [Arel::SelectManager] query
-    def count_number_of_buckets_monthly(time_range_and_interval, interval)
+    def count_number_of_buckets_monthly(time_range_and_interval, _interval)
       t = time_range_and_interval.table
 
       end_time = upper(t[:time_range])
@@ -223,7 +225,7 @@ module Report
     # @param time_range_and_interval [Query] cte returning tsrange
     # @param interval [String] the bucket interval
     # #return [Arel::SelectManager] query
-    def count_number_of_buckets_yearly(time_range_and_interval, interval)
+    def count_number_of_buckets_yearly(time_range_and_interval, _interval)
       t = time_range_and_interval.table
 
       end_time = upper(t[:time_range])
@@ -395,7 +397,7 @@ module Report
       ReportQuery.new(table, cte)
     end
 
-    def datetime_range_to_array(start_field, end_field)
+    def datetime_range_to_array(_start_field, _end_field)
       Arel::Nodes::SqlLiteral.new("
           array_to_json(ARRAY[
             to_char(#{start_date}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),

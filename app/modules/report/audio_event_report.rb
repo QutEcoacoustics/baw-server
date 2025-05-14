@@ -28,6 +28,8 @@ module Report
       composition_series = composition_series_aggregate(bucketed_time_series, base_table, base_verification)
       composition_series_aggregate = composition_series_aggregated_for_main_query(composition_series)
 
+      # coverage
+
       all_ctes = [base_cte]
       all_ctes += accumulation_series_ctes + event_summary_ctes + [composition_series.cte]
 
@@ -40,17 +42,15 @@ module Report
           aggregate_distinct(base_table, :audio_recording_ids).as('audio_recording_ids'),
           aggregate_distinct(base_table, :provenance_id).as('provenance_ids'),
           base_table[:audio_event_id].count(distinct = true).as('audio_events_count'),
-          # accum_subquery.as('accumulation_series'),
           accumulation_series_aggregate.as('accumulation_series'),
           event_summaries_aggregate.as('event_summaries'),
           composition_series_aggregate.as('composition_series')
         )
         .from(base_table)
-
       debugger
-
-      output = ActiveRecord::Base.connection.execute(final.to_sql)
-      AudioEventReport.format(output)
+      final
+      # output = ActiveRecord::Base.connection.execute(final.to_sql)
+      # AudioEventReport.format(output)
     end
 
     # ==> things to be aware for the report output: in the uncommon case, there
@@ -272,6 +272,9 @@ module Report
 
       subquery_one_alias = Arel::Nodes::TableAlias.new(subquery_one, 'subquery_one')
 
+      # could I consolidate the following two subqueries to average only the max
+      # ratio values for each audio event, using some kind of distinct on (..),
+      # average(distinct ratios) with order by ratio descending
       subquery_two = manager
         .project(
           subquery_one_alias[:audio_event_id],
@@ -391,6 +394,8 @@ module Report
         audio_events[:score].as('score'),
         audio_events[:id].as('audio_event_id'),
         audio_recordings[:recorded_date],
+        audio_recordings[:audio_recording_id].as('audio_recording_id'),
+        audio_recordings[:duration_seconds],
         # verifications[:id].as('verification_id'),
         # audio event absolute start and end time
         Arel::Nodes::SqlLiteral.new(start_time_absolute_expression),
@@ -409,11 +414,15 @@ module Report
         .on(regions[:id].eq(sites[:region_id]))
     end
 
+    # returns an expression that projects the absolute start time of an audio
+    # event as a derived columnn
     def start_time_absolute_expression
       'audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) ' \
         'as start_time_absolute'
     end
 
+    # returns an expression that projects the absolute end time of an audio
+    # event as a derived columnn
     def end_time_absolute_expression
       'audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) ' \
         'as end_time_absolute'
@@ -484,7 +493,7 @@ module Report
     end
 
     # experiemntal not in use
-    def self.format_results_using_type_map(results)
+    def self.format_results_using_type_map(_results)
       # Alternative method?
       # But array values are formatted as strings
       conn = ActiveRecord::Base.connection.raw_connection
