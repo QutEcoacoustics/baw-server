@@ -148,6 +148,7 @@ class AudioRecording < ApplicationRecord
   scope(:end_after_not_equal, lambda { |time|
                                 where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  > ?', time)
                               })
+  # BUG? ERROR:  column \"end_time_seconds\" does not exist
   scope(:end_before, lambda { |time|
                        where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time)
                      })
