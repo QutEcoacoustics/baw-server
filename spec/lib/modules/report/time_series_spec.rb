@@ -3,7 +3,7 @@
 RSpec.shared_examples 'a bucket range' do |start_date, end_date, bucket_size, expected_buckets|
   it "returns the expected result for range #{start_date} to #{end_date} with interval #{bucket_size}" do
     postgres_interval = subject.bucket_interval(bucket_size)
-    time_series_sql = subject.time_series(start_date, end_date, postgres_interval)
+    time_series_sql = subject.time_series(start_date, end_date, postgres_interval) # TODO: delete
 
     result = ActiveRecord::Base.connection.execute(
       <<~SQL.squish
@@ -410,8 +410,8 @@ describe Report::TimeSeries do
   end
 end
 
-# Helper method to execute a CTE query and return the result
-# @param query [Report::TimeSeries::Query] The CTE query to execute
+# Helper method to execute a report query and return the result
+# @param [Report::ArelHelpers::ReportQuery] query object
 def execute_query(query)
   select = Arel::SelectManager.new
     .with(query.cte)

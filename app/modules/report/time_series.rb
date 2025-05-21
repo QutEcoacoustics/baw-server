@@ -277,32 +277,7 @@ module Report
     end
 
     def bucket_count_default(start_column, end_column, interval_column)
-      # extract(epoch from ?)
       (end_column.extract('epoch') - start_column.extract('epoch')) / interval_column.extract('epoch')
-    end
-
-    # Generate bucket time series sql
-    # @param start_date [String] Start date in ISO format
-    # @param end_date [String] End date in ISO format
-    # @param bucket_interval [String] PostgreSQL interval string e.g. '1 hour'
-    # @return [String] SQL for generating bucket boundaries
-    def time_series(start_date, end_date, bucket_interval)
-      bucket_count_case = case bucket_interval
-                          when '1 month' then expr_bucket_count_month
-                          when '1 year' then expr_bucket_count_year
-                          else expr_bucket_count_default
-                          end
-
-      time_boundaries = cte_time_boundaries(start_date, end_date, bucket_interval)
-      calculated_settings = cte_calculated_settings(bucket_count_case)
-      all_buckets = cte_all_buckets
-      Arel.sql(
-       <<~SQL.squish
-         #{time_boundaries},
-         #{calculated_settings},
-         #{all_buckets}
-       SQL
-     )
     end
 
     def extract_epoch(expr)

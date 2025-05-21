@@ -4,7 +4,7 @@ describe 'Audio Event Reports' do
   # create unique users that will be available to confirm events
   let(:users) { create_list(:user, 4) }
   let(:creator) { users.first }
-  let(:provenance) { create(:provenance, creator: creator) }
+  let(:provenance) { create(:provenance, creator: creator, score_minimum: 0, score_maximum: 1) }
   let(:start_date_string) { '2025-01-01T00:00:00Z' }
   let(:start_date) { DateTime.parse(start_date_string, nil) }
   let(:tags) {
@@ -34,15 +34,15 @@ describe 'Audio Event Reports' do
           with_event(creator: creator, provenance: provenance, recording:, start: 18_000, tag: tags[:koala])
           with_event(creator: creator, provenance: provenance, recording:, start: 20_000, tag: tags[:koala],
             confirmations: ['correct', 'correct', 'correct', 'incorrect'], users: users)
-        },
-        with_recording(site: site_one, creator: creator, date: start_date + 6.days) { |recording|
-          with_event(creator: creator, provenance: provenance, recording:, start: 5, tag: tags[:koala])
-          with_event(creator: creator, provenance: provenance, recording:, start: 3600, tag: tags[:whip_bird],
-            confirmations: ['incorrect', 'incorrect'], users: users) # whip bird should have average of 1 consensus; verifiers are always in agreement
-          with_event(creator: creator, provenance: provenance, recording:, start: 7600, tag: tags[:honeyeater])
-          with_event(creator: creator, provenance: provenance, recording:, start: 18_000, tag: tags[:magpie],
-            confirmations: ['correct', 'incorrect', 'incorrect'], users: users)
         }
+        # with_recording(site: site_one, creator: creator, date: start_date + 6.days) { |recording|
+        #   with_event(creator: creator, provenance: provenance, recording:, start: 5, tag: tags[:koala])
+        #   with_event(creator: creator, provenance: provenance, recording:, start: 3600, tag: tags[:whip_bird],
+        #     confirmations: ['incorrect', 'incorrect'], users: users) # whip bird should have average of 1 consensus; verifiers are always in agreement
+        #   with_event(creator: creator, provenance: provenance, recording:, start: 7600, tag: tags[:honeyeater])
+        #   with_event(creator: creator, provenance: provenance, recording:, start: 18_000, tag: tags[:magpie],
+        #     confirmations: ['correct', 'incorrect', 'incorrect'], users: users)
+        # }
       ] }
   }
 
@@ -58,11 +58,25 @@ describe 'Audio Event Reports' do
     }
   }
 
+  before do
+    script = create(:script, creator: creator, provenance: provenance)
+    job = create(:analysis_job, project: project, creator: creator, scripts: [script])
+
+    status_yielder = [AnalysisJobsItem::RESULT_SUCCESS, AnalysisJobsItem::RESULT_FAILED,
+                      AnalysisJobsItem::RESULT_SUCCESS, AnalysisJobsItem::RESULT_CANCELLED].each
+    AnalysisJobsItem.aasm.state_machine.config.toggle(:no_direct_assignment) do
+      AudioRecording.find_each do |recording|
+        create(:analysis_jobs_item, analysis_job: job, script: script, result: status_yielder.next,
+          audio_recording: recording)
+      end
+    end
+  end
+
   it 'returns expected values' do
     # extra tagging to get two different tags on one audio event, and expect
     # to see sum of counts for event summaries to be greater than the number of
     # actual audio events
-    create(:tagging, audio_event: AudioEvent.last)
+    create(:tagging, audio_event: AudioEvent.last, tag: tags[:magpie])
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
 
     expect(response).to have_http_status(:ok)
@@ -81,8 +95,29 @@ end
 # @option [Array<String>] :confirmations verification confirmation values
 # @option [Array<User>] :users to confirm the event, length >= confirmations
 # @return the audio_recording used to create the event
-def with_event(recording:, start: 5, tag: tags.values.first, **args)
+def with_event(recording:, creator:, start:, provenance:, tag:, **args)
   create(:audio_event_tagging, audio_recording: recording, creator: creator,
-    start_time_seconds: start, provenance:, tag:, **args)
+    start_time_seconds: start, provenance: provenance, tag: tag, **args)
   recording
+end
+
+describe 'fresh' do
+  let(:users) { create_list(:user, 4) }
+  let(:creator) { users.first }
+  let(:provenance) { create(:provenance, creator: creator) }
+  let(:start_date_string) { '2025-01-01T00:00:00Z' }
+  let(:start_date) { DateTime.parse(start_date_string, nil) }
+  let(:tags) {
+    tag_keys = [:koala, :whip_bird, :honeyeater, :magpie]
+    tag_keys.index_with { |tag_name| create(:tag, text: tag_name) }
+  }
+
+  let(:project) { create(:project, creator: creator) }
+  let(:region) { create(:region, project: project, creator: creator) }
+  let(:site_one) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
+  let(:site_two) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
+
+  it 'does' do
+    # debugger
+  end
 end

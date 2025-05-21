@@ -19,6 +19,7 @@ module Report
         base_table, @parameters
       )
 
+      debugger
       event_summary_ctes, event_summaries_aggregate = event_summary_result(base_table)
 
       # hack. access the table using .left
@@ -28,10 +29,47 @@ module Report
       composition_series = composition_series_aggregate(bucketed_time_series, base_table, base_verification)
       composition_series_aggregate = composition_series_aggregated_for_main_query(composition_series)
 
-      # coverage
+      # analysis coverage
+      analysis_coverage_options = Report::TimeSeries::Coverage.coverage_options(
+        source: base_table,
+        fields: { lower_field: base_table[:recorded_date],
+                  upper_field: Report::TimeSeries::Coverage.arel_recorded_end_date(base_table) },
+        analysis_result: true,
+        project_field_as: 'analysis'
+      )
+
+      analysis_coverage_cte_collection = Report::TimeSeries::Coverage.coverage_series(
+        TimeSeries::StartEndTime.call(@parameters), analysis_coverage_options
+      )
+
+      analysis_coverage_aggregate = TimeSeries::Coverage.coverage_series_arel(
+        analysis_coverage_cte_collection,
+        analysis_coverage_options
+      )
+      analysis_coverage_ctes = analysis_coverage_cte_collection.ctes
+
+      # audio recording coverage
+      recording_coverage_options = Report::TimeSeries::Coverage.coverage_options(
+        source: base_table,
+        fields: { lower_field: base_table[:recorded_date],
+                  upper_field: Report::TimeSeries::Coverage.arel_recorded_end_date(base_table) },
+        analysis_result: false,
+        project_field_as: 'recording'
+      )
+
+      recording_coverage_cte_collection = Report::TimeSeries::Coverage.coverage_series(
+        TimeSeries::StartEndTime.call(@parameters), recording_coverage_options
+      )
+
+      recording_coverage_aggregate = TimeSeries::Coverage.coverage_series_arel(
+        recording_coverage_cte_collection,
+        recording_coverage_options
+      )
+      recording_coverage_ctes = recording_coverage_cte_collection.ctes
 
       all_ctes = [base_cte]
       all_ctes += accumulation_series_ctes + event_summary_ctes + [composition_series.cte]
+      all_ctes += analysis_coverage_ctes + recording_coverage_ctes
 
       final = Arel::SelectManager.new
         .with(all_ctes)
@@ -44,13 +82,67 @@ module Report
           base_table[:audio_event_id].count(distinct = true).as('audio_events_count'),
           accumulation_series_aggregate.as('accumulation_series'),
           event_summaries_aggregate.as('event_summaries'),
-          composition_series_aggregate.as('composition_series')
+          composition_series_aggregate.as('composition_series'),
+          analysis_coverage_aggregate,
+          recording_coverage_aggregate
         )
         .from(base_table)
-      debugger
-      final
-      # output = ActiveRecord::Base.connection.execute(final.to_sql)
-      # AudioEventReport.format(output)
+      output = ActiveRecord::Base.connection.execute(final.to_sql)
+      AudioEventReport.format(output)
+    end
+
+    def work_in_progress
+      verification_base = verification_base_report_query(base_table)
+      verification_counts = verification_counts_report_query(verification_base)
+      verification_counts_per_tag_provenance_event = verification_counts_per_tag_provenance_event(verification_counts)
+      verification_counts_per_tag_provenance = verification_counts_per_tag_provenance(verification_counts_per_tag_provenance_event)
+      ctes = [
+        base_cte,
+        verification_base.cte,
+        verification_counts.cte,
+        verification_counts_per_tag_provenance_event.cte,
+        verification_counts_per_tag_provenance.cte
+      ]
+
+      one = verification_counts_per_tag_provenance_event.table.project(Arel.star).with(ctes)
+      jj ActiveRecord::Base.connection.execute(one.to_sql).to_a
+
+      # this is the target table that should output the array
+      two = verification_counts_per_tag_provenance.table.project(Arel.star).with(ctes)
+      jj ActiveRecord::Base.connection.execute(two.to_sql).to_a
+
+      ### branch to get the bins
+
+      bin_ids = TimeSeries.generate_series(50).to_sql
+      series_alias = Arel.sql('bin_id')
+
+      bucket = <<~SQL.squish
+        WIDTH_BUCKET(
+          verification_counts.score, provenances.score_minimum, provenances.score_maximum, 50
+          ) as bin_id
+      SQL
+
+      verification_counts.table[:audio_event_id].count
+        .over(Arel::Nodes::Window.new.partition(
+          verification_counts.table[:tag_id], verification_counts.table[:provenance_id]
+        )).as('group_count')
+
+      scores_binned = Arel::Table.new('scores_binned')
+      # Arel::Nodes::As.new(
+      # scored_binned,
+      out = verification_counts.table
+        .project(
+          verification_counts.table[:tag_id],
+          verification_counts.table[:provenance_id],
+          verification_counts.table[:audio_event_id],
+          bucket
+        )
+        .join(provenance, Arel::Nodes::OuterJoin)
+        .on(verification_counts.table[:provenance_id].eq(provenance[:id]))
+        .with(ctes)
+      # )
+
+      jj ActiveRecord::Base.connection.execute(out.to_sql).to_a
     end
 
     # ==> things to be aware for the report output: in the uncommon case, there
@@ -132,6 +224,7 @@ module Report
           verification_base.table[:tag_id],
           verification_base.table[:provenance_id],
           verification_base.table[:audio_event_id],
+          verification_base.table[:score],
           verification_base.table[:confirmed],
           verification_base.table[:verification_id].count.as('category_count'),
           verification_base.table[:verification_id].count.coalesce(0).cast('float') / count_sum_over_nullif.as('ratio')
@@ -141,7 +234,8 @@ module Report
           verification_base.table[:tag_id],
           verification_base.table[:provenance_id],
           verification_base.table[:audio_event_id],
-          verification_base.table[:confirmed]
+          verification_base.table[:confirmed],
+          verification_base.table[:score]
         )
 
       verification_counts_cte = Arel::Nodes::As.new(verification_counts_table, verification_counts_query)
@@ -151,12 +245,26 @@ module Report
     # select the maximum value of the ratio for each group: this is the
     # consensus value for an audio event
     def verification_counts_per_tag_provenance_event(verification_counts_per_tag_provenance_event_confirmed_category)
+      # first we want the score histogram data, by tag and provenance, and then
+      # join it to the below query
+      # join BINS on tag_id and provenance_id, selecting the score_histogram
+      # data.json_agg
+      # BINS is a table with rows for each bin value and tag_id and
+      # provenance_id
+      # bin values are the count of audio_event scores that fall within the bin
+      # interval.
+      # 1. left outer join to get provenance min and max
+      # 2. width_bucket(socre, provenance_min, provenance_max, 50) as
+      #    allocated_bucket
+      # 3. generate_series(provenance_min, provenance_max, 50) as buckets
+      # 4. left outer join generate_series with width_bucket
       verification_counts_per_tag_provenance_event_table = Arel::Table.new('verification_counts_per_tag_provenance_event')
       verification_counts_per_tag_provenance_event_query = manager
         .project(
           verification_counts_per_tag_provenance_event_confirmed_category.table[:tag_id],
           verification_counts_per_tag_provenance_event_confirmed_category.table[:provenance_id],
           verification_counts_per_tag_provenance_event_confirmed_category.table[:audio_event_id],
+          verification_counts_per_tag_provenance_event_confirmed_category.table[:score],
           verification_counts_per_tag_provenance_event_confirmed_category.table[:ratio].maximum.as('consensus_for_event'),
           verification_counts_per_tag_provenance_event_confirmed_category.table[:category_count].sum.as('total_verifications_for_event')
         )
@@ -164,7 +272,8 @@ module Report
         .group(
           verification_counts_per_tag_provenance_event_confirmed_category.table[:tag_id],
           verification_counts_per_tag_provenance_event_confirmed_category.table[:provenance_id],
-          verification_counts_per_tag_provenance_event_confirmed_category.table[:audio_event_id]
+          verification_counts_per_tag_provenance_event_confirmed_category.table[:audio_event_id],
+          verification_counts_per_tag_provenance_event_confirmed_category.table[:score]
         )
 
       verification_counts_per_tag_provenance_event_cte = Arel::Nodes::As.new(
@@ -178,12 +287,19 @@ module Report
       )
     end
 
+    def score_histogram_agg; end
+
     def verification_counts_per_tag_provenance(verification_counts_per_tag_provenance_event)
       verification_counts_per_tag_provenance_table = Arel::Table.new('verification_counts_per_tag_provenance')
       verification_counts_per_tag_provenance_query = manager.project(
         verification_counts_per_tag_provenance_event.table[:tag_id],
         verification_counts_per_tag_provenance_event.table[:provenance_id],
         verification_counts_per_tag_provenance_event.table[:audio_event_id].count.as('count'),
+        verification_counts_per_tag_provenance_event.table[:score].average.as('score_mean'),
+        verification_counts_per_tag_provenance_event.table[:score].minimum.as('score_min'),
+        verification_counts_per_tag_provenance_event.table[:score].maximum.as('score_max'),
+        verification_counts_per_tag_provenance_event.table[:score].std.as('score_stdev'),
+        # score_histogram_agg.as('score_bins'),
         verification_counts_per_tag_provenance_event.table[:consensus_for_event].average.as('consensus'),
         verification_counts_per_tag_provenance_event.table[:total_verifications_for_event].sum.as('verifications')
       )
@@ -208,17 +324,30 @@ module Report
         count: source.table[:count],
         verifications: source.table[:verifications],
         consensus: source.table[:consensus]
-      }).group
+      }).group # => jsonb_agg(jsonb_build_object (...))
+    end
+
+    def score_histogram_as_json(source)
+      json = Arel.json({
+        bins: source.table[:score_bins],
+        standard_deviation: source.table[:score_stdev],
+        mean: source.table[:score_mean],
+        min: source.table[:score_min],
+        max: source.table[:score_max]
+      }).group # => jsonb_agg(jsonb_build_object (...))
     end
 
     def event_summaries_report_query(verification_counts_per_tag_provenance)
       events_json = event_summary_counts_and_consensus_as_json(verification_counts_per_tag_provenance)
+      scores_json = score_histogram_as_json(verification_counts_per_tag_provenance)
+
       event_summaries_table = Arel::Table.new('event_summaries')
       event_summaries_query = manager
         .project(
           verification_counts_per_tag_provenance.table[:provenance_id],
           verification_counts_per_tag_provenance.table[:tag_id],
-          events_json.as('events')
+          events_json.as('events'),
+          score_histogram.as('score_histogram')
         )
         .from([verification_counts_per_tag_provenance.table])
         .group(verification_counts_per_tag_provenance.table[:tag_id], verification_counts_per_tag_provenance.table[:provenance_id])
@@ -380,6 +509,7 @@ module Report
     def taggings = Tagging.arel_table
     def provenance = Provenance.arel_table
     def verifications = Verification.arel_table
+    def analysis_jobs_items = AnalysisJobsItem.arel_table
 
     # Default attributes for projection
     # @return [Array<Arel::Attributes>] the attributes to select
@@ -394,12 +524,13 @@ module Report
         audio_events[:score].as('score'),
         audio_events[:id].as('audio_event_id'),
         audio_recordings[:recorded_date],
-        audio_recordings[:audio_recording_id].as('audio_recording_id'),
         audio_recordings[:duration_seconds],
-        # verifications[:id].as('verification_id'),
+        provenance[:score_minimum].as('provenance_score_minimum'),
+        provenance[:score_maximum].as('provenance_score_maximum'),
         # audio event absolute start and end time
         Arel::Nodes::SqlLiteral.new(start_time_absolute_expression),
-        Arel::Nodes::SqlLiteral.new(end_time_absolute_expression)
+        Arel::Nodes::SqlLiteral.new(end_time_absolute_expression),
+        analysis_jobs_items[:result].as('result')
       ]
     end
 
@@ -412,6 +543,10 @@ module Report
         .on(taggings[:tag_id].eq(tags[:id]))
         .join(regions, Arel::Nodes::OuterJoin)
         .on(regions[:id].eq(sites[:region_id]))
+        .join(analysis_jobs_items, Arel::Nodes::OuterJoin)
+        .on(analysis_jobs_items[:audio_recording_id].eq(audio_events[:audio_recording_id]))
+        .join(provenance, Arel::Nodes::OuterJoin)
+        .on(provenance[:id].eq(audio_events[:provenance_id]))
     end
 
     # returns an expression that projects the absolute start time of an audio
@@ -440,22 +575,27 @@ module Report
       json_decoder = PG::TextDecoder::JSON.new
 
       decoded_event_summaries = json_decoder.decode(result['event_summaries'])
-      event_summaries = decoded_event_summaries.map { |item| transform_event_summary(item) }
+      event_summaries = decoded_event_summaries.map { |item_name| transform_event_summary(item_name) }
 
       decoded_accumulation_series = json_decoder.decode(result['accumulation_series'])
       accumulation_series = decoded_accumulation_series.map { |row|
-        transform_bucket_tsrange(row, as_date_time: true)
+        AudioEventReport.transform_bucket_tsrange(row, as_date_time: true)
       }
 
-      decoded_composition_series = json_decoder.decode(result['composition_series'])
+      decoded_composition_series = json_decoder.decode(result['analysis'])
       composition_series = decoded_composition_series.map { |row|
-        AudioEventReport.transform_composition_series(
-          row,
-          AudioEventReport.transform_composition_options
-        ).tap { |r| AudioEventReport.transform_bucket_tsrange(r, as_date_time: true) }
+        AudioEventReport.transform_composition_series(row, AudioEventReport.transform_composition_options).tap { |r|
+          AudioEventReport.transform_bucket_tsrange(r, as_date_time: true)
+        }
       }
-      # row_date_formatted = AudioEventReport.transform_bucket_tsrange(row, as_date_time: true)
-      # row_date_formatted.merge(row_with_tag_ratio)
+
+      ['analysis', 'recording'].to_h do |key|
+        decoded_coverage_series = json_decoder.decode(result[key])
+        coverage_series = decoded_coverage_series.map { |row|
+          AudioEventReport.transform_bucket_tsrange(row, as_date_time: true)
+        }
+        [key, coverage_series]
+      end => coverage_series
 
       {
         site_ids: array_decoder.decode(result['site_ids']).map(&:to_i),
@@ -468,8 +608,8 @@ module Report
         audio_recording_ids: array_decoder.decode(result['audio_recording_ids']).map(&:to_i),
         event_summaries: event_summaries,
         accumulation_series: accumulation_series,
-        composition_series: composition_series
-
+        composition_series: composition_series,
+        coverage_series: coverage_series
       }
     end
 
@@ -524,12 +664,12 @@ module Report
     end
 
     # extract the events object from the array unneccesary array wrapper and
-    def self.transform_event_summary(item)
-      events_data = item['events'].first
+    def self.transform_event_summary(item_name)
+      events_data = item_name['events'].first
 
       events_data = events_data.merge('consensus' => events_data['consensus'].round(2)) if events_data['consensus']
 
-      item.merge('events' => events_data)
+      item_name.merge('events' => events_data)
     end
 
     # temp method for dev
