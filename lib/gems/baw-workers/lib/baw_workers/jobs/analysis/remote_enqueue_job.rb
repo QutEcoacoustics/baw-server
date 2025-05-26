@@ -111,7 +111,10 @@ module BawWorkers
         end
 
         def our_maximum
-          Settings.batch_analysis.remote_enqueue_limit
+          [
+            Settings.batch_analysis.remote_enqueue_limit,
+            SiteSettings.batch_analysis_remote_enqueue_limit
+          ].compact.first
         end
 
         def maximum_queued_jobs

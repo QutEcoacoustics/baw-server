@@ -18,7 +18,7 @@ module Api
     # The name of the controller including namespaces
     # @return [String]
     def resource_path
-      @resource_path ||= controller_path
+      @resource_path ||= controller_path.singularize
     end
 
     # The plural name for the resource class based on the controller
@@ -56,7 +56,23 @@ module Api
     # The resource class based on the controller
     # @return [Class]
     def resource_class
-      @resource_class ||= resource_name.classify.constantize
+      @resource_class ||= resource_path.classify.constantize
+    end
+
+    # Simply gets the id route parameter.
+    # Defined so you can override it in your controller if you need to.
+    # @return [String, Integer, nil]
+    def id_param
+      params[:id]
+    end
+
+    # find the resource using the id_param
+    # Defined so you can override it in your controller if you need to.
+    # @param base_query [ActiveRecord::Relation] the base query to use to find the resource
+    # @return [ApplicationRecord]
+    # @raise [ActiveRecord::RecordNotFound] if the resource is not found
+    def find_resource(base_query)
+      base_query.find(id_param)
     end
 
     # Set a <user>_id to the current_user's id
@@ -292,7 +308,7 @@ module Api
       # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
       query = Filter::Single.new(parameters, resource_class, filter_settings).query
 
-      resource = query.find(params[:id])
+      resource = find_resource(query)
 
       set_resource(resource)
     end

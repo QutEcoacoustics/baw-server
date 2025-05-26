@@ -878,6 +878,23 @@ Rails.application.routes.draw do
         post :update
       end
     end
+
+    resources :site_settings, except: [:new, :edit], defaults: { format: 'json' }, concerns: [:upsertable], constraints: lambda { |request|
+      id = request.params.fetch('id', nil)
+
+      next true if id.blank?
+      next false if id == 'new'
+      next false if id == 'edit'
+      next false if id == 'filter'
+
+      # check if id is a number
+      next true if id =~ /^\d+$/
+
+      # allow for an identifier
+      next true if id =~ /^[a-zA-Z0-9_]+$/
+
+      false
+    }
   end
 
   # enable CORS preflight requests

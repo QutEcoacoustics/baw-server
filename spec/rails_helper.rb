@@ -356,6 +356,8 @@ RSpec.configure do |config|
       Rails.application.load_seed
     end
 
+    Admin::SiteSetting.reset_all_settings!
+
     Warden.test_reset!
 
     Resque.redis.close
