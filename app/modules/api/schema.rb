@@ -358,7 +358,8 @@ module Api
             audio_event_import_file: AudioEventImportFile.schema,
             audio_event: AudioEvent.schema,
             provenance: Provenance.schema,
-            verification: Verification.schema
+            verification: Verification.schema,
+            admin_site_setting: Admin::SiteSetting.schema
           },
           parameters: {
             'archived-parameter': archived_parameter

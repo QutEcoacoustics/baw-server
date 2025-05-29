@@ -11,13 +11,14 @@ describe 'failures' do
 
   it 'rejects additional tag_ids that are not wholly integers' do
     another_tag = create(:tag, creator: writer_user)
+    invalid_tag_id = [machine_generated_tag.id, another_tag.id].join(',')
     body = {
       audio_event_import_file: {
         file: with_file(raven_example),
         # We're really testing that clients encoding the additional_tag_ids as a CSV string will fail.
         # We have to manually construct this as a string because the test helpers automatically convert arrays
         # to multiple form data entries.
-        additional_tag_ids: [[machine_generated_tag.id, another_tag.id].join(',')]
+        additional_tag_ids: [invalid_tag_id]
       },
       commit: true
     }
@@ -28,7 +29,7 @@ describe 'failures' do
       :unprocessable_content,
       'The request has an invalid parameter',
       {
-        additional_tag_ids: 'Invalid integer string: `3,2`'
+        additional_tag_ids: "Invalid integer string: `#{invalid_tag_id}`"
       }
     )
   end

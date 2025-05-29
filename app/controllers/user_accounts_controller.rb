@@ -106,7 +106,7 @@ ELSE last_sign_in_at END DESC')
 
     @user_projects = Access::ByPermission.projects(@user).includes(:creator).references(:creator)
       .order('projects.name ASC')
-      .page((paging_params[:page].presence || 1))
+      .page(paging_params[:page].presence || 1)
     respond_to do |format|
       format.html
     end
@@ -119,7 +119,7 @@ ELSE last_sign_in_at END DESC')
 
     @user_sites = Access::ByPermission.sites(@user).includes(:creator, :projects).references(:creator, :project)
       .order('sites.name ASC')
-      .page((paging_params[:page].presence || 1))
+      .page(paging_params[:page].presence || 1)
 
     respond_to do |format|
       format.html
@@ -133,7 +133,7 @@ ELSE last_sign_in_at END DESC')
 
     @user_bookmarks = Access::ByUserModified.bookmarks(@user)
       .order('bookmarks.updated_at DESC')
-      .page((paging_params[:page].presence || 1))
+      .page(paging_params[:page].presence || 1)
     respond_to do |format|
       format.html
     end
@@ -146,7 +146,7 @@ ELSE last_sign_in_at END DESC')
 
     @user_audio_event_comments = Access::ByUserModified.audio_event_comments(@user)
       .order('audio_event_comments.updated_at DESC')
-      .page((paging_params[:page].presence || 1))
+      .page(paging_params[:page].presence || 1)
     respond_to do |format|
       format.html
     end
@@ -161,7 +161,7 @@ ELSE last_sign_in_at END DESC')
       :audio_recordings, :sites
     )
       .order('audio_events.updated_at DESC')
-      .page((paging_params[:page].presence || 1))
+      .page(paging_params[:page].presence || 1)
     respond_to do |format|
       format.html
     end
@@ -217,6 +217,10 @@ ELSE last_sign_in_at END DESC')
   # override resource name
   def resource_name
     'user'
+  end
+
+  def resource_class
+    User
   end
 
   def user_params

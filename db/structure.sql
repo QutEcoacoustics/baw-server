@@ -1823,6 +1823,38 @@ ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
+-- Name: site_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.site_settings (
+    id bigint NOT NULL,
+    name character varying NOT NULL,
+    value character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: site_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.site_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: site_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.site_settings_id_seq OWNED BY public.site_settings.id;
+
+
+--
 -- Name: sites; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2340,6 +2372,13 @@ ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scri
 
 
 --
+-- Name: site_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.site_settings ALTER COLUMN id SET DEFAULT nextval('public.site_settings_id_seq'::regclass);
+
+
+--
 -- Name: sites id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2715,6 +2754,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 ALTER TABLE ONLY public.scripts
     ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: site_settings site_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.site_settings
+    ADD CONSTRAINT site_settings_pkey PRIMARY KEY (id);
 
 
 --
@@ -3394,6 +3441,13 @@ CREATE INDEX index_scripts_on_group_id ON public.scripts USING btree (group_id);
 --
 
 CREATE INDEX index_scripts_on_provenance_id ON public.scripts USING btree (provenance_id);
+
+
+--
+-- Name: index_site_settings_on_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_site_settings_on_name ON public.site_settings USING btree (name);
 
 
 --
@@ -4350,6 +4404,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250430021003'),
 ('20250402025432'),
 ('20250211012005'),
 ('20250120064731'),

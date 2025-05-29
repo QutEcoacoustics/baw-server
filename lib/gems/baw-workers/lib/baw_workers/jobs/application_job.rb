@@ -45,8 +45,8 @@ module BawWorkers
         # https://github.com/rails/rails/blob/main/activejob/lib/active_job/queue_name.rb#L48
         # @param [Symbol] name
         # @return [Symbol]
-        def queue_name_from_part(name)
-          name = super(name)
+        def queue_name_from_part(initial_name)
+          name = super
           name = name.to_s + "_#{BawApp.env}" unless name.end_with?(BawApp.env)
           name
         end
@@ -61,6 +61,10 @@ module BawWorkers
         next unless BawApp.dev_or_test?
 
         throw :abort
+      end
+
+      after_perform do
+        SiteSettings.clear_cache
       end
 
       discard_on(StandardError, &:notify_error)

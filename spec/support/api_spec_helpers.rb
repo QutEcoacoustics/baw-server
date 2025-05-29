@@ -81,8 +81,10 @@ module ApiSpecHelpers
       self.baw_produces = ['application/json']
     end
 
-    def for_model(given_model, factory: nil, factory_args: nil)
-      self.baw_model_name = baw_model_name = given_model.model_name.singular
+    def for_model(given_model, factory: nil, factory_args: nil, model_name: nil)
+      model_name ||= given_model.model_name.element
+
+      self.baw_model_name = baw_model_name = model_name
       self.baw_factory = factory || baw_model_name
       # rswag expects let statements to be defined with the same name as the parameters,
       # however, our creation scripts already define many let statements that have the

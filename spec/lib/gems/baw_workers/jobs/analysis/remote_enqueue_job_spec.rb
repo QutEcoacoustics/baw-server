@@ -23,10 +23,20 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
       .max_by(&:time)
   end
 
+  it 'respects the batch analysis remote enqueue limit' do
+    SiteSettings.batch_analysis_remote_enqueue_limit = 0
+
+    BawWorkers::Jobs::Analysis::RemoteEnqueueJob.perform_now
+    status = get_last_status(1)
+
+    expect(status).to be_completed
+    expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+  end
+
   stepwise 'the remote enqueue job' do
     step 'check initial state' do
       expect(AnalysisJobsItem.count).to eq(40)
-      expect(AnalysisJobsItem.all.pluck(:status)).to all(eq('new'))
+      expect(AnalysisJobsItem.pluck(:status)).to all(eq('new'))
     end
 
     step 'works as expected' do

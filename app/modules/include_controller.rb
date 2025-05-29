@@ -36,6 +36,9 @@ module IncludeController
     rescue_from CanCan::AccessDenied, with: :access_denied_response
     rescue_from Api::ApiAuth::AccessDenied, with: :access_denied_response
 
+    rescue_from DynamicSettings::UnknownSettingError, with: :record_not_found_response
+    rescue_from DynamicSettings::InvalidSettingError, with: :unprocessable_entity_error_response
+
     # Prevent CSRF attacks by raising an exception.
     # For APIs, you may want to use :null_session instead.
     protect_from_forgery unless: -> { request.format.json? }
@@ -207,7 +210,7 @@ module IncludeController
     options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
 
     # notify of exception when head requests AND when should_notify_error is true
-    should_notify_error = request.head? && (options.include?(:should_notify_error) && options[:should_notify_error])
+    should_notify_error = request.head? && options.include?(:should_notify_error) && options[:should_notify_error]
 
     json_response = Settings.api_response.build(status_symbol, nil, options)
 

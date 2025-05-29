@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Admin
+  # Common controller for all admin controllers.
+  # Essentially just verifies that the user is an admin before each action.
   class BaseController < ApplicationController
     # an unused named token to pass to cancancan
     # We use it for all admin endpoints.
