@@ -123,13 +123,13 @@ class AudioEvent < ApplicationRecord
                      :is_reference,
                      :created_at, :creator_id, :updated_at,
                      :duration_seconds,
-                     :audio_event_import_file_id, :import_file_index, :provenance_id, :channel],
+                     :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
                       :is_reference,
                       :creator_id, :updated_at, :created_at,
-                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel],
+                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score],
       custom_fields: lambda { |item, _user|
                        # do a query for the attributes that may not be in the projection
                        fresh_audio_event = AudioEvent.find(item.id)
@@ -236,8 +236,10 @@ class AudioEvent < ApplicationRecord
         audio_event_import_file_id: Api::Schema.id(nullable: true, read_only: true),
         import_file_index: { type: ['null', 'integer'], readOnly: true },
         provenance_id: Api::Schema.id(nullable: true),
-        channel: { type: ['null', 'integer'] }
-      }
+        channel: { type: ['null', 'integer'] },
+        score: { type: ['null', 'number'], readOnly: true }
+      },
+      required: [:score]
     }
   end
 
