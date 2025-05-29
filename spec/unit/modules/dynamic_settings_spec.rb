@@ -7,7 +7,7 @@ describe DynamicSettings do
     #
     # https://discuss.rubyonrails.org/t/insert-all-with-temporary-table/85830/1
     # Rails excludes indices from temporary tables for some reason??
-    # This means `upsert` doesn't work because it  can't find a unique index
+    # This means `upsert` doesn't work because it can't find a unique index
     # needed for the statement.
     # So we create a non-temporary table and then drop it after the test.
     Temping.create(:fruit, temporary: false) do
@@ -91,7 +91,7 @@ describe DynamicSettings do
       expect {
         Fruit.apple = 'not a number'
       }.to raise_error(
-        ArgumentError,
+        DynamicSettings::InvalidSettingError,
         'Invalid setting: Value must be of type NilClass | Integer'
       )
     end

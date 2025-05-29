@@ -108,5 +108,9 @@ module Admin
     def get_scripts
       Script.order(name: :asc).order(created_at: :desc)
     end
+
+    def resource_class
+      Script
+    end
   end
 end

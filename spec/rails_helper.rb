@@ -353,10 +353,11 @@ RSpec.configure do |config|
     DatabaseCleaner.clean unless example.metadata.key?(:no_database_cleaning)
     strategy = DatabaseCleaner[:active_record].strategy
     if strategy.is_a?(DatabaseCleaner::ActiveRecord::Truncation) || strategy.is_a?(DatabaseCleaner::ActiveRecord::Deletion)
+      Admin::SiteSetting.reset_all_settings!
       Rails.application.load_seed
+    else
+      Admin::SiteSetting.clear_cache
     end
-
-    Admin::SiteSetting.reset_all_settings!
 
     Warden.test_reset!
 

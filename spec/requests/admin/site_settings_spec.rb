@@ -140,7 +140,7 @@ describe 'Admin::SiteSettings' do
       )
     end
 
-    it 'can create a site setting' do
+    it 'fails to create a site setting that already exists' do
       params = {
         site_setting: {
           name: 'batch_analysis_remote_enqueue_limit',

@@ -4,7 +4,7 @@ describe 'Admin::SiteSettings permissions' do
   # we're using a string route parameter,
   # so we have to override the expectations in the default actions
   with_custom_action(:show, path: '{id}', verb: :get, expect: lambda { |_user, _action|
-    expect(api_data).to include(id: null, name: 'batch_analysis_remote_enqueue_limit')
+    expect(api_data).to include(id: nil, name: 'batch_analysis_remote_enqueue_limit')
   })
 
   with_custom_action(:update, path: '{id}', verb: :put, expect: lambda { |_user, _action|
