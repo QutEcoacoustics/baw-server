@@ -16,7 +16,7 @@
 #  start_time_seconds                                                              :decimal(10, 4)   not null
 #  created_at                                                                      :datetime
 #  updated_at                                                                      :datetime
-#  audio_event_import_file_id                                                      :bigint
+#  audio_event_import_file_id                                                      :integer
 #  audio_recording_id                                                              :integer          not null
 #  creator_id                                                                      :integer          not null
 #  deleter_id                                                                      :integer
