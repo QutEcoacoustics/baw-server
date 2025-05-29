@@ -1,5 +1,21 @@
 # Changelog
 
+## [12.16.0](https://github.com/QutEcoacoustics/baw-server/tree/12.16.0) (2025-05-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.14.2...12.16.0)
+
+**Implemented enhancements:**
+
+- Expose `score` through `audio_event` model [\#762](https://github.com/QutEcoacoustics/baw-server/issues/762)
+- Dynamic setting: batch\_analysis.remote\_enqueue\_limit [\#760](https://github.com/QutEcoacoustics/baw-server/issues/760)
+- Dynamic settings module [\#759](https://github.com/QutEcoacoustics/baw-server/issues/759)
+- Emit score field from audio event responses [\#763](https://github.com/QutEcoacoustics/baw-server/pull/763) ([hudson-newey](https://github.com/hudson-newey))
+- Add site settings management with dynamic configuration [\#761](https://github.com/QutEcoacoustics/baw-server/pull/761) ([atruskie](https://github.com/atruskie))
+
+**Closed issues:**
+
+- We may need a custom REST endpoint / API for importing annotation results as annotations [\#197](https://github.com/QutEcoacoustics/baw-server/issues/197)
+
 ## [12.14.2](https://github.com/QutEcoacoustics/baw-server/tree/12.14.2) (2025-04-04)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.14.1...12.14.2)
