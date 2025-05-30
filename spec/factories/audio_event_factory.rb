@@ -78,6 +78,50 @@ FactoryBot.define do
       end
     end
 
+    factory :audio_event_tagging do
+      provenance
+      score { rand(0...1.0).round(2) }
+      end_time_seconds { start_time_seconds + rand(2..4.50).round(2) }
+      transient do
+        tag { nil }
+        confirmations { [] }
+        users { [] }
+      end
+
+      after(:create) do |audio_event, evaluator|
+        create(:tagging, audio_event: audio_event, tag: evaluator.tag, creator: evaluator.creator)
+
+        if evaluator.confirmations.any?
+          raise 'users must be >= confirmations' if evaluator.users.size < evaluator.confirmations.size
+
+          evaluator.confirmations.each_with_index do |confirmed, index|
+            user = evaluator.users[index]
+            create(:verification, audio_event: audio_event, tag: evaluator.tag, creator: user, confirmed:)
+          end
+        end
+      end
+
+      trait :and_verification do
+        transient do
+          confirmations { [] }
+          users { [] }
+        end
+
+        after(:create) do |audio_event, evaluator|
+          raise 'users must be >= confirmations' if evaluator.users.size < evaluator.confirmations.size
+
+          evaluator.confirmations.each_with_index do |confirmed, index|
+            user = evaluator.users[index]
+            create(:verification,
+              audio_event: audio_event,
+              tag: evaluator.tag,
+              creator: user,
+              confirmed:)
+          end
+        end
+      end
+    end
+
     factory :audio_event_with_tags, traits: [:with_tags]
     factory :audio_event_with_comments, traits: [:with_comments]
     factory :audio_event_with_tags_and_comments, traits: [:with_tags, :with_comments]
