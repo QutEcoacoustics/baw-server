@@ -184,5 +184,35 @@ describe AnalysisJobsItem do
       expect(AudioEvent.count).to eq(before_audio_events)
       expect(AudioEventImportFile.count).to eq(before_audio_event_import_files)
     end
+
+    it 'imports nothing if glob is blank' do
+      analysis_jobs_item.script.update!(event_import_glob: nil)
+
+      result = analysis_jobs_item.import_results!
+      expect(result).to be_success
+
+      item = analysis_jobs_item.reload
+
+      expect(item.audio_event_import_files.count).to eq(0)
+      expect(item.analysis_job.audio_event_imports.count).to eq(0)
+
+      expect(AudioEvent.count).to eq(0)
+    end
+
+    it 'does not import results if glob does not match' do
+      analysis_jobs_item.script.update!(event_import_glob: 'non_existent_file.csv')
+
+      create_analysis_result_file(analysis_jobs_item, Pathname('sub_folder/generic_example.csv'), content: 'banana')
+
+      result = analysis_jobs_item.import_results!
+      expect(result).to be_success
+
+      item = analysis_jobs_item.reload
+
+      expect(item.audio_event_import_files.count).to eq(0)
+      expect(item.analysis_job.audio_event_imports.count).to eq(0)
+
+      expect(AudioEvent.count).to eq(0)
+    end
   end
 end

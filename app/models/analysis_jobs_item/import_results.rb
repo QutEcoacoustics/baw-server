@@ -23,6 +23,11 @@ class AnalysisJobsItem
       # scan for files with valid extension
       files = scan_results_directory(script.event_import_glob)
 
+      if files.empty?
+        # it's not a failure, but we didn't find any files to import
+        return Dry::Monads.Success()
+      end
+
       # create or load audio event import
       import = create_or_find_audio_event_import
 
@@ -57,6 +62,8 @@ class AnalysisJobsItem
     private
 
     def scan_results_directory(glob)
+      return [] if glob.blank?
+
       glob = "**/*#{glob}" unless glob.start_with?('**/')
 
       results_absolute_path.glob(glob).filter(&:file?)

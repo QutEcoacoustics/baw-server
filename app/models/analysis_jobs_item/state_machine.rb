@@ -238,6 +238,8 @@ class AnalysisJobsItem
     def enqueue_import_results
       return unless result_success?
 
+      # TODO: should we even bother enqueuing this unless the script has
+      # event_import_glob set?
       BawWorkers::Jobs::Analysis::ImportResultsJob.enqueue(self)
     end
 
