@@ -145,7 +145,7 @@ describe 'Audio Event Reports' do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(api_data).to match(expected_report_structure)
+    expect(api_result).to match(expected_report_structure)
   end
 
   it 'returns a report with the correct top level results' do
@@ -156,23 +156,23 @@ describe 'Audio Event Reports' do
     expected_provenance_ids = [provenance.id].sort
     expected_audio_recording_ids = AudioRecording.last(4).map(&:id).sort
 
-    expect(api_data[:site_ids].sort).to eq(expected_site_ids)
-    expect(api_data[:region_ids].sort).to eq(expected_region_ids)
-    expect(api_data[:tag_ids].sort).to eq(expected_tag_ids)
-    expect(api_data[:provenance_ids].sort).to eq(expected_provenance_ids)
+    expect(api_result[:site_ids].sort).to eq(expected_site_ids)
+    expect(api_result[:region_ids].sort).to eq(expected_region_ids)
+    expect(api_result[:tag_ids].sort).to eq(expected_tag_ids)
+    expect(api_result[:provenance_ids].sort).to eq(expected_provenance_ids)
 
-    expect(api_data[:generated_date]).to start_with(Time.zone.now.year.to_s)
+    expect(api_result[:generated_date]).to start_with(Time.zone.now.year.to_s)
 
-    expect(api_data[:bucket_count]).to eq(7)
-    expect(api_data[:audio_events_count]).to eq(8)
-    expect(api_data[:audio_recording_ids].sort).to eq(expected_audio_recording_ids)
+    expect(api_result[:bucket_count]).to eq(7)
+    expect(api_result[:audio_events_count]).to eq(8)
+    expect(api_result[:audio_recording_ids].sort).to eq(expected_audio_recording_ids)
   end
 
   it 'returns the correct event summary results' do
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
 
     # check first element's values
-    expect(api_data[:event_summaries].first).to match(
+    expect(api_result[:event_summaries].first).to match(
       provenance_id: provenance.id,
       tag_id: tags[:koala].id,
       events: {
@@ -194,11 +194,11 @@ describe 'Audio Event Reports' do
   it 'returns the correct accumulation series results' do
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
 
-    expect(api_data[:accumulation_series].length).to eq(report_length.in_days)
+    expect(api_result[:accumulation_series].length).to eq(report_length.in_days)
 
     expected_counts = [2, 2, 3, 3, 3, 4, 4]
 
-    api_data[:accumulation_series].each_with_index do |bucket, index|
+    api_result[:accumulation_series].each_with_index do |bucket, index|
       expect(bucket[:count]).to eq(expected_counts[index])
 
       expect(bucket[:range].first).to start_with('2025-01-')
@@ -212,24 +212,24 @@ describe 'Audio Event Reports' do
     # composition should always have one entry per tag, per bucket
     expected_length = Tag.count * report_length.in_days
 
-    expect(api_data[:composition_series].length).to eq(expected_length)
+    expect(api_result[:composition_series].length).to eq(expected_length)
   end
 
   it 'returns the correct coverage series' do
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
 
     # these are the coverage results
-    expect(api_data[:coverage_series][:recording].length).to eq(3)
-    expect(api_data[:coverage_series][:analysis].length).to eq(4)
+    expect(api_result[:coverage_series][:recording].length).to eq(3)
+    expect(api_result[:coverage_series][:analysis].length).to eq(4)
 
     # check the first recording entry
-    first_recording = api_data[:coverage_series][:recording].first
+    first_recording = api_result[:coverage_series][:recording].first
     expect(first_recording[:range].first).to start_with('2025-01-01')
     expect(first_recording[:range].last).to start_with('2025-01-01')
     expect(first_recording[:density]).to eq(1.0)
 
     # check the first analysis entry
-    first_analysis = api_data[:coverage_series][:analysis].first
+    first_analysis = api_result[:coverage_series][:analysis].first
     expect(first_analysis[:type]).to eq('success')
     expect(first_analysis[:range].first).to start_with('2025-01-03')
     expect(first_analysis[:range].last).to start_with('2025-01-03')
@@ -346,7 +346,7 @@ describe 'Audio Event Reports' do
                                       { type: 'success',
                                         range: ['2025-01-01T00:00:00.000+00:00', '2025-01-01T16:40:00.000+00:00'], density: 1.0 }] }
       }
-    actual_without_date = api_data.except(:generated_date)
+    actual_without_date = api_result.except(:generated_date)
     expect(actual_without_date).to eq(expected)
   end
 end
