@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# TODO: update tests - broken post-refactor
 RSpec.shared_examples 'a bucket range' do |start_date, end_date, bucket_size, expected_buckets|
   it "returns the expected result for range #{start_date} to #{end_date} with interval #{bucket_size}" do
     postgres_interval = subject.bucket_interval(bucket_size)
@@ -178,7 +179,7 @@ describe Report::TimeSeries do
     end
   end
 
-  describe Report::TimeSeries::StartEndTime do
+  describe Report::TimeSeries::Options do
     let(:valid_parameters) {
       {
         options: {
@@ -203,7 +204,7 @@ describe Report::TimeSeries do
 
     describe '.call' do
       it 'processes valid parameters correctly' do
-        result = Report::TimeSeries::StartEndTime.call(valid_parameters)
+        result = Report::TimeSeries::Options.call(valid_parameters)
 
         expect(result).to include(
           :start_time,
@@ -217,7 +218,7 @@ describe Report::TimeSeries do
       end
 
       it 'accepts custom parsers' do
-        result = Report::TimeSeries::StartEndTime.call(
+        result = Report::TimeSeries::Options.call(
           {},
           time_range_parser: mock_time_range_parser,
           bucket_size_parser: mock_bucket_size_parser
@@ -239,7 +240,7 @@ describe Report::TimeSeries do
 
           expect(Rails.logger).to receive(:warn).with('end_time is in the future, defaulting to current time.')
 
-          result = Report::TimeSeries::StartEndTime.call(parameters)
+          result = Report::TimeSeries::Options.call(parameters)
 
           expect(result[:end_time]).to eq(now)
         end
@@ -257,7 +258,7 @@ describe Report::TimeSeries do
 
           expect(Rails.logger).to receive(:warn).with("Invalid bucket size: invalid_bucket. Defaulting to 'day'.")
 
-          result = Report::TimeSeries::StartEndTime.call(parameters)
+          result = Report::TimeSeries::Options.call(parameters)
 
           expect(result[:bucket_size]).to eq('day')
           expect(result[:interval]).to eq('1 day')
@@ -271,7 +272,7 @@ describe Report::TimeSeries do
 
           expect(Rails.logger).to receive(:warn).with("No bucket size specified. Defaulting to 'day'.")
 
-          result = Report::TimeSeries::StartEndTime.call(params)
+          result = Report::TimeSeries::Options.call(params)
 
           expect(result[:bucket_size]).to eq('day')
           expect(result[:interval]).to eq('1 day')
@@ -289,7 +290,7 @@ describe Report::TimeSeries do
           }
 
           expect {
-            Report::TimeSeries::StartEndTime.call(params)
+            Report::TimeSeries::Options.call(params)
           }.to raise_error(ArgumentError, 'start_time must be before end_time.')
         end
 
@@ -303,7 +304,7 @@ describe Report::TimeSeries do
           }
 
           expect {
-            Report::TimeSeries::StartEndTime.call(params)
+            Report::TimeSeries::Options.call(params)
           }.to raise_error(ArgumentError, 'start_time must be before the current date.')
         end
 
@@ -317,7 +318,7 @@ describe Report::TimeSeries do
           }
 
           expect {
-            Report::TimeSeries::StartEndTime.call(params)
+            Report::TimeSeries::Options.call(params)
           }.to raise_error(ArgumentError, 'start_time must be before the current date.')
         end
       end
@@ -409,26 +410,3 @@ describe Report::TimeSeries do
     end
   end
 end
-
-# Helper method to execute a report query and return the result
-# @param [Report::ArelHelpers::ReportQuery] query object
-def execute_query(query)
-  select = Arel::SelectManager.new
-    .with(query.cte)
-    .project(Arel.star)
-    .from(query.table)
-  ActiveRecord::Base.connection.execute(select.to_sql)
-end
-
-# report over a defined range
-# important for the regular sizing of buckets
-# different from filtering any object in our database, because want to return
-# empty sections
-# report apis will accept additional two parameters in same scope as the bucket
-# start end of report (range)
-# either can be NULL not supplied, infer start end automatically based on
-# start equals min recorded at floored to midnight => extract date (start bucket
-# counting from) e.g. 1400 for a day, bucket starts at 00:00 on said date
-# end time would be the opposite (recorded at max nearest day)
-
-# if report range, and no filter dates, filter base data to report range

@@ -100,26 +100,6 @@ FactoryBot.define do
           end
         end
       end
-
-      trait :and_verification do
-        transient do
-          confirmations { [] }
-          users { [] }
-        end
-
-        after(:create) do |audio_event, evaluator|
-          raise 'users must be >= confirmations' if evaluator.users.size < evaluator.confirmations.size
-
-          evaluator.confirmations.each_with_index do |confirmed, index|
-            user = evaluator.users[index]
-            create(:verification,
-              audio_event: audio_event,
-              tag: evaluator.tag,
-              creator: user,
-              confirmed:)
-          end
-        end
-      end
     end
 
     factory :audio_event_with_tags, traits: [:with_tags]
