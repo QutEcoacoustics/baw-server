@@ -114,7 +114,7 @@ module BawWorkers
           [
             Settings.batch_analysis.remote_enqueue_limit,
             SiteSettings.batch_analysis_remote_enqueue_limit
-          ].compact.first
+          ].compact.min
         end
 
         def maximum_queued_jobs

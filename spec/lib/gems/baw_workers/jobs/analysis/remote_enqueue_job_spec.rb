@@ -23,7 +23,7 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
       .max_by(&:time)
   end
 
-  it 'respects the batch analysis remote enqueue limit' do
+  it 'respects the SiteSettings batch analysis remote enqueue limit' do
     SiteSettings.batch_analysis_remote_enqueue_limit = 0
 
     BawWorkers::Jobs::Analysis::RemoteEnqueueJob.perform_now
@@ -31,6 +31,24 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
 
     expect(status).to be_completed
     expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+  end
+
+  it 'respects the Settings batch analysis remote enqueue limit' do
+    Settings.batch_analysis_remote_enqueue_limit = 0
+    allow(Settings.batch_analysis).to receive(:remote_enqueue_limit).and_return(0)
+    BawWorkers::Jobs::Analysis::RemoteEnqueueJob.perform_now
+    status = get_last_status(1)
+    expect(status).to be_completed
+    expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+  end
+
+  it 'takes the minimum of the SiteSettings and Settings batch analysis remote enqueue limits' do
+    allow(Settings.batch_analysis).to receive(:remote_enqueue_limit).and_return(10)
+    SiteSettings.batch_analysis_remote_enqueue_limit = 5
+    BawWorkers::Jobs::Analysis::RemoteEnqueueJob.perform_now
+    status = get_last_status(1)
+    expect(status).to be_completed
+    expect(status.messages).to include 'Enqueued 5 of 5 jobs, sleeping now'
   end
 
   stepwise 'the remote enqueue job' do
