@@ -269,6 +269,11 @@ module BawWorkers
         # ! Will not follow redirects.
         # We don't expect redirects are needed but if they are here curl semantics mean
         # it would fire a GET instead of a POST after redirect unless we customize the behaviour.
+        #
+        # AT 2025: Curl versions less than 7.84.0 will not retry on error if fail-with-body is set.
+        # This is a bug that was fixed in https://github.com/curl/curl/commit/0356804d13676641aec9b004722c23ae8b424c49
+        # We've fixed this in our deploy playbooks but leaving a note here for records.
+        #
         # rubocop:disable Style/FormatStringToken
         command = <<~SHELL
           curl
@@ -336,7 +341,7 @@ module BawWorkers
           .find_by(script_id: script.id)
           &.custom_settings => custom_settings
         encoded_config = format_config(
-          (custom_settings.presence || script.executable_settings),
+          custom_settings.presence || script.executable_settings,
           config_name
         )
 
