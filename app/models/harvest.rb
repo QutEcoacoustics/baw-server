@@ -33,6 +33,7 @@ class Harvest < ApplicationRecord
   HARVEST_FOLDER_PREFIX = 'harvest_'
   HARVEST_ID_FROM_FOLDER_REGEX = %r{/#{HARVEST_FOLDER_PREFIX}(\d+)/}
 
+  before_validation :clean_up_mappings
   before_save :mark_mappings_change_at
   before_create :set_default_name
   before_update :set_default_name
@@ -73,6 +74,18 @@ class Harvest < ApplicationRecord
     return if uploads_enabled?
 
     errors.add(:project, 'A harvest cannot be created unless its parent project has enabled audio upload')
+  end
+
+  def clean_up_mappings
+    # we want user changes to mappings to trigger validation
+    return if mappings_changed? || mappings.blank?
+
+    mappings_site_ids = mappings.map(&:site_id).compact
+    invalid_sites_ids = mappings_site_ids.excluding(
+      Site.where(id: mappings_site_ids).pluck(:id)
+    ).to_set
+
+    self.mappings = mappings.reject { |item| invalid_sites_ids.include?(item.site_id) }
   end
 
   def validate_site_mappings_exist

@@ -195,14 +195,14 @@ describe '/audio_recordings' do
 
   context 'when filtering by time of day' do
     let(:perth) {
-      perth_site = create(:site)
+      perth_site = create(:site, creator: writer_user, region: region, projects: [project])
       project.sites << perth_site
       project.save!
       perth_site
     }
 
     let(:sydney) {
-      sydney_site = create(:site)
+      sydney_site = create(:site, creator: writer_user, region: region, projects: [project])
       project.sites << sydney_site
       project.save!
       sydney_site
@@ -225,8 +225,10 @@ describe '/audio_recordings' do
       (1..6).each do |day|
         (0...24).step(2).each do |hour|
           recorded_at = Time.new(2021, 10, day, hour, 0, 0, '+10:00')
-          create(:audio_recording, recorded_date: recorded_at, duration_seconds: 7200, site_id: sydney.id)
-          create(:audio_recording, recorded_date: recorded_at, duration_seconds: 7200, site_id: perth.id)
+          create(:audio_recording, creator: writer_user, recorded_date: recorded_at, duration_seconds: 7200,
+            site_id: sydney.id)
+          create(:audio_recording, creator: writer_user, recorded_date: recorded_at, duration_seconds: 7200,
+            site_id: perth.id)
         end
       end
     end
