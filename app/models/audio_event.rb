@@ -200,6 +200,11 @@ class AudioEvent < ApplicationRecord
               join: Tag,
               on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
               available: true
+            },
+            {
+              join: Verification,
+              on: Tagging.arel_table[:audio_event_id].eq(Verification.arel_table[:audio_event_id]),
+              available: true
             }
           ]
 
