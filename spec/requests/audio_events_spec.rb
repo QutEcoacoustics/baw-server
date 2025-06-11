@@ -213,7 +213,11 @@ describe '/audio_events' do
       expect_success
 
       expect_number_of_items(1)
-      expect(api_data.first[:id]).to eq(audio_event.id)
+      expect(AudioEvent.count).to eq(4)
+
+      expect(api_data.first[:id])
+        .to eq(audio_event.id)
+        .and eq(verification.audio_event_id)
     end
 
     it 'can filter by with an overlapping start and end time' do
