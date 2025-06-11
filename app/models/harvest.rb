@@ -80,7 +80,7 @@ class Harvest < ApplicationRecord
     # we want user changes to mappings to trigger validation
     return if mappings_changed? || mappings.blank?
 
-    mappings_site_ids = mappings.map(&:site_id).compact
+    mappings_site_ids = mappings.map(&:site_id).compact.uniq
     invalid_sites_ids = mappings_site_ids.excluding(
       Site.where(id: mappings_site_ids).pluck(:id)
     ).to_set

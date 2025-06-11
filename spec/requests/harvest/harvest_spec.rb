@@ -304,8 +304,9 @@ describe 'Harvesting files' do
         site1.delete
       end
 
+      # before mappings were cleaned up we would fail validation if a site was missing
       it 'cleans up mappings referencing deleted sites when saved' do
-        harvest.save
+        harvest.save!
 
         expect(harvest.mappings.length).to eq 1
         expect(harvest.mappings).to match(a_collection_containing_exactly(
