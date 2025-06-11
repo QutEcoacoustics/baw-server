@@ -93,12 +93,8 @@ class AudioEvent < ApplicationRecord
   scope :end_before, ->(offset_seconds) { where(end_time_seconds: ...offset_seconds) }
 
   # postgres-specific
-  scope(:select_start_absolute, lambda {
-                                  select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute')
-                                })
-  scope(:select_end_absolute, lambda {
-                                select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute')
-                              })
+  scope(:select_start_absolute, -> { select(arel_start_absolute) })
+  scope(:select_end_absolute, -> { select(arel_end_absolute) })
   scope :duration_seconds, -> { arel_table[:end_time_seconds] - arel_table[:start_time_seconds] }
 
   scope :total_duration_seconds, -> { sum(duration_seconds.cast('bigint')) }
@@ -440,6 +436,14 @@ class AudioEvent < ApplicationRecord
       .where(audio_recordings: { site_id: site.id })
       .order(updated_at: :desc)
       .limit(6)
+  end
+
+  def self.arel_start_absolute
+    'audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute'
+  end
+
+  def self.arel_end_absolute
+    'audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute'
   end
 
   private

@@ -135,7 +135,7 @@ gem 'pg'
 
 # extensions to arel https://github.com/Faveod/arel-extensions
 # in particular, we use `cast`, and `coalesce`
-gem 'arel_extensions', '>= 2.1.0'
+gem 'arel_extensions', '>= 2.3.3'
 
 # allows for adding common table expressions to queries
 gem 'activerecord-cte'

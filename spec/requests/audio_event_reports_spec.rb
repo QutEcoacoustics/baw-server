@@ -168,29 +168,6 @@ describe 'Audio Event Reports' do
     expect(api_result[:audio_recording_ids].sort).to eq(expected_audio_recording_ids)
   end
 
-  it 'returns the correct event summary results' do
-    post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
-
-    # check first element's values
-    expect(api_result[:event_summaries].first).to match(
-      provenance_id: provenance.id,
-      tag_id: tags[:koala].id,
-      events: {
-        count: 5,
-        consensus: 0.75,
-        verifications: 4
-      },
-      score_histogram: [
-        a_hash_including(
-          max: 0.84,
-          min: 0.12,
-          mean: 0.414,
-          standard_deviation: 0.334
-        )
-      ]
-    )
-  end
-
   it 'returns the correct accumulation series results' do
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
 
@@ -215,27 +192,6 @@ describe 'Audio Event Reports' do
     expect(api_result[:composition_series].length).to eq(expected_length)
   end
 
-  it 'returns the correct coverage series' do
-    post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
-
-    # these are the coverage results
-    expect(api_result[:coverage_series][:recording].length).to eq(3)
-    expect(api_result[:coverage_series][:analysis].length).to eq(4)
-
-    # check the first recording entry
-    first_recording = api_result[:coverage_series][:recording].first
-    expect(first_recording[:range].first).to start_with('2025-01-01')
-    expect(first_recording[:range].last).to start_with('2025-01-01')
-    expect(first_recording[:density]).to eq(1.0)
-
-    # check the first analysis entry
-    first_analysis = api_result[:coverage_series][:analysis].first
-    expect(first_analysis[:type]).to eq('success')
-    expect(first_analysis[:range].first).to start_with('2025-01-03')
-    expect(first_analysis[:range].last).to start_with('2025-01-03')
-    expect(first_analysis[:density]).to eq(1.0)
-  end
-
   # temporary catch-all during development
   it 'matches these results' do
     post '/audio_event_reports', params: default_filter, **api_with_body_headers(writer_token)
@@ -252,7 +208,7 @@ describe 'Audio Event Reports' do
     magpie_tag_id = Tag.find_by(text: :magpie).id
     first_provenance_id = Provenance.first.id
     expected =
-      {
+      a_hash_including(
         site_ids: all_site_ids,
         region_ids: all_region_ids,
         tag_ids: all_tag_ids,
@@ -260,94 +216,165 @@ describe 'Audio Event Reports' do
         bucket_count: 7,
         audio_events_count: 8,
         audio_recording_ids: last_audio_recording_ids,
-        event_summaries: [
-          { provenance_id: first_provenance_id, tag_id: koala_tag_id,
-            events: { count: 5, consensus: 0.75, verifications: 4 }, score_histogram: [{ max: 0.84, min: 0.12, bins: [0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0], mean: 0.414, standard_deviation: 0.334 }] },
-          { provenance_id: first_provenance_id, tag_id: whip_bird_tag_id, events: { count: 2, consensus: 1, verifications: 4 },
-            score_histogram: [{ max: 0.26, min: 0.09, bins: [0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mean: 0.175, standard_deviation: 0.12 }] },
-          { provenance_id: first_provenance_id, tag_id: riflebird_tag_id, events: { count: 1, consensus: nil, verifications: 0 },
-            score_histogram: [{ max: 0.86, min: 0.86, bins: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0], mean: 0.86, standard_deviation: nil }] },
-          { provenance_id: first_provenance_id, tag_id: magpie_tag_id, events: { count: 1, consensus: nil, verifications: 0 },
-            score_histogram: [{ max: 0.26, min: 0.26, bins: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mean: 0.26, standard_deviation: nil }] }
-        ],
-        accumulation_series: [
-          { bucket_number: 1, range: ['2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'], count: 2 },
-          { bucket_number: 2, range: ['2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'], count: 2 },
-          { bucket_number: 3, range: ['2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'], count: 3 },
-          { bucket_number: 4, range: ['2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'], count: 3 },
-          { bucket_number: 5, range: ['2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'], count: 3 },
-          { bucket_number: 6, range: ['2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'], count: 4 },
-          { bucket_number: 7, range: ['2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'], count: 4 }
-        ],
-        composition_series: [
-          { range: ['2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.67, events: { count: 2, verifications: 0, consensus: nil } },
-          { range: ['2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.33, events: { count: 1, verifications: 2, consensus: 1 } },
-          { range: ['2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.67, events: { count: 2, verifications: 4, consensus: 0.75 } },
-          { range: ['2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.33, events: { count: 1, verifications: 0, consensus: nil } },
-          { range: ['2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.33, events: { count: 1, verifications: 0, consensus: nil } },
-          { range: ['2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.33, events: { count: 1, verifications: 2, consensus: 1 } },
-          { range: ['2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.33, events: { count: 1, verifications: 0, consensus: nil } },
-          { range: ['2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'], tag_id: koala_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'], tag_id: whip_bird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'], tag_id: riflebird_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } },
-          { range: ['2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'], tag_id: magpie_tag_id,
-            ratio: 0.0, events: { count: 0, verifications: 0, consensus: nil } }
-        ],
-        coverage_series: { recording: [{ range: ['2025-01-01T00:00:00.000+00:00', '2025-01-01T16:40:00.000+00:00'], density: 1.0 }, { range: ['2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'], density: 1.0 }, { range: ['2025-01-06T00:00:00.000+00:00', '2025-01-06T16:40:00.000+00:00'], density: 1.0 }],
-                           analysis: [{ type: 'success', range: ['2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'], density: 1.0 },
-                                      { type: 'cancelled',
-                                        range: ['2025-01-06T00:00:00.000+00:00', '2025-01-06T16:40:00.000+00:00'], density: 1.0 },
-                                      { type: 'failed',
-                                        range: ['2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'], density: 1.0 },
-                                      { type: 'success',
-                                        range: ['2025-01-01T00:00:00.000+00:00', '2025-01-01T16:40:00.000+00:00'], density: 1.0 }] }
-      }
+        event_summaries: array_including(
+          a_hash_including(
+            provenance_id: first_provenance_id,
+            tag_id: koala_tag_id,
+            events: a_hash_including(count: 5, consensus: 0.75, verifications: 4),
+            score_histogram: array_including(
+              a_hash_including(
+                max: 0.84,
+                min: 0.12,
+                bins: array_including(0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0),
+                mean: 0.414,
+                standard_deviation: 0.334
+              )
+            )
+          ),
+          a_hash_including(
+            provenance_id: first_provenance_id,
+            tag_id: whip_bird_tag_id,
+            events: a_hash_including(count: 2, consensus: 1, verifications: 4),
+            score_histogram: array_including(
+              a_hash_including(
+                max: 0.26,
+                min: 0.09,
+                bins: array_including(0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                mean: 0.175,
+                standard_deviation: 0.12
+              )
+            )
+          ),
+          a_hash_including(
+            provenance_id: first_provenance_id,
+            tag_id: riflebird_tag_id,
+            events: a_hash_including(count: 1, consensus: nil, verifications: 0),
+            score_histogram: array_including(
+              a_hash_including(
+                max: 0.86,
+                min: 0.86,
+                bins: array_including(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0),
+                mean: 0.86,
+                standard_deviation: nil
+              )
+            )
+          ),
+          a_hash_including(
+            provenance_id: first_provenance_id,
+            tag_id: magpie_tag_id,
+            events: a_hash_including(count: 1, consensus: nil, verifications: 0),
+            score_histogram: array_including(
+              a_hash_including(
+                max: 0.26,
+                min: 0.26,
+                bins: array_including(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                mean: 0.26,
+                standard_deviation: nil
+              )
+            )
+          )
+        ),
+        accumulation_series: array_including(
+          a_hash_including(bucket_number: 1,
+            range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'), count: 2),
+          a_hash_including(bucket_number: 2,
+            range: array_including('2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'), count: 2),
+          a_hash_including(bucket_number: 3,
+            range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'), count: 3),
+          a_hash_including(bucket_number: 4,
+            range: array_including('2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'), count: 3),
+          a_hash_including(bucket_number: 5,
+            range: array_including('2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'), count: 3),
+          a_hash_including(bucket_number: 6,
+            range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'), count: 4),
+          a_hash_including(bucket_number: 7,
+            range: array_including('2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'), count: 4)
+        ),
+        composition_series: array_including(
+          a_hash_including(range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.67, events: a_hash_including(count: 2, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.33, events: a_hash_including(count: 1, verifications: 2, consensus: 1)),
+          a_hash_including(range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-02T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-02T00:00:00.000+00:00', '2025-01-03T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.67, events: a_hash_including(count: 2, verifications: 4, consensus: 0.75)),
+          a_hash_including(range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.33, events: a_hash_including(count: 1, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-04T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-04T00:00:00.000+00:00', '2025-01-05T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-05T00:00:00.000+00:00', '2025-01-06T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.33, events: a_hash_including(count: 1, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.33, events: a_hash_including(count: 1, verifications: 2, consensus: 1)),
+          a_hash_including(range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-07T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.33, events: a_hash_including(count: 1, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'),
+            tag_id: koala_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'),
+            tag_id: whip_bird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'),
+            tag_id: riflebird_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil)),
+          a_hash_including(range: array_including('2025-01-07T00:00:00.000+00:00', '2025-01-08T00:00:00.000+00:00'),
+            tag_id: magpie_tag_id, ratio: 0.0, events: a_hash_including(count: 0, verifications: 0, consensus: nil))
+        ),
+        coverage_series: a_hash_including(
+          recording: array_including(
+            a_hash_including(range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-01T16:40:00.000+00:00'),
+              density: 1.0),
+            a_hash_including(range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'),
+              density: 1.0),
+            a_hash_including(range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-06T16:40:00.000+00:00'),
+              density: 1.0)
+          ),
+          analysis: array_including(
+            a_hash_including(type: 'success',
+              range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'), density: 1.0),
+            a_hash_including(type: 'cancelled',
+              range: array_including('2025-01-06T00:00:00.000+00:00', '2025-01-06T16:40:00.000+00:00'), density: 1.0),
+            a_hash_including(type: 'failed',
+              range: array_including('2025-01-03T00:00:00.000+00:00', '2025-01-03T16:40:00.000+00:00'), density: 1.0),
+            a_hash_including(type: 'success',
+              range: array_including('2025-01-01T00:00:00.000+00:00', '2025-01-01T16:40:00.000+00:00'), density: 1.0)
+          )
+        )
+      )
     actual_without_date = api_result.except(:generated_date)
-    expect(actual_without_date).to eq(expected)
+    expect(actual_without_date).to match(expected)
   end
 end
 

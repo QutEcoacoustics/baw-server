@@ -70,7 +70,7 @@ module Report
           aggregate_distinct(base_table, :tag_id).as('tag_ids'),
           aggregate_distinct(base_table, :audio_recording_id).as('audio_recording_ids'),
           aggregate_distinct(base_table, :provenance_id).as('provenance_ids'),
-          base_table[:audio_event_id].count(distinct = true).as('audio_events_count'),
+          base_table[:audio_event_id].count(true).as('audio_events_count'),
           accumulation_series_aggregate.as('accumulation_series'),
           event_summaries_aggregate.as('event_summaries'),
           composition_series_aggregate.as('composition_series'),
@@ -117,8 +117,8 @@ module Report
         provenance[:score_maximum].as('provenance_score_maximum'),
         analysis_jobs_items[:result].as('result'),
         # audio event absolute start and end time
-        Arel::Nodes::SqlLiteral.new(start_time_absolute_expression),
-        Arel::Nodes::SqlLiteral.new(end_time_absolute_expression)
+        Arel.sql(AudioEvent.arel_start_absolute),
+        Arel.sql(AudioEvent.arel_end_absolute)
       ]
     end
 
