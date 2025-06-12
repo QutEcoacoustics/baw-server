@@ -3,7 +3,7 @@
 class AudioEventReportsController < ApplicationController
   include Api::ControllerHelper
 
-  # POST /audio_event_reports
+  # POST /reports/audio_event_summary
   def filter
     # @audio_event_report = AudioEventReporter::AudioEventReport.new
     do_authorize_class(:filter, :audio_event_reports)
