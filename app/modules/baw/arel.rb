@@ -33,6 +33,20 @@ module Baw
         Baw::Arel::Nodes::ArrayAgg.new([self])
       end
 
+      # Use the array to json function.
+      # @return [Baw::Arel::Nodes::ArrayToJson]
+      def array_to_json
+        Baw::Arel::Nodes::ArrayToJson.new([self])
+      end
+
+      def json_agg
+        Baw::Arel::Nodes::JsonAgg.new([self])
+      end
+
+      def row_to_json
+        Baw::Arel::Nodes::RowToJson.new([self])
+      end
+
       def to_array
         Baw::Arel::Nodes::ArrayConstructor.new([self])
       end
