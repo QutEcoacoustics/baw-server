@@ -157,14 +157,5 @@ module Report
     def generate_series(expr)
       Arel::Nodes::NamedFunction.new('generate_series', [1, expr])
     end
-
-    def datetime_range_to_array(_start_field, _end_field)
-      Arel::Nodes::SqlLiteral.new("
-          array_to_json(ARRAY[
-            to_char(#{start_date}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
-            to_char(#{end_date}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')
-          ])
-        ").as('range')
-    end
   end
 end

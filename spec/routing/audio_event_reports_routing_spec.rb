@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-describe AudioEventReportsController, type: :routing do
+describe ReportsController, type: :routing do
   describe :routing do
     it do
-      expect(post('audio_event_reports')).to \
-      route_to('audio_event_reports#filter', format: 'json')
+      expect(post('reports/audio_event_summary')).to \
+      route_to('reports#summary', format: 'json')
     end
   end
 end

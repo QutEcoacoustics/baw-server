@@ -239,11 +239,14 @@ module Report
       (count.to_f / total).round(2)
     end
 
+    # split on commma + trim from ends,
+    # date time strings in the array like before -no parse just string
     def self.transform_tsrange(row)
-      matches = row['range'].match(/\["([^"]+)","([^"]+)"\)/)
-      return row unless matches
-
-      row['range'] = [DateTime.parse(matches[1]), DateTime.parse(matches[2])]
+      row['range'] = row['range']
+        .delete_prefix('[')
+        .delete_suffix(')')
+        .split(',')
+        .map { Time.parse(_1).utc }
       row
     end
 

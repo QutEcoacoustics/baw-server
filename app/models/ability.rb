@@ -120,7 +120,7 @@ class Ability
       to_study(user, is_guest)
       to_question(user, is_guest)
       to_response(user, is_guest)
-      to_event_report(user, is_guest)
+      to_report(user, is_guest)
     else
       raise ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
@@ -137,8 +137,8 @@ class Ability
     #fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
   end
 
-  def to_event_report(_user, _is_guest)
-    can [:filter], :audio_event_reports
+  def to_report(_user, _is_guest)
+    can [:summary], :reports
   end
 
   def to_cms(user, _is_guest)

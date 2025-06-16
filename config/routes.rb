@@ -781,7 +781,7 @@ Rails.application.routes.draw do
       concerns: [:filterable]
   end
 
-  post '/audio_event_reports' => 'audio_event_reports#filter', defaults: { format: 'json' }
+  post '/reports/audio_event_summary' => 'reports#summary', defaults: { format: 'json' }
 
   resources :scripts, only: [:index, :show], defaults: { format: 'json' }, concerns: [:filterable]
 
