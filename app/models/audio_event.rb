@@ -203,7 +203,13 @@ class AudioEvent < ApplicationRecord
             }
           ]
 
+        },
+        {
+          join: Verification,
+          on: AudioEvent.arel_table[:id].eq(Verification.arel_table[:audio_event_id]),
+          available: true
         }
+
       ]
     }
   end

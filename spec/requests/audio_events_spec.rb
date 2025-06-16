@@ -107,14 +107,6 @@ describe '/audio_events' do
   end
 
   context 'when filtering' do
-    let(:audio_event_import) {
-      create(:audio_event_import, creator: reader_user, updater: reader_user)
-    }
-
-    let(:audio_event_import_file) {
-      create(:audio_event_import_file, :with_file, audio_event_import: audio_event_import)
-    }
-
     let(:second_audio_recording) {
       create(:audio_recording, creator: reader_user, site:, recorded_date: audio_recording.recorded_date + 1.day)
     }
@@ -182,6 +174,50 @@ describe '/audio_events' do
         # the defaults values for audio event factory from the existing hierarchy
         a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8, is_reference: false)
       ]
+    end
+
+    it 'can filter by audio_event_import_file paths' do
+      event = build(:audio_event_import_file, path: 'ology.csv', analysis_jobs_item:)
+        .tap { |import| import.save(validate: false) }
+        .then { |import| create(:audio_event, creator: reader_user, audio_recording:, audio_event_import_file: import) }
+
+      body = {
+        filter: {
+          'audio_event_import_files.path' => {
+            contains: 'ology'
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+
+      expect_number_of_items(1)
+      expect(api_data.first[:id]).to eq(event.id)
+    end
+
+    it 'can filter by events that are verified' do
+      # filter by audio_event verified is asking for audio events that have at
+      # least one tagging with a verification
+      body = {
+        filter: {
+          'verifications.id' => {
+            not_eq: nil
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+
+      expect_number_of_items(1)
+      expect(AudioEvent.count).to eq(4)
+
+      expect(api_data.first[:id])
+        .to eq(audio_event.id)
+        .and eq(verification.audio_event_id)
     end
 
     it 'can filter by with an overlapping start and end time' do
