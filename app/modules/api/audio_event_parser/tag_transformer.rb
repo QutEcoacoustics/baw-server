@@ -26,6 +26,10 @@ module Api
           value
         end => new_value
 
+        # sometimes value is an array, e.g. from a JSON array
+        # even if we didn't have to split the string
+        new_value = new_value.is_a?(Array) ? new_value.map(&:strip) : new_value.strip
+
         Some(new_value)
       end
 
