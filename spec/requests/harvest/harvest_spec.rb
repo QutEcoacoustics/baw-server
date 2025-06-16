@@ -293,6 +293,62 @@ describe 'Harvesting files' do
 
       expect_error(:unprocessable_content, /found unpermitted parameter: :banana/)
     end
+
+    context 'when sites are deleted' do
+      let!(:site1) { Creation::Common.create_site(owner_user, project, region:, name: 'meeseeks') }
+
+      before do
+        create_harvest(streaming: false)
+        expect(harvest.mappings.length).to eq 2
+
+        site1.delete
+      end
+
+      # before mappings were cleaned up we would fail validation if a site was missing
+      it 'cleans up mappings referencing deleted sites when saved' do
+        harvest.save!
+
+        expect(harvest.mappings.length).to eq 1
+        expect(harvest.mappings).to match(a_collection_containing_exactly(
+          a_hash_including(
+            site_id: site.id,
+            path: site.unique_safe_name,
+            utc_offset: nil,
+            recursive: true
+          )
+        ))
+      end
+
+      it 'cleans up mappings referencing deleted sites when extending user expiry' do
+        harvest.upload_user_expiry_at = nil
+
+        # this used to fail before we had the `clean_up_mappings` method
+        harvest.extend_upload_user_expiry_if_needed!
+
+        expected = BawWorkers::UploadService::Communicator::STANDARD_EXPIRY.from_now
+
+        expect(harvest.mappings.length).to eq 1
+        expect(harvest.upload_user_expiry_at).to be_within(3.seconds).of(expected)
+      end
+
+      it 'skips clean up when a mapping is changed directly' do
+        add_mapping(BawWorkers::Jobs::Harvest::Mapping.new(
+          site_id: 123_456,
+          path: '',
+          utc_offset: '-04:00',
+          recursive: true
+        ))
+
+        # because `clean_up_mappings` has not been triggered since deleting the
+        # test site, it should also still be in the mappings when validation runs
+        expect_error(:unprocessable_content, /Record could not be saved/, {
+          mappings: include(
+            match(/Site '\d+' does not exist for mapping 'meeseeks_\d+'/),
+            match(/Site '123456' does not exist for mapping ''/)
+          )
+        })
+      end
+    end
   end
 
   describe 'ignores WinSCP .filepart files', :clean_by_truncation, :slow, web_server_timeout: 60 do
