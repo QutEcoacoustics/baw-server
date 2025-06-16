@@ -58,6 +58,13 @@ API tests that aren't covered by either the permissions or
 documentation/validation categories (such as complex behaviours) can be a request
 spec (`/spec/requests`).
 
+## Git LFS
+
+There are test fixtures that are tracked by Git LFS (Large File Storage). If Git
+LFS files weren't downloaded successfully, they will appear as pointer files.
+This can cause certain tests to fail. To fix this you can run the command `git
+lfs pull`. 
+
 ### Deprecated tests
 
 All tests in `spec/acceptance` are deprecated and should be replaced

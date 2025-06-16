@@ -403,8 +403,23 @@ module IncludeController
       :conflict,
       'The item must be unique.',
       error,
-      'record_not_unique_response'
+      'record_not_unique_response',
+      parse_unique_violation_keys(error)
     )
+  end
+
+  # @param error [#exception] The database error containing
+  #   the violation message.
+  # @return [Hash, nil] an error_info hash containing the unique_violation key
+  #   => value pairs that caused the constraint violation, or nil if message
+  #   doesn't match the expected format.
+  def parse_unique_violation_keys(error)
+    match = error.message.match(/Key \((?<key>.*?)\)=\((?<value>.*?)\)/)
+    return {} unless match
+
+    keys = match[:key].split(', ')
+    values = match[:value].split(', ').map(&:to_i)
+    { error_info: { unique_violation: keys.zip(values).to_h } }
   end
 
   def custom_error_response(error)

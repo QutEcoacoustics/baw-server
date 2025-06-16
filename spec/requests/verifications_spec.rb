@@ -129,8 +129,14 @@ describe 'Verifications' do
     it 'cannot create a duplicate verification' do
       post '/verifications', params: payload, **api_with_body_headers(writer_token)
 
-      expect(response).to have_http_status(409)
       expect_error(:conflict, 'The item must be unique.', nil)
+    end
+
+    it 'returns conflicting ids when unique constraint is violated' do
+      post '/verifications', params: payload, **api_with_body_headers(writer_token)
+
+      error_info = { unique_violation: { audio_event_id: audio_event.id, tag_id: tag.id, creator_id: writer_user.id } }
+      expect_error(:conflict, 'The item must be unique.', error_info)
     end
   end
 end
