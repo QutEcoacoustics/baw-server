@@ -9,6 +9,14 @@ module Report
 
     BASE_TABLE = Arel::Table.new('base_table')
 
+    SECTIONS = [
+      [Report::Section::Accumulation],
+      [Report::Section::EventSummary],
+      [Report::Section::Composition],
+      [Report::Section::Coverage],
+      [Report::Section::Coverage]
+    ].freeze
+
     def build_query
       base_query_projected = @base_query.arel.project(attributes)
       base_query_joined = add_joins(base_query_projected)

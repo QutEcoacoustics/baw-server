@@ -6,6 +6,13 @@ module Report
     def initialize(filter_params, base_scope)
       @filter_params = filter_params
       @base_scope = base_scope
+      @sections = []
+
+      section_classes = filter_params[:sections] || self.class::SECTIONS
+      section_classes.each do |section_class|
+        @sections << section_class
+      end
+
       parse_parameters(filter_params, base_scope)
     end
 
