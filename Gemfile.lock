@@ -744,7 +744,7 @@ GEM
       rack-protection (= 4.0.0)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
-    solargraph (0.55.1)
+    solargraph (0.54.5)
       backport (~> 1.2)
       benchmark (~> 0.4)
       bundler (~> 2.0)
@@ -938,7 +938,7 @@ DEPENDENCIES
   shoulda-matchers (~> 6)
   simple_form
   simplecov
-  solargraph (>= 0.45.0)
+  solargraph (= 0.54.5)
   solargraph-rails (>= 0.3.1)
   sqlite3
   super_diff

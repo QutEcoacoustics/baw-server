@@ -67,6 +67,12 @@ module BawWorkers
         SiteSettings.clear_cache
       end
 
+      retry_on ::ActiveRecord::DatabaseConnectionError, wait: 1.minute, attempts: :unlimited do |job, error|
+        push_message(
+          "Retrying job #{job.class.name} on database connection error: #{error.message}"
+        )
+      end
+
       discard_on(StandardError, &:notify_error)
 
       def notify_error(error)

@@ -55,18 +55,21 @@ describe PBS::Connection do
       settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(bin_path: nil))
       connection = PBS::Connection.new(settings, 'tag')
 
-      allow(connection).to receive(:execute_safe).and_return(Dry::Monads::Result.pure(['0', '']))
+      allow(connection).to receive(:execute_pbs_command).and_return(Dry::Monads::Result.pure(
+        PBS::Result.new(0, '', '', nil)
+      ))
       connection.fetch_queued_count
-      expect(connection).to have_received(:execute_safe).with('qselect -s Q -u pbsuser | wc -l')
+      expect(connection).to have_received(:execute_pbs_command).with('qselect -s Q -u pbsuser | wc -l')
     end
 
     it 'appends a path prefix if bin_path is set' do
       settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(bin_path: '/opt/pbs/bin'))
       connection = PBS::Connection.new(settings, 'tag')
 
-      allow(connection).to receive(:execute_safe).and_return(Dry::Monads::Result.pure(['0', '']))
+      allow(connection).to receive(:execute_pbs_command).and_return(Dry::Monads::Result.pure(PBS::Result.new(0, '', '',
+        nil)))
       connection.fetch_queued_count
-      expect(connection).to have_received(:execute_safe).with('/opt/pbs/bin/qselect -s Q -u pbsuser | wc -l')
+      expect(connection).to have_received(:execute_pbs_command).with('/opt/pbs/bin/qselect -s Q -u pbsuser | wc -l')
     end
   end
 
@@ -87,10 +90,10 @@ describe PBS::Connection do
     end
 
     it 'can fetch a job status' do
-      submit = connection.send(:execute_safe, 'echo "/usr/bin/sleep 2 && echo \'hello\'" | qsub -')
+      submit = connection.send(:execute_pbs_command, 'echo "/usr/bin/sleep 2 && echo \'hello\'" | qsub -')
       expect(submit).to be_success
 
-      submit_id = submit.value!.first.strip
+      submit_id = submit.value!.stdout.strip
 
       result = connection.fetch_status(submit_id)
 
@@ -109,27 +112,27 @@ describe PBS::Connection do
 
     # https://github.com/QutEcoacoustics/baw-server/issues/729
     it 'can handle fetching a job status which does not tell us about all the resources used' do
-      submit = connection.send(:execute_safe, 'echo "/usr/bin/sleep 2 && echo \'hello\'" | qsub -')
+      submit = connection.send(:execute_pbs_command, 'echo "/usr/bin/sleep 2 && echo \'hello\'" | qsub -')
       expect(submit).to be_success
 
-      submit_id = submit.value!.first.strip
+      submit_id = submit.value!.stdout.strip
       wait_for_pbs_job(submit_id)
 
-      allow(connection).to receive(:execute_safe).and_wrap_original do |m, *args, **keyword_args|
+      allow(connection).to receive(:execute_pbs_command).and_wrap_original do |m, *args, **keyword_args|
         original_result = m.call(*args, **keyword_args)
 
         next original_result unless args.first.include?('qstat')
 
         expect(original_result).to be_success
-        stdout, stderr = original_result.value!
+        command_result = original_result.value!
 
         # in production, we found instances where ncpus, vmem, and walltime were not reported by qstat under some conditions
-        stdout = stdout.gsub(
+        stdout = command_result.stdout.gsub(
           /"resources_used":{[^}]+}/,
           '"resources_used":{"cpupercent":0,"cput":"00:00:00","mem":"0b"}'
         )
 
-        Success([stdout, stderr])
+        Success(command_result.with(stdout:))
       end
       result = connection.fetch_status(submit_id)
 
@@ -146,7 +149,30 @@ describe PBS::Connection do
       result = connection.fetch_status('9999')
 
       expect(result).to be_failure
-      expect(result.failure).to match(/Unknown Job Id/)
+      expect(result.failure).to be_a(PBS::Errors::JobNotFoundError)
+    end
+
+    # https://github.com/QutEcoacoustics/baw-server/issues/776
+    it 'can handle cluster connection errors' do
+      stderr = <<~STDERR
+        Connection refused
+        qstat: cannot connect to server 6cfab3a0b8ac (errno=15010)
+      STDERR
+      stdout = <<~STDOUT
+        {
+          "timestamp":1750053827,
+          "pbs_version":"22.05.11",
+          "pbs_server":"6cfab3a0b8ac"
+        }
+      STDOUT
+      allow(connection).to receive(:execute_safe).and_return(
+        Failure(PBS::Result.new(255, stdout, stderr, nil))
+      )
+
+      result = connection.fetch_status('9999')
+
+      expect(result).to be_failure
+      expect(result.failure).to be_a(PBS::Errors::ConnectionRefusedError)
     end
 
     stepwise 'when fetching all statuses' do
@@ -263,7 +289,7 @@ describe PBS::Connection do
         Server pbs
 
       OUTPUT
-      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+      allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
       expect(connection.fetch_max_queued).to eq Success(nil)
     end
@@ -275,7 +301,7 @@ describe PBS::Connection do
 
 
       OUTPUT
-      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+      allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
       expect(connection.fetch_max_queued).to eq Success(nil)
     end
@@ -289,7 +315,7 @@ describe PBS::Connection do
         Server pbs
 
       OUTPUT
-      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+      allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
       expect(connection.fetch_max_array_size).to eq Success(nil)
     end
@@ -301,7 +327,7 @@ describe PBS::Connection do
 
 
       OUTPUT
-      allow(connection).to receive(:execute).and_return([0, stdout, nil])
+      allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
       expect(connection.fetch_max_array_size).to eq Success(nil)
     end
@@ -396,7 +422,7 @@ describe PBS::Connection do
         expect(job).to be_running
 
         result = connection.cancel_job(job_id, wait: true)
-        stdout, = result.value!
+        stdout = result.value!.stdout
 
         expect(stdout).to match(/waiting/)
 
@@ -429,9 +455,20 @@ describe PBS::Connection do
 
         # assert
         expect(result).to be_success
-        stdout, stderr = result.value!
+        result.value! => { stdout:, stderr: }
         expect(stderr).to match(/Job has finished/)
         expect(stdout).not_to match(/waiting/)
+      end
+
+      # https://github.com/QutEcoacoustics/baw-server/issues/776
+      it 'uses an exception failure when connection is refused when canceling a job' do
+        allow(connection).to receive(:execute_safe).and_return(
+          Failure(PBS::Result.new(255, '', 'Connection refused', nil))
+        )
+        result = connection.cancel_job('9999', wait: true, force: true)
+
+        expect(result).to be_failure
+        expect(result.failure).to be_a(PBS::Errors::ConnectionRefusedError)
       end
 
       it 'is graceful when canceling a job that is not in the job history' do
@@ -457,9 +494,46 @@ describe PBS::Connection do
         # assert
         expect(result).to be_success
 
-        stdout, stderr = result.value!
+        result.value! => { stdout:, stderr: }
         expect(stderr).to match(/Unknown Job Id/)
         expect(stdout).not_to match(/waiting/)
+      end
+
+      # https://github.com/QutEcoacoustics/baw-server/issues/765
+      it 'uses an exception failure when canceling a job that is in the process of finishing' do
+        # arrange
+        result = connection.submit_job(
+          # this is a very poorly behaved job. The idea is a lot of stdout will
+          # keep the job in the exiting state for a while
+          'cat /dev/random',
+          working_directory
+        )
+        job_id = result.value!
+
+        sleep 1
+
+        status_result = connection.fetch_status(job_id).value!
+        raise 'not running' unless status_result.running?
+
+        # we're trying to simulate a race condition where the job is cleaned up
+        # while exiting. I can't work out how to extend the exiting state to test
+        # this reliably, so we're just going to spam cancel requests and hope one
+        # happens while the job is exiting
+        cancel_result = nil
+        100.times.map do
+          result = connection.cancel_job(job_id, wait: false)
+          if result.failure?
+            cancel_result = result
+            break
+          end
+        end
+        status_result = connection.fetch_status(job_id).value!
+
+        expect(cancel_result).to be_failure
+        expect(cancel_result.failure).to be_a(PBS::Errors::InvalidStateError)
+        expect(cancel_result.failure.message).to match(/Request invalid for state of job/)
+        expect(cancel_result.failure.message).to match(PBS::Connection::QDEL_INVALID_STATE_STATUS.to_s)
+        expect(status_result).to be_exiting
       end
 
       it 'can batch cancel jobs', :slow do

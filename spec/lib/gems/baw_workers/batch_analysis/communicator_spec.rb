@@ -237,7 +237,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       result = BawWorkers::Config.batch_analysis.connection.fetch_status(@job_id)
 
       expect(result).to be_failure
-      expect(result.failure).to match(/Unknown Job Id/)
+      expect(result.failure).to be_a(PBS::Errors::JobNotFoundError)
     end
 
     step 'the job successful hook has fired' do
@@ -358,7 +358,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       result = BawWorkers::Config.batch_analysis.connection.fetch_status(@job_id)
 
       expect(result).to be_failure
-      expect(result.failure).to match(/Unknown Job Id/)
+      expect(result.failure).to be_a(PBS::Errors::JobNotFoundError)
     end
 
     step 'the job item should be cancelled' do

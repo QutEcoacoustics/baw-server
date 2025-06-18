@@ -27,7 +27,7 @@ describe PBS::SSH do
   }
 
   it 'can execute an command' do
-    status, stdout, stderr = ssh.execute('echo "hello world"')
+    ssh.execute('echo "hello world"') => {status:, stdout:, stderr:}
 
     aggregate_failures do
       expect(status).to eq 0
@@ -37,7 +37,8 @@ describe PBS::SSH do
   end
 
   it 'can fail' do
-    status, stdout, stderr = ssh.execute('echo "hello world" && exit 1')
+    ssh.execute('echo "hello world" && exit 1') => {status:, stdout:, stderr:}
+
 
     aggregate_failures do
       expect(status).to eq 1
@@ -47,7 +48,7 @@ describe PBS::SSH do
   end
 
   it 'can write to stderr' do
-    status, stdout, stderr = ssh.execute('echo "hello world" && (echo "hello error" >&2)')
+    ssh.execute('echo "hello world" && (echo "hello error" >&2)') => {status:, stdout:, stderr:}
 
     aggregate_failures do
       expect(status).to eq 0
@@ -57,7 +58,8 @@ describe PBS::SSH do
   end
 
   it 'sets the TZ and LANG environment variables' do
-    status, stdout, = ssh.execute('env')
+    ssh.execute('env') => {status:, stdout:}
+
 
     aggregate_failures do
       expect(status).to eq 0
@@ -68,7 +70,7 @@ describe PBS::SSH do
 
   context 'with our method of setting environment variables we are robust' do
     example 'command combinations' do
-      status, stdout, = ssh.execute('echo "hello" && env')
+      ssh.execute('echo "hello" && env') => {status:, stdout:}
 
       aggregate_failures do
         expect(status).to eq 0
@@ -78,7 +80,7 @@ describe PBS::SSH do
     end
 
     example 'command termination' do
-      status, stdout, = ssh.execute('echo "hello"; env')
+      ssh.execute('echo "hello"; env') => {status:, stdout:}
 
       aggregate_failures do
         expect(status).to eq 0
@@ -133,10 +135,10 @@ describe PBS::SSH do
     result = ssh.remote_chmod(destination, '+x')
     expect(result).to be_success
 
-    status, output, _error = ssh.execute(destination)
+    ssh.execute(destination) => {status:, stdout:}
 
     expect(status).to eq 0
-    expect(output).to eq "Hello World\n"
+    expect(stdout).to eq "Hello World\n"
 
     ssh.remote_delete(destination)
   end
@@ -169,7 +171,7 @@ describe PBS::SSH do
 
     def fire!
       # execute something that will purposely fail to test different log levels
-      exit_code, = ssh.execute('broken')
+      ssh.execute('broken') => {status: exit_code }
       expect(exit_code).not_to eq 0
     end
 

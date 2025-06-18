@@ -25,6 +25,7 @@ module PBS
     JOB_FINISHED_STATUS = 35
     UNKNOWN_JOB_ID_STATUS = 153
     QDEL_GRACEFUL_STATUSES = [0, JOB_FINISHED_STATUS, UNKNOWN_JOB_ID_STATUS].freeze
+    QDEL_INVALID_STATE_STATUS = 168
 
     JSON_PARSER_OPTIONS = {
       allow_nan: true,
@@ -78,8 +79,8 @@ module PBS
       filter = qselect + skip + take
       command = "#{pbs_bin('qstat')} -x -f -F JSON $(#{filter})"
 
-      execute_safe(command).fmap { |stdout, _stderr|
-        parse_status_payload(stdout)
+      execute_pbs_command(command).fmap { |result|
+        parse_status_payload(result.stdout)
       }
     end
 
@@ -92,8 +93,8 @@ module PBS
 
       command = "#{pbs_bin('qstat')} -x -f -F JSON #{job_id_or_name}"
 
-      execute_safe(command).fmap { |stdout, _stderr|
-        job_list = parse_status_payload(stdout)
+      execute_pbs_command(command).fmap { |result|
+        job_list = parse_status_payload(result.stdout)
         job_list.jobs&.first&.last
       }
     end
@@ -110,8 +111,8 @@ module PBS
     def fetch_all_queue_statuses
       command = "#{pbs_bin('qstat')} -Q -f -F JSON"
 
-      execute_safe(command).fmap { |stdout, _stderr|
-        queue_transformer.call(stdout)
+      execute_pbs_command(command).fmap { |result|
+        queue_transformer.call(result.stdout)
       }
     end
 
@@ -143,7 +144,6 @@ module PBS
     # distinguish which event triggered the failure hook within the job.
     # It may also be executing shortly before the script is about to be KILLed
     # so make it quick.
-    #
     #
     # @param script [String] a bash script to execute in the body of the wrapper script
     # @param working_directory [Pathname] where to store the script and the results.
@@ -204,9 +204,9 @@ module PBS
         # set +x
         .bind { |_| remote_chmod(script_remote_path, '+x') }
         # qsub script
-        .bind { |_| execute_safe(command, fail_message: 'submitting job with qsub') }
+        .bind { |_| execute_pbs_command(command, fail_message: 'submitting job with qsub') }
         # return job status
-        .fmap { |stdout, _stderr| stdout.strip }
+        .fmap { |result| result.stdout.strip }
     end
 
     # Check if the cluster knows about a job id or not.
@@ -214,12 +214,14 @@ module PBS
     # @return [::Dry::Monads::Result<Boolean>] true if the job exists, false if not
     def job_exists?(job_id)
       command = "#{pbs_bin('qstat')} -x #{job_id} > /dev/null"
-      status, stdout, stderr = execute(command, success_statuses: [0, UNKNOWN_JOB_ID_STATUS])
+      result = execute_pbs_command(command, success_statuses: [0, UNKNOWN_JOB_ID_STATUS])
 
+      status = result.fmap(&:status).value_or(nil)
       return Success(true) if status&.zero?
       return Success(false) if status == UNKNOWN_JOB_ID_STATUS
 
-      Failure("Command failed with status `#{status}`#{fail_message}: \n#{stdout}\n#{stderr}")
+      # result must be a failure at this point
+      result
     end
 
     # Deletes a job identified by a job id.
@@ -230,7 +232,7 @@ module PBS
     # @param wait [Boolean] whether to wait for the job to be finish
     # @param completed [Boolean] whether to delete the job from the completed queue
     # @param force [Boolean] whether to force the job to be deleted
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] The result of the command.
     def cancel_job(job_id, wait: false, completed: false, force: false)
       options = completed ? '-x' : ''
       options += ' -W force' if force
@@ -241,7 +243,7 @@ module PBS
       # if the job has already finished by the time we get up to cancelling it
       # we don't want to consider it an error. Just be graceful - it has ended.
       # Same thing for a job that's been cleared from the cluster's history:
-      execute_safe(command, fail_message: "deleting job #{job_id}", success_statuses: QDEL_GRACEFUL_STATUSES)
+      execute_pbs_command(command, fail_message: "deleting job #{job_id}", success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
     # Cancels multiple jobs identified by job ids
@@ -260,7 +262,7 @@ module PBS
 
       command = "#{pbs_bin('qdel')} -x -W force #{subset.join(' ')}"
 
-      execute_safe(command, fail_message: "deleting jobs #{subset}", success_statuses: QDEL_GRACEFUL_STATUSES)
+      execute_pbs_command(command, fail_message: "deleting jobs #{subset}", success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
     # Cancels all jobs that belong to the same project.
@@ -269,7 +271,7 @@ module PBS
     # Does not wait.
     # Clears job history.
     # @param project_suffix [String] the project suffix
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] The result of the command.
     def cancel_jobs_by_project!(project_suffix)
       raise ArgumentError, 'project_suffix must not be empty' if project_suffix.blank?
 
@@ -279,27 +281,27 @@ module PBS
       # but we still allow qdel to deleted them to avoid races
       command = "#{pbs_bin('qselect')} -x -P #{project} -u #{settings.connection.username} | xargs --no-run-if-empty #{pbs_bin('qdel')} -x -W force"
 
-      execute_safe(command, fail_message: "deleting jobs by project #{project}",
+      execute_pbs_command(command, fail_message: "deleting jobs by project #{project}",
         success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
     # Releases a job identified by a job id
     # @param job_id [String] the job id
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] The result of the command.
     def release_job(job_id)
       command = "#{pbs_bin('qrls')} #{job_id}"
 
-      execute_safe(command, fail_message: "releasing job #{job_id}")
+      execute_pbs_command(command, fail_message: "releasing job #{job_id}")
     end
 
     # Deletes all jobs created by the connection user
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] The result of the command.
     def clean_all_jobs
       # select jobs, including historical, by user which we're connecting with
       # then delete each, including historical
       command = "#{pbs_bin('qselect')} -x -u #{settings.connection.username} | xargs --no-run-if-empty #{pbs_bin('qdel')} -x -W force"
 
-      execute_safe(command, fail_message: 'cleaning all jobs')
+      execute_pbs_command(command, fail_message: 'cleaning all jobs')
     end
 
     # Gets the number of jobs currently enqueued - no matter the state.
@@ -307,30 +309,21 @@ module PBS
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_enqueued_count
       command = "#{pbs_bin('qselect')} -u #{settings.connection.username} | wc -l"
-
-      execute_safe(command).fmap { |stdout, _stderr|
-        stdout&.strip.to_i
-      }
+      execute_pbs_command(command).fmap { |result| result.stdout&.strip.to_i }
     end
 
     # Gets the number of jobs currently in the queued states
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_queued_count
       command = "#{pbs_bin('qselect')} -s Q -u #{settings.connection.username} | wc -l"
-
-      execute_safe(command).fmap { |stdout, _stderr|
-        stdout&.strip.to_i
-      }
+      execute_pbs_command(command).fmap { |result| result.stdout&.strip.to_i }
     end
 
     # Gets the number of jobs currently running for the connection user
     # @return [::Dry::Monads::Result<Integer>]
     def fetch_running_count
       command = "#{pbs_bin('qselect')} -s R -u #{settings.connection.username} | wc -l"
-
-      execute_safe(command).fmap { |stdout, _stderr|
-        stdout&.strip.to_i
-      }
+      execute_pbs_command(command).fmap { |result| result.stdout&.strip.to_i }
     end
 
     # Gets max_queued from qmgr.
@@ -343,9 +336,11 @@ module PBS
       #set server max_queued = [u:PBS_GENERIC=50000]
       command = "#{pbs_bin('qmgr')} -c 'list server max_queued'"
 
-      status, stdout, _stderr = execute(command)
+      result = execute_pbs_command(command, fail_message: 'fetching max_queued')
 
-      return Failure("status was non-zero: #{status}") unless status&.zero?
+      return result if result.failure?
+
+      stdout = result.value!.stdout
 
       max_value = parse_qmgr_list(stdout, 'max_queued')
 
@@ -366,7 +361,11 @@ module PBS
       #set server max_array_size = 20000
       command = "#{pbs_bin('qmgr')} -c 'list server max_array_size'"
 
-      status, stdout, _stderr = execute(command)
+      result = execute_pbs_command(command, fail_message: 'fetching max_array_size')
+
+      return result if result.failure?
+
+      result.value! => status, stdout, _stderr, _message
 
       return Failure("status was non-zero: #{status}") unless status&.zero?
 
@@ -376,9 +375,9 @@ module PBS
 
     # @return [Boolean] true if the connection was established
     def test_connection
-      status, stdout, _stderr = execute('echo "PONG"')
+      execute('echo "PONG"') => status, stdout, _stderr, _message
       status&.zero? && stdout.start_with?('PONG')
-    rescue SSH::TransportError => e
+    rescue Errors::TransportError => e
       logger.error('failed to test_connection', exception: e)
 
       false
@@ -412,6 +411,25 @@ module PBS
     end
 
     private
+
+    # executes a command on the remote PBS cluster via ssh, but will
+    # lift some errors into specific PBS error types for better handling
+    # @param command [String] the command to execute
+    # @param fail_message [String,nil] a message to add to the failure if the command fails
+    # @param success_statuses [Array<Integer>] the exit statuses that are considered successful
+    # @return [::Dry::Monads::Result<Result>]
+    def execute_pbs_command(command, fail_message: nil, success_statuses: SUCCESS_STATUSES)
+      execute_safe(command, fail_message:, success_statuses:)
+        .or do |error|
+          # Some Errors we want to lift into specific PBS error types for better handling
+          new_error = Errors::InvalidStateError.wrap(error) ||
+                      Errors::ConnectionRefusedError.wrap(error) ||
+                      Errors::JobNotFoundError.wrap(error) ||
+                      error
+
+          Failure(new_error)
+        end
+    end
 
     def status_transformer
       @status_transformer ||= PBS::Transformers::StatusTransformer.new

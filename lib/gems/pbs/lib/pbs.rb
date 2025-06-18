@@ -14,6 +14,7 @@ Zeitwerk::Loader.new.tap do |loader|
   loader.ignore("#{base_dir}/patches")
   loader.inflector.inflect(
     'pbs' => 'PBS',
+    'pbs_error' => 'PBSError',
     'ssh' => 'SSH'
   )
 

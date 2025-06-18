@@ -17,8 +17,14 @@ module BawWorkers
 
         # Automatically retry jobs when we can't contact the remote queue
         # The block will also squash the exception on retry.
-        retry_on ::PBS::Connection::TransportError, wait: 1.minute do |_job, error|
+        retry_on ::PBS::Errors::TransportError, wait: 1.minute do |_job, error|
           push_message(error.message)
+        end
+
+        retry_on ::PBS::Errors::TransientError, wait: 1.minute, attempts: :unlimited do |job, error|
+          # If we get a transient error, we can retry the job.
+          # This is because the job will be retried by the scheduler.
+          job.push_message("Retrying job due to transient error: #{error.message}")
         end
 
         # very aggressive retrying

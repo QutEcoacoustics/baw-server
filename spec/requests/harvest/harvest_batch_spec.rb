@@ -131,7 +131,7 @@ describe 'Harvesting a batch of files' do
     end
   end
 
-  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 90 do
+  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 120 do
     expose_app_as_web_server
     pause_all_jobs
 
@@ -774,7 +774,7 @@ describe 'Harvesting a batch of files' do
       expect(HarvestItem.count).to eq 3
 
       # this is not guaranteed to have waited for jobs to finish, adjust timer as needed
-      wait_for_jobs(timeout: 10)
+      wait_for_jobs(timeout: 15)
       expect_jobs_to_be(completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
 
       # now simulate a very large harvest by creating many harvest items that

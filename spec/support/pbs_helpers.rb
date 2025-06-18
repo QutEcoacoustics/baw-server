@@ -102,7 +102,7 @@ module PBSHelpers
 
         result = connection.fetch_status(job_id)
         if result.failure?
-          if result.failure =~ /Unknown Job Id/
+          if result.failure.is_a?(PBS::Errors::JobNotFoundError)
             logger.error('Job not found', job_id:, error: result.failure)
             break
           else

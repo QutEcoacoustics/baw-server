@@ -211,9 +211,11 @@ class AnalysisJobsItem
       # we let failures bubble up. The RemoteEnqueueJob should catch and then retry
       result = BawWorkers::Config.batch_analysis.submit_job(self)
 
+      value = unwrap_failure(result)
+
       # the assumption here is that result is a unique identifier that we can
       # later use to interrogate the message queue
-      self.queue_id = result.value!
+      self.queue_id = value
     end
 
     # Dequeue this item representing an audio recordings to a remote queue.
@@ -221,14 +223,21 @@ class AnalysisJobsItem
     def remove_from_queue
       return if queue_id.blank?
 
-      BawWorkers::Config.batch_analysis.cancel_job(self).value!
+      unwrap_failure(BawWorkers::Config.batch_analysis.cancel_job(self))
+    rescue ::PBS::Errors::JobNotFoundError => e
+      # If the job is not found, we can just ignore it.
+      logger.warn("Job not found when trying to remove from queue: #{e.message}")
     end
 
     # Remove the job history from the queue.
     # It's important to do this as soon as possible to free up resources on the
     # remote queue.
     def clear_from_queue
-      BawWorkers::Config.batch_analysis.clear_job(self).value!
+      result = BawWorkers::Config.batch_analysis.clear_job(self)
+      unwrap_failure(result)
+    rescue ::PBS::Errors::JobNotFoundError => e
+      # If the job is not found, we can just ignore it.
+      logger.warn("Job not found when trying to remove from queue: #{e.message}")
     end
 
     def check_overall_progress
@@ -288,6 +297,20 @@ class AnalysisJobsItem
         duration: audio_recording.duration_seconds
       )
       Statistics::AudioRecordingStatistics.increment_analysis_count(audio_recording)
+    end
+
+    def unwrap_failure(result)
+      # The non-idiomatic reason we unwrap the results is the retry_on handlers
+      # for active job match on Exception types... so at some point we have to
+      # unwrap the result to get the value or raise an error.
+
+      return result.value! if result.success?
+
+      # if the result is a failure, we want to raise it
+      raise result.failure if result.failure.is_a?(StandardError)
+
+      # otherwise we just raise the failure value
+      raise StandardError, result.failure
     end
   end
 end

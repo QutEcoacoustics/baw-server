@@ -3,6 +3,13 @@
 require_relative '../../../baw-app/lib/suppressed_level_logger'
 
 module PBS
+  Result = Data.define(:status, :stdout, :stderr, :message) {
+    def to_s
+      msg = message ? "#{message}\n" : ''
+      "#{msg}Status: #{status}\nStdout: #{stdout}\nStderr: #{stderr}"
+    end
+  }
+
   # Controls the SSH transport for the connection to PBS
   #
   # THESE METHODS ARE NOT SAFE AGAINST INJECTION ATTACKS.
@@ -11,8 +18,6 @@ module PBS
     include Dry::Monads[:result]
 
     SUCCESS_STATUSES = [0].freeze
-
-    class TransportError < StandardError; end
 
     private
 
@@ -53,7 +58,7 @@ module PBS
           stderr += data if stream == :stderr
         end
       rescue Net::SSH::Exception, Errno::ECONNREFUSED => e
-        raise TransportError, e.message
+        raise Errors::TransportError, e.message
       end
 
       exit_code = status.fetch(:exit_code, nil)
@@ -63,23 +68,26 @@ module PBS
         command:, exit_code:, stdout:, stderr:
       )
 
-      [exit_code, stdout, stderr]
+      Result.new(exit_code, stdout, stderr, nil)
     end
 
     # Execute a command but wrap the result in monad based on exit status.
     # @param command [String] the shell command to execute
     # @param fail_message [String] a message to add to the failure if the command fails
-    # @return [::Dry::Monads::Result<Array(String,String)>] a tuple of
-    #   stdout, stderr, each of which is NOT split into lines.
+    # @return [::Dry::Monads::Result<Result>] Note: stdout & stderr are NOT split into lines.
     def execute_safe(command, fail_message: '', success_statuses: SUCCESS_STATUSES)
-      status, stdout, stderr = execute(command, success_statuses:)
+      result = execute(command, success_statuses:)
 
-      unless success_statuses.include?(status)
+      unless success_statuses.include?(result.status)
         fail_message = fail_message.blank? ? '' : " when #{fail_message}"
-        return Failure("Command failed with status `#{status}`#{fail_message}: \n#{stdout}\n#{stderr}")
+        return Failure(
+          result.with(
+            message: "Command failed with status `#{result.status}`#{fail_message}"
+          )
+        )
       end
 
-      Success([stdout, stderr])
+      Success(result)
     end
 
     # Upload a file to the remote. Intended for use with small files.
@@ -131,13 +139,13 @@ module PBS
     def remote_exist?(path)
       raise ArgumentError, 'path is not a Pathname' unless path.is_a?(Pathname)
 
-      status, _stdout, _stderr = execute("stat #{path}")
+      status = execute("stat #{path}").status
 
       status&.zero?
     end
 
     # @param dir [Pathname] the path to create for
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] stdout, stderr
     def remote_mkdir(dir)
       raise ArgumentError, 'dir is not a Pathname' unless dir.is_a?(Pathname)
 
@@ -146,7 +154,7 @@ module PBS
 
     # @param path [Pathname] the path to check for
     # @param permissions [String] a chmod permissions string
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] stdout, stderr
     def remote_chmod(path, permissions)
       raise ArgumentError, 'path is not a Pathname' unless path.is_a?(Pathname)
 
@@ -154,7 +162,7 @@ module PBS
     end
 
     # @param path [Pathname] the path to delete
-    # @return [::Dry::Monads::Result<Array(String,String)>] stdout, stderr
+    # @return [::Dry::Monads::Result<Result>] stdout, stderr
     def remote_delete(path, recurse: false)
       raise ArgumentError, 'path is not a Pathname' unless path.is_a?(Pathname)
 

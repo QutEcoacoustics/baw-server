@@ -9,8 +9,9 @@ module BawWorkers
         def self.transform(value)
           if value.failure?
             return case value.failure
-                   when /.*Unknown Job Id (#{::PBS::Connection::JOB_ID_REGEX})/
-                     JobStatus.not_found(value.failure, ::Regexp.last_match(2).strip)
+                   when ::PBS::Errors::JobNotFoundError
+                     e = value.failure
+                     JobStatus.not_found(e.message, e.job_id)
                    else
                      raise value.failure
                    end

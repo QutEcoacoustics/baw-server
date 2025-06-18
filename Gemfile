@@ -209,7 +209,8 @@ group :development do
   gem 'debug'
 
   # a ruby language server
-  gem 'solargraph', '>= 0.45.0'
+  # temporarily pinned to 0.54.5 because of a bug in 0.55.0 that reduces performance
+  gem 'solargraph', '= 0.54.5'
   gem 'solargraph-rails', '>= 0.3.1'
 
   # official ruby typing support

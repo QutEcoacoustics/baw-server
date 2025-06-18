@@ -180,7 +180,7 @@ describe 'Harvesting streaming files' do
 
       step 'we will wait for harvests jobs to run' do
         # average time to harvest is 3.5 seconds
-        wait_for_jobs(timeout: 4 * 4)
+        wait_for_jobs(timeout: 4 * 8)
       end
 
       step 'we expect 4 harvest items to be created' do

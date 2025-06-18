@@ -25,8 +25,18 @@ module BawWorkers
 
         # Automatically retry jobs when we can't contact the remote queue
         # The block will also squash the exception on retry.
-        retry_on ::PBS::Connection::TransportError, wait: 1.minute do |_job, error|
+        retry_on ::PBS::Errors::TransportError, wait: 1.minute do |_job, error|
           push_message(error.message)
+        end
+
+        discard_on ::PBS::Errors::TransientError do |job, error|
+          # If we get a transient error, we can discard the job.
+          # This is because the job will be retried by the scheduler.
+          job.push_message("Discarding job due to transient error: #{error.message}")
+          logger.warn(
+            'Discarding job due to transient error',
+            error: error.message
+          )
         end
 
         def perform
@@ -71,6 +81,14 @@ module BawWorkers
             item.clear_transition_finish
             item.save!
           end
+        # https://github.com/QutEcoacoustics/baw-server/issues/765
+        rescue ::PBS::Errors::InvalidStateError => e
+          # In this case we just keep processing the batch, and the next round of status checks will catch the job
+          logger.warn('Remote job is not ready to be finished, wait for next execution', exception: e, item_id: item.id)
+          push_message(
+            "Remote job is not ready to be finished, wait for next execution: #{e.message}, item_id: #{item.id}"
+          )
+          false
         end
 
         # @return [BawWorkers::BatchAnalysis::Communicator]
