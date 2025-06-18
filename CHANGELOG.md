@@ -1,5 +1,35 @@
 # Changelog
 
+## [12.17.6](https://github.com/QutEcoacoustics/baw-server/tree/12.17.6) (2025-06-18)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.16.1...12.17.6)
+
+**Implemented enhancements:**
+
+- Add associations for audio event imports and verifications to audio events endpoint [\#768](https://github.com/QutEcoacoustics/baw-server/issues/768)
+- \# Improve database conflict error messages [\#767](https://github.com/QutEcoacoustics/baw-server/pull/767) ([andrew-1234](https://github.com/andrew-1234))
+
+**Fixed bugs:**
+
+- Need to gracefully handle disconnects to the pbs scheduler [\#776](https://github.com/QutEcoacoustics/baw-server/issues/776)
+- Tag transformer should trim leading/trailing spaces in array items [\#774](https://github.com/QutEcoacoustics/baw-server/issues/774)
+- Need to handle case where qdel is happening for exiting job: [\#765](https://github.com/QutEcoacoustics/baw-server/issues/765)
+- Dynamic maximum enqueue threshold not `min`ed [\#764](https://github.com/QutEcoacoustics/baw-server/issues/764)
+- If a site is deleted, and there are mappings in a harvest, the harvest is no longer valid and cannot be used [\#673](https://github.com/QutEcoacoustics/baw-server/issues/673)
+- Remove invalid sites from Harvest mappings [\#772](https://github.com/QutEcoacoustics/baw-server/pull/772) ([andrew-1234](https://github.com/andrew-1234))
+
+**Closed issues:**
+
+- retry application job on ActiveRecord::DatabaseConnectionError [\#777](https://github.com/QutEcoacoustics/baw-server/issues/777)
+
+**Merged pull requests:**
+
+- Audio event associations [\#773](https://github.com/QutEcoacoustics/baw-server/pull/773) ([andrew-1234](https://github.com/andrew-1234))
+
+## [12.16.1](https://github.com/QutEcoacoustics/baw-server/tree/12.16.1) (2025-05-30)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.16.0...12.16.1)
+
 ## [12.16.0](https://github.com/QutEcoacoustics/baw-server/tree/12.16.0) (2025-05-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.14.2...12.16.0)
@@ -75,6 +105,10 @@
 ## [12.10.6](https://github.com/QutEcoacoustics/baw-server/tree/12.10.6) (2025-03-06)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.10.5...12.10.6)
+
+**Implemented enhancements:**
+
+- 409 Conflict errors should respond with what model \(id\) it conflicts with [\#722](https://github.com/QutEcoacoustics/baw-server/issues/722)
 
 ## [12.10.5](https://github.com/QutEcoacoustics/baw-server/tree/12.10.5) (2025-03-04)
 
