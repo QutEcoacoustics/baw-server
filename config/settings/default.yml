@@ -122,6 +122,9 @@ batch_analysis:
     # If nil, it will rely on PATH being set and the appropriate profile being loaded.
     # If set, it will append this path as a prefix to any pbs commands.
     bin_path: /opt/pbs/bin
+    # An optional string to insert into job scripts that run before the rest of
+    # the script is run. This can be used to load modules, set environment variables, etc.
+    prelude_script: ~
   # a safety limit that allows us to enqueue even less remote jobs if needed
   remote_enqueue_limit: ~
   # how long an issued jwt is valid for, 14 * 86400 = 1209600

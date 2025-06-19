@@ -114,6 +114,7 @@ class BawConfigContract < Dry::Validation::Contract
         required(:default_queue).maybe(:string)
         required(:primary_group).filled(:string)
         required(:bin_path).maybe(:string)
+        required(:prelude_script).maybe(:string)
       end
       required(:remote_enqueue_limit).maybe(:integer, gt?: 0)
       required(:auth_tokens_expire_in).filled(:integer, gt?: 0)

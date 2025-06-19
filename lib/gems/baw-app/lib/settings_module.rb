@@ -40,6 +40,10 @@ module BawApp
       #   @return [String,nil]
       #   @example '/opt/pbs/bin'
       attribute :bin_path, ::BawApp::Types::String.optional
+
+      # @!attribute [r] prelude_script
+      #  @return [String,nil]
+      attribute :prelude_script, ::BawApp::Types::String.optional
     end
 
     # @!attribute [r] connection

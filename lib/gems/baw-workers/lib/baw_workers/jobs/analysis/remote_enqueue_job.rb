@@ -55,7 +55,9 @@ module BawWorkers
           # as many as we like.
           submittable = max.nil? ? current : (max - current)
 
-          completed!('Remote queue cannot accept any further jobs') if submittable < 1
+          if submittable < 1
+            completed!("Remote queue cannot accept any further jobs. Currently queued: #{current}. Max: #{max}.")
+          end
 
           # get a list of analysis jobs items that are ready to be enqueued
           # - we'll sample across jobs to timeshare the remote enqueueing amongst jobs

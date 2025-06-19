@@ -536,39 +536,6 @@ describe PBS::Connection do
         expect(status_result).to be_exiting
       end
 
-      it 'can batch cancel jobs', :slow do
-        # arrange
-        job_ids = []
-        5.times do
-          result = connection.submit_job(
-            'sleep 30',
-            working_directory
-          )
-
-          expect(result).to be_success
-          job_ids << result.value!
-        end
-
-        # pick a job to complete - to test graceful handling
-        job = wait_for_pbs_job(job_ids[1])
-        expect(job).to be_finished
-
-        # pick a job to cancel - to test graceful handling
-        connection.cancel_job(job_ids[2])
-
-        # pick a job to delete history for - to test graceful handling
-        wait_for_pbs_job(job_ids[3])
-        connection.cancel_job(job_ids[3], wait: true, force: true, completed: true)
-        expect(connection.job_exists?(job_ids[3])).to be_success.and(have_attributes(value!: false))
-
-        # act
-        result = connection.cancel_jobs!(job_ids)
-
-        # assert
-        expect(result).to be_success
-        expect(job_ids).to be_empty
-      end
-
       it 'can batch cancel jobs based on project_suffix', :slow do
         # arrange
         job_ids = []
@@ -710,6 +677,9 @@ describe PBS::Connection do
 
             # cancel the job
             connection.cancel_job(main_id)
+
+            # wait for the job to be cancelled
+            sleep 1
           }
 
           expect(main.exit_status).to eq PBS::ExitStatus::CANCELLED_EXIT_STATUS
@@ -740,6 +710,59 @@ describe PBS::Connection do
           expect(log.scan('LOG: Congratulations. You\'re Being Rescued.').size).to eq 1
         end
       end
+
+      context 'with preludes' do
+        it 'emits nothing if it is not set' do
+          settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(prelude_script: nil))
+          connection = PBS::Connection.new(settings, 'tag')
+
+          result = connection.submit_job(
+            'echo "What is my purpose?"',
+            working_directory,
+            job_name: 'empty_prelude'
+          )
+
+          expect(result).to be_success
+
+          # don't need to run the script just want to see it templated
+          script = working_directory / 'empty_prelude'
+          expect(script).to be_exist
+          expect(script.read).to include <<~BASH
+            # prelude
+            # end prelude
+          BASH
+        end
+
+        it 'emits the prelude if it is set' do
+          settings = Settings.batch_analysis.new(pbs: Settings.batch_analysis.pbs.new(
+            prelude_script: 'echo "You serve butter 😑"'
+          ))
+          connection = PBS::Connection.new(settings, 'tag')
+
+          result = connection.submit_job(
+            'echo "What is my purpose?"',
+            working_directory,
+            job_name: 'test_prelude'
+          )
+
+          expect(result).to be_success
+
+          script = working_directory / 'test_prelude'
+          expect(script).to be_exist
+          expect(script.read).to include <<~BASH
+            # prelude
+            echo "You serve butter 😑"
+            # end prelude
+          BASH
+
+          wait_for_pbs_job(result.value!)
+          output = working_directory.glob('test_prelude.log').first
+          log = output.read
+          expect(log).to include('You serve butter 😑')
+          expect(log).to include('What is my purpose?')
+        end
+      end
+
 
       it 'lets us set environment variables' do
         script = <<~BASH

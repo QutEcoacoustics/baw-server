@@ -28,7 +28,10 @@ module PBSHelpers
       }
 
       base.before do
-        connection.clean_all_jobs
+        while connection.clean_all_jobs.failure?
+          # retry until we can clean all jobs
+          logger.error('Failed to clean all PBS jobs, retrying...')
+        end
       end
 
       base.after do

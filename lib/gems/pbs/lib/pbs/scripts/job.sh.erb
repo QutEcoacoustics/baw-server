@@ -62,14 +62,19 @@ function log_term {
   report_error
 }
 
-
-
 # traps
 trap 'log_error $?' ERR
 trap log_term TERM
 
 # script
 log "vars: PBS_JOBNAME=$PBS_JOBNAME PBS_JOBID=$PBS_JOBID PBS_O_WORKDIR=$PBS_O_WORKDIR TMPDIR=$TMPDIR"
+
+# prelude
+<%- prelude_script.each do |line| -%>
+<%= line %>
+<%- end -%>
+# end prelude
+
 log "cd $PBS_O_WORKDIR"
 cd $PBS_O_WORKDIR
 

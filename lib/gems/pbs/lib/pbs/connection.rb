@@ -246,25 +246,6 @@ module PBS
       execute_pbs_command(command, fail_message: "deleting job #{job_id}", success_statuses: QDEL_GRACEFUL_STATUSES)
     end
 
-    # Cancels multiple jobs identified by job ids
-    # Graceful, like `cancel_job`, if the job has already finished or the job history has cleared t`he ID (unknown).
-    # Designed to send fewer commands to the cluster.
-    # Does not wait.
-    # Clears job history.
-    # ! This method will mutate the job_ids array in place !
-    # @param job_ids [Array<String>] the job ids. The array must not be empty and will be mutated in place as a subset
-    #   of the job ids will be used in each invocation
-    # @return [::Dry::Monads::Result<Array<(String,String>>] std out and std err
-    def cancel_jobs!(job_ids)
-      raise ArgumentError, 'job_ids must not be empty' if job_ids.empty?
-
-      subset = job_ids.slice!(0, 100)
-
-      command = "#{pbs_bin('qdel')} -x -W force #{subset.join(' ')}"
-
-      execute_pbs_command(command, fail_message: "deleting jobs #{subset}", success_statuses: QDEL_GRACEFUL_STATUSES)
-    end
-
     # Cancels all jobs that belong to the same project.
     # Graceful like `cancel_job`, if the job has already finished or the job history has cleared the ID (unknown).
     # Designed to send fewer commands to the cluster.
@@ -472,7 +453,8 @@ module PBS
         report_error_script: split_into_lines(options.fetch(:report_error_script, 'log "NOOP error hook"')),
         script:,
         date: now.iso8601,
-        instance_tag:
+        instance_tag:,
+        prelude_script: split_into_lines(settings.pbs.prelude_script)
       })
 
       StringIO.new(templated)
@@ -583,7 +565,7 @@ module PBS
     end
 
     def split_into_lines(string)
-      string.split(/\r\n|\n/)
+      string&.split(/\r\n|\n/) || []
     end
   end
 end
