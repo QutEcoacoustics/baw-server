@@ -1,5 +1,13 @@
 # Changelog
 
+## [12.18.0](https://github.com/QutEcoacoustics/baw-server/tree/12.18.0) (2025-06-19)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.17.6...12.18.0)
+
+**Fixed bugs:**
+
+- Curl request for status update does not run more than once for a 502 error [\#766](https://github.com/QutEcoacoustics/baw-server/issues/766)
+
 ## [12.17.6](https://github.com/QutEcoacoustics/baw-server/tree/12.17.6) (2025-06-18)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.16.1...12.17.6)
