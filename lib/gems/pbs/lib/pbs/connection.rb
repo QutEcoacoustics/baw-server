@@ -104,6 +104,12 @@ module PBS
     # @return [::PBS::Models::JobList]
     def parse_status_payload(payload)
       status_transformer.call(payload)
+    rescue StandardError => e
+      # Trying to capture more state to diagnose an intermittent issue
+      # where the payload is not parsable.
+      # https://github.com/QutEcoacoustics/baw-server/issues/771a
+      logger.error('Failed to parse status payload', exception: e, payload:)
+      raise
     end
 
     # Fetches information about the queues currently running on the cluster
