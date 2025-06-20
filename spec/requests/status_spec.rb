@@ -121,4 +121,45 @@ describe '/status.json' do
       batch_analysis: 'Connected'
     })
   end
+
+  it 'can check the batch analysis status' do
+    allow(BawWorkers::Config.batch_analysis).to receive(:remote_connected?)
+      .and_raise(::PBS::Errors::TransportError.new('failed to test_connection'))
+
+    get '/status.json'
+
+    expect_success
+    expect(api_result).to match({
+      status: 'bad',
+      timed_out: false,
+      database: true,
+      redis: 'PONG',
+      storage: '1 audio recording storage directory available.',
+      upload: 'Alive',
+      batch_analysis: 'error: failed to test_connection'
+    })
+  end
+
+  it 'has a shorter timeout for the batch analysis status' do
+    allow(BawWorkers::Config.batch_analysis).to(receive(:remote_connected?)
+      .and_return {
+        # simulate the server being unresponsive
+        sleep 20
+        raise ::PBS::Errors::TransportError, 'failed to test_connection'
+      }
+    )
+
+    get '/status.json'
+
+    expect_success
+    expect(api_result).to match({
+      status: 'bad',
+      timed_out: false,
+      database: true,
+      redis: 'PONG',
+      storage: '1 audio recording storage directory available.',
+      upload: 'Alive',
+      batch_analysis: 'error: failed to test_connection'
+    })
+  end
 end
