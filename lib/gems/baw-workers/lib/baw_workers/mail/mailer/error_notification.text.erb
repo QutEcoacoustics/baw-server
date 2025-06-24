@@ -11,7 +11,7 @@ Arguments: <%= @details[:job_args] %>
 
 The error was:
 
-Error: <%= @details[:error_message] %>
+Error: <%= (@details[:error_class])%>  <%= @details[:error_message] %>
 
 Backtrace: <%= @details[:error_backtrace].join("\n") %>
 

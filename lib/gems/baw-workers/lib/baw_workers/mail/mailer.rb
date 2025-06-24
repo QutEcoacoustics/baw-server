@@ -6,7 +6,7 @@ require 'rack/utils'
 
 module BawWorkers
   module Mail
-    class Mailer < ActionMailer::Base
+    class Mailer < ApplicationMailer
       prepend_view_path BawWorkers::ROOT
 
       def self.logger
@@ -55,6 +55,7 @@ module BawWorkers
           job_class: job_class.nil? ? '(no job class available)' : job_class,
           job_args: job_args.nil? ? '(no job args available)' : job_args,
           job_queue: job_queue.nil? ? '(job queue not available)' : job_queue,
+          error_class: error&.class&.name,
           error_message: message,
           error_backtrace: backtrace,
           generated_timestamp: Time.zone.now

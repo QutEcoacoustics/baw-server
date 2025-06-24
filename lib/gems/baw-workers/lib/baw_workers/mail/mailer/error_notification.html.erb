@@ -12,7 +12,7 @@
 
 <p>The error was:</p>
 
-<p>Error: <%= (@details[:error_message]) %></p>
+<p>Error: <%= (@details[:error_class])%> <%= (@details[:error_message]) %></p>
 
 <pre>Backtrace: <code><%= @details[:error_backtrace].map { |i| (i) + '<br>' }.join('') %></code></pre>
 
