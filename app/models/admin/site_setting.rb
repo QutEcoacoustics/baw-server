@@ -62,10 +62,10 @@ module Admin
           description: { type: :string },
           type_specification: { type: :string },
           created_at: Api::Schema.date(nullable: true),
-          updated_at: Api::Schema.date(nullable: true),
-          required: ['name', 'value'],
-          additionalProperties: false
-        }
+          updated_at: Api::Schema.date(nullable: true)
+        },
+        required: ['name', 'value'],
+        additionalProperties: false
       }
     end
   end
