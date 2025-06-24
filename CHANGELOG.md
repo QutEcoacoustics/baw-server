@@ -1,5 +1,19 @@
 # Changelog
 
+## [12.18.5](https://github.com/QutEcoacoustics/baw-server/tree/12.18.5) (2025-06-24)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.1...12.18.5)
+
+**Fixed bugs:**
+
+- retry application job on PG::ConnectionBad [\#783](https://github.com/QutEcoacoustics/baw-server/issues/783)
+- Curl retry attempts are too frequent [\#782](https://github.com/QutEcoacoustics/baw-server/issues/782)
+- Friendly name can be nil when site\_id is nil. What to do for analysis jobs? [\#781](https://github.com/QutEcoacoustics/baw-server/issues/781)
+
+## [12.18.1](https://github.com/QutEcoacoustics/baw-server/tree/12.18.1) (2025-06-20)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.0...12.18.1)
+
 ## [12.18.0](https://github.com/QutEcoacoustics/baw-server/tree/12.18.0) (2025-06-19)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.17.6...12.18.0)
