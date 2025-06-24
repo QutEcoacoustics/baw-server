@@ -599,6 +599,11 @@ describe AudioRecording do
     end
   end
 
+  it 'can emit a simple name' do
+    audio_recording = create(:audio_recording)
+    expect(audio_recording.simple_name).to eq("#{audio_recording.id}.#{audio_recording.original_format_calculated}")
+  end
+
   it_behaves_like 'cascade deletes for', :audio_recording, {
     audio_events: {
       taggings: nil,

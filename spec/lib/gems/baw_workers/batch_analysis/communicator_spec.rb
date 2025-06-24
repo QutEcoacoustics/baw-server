@@ -100,6 +100,27 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
     expect(templated_script).to include('monkey://banana:6969')
   end
 
+  # https://github.com/QutEcoacoustics/baw-server/issues/781
+  it 'can handle when friendly name is nil' do
+    analysis_jobs_item.audio_recording.site = nil
+    analysis_jobs_item.script.executable_command = <<~BASH
+      echo 'source={source} {output_dir}'
+    BASH
+
+    analysis_jobs_item.queue!
+    release_all_held_pbs_jobs
+    wait_for_pbs_job analysis_jobs_item.queue_id
+
+    status = BawWorkers::Config.batch_analysis.job_status(analysis_jobs_item)
+
+    expect(status).to be_finished
+    expect(status).to be_successful
+
+    log = analysis_jobs_item.results_job_log_path.read
+    expected_name = analysis_jobs_item.audio_recording.simple_name
+    expect(log).to include("source=$TMPDIR/source/#{expected_name}")
+  end
+
   describe 'settings' do
     before do
       AnalysisJobsScript
@@ -176,6 +197,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       # from a testing perspective. But the alternative is to duplicate the logic
       # in the model in this module which is also not desirable.
       analysis_jobs_item.queue!
+      wait_for_pbs_job analysis_jobs_item.queue_id
     end
 
     step 'the job is in the remote queue' do

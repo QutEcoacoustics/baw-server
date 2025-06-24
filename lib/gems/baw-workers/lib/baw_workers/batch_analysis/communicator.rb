@@ -333,7 +333,7 @@ module BawWorkers
       def prepare_script(analysis_job, script, audio_recording, harvester_id)
         command = script.executable_command
         output = WORKING_DIR
-        source_name = audio_recording.friendly_name
+        source_name = audio_recording.friendly_name || audio_recording.simple_name
         config_name = script.executable_settings_name
 
         download_command = curl_audio_download(
@@ -361,8 +361,8 @@ module BawWorkers
           config_basename: config_name,
           source: SOURCE_DIR / source_name,
           config: config_name.nil? ? nil : CONFIG_DIR / config_name,
-          latitude: audio_recording.site.latitude,
-          longitude: audio_recording.site.longitude,
+          latitude: audio_recording&.site&.latitude,
+          longitude: audio_recording&.site&.longitude,
           timestamp: audio_recording.recorded_date,
           id: audio_recording.id,
           uuid: audio_recording.uuid

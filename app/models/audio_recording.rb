@@ -226,6 +226,7 @@ class AudioRecording < ApplicationRecord
   end
 
   # gets a filename that looks nice enough to provide to a user for a file download
+  # @return [String, nil] - the filename or nil if site is not set
   def friendly_name
     return nil if site.nil?
 
@@ -241,6 +242,14 @@ class AudioRecording < ApplicationRecord
     end => date
 
     "#{date}_#{name}_#{id}.#{original_format_calculated}"
+  end
+
+  # Simply audio recording id and an extension.
+  # This is an alternative to `friendly_name` that is used
+  # when we don't have all the information needed to create a friendly name.
+  # @return [String] - the simple name of the audio recording
+  def simple_name
+    "#{id}.#{original_format_calculated}"
   end
 
   # gets a filename that looks nice enough to provide to a user for a file download
