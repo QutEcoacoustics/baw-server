@@ -274,6 +274,13 @@ module BawWorkers
         # This is a bug that was fixed in https://github.com/curl/curl/commit/0356804d13676641aec9b004722c23ae8b424c49
         # We've fixed this in our deploy playbooks but leaving a note here for records.
         #
+        # "When curl is about to retry a transfer, it first waits one second and then for all forthcoming retries it
+        #     doubles the waiting time until it reaches 10 minutes, which then remains the set fixed delay time between
+        #     the rest of the retries"
+        # Attempts       1    2    3    4    5     6     7     8     9      10     11     12
+        # Wait           1    2    4    8    16    32    64    128   256    512    600    600
+        # Cumulative     1    3    7    15   31    63    127   255   511    1023   1623   2223
+
         # rubocop:disable Style/FormatStringToken
         command = <<~SHELL
           curl
@@ -283,7 +290,7 @@ module BawWorkers
           --header 'Content-Type: application/json'
           --header 'Authorization: Bearer #{token}'
           --request POST
-          --retry 3
+          --retry 10
           --fail-with-body
           --write-out '\\nStatus update: %{http_code} in %{time_total} seconds\\n'
           "#{endpoint}"
