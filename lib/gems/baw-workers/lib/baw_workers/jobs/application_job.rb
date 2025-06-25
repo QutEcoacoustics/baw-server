@@ -67,8 +67,13 @@ module BawWorkers
         SiteSettings.clear_cache
       end
 
-      retry_on ::ActiveRecord::DatabaseConnectionError, PG::ConnectionBad, wait: 1.minute,
-        attempts: :unlimited do |job, error|
+      retry_on(
+        ::ActiveRecord::DatabaseConnectionError,
+        PG::ConnectionBad,
+        Redis::CannotConnectError,
+        wait: 1.minute,
+        attempts: :unlimited
+      ) do |job, error|
         push_message(
           "Retrying job #{job.class.name} on database connection error #{error.class.name}: #{error.message}"
         )
