@@ -3,13 +3,6 @@
 require_relative '../../../baw-app/lib/suppressed_level_logger'
 
 module PBS
-  Result = Data.define(:status, :stdout, :stderr, :message) {
-    def to_s
-      msg = message ? "#{message}\n" : ''
-      "#{msg}Status: #{status}\nStdout: #{stdout}\nStderr: #{stderr}"
-    end
-  }
-
   # Controls the SSH transport for the connection to PBS
   #
   # THESE METHODS ARE NOT SAFE AGAINST INJECTION ATTACKS.

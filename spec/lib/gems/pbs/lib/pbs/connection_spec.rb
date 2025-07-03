@@ -173,6 +173,31 @@ describe PBS::Connection do
 
       expect(result).to be_failure
       expect(result.failure).to be_a(PBS::Errors::ConnectionRefusedError)
+      expect(result.failure).to be_a(PBS::Errors::TransientError)
+    end
+
+    # https://github.com/QutEcoacoustics/baw-server/issues/789
+    it 'can handle no route to host errors' do
+      stdout = <<~STDOUT
+        {
+          "timestamp":1751498039,
+          "pbs_version":"2025.2.0.20250218043111",
+          "pbs_server":"aqua"
+        }
+      STDOUT
+      stderr = <<~STDERR
+        No route to host
+        qstat: cannot connect to server aqua (errno=15010)
+      STDERR
+      allow(connection).to receive(:execute_safe).and_return(
+        Failure(PBS::Result.new(255, stdout, stderr, nil))
+      )
+
+      result = connection.fetch_status('9999')
+
+      expect(result).to be_failure
+      expect(result.failure).to be_a(PBS::Errors::NoRouteToHostError)
+      expect(result.failure).to be_a(PBS::Errors::TransientError)
     end
 
     stepwise 'when fetching all statuses' do
@@ -762,7 +787,6 @@ describe PBS::Connection do
           expect(log).to include('What is my purpose?')
         end
       end
-
 
       it 'lets us set environment variables' do
         script = <<~BASH

@@ -8,13 +8,14 @@ module BawWorkers
         # @param value [::Dry::Monads::Result<::PBS::Models::Job>]
         def self.transform(value)
           if value.failure?
-            return case value.failure
-                   when ::PBS::Errors::JobNotFoundError
-                     e = value.failure
-                     JobStatus.not_found(e.message, e.job_id)
-                   else
-                     raise value.failure
-                   end
+            case value.failure
+            in ::PBS::Errors::JobNotFoundError => e
+              return JobStatus.not_found(e.message, e.job_id)
+            in StandardError => e
+              raise e
+            else
+              raise StandardError, "Cannot parse PBS Job status: #{value.failure}"
+            end
           end
 
           job = value.value!

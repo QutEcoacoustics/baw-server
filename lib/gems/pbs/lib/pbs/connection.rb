@@ -411,6 +411,7 @@ module PBS
           # Some Errors we want to lift into specific PBS error types for better handling
           new_error = Errors::InvalidStateError.wrap(error) ||
                       Errors::ConnectionRefusedError.wrap(error) ||
+                      Errors::NoRouteToHostError.wrap(error) ||
                       Errors::JobNotFoundError.wrap(error) ||
                       error
 
