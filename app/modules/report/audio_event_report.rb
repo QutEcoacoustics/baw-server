@@ -10,26 +10,45 @@ module Report
     BASE_TABLE = Arel::Table.new('base_table')
 
     SECTIONS = [
-      [Report::Section::Accumulation],
-      [Report::Section::EventSummary],
-      [Report::Section::Composition],
-      [Report::Section::Coverage],
-      [Report::Section::Coverage]
+      Report::Section::Accumulation,
+      Report::Section::EventSummary,
+      Report::Section::Composition,
+      Report::Section::Coverage,
+      Report::Section::Coverage
     ].freeze
 
-    def build_query
-      base_query_projected = @base_query.arel.project(attributes)
-      base_query_joined = add_joins(base_query_projected)
-      base_table = Arel::Table.new('base_table')
-      base_cte = Arel::Nodes::As.new(base_table, base_query_joined)
-
-      time_series_options = TimeSeries::Options.call(@parameters, base_table: BASE_TABLE)
-      composition_options = {
-        bucketed_time_series: Section::Accumulation::TABLE_BUCKETED_TIME_SERIES,
-        base_table: BASE_TABLE,
-        base_verification: Section::EventSummary::TABLE_VERIFICATION_BASE
-      }
+    def setup
+      time_series_options = TimeSeries.options(parameters, base_table: base_table)
+      # composition_options = Section::Composition.options(base_table: BASE_TABLE)
       recording_coverage_options = Report::Section::Coverage.options(time_series_options) { |opt|
+        # TODO: change source to use base_table in coverage
+        opt[:source] = base_table
+        opt[:lower_field] = base_table[:recorded_date]
+        opt[:upper_field] = Report::ArelHelpers.arel_recorded_end_date(base_table) # using AudioRecording.arel_recorded_end_date => missing FROM-clause entry for table "audio_recordings"
+        opt[:analysis_result] = false
+        opt[:project_field_as] = 'recording'
+      }
+      analysis_coverage_options = recording_coverage_options.merge({
+        analysis_result: true,
+        project_field_as: 'analysis',
+        suffix: '_analysis'
+      })
+      {
+        accumulation: Report::Section::Accumulation.new(time_series_options),
+        event_summary: Report::Section::EventSummary.new(time_series_options),
+        composition: Report::Section::Composition.new(composition_options),
+        recording_coverage: Report::Section::Coverage.new(recording_coverage_options),
+        analysis_coverage: Report::Section::Coverage.new(analysis_coverage_options)
+      }
+    end
+
+    def options
+      time_series_options = TimeSeries.options(parameters, base_table: base_table)
+      # TODO: move these cte dependencies to their own files
+      Section::Composition.options(base_table: BASE_TABLE)
+
+      recording_coverage_options = Report::Section::Coverage.options(time_series_options) { |opt|
+        # TODO: change source to use base_table in coverage
         opt[:source] = base_table
         opt[:lower_field] = base_table[:recorded_date]
         opt[:upper_field] = Report::ArelHelpers.arel_recorded_end_date(base_table) # using AudioRecording.arel_recorded_end_date => missing FROM-clause entry for table "audio_recordings"
@@ -37,37 +56,87 @@ module Report
         opt[:project_field_as] = 'recording'
       }
 
+      recording_coverage_options.merge({ analysis_result: true, project_field_as: 'analysis', suffix: '_analysis' })
+
+      # ! TODO can't merge because analysis and recording need different
+      # suffixes etc and merging will scre that up.
+      # Maybe settings should be like Initialising the reports with their options
+      # so its a constant kind of method
+    end
+
+    def prepare
+      # base_query_projected = base.arel.project(attributes)
+      # base_query_joined = add_joins(base_query_projected)
+      # base_table = Arel::Table.new('base_table')
+      # base_cte = Arel::Nodes::As.new(base_table, query)
+
+      # time_series_options = TimeSeries.options(parameters, base_table: base_table)
+      # composition_options = {
+      #   bucketed_time_series: Section::Accumulation::TABLE_BUCKETED_TIME_SERIES,
+      #   base_table: BASE_TABLE,
+      #   base_verification: Section::EventSummary::TABLE_VERIFICATION_BASE
+      # }
+      # recording_coverage_options = Report::Section::Coverage.options(time_series_options) { |opt|
+      #   opt[:source] = base_table
+      #   opt[:lower_field] = base_table[:recorded_date]
+      #   opt[:upper_field] = Report::ArelHelpers.arel_recorded_end_date(base_table) # using AudioRecording.arel_recorded_end_date => missing FROM-clause entry for table "audio_recordings"
+      #   opt[:analysis_result] = false
+      #   opt[:project_field_as] = 'recording'
+      # }
+
+      # analysis_options = { analysis_result: true, project_field_as: 'analysis', suffix: '_analysis' }
+      # analysis_coverage_options = recording_coverage_options.merge(analysis_options)
+
+      # need some kind of api for hiding the mess below
+      # audio_event_report = [
+      #   [Report::Section::Accumulation, time_series_options],
+      #   [Report::Section::EventSummary, time_series_options],
+      #   [Report::Section::Composition, composition_options],
+      #   [Report::Section::Coverage, recording_coverage_options],
+      #   [Report::Section::Coverage, analysis_coverage_options]
+      # ]
+      # audio_event_report = [
+      #   Report::Section::Accumulation,
+      #   Report::Section::EventSummary,
+      #   Report::Section::Composition,
+      #   Report::Section::Coverage
+      #   # Report::Section::Coverage
+      # ]
+
+      # ------------
+
+      time_series_options = TimeSeries.options(parameters, base_table: base_table)
+      recording_coverage_options = {
+        source: base_table,
+        lower_field: base_table[:recorded_date],
+        upper_field: Report::ArelHelpers.arel_recorded_end_date(base_table), # using AudioRecording.arel_recorded_end_date => missing FROM-clause entry for table "audio_recordings"
+        analysis_result: false,
+        project_field_as: 'recording'
+      }.merge(time_series_options)
+
       analysis_options = { analysis_result: true, project_field_as: 'analysis', suffix: '_analysis' }
       analysis_coverage_options = recording_coverage_options.merge(analysis_options)
 
-      # need some kind of api for hiding the mess below
-      audio_event_report = [
-        [Report::Section::Accumulation, time_series_options],
-        [Report::Section::EventSummary, time_series_options],
-        [Report::Section::Composition, composition_options],
-        [Report::Section::Coverage, recording_coverage_options],
-        [Report::Section::Coverage, analysis_coverage_options]
+      new_sections = [
+        [Report::Section::Accumulation, time_series_options, :accumulation],
+        [Report::Section::EventSummary, time_series_options, :event_summary],
+        [Report::Section::Composition, { base_table: base_table }, :composition],
+        [Report::Section::Coverage, recording_coverage_options, :recording_coverage],
+        [Report::Section::Coverage, analysis_coverage_options, :analysis_coverage]
       ]
+      # id = klass.name.demodulize.underscore.to_sym
+      debugger
 
-      results = audio_event_report
-        .map { |section, opts| section.process(options: opts) }
+      sections = new_sections.each_with_object({}) do |(klass, options, id), sections|
+        instance = klass.new(options: options)
+        sections[id] = instance.prepare
+      end
 
-      # yuk
-      accumulation_series_aggregate,
-      event_summaries_aggregate,
-      composition_series_aggregate,
-      recording_coverage_aggregate,
-      analysis_coverage_aggregate = audio_event_report.zip(results)
-        .map { |(section, opts), result|
-        section.project(result, opts)
+      all_ctes = sections.values.reduce(Report::Collection.new) { |collection, result|
+        collection.merge(result)
       }
-
-      Report::TableExpression::Collection.new.then { |collection|
-        results.reduce(collection) { |collection, result|
-          Report::Section.transform_to_collection(result, collection)
-        }
-      }.ctes => all_ctes
-
+      debugger
+      all_ctes.sort_all
       all_ctes.prepend(base_cte)
 
       Arel::SelectManager.new
@@ -89,7 +158,7 @@ module Report
     end
 
     # @param filter_params [ActionController::Parameters] the filter parameters
-    # @param base_scope [ActiveRecord::Relation] the base scope for the query
+    # @param base_scope [ActiveRecord::Relation] base permissions scope to use
     def filter_as_relation(filter_params, base_scope)
       filter_query = Filter::Query.new(
         filter_params,
@@ -130,18 +199,21 @@ module Report
       ]
     end
 
-    def add_joins(query)
-      query
-        .join(taggings)
-        .on(audio_events[:id].eq(taggings[:audio_event_id]))
-        .join(tags)
-        .on(taggings[:tag_id].eq(tags[:id]))
-        .join(regions, Arel::Nodes::OuterJoin)
-        .on(regions[:id].eq(sites[:region_id]))
-        .join(analysis_jobs_items, Arel::Nodes::OuterJoin)
-        .on(analysis_jobs_items[:audio_recording_id].eq(audio_events[:audio_recording_id]))
-        .join(provenance, Arel::Nodes::OuterJoin)
-        .on(provenance[:id].eq(audio_events[:provenance_id]))
+    def joins
+      lambda { |query|
+        query
+          .join(taggings)
+          .on(audio_events[:id].eq(taggings[:audio_event_id]))
+          .join(tags)
+          .on(taggings[:tag_id].eq(tags[:id]))
+          .join(regions, Arel::Nodes::OuterJoin)
+          .on(regions[:id].eq(sites[:region_id]))
+          .join(analysis_jobs_items, Arel::Nodes::OuterJoin)
+          .on(analysis_jobs_items[:audio_recording_id].eq(audio_events[:audio_recording_id]))
+          .join(provenance, Arel::Nodes::OuterJoin)
+          .on(provenance[:id].eq(audio_events[:provenance_id]))
+        query
+      }
     end
 
     # returns an expression that projects the absolute start time of an audio
