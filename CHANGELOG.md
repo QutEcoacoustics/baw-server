@@ -1,5 +1,21 @@
 # Changelog
 
+## [12.18.6](https://github.com/QutEcoacoustics/baw-server/tree/12.18.6) (2025-07-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.5...12.18.6)
+
+**Implemented enhancements:**
+
+- Need to retry jobs on Errno::ECONNREFUSED [\#785](https://github.com/QutEcoacoustics/baw-server/issues/785)
+
+**Fixed bugs:**
+
+- Type error when deserializing job status [\#789](https://github.com/QutEcoacoustics/baw-server/issues/789)
+
+**Closed issues:**
+
+- Verification UI feature requests [\#794](https://github.com/QutEcoacoustics/baw-server/issues/794)
+
 ## [12.18.5](https://github.com/QutEcoacoustics/baw-server/tree/12.18.5) (2025-06-24)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.1...12.18.5)
