@@ -88,6 +88,7 @@ class AudioEventsController < ApplicationController
       AudioEvent,
       AudioEvent.filter_settings
     )
+
     respond_filter(filter_response, opts)
   end
 

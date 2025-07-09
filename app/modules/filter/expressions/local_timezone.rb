@@ -2,7 +2,7 @@
 
 module Filter
   module Expressions
-    # Covnerts UTC dates into some other timezone for comparison.
+    # Converts UTC dates into some other timezone for comparison.
     class LocalTimezone < Expression
       def validate_type(type, model, _column_name)
         is_date = type == :datetime
@@ -31,10 +31,10 @@ module Filter
       end
 
       def transform_query(model, _column_name)
-        model.with_timezone => {association:}
+        model.with_timezone => { joins: }
 
         lambda { |query|
-          query.left_outer_joins(association)
+          query.left_outer_joins(joins)
         }
       end
 

@@ -116,8 +116,8 @@ module Filter
       }.flatten.compact
     end
 
-    def allowed_fields
-      (@render_fields + @custom_fields2.keys).uniq
+    def allowed_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
+      (render_fields + custom_fields2.keys).uniq
     end
 
     # Combine conditions.
@@ -316,10 +316,11 @@ module Filter
           table = info[:arel_table]
           column_name = info[:field_name]
           valid_fields = info[:filter_settings][:valid_fields]
+          custom_fields2 = info[:filter_settings][:custom_fields2] || {}
           model = info[:model]
 
           # check if this is a custom field
-          custom_field = build_custom_calculated_field(column_name)
+          custom_field = build_custom_calculated_field(column_name, custom_fields2)
           if custom_field.nil?
             # if not, pull column out of active record information
             validate_table_column(table, column_name, valid_fields)
@@ -332,7 +333,7 @@ module Filter
           end
 
           if expression?(filter_value)
-            transforms, field_node, filter_value = compose_expression(
+            transforms, field_node, filter_value, last_type = compose_expression(
               filter_value,
               model:,
               column_name:,
@@ -340,12 +341,16 @@ module Filter
               column_type: node_type
             )
 
+            # we normalize the value here because the expression may have changed the type
+            filter_value = normalize_value(last_type, filter_value)
+
             return {
               transforms:,
               node: condition_node(filter_name, field_node, filter_value)
             }
           end
 
+          filter_value = normalize_value(node_type, filter_value)
           condition_node(filter_name, field_node, filter_value)
         else
           raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name `#{primary}`."
@@ -353,6 +358,16 @@ module Filter
       else
         raise CustomErrors::FilterArgumentError, "Unrecognized filter component `#{primary}`."
       end
+    end
+
+    # ensure values that come from params are normalized to the correct type if they need to be
+    def normalize_value(type, value)
+      # parsing these string value into actual Time instances results in better comparisons
+      # in postgresql. When postgres parses a string it ignore the offset unless it is
+      # explicitly cast as a timestamp with time zone.
+      return Time.iso8601(value) if type == :datetime
+
+      value
     end
 
     # Build a condition.

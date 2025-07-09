@@ -44,10 +44,13 @@ FactoryBot.define do
     sequence(:description) { |n| "site description #{n}" }
 
     creator
-    # careful! this will create another project that is different from the
-    # project in the projects association below
-    region
-    projects { [create(:project)] }
+    # AT 2025: possibly breaking change. These two associations used to create
+    # two independent projects. Now they only do one.
+    transient do
+      shared_project { create(:project) }
+    end
+    region { create(:region, project: shared_project) }
+    projects { [region.project] }
 
     trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"

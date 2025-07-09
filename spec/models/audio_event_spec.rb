@@ -122,6 +122,32 @@ describe AudioEvent do
     expect(actual).not_to include(old)
   end
 
+  context 'with arel scopes' do
+    let!(:audio_recording) {
+      create(:audio_recording, recorded_date: Time.zone.parse('2023-10-01 12:00:00'))
+    }
+
+    let!(:audio_event) {
+      create(:audio_event, start_time_seconds: 123.456, end_time_seconds: 456.789)
+    }
+
+    let(:event) {
+      AudioEvent
+        .joins(:audio_recording)
+        .select(AudioEvent.start_date_arel.as('start_date'))
+        .where(audio_event_id: audio_event.id)
+        .first
+    }
+
+    it 'has a start_date arel expression' do
+      expect(event.start_date).to eq(Time.zone.parse('2023-10-01 12:02:03.456'))
+    end
+
+    it 'has a end_date arel expression' do
+      expect(event.end_date).to eq(Time.zone.parse('2023-10-01 12:07:36.789'))
+    end
+  end
+
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
     query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     sql = <<~SQL.squish
@@ -755,8 +781,8 @@ describe AudioEvent do
 
       expect(results.pluck('verification_consensus')).to eq([
         '1.00',
-        [format('%.2f', (choices_one.values.max / choices_one.values.sum.to_f)),
-         format('%.2f', (choices_two.values.max / choices_two.values.sum.to_f))].join('|')
+        [format('%.2f', choices_one.values.max / choices_one.values.sum.to_f),
+         format('%.2f', choices_two.values.max / choices_two.values.sum.to_f)].join('|')
       ])
     end
   end

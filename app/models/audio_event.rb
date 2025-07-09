@@ -104,15 +104,39 @@ class AudioEvent < ApplicationRecord
   scope :total_duration_seconds, -> { sum(duration_seconds.cast('bigint')) }
 
   scope(:by_import, lambda { |import_id|
-                      raise ArgumentError, 'import_id must be an integer' unless import_id.is_a?(Integer)
+    raise ArgumentError, 'import_id must be an integer' unless import_id.is_a?(Integer)
 
-                      joins(:audio_event_import_file)
-                        .where(
-                        AudioEventImportFile
-                          .arel_table[:audio_event_import_id]
-                          .eq(import_id)
-                      )
-                    })
+    joins(:audio_event_import_file)
+      .where(
+      AudioEventImportFile
+        .arel_table[:audio_event_import_id]
+        .eq(import_id)
+    )
+  })
+
+  def self.start_date_arel
+    Arel.grouping(
+      AudioRecording.arel_table[:recorded_date] +
+      arel_table[:start_time_seconds].seconds
+    )
+  end
+
+  def self.end_date_arel
+    Arel.grouping(
+      AudioRecording.arel_table[:recorded_date] +
+      arel_table[:end_time_seconds].seconds
+    )
+  end
+
+  # Allows this model to infer its timezone when included with larger queries
+  # constructed by filter args.
+  def self.with_timezone
+    {
+      model: Site,
+      joins: { audio_recording: :site },
+      column: :tzinfo_tz
+    }
+  end
 
   # Define filter api settings
   def self.filter_settings
@@ -123,7 +147,8 @@ class AudioEvent < ApplicationRecord
                      :is_reference,
                      :created_at, :creator_id, :updated_at,
                      :duration_seconds,
-                     :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score],
+                     :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score,
+                     :start_date, :end_date],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
@@ -149,6 +174,18 @@ class AudioEvent < ApplicationRecord
           transform: nil,
           arel: AudioEvent.duration_seconds,
           type: :decimal
+        },
+        start_date: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.start_date_arel,
+          type: :datetime
+        },
+        end_date: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.end_date_arel,
+          type: :datetime
         }
       },
       new_spec_fields: lambda { |_user|
@@ -172,7 +209,40 @@ class AudioEvent < ApplicationRecord
         {
           join: AudioRecording,
           on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-          available: true
+          available: true,
+          associations: [
+            {
+              join: Site,
+              on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+              available: true,
+              associations: [
+                {
+                  join: Region,
+                  on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
+                  available: true,
+                  associations: [
+                    {
+                      join: Project,
+                      on: Region.arel_table[:project_id].eq(Project.arel_table[:id]),
+                      available: true
+                    }
+                  ]
+                },
+                {
+                  join: ProjectsSite,
+                  on: Site.arel_table[:id].eq(ProjectsSite.arel_table[:site_id]),
+                  available: false,
+                  associations: [
+                    {
+                      join: Project,
+                      on: ProjectsSite.arel_table[:project_id].eq(Project.arel_table[:id]),
+                      available: true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
         {
           join: AudioEventImportFile,

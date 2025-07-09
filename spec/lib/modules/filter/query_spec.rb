@@ -460,6 +460,29 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
+    it 'can filter on and include custom fields from associations' do
+      body = {
+        projection: { include: [:'audio_events.duration_seconds'] },
+        filter: { 'audio_events.duration_seconds' => { gt: 0 } }
+      }
+      complex_result = <<~SQL.squish
+        SELECT ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
+        AS "audio_events.duration_seconds"
+        FROM "audio_recordings"
+        LEFT
+        OUTER
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
+        AND ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 0
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25
+        OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
+
     it 'does not allows including fields not in an api definition' do
       body = {
         projection: { include: [:'sites.rails_tz'] },

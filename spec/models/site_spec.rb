@@ -66,6 +66,12 @@ describe Site do
     expect(create(:site)).to be_valid
   end
 
+  it 'creates just one project when the factory is created' do
+    site = create(:site)
+    expect(site.projects.size).to eq(1)
+    expect(site.region.project.id).to eq(site.projects.first.id)
+  end
+
   it 'is invalid without a name' do
     expect(build(:site, name: nil)).not_to be_valid
   end

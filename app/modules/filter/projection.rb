@@ -19,7 +19,7 @@ module Filter
       return project_association(table, column_name) if association_field?(column_name)
 
       # allow a custom field to be used in a projection,
-      return project_custom_field(table, column_name) if @custom_fields2.key?(column_name)
+      return project_custom_field(table, column_name, @custom_fields2) if @custom_fields2.key?(column_name)
 
       validate_table_column(table, column_name, allowed)
       table[column_name]
@@ -29,21 +29,22 @@ module Filter
     # Can either:
     # - inject custom arel for a calculated field
     # - or use a hint from the field for what additional columns to select for a virtual field
-    def project_custom_field(_table, column_name)
+    def project_custom_field(_table, column_name, custom_fields2, as: nil)
       # two scenarios:
-      field_type = custom_field_type(column_name)
+      field_type = custom_field_type(column_name, custom_fields2)
 
       #   1. this is a calculated column that can be calculated in query
       #     - then we supply the arel directly here
       if field_type == :calculated
-        calculated = build_custom_calculated_field(column_name)[:arel]
+        as ||= column_name
+        calculated = build_custom_calculated_field(column_name, custom_fields2)[:arel]
         # `as` is needed to name the column so it can deserialize into active model
-        return calculated.as(column_name.to_s) unless calculated.nil?
+        return calculated.as(as.to_s) unless calculated.nil?
       end
 
       #   2. this is a virtual column who's result will be calculated post-query in rails and we're just fetching source columns
       #     - then we use query_attributes and apply transform after the fact
-      return build_custom_virtual_field(column_name) if field_type == :virtual
+      return build_custom_virtual_field(column_name, custom_fields2) if field_type == :virtual
 
       # if nil, this is not a custom field
       raise "unknown field type #{field_type}" unless field_type.nil?
@@ -52,11 +53,21 @@ module Filter
     end
 
     def project_association(base_table, column_name)
-      parse_table_field(base_table, column_name) => {table_name:, field_name:, arel_table:, model:, filter_settings:}
+      parse_table_field(base_table, column_name) => { table_name:, field_name:, arel_table:, model:, filter_settings: }
+      custom_fields2 = filter_settings[:custom_fields2] || {}
+      allowed = allowed_fields(filter_settings[:render_fields], custom_fields2)
+
       joins, match = build_joins(model, @valid_associations)
       raise CustomErrors::FilterArgumentError, "Association is not matched for #{column_name}" unless match
 
-      projection = arel_table[field_name].as(column_name.to_s)
+      # allow a custom field to be used in a projection,
+      if custom_fields2.key?(field_name)
+        project_custom_field(arel_table, field_name, custom_fields2, as: column_name.to_s) => projection
+      else
+        validate_table_column(arel_table, field_name, allowed)
+        projection = arel_table[field_name].as(column_name.to_s)
+      end
+
       joins = joins.map { |j|
         table = j[:join]
         # assume this is an arel_table if it doesn't respond to .arel_table
@@ -93,12 +104,12 @@ module Filter
           expression = expression.join(join[:arel_table], join[:type]).on(join[:on])
         end
         query = query.joins(expression.join_sources)
-        query = query.select(projection[:projection])
+        query = query.select(*projection[:projection])
 
         return query
       end
 
-      query.select(projection)
+      query.select(*projection)
     end
 
     #

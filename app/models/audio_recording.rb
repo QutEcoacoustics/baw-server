@@ -191,7 +191,7 @@ class AudioRecording < ApplicationRecord
   def self.with_timezone
     {
       model: Site,
-      association: :site,
+      joins: :site,
       column: :tzinfo_tz
     }
   end
@@ -552,17 +552,10 @@ class AudioRecording < ApplicationRecord
   end
 
   # Results in:
-  # ("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || 'seconds' as interval))
+  # ("audio_recordings"."recorded_date" + make_interval(secs => "audio_recordings"."duration_seconds"))
   def self.arel_recorded_end_date
-    seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
-    infix_op_string_join = Arel::Nodes::InfixOperation.new(:'||', AudioRecording.arel_table[:duration_seconds],
-      seconds_as_interval)
-    function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
-
     # Don't omit the grouping or else we run into order of operation issues in compound expressions
-    Arel::Nodes::Grouping.new(
-      Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
-    )
+    Arel.grouping(arel_table[:recorded_date] + arel_table[:duration_seconds].seconds)
   end
 
   # Results in:

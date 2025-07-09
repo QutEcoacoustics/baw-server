@@ -108,23 +108,45 @@ describe '/audio_events' do
 
   context 'when filtering' do
     let(:second_audio_recording) {
-      create(:audio_recording, creator: reader_user, site:, recorded_date: audio_recording.recorded_date + 1.day)
+      create(:audio_recording, creator: reader_user, site:, recorded_date: Time.new(2020, 1, 1, 5, 2, 0, '+10:00'))
+    }
+
+    let!(:isolated_audio_event) {
+      # intentionally completely isolated hierarchy
+      create(
+        :audio_event,
+        start_time_seconds: 10,
+        end_time_seconds: 11
+      )
     }
 
     before do
       create(
         :audio_event,
-        creator: reader_user, audio_recording:, is_reference: true
+        creator: reader_user, audio_recording:, is_reference: true,
+        start_time_seconds: 5.2, end_time_seconds: 5.8
       )
       create(
         :audio_event,
-        creator: reader_user, audio_recording:, is_reference: true, start_time_seconds: 4.0,
+        creator: reader_user, audio_recording:, is_reference: true,
+        start_time_seconds: 4.0, end_time_seconds: 5.8,
         audio_event_import_file:
       )
       create(
         :audio_event,
-        creator: reader_user, audio_recording: second_audio_recording, is_reference: true, start_time_seconds: 5.4
+        creator: reader_user, audio_recording: second_audio_recording, is_reference: true,
+        start_time_seconds: 5.4, end_time_seconds: 5.8
       )
+
+      create(
+        :read_permission,
+        creator: owner_user,
+        user: reader_user,
+        project: isolated_audio_event.audio_recording.site.region.project
+      )
+
+      site.tzinfo_tz = 'Australia/Brisbane'
+      site.save!
     end
 
     it 'can sort by duration_seconds' do
@@ -213,7 +235,7 @@ describe '/audio_events' do
       expect_success
 
       expect_number_of_items(1)
-      expect(AudioEvent.count).to eq(4)
+      expect(AudioEvent.count).to eq 5
 
       expect(api_data.first[:id])
         .to eq(audio_event.id)
@@ -242,30 +264,172 @@ describe '/audio_events' do
     end
 
     it 'can filter by audio_recording.recorded_end_date' do
-      pending 'Depends on a feature we haven not made yet https://github.com/QutEcoacoustics/baw-server/issues/689'
-      next
-
       filter = {
         'filter' => {
           'audio_recordings.recorded_end_date' => { 'lt' => second_audio_recording.recorded_date }
         },
         'projection' => {
-          'include' => ['audio_recordings.recorded_end_date']
+          'include' => ['audio_recordings.recorded_end_date', 'id']
+        },
+        'sorting' => {
+          'order_by' => 'id',
+          'direction' => 'asc'
         }
       }
 
       post '/audio_events/filter', params: filter, **api_with_body_headers(reader_token)
 
       expect_success
-      expect_number_of_items(2)
+      expect_number_of_items(4)
+
+      # so this is a little tricky: we are filtering events by the end date of their recordings.
+      # because we have one event that is attached to the second recording, the end date of that recording
+      # is EQUAL to the filter date (the recording's end date), thus it is excluded from the results.
+      #
+      # Rather if we had filtered by the end_date of the event, then it would have been included because the
+      # event's end obviously occurs before the recording's end date.
+      expected = AudioEvent
+        .joins(:audio_recording)
+        .where.not(audio_recording_id: second_audio_recording.id)
+        .select(:id, AudioRecording.arel_recorded_end_date.as('audio_recording.recorded_end_date'))
+        .order(:id)
+        .map { |event|
+          a_hash_including(
+            id: event.id,
+            'audio_recordings.recorded_end_date': event['audio_recording.recorded_end_date'].iso8601(3)
+          )
+        }
+      expect(api_data).to match expected
+    end
+
+    it 'can filter by project id' do
+      body = {
+        filter: {
+          'projects.id' => {
+            eq: isolated_audio_event.audio_recording.site.region.project.id
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
       expect(api_data).to match [
-        a_hash_including(start_time_seconds: 5.2, end_time_seconds: 5.8),
-        a_hash_including(start_time_seconds: 4.0, end_time_seconds: 5.8)
+        a_hash_including(start_time_seconds: 10, end_time_seconds: 11, is_reference: false)
+      ]
+    end
+
+    it 'can filter by project name' do
+      body = {
+        filter: {
+          'projects.name' => {
+            contains: isolated_audio_event.audio_recording.site.region.project.name
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 10, end_time_seconds: 11, is_reference: false)
+      ]
+    end
+
+    it 'can filter by region id' do
+      body = {
+        filter: {
+          'regions.id' => {
+            eq: isolated_audio_event.audio_recording.site.region.id
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 10, end_time_seconds: 11, is_reference: false)
+      ]
+    end
+
+    it 'can filter by site id' do
+      body = {
+        filter: {
+          'sites.id' => {
+            eq: isolated_audio_event.audio_recording.site.id
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(start_time_seconds: 10, end_time_seconds: 11, is_reference: false)
+      ]
+    end
+
+    it 'can filter by audio events absolute start and end dates' do
+      # date + 5.4 to date + 5.8
+      body = {
+        filter: {
+          'start_date' => {
+            lt: '2020-01-01T05:02:10+10:00'
+          },
+          'end_date' => {
+            gt: '2020-01-01T05:02:05+10:00'
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(
+          start_time_seconds: 5.4,
+          end_time_seconds: 5.8,
+          is_reference: true,
+          audio_recording_id: second_audio_recording.id
+        )
+      ]
+    end
+
+    it 'can filter by audio events by times of day' do
+      # date + 5.4 to date + 5.8
+      body = {
+        filter: {
+          'start_date' => {
+            lt: { expressions: ['local_offset', 'time_of_day'], value: '06:00' }
+          },
+          'end_date' => {
+            gt: { expressions: ['local_offset', 'time_of_day'], value: '05:00' }
+          }
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(
+          start_time_seconds: 5.4,
+          end_time_seconds: 5.8,
+          is_reference: true,
+          audio_recording_id: second_audio_recording.id
+        )
       ]
     end
   end
 
-  context('reference events') do
+  context('with reference events') do
     let(:another_user) {
       create(:user, user_name: 'bob dole')
     }

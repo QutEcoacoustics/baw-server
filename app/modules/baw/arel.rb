@@ -24,6 +24,12 @@ module Baw
       def unqualified
         ::Arel::Nodes::UnqualifiedColumn.new(self)
       end
+
+      # Construct an interval from this attribute as if it were a number of seconds.
+      # @return [Baw::Arel::Nodes::MakeInterval]
+      def seconds
+        Nodes::MakeInterval.new(seconds: self)
+      end
     end
 
     module ExpressionsExtensions
@@ -35,6 +41,10 @@ module Baw
 
       def to_array
         Baw::Arel::Nodes::ArrayConstructor.new([self])
+      end
+
+      def seconds
+        Nodes::MakeInterval.new(seconds: self)
       end
     end
 
