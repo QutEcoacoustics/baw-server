@@ -28,6 +28,7 @@ require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
 require "#{__dir__}/../lib/gems/emu/lib/emu"
 require "#{__dir__}/../lib/gems/pbs/lib/pbs"
 require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
+require "#{__dir__}/../lib/middlewares/connection_leak_detector"
 
 # add patches
 # zeitwerk specifically does not deal with the concept of overrides,
@@ -186,6 +187,8 @@ module Baw
       rewrite(%r{^/audio_analysis.*}i, '/listen_to/index.html')
       rewrite(%r{^/citsci.*}i, '/listen_to/index.html')
     end
+
+    config.middleware.use ConnectionLeakDetector if BawApp.log_connection_pool_stats?
 
     # https://blog.saeloun.com/2022/02/23/rails-fiber-safe-connection-pools/
     # we use fibers to simulate concurrency in our tests

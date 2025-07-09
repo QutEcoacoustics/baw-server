@@ -108,6 +108,10 @@ module BawApp
     true
   end
 
+  def log_connection_pool_stats?
+    true if ENV.key?('LOG_CONNECTION_POOL_STATS')
+  end
+
   # Get the log level for the application.
   # If no environment variable, or environment default applies,
   # it will return `:trace`.

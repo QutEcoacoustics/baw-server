@@ -17,7 +17,7 @@ module Baw
         status, headers, body = @app.call(env)
         body = ::Rack::BodyProxy.new(body, &instrumenter_finish)
         [status, headers, body]
-      rescue Exception
+      rescue StandardError
         instrumenter_finish.call
         raise
       end
