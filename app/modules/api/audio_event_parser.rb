@@ -585,9 +585,8 @@ module Api
           .as('error')
         ) => query
 
-      connection = AudioRecording.connection
       results = nil
-      begin
+      AudioRecording.with_connection do |connection|
         connection.transaction do
           connection.create_table(source_table.name, id: false, temporary: true) do |t|
             t.bigint :id
@@ -596,7 +595,7 @@ module Api
           insert.into(source_table)
           insert.columns << source_table[:id]
           insert.values = insert.create_values_list(@audio_recording_ids.map { |x| [x] })
-          connection.execute(insert.to_sql)
+          connection.exec_query(insert.to_sql)
 
           connection
             .select_all(query.to_sql, 'Check audio recording IDs exist and have permission')

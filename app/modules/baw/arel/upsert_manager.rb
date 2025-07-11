@@ -67,12 +67,14 @@ module Baw
       end
 
       def execute
-        sql, binds = model.connection.send(:to_sql_and_binds, self)
-        result = model.connection.exec_query(sql, "#{model.name} upsert", binds)
+        model.with_connection do |connection|
+          sql, binds = connection.send(:to_sql_and_binds, self)
+          result = connection.exec_query(sql, "#{model.name} upsert", binds)
 
-        return nil if @ast.returning.nil?
+          return nil if @ast.returning.nil?
 
-        result.cast_values
+          result.cast_values
+        end
       end
 
       private
