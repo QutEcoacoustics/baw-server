@@ -75,14 +75,9 @@ class StatusController < ApplicationController
           ActiveRecord::Base.connection.verify!
         end
       },
-      Concurrent::Promises.any(
-        Concurrent::Promises::FactoryMethods.future {
-          sleep 2
-        },
-        Concurrent::Promises::FactoryMethods.future {
-          BawWorkers::Config.batch_analysis.remote_connected?
-        }
-      )
+      Concurrent::Promises::FactoryMethods.future {
+        BawWorkers::Config.batch_analysis.remote_connected?
+      }.timeout(2, false)
     )
   end
 
