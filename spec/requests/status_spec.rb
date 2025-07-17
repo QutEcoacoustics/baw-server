@@ -159,7 +159,7 @@ describe '/status.json' do
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
       upload: 'Alive',
-      batch_analysis: 'error: failed to test_connection'
+      batch_analysis: 'Failed to connect'
     })
   end
 end
