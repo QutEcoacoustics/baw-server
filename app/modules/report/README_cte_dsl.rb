@@ -303,6 +303,9 @@ module Cte
 
   # Provides a context for evaluating a select block with access to options and
   # dependencies, at the time of evaluation.
+  # * note - I think this means constants that are in scope where the block is
+  # defined will not be available in the context of the block which could be
+  # confusing. have to check that
   class SelectContext
     attr_reader :options
 
@@ -339,8 +342,7 @@ TableB = Cte::Dsl.define_table :table_b do
 
   select do
     # accessing the table_a dependency table using its key as the method name
-    table_a.project
-    table_a[:is_squanchy].count.as('count_of_squanchies')
+    table_a.project(table_a[:is_squanchy].count.as('count_of_squanchies'))
       .where(table_a[:is_squanchy].eq(true))
   end
 end
@@ -369,16 +371,16 @@ tableB_suffixed.to_sql
 tableB_suffixed_v2 = TableB.new(suffix: :rocks)
 tableB_suffixed_v2.to_sql(registry)
 # Didn't work - the column reference output in the sql is still 'is_squanchy' and not 'is_squanchy_2' like our injected node has.
-# Because the name in the registry does not match the name that the node will
+# Because the key / name in the registry does not match the name that the node will
 # have after the suffix is applied. Change the name in the registry and it will work.
 
 # Note that suffixes are only propagated to un-initialised nodes. Intentionally,
-# since we don't want to mutate existing nodes. Its unlikely to be a problem but
+# since we don't want to mutate existing nodes. It's unlikely to be a problem but
 # helpful to understand the dependency resolution logic.
 
 # Organize related CTEs into modules, and extend the Cte::Dsl module
 
-# -- Example: Options are propogated
+# -- Example: Options are propagated
 module Beans
   extend Cte::Dsl
 
