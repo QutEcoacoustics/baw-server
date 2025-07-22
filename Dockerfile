@@ -25,6 +25,8 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
   # needed to build the psych gem's native extensions
   libyaml-dev \
+  # passenger needs the ps command and it's not longer included in the base image
+  procps \
   # for the pg gem we need postgresql-client (also used by rails rake db commands)
   && /provision/web/install_postgresql_client.sh \
   # install audio tools and other binaries
