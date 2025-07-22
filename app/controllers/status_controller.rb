@@ -21,8 +21,8 @@ class StatusController < ApplicationController
       statuses.fulfilled?,
       storage&.fetch(:success, false),
       redis == 'PONG',
-      upload&.success?, upload&.fmap { |audio_recording|
-                          audio_recording.try(:data_provider).fetch(:error) == ''
+      upload&.success?, upload&.fmap { |payload|
+                          payload.try(:data_provider).fetch(:error) == ''
                         }&.value_or(false),
       database,
       batch_analysis
@@ -57,6 +57,15 @@ class StatusController < ApplicationController
   private
 
   def start_checks
+    # https://github.com/QutEcoacoustics/baw-server/issues/795
+    # https://guides.rubyonrails.org/v7.1/threading_and_code_execution.html#permit-concurrent-loads
+    # Another way to achieve safety here is to create and then shut down a
+    # dedicated thread pool each request. I suspect though that that is inefficient.
+    # Another idea I tried is https://github.com/luizkowalski/concurrent_rails/tree/main
+    # But the API varied too much from concurrent-ruby and it was confusing.
+    # In the end I've gone with a very minimal executor.wrap but take care:
+    # That only stops connection leaks for that promise it is in. Ideally every
+    # callback in every promise should be wrapped in executor.wrap.
     Concurrent::Promises::FactoryMethods.zip(
       Concurrent::Promises::FactoryMethods.future {
         # indicates if audio recording storage is available
@@ -71,14 +80,12 @@ class StatusController < ApplicationController
         BawWorkers::Config.upload_communicator.service_status
       },
       Concurrent::Promises::FactoryMethods.future {
-        ActiveRecord::Base.connection_pool.with_connection do
+        Rails.application.executor.wrap do
           ActiveRecord::Base.connection.verify!
         end
       },
       Concurrent::Promises.any(
-        Concurrent::Promises::FactoryMethods.future {
-          sleep 2
-        },
+        Concurrent::Promises.schedule(2).then { raise 'timeout' },
         Concurrent::Promises::FactoryMethods.future {
           BawWorkers::Config.batch_analysis.remote_connected?
         }

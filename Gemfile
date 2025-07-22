@@ -16,6 +16,10 @@ source 'https://rubygems.org'
 gem 'tzinfo' # active support pins the version of tzinfo, no point in setting it here
 gem 'tzinfo-data'
 
+# Rails standard library
+# Used anywhere we need CSV: audio event download and import, and our API
+gem 'csv'
+
 # for simple caching of functions
 gem 'memoist'
 
@@ -67,7 +71,7 @@ gem 'descriptive-statistics'
 # for sorting hashes by keys
 gem 'deep_sort'
 
-RAILS_VERSION = '~> 7.2.1'
+RAILS_VERSION = '~> 8.0.2'
 
 # RAILS
 
@@ -79,7 +83,11 @@ gem 'rails', RAILS_VERSION
 gem 'nokogiri'
 
 # cms
-gem 'comfortable_mexican_sofa', '~> 2.0.0'
+# AT 2025: ComfortableMexicanSofa is deprecated.
+# It's causing issues so we forked it. Mainly gem updates. See the README.md in our fork of comfortable-mexican-sofa.
+#  Note: the successor is ComfortableMediaSurfer, but doesn't work for us because it adds new features, particularly
+#  around asset management. We don't have a node environment or build pipeline, so it is a pain to use.
+gem 'comfortable_mexican_sofa', git: 'https://github.com/QutEcoacoustics/comfortable-mexican-sofa.git', ref: 'master'
 
 # UI HELPERS
 # -------------------------------------
@@ -94,11 +102,15 @@ gem 'jquery-rails', '~> 4.3'
 #gem 'jbuilder' # deprecate this maybe? let's see what fails!
 
 gem 'haml', '~> 5.1.2'
-gem 'haml-rails', '~> 2.0.1'
+gem 'haml-rails', '~> 2'
 
-gem 'kramdown', '~> 2.3.0'
+gem 'kramdown', '~> 2'
 gem 'kramdown-parser-gfm'
-gem 'paperclip', '> 6.0.0'
+# AT 2025: Paperclip has long been deprecated in favour of ActiveStorage.
+# We don't have the bandwidth to migrate to ActiveStorage yet. The repo is unmaintained and causes issues.
+# We've switched to a fork that was recommended by the Paperclip maintainers.
+# https://github.com/kreeti/kt-paperclip
+gem 'kt-paperclip', '> 7.0.0'
 gem 'simple_form'
 
 # Bootstrap UI
@@ -143,7 +155,7 @@ gem 'activerecord-cte'
 # MODELS
 # -------------------------------------
 gem 'activerecord_json_validator'
-gem 'validates_timeliness', '~> 7.0.0.beta2'
+gem 'validates_timeliness', '~> 8.0.0.beta1'
 gem 'validate_url', git: 'https://github.com/perfectline/validates_url.git',
   ref: '81ec1516423af0b4fdc7cabbcda0089e434f2703'
 
@@ -210,7 +222,7 @@ group :development do
 
   # a ruby language server
   # temporarily pinned to 0.54.5 because of a bug in 0.55.0 that reduces performance
-  gem 'solargraph', '= 0.54.5'
+  gem 'solargraph', '>= 0.56.1'
   gem 'solargraph-rails', '>= 0.3.1'
 
   # official ruby typing support
@@ -219,7 +231,7 @@ group :development do
   # needed by bundler/soalrgraph for language server?
   gem 'actionview', RAILS_VERSION
 
-  gem 'i18n-tasks', '~> 0.9.31'
+  gem 'i18n-tasks', '~> 1.0.15'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
 
@@ -227,7 +239,8 @@ group :development do
   gem 'github_changelog_generator'
 
   # documents models
-  gem 'annotate'
+  # originally 'annotate' but it is not maintained anymore
+  gem 'annotaterb'
 end
 
 group :development, :test do

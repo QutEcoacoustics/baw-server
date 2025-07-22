@@ -15,7 +15,8 @@ module BawWorkers
 
         def perform(analysis_jobs_item_id)
           item = AnalysisJobsItem
-            .includes([:analysis_job, :audio_recording, :script])
+            # Apparently Bullet tells me we don't need to eager load this?
+            #.includes([:analysis_job, :audio_recording, :script])
             .find(analysis_jobs_item_id)
 
           # check if the item is ready to import

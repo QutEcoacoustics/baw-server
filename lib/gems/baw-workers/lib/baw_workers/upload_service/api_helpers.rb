@@ -38,10 +38,10 @@ module BawWorkers
       # that they're set up in a certain format.
       NO_DIRECTORY_CHANGES_PERMISSIONS = {
         '/' => SftpgoClient::Permission::PERMISSIONS
-                                         .values
-                                         .reject { |x| x == SftpgoClient::Permission::ALL }
-                                         .grep_v(/dirs/)
-                                         .freeze
+          .values
+          .reject { |x| x == SftpgoClient::Permission::ALL }
+          .grep_v(/dirs/)
+          .freeze
       }.freeze
 
       STANDARD_FILESYSTEM = SftpgoClient::FilesystemConfig.new({
@@ -62,7 +62,7 @@ module BawWorkers
 
         raise result.failure
       rescue ::Faraday::Error
-        operation = caller_locations(1, 2)[1].label
+        operation = caller_locations(1, 2)[1].base_label
         raise UploadServiceError, "Failed to #{operation}, got #{result.failure&.response&.fetch(:status)}"
       end
 

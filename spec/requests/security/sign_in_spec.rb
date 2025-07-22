@@ -66,7 +66,7 @@ describe 'authorization' do
         post '/security', params: body, headers: headers(post: true), as: :json
 
         expect_error(:unprocessable_content,
-          'The request could not be understood: param is missing or the value is empty: login')
+          'The request could not be understood: param is missing or the value is empty or invalid: login')
       end
 
       it 'errors without password' do
@@ -78,7 +78,7 @@ describe 'authorization' do
         post '/security', params: body, headers: headers(post: true), as: :json
 
         expect_error(:unprocessable_content,
-          'The request could not be understood: param is missing or the value is empty: password')
+          'The request could not be understood: param is missing or the value is empty or invalid: password')
       end
 
       it 'errors without password (2)' do
@@ -90,7 +90,7 @@ describe 'authorization' do
         post '/security', params: body, headers: headers(post: true), as: :json
 
         expect_error(:unprocessable_content,
-          'The request could not be understood: param is missing or the value is empty: password')
+          'The request could not be understood: param is missing or the value is empty or invalid: password')
       end
     end
   end

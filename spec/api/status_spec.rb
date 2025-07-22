@@ -19,7 +19,7 @@ describe 'status', type: :request do
               enum: ['good', 'bad']
             },
             timed_out: { type: 'boolean' },
-            database: { type: 'boolean' },
+            database: { type: ['boolean', 'string'] },
             redis: { type: 'string' },
             storage: { type: 'string' },
             upload: { type: 'string' },

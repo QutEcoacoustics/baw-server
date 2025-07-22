@@ -123,7 +123,7 @@ describe BawWorkers::Storage::AnalysisCache do
         analysis_cache.file_name(file_name: tilde)
       )
     }.to raise_error(ArgumentError,
-      'job_id must be equal to or greater than 1: ~. Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>["~"], :file_name=>"~", :job_id=>"~"}')
+      'job_id must be equal to or greater than 1: ~. Provided parameters: {uuid: "5498633d-89a7-4b65-8f4a-96aa0c09c619", sub_folders: ["~"], file_name: "~", job_id: "~"}')
   end
 
   it 'prevents valid path with job id .. from going to other parts of the file system' do
@@ -142,7 +142,7 @@ describe BawWorkers::Storage::AnalysisCache do
         analysis_cache.file_name(file_name: double_dot)
       )
     }.to raise_error(ArgumentError,
-      'job_id must be equal to or greater than 1: ... Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>[".."], :file_name=>"..", :job_id=>".."}')
+      'job_id must be equal to or greater than 1: ... Provided parameters: {uuid: "5498633d-89a7-4b65-8f4a-96aa0c09c619", sub_folders: [".."], file_name: "..", job_id: ".."}')
   end
 
   it 'prevents valid path with job id . from going to other parts of the file system' do
@@ -161,6 +161,6 @@ describe BawWorkers::Storage::AnalysisCache do
         analysis_cache.file_name(file_name: single_dot)
       )
     }.to raise_error(ArgumentError,
-      'job_id must be equal to or greater than 1: .. Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>["."], :file_name=>".", :job_id=>"."}')
+      'job_id must be equal to or greater than 1: .. Provided parameters: {uuid: "5498633d-89a7-4b65-8f4a-96aa0c09c619", sub_folders: ["."], file_name: ".", job_id: "."}')
   end
 end

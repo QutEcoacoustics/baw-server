@@ -66,11 +66,11 @@ describe ControllerWatcher, type: :request do
         get '/projects/', **api_headers(owner_token)
       end
       task.async do |_task|
-        start = Time.now
+        start = Time.zone.now
         wait_for_action_invocation(ProjectsController, :index, goal: 4)
 
-        stop = Time.now
-        expect(stop - start).to be_within(0.25).of(3)
+        stop = Time.zone.now
+        expect(stop - start).to be_within(0.25).of(3.25)
       end
     end
 

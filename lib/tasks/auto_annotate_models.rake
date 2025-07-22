@@ -12,11 +12,11 @@ if Rails.env.development?
     cmd.perform
   end
 
-  require 'annotate'
+  require 'annotaterb'
   task :set_annotation_options do
     # You can override any of these by setting an environment variable of the
     # same name.
-    Annotate.set_defaults(
+    AnnotateRb.set_defaults(
       'active_admin' => 'false',
       'additional_file_patterns' => [],
       'routes' => 'false',
@@ -65,5 +65,5 @@ if Rails.env.development?
     )
   end
 
-  Annotate.load_tasks
+  AnnotateRb::Core.load_rake_tasks
 end

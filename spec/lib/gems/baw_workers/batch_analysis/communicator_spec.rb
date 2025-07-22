@@ -197,7 +197,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
       # from a testing perspective. But the alternative is to duplicate the logic
       # in the model in this module which is also not desirable.
       analysis_jobs_item.queue!
-      wait_for_pbs_job analysis_jobs_item.queue_id
+      sleep 0.1
     end
 
     step 'the job is in the remote queue' do

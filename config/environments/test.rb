@@ -76,6 +76,8 @@ Rails.application.configure do
     # Bullet.console = true
     # Bullet.rails_logger = true
     Bullet.raise = true
+    # this is vendor code, we don't control it, not our fault
+    Bullet.add_safelist type: :unused_eager_loading, class_name: 'ActiveStorage::Attachment', association: :record
   end
   # config.i18n.raise_on_missing_translations = true
 end

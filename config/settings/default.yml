@@ -146,7 +146,7 @@ dbs:
     adapter: postgresql
     encoding: utf8
     reconnect: false
-    pool: 10
+    pool: 2
     username: postgres
     password: "password"
     # see docker compose

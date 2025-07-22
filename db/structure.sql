@@ -225,7 +225,7 @@ CREATE TABLE public.active_storage_blobs (
     content_type character varying,
     metadata text,
     byte_size bigint NOT NULL,
-    checksum character varying NOT NULL,
+    checksum character varying,
     created_at timestamp without time zone NOT NULL,
     service_name character varying NOT NULL
 );
@@ -701,8 +701,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    import_file_index integer,
-    audio_event_import_file_id bigint
+    audio_event_import_file_id integer,
+    import_file_index integer
 );
 
 
@@ -4404,6 +4404,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250714045539'),
 ('20250430021003'),
 ('20250402025432'),
 ('20250211012005'),

@@ -35,7 +35,7 @@ class PublicController < ApplicationController
   helper CmsHelpers
 
   def index
-    base_path = "#{Rails.root}/public"
+    base_path = Rails.public_path.to_s
     image_base = '/system/home/'
     json_data_file = "#{base_path}#{image_base}animals.json"
     sensor_tree = "#{base_path}#{image_base}sensor_tree.jpg"
@@ -54,11 +54,11 @@ class PublicController < ApplicationController
     end
 
     @random_projects = Access::ByPermission
-                       .projects(current_user)
-                       .includes(:creator)
-                       .references(:creator)
-                       .order('RANDOM()')
-                       .take(3)
+      .projects(current_user)
+      .includes(:creator)
+      .references(:creator)
+      .order('RANDOM()')
+      .take(3)
 
     respond_to do |format|
       format.html
@@ -72,12 +72,12 @@ class PublicController < ApplicationController
     # use .includes to eager load associations
     @recent_audio_recordings =
       result
-      .dig(:recent, :audio_recordings)
-      &.includes([:creator, { site: :projects }])
+        .dig(:recent, :audio_recordings)
+        &.includes([:creator, { site: :projects }])
     @recent_audio_events =
       result
-      .dig(:recent, :audio_events)
-      .includes([:updater, { audio_recording: :site }])
+        .dig(:recent, :audio_events)
+        .includes([:updater, { audio_recording: :site }])
 
     respond_to do |format|
       format.html

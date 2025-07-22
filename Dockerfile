@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 # Debian releases:
 #
-FROM ruby:3.2.2-slim-bullseye
+FROM ruby:3.4.4-slim-bullseye
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -23,6 +23,8 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   sqlite3 libsqlite3-dev libgmp-dev \
   # the following are for nokogiri and the like
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
+  # needed to build the psych gem's native extensions
+  libyaml-dev \
   # for the pg gem we need postgresql-client (also used by rails rake db commands)
   && /provision/web/install_postgresql_client.sh \
   # install audio tools and other binaries
@@ -77,7 +79,7 @@ COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 # install deps
 # skip installing gem documentation
-  # run this as the app user
+# run this as the app user
 RUN <<EOF
   su ${app_user} << "EOF2"
     echo "Running as: $(whoami) || $(id)"

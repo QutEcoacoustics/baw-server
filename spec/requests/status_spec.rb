@@ -7,6 +7,17 @@ describe '/status.json' do
     }
   end
 
+  it 'does not leak connections' do
+    5.times do
+      get '/status.json'
+
+      expect_success
+    end
+
+    pool = ActiveRecord::Base.connection_pool
+    expect(pool.stat[:busy]).to eq(0)
+  end
+
   it 'everything ok' do
     get '/status.json'
 
@@ -124,7 +135,7 @@ describe '/status.json' do
 
   it 'can check the batch analysis status' do
     allow(BawWorkers::Config.batch_analysis).to receive(:remote_connected?)
-      .and_raise(::PBS::Errors::TransportError.new('failed to test_connection'))
+      .and_raise(PBS::Errors::TransportError.new('failed to test_connection'))
 
     get '/status.json'
 
@@ -141,13 +152,11 @@ describe '/status.json' do
   end
 
   it 'has a shorter timeout for the batch analysis status' do
-    allow(BawWorkers::Config.batch_analysis).to(receive(:remote_connected?)
-      .and_return {
-        # simulate the server being unresponsive
-        sleep 20
-        raise ::PBS::Errors::TransportError, 'failed to test_connection'
-      }
-    )
+    allow(BawWorkers::Config.batch_analysis).to receive(:remote_connected?) do
+      # simulate the remote server being unresponsive
+      sleep 20
+      raise PBS::Errors::TransportError, 'failed to test_connection'
+    end
 
     get '/status.json'
 
@@ -159,7 +168,7 @@ describe '/status.json' do
       redis: 'PONG',
       storage: '1 audio recording storage directory available.',
       upload: 'Alive',
-      batch_analysis: 'error: failed to test_connection'
+      batch_analysis: 'error: timeout'
     })
   end
 end

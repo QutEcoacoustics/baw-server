@@ -30,7 +30,7 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
     status = get_last_status(1)
 
     expect(status).to be_completed
-    expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+    expect(status.messages).to include(/Remote queue cannot accept any further jobs/)
   end
 
   it 'respects the Settings batch analysis remote enqueue limit' do
@@ -39,7 +39,7 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
     BawWorkers::Jobs::Analysis::RemoteEnqueueJob.perform_now
     status = get_last_status(1)
     expect(status).to be_completed
-    expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+    expect(status.messages).to include(/Remote queue cannot accept any further jobs/)
   end
 
   it 'takes the minimum of the SiteSettings and Settings batch analysis remote enqueue limits' do
@@ -77,7 +77,7 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
       status = get_last_status(2)
 
       expect(status).to be_completed
-      expect(status.messages).to include 'Remote queue cannot accept any further jobs'
+      expect(status.messages).to include(/Remote queue cannot accept any further jobs/)
 
       expect(AnalysisJobsItem.queued.count).to eq(10)
     end

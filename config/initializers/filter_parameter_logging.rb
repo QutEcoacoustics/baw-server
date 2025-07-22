@@ -5,6 +5,9 @@
 # Configure sensitive parameters which will be filtered from the log file.
 Rails.application.config.filter_parameters += [:password]
 
+Rails.application.config.filter_parameters += [
+  :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn
+]
 Rails.application.config.filter_parameters << lambda { |k, v|
   begin
     # Bail immediately if we can

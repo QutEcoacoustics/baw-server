@@ -133,7 +133,7 @@ module Filter
       transforms_collection = []
 
       conditions.reduce(nil) do |previous, condition|
-        if condition in {transforms:, node:}
+        if condition in { transforms:, node: }
           transforms_collection.push(*transforms)
           condition = node
         end
@@ -328,7 +328,7 @@ module Filter
             node_type = model.columns_hash[column_name.to_s].type
           else
             # if a custom field use information supplied
-            custom_field => {type: node_type, arel: field_node}
+            custom_field => { type: node_type, arel: field_node }
           end
 
           if expression?(filter_value)
@@ -492,7 +492,7 @@ module Filter
 
       associations = build_associations(@valid_associations, table)
       models = associations.pluck(:join)
-      table_names = associations.map { |analysis_job| analysis_job[:join].table_name.to_sym }
+      table_names = associations.map { |association| association[:join].table_name.to_sym }
 
       validate_name(parsed_table, table_names)
 

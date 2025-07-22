@@ -23,8 +23,27 @@ module Baw
       end
     end
   end
+
+  module ActiveRecord
+    # https://github.com/reidmorrison/rails_semantic_logger/issues/249
+    module LogSubscriber
+      # just aliasing some methods because the version detection is broken
+      def self.included(base)
+        base.alias_method(:bind_values, :bind_values_v6_1)
+        base.alias_method(:render_bind, :render_bind_v6_1)
+        base.alias_method(:type_casted_binds, :type_casted_binds_v5_1_5)
+      end
+    end
+  end
 end
 
 RailsSemanticLogger::Rack::Logger.prepend(Baw::Rack::Logger)
+RailsSemanticLogger::ActiveRecord::LogSubscriber.include(Baw::ActiveRecord::LogSubscriber)
+
+if Gem.loaded_specs['rails_semantic_logger'].version > Gem::Version.new('4.17.0')
+  raise 'PATCH: revaluate if patches in /home/baw_web/baw-server/lib/patches/rails_sementic_logger.rb are still needed, as they may have been fixed in rails_semantic_logger'
+
+end
 
 puts 'PATCH: Baw::Rack::Logger applied to RailsSemanticLogger::Rack::Logger'
+puts 'PATCH: Baw::ActiveRecord::LogSubscriber applied to RailsSemanticLogger::ActiveRecord::LogSubscriber'

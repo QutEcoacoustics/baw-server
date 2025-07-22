@@ -23,7 +23,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     @barrier = barrier
 
     # want time for the workers to start
-    sleep 1
+    sleep 0.5
   end
 
   def cleanup(barrier)

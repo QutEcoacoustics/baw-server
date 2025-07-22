@@ -8,10 +8,9 @@ describe AnalysisJobsItem do
 
     before do
       analysis_jobs_item.result_success!
-      Bullet.enable = false
-      analysis_jobs_item.audio_event_import_files.destroy_all
-    ensure
-      Bullet.enable = true
+      Bullet.disable_for do
+        analysis_jobs_item.audio_event_import_files.destroy_all
+      end
     end
 
     describe 'successful import' do
