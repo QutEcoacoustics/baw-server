@@ -1,5 +1,25 @@
 # Changelog
 
+## [13.0.0](https://github.com/QutEcoacoustics/baw-server/tree/13.0.0) (2025-07-22)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.7...13.0.0)
+
+**Implemented enhancements:**
+
+- Upgrade to Rails 8 and a new version of Ruby [\#799](https://github.com/QutEcoacoustics/baw-server/issues/799)
+
+**Fixed bugs:**
+
+- status batch\_analysis endpoint [\#801](https://github.com/QutEcoacoustics/baw-server/issues/801)
+
+**Closed issues:**
+
+- Connection leak tracking issue [\#795](https://github.com/QutEcoacoustics/baw-server/issues/795)
+
+## [12.18.7](https://github.com/QutEcoacoustics/baw-server/tree/12.18.7) (2025-07-11)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.6...12.18.7)
+
 ## [12.18.6](https://github.com/QutEcoacoustics/baw-server/tree/12.18.6) (2025-07-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.5...12.18.6)

@@ -115,14 +115,14 @@ paths:
 
                   <script src='/cms/cms-js/3/default/1577934245.js' type='text/javascript'></script>
                 children:
-                - label: Credits
-                  full_path: "/credits"
-                - label: Data Upload
-                  full_path: "/data_upload"
-                - label: Ethics
-                  full_path: "/ethics"
-                - label: Privacy
-                  full_path: "/privacy"
+                - full_path: "/credits"
+                  label: Credits
+                - full_path: "/data_upload"
+                  label: Data Upload
+                - full_path: "/ethics"
+                  label: Ethics
+                - full_path: "/privacy"
+                  label: Privacy
               schema:
                 "$ref": "#/components/schemas/cms_blob"
   "/audio_events/filter":
@@ -998,7 +998,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-07-11T05:41:55.761Z'
+                  created_at: '2025-07-22T03:55:14.349Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -1906,7 +1906,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.18.6 from http://web:3000.
+                  Version 12.18.7 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1946,7 +1946,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.18.6"
+                Write-Information "Acoustic Workbench downloader script version 12.18.7"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2128,7 +2128,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 12.18.6 from http://web:3000.
+                  Version 12.18.7 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2168,7 +2168,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 12.18.6"
+                Write-Information "Acoustic Workbench downloader script version 12.18.7"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4983,7 +4983,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: s0LOFkQW4-C1KUcWdqIW3tY333i6yYtXco8Aco9rU-8
+                  auth_token: 6r4ePCZTfz_wwLwC2VDDKNGyritqEro6i0flPcU_gG4
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5039,7 +5039,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: iLIdftiFKw9Psy5jHPtkK5AW_dgdpFkXv9ejT9S6DKw
+                  auth_token: oN9X-V_0Q-fEVOAxC5X99ogACz5SdN2Gy2uMj7z9jpU
                   user_name: Admin
                   user_id: 1
               schema:
@@ -6183,7 +6183,7 @@ paths:
                 data:
                 - id: 97
                   additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNekUwTXpka2F6TnBjVEk0Ym1JMU1ISTNkR05sTm5FeU9IVmhaQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVFdGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSmhkV1JwYjE5amFHVmpheTVqYzNZaU95Qm1hV3hsYm1GdFpTbzlWVlJHTFRnbkoyRjFaR2x2WDJOb1pXTnJMbU56ZGdZN0JsUTZFV052Ym5SbGJuUmZkSGx3WlVraURYUmxlSFF2WTNOMkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjAtMDEtMDJUMDM6MDk6MDUuNjc3WiIsInB1ciI6ImJsb2Jfa2V5In19--8236b7d0f67b2804051f9736c198baccad8b4dad/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiIzc2RuMTF6MnJnZzNseGduM3kzdGJrbzcxdDkzIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--611e3f98e0e35280f82fc402b6127939d573c0d3/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 98
                   analysis_jobs_item_id: 
@@ -6242,7 +6242,7 @@ paths:
                   id: 99
                   additional_tag_ids:
                   - 100
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhOWGRtWkRaMmRYZG9iM0F6Y0RsdFlUbHZhSEJqZFdGNmFuWm1hQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVldGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSm5aVzVsY21salgyVjRZVzF3YkdVdVkzTjJJanNnWm1sc1pXNWhiV1VxUFZWVVJpMDRKeWRuWlc1bGNtbGpYMlY0WVcxd2JHVXVZM04yQmpzR1ZEb1JZMjl1ZEdWdWRGOTBlWEJsU1NJTmRHVjRkQzlqYzNZR093WlVPaEZ6WlhKMmFXTmxYMjVoYldVNkNteHZZMkZzIiwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--b03c58e04c6622b9512aba22eea765002cf57d46/generic_example.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJzZ2poZGhzdXl3NmIwNmVuYWVianI3MnBrOGp3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImdlbmVyaWNfZXhhbXBsZS5jc3ZcIjsgZmlsZW5hbWUqPVVURi04JydnZW5lcmljX2V4YW1wbGUuY3N2IiwiY29udGVudF90eXBlIjoidGV4dC9jc3YiLCJzZXJ2aWNlX25hbWUiOiJsb2NhbCJ9LCJleHAiOiIyMDIwLTAxLTAyVDAzOjA5OjA1LjY3N1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--d9f4a30690590de79b2bdd0786ace6b418293794/generic_example.csv
                   name: generic_example.csv
                   audio_event_import_id: 99
                   analysis_jobs_item_id: 
@@ -6437,7 +6437,7 @@ paths:
                 data:
                 - id: 102
                   additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhhek5sTm1oM2F6QXhlREV3ZGpWNk4yOXlkalpxTlhOeU1USnNiZ1k2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVFdGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSmhkV1JwYjE5amFHVmpheTVqYzNZaU95Qm1hV3hsYm1GdFpTbzlWVlJHTFRnbkoyRjFaR2x2WDJOb1pXTnJMbU56ZGdZN0JsUTZFV052Ym5SbGJuUmZkSGx3WlVraURYUmxlSFF2WTNOMkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjAtMDEtMDJUMDM6MDk6MDUuNjc3WiIsInB1ciI6ImJsb2Jfa2V5In19--7c049df50c2cc1d96b1145e10a5e4b3911b8b3ac/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJ1ZTRrNjVvYWZ6dmFrYzU4dTh0dzVyaWp1d3h5IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--0687803dfa0d94cb30ef78d07a11613431c4d1c3/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 101
                   analysis_jobs_item_id: 
@@ -6598,7 +6598,7 @@ paths:
                 data:
                   id: 106
                   additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDVG9JYTJWNVNTSWhNemN4YURreFptbDVOM0YyY1RKbGIyZ3daMjFzWTJneE5tZGpNQVk2QmtWVU9oQmthWE53YjNOcGRHbHZia2tpVFdGMGRHRmphRzFsYm5RN0lHWnBiR1Z1WVcxbFBTSmhkV1JwYjE5amFHVmpheTVqYzNZaU95Qm1hV3hsYm1GdFpTbzlWVlJHTFRnbkoyRjFaR2x2WDJOb1pXTnJMbU56ZGdZN0JsUTZFV052Ym5SbGJuUmZkSGx3WlVraURYUmxlSFF2WTNOMkJqc0dWRG9SYzJWeWRtbGpaVjl1WVcxbE9ncHNiMk5oYkE9PSIsImV4cCI6IjIwMjAtMDEtMDJUMDM6MDk6MDUuNjc3WiIsInB1ciI6ImJsb2Jfa2V5In19--10c1ad4739a0a8c2dce03c84522620da3df092dd/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJxMXNqdWc2NTRuNnlwMHpqMnl6c2xxc3dnbXIxIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--de8a8164e7c65f965b34c1dd63e4109d059b4654/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 105
                   analysis_jobs_item_id: 
@@ -6685,8 +6685,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 133
-                  custom_latitude: -69.158467
-                  custom_longitude: -84.283166
+                  custom_latitude: -0.937287
+                  custom_longitude: -48.840125
                   location_obfuscated: false
                   project_ids:
                   - 148
@@ -6788,8 +6788,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 135
-                  custom_latitude: -36.25383
-                  custom_longitude: 139.929456
+                  custom_latitude: 78.128773
+                  custom_longitude: 105.77013
                   location_obfuscated: false
                   project_ids:
                   - 152
@@ -6864,8 +6864,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 137
-                  custom_latitude: 11.501298
-                  custom_longitude: -19.197196
+                  custom_latitude: 89.108853
+                  custom_longitude: 69.704671
                   location_obfuscated: false
                   project_ids:
                   - 153
@@ -7056,8 +7056,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 140
-                  custom_latitude: 53.794447
-                  custom_longitude: -175.02455
+                  custom_latitude: 15.049827
+                  custom_longitude: -172.698515
                   location_obfuscated: false
                   project_ids:
                   - 158
@@ -7140,8 +7140,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 141
-                  custom_latitude: -64.440395
-                  custom_longitude: -42.842211
+                  custom_latitude: 38.236074
+                  custom_longitude: 53.024047
                   location_obfuscated: false
                   project_ids:
                   - 159
@@ -7297,7 +7297,7 @@ paths:
                   project_id: 161
                   name: January 2nd Upload
                   upload_user: Admin_119
-                  upload_password: hKXrQSCLu82tHejxq73bEvRj
+                  upload_password: NYUFFDbwT8PuxoHm1xQKE26a
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '141'
@@ -7782,7 +7782,7 @@ paths:
                       details: 
                 data:
                   id: 149
-                  uuid: 87b92e8d-8977-443f-9ac3-2d1596c66570
+                  uuid: 3db64b7a-6ee3-4ea3-96db-e5d7df8168f7
                   recorded_date: '2000-08-22T07:06:59.000Z'
                   site_id: 149
                   duration_seconds: 60000.0
@@ -7800,7 +7800,7 @@ paths:
                   updater_id: 
                   notes:
                     test: note number 149
-                  file_hash: SHA256::1491y7tdqsnwlt0auiutx2hutkxf1tkeaejq4fhd7ja5c43nurbq8sqb3lgpg9qu
+                  file_hash: SHA256::1497zgu4taevglccbatdx1b4w298sna8ig5pxupd49ahzwa80wf6a9a5myg08b93
                   uploader_id: 1
                   original_file_name: original name 149.mp3
                   canonical_file_name: 20000822T070659Z_site-name-150_149.mp3
@@ -7848,7 +7848,9 @@ paths:
                   timed_out:
                     type: boolean
                   database:
-                    type: boolean
+                    type:
+                    - boolean
+                    - string
                   redis:
                     type: string
                   storage:
@@ -9234,7 +9236,7 @@ paths:
                   project_id: 208
                   name: January 2nd Upload
                   upload_user: Admin_155
-                  upload_password: 49bXyiyrbh17e2SBG4xmbGMD
+                  upload_password: JyTu7pbnxKCiaEFg2Yk1BP8n
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '183'
@@ -10691,8 +10693,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 215
-                  custom_latitude: -58.374404
-                  custom_longitude: -95.404118
+                  custom_latitude: -80.690348
+                  custom_longitude: -160.401292
                   location_obfuscated: false
                   project_ids:
                   - 242
@@ -10812,8 +10814,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 218
-                  custom_latitude: 44.280146
-                  custom_longitude: 13.76713
+                  custom_latitude: -13.747064
+                  custom_longitude: 24.413241
                   location_obfuscated: false
                   project_ids:
                   - 244
@@ -10899,8 +10901,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 219
-                  custom_latitude: -39.077243
-                  custom_longitude: -48.348475
+                  custom_latitude: -64.834007
+                  custom_longitude: -167.766614
                   location_obfuscated: false
                   project_ids:
                   - 246
@@ -10981,8 +10983,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 221
-                  custom_latitude: 54.876464
-                  custom_longitude: 27.948539
+                  custom_latitude: 1.717382
+                  custom_longitude: 141.215262
                   location_obfuscated: false
                   project_ids:
                   - 247
@@ -11183,8 +11185,8 @@ paths:
                   deleter_id: 
                   deleted_at: 
                   region_id: 225
-                  custom_latitude: 13.08685
-                  custom_longitude: -119.246068
+                  custom_latitude: -8.045459
+                  custom_longitude: 82.552085
                   location_obfuscated: false
                   project_ids:
                   - 252
