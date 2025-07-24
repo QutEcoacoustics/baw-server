@@ -3,11 +3,11 @@
 describe Report::Cte::Node do
   users = User.arel_table # puts 'users' in lexical scope of `select` blocks
 
+  subject(:node) { Report::Cte::Node.new(:test_node) { users.project(users[:id]) } }
+
   describe '.new' do
     context 'with a block' do
       it 'initializes successfully' do
-        node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
-
         expect(node).to be_a(Report::Cte::Node)
       end
     end
@@ -54,8 +54,6 @@ describe Report::Cte::Node do
 
   describe '#table' do
     it 'returns a memoized Arel::Table with the node name' do
-      node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
-
       table = node.table
 
       expect(table).to be_a(Arel::Table)
@@ -66,9 +64,6 @@ describe Report::Cte::Node do
 
   describe '#select_manager' do
     it "returns a memoized Arel::SelectManager representation of the node's select statement" do
-      select = -> { users.project(users[:id]) }
-      node = Report::Cte::Node.new(:test_node, select:)
-
       select_manager = node.select_manager
 
       expect(select_manager).to be_a(Arel::SelectManager)
@@ -91,27 +86,30 @@ describe Report::Cte::Node do
   end
 
   describe '#node' do
-    it 'returns an Arel::Nodes::As representation of the node' do
-      node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
+    it 'returns an Arel::Nodes:: representation of the node' do
       as_node = node.node
-      expect(as_node).to be_a(Arel::Nodes::As)
-      expect(as_node.left).to eq('test_node')
-      expect_common(as_node.right, node.select_manager)
+
+      # for a nodes::as, left would be the arel table, right would be the select
+      expect(as_node).to be_a(Arel::Nodes::TableAlias)
+      expect(as_node.left).to be(node.select_manager)
+      expect(as_node.right).to eq(node.table.name)
     end
   end
 
   describe '#to_arel' do
-    it 'returns the select manager when no dependencies exist' do
-      node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
+    it 'returns the select manager representation of the node' do
       arel = node.to_arel
+
       expect(arel).to be_a(Arel::SelectManager)
       expect(arel.to_sql).to eq('SELECT "users"."id" FROM "users"')
     end
 
-    it 'includes dependencies in a WITH clause' do
+    it 'includes dependencies in the ast' do
       dep = Report::Cte::Node.new(:dep_node) { users.project(users[:id]) }
       node = Report::Cte::Node.new(:test_node, dependencies: { dep: dep }) { dep.table.project(Arel.star) }
+
       arel = node.to_arel
+
       expect(arel.to_sql.squish).to eq <<~SQL.squish
         WITH "dep_node" AS
           (SELECT "users"."id" FROM "users")
@@ -122,7 +120,6 @@ describe Report::Cte::Node do
 
   describe '#to_sql' do
     it 'generates correct SQL' do
-      node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
       expect(node.to_sql).to eq(node.to_arel.to_sql)
       expect(node.to_sql).to eq('SELECT "users"."id" FROM "users"')
     end
@@ -130,8 +127,6 @@ describe Report::Cte::Node do
 
   describe '#execute' do
     it 'executes the generated SQL' do
-      debugger
-      node = Report::Cte::Node.new(:test_node) { users.project(users[:id]) }
       result = node.execute.to_a.pluck('id')
       expect(result).to eq(User.pluck(:id))
     end
@@ -232,11 +227,15 @@ describe Report::Cte::Node do
 
     it 'gives access to Arel::Tables of node dependencies' do
       dep = Report::Cte::Node.new(:dep_node) { users.project(users[:id]) }
+
+      # the key `some_cte` can be used in the body of the select block/Proc to access the dependency's Arel::table
       dep_hash = { some_cte: dep }
 
-      node = Report::Cte::Node.new(:test_node, dependencies: dep_hash) {
+      select = lambda {
         some_cte.project(some_cte[:id])
       }
+
+      node = Report::Cte::Node.new(:test_node, dependencies: dep_hash, select: select)
 
       expect(node.select_manager.to_sql).to eq('SELECT "dep_node"."id" FROM "dep_node"')
     end

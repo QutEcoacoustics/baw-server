@@ -62,6 +62,9 @@ module Report
 
       # Create the Arel node representing the Cte
       # @return [Arel::Nodes::As]
+      # ! actually returns Arel::Nodes::TableAlias. Does it ever return nodes as?
+      # Does it matter? can they be used interchangably? their left and right are different
+      # Table alias seems more flexible since you can use it as a subquery in from
       def node
         @node ||= select_manager.as(table.name)
       end
