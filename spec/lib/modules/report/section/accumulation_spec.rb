@@ -6,18 +6,20 @@ describe 'Report::Section::Accumulation' do
                  end_time: '2000-07-02T00:00:00Z',
                  interval: '1 day' } }
   end
-  let(:time_series_options) { Report::TimeSeries::Options.call(params) }
+  let(:time_series_options) { Report::TimeSeries.options(params, base_table: AudioEvent.arel_table) }
 
   it 'generates the correct SQL for time_range_and_interval' do
     expected_sql = <<~SQL.squish
-      SELECT
-        tsrange(CAST('2000-02-01 00:00:00' AS timestamp without time zone),
-                CAST('2000-07-02 00:00:00' AS timestamp without time zone), '[)') AS "time_range",
-        INTERVAL '1 day' AS "bucket_interval"
+      WITH "time_range_and_interval" AS
+        (SELECT
+          tsrange(CAST('2000-02-01 00:00:00' AS timestamp without time zone),
+                  CAST('2000-07-02 00:00:00' AS timestamp without time zone), '[)') AS "time_range",
+          INTERVAL '1 day' AS "bucket_interval")
+          SELECT * FROM "time_range_and_interval"
     SQL
-    accumulation_collection = Report::Section::Accumulation.process(options: time_series_options)
-    result = accumulation_collection[:time_range_and_interval][:select]
-    expect(result.to_sql).to eq(expected_sql)
+    debugger
+    accumulation_collection = Report::Section::Accumulation.new(options: time_series_options).prepare
+    expect(accumulation_collection.select(:time_range_and_interval).to_sql).to eq(expected_sql)
   end
 
   it 'generates the correct SQL for number_of_buckets' do

@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+module Report
+  module Ctes
+    class TsRangeAndInterval < Report::Cte::Node
+      include Cte::Dsl
+
+      table_name :time_range_and_interval
+
+      default_options do
+        {
+          start_time: Time.utc(2000, 1, 1),
+          end_time: Time.utc(2000, 1, 7),
+          interval: '1 day'
+        }
+      end
+
+      select do
+        lower, upper, interval = options.values_at(:start_time, :end_time, :interval)
+        arel_tsrange_expr = Report::TimeSeries.arel_tsrange(
+          Report::TimeSeries.arel_cast_datetime(lower),
+          Report::TimeSeries.arel_cast_datetime(upper)
+        ).as('time_range')
+        bucket_interval_expr = Report::TimeSeries.arel_interval(interval).as('bucket_interval')
+        Arel::SelectManager.new.project(arel_tsrange_expr, bucket_interval_expr)
+      end
+    end
+  end
+end

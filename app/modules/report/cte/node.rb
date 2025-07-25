@@ -206,8 +206,13 @@ module Report
       # Arel::Tables of any dependecies, and the options hash.
       def call_block_with_dependencies
         resolved_deps = dependencies.transform_values(&:table)
-        context = Report::Cte::SelectContext.new(resolved_deps, @options)
-        context.instance_exec(&@select_block)
+        Report::Cte::SelectContext.execute_with_context(
+          @select_block,
+          resolved_deps,
+          @options
+        )
+        # context = Report::Cte::SelectContext.new(resolved_deps, @options)
+        # context.instance_exec(&@select_block)
       rescue StandardError => e
         # If the block raises an error, we want to provide a clear message
         # indicating which node and block caused the issue.
