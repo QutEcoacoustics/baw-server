@@ -3,8 +3,8 @@
 module Report
   module Ctes
     class BucketCount < Report::Cte::Node
-      include Cte::Dsl
       extend Report::TimeSeries
+      include Cte::Dsl
 
       table_name :bucket_count
 

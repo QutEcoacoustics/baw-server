@@ -21,7 +21,7 @@ module Report
     # uninstantiated dependencies when it is resolved.
     class Node
       extend Report::Cte::Dsl
-      attr_reader :options
+      attr_reader :options, :_initial_dependencies
       attr_accessor :name, :select_block
 
       # Initializes a new Cte node.
@@ -39,7 +39,7 @@ module Report
                      select: nil,
                      &block)
         @name = suffix ? :"#{name}_#{suffix}" : name.to_sym
-        @initial_dependencies = Hash(dependencies)
+        @initial_dependencies = default_dependencies(Hash(dependencies))
         @suffix = suffix
         @select_block = block || validate_select(select)
 
@@ -51,6 +51,13 @@ module Report
       # @return [Hash]
       def default_options
         {}
+      end
+
+      def default_dependencies(dependencies)
+        # Merge into any templated dependencies if they are defined in the
+        # parent class (in the case of subclassing Node with the Cte::Dsl
+        # module).
+        self.class.respond_to?(:_depends_on) ? self.class._depends_on.merge(dependencies) : dependencies
       end
 
       # Return an Arel::Table for the Cte

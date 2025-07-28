@@ -37,6 +37,9 @@ module Report
                                          options: {},
                                          &blk|
             blk ||= self.class._select_block
+
+            raise ArgumentError, 'Cte must have a table name defined using `table_name`' if self.class._table_name.nil?
+
             super(name,
                   dependencies: dependencies,
                   suffix: suffix,
