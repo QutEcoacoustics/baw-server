@@ -1,46 +1,54 @@
 # frozen_string_literal: true
 
 describe Report::Ctes do
+  include SqlHelpers::Example
+
   describe 'Accumulation related CTEs' do
     let(:params) do
-      { start_time: '2000-02-01T00:00:00Z',
-        end_time: '2000-07-02T00:00:00Z',
+      { start_time: '2000-03-26 07:06:59',
+        end_time: '2000-04-26 07:06:59',
         interval: '1 day' }
     end
+    let(:actual) { subject.select_manager.to_sql }
 
     describe Report::Ctes::TsRangeAndInterval do
-      it 'generates the correct select manager SQL' do
+      subject { Report::Ctes::TsRangeAndInterval.new(options: params) }
+
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
-            tsrange(CAST('2000-02-01T00:00:00Z' AS timestamp without time zone),
-                    CAST('2000-07-02T00:00:00Z' AS timestamp without time zone),
+            tsrange(CAST('#{params[:start_time]}' AS timestamp without time zone),
+                    CAST('#{params[:end_time]}' AS timestamp without time zone),
                     '[)') AS "time_range",
             INTERVAL '1 day' AS "bucket_interval"
         SQL
 
-        expect(Report::Ctes::TsRangeAndInterval.new(options: params).select_manager.to_sql).to eq(expected_sql)
+        comparison_sql(actual, expected_sql)
       end
     end
 
     describe Report::Ctes::BucketCount do
-      it 'generates the correct select manager SQL' do
+      subject { Report::Ctes::BucketCount.new(options: params) }
+
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
             "time_range_and_interval"."time_range", "time_range_and_interval"."bucket_interval",
             (SELECT
-              (EXTRACT(EPOCH FROM upper("time_range_and_interval"."time_range")) - EXTRACT(EPOCH FROM LOWER("time_range_and_interval"."time_range"))) /
+              (
+                EXTRACT(EPOCH FROM upper("time_range_and_interval"."time_range")) -
+                EXTRACT(EPOCH FROM LOWER("time_range_and_interval"."time_range"))) /
                EXTRACT(EPOCH FROM "time_range_and_interval"."bucket_interval")
              FROM "time_range_and_interval") "bucket_count"
           FROM "time_range_and_interval"
         SQL
 
-        expect(Report::Ctes::BucketCount.new(options: params).select_manager.to_sql).to eq(expected_sql)
+        comparison_sql(actual, expected_sql)
       end
 
       context 'when interval is 1 day' do
         it 'correcctly counts buckets' do
-          result = Report::Ctes::BucketCount.new(options: params).execute
-
+          result = subject.execute
           bucket_count = result[0]['bucket_count'].to_i
 
           expected_days =
@@ -52,8 +60,8 @@ describe Report::Ctes do
       end
     end
 
-    describe Report::Ctes::BucketTsRange do
-      it 'generates the correct select manager SQL' do
+    describe Report::Ctes::BucketTimeSeries do
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
             bucket_number,
@@ -62,12 +70,13 @@ describe Report::Ctes do
           FROM "bucket_count"
           CROSS JOIN generate_series(1, CEIL("bucket_count"."bucket_count")) AS bucket_number
         SQL
-        expect(Report::Ctes::BucketTsRange.new.select_manager.to_sql).to eq(expected_sql)
+
+        comparison_sql(actual, expected_sql)
       end
     end
 
     describe Report::Ctes::BucketAllocate do
-      it 'generates the correct select manager SQL' do
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
             width_bucket(EXTRACT(EPOCH FROM "base_table"."start_time_absolute"),
@@ -78,20 +87,15 @@ describe Report::Ctes do
             "base_table"."score"
           FROM "base_table"
         SQL
-        expect(Report::Ctes::BucketAllocate.new.select_manager.to_sql).to eq(expected_sql)
+
+        comparison_sql(actual, expected_sql)
       end
     end
 
     describe Report::Ctes::BucketFirstTag do
       before { create(:tagging) }
 
-      let(:params) do
-        { start_time: '2000-03-26 07:06:59',
-          end_time: '2000-04-26 07:06:59',
-          interval: '1 day' }
-      end
-
-      it 'generates the correct select manager SQL' do
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
             "bucket_allocate"."bucket", "bucket_allocate"."tag_id", "bucket_allocate"."score",
@@ -101,13 +105,13 @@ describe Report::Ctes do
           FROM "bucket_allocate"
           WHERE "bucket_allocate"."bucket" IS NOT NULL
         SQL
-        expect(Report::Ctes::BucketFirstTag.new.select_manager.to_sql).to eq(expected_sql)
 
+        comparison_sql(actual, expected_sql)
       end
     end
 
     describe Report::Ctes::BucketSumUnique do
-      it 'generates the correct select manager SQL' do
+      it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT
             SUM("bucket_first_tag"."is_first_time") AS "sum_new_tags",
@@ -115,7 +119,40 @@ describe Report::Ctes do
           FROM "bucket_first_tag"
           GROUP BY "bucket_first_tag"."bucket"
         SQL
-        expect(Report::Ctes::BucketSumUnique.new.select_manager.to_sql).to eq(expected_sql)
+
+        comparison_sql(actual, expected_sql)
+      end
+    end
+
+    describe Report::Ctes::BucketCumulativeUnique do
+      it 'generates the correct #select_manager SQL' do
+        expected_sql = <<-SQL.squish
+          SELECT
+            "bucket_time_series"."bucket_number",
+            "bucket_time_series"."time_bucket" AS "range",
+            CAST(COALESCE(SUM("bucket_sum_unique"."sum_new_tags") OVER (ORDER BY "bucket_time_series"."bucket_number"), 0) AS int) AS "count"
+          FROM "bucket_time_series"
+          LEFT OUTER JOIN "bucket_sum_unique" ON "bucket_time_series"."bucket_number" = "bucket_sum_unique"."bucket"
+          ORDER BY "bucket_time_series"."bucket_number" ASC
+        SQL
+
+        comparison_sql(actual, expected_sql)
+      end
+    end
+
+    describe Report::Ctes::AggTagAccumulation do
+      it 'generates the correct #select_manager SQL' do
+        expected_sql = <<~SQL.squish
+          SELECT
+            json_agg(row_to_json(t))
+          FROM "bucket_cumulative_unique" AS "t"
+        SQL
+
+        comparison_sql(actual, expected_sql)
+      end
+
+      it 'executes' do
+        expect(subject.execute).to be_a(PG::Result)
       end
     end
   end

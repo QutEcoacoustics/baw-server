@@ -3,11 +3,11 @@
 module Report
   module Ctes
     # Generate a series of tsrange values, one for each bucket in a time series
-    class BucketTsRange < Report::Cte::Node
+    class BucketTimeSeries < Report::Cte::Node
       extend Report::TimeSeries
       include Cte::Dsl
 
-      table_name :bucketed_time_series
+      table_name :bucket_time_series
 
       depends_on bucket_count: Report::Ctes::BucketCount
 

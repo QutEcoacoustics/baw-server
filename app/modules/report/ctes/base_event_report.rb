@@ -15,11 +15,14 @@ module Report
 
       select do
         AudioEvent.joins(:audio_recording, :taggings)
-          .select(accumulation_columns).select_start_absolute.arel
+          .select({ id: :audio_event_id })
+          .select(fields)
+          .select_start_absolute
+          .arel
       end
 
-      def self.accumulation_columns
-        [:id, :tag_id, :score]
+      def self.fields
+        [:tag_id, :score, :provenance_id]
       end
     end
   end

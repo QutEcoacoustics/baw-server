@@ -45,6 +45,7 @@ RSpec:
       # rswag test helper that runs expect
       - run_test!
       - run_test
+      - comparison_sql
 
 # Customized options
 Lint/DeprecatedOpenSSLConstant:
