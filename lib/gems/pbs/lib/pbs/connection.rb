@@ -8,6 +8,7 @@ module PBS
     include Dry::Monads[:result]
     include SSH
     include ::BawApp::Inspector
+    include Limits
 
     inspector excludes: [:@settings, :@key_file, :@logger, :@net_ssh_logger, :@ssh_logger, :@connection,
                          :@status_transformer, :@queue_transformer]
@@ -329,16 +330,14 @@ module PBS
 
       stdout = result.value!.stdout
 
-      max_value = parse_qmgr_list(stdout, 'max_queued')
+      limits = parse_qmgr_limit_list(stdout, 'max_queued', settings.connection.username, settings.pbs.primary_group,
+        nil)
 
       # the value hasn't been set
-      return Success(nil) if max_value.blank?
+      return Success(nil) if limits.empty?
 
-      # 🚨DODGY ALERT:🚨 find the first number and assume it is a limit
-      number = max_value.match(/\d+/)&.values_at(0)&.first
-
-      parsed = number.to_i
-      Success(parsed.zero? ? nil : parsed)
+      # return the lowest limit value:
+      Success(limits.map(&:value).min)
     end
 
     # Gets max_array_size from qmgr.
@@ -356,8 +355,14 @@ module PBS
 
       return Failure("status was non-zero: #{status}") unless status&.zero?
 
-      parsed = parse_qmgr_list(stdout, 'max_array_size').to_i
-      Success(parsed.zero? ? nil : parsed)
+      limits = parse_qmgr_limit_list(stdout, 'max_array_size', settings.connection.username, settings.pbs.primary_group,
+        nil)
+
+      # the value hasn't been set
+      return Success(nil) if limits.empty?
+
+      # return the lowest limit value:
+      Success(limits.map(&:value).min)
     end
 
     # @return [Boolean] true if the connection was established
@@ -425,31 +430,6 @@ module PBS
 
     def queue_transformer
       @queue_transformer ||= PBS::Transformers::QueueTransformer.new
-    end
-
-    # @param lines [Array<String>]
-    # @param search_key [String]
-    # @return [String]
-    def parse_qmgr_list(lines, search_key)
-      lines = lines.split("\n")
-
-      # Server pbs
-      #    max_array_size = 20000
-      #
-
-      lines.find do |line|
-        next if line.start_with?('Server')
-        next if line.blank?
-
-        split = line.split('=', 2)
-
-        raise "Unknown qmgr format for `#{line}` in `#{lines}`" unless split.length == 2
-
-        key = split[0].strip
-        value = split[1].strip
-
-        return value if key == search_key
-      end
     end
 
     def template_script(script, now, options)

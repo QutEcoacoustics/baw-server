@@ -75,6 +75,7 @@ describe PBS::Connection do
 
   describe 'commands' do
     include Dry::Monads[:result]
+
     include_context 'shared_test_helpers'
     include PBSHelpers::Example
 
@@ -311,12 +312,93 @@ describe PBS::Connection do
 
     it 'can fetch max queue size if the value is not set' do
       stdout = <<~OUTPUT
-        Server pbs
+        Server aqua
+            max_queued = [u:user01=0]
+            max_queued = [u:user02=0]
+            max_queued = [u:user03=0]
+            max_queued = [u:user04=0]
+            max_queued = [u:user05=0]
+            max_queued = [u:user06=0]
+            max_queued = [u:user07=0]
+            max_queued = [u:user08=0]
+            max_queued = [u:user09=0]
+            max_queued = [u:user10=0]
+            max_queued = [u:user11=0]
+            max_queued = [u:user12=0]
+            max_queued = [u:user13=0]
+            max_queued = [u:user14=0]
+            max_queued = [u:user15=0]
+            max_queued = [u:user16=0]
+            max_queued = [u:user17=0]
+            max_queued = [u:user18=0]
 
       OUTPUT
       allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
       expect(connection.fetch_max_queued).to eq Success(nil)
+    end
+
+    describe 'limit parsing tests' do
+      let(:stdout) {
+        <<~OUTPUT
+          Server pbs
+              max_queued = [u:PBS_GENERIC=20]
+              max_queued = [o:PBS_ALL=50]
+              max_queued = [g:PBS_GENERIC=40]
+              max_queued = [p:PBS_GENERIC=30]
+              max_queued = [u:user123=5]
+              max_queued = [u:"user with spaces"=15]
+              max_queued = [g:groupname=10]
+              max_queued = [g:'group with spaces'=12]
+              max_queued = [p:projectname=17]
+              max_queued = [u:banned_user=0]
+
+        OUTPUT
+      }
+
+      def choose_lowest_limit(limits)
+        limits.map(&:value).compact.min
+      end
+
+      [
+        ['pbsuser', 'pbsgroup', 'pbsproject', 'generic user', 20],
+        ['user123', 'pbsgroup', 'pbsproject', 'user123', 5],
+        ['user with spaces', 'pbsgroup', 'pbsproject', 'user with spaces', 15],
+        ['pbsuser', 'groupname', 'pbsproject', 'group name', 10],
+        ['afadfads', 'afdfa', 'projectname', 'project name', 17],
+        ['banned_user', 'pbsgroup', 'projectname', 'banned user', 0],
+        [nil, nil, nil, 'generic user (no user matching)', 20],
+        ['pbsuser', 'group with spaces', 'pbsproject', 'group with spaces', 12]
+      ].each do |user, group, project, description, expected_max|
+        it "can parse max_queued when limited by #{description}" do
+          result = connection.send(:parse_qmgr_limit_list, stdout, 'max_queued', user, group, project)
+
+          expect(choose_lowest_limit(result)).to eq expected_max
+        end
+      end
+
+      it 'returns nil if no conditions match' do
+        output = <<~OUTPUT
+          Server pbs
+              max_queued = [u:unknown_user=0]
+        OUTPUT
+
+        result = connection.send(:parse_qmgr_limit_list, output, 'max_queued', 'pbsuser', 'pbsgroup', 'pbsproject')
+
+        expect(choose_lowest_limit(result)).to eq nil
+      end
+
+      it 'can PBS_ALL if it is lower than user' do
+        output = <<~OUTPUT
+          Server pbs
+              max_queued = [o:PBS_ALL=50]
+              max_queued = [u:unknown_user=100]
+        OUTPUT
+
+        result = connection.send(:parse_qmgr_limit_list, output, 'max_queued', 'unknown_user', 'pbsgroup', 'pbsproject')
+
+        expect(choose_lowest_limit(result)).to eq 50
+      end
     end
 
     it 'can fetch max queue size if the value is set to 0' do
@@ -328,11 +410,18 @@ describe PBS::Connection do
       OUTPUT
       allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
 
-      expect(connection.fetch_max_queued).to eq Success(nil)
+      expect(connection.fetch_max_queued).to eq Success(0)
+    end
+
+    it 'can fetch max queue size with more complicated rules' do
+      stdout = <<~OUTPUT
+
+      OUTPUT
+      allow(connection).to receive(:execute).and_return(PBS::Result[0, stdout, nil, nil])
     end
 
     it 'can fetch max array size' do
-      expect(connection.fetch_max_array_size).to eq Success(10_000)
+      expect(connection.fetch_max_array_size).to eq Success(nil)
     end
 
     it 'can fetch max array size if the value is not set' do
