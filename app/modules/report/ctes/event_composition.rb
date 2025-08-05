@@ -109,5 +109,17 @@ module Report
           .order(Arel.sql('distinct_tags.tag_id'), bucket_time_series[:bucket_number])
       end
     end
+
+    class EventCompositionAggregate < Report::Cte::Node
+      include Cte::Dsl
+      table_name :composition_aggregate
+      depends_on composition_series: Report::Ctes::EventComposition
+      select do
+        composition_series_aliased = composition_series.as('c')
+        Arel::SelectManager.new
+          .project(composition_series_aliased.right.json_agg)
+          .from(composition_series_aliased)
+      end
+    end
   end
 end

@@ -79,10 +79,13 @@ module Report
       # Returns `select` as an Arel::SelectManager.
       # @return [Arel::SelectManager]
       def select_manager
-        if select.is_a?(Arel::SelectManager)
+        case select
+        when Arel::SelectManager
           select
-        elsif select.is_a?(Arel::Nodes::SqlLiteral)
+        when Arel::Nodes::SqlLiteral
           Arel::SelectManager.new.project(select)
+        when Arel::Nodes::UnionAll
+          select
         else
           raise ArgumentError, "Unsupported select type: #{select.class.name} for node: #{name}"
         end
@@ -170,8 +173,8 @@ module Report
         select_expr = select_manager
         return select_expr if dependencies.empty?
 
-        # Collect all dependency nodes (but not self, so root is false) and get
-        # their Arel node representations.
+        # Collect all dependency Cte::Node nodes (but not self, so root is
+        # false) and get their Arel::Nodes node representations.
         dependency_arel_nodes = collect(registry, root: false).map(&:node)
 
         select_expr.with(dependency_arel_nodes)

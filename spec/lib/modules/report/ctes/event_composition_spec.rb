@@ -1,29 +1,17 @@
 # frozen_string_literal: true
 
-describe Report::Ctes::BaseVerification do
-  before do
-    create(:audio_event_tagging,
-      tag: create(:tag),
-      confirmations: ['correct'],
-      users: [create(:user)])
-  end
-
-  it 'executes' do
-    expect(Report::Ctes::BaseVerification.new.execute).to be_a(PG::Result)
-  end
-end
-
 describe 'Report Composition Ctes' do
   include SqlHelpers::Example
 
   let(:params) do
     { start_time: '2000-03-26 07:06:59',
-    end_time: '2000-04-26 07:06:59',
-    interval: '1 day' }
+      end_time: '2000-04-26 07:06:59',
+      interval: '1 day' }
   end
 
   describe Report::Ctes::EventComposition do
     subject { Report::Ctes::EventComposition.new(options: params) }
+
     let(:actual) { subject.select_manager.to_sql }
 
     before do
@@ -102,6 +90,38 @@ describe 'Report Composition Ctes' do
 
     it 'summarised the correct number of Event/Tags' do
       expect(subject.execute.pluck('count').sum).to eq(Tagging.count)
+    end
+  end
+
+  describe Report::Ctes::EventCompositionAggregate do
+    subject { Report::Ctes::EventCompositionAggregate.new(options: params) }
+
+    let(:params) do
+      { start_time: '2000-03-26 07:06:59',
+        end_time: '2000-04-26 07:06:59',
+        interval: '1 day' }
+    end
+
+    let(:actual) { subject.select_manager.to_sql }
+
+    before do
+      create(
+        :audio_event_tagging,
+        tag: create(:tag),
+        confirmations: ['correct'],
+        users: [create(:user)]
+      )
+    end
+
+    it 'generates the correct #select_manager SQL' do
+      expected_sql = <<~SQL.squish
+        SELECT json_agg(c) FROM "composition_series" AS "c"
+      SQL
+      comparison_sql(subject.select_manager.to_sql, expected_sql)
+    end
+
+    it 'executes and returns a PG::Result' do
+      expect(subject.execute).to be_a(PG::Result)
     end
   end
 end

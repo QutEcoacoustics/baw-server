@@ -5,9 +5,9 @@ module Report
     # Base class for event reports that use time series data.
 
     # @see Report::Ctes::BucketAllocate
-    # @see Report::Ctes::BucketFirstTag
-    # @see Report::Ctes::BucketTsRange
-    # @see Report::Ctes::TsRangeAndInterval
+    # @see Report::Ctes::BaseVerification
+    # @see Report::Ctes::SortWithLag
+    # @see Report::Ctes::EventComposition
     class BaseEventReport < Report::Cte::Node
       include Cte::Dsl
 
@@ -18,11 +18,12 @@ module Report
           .select({ id: :audio_event_id })
           .select(fields)
           .select_start_absolute
+          .select(AudioRecording.arel_recorded_end_date.as('end_date'))
           .arel
       end
 
       def self.fields
-        [:tag_id, :score, :provenance_id]
+        [:tag_id, :score, :provenance_id, :recorded_date, :duration_seconds]
       end
     end
   end

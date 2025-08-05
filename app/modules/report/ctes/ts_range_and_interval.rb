@@ -17,10 +17,7 @@ module Report
 
       select do
         lower, upper, interval = options.values_at(:start_time, :end_time, :interval)
-        arel_tsrange_expr = Report::TimeSeries.arel_tsrange(
-          Report::TimeSeries.arel_cast_datetime(lower),
-          Report::TimeSeries.arel_cast_datetime(upper)
-        ).as('time_range')
+        arel_tsrange_expr = Report::TimeSeries.arel_tsrange(lower, upper).as('time_range')
         bucket_interval_expr = Report::TimeSeries.arel_interval(interval).as('bucket_interval')
         Arel::SelectManager.new.project(arel_tsrange_expr, bucket_interval_expr)
       end

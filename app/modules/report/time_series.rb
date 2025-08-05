@@ -129,14 +129,16 @@ module Report
 
     # Return a tsrange expression for the given start and end dates
     def arel_tsrange(start_date, end_date)
-      start_date = arel_cast_datetime(start_date) if start_date.is_a?(DateTime)
-      end_date = arel_cast_datetime(end_date) if end_date.is_a?(DateTime)
+      start_date = arel_cast_datetime(start_date)
+      end_date = arel_cast_datetime(end_date)
       Arel::Nodes::NamedFunction.new('tsrange', [start_date, end_date, Arel.quoted('[)')])
     end
 
     # Casts a given expression to a datetime type
+    # ! check which one is appropriate
     def arel_cast_datetime(expr)
-      Arel.quoted(expr).cast(:datetime)
+      Arel.quoted(expr).cast(:datetime) # => CAST('2000-01-01T12:12:12' AS timestamp without time zone
+      # if using .cast(:time) instead:    => CAST('2000-01-01T12:12:12' AS time)
     end
 
     # Returns an upper function call for the given expression
