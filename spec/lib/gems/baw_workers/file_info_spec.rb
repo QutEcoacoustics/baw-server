@@ -244,7 +244,19 @@ describe BawWorkers::FileInfo do
                 recorded_date_local: '2015-07-27T13:31:38.000+00:00',
                 recorded_date: '2015-07-27T13:31:38.000Z',
                 prefix: '', separator: 'T', suffix: '',
+                extension: 'wav' },
+        '20160506$175304.wav' =>
+              { raw: {
+                  year: '2016', month: '05', day: '06',
+                  hour: '17', min: '53', sec: '04',
+                  offset: '', ext: 'wav'
+                },
+                utc_offset: '+00:00',
+                recorded_date_local: '2016-05-06T17:53:04.000+00:00',
+                recorded_date: '2016-05-06T17:53:04.000+00:00',
+                prefix: '', separator: '$', suffix: '',
                 extension: 'wav' }
+
       }.each do |file_name, expected_hash|
         expect_correct_file_name(file_name, expected_hash)
       end

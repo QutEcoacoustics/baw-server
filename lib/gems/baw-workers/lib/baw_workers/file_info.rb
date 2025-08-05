@@ -143,7 +143,7 @@ module BawWorkers
       ext = File.extname(file).trim('.', '').downcase
 
       is_excluded_ext = false
-      is_excluded_ext = ext_exclude.include?(ext) unless ext_exclude.blank?
+      is_excluded_ext = ext_exclude.include?(ext) if ext_exclude.present?
 
       ext_include.include?(ext) && !is_excluded_ext
     end
@@ -165,7 +165,7 @@ module BawWorkers
     # @param [string] value
     # @return [Boolean]
     def time_offset?(value)
-      !value.blank? && value =~ UTC_OFFSET_REGEX
+      value.present? && value =~ UTC_OFFSET_REGEX
     end
 
     # Get info from upload dir file name.
@@ -194,7 +194,7 @@ module BawWorkers
         result[:prefix] = ''
         result[:separator] = '_'
         result[:suffix] = ''
-        result[:extension] = extension.blank? ? '' : extension
+        result[:extension] = (extension.presence || '')
       end
       result
     end
@@ -205,12 +205,12 @@ module BawWorkers
     # @return [Hash] info from file name
     def file_name_datetime(file_name, utc_offset = nil, throw: true)
       result = {}
-      regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
+      regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T|\$)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
         result[:raw] = {
           year:, month:, day:,
           hour:, min: minute, sec: second,
-          offset: offset.blank? ? '' : offset,
+          offset: offset.presence || '',
           ext: extension
         }
         available_offset = offset || utc_offset
@@ -231,10 +231,10 @@ module BawWorkers
         end => recorded_date
         result[:recorded_date] = recorded_date
 
-        result[:prefix] = prefix.blank? ? '' : prefix
-        result[:separator] = separator.blank? ? '' : separator
-        result[:suffix] = suffix.blank? ? '' : suffix
-        result[:extension] = extension.blank? ? '' : extension
+        result[:prefix] = (prefix.presence || '')
+        result[:separator] = (separator.presence || '')
+        result[:suffix] = (suffix.presence || '')
+        result[:extension] = (extension.presence || '')
       end
       result
     end
