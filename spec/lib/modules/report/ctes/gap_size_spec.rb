@@ -52,7 +52,7 @@ describe Report::Ctes::Coverage::CoverageEventsSortedSum do
       end_time: Time.new('2000-04-26T07:06:59').iso8601,
       scaling_factor: 1920,
       lower_field: :recorded_date,
-      upper_field: :end_date
+      upper_field: :end_date # see Report::Ctes::BaseEventReport
     }
   }
 

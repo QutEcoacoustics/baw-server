@@ -54,9 +54,9 @@ module Report
       end
 
       def default_dependencies(dependencies)
-        # Merge into any templated dependencies if they are defined in the
-        # parent class (in the case of subclassing Node with the Cte::Dsl
-        # module).
+        # The dependency arguement allows overriding the default dependencies
+        # defined in the template class. Merging the dependency argument
+        # into any templated dependencies allows for partial overrides.
         self.class.respond_to?(:_depends_on) ? self.class._depends_on.merge(dependencies) : dependencies
       end
 
@@ -170,7 +170,8 @@ module Report
       # @param registry [Hash] Registry for dependency injection
       # @return [Arel::SelectManager]
       def to_arel(registry = {})
-        select_expr = select_manager
+        # otherwise the select manager is modified by #with
+        select_expr = select_manager.dup
         return select_expr if dependencies.empty?
 
         # Collect all dependency Cte::Node nodes (but not self, so root is

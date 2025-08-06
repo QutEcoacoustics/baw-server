@@ -13,7 +13,7 @@ module Report
       select do
         cumulative_table_aliased = bucket_cumulative_unique.as('t')
         Arel::SelectManager.new
-          .project(cumulative_table_aliased.right.row_to_json.json_agg)
+          .project(cumulative_table_aliased.right.row_to_json.json_agg.as('accumulation_series'))
           .from(cumulative_table_aliased)
       end
     end

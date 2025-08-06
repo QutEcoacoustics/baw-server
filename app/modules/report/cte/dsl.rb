@@ -66,8 +66,8 @@ module Report
         # the dependency node.
         #
         # @param dependencies [Hash{Symbol => Class, Node}]
-        def depends_on(**deps)
-          @_depends_on = deps
+        def depends_on(**deps, &blk)
+          @_depends_on = blk ? blk.call : deps
         end
 
         # DSL method to set default options for the Cte

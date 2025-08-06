@@ -336,8 +336,11 @@ module Report
           fields = fields.merge('type' => final_coverage[:result]) if options[:analysis_result]
 
           json = Arel.json(fields)
+
           project_field_as = options[:project_field_as]
 
+          # maybe just make this a fixed string
+          # and then in the report Cte you are writing the aliases you want anyway
           final_coverage
             .project(json.json_agg.as(project_field_as.to_s))
         end

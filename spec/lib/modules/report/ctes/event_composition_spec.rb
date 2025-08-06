@@ -9,8 +9,8 @@ describe 'Report Composition Ctes' do
       interval: '1 day' }
   end
 
-  describe Report::Ctes::EventComposition do
-    subject { Report::Ctes::EventComposition.new(options: params) }
+  describe Report::Ctes::CompositionSeries do
+    subject { Report::Ctes::CompositionSeries.new(options: params) }
 
     let(:actual) { subject.select_manager.to_sql }
 
@@ -93,8 +93,8 @@ describe 'Report Composition Ctes' do
     end
   end
 
-  describe Report::Ctes::EventCompositionAggregate do
-    subject { Report::Ctes::EventCompositionAggregate.new(options: params) }
+  describe Report::Ctes::EventComposition do
+    subject { Report::Ctes::EventComposition.new(options: params) }
 
     let(:params) do
       { start_time: '2000-03-26 07:06:59',
@@ -105,12 +105,9 @@ describe 'Report Composition Ctes' do
     let(:actual) { subject.select_manager.to_sql }
 
     before do
-      create(
-        :audio_event_tagging,
-        tag: create(:tag),
-        confirmations: ['correct'],
-        users: [create(:user)]
-      )
+      create(:user) { |user|
+        create(:audio_event_tagging, creator: user, tag: create(:tag), confirmations: ['correct'], users: [user])
+      }
     end
 
     it 'generates the correct #select_manager SQL' do
