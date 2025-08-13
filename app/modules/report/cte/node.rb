@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Report
+  # Everthing is a Cte node
   module Cte
     # Represent a Cte node in a dependency graph.
     #
@@ -218,6 +219,7 @@ module Report
       def call_block_with_dependencies
         resolved_deps = dependencies.transform_values(&:table)
         Report::Cte::SelectContext.execute_with_context(
+          @name,
           @select_block,
           resolved_deps,
           @options

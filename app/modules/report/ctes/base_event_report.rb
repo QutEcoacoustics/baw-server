@@ -24,17 +24,20 @@ module Report
           .arel
           .project(
             provenance[:score_minimum].as('provenance_score_minimum'),
-            provenance[:score_maximum].as('provenance_score_maximum')
+            provenance[:score_maximum].as('provenance_score_maximum'),
+            analysis_jobs_items[:result].as('result')
           )
+          .join(analysis_jobs_items, Arel::Nodes::OuterJoin)
+          .on(analysis_jobs_items[:audio_recording_id].eq(audio_events[:audio_recording_id]))
       end
 
       def self.fields
         [:tag_id, :score, :provenance_id, :recorded_date, :duration_seconds]
       end
 
-      def self.provenance
-        Provenance.arel_table
-      end
+      def self.audio_events = AudioEvent.arel_table
+      def self.provenance = Provenance.arel_table
+      def self.analysis_jobs_items = AnalysisJobsItem.arel_table
     end
   end
 end
