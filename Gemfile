@@ -221,7 +221,8 @@ group :development do
   gem 'debug'
 
   # a ruby language server
-  # temporarily pinned to 0.54.5 because of a bug in 0.55.0 that reduces performance
+  gem 'ruby-lsp'
+  # solargraph is so slow, we're moving away from it
   gem 'solargraph', '>= 0.56.1'
   gem 'solargraph-rails', '>= 0.3.1'
 
