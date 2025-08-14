@@ -114,16 +114,24 @@ describe AudioEventImportFile do
     it 'works for a file with a path' do
       model = create(:audio_event_import_file, :with_path)
 
-      with_field = AudioEventImportFile.where(id: model.id).left_outer_joins(:file_blob).select(AudioEventImportFile.name_arel.as('name')).first
-      
+      AudioEventImportFile
+        .where(id: model.id)
+        .left_outer_joins(:file_blob)
+        .select(AudioEventImportFile.name_arel.as('name'))
+        .first => with_field
+
       expect(with_field[:name]).to eq(File.basename(model.path))
     end
 
     it 'works for a file with an attached file' do
       model = create(:audio_event_import_file, :with_file)
 
-      with_field = AudioEventImportFile.where(id: model.id).left_outer_joins(:file_blob).select(AudioEventImportFile.name_arel.as('name')).first
-      
+      AudioEventImportFile
+        .where(id: model.id)
+        .left_outer_joins(:file_blob)
+        .select(AudioEventImportFile.name_arel.as('name'))
+        .first => with_field
+
       expect(with_field[:name]).to eq(model.file.blob.filename.to_s)
     end
   end
