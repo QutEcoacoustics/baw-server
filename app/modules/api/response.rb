@@ -99,7 +99,6 @@ module Api
       # project using filter projection or default fields
       effective_projection = opts[:projected_fields]
       unless effective_projection.is_a?(Set)
-        debugger
         raise 'effective_projection must be an Set'
       end
 
