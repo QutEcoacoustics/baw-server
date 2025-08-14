@@ -50,7 +50,7 @@ FactoryBot.define do
       shared_project { create(:project) }
     end
     region { create(:region, project: shared_project) }
-    projects { [region.project] }
+    projects { region.present? ? [region.project] : [shared_project] }
 
     trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"

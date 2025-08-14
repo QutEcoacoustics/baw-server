@@ -9,6 +9,10 @@ module Baw
       Baw::Arel::Nodes::ArrayConstructor.new(expressions)
     end
 
+    def seconds(seconds)
+      Baw::Arel::Nodes::MakeInterval.new(seconds:)
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.

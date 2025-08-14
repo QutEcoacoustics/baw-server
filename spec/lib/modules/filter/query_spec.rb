@@ -92,7 +92,7 @@ describe Filter::Query do
             filter: {
               not: {
                 recorded_date: {
-                  contains: 'Hello'
+                  contains: '2025-01-01'
                 },
                 site_id: {
                   contains: 'Hello'
@@ -111,7 +111,7 @@ describe Filter::Query do
             filter: {
               not: {
                 recorded_date: {
-                  contains: 'Hello',
+                  contains: '2025-01-01',
                   eq: 2
                 }
               }
@@ -251,6 +251,7 @@ describe Filter::Query do
     end
 
     it 'occurs when projection includes duplicate fields' do
+      # AT 2025: with new projection syntax, this is no longer an error
       expect {
         create_filter(
           {
@@ -268,7 +269,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Must not contain duplicate fields/)
+      }.not_to raise_error
     end
 
     it 'occurs when projection has both include and exclude' do
@@ -292,7 +293,8 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Projections hash must have exactly 1 entry, got 2/)
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        /must have exactly 1 of \[`include`, `exclude`\] if using legacy projection/)
     end
 
     it 'occurs when projection has empty include' do
@@ -309,7 +311,7 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Include must contain at least one field/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /field list for `include` must not be empty/)
     end
 
     it 'occurs with a deformed \'in\' filter' do
@@ -389,7 +391,7 @@ describe Filter::Query do
 
       complex_result = <<~SQL.squish
         SELECT ("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval))
+        make_interval(secs => "audio_recordings"."duration_seconds"))
         AS "recorded_end_date"
         FROM "audio_recordings"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
@@ -475,8 +477,17 @@ describe Filter::Query do
         ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
         WHERE ("audio_recordings"."deleted_at" IS NULL)
         AND ("audio_recordings"."status" = 'ready')
-        AND ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 0
-        ORDER BY "audio_recordings"."recorded_date" DESC
+        AND ("audio_recordings"."id"
+        IN (
+        SELECT "audio_recordings"."id"
+        FROM "audio_recordings"
+        LEFT
+        OUTER
+        JOIN "audio_events"
+        ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
+        WHERE ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 0))
+        ORDER BY "audio_recordings"."recorded_date"
+        DESC
         LIMIT 25
         OFFSET 0
       SQL
@@ -1330,7 +1341,8 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL.squish
-        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score"
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score", ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
+        AS "duration_seconds"
         FROM "audio_events"
         INNER JOIN "audio_recordings"
         ON ("audio_recordings"."deleted_at"
@@ -1379,7 +1391,7 @@ describe Filter::Query do
         AND "ae_ref"."id" = "audio_events"."id")))
         AND (("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds") > 3)
         ORDER
-        BY ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
+        BY "duration_seconds"
         ASC
         LIMIT 25
         OFFSET 0
@@ -1447,9 +1459,9 @@ describe Filter::Query do
         TRUE)))))
         AND ("audio_recordings"."status" = 'ready')
         AND (("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) < '2016-03-01T02:00:00')
+        make_interval(secs => "audio_recordings"."duration_seconds")) < '2016-03-01 02:00:00')
         AND (("audio_recordings"."recorded_date" +
-        CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) > '2016-03-01T01:50:00')
+        make_interval(secs => "audio_recordings"."duration_seconds")) > '2016-03-01 01:50:00')
         ORDER
         BY "audio_recordings"."recorded_date"
         DESC

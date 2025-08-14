@@ -72,7 +72,7 @@ resource 'Tags' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    expected_paths = Array[
+    expected_paths = [
       'id',
       'text',
       'is_taxonomic',
@@ -82,7 +82,7 @@ resource 'Tags' do
       'updater_id',
       'created_at',
       'updated_at',
-      'notes',
+      'notes'
     ].map { |path| "data/0/#{path}" }
 
     tag_extras_id_params
@@ -151,7 +151,7 @@ resource 'Tags' do
   end
 
   get '/tags' do
-    expected_paths = Array[
+    expected_paths = [
       'id',
       'text',
       'is_taxonomic',
@@ -161,7 +161,7 @@ resource 'Tags' do
       'updater_id',
       'created_at',
       'updated_at',
-      'notes',
+      'notes'
     ].map { |path| "data/0/#{path}" }
 
     tag_extras_id_params
@@ -378,7 +378,7 @@ resource 'Tags' do
         expected_json_path: 'data/0/is_taxonomic',
         data_item_count: 1,
         response_body_content: ['"retired":false',
-                                '"projection":{"include":["id","text","is_taxonomic","retired"]}']
+                                '"projection":{"only":["id","text","is_taxonomic","retired"]}']
       })
   end
 

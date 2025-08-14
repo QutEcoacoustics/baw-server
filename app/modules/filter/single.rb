@@ -15,6 +15,12 @@ module  Filter
 
     attr_reader :table
 
+    # The fields actually requested by any projection (default or not)
+    # after flattening. If projection was not requested this will be equivalent to `render_fields`.
+    # Nil if `query_projection` was not called.
+    # @return [Set<Symbol>]
+    attr_reader :projected_fields
+
     def initialize(parameters, model, filter_settings)
       @model = model
       @table = relation_table(model)
@@ -47,16 +53,20 @@ module  Filter
     # @return [ActiveRecord::Relation] the modified query
     def query_additional_fields(query)
       # select  all the default fields
-      projections = [Arel.star]
+      projections = [table[Arel.star]]
       # also select any fields that are in the render filter setting and append them on
-      @custom_fields2.each do |key, _value|
+      @custom_fields2.each_key do |key|
         # if a custom field is not in render, then we assume it is not rendered by default
         next unless @render_fields.include?(key)
 
-        projections.push(project_custom_field(@table, key))
+        projections.push(project_custom_field(@table, key, @custom_fields2))
       end
 
-      projections = projections.flatten.compact
+      # set projected_fields to render_fields. This works pretty differently from
+      # Filter::Query but it's equivalent because we don't allow customization of the
+      # projection in this class.
+      # If the above lines change, then this line should also change.
+      @projected_fields = @render_fields.to_set
 
       apply_projections(query, projections)
     end

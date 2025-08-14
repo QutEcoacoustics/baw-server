@@ -59,6 +59,23 @@ module Api
       @resource_class ||= resource_path.classify.constantize
     end
 
+    # Only needed for single responses because for filter/index responses
+    # We can customize the projection and that is passed through in opts.
+    # No customization for single responses, so we use the default projected fields.
+    def default_projected_fields_for_single
+      filter_settings[:render_fields].to_set
+    end
+
+    # The default parameters to give to filter query single.
+    def default_filter_parameters_for_single
+      {
+        # by default allow archived records to be loaded
+        # we can issue GONE responses if the record is archived
+        # If we're not allowed access `check_if_archived` will raise an error
+        Archivable::ARCHIVE_ACCESS_PARAM => true
+      }
+    end
+
     # Simply gets the id route parameter.
     # Defined so you can override it in your controller if you need to.
     # @return [String, Integer, nil]
@@ -86,6 +103,8 @@ module Api
     end
 
     def respond_index(opts = {})
+      opts[:projected_fields] ||= default_projected_fields_for_single
+
       items = get_resource_plural.map { |item|
         Settings.api_response.prepare(item, current_user, nil, opts)
       }
@@ -97,11 +116,14 @@ module Api
 
     # also used for update_success and new
     def respond_show(additional_data = nil)
-      item_resource = get_resource
+      item_resource = get_or_reload_resource
 
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
+      opts = {
+        projected_fields: default_projected_fields_for_single
+      }
 
-      opts = {}
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
+
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
 
       built_response = Settings.api_response.build(:ok, item, opts)
@@ -122,11 +144,13 @@ module Api
     end
 
     def respond_create_success(location = nil, additional_data = nil)
-      item_resource = get_resource
+      item_resource = get_or_reload_resource
 
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
+      opts = {
+        projected_fields: default_projected_fields_for_single
+      }
 
-      opts = {}
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
 
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
 
@@ -149,7 +173,13 @@ module Api
 
     def respond_change_fail_with_resource(additional_data = nil)
       item_resource = get_resource
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data)
+      item_resource = get_or_reload_resource if item_resource.persisted?
+
+      opts = {
+        projected_fields: default_projected_fields_for_single
+      }
+
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
 
       built_response = Settings.api_response.build(
         :unprocessable_content,
@@ -299,16 +329,11 @@ module Api
     end
 
     def do_load_resource
-      # by default allow archived records to be loaded
-      # we can issue GONE responses if the record is archived
-      # If we're not allowed access `check_if_archived` will raise an error
-      parameters = { Archivable::ARCHIVE_ACCESS_PARAM => true }
-
       # we augment the query here to allow us to fetch information needed for custom fields
       # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
-      query = Filter::Single.new(parameters, resource_class, filter_settings).query
+      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
 
-      resource = find_resource(query)
+      resource = find_resource(current_filter.query)
 
       set_resource(resource)
     end
@@ -322,10 +347,9 @@ module Api
       raise ArgumentError, 'find_keys must not be empty' if find_keys.blank?
       raise ArgumentError, 'find_keys must contain symbols' unless find_keys.all?(Symbol)
 
-      parameters = { Archivable::ARCHIVE_ACCESS_PARAM => true }
-      query = Filter::Single.new(parameters, resource_class, filter_settings).query
+      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
 
-      resource = query.find_by(upsert_params.slice(*find_keys))
+      resource = current_filter.query.find_by(upsert_params.slice(*find_keys))
 
       if resource.nil?
         do_new_resource
@@ -334,6 +358,34 @@ module Api
         set_resource(resource)
         do_set_attributes(upsert_params.except(*find_keys))
       end
+    end
+
+    # To return any resource that has custom fields,
+    # we need to reload it to ensure the custom fields are calculated.
+    def get_or_reload_resource
+      resource = get_resource
+
+      raise 'Resource not set' if resource.nil?
+      # In two cases (dry commit for AEIF, and failed validation for AEIF)
+      # the resource is not saved. In this case there's no way we can return
+      # custom fields if the object isn't in the database.
+      return resource unless resource.persisted?
+
+      # If custom_field2 isn't even in the resource, not reason to continue
+      return resource unless filter_settings in { render_fields:, custom_fields2: }
+
+      custom_calculated_fields = custom_fields2.keys.filter { |key| Filter::CustomField.custom_field_is_calculated?(key, custom_fields2) }
+      render_fields_include_custom_fields = render_fields.intersect?(custom_calculated_fields)
+
+      return resource unless render_fields_include_custom_fields
+
+      # we augment the query here to allow us to fetch information needed for custom fields
+      # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
+      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
+
+      resource = current_filter.query.find(resource.id)
+
+      set_resource(resource)
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)

@@ -52,7 +52,12 @@ resource 'Sites' do
   create_entire_hierarchy
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryBot.attributes_for(:site).except(:projects).merge(project_ids: [project.id]) }
+  let(:post_attributes) {
+    FactoryBot
+      .attributes_for(:site)
+      .except(:projects).merge(project_ids: [project.id])
+      .except(:region).merge(region_id: region.id)
+  }
   let(:post_attributes_with_lat_long) { FactoryBot.attributes_for(:site, :with_lat_long) }
 
   ################################
@@ -741,7 +746,7 @@ resource 'Sites' do
       expected_json_path: 'data/0/project_ids/0',
       data_item_count: 1,
       regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
-      response_body_content: '"projection":{"include":["id","name"]}',
+      response_body_content: '"projection":{"only":["id","name"]}',
       invalid_content: '"project_ids":[{"id":'
     )
   end
@@ -874,7 +879,7 @@ resource 'Sites' do
       expected_json_path: 'data/0/project_ids/0',
       data_item_count: 1,
       regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
-      response_body_content: '"projection":{"include":["id","name"]}',
+      response_body_content: '"projection":{"only":["id","name"]}',
       invalid_content: '"project_ids":[{"id":'
     )
   end

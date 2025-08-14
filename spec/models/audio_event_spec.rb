@@ -128,15 +128,17 @@ describe AudioEvent do
     }
 
     let!(:audio_event) {
-      create(:audio_event, start_time_seconds: 123.456, end_time_seconds: 456.789)
+      create(:audio_event, start_time_seconds: 123.456, end_time_seconds: 456.789, audio_recording:)
     }
 
     let(:event) {
       AudioEvent
         .joins(:audio_recording)
-        .select(AudioEvent.start_date_arel.as('start_date'))
-        .where(audio_event_id: audio_event.id)
-        .first
+        .select(
+          AudioEvent.start_date_arel.as('start_date'),
+          AudioEvent.end_date_arel.as('end_date')
+        )
+        .find(audio_event.id)
     }
 
     it 'has a start_date arel expression' do

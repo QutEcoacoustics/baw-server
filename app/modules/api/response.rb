@@ -69,14 +69,13 @@ module Api
       additional_data.deep_transform_keys!(&:to_s)
 
       filter_settings = item.class.filter_settings
-      item_new = item
 
       # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
       custom_fields_is_lambda = custom_fields.present? && custom_fields.lambda?
       custom_fields_hash = {}
-      if custom_fields_is_lambda && !item_new.nil? && !item_new.id.nil?
-        item_new, custom_fields_hash = custom_fields.call(item, user)
+      if custom_fields_is_lambda && !item.nil? && !item.id.nil?
+        item, custom_fields_hash = custom_fields.call(item, user)
         custom_fields_hash.transform_keys!(&:to_s)
       end
       custom_fields_keys = custom_fields_hash.keys
@@ -91,31 +90,29 @@ module Api
         .transform_keys(&:to_s)
 
       hashed_item = {}.merge(
-        item_new&.as_json,
+        item&.as_json,
         additional_data,
         custom_fields_hash,
         custom_fields_hash2
       )
 
       # project using filter projection or default fields
-      # Note: most queries with a projection already only return required fields
-      # but some don't... currently those using custom_filter_2
-      projection = opts[:projection]
-      if projection
-        if projection[:include]
-          # backwards compatible hack: custom fields always used to be included,
-          # no matter the projection
-          hashed_item.slice(*(projection[:include].map(&:to_s) + custom_fields_keys))
-        else
-          hashed_item.except(*projection[:exclude].map(&:to_s))
-        end => hashed_item
-      else
-        default_fields = filter_settings[:render_fields] +
-                         custom_fields_keys +
-                         # rendered by default but not defined is filter settings
-                         additional_data.keys
-        hashed_item = hashed_item.slice(*default_fields.map(&:to_s))
+      effective_projection = opts[:projected_fields]
+      unless effective_projection.is_a?(Set)
+        debugger
+        raise 'effective_projection must be an Set'
       end
+
+      (effective_projection +
+       # backwards compatible hack: custom fields always used to be included,
+       # no matter the projection
+       custom_fields_keys +
+       # rendered by default but not defined is filter settings
+       additional_data.keys
+      ) => final_rendered_fields
+
+      # subset the item to only include the fields we want
+      hashed_item = hashed_item.slice(*final_rendered_fields.map(&:to_s))
 
       # Now that the projection is applied, transform any remaining
       # custom values.
@@ -173,7 +170,7 @@ module Api
       result[:meta][:warning] = opts[:warning] if opts[:warning].present?
 
       # include projection/filter if given
-      result[:meta][:projection] = opts[:projection] if opts[:projection].present?
+      result[:meta][:projection] = opts[:projection].filter { |_, value| !value.empty? } if opts[:projection].present?
 
       result[:meta][:filter] = opts[:filter] if opts[:filter].present?
 
@@ -313,7 +310,7 @@ module Api
       filter_settings = klass&.try(:filter_settings)
 
       # check we can get filter settings and that capabilities are defined for this class
-      unless filter_settings in {capabilities: Hash}
+      unless filter_settings in { capabilities: Hash }
         opts[:capabilities] = nil
         return
       end
@@ -351,6 +348,8 @@ module Api
       opts[:filter] = filter_query.filter if filter_query.filter.present?
       opts[:filter_without_defaults] = filter_query.supplied_filter if filter_query.supplied_filter.present?
       opts[:projection] = filter_query.projection if filter_query.projection.present?
+      # projected_fields is not nil if query_projection was called, which always was with query_without_paging_sorting
+      opts[:projected_fields] = filter_query.projected_fields
       opts[:capabilities] = filter_query.capabilities if filter_query.capabilities.present?
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,

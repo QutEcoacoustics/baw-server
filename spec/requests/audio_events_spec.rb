@@ -155,6 +155,9 @@ describe '/audio_events' do
           'isReference' => { 'eq' => true }
         },
         'paging' => { 'items' => 10, 'page' => 1 },
+        'projection' => {
+          'include' => ['id', 'start_time_seconds', 'end_time_seconds', 'durationSeconds', 'is_reference']
+        },
         'sorting' => {
           'orderBy' => 'durationSeconds',
           'direction' => 'desc'
@@ -198,16 +201,19 @@ describe '/audio_events' do
       ]
     end
 
-    it 'can filter by audio_event_import_file paths' do
+    it 'can filter by audio_event_import_file file names for analysis job results' do
       event = build(:audio_event_import_file, path: 'ology.csv', analysis_jobs_item:)
         .tap { |import| import.save(validate: false) }
         .then { |import| create(:audio_event, creator: reader_user, audio_recording:, audio_event_import_file: import) }
 
       body = {
         filter: {
-          'audio_event_import_files.path' => {
+          'audio_event_import_files.name' => {
             contains: 'ology'
           }
+        },
+        projection: {
+          include: ['audio_event_import_files.name', 'id']
         }
       }
 
@@ -217,6 +223,39 @@ describe '/audio_events' do
 
       expect_number_of_items(1)
       expect(api_data.first[:id]).to eq(event.id)
+    end
+
+    it 'can filter by audio_event_import_file file names for uploaded files' do
+      event = build(:audio_event_import_file, :with_file)
+        .tap { |import| import.save(validate: false) }
+        .then { |import| create(:audio_event, creator: reader_user, audio_recording:, audio_event_import_file: import) }
+
+      body = {
+        filter: {
+          'audio_event_import_files.name' => {
+            contains: 'csv'
+          }
+        },
+        projection: {
+          include: ['audio_event_import_files.name', 'id']
+        },
+        sorting: {
+          order_by: 'audio_event_import_files.name',
+          direction: 'asc'
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+
+      # why 3?
+      # - 2 exiting files were made for existing audio events (and these simulate analysis job results)
+      # - 1 new file was 'uploaded' and is the fixture created for this test
+      expect_number_of_items(3)
+      existing_ids = AudioEvent.all.where.not(audio_event_import_file: nil).pluck(:id).to_set
+      existing_ids.add(event.id)
+      expect(api_data.pluck(:id)).to match_array(existing_ids)
     end
 
     it 'can filter by events that are verified' do

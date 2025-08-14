@@ -563,6 +563,6 @@ class AudioRecording < ApplicationRecord
   def self.arel_timezone
     site = Site.arel_table
     analysis_job = AudioRecording.arel_table
-    Arel.grouping(site.where(analysis_job[:site_id] == site[:id]).project(:tzinfo_tz))
+    Arel.grouping(site.where(analysis_job[:site_id].eq(site[:id])).project(:tzinfo_tz))
   end
 end

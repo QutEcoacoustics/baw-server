@@ -6,13 +6,11 @@ require 'active_support/concern'
 # Provides common validations for composing queries.
 module Filter
   module Validate
-    extend ActiveSupport::Concern
-
     # using Arel https://github.com/rails/arel
     # http://robots.thoughtbot.com/using-arel-to-compose-sql-queries
     # http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
-    private
+    module_function
 
     # Validate sorting values.
     # @param [Symbol] order_by
@@ -138,6 +136,13 @@ module Filter
       raise CustomErrors::FilterArgumentError, "Query must be ActiveRecord::Relation, got #{query.class}"
     end
 
+    def validate_query_or_select_manager(query)
+      return if query.is_a?(ActiveRecord::Relation) || query.is_a?(Arel::SelectManager)
+
+      raise CustomErrors::FilterArgumentError,
+        "Query must be ActiveRecord::Relation or Arel::SelectManager, got #{query.class}"
+    end
+
     # Validate condition value.
     # @param [Arel::Nodes::Node] condition
     # @raise [FilterArgumentError] if condition is not an Arel::Nodes::Node
@@ -154,14 +159,21 @@ module Filter
     # @return [void]
     def validate_projection(projection)
       if projection.is_a?(Hash)
-        validate_hash_key(projection, :projection, [Arel::Nodes::Node, Arel::Attributes::Attribute])
+        validate_hash_key(projection, :projection, [Arel::Nodes::Node, Arel::Attributes::Attribute, Array])
+        if projection[:projection].is_a?(Array)
+          projection[:projection].each do |item|
+            unless item.is_a?(Arel::Nodes::Node) || item.is_a?(Arel::Attributes::Attribute)
+              raise CustomErrors::FilterArgumentError,
+                "Projection item must be Arel::Nodes::Node or Arel::Attributes::Attribute, got #{item.class}"
+            end
+          end
+        end
         validate_hash_key(projection, :joins, Array)
-        validate_table(projection[:base_table])
         projection[:joins].each do |join|
-          validate_hash(join)
-          validate_table(join[:arel_table])
-          validate_hash_key(join, :type, Arel::Nodes::Join)
-          validate_hash_key(join, :on, Arel::Nodes::Equality)
+          unless join.is_a?(Arel::Nodes::Join)
+            raise CustomErrors::FilterArgumentError,
+              "join must be an Arel::Nodes::Join, got #{join.class}"
+          end
         end
         return
       end
@@ -221,7 +233,7 @@ module Filter
       end
 
       # if there are no items, let it through
-      return unless value.count.positive?
+      return unless value.any?
 
       # all items must be the same type. Assume the first item is the correct type.
       type_compare_item = value[0].class
@@ -442,13 +454,20 @@ module Filter
           validate_hash_key(custom_definition, :arel,
             [NilClass, Arel::Nodes::Node, Arel::Nodes::SqlLiteral, Arel::Attributes::Attribute])
           validate_hash_key(custom_definition, :type, [Symbol]) unless custom_definition[:arel].nil?
+
+          next if custom_definition[:joins].nil?
+
+          custom_definition[:joins].each do |join|
+            unless join.is_a?(Arel::Nodes::Join) || join.is_a?(Symbol)
+              raise CustomErrors::FilterArgumentError,
+                'Join must be a  Arel::Nodes::Join or Symbol'
+            end
+          end
         end
       end
 
       validate_closure(value[:new_spec_fields], [:user]) if value.include?(:new_spec_fields)
 
-      validate_hash_key(value, :base_association, ActiveRecord::Relation) if value.include?(:base_association)
-      validate_hash_key(value, :base_association_key, Symbol) if value.include?(:base_association)
       validate_filter_associations(value[:valid_associations]) if value.include?(:valid_associations)
     end
 

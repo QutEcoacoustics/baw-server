@@ -215,10 +215,16 @@ class SavedSearch < ApplicationRecord
   private
 
   def append_conditions(query, conditions)
-    conditions.each do |condition|
-      query = query.where(condition)
+    conditions.reduce(query) do |query, condition|
+      raise 'not a condition' unless condition.is_a?(Filter::Models::Condition)
+
+      condition => { predicate:, transforms:, joins: }
+
+      query = apply_transforms(query, transforms) if transforms.present?
+      query = apply_joins(query, joins) if joins.present?
+
+      query.where(predicate)
     end
-    query
   end
 
   def projects?

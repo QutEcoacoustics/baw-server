@@ -24,7 +24,7 @@ module AudioRecordings
 
       filter = build_filter_response_as_filter_query(query, opts)
       # ensure the needed fields (and only them) are returned
-      filter[:projection] = { include: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] }
+      filter[:projection] = { only: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] }
 
       @model = OpenStruct.new({
         app_version: Settings.version_string,

@@ -109,6 +109,33 @@ CREATE TYPE public.consent AS ENUM (
 
 
 --
+-- Name: basename(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.basename(path text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+    AS $$
+DECLARE
+  segments text[];
+  length int;
+BEGIN
+  IF path IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  segments := string_to_array(path, '/');
+  length := CARDINALITY(segments);
+
+  IF length = 0 THEN
+    RETURN NULL;
+  END IF;
+
+  RETURN segments[length];
+END;
+$$;
+
+
+--
 -- Name: dirname(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4404,6 +4431,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250723051530'),
 ('20250714045539'),
 ('20250430021003'),
 ('20250402025432'),
