@@ -298,7 +298,7 @@ resource 'Users' do
     let(:authentication_token) { writer_token }
 
     standard_request_options(:post, 'FILTER (as reader checking timezone info)', :ok, {
-      expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
+      expected_json_path: ['data/0/user_name', 'meta/projection/only', 'data/0/timezone_information'],
       data_item_count: 1,
       response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
     })
@@ -320,7 +320,7 @@ resource 'Users' do
     let(:authentication_token) { writer_token }
 
     standard_request_options(:post, 'FILTER (as reader checking no timezone info)', :ok, {
-      expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
+      expected_json_path: ['data/0/user_name', 'meta/projection/only', 'data/0/timezone_information'],
       data_item_count: 1,
       response_body_content: '"timezone_information":null'
     })
@@ -342,7 +342,7 @@ resource 'Users' do
     let(:authentication_token) { admin_token }
 
     standard_request_options(:post, 'FILTER (as admin)', :ok, {
-      expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+      expected_json_path: ['data/0/user_name', 'meta/projection/only'],
       data_item_count: 1,
       response_body_content: ['"last_seen_at":null,"preferences":null']
     })

@@ -28,7 +28,9 @@ module Filter
     def compose_contains_node(node, value)
       validate_node_or_attribute(node)
       validate_basic_class(node, value)
-      sanitized_value = sanitize_like_value(value)
+
+      string_value = ActiveRecord::Base.connection.type_cast(value)
+      sanitized_value = sanitize_like_value(string_value)
 
       # if we're querying against a json/jsonb column, then first cast column to json
       node = node.cast('text') if json_column?(node)
@@ -202,17 +204,17 @@ module Filter
       to = hash[:to]
       interval = hash[:interval]
 
-      if !from.blank? && !to.blank? && !interval.blank?
+      if from.present? && to.present? && interval.present?
         raise CustomErrors::FilterArgumentError.new(
           "Range filter must use either ('from' and 'to') or ('interval'), not both.", { hash: hash }
         )
-      elsif from.blank? && !to.blank?
+      elsif from.blank? && to.present?
         raise CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", { hash: hash })
-      elsif !from.blank? && to.blank?
+      elsif from.present? && to.blank?
         raise CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", { hash: hash })
-      elsif !from.blank? && !to.blank?
+      elsif from.present? && to.present?
         compose_range_node(node, from, to)
-      elsif !interval.blank?
+      elsif interval.present?
         compose_range_string_node(node, interval)
       else
         raise CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", { hash: hash })

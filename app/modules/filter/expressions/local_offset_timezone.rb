@@ -9,7 +9,7 @@ module Filter
       UTC_OFFSET_TABLE = Arel::Table.new(:offset_table)
       PG_TIMEZONE_NAMES = Arel::Table.new(:pg_timezone_names)
       BASE_OFFSET = :base_offset
-      ONE_HOUR = Arel.sql("'3600 SECONDS'::interval")
+      ONE_HOUR = Arel.seconds(3600)
 
       def transform_value(node, _model, _column_name, context)
         # don't do conversions on a value that isn't a date... a time will be

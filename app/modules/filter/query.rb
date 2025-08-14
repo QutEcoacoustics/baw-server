@@ -29,6 +29,12 @@ module Filter
       :qsp_generic_filters, :paging, :sorting, :build,
       :custom_fields2, :capabilities
 
+    # The fields actually requested by any projection (default or not)
+    # after flattening. If projection was not requested this will be equivalent to `render_fields`.
+    # Nil if `query_projection` was not called.
+    # @return [Set<Symbol>]
+    attr_reader :projected_fields
+
     # Returns the filter provided by a request, before being merged onto the default filter
     # @return [Hash] filter
     attr_reader :supplied_filter
@@ -112,6 +118,7 @@ module Filter
 
       @paging = parse_paging(@parameters, @default_page, @default_items, @max_items)
       @sorting = parse_sorting(@parameters, @default_sort_order, @default_sort_direction)
+      @normalized_sorts = normalize_sorting_params(@table, Array(@sorting[:order_by]), @sorting[:direction])
     end
 
     def query_base
@@ -175,18 +182,15 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_projection(query)
-      if has_projection_params?
-        apply_projections(query, @build.projections(@projection))
-      else
-        query_projection_default(query)
-      end
-    end
+      @projected_fields = flatten_projection_hash(@projection)
 
-    # Add default projections to a query.
-    # @param [ActiveRecord::Relation] query
-    # @return [ActiveRecord::Relation] query
-    def query_projection_default(query)
-      apply_projections(query, @build.projections({ include: @render_fields }))
+      # to reliably (and efficiently) sort, calculated fields need to
+      # be included in the projection (they're not necessarily returned
+      # in the final payload because we still subset the fields
+      # when rendering the payload)
+      fields_to_project = @projected_fields + @normalized_sorts.filter { _1[:project] }.pluck(:column_name)
+
+      apply_projections(query, @build.projections(fields_to_project))
     end
 
     # Add sorting to query.
@@ -195,7 +199,7 @@ module Filter
     def query_sort(query)
       return query unless has_sort_params?
 
-      apply_sort(query, @table, @sorting[:order_by], @valid_fields + @custom_fields2.keys, @sorting[:direction])
+      apply_sort(query, @normalized_sorts)
     end
 
     # Add paging to query.
@@ -254,7 +258,7 @@ module Filter
     def decode_payload(parameters)
       return parameters unless parameters.include?(:filter_encoded)
 
-      parameters.extract!(:filter_encoded) => {filter_encoded: value}
+      parameters.extract!(:filter_encoded) => { filter_encoded: value }
 
       return parameters if value.blank?
 
@@ -400,18 +404,19 @@ module Filter
 
     # Add conditions to a query.
     # @param [ActiveRecord::Relation] query
-    # @param [Array<Arel::Nodes::Node>] conditions
+    # @param [Array<Build::Condition>] conditions
     # @return [ActiveRecord::Relation] the modified query
     def apply_conditions(query, conditions)
-      conditions.each do |condition_or_hash|
-        case condition_or_hash
-        in {transforms:, node:}
-          apply_condition(apply_transforms(query, transforms), node)
-        in ::Arel::Nodes::Node => condition
-          apply_condition(query, condition)
-        end => query
+      conditions.reduce(query) do |query, condition|
+        raise 'not a condition' unless condition.is_a?(Models::Condition)
+
+        condition => { predicate:, transforms:, joins: }
+
+        query = apply_transforms(query, transforms) if transforms.present?
+        query = apply_joins(query, joins) if joins.present?
+
+        apply_condition(query, predicate)
       end
-      query
     end
 
     # Add condition to a query.
@@ -419,7 +424,7 @@ module Filter
     # @param [Arel::Nodes::Node] condition
     # @return [ActiveRecord::Relation] the modified query
     def apply_condition(query, condition)
-      validate_query(query)
+      validate_query_or_select_manager(query)
       validate_condition(condition)
       query.where(condition)
     end
@@ -436,10 +441,9 @@ module Filter
     # @param [Array<String>] joins
     # @return [ActiveRecord::Relation] the modified query
     def apply_joins(query, joins)
-      joins.each do |join|
-        query = apply_join(query, join)
+      joins.reduce(query) do |query, join|
+        apply_join(query, join)
       end
-      query
     end
 
     # Add join to a query.
@@ -447,35 +451,27 @@ module Filter
     # @param [String] join
     # @return [ActiveRecord::Relation] the modified query
     def apply_join(query, join)
-      validate_query(query)
+      validate_query_or_select_manager(query)
       query.joins(join)
     end
 
     # Append sorting to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Arel::Table] table
-    # @param [Symbol] column_name
-    # @param [Array<Symbol>] allowed
-    # @param [Symbol] direction
+    # @param query [ActiveRecord::Relation]
+    # @param normalized_sorts [Array<Hash>]
     # @return [ActiveRecord::Relation] the modified query
-    def apply_sort(query, table, column_name, allowed, direction)
-      validate_query_table_column(query, table, column_name, allowed)
-      validate_sorting(column_name, allowed, direction)
+    def apply_sort(query, normalized_sorts)
+      normalized_sorts.reduce(query) do |q, sort|
+        raise 'bad sorting hash ' unless sort in { column_name: _, expression:, project: _, direction: }
 
-      # allow sorting by field mappings
-      sort_field = @build.build_custom_calculated_field(column_name)&.fetch(:arel)
-      sort_field = table[column_name] if sort_field.blank?
+        if direction == :desc
+          Arel::Nodes::Descending.new(expression)
+        else
+          #direction == :asc
+          Arel::Nodes::Ascending.new(expression)
+        end => sort_field_by
 
-      if sort_field.is_a? String
-        sort_field
-      elsif direction == :desc
-        Arel::Nodes::Descending.new(sort_field)
-      else
-        #direction == :asc
-        Arel::Nodes::Ascending.new(sort_field)
-      end => sort_field_by
-
-      query.order(sort_field_by)
+        q.order(sort_field_by)
+      end
     end
 
     # Append paging to a query.
@@ -486,6 +482,52 @@ module Filter
     def apply_paging(query, offset, limit)
       validate_paging(offset, limit)
       query.offset(offset).limit(limit)
+    end
+
+    # NOTE: only works on one table at a time, which means we don't generate
+    # nice available sorting fields for associations on error
+    def allowed_sort_fields(valid_fields = @valid_fields, custom_fields2 = @custom_fields2)
+      valid_fields + custom_fields2.keys
+    end
+
+    # Checks sort fields.
+    # Turns the
+    def normalize_sorting_params(table, sort_names, default_direction)
+      sort_names.map do |sort_name|
+        # allow sorting by association
+        @build.parse_table_field(table, sort_name) => {
+          arel_table: sort_table,
+          field_name: sort_field,
+          filter_settings: sort_filter_settings,
+          table_name: sort_table_name
+        }
+        sort_custom_fields2 = sort_filter_settings[:custom_fields2] || {}
+
+        # allow sorting by custom fields (only calculated fields)
+        if Filter::CustomField.custom_field_defined?(sort_field, sort_custom_fields2)
+          if Filter::CustomField.custom_field_is_virtual?(sort_field, sort_custom_fields2)
+            raise CustomErrors::FilterArgumentError,
+              "Custom field `#{sort_field}` is virtual and not supported for sorting"
+          end
+
+          # we ensure the sort field is in the projection,
+          # so we can use it directly as an unqualified column name
+          project = true
+          ::Arel::Nodes::UnqualifiedColumn.new(sort_name)
+        else
+          project = false
+          sort_table[sort_field]
+        end => expression
+
+        allowed = allowed_sort_fields(sort_filter_settings[:valid_fields], sort_custom_fields2)
+        allowed = allowed.map { |f| :"#{sort_table_name}.#{f}" } if sort_table != table
+
+        validate_table(table)
+        validate_name(sort_name, allowed)
+        validate_sorting(sort_name, allowed, default_direction)
+
+        { column_name: sort_name, expression:, direction: default_direction, project: }
+      end
     end
   end
 end

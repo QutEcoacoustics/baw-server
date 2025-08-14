@@ -32,7 +32,7 @@ module Filter
     # Will also return a series of transforms that need to be applied to the whole query.
     # @return [[Array<Proc>, ::Arel::Nodes::Node, ::Arel::Nodes::Node]] a tuple of the modified query, field, and value
     def compose_expression(expression_object, model:, column_name:, column_node:, column_type:)
-      expression_object => {expressions:, value: raw_value}
+      expression_object => { expressions:, value: raw_value }
 
       raise "column_type not supplied (it was #{column_type})" unless column_type.is_a?(Symbol)
       unless column_node.is_a?(::Arel::Nodes::Node) || column_node.is_a?(::Arel::Attributes::Attribute)
@@ -77,7 +77,7 @@ module Filter
         last_type = expression.new_type
       end
 
-      [query_transforms, field, value]
+      [query_transforms, field, value, last_type]
     end
   end
 end

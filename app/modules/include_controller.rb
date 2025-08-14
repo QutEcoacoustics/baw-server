@@ -586,7 +586,8 @@ module IncludeController
     msg += if error.blank?
              ' No original error.'
            else
-             " Original error: #{error.inspect}."
+             message = BawApp.dev_or_test? ? error.full_message : error.inspect
+             " Original error: #{message}."
            end
 
     msg += " Response given: #{response_given}."

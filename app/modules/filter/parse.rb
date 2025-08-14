@@ -93,15 +93,8 @@ module Filter
     end
 
     def parse_projection(params)
-      return nil unless params.include?(:projection) && params[:projection].present?
-
-      projection = params[:projection]
-      projection[:include].map! { |x| CleanParams.clean(x) } if projection in {include: Array}
-
-      projection[:exclude].map! { |x| CleanParams.clean(x) } if projection in {exclude: Array}
-
       # further validation done is #projections - we're just normalizing values here
-      projection
+      validate_and_normalize_projection(params[:projection], render_fields: @render_fields)
     end
 
     # Parse text from parameters.

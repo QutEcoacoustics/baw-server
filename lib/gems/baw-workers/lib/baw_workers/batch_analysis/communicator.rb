@@ -168,7 +168,7 @@ module BawWorkers
 
         prepared_script = prepare_script(analysis_job, script, audio_recording, harvester_id)
         working_directory = submit_directory(analysis_job_item)
-        #        debugger
+
         # transform resource requirements to a simple hash (this step allows
         # resources to scale with the size of the input recording)
         resources = script.resources.combine(BASE_RESOURCES).calculate(
@@ -234,7 +234,7 @@ module BawWorkers
       def status_jwt(harvester_id)
         # attempted to cache the value here but it messed up tests because
         # the encoded values can refer to users that no longer exist
-        #debugger
+
         Api::Jwt.encode(
           subject: harvester_id,
           expiration: settings.auth_tokens_expire_in.seconds,

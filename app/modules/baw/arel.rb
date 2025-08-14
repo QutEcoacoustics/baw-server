@@ -9,6 +9,10 @@ module Baw
       Baw::Arel::Nodes::ArrayConstructor.new(expressions)
     end
 
+    def seconds(seconds)
+      Baw::Arel::Nodes::MakeInterval.new(seconds:)
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.
@@ -24,6 +28,12 @@ module Baw
       def unqualified
         ::Arel::Nodes::UnqualifiedColumn.new(self)
       end
+
+      # Construct an interval from this attribute as if it were a number of seconds.
+      # @return [Baw::Arel::Nodes::MakeInterval]
+      def seconds
+        Nodes::MakeInterval.new(seconds: self)
+      end
     end
 
     module ExpressionsExtensions
@@ -35,6 +45,10 @@ module Baw
 
       def to_array
         Baw::Arel::Nodes::ArrayConstructor.new([self])
+      end
+
+      def seconds
+        Nodes::MakeInterval.new(seconds: self)
       end
     end
 

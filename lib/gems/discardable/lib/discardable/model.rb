@@ -288,7 +288,6 @@ module Discardable
         .each do |reflection|
         raise NotImplementedError, 'no support for association scopes' if reflection.scope
 
-        #debugger #if inverse_reflection.nil?
         child_class = reflection.klass
         parent_class = if reflection.belongs_to?
                          reflection.active_record

@@ -67,6 +67,12 @@ module Baw
           visit o.expression, collector
         end
 
+        def visit_Baw_Arel_Nodes_NamedArgument(o, collector)
+          collector << o.name
+          collector << ' => '
+          visit(o.value, collector)
+        end
+
         def visit_Baw_Arel_Nodes_AsTimeZone(o, collector)
           collector << '('
           collector = inject_join o.expressions, collector, ' '

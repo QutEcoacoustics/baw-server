@@ -6,7 +6,7 @@
 #
 #  id                                                                                             :bigint           not null, primary key
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
-#  file_hash(Hash of the file contents used for uniqueness checking)                              :text             not null
+#  file_hash(Hash of the file contents used for uniqueness checking)                              :text
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
 #  created_at                                                                                     :datetime         not null
 #  analysis_jobs_item_id                                                                          :integer
@@ -108,6 +108,32 @@ describe AudioEventImportFile do
     subject.additional_tag_ids = [9_999_999]
     expect(subject).not_to be_valid
     expect(subject.errors[:additional_tag_ids]).to include('contains invalid tag ids')
+  end
+
+  describe 'name_arel' do
+    it 'works for a file with a path' do
+      model = create(:audio_event_import_file, :with_path)
+
+      AudioEventImportFile
+        .where(id: model.id)
+        .left_outer_joins(:file_blob)
+        .select(AudioEventImportFile.name_arel.as('name'))
+        .first => with_field
+
+      expect(with_field[:name]).to eq(File.basename(model.path))
+    end
+
+    it 'works for a file with an attached file' do
+      model = create(:audio_event_import_file, :with_file)
+
+      AudioEventImportFile
+        .where(id: model.id)
+        .left_outer_joins(:file_blob)
+        .select(AudioEventImportFile.name_arel.as('name'))
+        .first => with_field
+
+      expect(with_field[:name]).to eq(model.file.blob.filename.to_s)
+    end
   end
 
   it_behaves_like 'cascade deletes for', :audio_event_import_file, {

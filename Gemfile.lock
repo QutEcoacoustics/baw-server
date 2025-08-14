@@ -174,7 +174,7 @@ GEM
     annotaterb (4.17.0)
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
-    arel_extensions (2.2.0)
+    arel_extensions (2.3.3)
       activerecord (>= 6.0)
     ast (2.4.3)
     async-container (0.18.3)

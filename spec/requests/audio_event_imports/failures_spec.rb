@@ -171,6 +171,7 @@ describe 'failures' do
         id = api_data[:id]
 
         submit(raven_example, commit:)
+
         expect_error(:unprocessable_content, 'Record could not be saved', {
           file: ["is not unique. Duplicate record found with id: #{id}"]
         })

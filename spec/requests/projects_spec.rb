@@ -139,7 +139,7 @@ describe 'Projects' do
 
       expect(response).to have_http_status(:success)
       expect_at_least_one_item
-      expect_has_projection({ include: ['id', 'name'] })
+      expect_has_projection({ only: ['id', 'name'] })
     end
 
     it 'filter partial match' do

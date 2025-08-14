@@ -42,6 +42,38 @@ module Baw
       class DoNothing < OnConflictAction
       end
 
+      class NamedArgument < ::Arel::Nodes::Binary
+        alias name left
+        alias value right
+      end
+
+      class NamedFunctionWithNamedArguments < ::Arel::Nodes::NamedFunction
+        def initialize(name, positional:, named:)
+          all = positional + named.map { |key, value|
+            NamedArgument.new(
+              key.to_s,
+              ::Arel::Nodes.build_quoted(value)
+            )
+          }
+
+          super(name, all)
+        end
+      end
+
+      class MakeInterval < NamedFunctionWithNamedArguments
+        def initialize(years: nil, months: nil, days: nil, hours: nil, minutes: nil, seconds: nil)
+          args = { years:, months:, days:, hours:, mins: minutes, secs: seconds }.compact
+
+          raise ArgumentError, 'At least one argument must be supplied' if args.empty?
+
+          super(
+            'make_interval',
+            positional: [],
+            named: args
+          )
+        end
+      end
+
       # Allows casting a timestamp to a particular UTC offset (either with a timezone or offset)
       class AsTimeZone < ::Arel::Nodes::Function
         RETURN_TYPE = :datetime

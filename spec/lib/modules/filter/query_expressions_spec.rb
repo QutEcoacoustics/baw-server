@@ -130,7 +130,7 @@ describe Filter::Query do
         complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
-              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
+              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - make_interval(secs => 3600))
               ELSE "pg_timezone_names"."utc_offset" END
               AS "base_offset"
             FROM "pg_timezone_names")
@@ -195,7 +195,7 @@ describe Filter::Query do
         complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
-              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
+              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - make_interval(secs => 3600))
               ELSE "pg_timezone_names"."utc_offset" END
               AS "base_offset"
             FROM "pg_timezone_names")
@@ -265,7 +265,7 @@ describe Filter::Query do
         complex_result = <<~SQL.squish
           WITH "offset_table" AS (
             SELECT "pg_timezone_names"."name",
-              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - '3600 SECONDS'::interval)
+              CASE "pg_timezone_names"."is_dst" WHEN TRUE THEN ("pg_timezone_names"."utc_offset" - make_interval(secs => 3600))
               ELSE "pg_timezone_names"."utc_offset" END
               AS "base_offset"
             FROM "pg_timezone_names")
@@ -277,7 +277,7 @@ describe Filter::Query do
           ON "sites"."tzinfo_tz" = "offset_table"."name"
           WHERE ("audio_recordings"."deleted_at" IS NULL)
           AND ("audio_recordings"."status" = 'ready')
-          AND (((CAST(((("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || ' seconds' as interval)) AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) >= CAST('03:00' AS time))
+          AND (((CAST(((("audio_recordings"."recorded_date" + make_interval(secs => "audio_recordings"."duration_seconds")) AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) >= CAST('03:00' AS time))
           OR (CAST((("audio_recordings"."recorded_date" AT TIME ZONE 'UTC') AT TIME ZONE "offset_table"."base_offset") AS time) <= CAST('05:00' AS time))))
           ORDER BY "audio_recordings"."recorded_date" DESC
           LIMIT 25 OFFSET 0
