@@ -1102,7 +1102,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
 
     standard_request_options(:post, 'FILTER (as reader with projection)', :ok, {
-      expected_json_path: 'meta/projection/include',
+      expected_json_path: 'meta/projection/only',
       data_item_count: 1,
       response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
     })
@@ -1122,7 +1122,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
 
     standard_request_options(:post, 'FILTER (as reader checking camel case)', :ok, {
-      expected_json_path: 'meta/projection/include',
+      expected_json_path: 'meta/projection/only',
       data_item_count: 1,
       invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds,
                                                                                :recorded_date, :created_at]).map { |i|

@@ -12,6 +12,10 @@ module Filter
     include Validate
     include Expressions
 
+    # When parsing truncated dates, we use this base date as the default values
+    # to pick any missing components from. 0000-01-01 00:00:00 UTC
+    DEFAULT_DATE = Time.utc(0)
+
     # Create an instance of Build.
     # @param [Arel::Table] table
     # @param [Hash] filter_settings
@@ -25,7 +29,6 @@ module Filter
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
-      @base_association = filter_settings[:base_association]
       @valid_associations = filter_settings[:valid_associations]
       @custom_fields2 = filter_settings[:custom_fields2] || {}
 
@@ -59,105 +62,20 @@ module Filter
     end
 
     # Build projections from a hash.
-    # @param [Hash] hash
-    # @return [Array<Arel::Attributes::Attribute>] projections
-    def projections(hash)
-      if hash.blank? || hash.size != 1
-        raise CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.",
-          { hash: })
-      end
+    # @param fields [Array<Symbol>] fields to project
+    # @return [Array<Arel::Attributes::Attribute, Hash>] projections
+    def projections(fields)
+      allowed = allowed_fields
+      projection_expressions = fields.map { |projection_name| project_column(@table, projection_name, allowed) }
 
-      result = []
-      hash.each do |key, value|
-        unless [:include, :exclude].include?(key)
-          raise CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}",
-            { hash: })
-        end
+      raise 'projection list should not have nils' if projection_expressions.any?(&:nil?)
+      raise 'projection list should not have arrays' if projection_expressions.any? { |item| item.is_a?(Array) }
 
-        result = projection(key, value)
-      end
-      result
+      projection_expressions
     end
 
-    # Build projection to include or exclude.
-    # @param [Symbol] key
-    # @param [Array<Symbol>] value
-    # @return [Array<Arel::Attributes::Attribute>] projections
-    def projection(key, value)
-      unless value.is_a?(Array)
-        raise CustomErrors::FilterArgumentError.new(
-          "Projection field list must be an array but instead got #{value.class}", { key.to_s => value }
-        )
-      end
-
-      if value.present? && value.uniq.length != value.length
-        raise CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', { key.to_s => value })
-      end
-
-      columns = []
-      case key
-      when :include
-        raise CustomErrors::FilterArgumentError, 'Include must contain at least one field.' if value.blank?
-
-        columns = value
-      when :exclude
-        raise CustomErrors::FilterArgumentError, 'Exclude must contain at least one field.' if value.blank?
-
-        columns = @render_fields.reject { |item| value.include?(item) }
-        raise CustomErrors::FilterArgumentError, 'Exclude must contain at least one field.' if columns.blank?
-      else
-        raise CustomErrors::FilterArgumentError, "Unrecognized projection key #{key}."
-      end
-
-      # create projection that includes each column
-
-      columns.map { |item|
-        project_column(@table, item, allowed_fields)
-      }.flatten.compact
-    end
-
-    def allowed_fields
-      (@render_fields + @custom_fields2.keys).uniq
-    end
-
-    # Combine conditions.
-    # @param [Symbol] combiner
-    # @param [Array<Arel::Nodes::Node>] conditions
-    # @return [Arel::Nodes::Node] condition
-    def combiner_one(combiner, conditions)
-      if conditions.blank?
-        raise CustomErrors::FilterArgumentError,
-          "Combiner '#{combiner}' must have at least 1 entry, got #{conditions.size}."
-      end
-
-      transforms_collection = []
-
-      conditions.reduce(nil) do |previous, condition|
-        if condition in { transforms:, node: }
-          transforms_collection.push(*transforms)
-          condition = node
-        end
-
-        next condition if previous.nil?
-
-        case combiner
-        when :and
-          compose_and(previous, condition)
-        when :or
-          compose_or(previous, condition)
-        else
-          raise CustomErrors::FilterArgumentError, "Unrecognized filter combiner #{combiner}."
-        end
-      end => combined_conditions
-
-      # wrap this set of expressions in brackets so we don't leak conditions
-      # e.g chaining `x AND y OR z` can be very different from `x AND (y OR z)`
-      # this produces a lot of brackets...
-      unless combined_conditions.is_a?(::Arel::Nodes::Grouping)
-        combined_conditions = Arel::Nodes::Grouping.new(combined_conditions)
-      end
-
-      { transforms: transforms_collection, node: combined_conditions }
+    def allowed_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
+      (render_fields + custom_fields2.keys).uniq
     end
 
     # Parse a filter.
@@ -242,13 +160,50 @@ module Filter
       result_table.where(query)
     end
 
+    # Build table field from field symbol.
+    # @param [Arel::Table] table
+    # @param [Symbol] field
+    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
+    def parse_table_field(table, field)
+      validate_table(table)
+      raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
+
+      if association_field?(field)
+        parse_other_table_field(table, field)
+      else
+
+        # table name may not be the same as model / controller name :(
+        model = to_model(table)
+        #controller = (filter_settings[:controller].to_s + '_controller').classify.constantize
+
+        {
+          table_name: table.name,
+          field_name: field,
+          arel_table: table,
+          model:,
+          filter_settings: @filter_settings
+        }
+      end
+    end
+
+    # Runs build_associations on the valid associations and caches the result.
+    def composed_associations(table)
+      @composed_associations ||= {}
+
+      unless @composed_associations.key?(table)
+        @composed_associations[table] ||= build_associations(@valid_associations, table)
+      end
+
+      @composed_associations[table]
+    end
+
     private
 
     # Recursively parse a filter hash.
     # @param [Hash, Symbol] primary
     # @param [Hash, Object] secondary
     # @param [nil, Hash] extra
-    # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>]
+    # @return [Condition, Array<Condition>]
     def parse_filter(primary, secondary = nil, extra = nil)
       case primary
       when Hash
@@ -262,6 +217,7 @@ module Filter
         end
 
         primary.flat_map do |key, value|
+          #! recursive
           parse_filter(key, value, secondary)
         end
       when Array
@@ -273,6 +229,7 @@ module Filter
               "Filter arrays can only contain other hashes; `#{value}` is not valid"
           end
 
+          #! recursive
           parse_filter(value)
         end
       when Symbol
@@ -281,24 +238,22 @@ module Filter
         when :and, :or
           combiner = primary
           filter_hash = secondary
+          #! recursive
           result = parse_filter(filter_hash)
           combiner_one(combiner, result)
         when :not
           #combiner = primary
           filter_hash = secondary
 
+          #! recursive
           result = parse_filter(filter_hash)
 
-          if result.respond_to?(:map)
-            result.map { |c| compose_not(c) }
-          else
-            [compose_not(result)]
-          end
-
+          combiner_not(result)
         when *@valid_fields, /\./
           field = primary
           field_conditions = secondary
           info = parse_table_field(@table, field)
+          #! recursive
           result = parse_filter(field_conditions, info)
 
           build_subquery(info, result)
@@ -316,23 +271,31 @@ module Filter
           table = info[:arel_table]
           column_name = info[:field_name]
           valid_fields = info[:filter_settings][:valid_fields]
+          custom_fields2 = info[:filter_settings][:custom_fields2] || {}
           model = info[:model]
+          joins = []
 
           # check if this is a custom field
-          custom_field = build_custom_calculated_field(column_name)
-          if custom_field.nil?
+          if custom_field_defined?(column_name, custom_fields2)
+            if custom_field_is_calculated?(column_name, custom_fields2)
+              custom_field = build_custom_calculated_field(column_name, custom_fields2)
+
+              # if a custom field use information supplied
+              custom_field => { type: node_type, arel: field_node, joins: }
+            else
+              raise CustomErrors::FilterArgumentError,
+                "Custom field `#{column_name}` is virtual and not supported for filtering"
+            end
+          else
             # if not, pull column out of active record information
             validate_table_column(table, column_name, valid_fields)
 
             field_node = table[column_name]
             node_type = model.columns_hash[column_name.to_s].type
-          else
-            # if a custom field use information supplied
-            custom_field => { type: node_type, arel: field_node }
           end
 
           if expression?(filter_value)
-            transforms, field_node, filter_value = compose_expression(
+            transforms, field_node, filter_value, last_type = compose_expression(
               filter_value,
               model:,
               column_name:,
@@ -340,18 +303,84 @@ module Filter
               column_type: node_type
             )
 
-            return {
-              transforms:,
-              node: condition_node(filter_name, field_node, filter_value)
-            }
+            # we normalize the value here because the expression may have changed the type
+            filter_value = normalize_value(last_type, filter_value)
+
+            return Models::Condition.new(
+              predicate: condition_node(filter_name, field_node, filter_value),
+              transforms:
+            )
           end
 
-          condition_node(filter_name, field_node, filter_value)
+          filter_value = normalize_value(node_type, filter_value)
+
+          Models::Condition.new(
+            predicate: condition_node(filter_name, field_node, filter_value),
+            joins: joins
+          )
         else
           raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name `#{primary}`."
         end
       else
         raise CustomErrors::FilterArgumentError, "Unrecognized filter component `#{primary}`."
+      end
+    end
+
+    # ensure values that come from params are normalized to the correct type if they need to be
+    def normalize_value(type, value)
+      # parsing these string value into actual Time instances results in better comparisons
+      # in postgresql. When postgres parses a string it ignore the offset unless it is
+      # explicitly cast as a timestamp with time zone.
+      return Time.parse(value, DEFAULT_DATE).utc if type == :datetime && value.is_a?(String)
+
+      value
+    end
+
+    # Combine an array conditions either with `and` or `or` operators.
+    # @param [Symbol] combiner
+    # @param [Array<Condition>] conditions
+    # @return [Condition] condition
+    def combiner_one(combiner, conditions)
+      if conditions.blank?
+        raise CustomErrors::FilterArgumentError,
+          "Combiner '#{combiner}' must have at least 1 entry, got #{conditions.size}."
+      end
+
+      Models::Condition.reduce(conditions) do |previous, predicate|
+        case combiner
+        when :and
+          compose_and(previous, predicate)
+        when :or
+          compose_or(previous, predicate)
+        else
+          raise CustomErrors::FilterArgumentError, "Unrecognized filter combiner #{combiner}."
+        end
+      end => combined_conditions
+
+      # wrap this set of expressions in brackets so we don't leak conditions
+      # e.g chaining `x AND y OR z` can be very different from `x AND (y OR z)`
+      # this produces a lot of brackets...
+      combined_conditions.map_predicate do |predicate|
+        if predicate.is_a?(::Arel::Nodes::Grouping)
+          predicate
+        else
+          Arel::Nodes::Grouping.new(predicate)
+        end
+      end
+    end
+
+    # @return [Array<Models::Condition>]
+    def combiner_not(conditions)
+      conditions = Array(conditions)
+
+      conditions.map do |condition|
+        raise 'condition must be a Condition' unless condition.is_a?(Models::Condition)
+
+        condition.map_predicate do |predicate|
+          raise 'must be a node' unless predicate.is_a?(Arel::Nodes::Node)
+
+          compose_not(predicate)
+        end
       end
     end
 
@@ -424,16 +453,9 @@ module Filter
       if current_table == @table
         conditions
       else
-        base_query = @base_association.nil? ? @table : @table.from.from(@base_association.arel.as(@table.table_name))
-        column_to_match_on = @filter_settings[:base_association_key] || :id
+        base_query = @table
+        column_to_match_on = :id
         subquery = base_query.project(@table[column_to_match_on])
-
-        # add conditions to subquery
-        if conditions.respond_to?(:each)
-          conditions.each { |c| subquery = subquery.where(c) }
-        else
-          subquery = subquery.where(result)
-        end
 
         # add relevant joins
         joins, = build_joins(model, @valid_associations)
@@ -445,33 +467,13 @@ module Filter
           subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
         end
 
-        compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
-      end
-    end
+        # add conditions to subquery
+        # essentially we're resetting the condition build-up here
+        subquery = Models::Condition.apply_to_select_manager(subquery, conditions)
 
-    # Build table field from field symbol.
-    # @param [Arel::Table] table
-    # @param [Symbol] field
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_table_field(table, field)
-      validate_table(table)
-      raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
-
-      if association_field?(field)
-        parse_other_table_field(table, field)
-      else
-
-        # table name may not be the same as model / controller name :(
-        model = to_model(table)
-        #controller = (filter_settings[:controller].to_s + '_controller').classify.constantize
-
-        {
-          table_name: table.name,
-          field_name: field,
-          arel_table: table,
-          model:,
-          filter_settings: @filter_settings
-        }
+        Models::Condition.new(
+          predicate: compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
+        )
       end
     end
 
@@ -490,7 +492,7 @@ module Filter
       parsed_table = field[0, dot_index].to_sym
       parsed_field = field[(dot_index + 1)..field.length].to_sym
 
-      associations = build_associations(@valid_associations, table)
+      associations = composed_associations(table)
       models = associations.pluck(:join)
       table_names = associations.map { |association| association[:join].table_name.to_sym }
 
@@ -562,6 +564,7 @@ module Filter
       associations = []
       case valid_associations
       when Array
+        #! recursive
         more_associations = valid_associations.map { |i| build_associations(i, table) }
         associations.push(*more_associations.flatten.compact) unless more_associations.empty?
       when Hash
@@ -570,6 +573,7 @@ module Filter
         on = valid_associations[:on]
         available = valid_associations[:available]
 
+        #! recursive
         more_associations = build_associations(valid_associations[:associations], join)
         associations.push(*more_associations.flatten.compact) unless more_associations.empty?
 

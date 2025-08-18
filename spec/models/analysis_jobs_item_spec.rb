@@ -14,7 +14,7 @@
 #  result(Result of this job item)                                                                                                                               :enum
 #  status(Current status of this job item)                                                                                                                       :enum             default("new"), not null
 #  transition(The pending transition to apply to this item. Any high-latency action should be done via transition and on a worker rather than in a web request.) :enum
-#  used_memory_bytes(Memory used by this job item)                                                                                                               :integer
+#  used_memory_bytes(Memory used by this job item)                                                                                                               :bigint
 #  used_walltime_seconds(Walltime used by this job item)                                                                                                         :integer
 #  work_started_at                                                                                                                                               :datetime
 #  created_at                                                                                                                                                    :datetime         not null

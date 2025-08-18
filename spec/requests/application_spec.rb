@@ -104,7 +104,8 @@ describe 'Common behaviour' do
       expect_success
       expect_json_response
       expect_number_of_items(1)
-      expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
+      # deprecated projection style rewritten to modern projection style
+      expect_has_projection({ only: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
         status: { eq: 'ready' },
         id: { gt: 0 }
@@ -119,7 +120,8 @@ describe 'Common behaviour' do
       expect_success
       expect_json_response
       expect_number_of_items(1)
-      expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
+      # deprecated projection style rewritten to modern projection style
+      expect_has_projection({ only: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
         status: { eq: 'ready' },
         id: { gt: 0 }
@@ -136,7 +138,8 @@ describe 'Common behaviour' do
       expect_success
       expect_json_response
       expect_number_of_items(1)
-      expect_has_projection({ include: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
+      # deprecated projection style rewritten to modern projection style
+      expect_has_projection({ only: ['id', 'recorded_date', 'sites.name', 'site_id', 'canonical_file_name'] })
       expect_has_filter({
         status: { eq: 'ready' },
         id: { gt: 0 }

@@ -33,6 +33,14 @@ class AudioEventImportFile < ApplicationRecord
 
   has_one_attached :file
 
+  # returns the filename of either an uploaded file or result from an analysis job.
+  # Make sure you're joining on blobs if you want to use this in a query.
+  # `AudioEventImportFile.left_outer_joins(:file_blob)`
+  def self.name_arel
+    Arel::Nodes::NamedFunction.new('basename', [arel_table[:path]])
+      .coalesce(ActiveStorage::Blob.arel_table[:filename])
+  end
+
   # hooks
 
   before_validation :generate_hash
@@ -91,12 +99,16 @@ class AudioEventImportFile < ApplicationRecord
           arel: nil
         },
         name: {
-          query_attributes: [:path],
+          id: 'name',
+          query_attributes: [],
           transform: lambda { |item|
+            next item[:name] if item[:name].present?
+
             item.path.nil? ? item.file.filename : File.basename(item.path)
           },
           type: :string,
-          arel: nil
+          arel: name_arel,
+          joins: AudioEventImportFile.left_outer_joins(:file_blob).arel.join_sources
         }
       },
       new_spec_fields: lambda { |_user|
