@@ -148,6 +148,23 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - audio_recording_id
+                    - start_time_seconds
+                    - end_time_seconds
+                    - low_frequency_hertz
+                    - high_frequency_hertz
+                    - is_reference
+                    - creator_id
+                    - updated_at
+                    - created_at
+                    - audio_event_import_file_id
+                    - import_file_index
+                    - provenance_id
+                    - channel
+                    - score
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -508,6 +525,21 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - notes
+                    - allow_original_download
+                    - allow_audio_upload
+                    - license
                   sorting:
                     order_by: name
                     direction: asc
@@ -603,6 +635,21 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - notes
+                    - allow_original_download
+                    - allow_audio_upload
+                    - license
                   sorting:
                     order_by: name
                     direction: asc
@@ -998,7 +1045,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-07-22T05:02:32.105Z'
+                  created_at: '2025-08-18T04:11:42.744Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -1041,6 +1088,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - project_id
+                    - user_id
+                    - level
+                    - allow_anonymous
+                    - allow_logged_in
+                    - updated_at
+                    - updater_id
+                    - created_at
+                    - creator_id
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -1402,6 +1461,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - project_id
+                    - user_id
+                    - level
+                    - allow_anonymous
+                    - allow_logged_in
+                    - updated_at
+                    - updater_id
+                    - created_at
+                    - creator_id
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -1476,6 +1547,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - group_id
+                    - name
+                    - description
+                    - analysis_identifier
+                    - executable_settings
+                    - executable_settings_media_type
+                    - executable_settings_name
+                    - executable_command
+                    - version
+                    - created_at
+                    - creator_id
+                    - is_last_version
+                    - is_first_version
+                    - event_import_glob
+                    - provenance_id
+                    - resources
                   sorting:
                     order_by: name
                     direction: asc
@@ -1605,6 +1695,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - group_id
+                    - name
+                    - description
+                    - analysis_identifier
+                    - executable_settings
+                    - executable_settings_media_type
+                    - executable_settings_name
+                    - executable_command
+                    - version
+                    - created_at
+                    - creator_id
+                    - is_last_version
+                    - is_first_version
+                    - event_import_glob
+                    - provenance_id
+                    - resources
                   sorting:
                     order_by: name
                     direction: asc
@@ -1906,7 +2015,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.0.0 from http://web:3000.
+                  Version 13.0.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -1946,7 +2055,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.0.0"
+                Write-Information "Acoustic Workbench downloader script version 13.0.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -1969,7 +2078,7 @@ paths:
 
                 if ($null -eq $filter) {
                   $filter = @'
-                {"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},"projection":{"include":["id","recorded_date","sites.name","site_id","canonical_file_name"]}}
+                {"projection":{"only":["id","recorded_date","sites.name","site_id","canonical_file_name"]},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25}}
                 '@
                 }
                 Write-Information "Filter: $filter"
@@ -2128,7 +2237,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.0.0 from http://web:3000.
+                  Version 13.0.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2168,7 +2277,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.0.0"
+                Write-Information "Acoustic Workbench downloader script version 13.0.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2191,7 +2300,7 @@ paths:
 
                 if ($null -eq $filter) {
                   $filter = @'
-                {"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25},"projection":{"include":["id","recorded_date","sites.name","site_id","canonical_file_name"]}}
+                {"projection":{"only":["id","recorded_date","sites.name","site_id","canonical_file_name"]},"sorting":{"order_by":"recorded_date","direction":"desc"},"paging":{"items":25}}
                 '@
                 }
                 Write-Information "Filter: $filter"
@@ -2408,6 +2517,24 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - analysis_job_id
+                    - audio_recording_id
+                    - script_id
+                    - created_at
+                    - queued_at
+                    - work_started_at
+                    - finished_at
+                    - queue_id
+                    - error
+                    - attempts
+                    - status
+                    - result
+                    - transition
+                    - import_success
+                    - audio_event_import_file_ids
                   sorting:
                     order_by: audio_recording_id
                     direction: asc
@@ -2514,6 +2641,24 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - analysis_job_id
+                    - audio_recording_id
+                    - script_id
+                    - created_at
+                    - queued_at
+                    - work_started_at
+                    - finished_at
+                    - queue_id
+                    - error
+                    - attempts
+                    - status
+                    - result
+                    - transition
+                    - import_success
+                    - audio_event_import_file_ids
                   sorting:
                     order_by: audio_recording_id
                     direction: asc
@@ -2534,7 +2679,7 @@ paths:
                   queued_at: 
                   work_started_at: 
                   finished_at: 
-                  queue_id: 31f0a28b-d549-4b31-923e-d73dd984f576
+                  queue_id: cf31f0a2-8bd5-490b-b192-3ed73dd984f5
                   error: 
                   attempts: 0
                   status: new
@@ -2596,7 +2741,7 @@ paths:
                   queued_at: 
                   work_started_at: 
                   finished_at: 
-                  queue_id: 81423972-b521-4718-a412-582d670601fd
+                  queue_id: 4b814239-72b5-41a7-9824-12582d670601
                   error: 
                   attempts: 0
                   status: queued
@@ -2784,6 +2929,32 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - uuid
+                    - recorded_date
+                    - site_id
+                    - duration_seconds
+                    - sample_rate_hertz
+                    - channels
+                    - bit_rate_bps
+                    - media_type
+                    - data_length_bytes
+                    - status
+                    - created_at
+                    - creator_id
+                    - deleted_at
+                    - deleter_id
+                    - updated_at
+                    - updater_id
+                    - notes
+                    - file_hash
+                    - uploader_id
+                    - original_file_name
+                    - canonical_file_name
+                    - recorded_date_timezone
+                    - recorded_utc_offset
                   sorting:
                     order_by: recorded_date
                     direction: desc
@@ -2814,7 +2985,7 @@ paths:
                   data_length_bytes: 3800
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 225
+                  creator_id: 224
                   deleted_at: 
                   deleter_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -2822,7 +2993,7 @@ paths:
                   notes:
                     test: note number 45
                   file_hash: SHA256::45ph4o5p2faz5gmujjbkfccs5ctwb95klypy4ozlyfci3v90dqcrn17fwbae42b7
-                  uploader_id: 225
+                  uploader_id: 224
                   original_file_name: original name 45.mp3
                   canonical_file_name: 20000510T070659Z_site-name-45_45.mp3
                   recorded_date_timezone: 
@@ -2882,7 +3053,7 @@ paths:
                   data_length_bytes: 3800
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 229
+                  creator_id: 228
                   deleted_at: 
                   deleter_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -2890,7 +3061,7 @@ paths:
                   notes:
                     test: note number 46
                   file_hash: SHA256::46utgw5ljotd1f37owt7bbqgm1uv4urpdmq4dmbm7xss8l97jc3bljpz7vurx1g9
-                  uploader_id: 229
+                  uploader_id: 228
                   original_file_name: original name 46.mp3
                   canonical_file_name: 20000511T070659Z_site-name-46_46.mp3
                   recorded_date_timezone: 
@@ -2952,7 +3123,7 @@ paths:
                   data_length_bytes: 3800
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 233
+                  creator_id: 232
                   deleted_at: 
                   deleter_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -2960,7 +3131,7 @@ paths:
                   notes:
                     test: note number 47
                   file_hash: SHA256::47p2gn8giib3y0mgn7r3ewbw2xc7u14t9lqwrzrprcxw06aie48duc9ceh2kems2
-                  uploader_id: 233
+                  uploader_id: 232
                   original_file_name: original name 47.mp3
                   canonical_file_name: 20000512T070659Z_site-name-47_47.mp3
                   recorded_date_timezone: 
@@ -3017,7 +3188,7 @@ paths:
                   data_length_bytes: 3800
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 237
+                  creator_id: 236
                   deleted_at: 
                   deleter_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3025,7 +3196,7 @@ paths:
                   notes:
                     test: note number 48
                   file_hash: SHA256::482vpywu8ofsg3abameun5qbxcyawyundc498d7p7ur70kz6f6ezvzmrza68vqw7
-                  uploader_id: 237
+                  uploader_id: 236
                   original_file_name: original name 48.mp3
                   canonical_file_name: 20000513T070659Z_site-name-48_48.mp3
                   recorded_date_timezone: 
@@ -3100,6 +3271,32 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - uuid
+                    - recorded_date
+                    - site_id
+                    - duration_seconds
+                    - sample_rate_hertz
+                    - channels
+                    - bit_rate_bps
+                    - media_type
+                    - data_length_bytes
+                    - status
+                    - created_at
+                    - creator_id
+                    - deleted_at
+                    - deleter_id
+                    - updated_at
+                    - updater_id
+                    - notes
+                    - file_hash
+                    - uploader_id
+                    - original_file_name
+                    - canonical_file_name
+                    - recorded_date_timezone
+                    - recorded_utc_offset
                   sorting:
                     order_by: recorded_date
                     direction: desc
@@ -3130,7 +3327,7 @@ paths:
                   data_length_bytes: 3800
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 245
+                  creator_id: 244
                   deleted_at: 
                   deleter_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3138,7 +3335,7 @@ paths:
                   notes:
                     test: note number 50
                   file_hash: SHA256::5016qssvle235ikvy14gyyp49044b13d0w1lalw2e3zpo1g7pann58hkxqy8kqsy
-                  uploader_id: 245
+                  uploader_id: 244
                   original_file_name: original name 50.mp3
                   canonical_file_name: 20000515T070659Z_site-name-50_50.mp3
                   recorded_date_timezone: 
@@ -3465,6 +3662,20 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - analysis_job_id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -3481,9 +3692,9 @@ paths:
                   name: import name 58
                   description: import **description** 58
                   analysis_job_id: 
-                  creator_id: 326
+                  creator_id: 325
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 327
+                  updater_id: 326
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: '2020-01-02T03:04:05.677Z'
@@ -3576,6 +3787,20 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - analysis_job_id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -3592,9 +3817,9 @@ paths:
                   name: import name 60
                   description: import **description** 60
                   analysis_job_id: 
-                  creator_id: 338
+                  creator_id: 337
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 339
+                  updater_id: 338
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: '2020-01-02T03:04:05.677Z'
@@ -3651,7 +3876,7 @@ paths:
                   name: import name 52
                   description: import **description** 52
                   analysis_job_id: 
-                  creator_id: 292
+                  creator_id: 291
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3704,7 +3929,7 @@ paths:
                   name: import name 54
                   description: import **description** 54
                   analysis_job_id: 
-                  creator_id: 300
+                  creator_id: 299
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -3779,9 +4004,9 @@ paths:
                   name: import name 59
                   description: import **description** 59
                   analysis_job_id: 
-                  creator_id: 332
+                  creator_id: 331
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 333
+                  updater_id: 332
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: '2020-01-02T03:04:05.677Z'
@@ -3904,6 +4129,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - deleted
+                    - path
+                    - status
+                    - created_at
+                    - harvest_id
+                    - updated_at
+                    - audio_recording_id
+                    - uploader_id
+                    - validations
                   sorting:
                     order_by: path
                     direction: asc
@@ -3924,7 +4161,7 @@ paths:
                   harvest_id: 60
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 70
-                  uploader_id: 361
+                  uploader_id: 359
                   validations: []
               schema:
                 allOf:
@@ -3970,6 +4207,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - deleted
+                    - path
+                    - status
+                    - created_at
+                    - harvest_id
+                    - updated_at
+                    - audio_recording_id
+                    - uploader_id
+                    - report
+                    - validations
                   sorting:
                     order_by: path
                     direction: asc
@@ -3978,7 +4228,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/78/harvests/61/items/a/b?direction=asc&items=25&order_by=path&page=1
+                    current: http://web:3000/projects/76/harvests/61/items/a/b?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -3990,7 +4240,7 @@ paths:
                   harvest_id: 61
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 72
-                  uploader_id: 371
+                  uploader_id: 368
                   report:
                     items_total: 1
                     items_size_bytes: 
@@ -4055,7 +4305,7 @@ paths:
                   low_frequency_hertz: 400.0
                   high_frequency_hertz: 6000.0
                   is_reference: false
-                  creator_id: 373
+                  creator_id: 370
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 60
@@ -4069,7 +4319,7 @@ paths:
                     tag_id: 60
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
-                    creator_id: 373
+                    creator_id: 370
                     updater_id: 
               schema:
                 allOf:
@@ -4120,7 +4370,7 @@ paths:
                   low_frequency_hertz: 400.0
                   high_frequency_hertz: 6000.0
                   is_reference: false
-                  creator_id: 377
+                  creator_id: 374
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 61
@@ -4134,7 +4384,7 @@ paths:
                     tag_id: 61
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
-                    creator_id: 377
+                    creator_id: 374
                     updater_id: 
               schema:
                 allOf:
@@ -4190,7 +4440,7 @@ paths:
                   low_frequency_hertz: 400.0
                   high_frequency_hertz: 6000.0
                   is_reference: false
-                  creator_id: 387
+                  creator_id: 383
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 62
@@ -4204,7 +4454,7 @@ paths:
                     tag_id: 62
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
-                    creator_id: 387
+                    creator_id: 383
                     updater_id: 
               schema:
                 allOf:
@@ -4312,6 +4562,23 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - audio_recording_id
+                    - start_time_seconds
+                    - end_time_seconds
+                    - low_frequency_hertz
+                    - high_frequency_hertz
+                    - is_reference
+                    - creator_id
+                    - updated_at
+                    - created_at
+                    - audio_event_import_file_id
+                    - import_file_index
+                    - provenance_id
+                    - channel
+                    - score
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -4331,7 +4598,7 @@ paths:
                   low_frequency_hertz: 400.0
                   high_frequency_hertz: 6000.0
                   is_reference: false
-                  creator_id: 405
+                  creator_id: 400
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 65
@@ -4345,7 +4612,7 @@ paths:
                     tag_id: 65
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
-                    creator_id: 405
+                    creator_id: 400
                     updater_id: 
               schema:
                 allOf:
@@ -4385,6 +4652,23 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - audio_recording_id
+                    - start_time_seconds
+                    - end_time_seconds
+                    - low_frequency_hertz
+                    - high_frequency_hertz
+                    - is_reference
+                    - creator_id
+                    - updated_at
+                    - created_at
+                    - audio_event_import_file_id
+                    - import_file_index
+                    - provenance_id
+                    - channel
+                    - score
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -4404,7 +4688,7 @@ paths:
                   low_frequency_hertz: 400.0
                   high_frequency_hertz: 6000.0
                   is_reference: false
-                  creator_id: 409
+                  creator_id: 404
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 66
@@ -4418,7 +4702,7 @@ paths:
                     tag_id: 66
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
-                    creator_id: 409
+                    creator_id: 404
                     updater_id: 
               schema:
                 allOf:
@@ -4561,7 +4845,7 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 96
+                  project_id: 90
                   site_ids: []
                   description_html: "<p>site <strong>description</strong> 86</p>\n"
                   description_html_tagline: site <strong>description</strong> 86
@@ -4606,6 +4890,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - project_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -4614,7 +4911,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/98/regions?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/92/regions?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
@@ -4623,13 +4920,13 @@ paths:
                   description: site **description** 87
                   notes:
                     region_note_87: 87
-                  creator_id: 432
+                  creator_id: 426
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 98
+                  project_id: 92
                   site_ids:
                   - 86
                   description_html: "<p>site <strong>description</strong> 87</p>\n"
@@ -4713,13 +5010,13 @@ paths:
                   description: site **description** 89
                   notes:
                     region_note_89: 89
-                  creator_id: 440
+                  creator_id: 434
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 100
+                  project_id: 94
                   site_ids:
                   - 88
                   description_html: "<p>site <strong>description</strong> 89</p>\n"
@@ -4772,13 +5069,13 @@ paths:
                   description: site **description** 91
                   notes:
                     region_note_91: 91
-                  creator_id: 444
+                  creator_id: 438
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 102
+                  project_id: 96
                   site_ids:
                   - 89
                   description_html: "<p>site <strong>description</strong> 91</p>\n"
@@ -4836,13 +5133,13 @@ paths:
                   description: site **description** 93
                   notes:
                     region_note_93: 93
-                  creator_id: 450
+                  creator_id: 444
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 104
+                  project_id: 98
                   site_ids:
                   - 90
                   description_html: "<p>site <strong>description</strong> 93</p>\n"
@@ -4889,6 +5186,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - project_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -4897,7 +5207,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/105/regions/filter?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/99/regions/filter?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
@@ -4906,13 +5216,13 @@ paths:
                   description: site **description** 94
                   notes:
                     region_note_94: 94
-                  creator_id: 456
+                  creator_id: 450
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 105
+                  project_id: 99
                   site_ids:
                   - 91
                   description_html: "<p>site <strong>description</strong> 94</p>\n"
@@ -4983,7 +5293,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: 3KfpS9Kx9bRDhrm5P0GoqvbFrSqjGVVImvS6pBRl5Vo
+                  auth_token: OUEDosww7FwnA28VV7tCWxhjsCMVmHxadExYO8VnZIE
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5039,7 +5349,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: 4X_hlk4K9Bmf9e7WvcqecLTw0UgPSarqHJTqQj-Vfc8
+                  auth_token: j7GDvlhTHcPPDrZWEhMp5yJzZNpWEGGh1VaRZVx95oc
                   user_name: Admin
                   user_id: 1
               schema:
@@ -5084,6 +5394,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - deleted
+                    - path
+                    - status
+                    - created_at
+                    - harvest_id
+                    - updated_at
+                    - audio_recording_id
+                    - uploader_id
+                    - validations
                   sorting:
                     order_by: path
                     direction: asc
@@ -5092,7 +5414,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/111/harvests/78/items/filter?direction=asc&items=25&order_by=path&page=1
+                    current: http://web:3000/projects/105/harvests/78/items/filter?direction=asc&items=25&order_by=path&page=1
                     previous: 
                     next: 
                 data:
@@ -5104,7 +5426,7 @@ paths:
                   harvest_id: 78
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 98
-                  uploader_id: 489
+                  uploader_id: 482
                   validations: []
               schema:
                 allOf:
@@ -5176,7 +5498,7 @@ paths:
                   confirmed: incorrect
                   audio_event_id: 78
                   tag_id: 77
-                  creator_id: 495
+                  creator_id: 488
                   updater_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5225,7 +5547,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 79
                   tag_id: 78
-                  creator_id: 499
+                  creator_id: 492
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5291,7 +5613,7 @@ paths:
                   confirmed: incorrect
                   audio_event_id: 81
                   tag_id: 80
-                  creator_id: 507
+                  creator_id: 500
                   updater_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5330,6 +5652,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - confirmed
+                    - audio_event_id
+                    - tag_id
+                    - creator_id
+                    - updater_id
+                    - created_at
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -5346,7 +5678,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 82
                   tag_id: 81
-                  creator_id: 511
+                  creator_id: 504
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5498,6 +5830,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - confirmed
+                    - audio_event_id
+                    - tag_id
+                    - creator_id
+                    - updater_id
+                    - created_at
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -5514,7 +5856,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 88
                   tag_id: 87
-                  creator_id: 543
+                  creator_id: 534
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5562,6 +5904,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - confirmed
+                    - audio_event_id
+                    - tag_id
+                    - creator_id
+                    - updater_id
+                    - created_at
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -5578,7 +5930,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 89
                   tag_id: 88
-                  creator_id: 547
+                  creator_id: 538
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5637,7 +5989,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 90
                   tag_id: 89
-                  creator_id: 551
+                  creator_id: 542
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -5683,6 +6035,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - confirmed
+                    - audio_event_id
+                    - tag_id
+                    - creator_id
+                    - updater_id
+                    - created_at
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -5699,7 +6061,7 @@ paths:
                   confirmed: correct
                   audio_event_id: 91
                   tag_id: 90
-                  creator_id: 555
+                  creator_id: 546
                   updater_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -6001,6 +6363,23 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - version
+                    - url
+                    - description
+                    - score_minimum
+                    - score_maximum
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: name
                     direction: asc
@@ -6060,6 +6439,23 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - version
+                    - url
+                    - description
+                    - score_minimum
+                    - score_maximum
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: name
                     direction: asc
@@ -6169,6 +6565,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - additional_tag_ids
+                    - path
+                    - name
+                    - audio_event_import_id
+                    - analysis_jobs_item_id
+                    - created_at
+                    - file_hash
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -6423,6 +6829,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - additional_tag_ids
+                    - path
+                    - name
+                    - audio_event_import_id
+                    - analysis_jobs_item_id
+                    - created_at
+                    - file_hash
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -6678,7 +7094,7 @@ paths:
                   name: site name 132
                   description: site description 132
                   notes: note number 132
-                  creator_id: 638
+                  creator_id: 629
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -6689,7 +7105,7 @@ paths:
                   custom_longitude: -48.840125
                   location_obfuscated: false
                   project_ids:
-                  - 148
+                  - 139
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -6781,7 +7197,7 @@ paths:
                   name: site name 134
                   description: site description 134
                   notes: note number 134
-                  creator_id: 650
+                  creator_id: 640
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -6792,7 +7208,7 @@ paths:
                   custom_longitude: 105.77013
                   location_obfuscated: false
                   project_ids:
-                  - 152
+                  - 142
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -6857,7 +7273,7 @@ paths:
                   name: site name 136
                   description: site description 136
                   notes: note number 136
-                  creator_id: 654
+                  creator_id: 644
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -6868,7 +7284,7 @@ paths:
                   custom_longitude: 69.704671
                   location_obfuscated: false
                   project_ids:
-                  - 153
+                  - 143
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -6974,7 +7390,7 @@ paths:
                   custom_longitude: 
                   location_obfuscated: false
                   project_ids:
-                  - 157
+                  - 146
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -7033,6 +7449,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -7049,18 +7481,18 @@ paths:
                   name: site name 139
                   description: site description 139
                   notes: note number 139
-                  creator_id: 670
+                  creator_id: 659
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
                   region_id: 140
-                  custom_latitude: 15.049827
-                  custom_longitude: -172.698515
+                  custom_latitude: -55.960786
+                  custom_longitude: -0.032519
                   location_obfuscated: false
                   project_ids:
-                  - 158
+                  - 147
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -7117,6 +7549,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -7133,18 +7581,18 @@ paths:
                   name: site name 140
                   description: site description 140
                   notes: note number 140
-                  creator_id: 674
+                  creator_id: 663
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
                   region_id: 141
-                  custom_latitude: 38.236074
-                  custom_longitude: 53.024047
+                  custom_latitude: -79.836222
+                  custom_longitude: -12.749936
                   location_obfuscated: false
                   project_ids:
-                  - 159
+                  - 148
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -7207,6 +7655,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - streaming
+                    - status
+                    - project_id
+                    - name
+                    - upload_user
+                    - upload_password
+                    - upload_url
+                    - mappings
+                    - report
+                    - last_upload_at
+                    - last_metadata_review_at
+                    - last_mappings_change_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -7215,18 +7682,18 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/160/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
+                    current: http://web:3000/projects/149/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
                 - id: 117
-                  creator_id: 678
+                  creator_id: 667
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 160
+                  project_id: 149
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -7294,7 +7761,7 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: true
                   status: uploading
-                  project_id: 161
+                  project_id: 150
                   name: January 2nd Upload
                   upload_user: Admin_119
                   upload_password: NYUFFDbwT8PuxoHm1xQKE26a
@@ -7360,6 +7827,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - streaming
+                    - status
+                    - project_id
+                    - name
+                    - upload_user
+                    - upload_password
+                    - upload_url
+                    - mappings
+                    - report
+                    - last_upload_at
+                    - last_metadata_review_at
+                    - last_mappings_change_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -7368,18 +7854,18 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/162/harvests?direction=desc&items=25&order_by=created_at&page=1
+                    current: http://web:3000/projects/151/harvests?direction=desc&items=25&order_by=created_at&page=1
                     previous: 
                     next: 
                 data:
                 - id: 120
-                  creator_id: 686
+                  creator_id: 675
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 162
+                  project_id: 151
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -7479,13 +7965,13 @@ paths:
                   message: OK
                 data:
                   id: 122
-                  creator_id: 694
+                  creator_id: 683
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 164
+                  project_id: 153
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -7578,13 +8064,13 @@ paths:
                   message: OK
                 data:
                   id: 124
-                  creator_id: 702
+                  creator_id: 691
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 166
+                  project_id: 155
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -7654,13 +8140,13 @@ paths:
                   message: OK
                 data:
                   id: 125
-                  creator_id: 706
+                  creator_id: 695
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 167
+                  project_id: 156
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -7782,7 +8268,7 @@ paths:
                       details: 
                 data:
                   id: 149
-                  uuid: 3db64b7a-6ee3-4ea3-96db-e5d7df8168f7
+                  uuid: c03db64b-7a6e-435e-a316-dbe5d7df8168
                   recorded_date: '2000-08-22T07:06:59.000Z'
                   site_id: 149
                   duration_seconds: 60000.0
@@ -7804,6 +8290,7 @@ paths:
                   uploader_id: 1
                   original_file_name: original name 149.mp3
                   canonical_file_name: 20000822T070659Z_site-name-150_149.mp3
+                  recorded_date_timezone: 
                   recorded_utc_offset: 
               schema:
                 allOf:
@@ -7888,6 +8375,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - deleted
+                    - path
+                    - status
+                    - created_at
+                    - harvest_id
+                    - updated_at
+                    - audio_recording_id
+                    - uploader_id
+                    - report
+                    - validations
                   sorting:
                     order_by: path
                     direction: asc
@@ -7908,7 +8408,7 @@ paths:
                   harvest_id: 128
                   updated_at: '2020-01-02T03:04:05.677Z'
                   audio_recording_id: 151
-                  uploader_id: 732
+                  uploader_id: 719
                   report:
                     items_total: 1
                     items_size_bytes: 
@@ -8000,6 +8500,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - audio_recording_id
+                    - name
+                    - category
+                    - description
+                    - offset_seconds
+                    - created_at
+                    - creator_id
+                    - updater_id
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -8084,6 +8596,18 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - audio_recording_id
+                    - name
+                    - category
+                    - description
+                    - offset_seconds
+                    - created_at
+                    - creator_id
+                    - updater_id
+                    - updated_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -8317,6 +8841,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -8333,7 +8873,7 @@ paths:
                   name: site name 166
                   description: site description 166
                   notes: note number 166
-                  creator_id: 787
+                  creator_id: 771
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -8400,6 +8940,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -8416,7 +8972,7 @@ paths:
                   name: site name 168
                   description: site description 168
                   notes: note number 168
-                  creator_id: 794
+                  creator_id: 778
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -8507,6 +9063,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - stored_query
+                    - created_at
+                    - creator_id
+                    - deleter_id
+                    - deleted_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -8526,11 +9092,11 @@ paths:
                     uuid:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 802
+                  creator_id: 786
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 194
+                  - 178
                   analysis_job_ids: []
                   description_html: "<p>saved search description 127</p>\n"
                   description_html_tagline: saved search description 127
@@ -8680,11 +9246,11 @@ paths:
                     uuid:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 820
+                  creator_id: 804
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 198
+                  - 182
                   analysis_job_ids: []
                   description_html: "<p>saved search description 133</p>\n"
                   description_html_tagline: saved search description 133
@@ -8718,6 +9284,16 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - stored_query
+                    - created_at
+                    - creator_id
+                    - deleter_id
+                    - deleted_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -8737,11 +9313,11 @@ paths:
                     uuid:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 824
+                  creator_id: 808
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 199
+                  - 183
                   analysis_job_ids: []
                   description_html: "<p>saved search description 134</p>\n"
                   description_html_tagline: saved search description 134
@@ -8860,13 +9436,13 @@ paths:
                   message: OK
                 data:
                   id: 148
-                  creator_id: 836
+                  creator_id: 820
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 202
+                  project_id: 186
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -8947,13 +9523,13 @@ paths:
                   message: OK
                 data:
                   id: 150
-                  creator_id: 844
+                  creator_id: 828
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 204
+                  project_id: 188
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -9017,13 +9593,13 @@ paths:
                   message: OK
                 data:
                   id: 151
-                  creator_id: 848
+                  creator_id: 832
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 205
+                  project_id: 189
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -9080,6 +9656,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - streaming
+                    - status
+                    - project_id
+                    - name
+                    - upload_user
+                    - upload_password
+                    - upload_url
+                    - mappings
+                    - report
+                    - last_upload_at
+                    - last_metadata_review_at
+                    - last_mappings_change_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -9093,13 +9688,13 @@ paths:
                     next: 
                 data:
                 - id: 152
-                  creator_id: 852
+                  creator_id: 836
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 206
+                  project_id: 190
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -9153,6 +9748,25 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - streaming
+                    - status
+                    - project_id
+                    - name
+                    - upload_user
+                    - upload_password
+                    - upload_url
+                    - mappings
+                    - report
+                    - last_upload_at
+                    - last_metadata_review_at
+                    - last_mappings_change_at
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -9166,13 +9780,13 @@ paths:
                     next: 
                 data:
                 - id: 153
-                  creator_id: 856
+                  creator_id: 840
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
-                  project_id: 207
+                  project_id: 191
                   name: January 2nd Upload
                   upload_user: 
                   upload_password: 
@@ -9233,10 +9847,10 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: true
                   status: uploading
-                  project_id: 208
+                  project_id: 192
                   name: January 2nd Upload
                   upload_user: Admin_155
-                  upload_password: JyTu7pbnxKCiaEFg2Yk1BP8n
+                  upload_password: iKjhERDufLoA67GFUtzqoeLf
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '183'
@@ -9306,7 +9920,7 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 210
+                  project_id: 194
                   site_ids: []
                   description_html: "<p>site <strong>description</strong> 189</p>\n"
                   description_html_tagline: site <strong>description</strong> 189
@@ -9345,6 +9959,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - project_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -9362,13 +9989,13 @@ paths:
                   description: site **description** 190
                   notes:
                     region_note_190: 190
-                  creator_id: 870
+                  creator_id: 854
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 211
+                  project_id: 195
                   site_ids:
                   - 185
                   description_html: "<p>site <strong>description</strong> 190</p>\n"
@@ -9406,6 +10033,19 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - project_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -9423,13 +10063,13 @@ paths:
                   description: site **description** 191
                   notes:
                     region_note_191: 191
-                  creator_id: 874
+                  creator_id: 858
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 212
+                  project_id: 196
                   site_ids:
                   - 186
                   description_html: "<p>site <strong>description</strong> 191</p>\n"
@@ -9479,13 +10119,13 @@ paths:
                   description: site **description** 193
                   notes:
                     region_note_193: 193
-                  creator_id: 878
+                  creator_id: 862
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 214
+                  project_id: 198
                   site_ids:
                   - 187
                   description_html: "<p>site <strong>description</strong> 193</p>\n"
@@ -9537,13 +10177,13 @@ paths:
                   description: site **description** 194
                   notes:
                     region_note_194: 194
-                  creator_id: 884
+                  creator_id: 868
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 215
+                  project_id: 199
                   site_ids:
                   - 188
                   description_html: "<p>site <strong>description</strong> 194</p>\n"
@@ -9590,13 +10230,13 @@ paths:
                   description: site **description** 196
                   notes:
                     region_note_196: 196
-                  creator_id: 888
+                  creator_id: 872
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  project_id: 217
+                  project_id: 201
                   site_ids:
                   - 189
                   description_html: "<p>site <strong>description</strong> 196</p>\n"
@@ -9687,6 +10327,35 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - creator_id
+                    - updater_id
+                    - deleter_id
+                    - created_at
+                    - updated_at
+                    - deleted_at
+                    - filter
+                    - system_job
+                    - ongoing
+                    - project_id
+                    - retry_count
+                    - amend_count
+                    - suspend_count
+                    - started_at
+                    - overall_status
+                    - overall_status_modified_at
+                    - overall_progress
+                    - script_ids
+                    - audio_event_import_ids
+                    - overall_count
+                    - overall_duration_seconds
+                    - overall_data_length_bytes
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: updated_at
                     direction: desc
@@ -9702,7 +10371,7 @@ paths:
                 - id: 143
                   name: job name 143
                   description: job description 143
-                  creator_id: 903
+                  creator_id: 887
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
@@ -9711,7 +10380,7 @@ paths:
                   filter: {}
                   system_job: false
                   ongoing: false
-                  project_id: 220
+                  project_id: 204
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -9792,6 +10461,24 @@ paths:
                   started_at: '2020-01-02T03:04:05.677Z'
                   overall_status: processing
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
+                  overall_progress:
+                    status_new_count: 1
+                    result_empty_count: 1
+                    result_failed_count: 0
+                    result_killed_count: 0
+                    status_queued_count: 0
+                    result_success_count: 0
+                    status_working_count: 0
+                    status_finished_count: 0
+                    result_cancelled_count: 0
+                    transition_empty_count: 0
+                    transition_queue_count: 1
+                    transition_retry_count: 0
+                    transition_cancel_count: 0
+                    transition_finish_count: 0
+                  script_ids:
+                  - 146
+                  audio_event_import_ids: []
                   overall_count: 1
                   overall_duration_seconds: 60000.0
                   overall_data_length_bytes: 3800
@@ -9887,7 +10574,7 @@ paths:
                   id: 148
                   name: job name 147
                   description: job description 147
-                  creator_id: 919
+                  creator_id: 903
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
@@ -9896,7 +10583,7 @@ paths:
                   filter: {}
                   system_job: false
                   ongoing: false
-                  project_id: 224
+                  project_id: 208
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -9965,7 +10652,7 @@ paths:
                   id: 149
                   name: job name 149
                   description: job description 149
-                  creator_id: 923
+                  creator_id: 907
                   updater_id: 1
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
@@ -9974,7 +10661,7 @@ paths:
                   filter: {}
                   system_job: false
                   ongoing: false
-                  project_id: 225
+                  project_id: 209
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -10048,7 +10735,7 @@ paths:
                   id: 150
                   name: job name 151
                   description: job description 151
-                  creator_id: 933
+                  creator_id: 917
                   updater_id: 1
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
@@ -10057,7 +10744,7 @@ paths:
                   filter: {}
                   system_job: false
                   ongoing: false
-                  project_id: 227
+                  project_id: 211
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -10176,6 +10863,35 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - creator_id
+                    - updater_id
+                    - deleter_id
+                    - created_at
+                    - updated_at
+                    - deleted_at
+                    - filter
+                    - system_job
+                    - ongoing
+                    - project_id
+                    - retry_count
+                    - amend_count
+                    - suspend_count
+                    - started_at
+                    - overall_status
+                    - overall_status_modified_at
+                    - overall_progress
+                    - script_ids
+                    - audio_event_import_ids
+                    - overall_count
+                    - overall_duration_seconds
+                    - overall_data_length_bytes
+                    - description_html_tagline
+                    - description_html
                   sorting:
                     order_by: updated_at
                     direction: desc
@@ -10191,7 +10907,7 @@ paths:
                 - id: 153
                   name: job name 154
                   description: job description 154
-                  creator_id: 951
+                  creator_id: 935
                   updater_id: 
                   deleter_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
@@ -10200,7 +10916,7 @@ paths:
                   filter: {}
                   system_job: false
                   ongoing: false
-                  project_id: 231
+                  project_id: 215
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -10308,6 +11024,15 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - created_at
+                    - creator_id
+                    - updated_at
+                    - updater_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -10324,7 +11049,7 @@ paths:
                   name: gen_dataset_name154
                   description: dataset description 154
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 962
+                  creator_id: 946
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   description_html: "<p>dataset description 154</p>\n"
@@ -10416,7 +11141,7 @@ paths:
                   name: gen_dataset_name157
                   description: dataset description 157
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 971
+                  creator_id: 955
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   description_html: "<p>dataset description 157</p>\n"
@@ -10461,7 +11186,7 @@ paths:
                   name: gen_dataset_name159
                   description: dataset description 159
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 975
+                  creator_id: 959
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   description_html: "<p>dataset description 159</p>\n"
@@ -10511,7 +11236,7 @@ paths:
                   name: gen_dataset_name161
                   description: dataset description 161
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 980
+                  creator_id: 964
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   description_html: "<p>dataset description 161</p>\n"
@@ -10611,6 +11336,15 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - created_at
+                    - creator_id
+                    - updated_at
+                    - updater_id
                   sorting:
                     order_by: name
                     direction: asc
@@ -10627,7 +11361,7 @@ paths:
                   name: gen_dataset_name164
                   description: dataset description 164
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 993
+                  creator_id: 977
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   description_html: "<p>dataset description 164</p>\n"
@@ -10670,6 +11404,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -10678,7 +11428,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/242/sites/filter?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/226/sites/filter?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
@@ -10686,7 +11436,7 @@ paths:
                   name: site name 213
                   description: site description 213
                   notes: note number 213
-                  creator_id: 997
+                  creator_id: 981
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -10697,7 +11447,7 @@ paths:
                   custom_longitude: -160.401292
                   location_obfuscated: false
                   project_ids:
-                  - 242
+                  - 226
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -10807,7 +11557,7 @@ paths:
                   name: site name 216
                   description: site description 216
                   notes: note number 216
-                  creator_id: 1005
+                  creator_id: 989
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -10818,7 +11568,7 @@ paths:
                   custom_longitude: 24.413241
                   location_obfuscated: false
                   project_ids:
-                  - 244
+                  - 228
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -10894,7 +11644,7 @@ paths:
                   name: site name 217
                   description: site description 217
                   notes: note number 217
-                  creator_id: 1012
+                  creator_id: 996
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -10905,7 +11655,7 @@ paths:
                   custom_longitude: -167.766614
                   location_obfuscated: false
                   project_ids:
-                  - 246
+                  - 230
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -10976,7 +11726,7 @@ paths:
                   name: site name 219
                   description: site description 219
                   notes: note number 219
-                  creator_id: 1016
+                  creator_id: 1000
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -10987,7 +11737,7 @@ paths:
                   custom_longitude: 141.215262
                   location_obfuscated: false
                   project_ids:
-                  - 247
+                  - 231
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11097,7 +11847,7 @@ paths:
                   custom_longitude: 
                   location_obfuscated: false
                   project_ids:
-                  - 250
+                  - 234
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11162,6 +11912,22 @@ paths:
                 meta:
                   status: 200
                   message: OK
+                  projection:
+                    only:
+                    - id
+                    - name
+                    - description
+                    - notes
+                    - creator_id
+                    - created_at
+                    - updater_id
+                    - updated_at
+                    - deleter_id
+                    - deleted_at
+                    - region_id
+                    - custom_latitude
+                    - custom_longitude
+                    - location_obfuscated
                   sorting:
                     order_by: name
                     direction: asc
@@ -11170,7 +11936,7 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/252/sites?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/236/sites?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
@@ -11178,7 +11944,7 @@ paths:
                   name: site name 223
                   description: site description 223
                   notes: note number 223
-                  creator_id: 1034
+                  creator_id: 1018
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
@@ -11189,7 +11955,7 @@ paths:
                   custom_longitude: 82.552085
                   location_obfuscated: false
                   project_ids:
-                  - 252
+                  - 236
                   timezone_information: 
                   image_urls:
                   - size: extralarge

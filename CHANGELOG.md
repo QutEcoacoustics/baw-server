@@ -1,5 +1,32 @@
 # Changelog
 
+## [13.6.2](https://github.com/QutEcoacoustics/baw-server/tree/13.6.2) (2025-08-18)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.0.1...13.6.2)
+
+**Implemented enhancements:**
+
+- Filter projection API: proposed changes [\#809](https://github.com/QutEcoacoustics/baw-server/issues/809)
+- Support `$` as datetime separator when parsing date stamps [\#808](https://github.com/QutEcoacoustics/baw-server/issues/808)
+- Allow filtering audio events by project/region/site [\#788](https://github.com/QutEcoacoustics/baw-server/issues/788)
+- API responses returned from create requests do not return custom fields [\#691](https://github.com/QutEcoacoustics/baw-server/issues/691)
+- Support filtering nested associated models [\#690](https://github.com/QutEcoacoustics/baw-server/issues/690)
+- Add support for projection and filtering for custom fields in associations [\#689](https://github.com/QutEcoacoustics/baw-server/issues/689)
+- Improved audio\_event filtering [\#687](https://github.com/QutEcoacoustics/baw-server/issues/687)
+- Filter improvements audio events [\#813](https://github.com/QutEcoacoustics/baw-server/pull/813) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Need to properly parse qmgr list server max\_queued [\#805](https://github.com/QutEcoacoustics/baw-server/issues/805)
+
+**Closed issues:**
+
+- permissions issue? [\#806](https://github.com/QutEcoacoustics/baw-server/issues/806)
+
+## [13.0.1](https://github.com/QutEcoacoustics/baw-server/tree/13.0.1) (2025-07-22)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.0.0...13.0.1)
+
 ## [13.0.0](https://github.com/QutEcoacoustics/baw-server/tree/13.0.0) (2025-07-22)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/12.18.7...13.0.0)
