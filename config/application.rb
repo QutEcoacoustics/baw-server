@@ -118,6 +118,12 @@ module Baw
 
     # trigger autoload for modules/Baw
     config.autoload_once_paths << (Rails.root / 'app/modules/baw/patch')
+    # we're doing it twice because i can't work out how to make this work in both
+    # eager_load (prod/staging) and not eager_load (where the above fails when running tests)
+    config.after_initialize do
+      # trigger autoload for modules/Baw
+      Baw::Patch.apply
+    end
 
     # Zeitwerk logging
     #Rails.autoloaders.log! # debug only!
