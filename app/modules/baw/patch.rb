@@ -19,3 +19,5 @@ module Baw
     end
   end
 end
+
+Baw::Patch.apply

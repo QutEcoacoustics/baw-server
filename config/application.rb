@@ -116,10 +116,8 @@ module Baw
     # we should never need to to autoload anything in ./app
     config.add_autoload_paths_to_load_path = false
 
-    config.after_initialize do
-      # trigger autoload for modules/Baw
-      Baw::Patch.apply
-    end
+    # trigger autoload for modules/Baw
+    config.autoload_once_paths << (Rails.root / 'app/modules/baw/patch')
 
     # Zeitwerk logging
     #Rails.autoloaders.log! # debug only!
