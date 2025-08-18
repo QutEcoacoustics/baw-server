@@ -380,12 +380,6 @@ module Filter
           raise 'must be a node' unless predicate.is_a?(Arel::Nodes::Node)
 
           compose_not(predicate)
-          # TODO: remove - not sure on correct impl, wait for tests to pass
-          # if predicate.respond_to?(:map)
-          #   predicate.map { |c| compose_not(c) }
-          # else
-          #   [compose_not(predicate)]
-          # end
         end
       end
     end

@@ -33,14 +33,16 @@ module Filter
     # Can either:
     # - inject custom arel for a calculated field
     # - or use a hint from the field for what additional columns to select for a virtual field
+    # @return [Hash] with two keys: `:projection` and `:joins`
     def project_custom_field(table, column_name, custom_fields2, as: nil)
-      # two scenarios: calculated or virtual
       arel = nil
       joins = []
 
-      #   1. this is a calculated column that can be calculated in query
-      #     - then we supply the arel directly here
+      # two scenarios: calculated or virtual
       if custom_field_is_calculated?(column_name, custom_fields2)
+        #   1. this is a calculated column that can be calculated in query
+        #     - then we supply the arel directly here
+        #     - and also any joins needed
         as ||= column_name
         build_custom_calculated_field(column_name, custom_fields2) => { arel:, joins: }
         # `as` is needed to name the column so it can deserialize into active model
@@ -51,8 +53,10 @@ module Filter
         # explicitly fixed the issue.
         arel = ::Arel::Nodes::As.new(arel, table[as].unqualified) unless arel.nil?
       elsif custom_field_is_virtual?(column_name, custom_fields2)
-        #   2. this is a virtual column who's result will be calculated post-query in rails and we're just fetching source columns
+        #   2. this is a virtual column who's result will be calculated post-query in rails
+        #      and we're just fetching source columns
         #     - then we use query_attributes and apply transform after the fact
+        #     - virtual fields don't support additional joins at this time, so `joins`` is just left empty
         arel = build_custom_virtual_field(column_name, custom_fields2, table)
       else
         # if nil, this is not a custom field

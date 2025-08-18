@@ -68,7 +68,7 @@ describe Site do
 
   it 'creates just one project when the factory is created' do
     site = create(:site)
-    expect(site.projects.size).to eq(1)
+    expect(site.projects.size).to eq 1
     expect(site.region.project.id).to eq(site.projects.first.id)
   end
 
@@ -80,7 +80,7 @@ describe Site do
     s = build(:site, name: 's')
     expect(s).not_to be_valid
     expect(s).not_to be_valid
-    expect(s.errors[:name].size).to eq(1)
+    expect(s.errors[:name].size).to eq 1
   end
 
   it 'obfuscates locations' do

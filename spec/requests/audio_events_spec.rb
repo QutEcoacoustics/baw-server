@@ -149,7 +149,8 @@ describe '/audio_events' do
       site.save!
     end
 
-    it 'can sort by duration_seconds' do
+    it 'can sort by and project duration_seconds' do
+      # projection and sorting are done at the same time to test the combination
       filter =   {
         'filter' => {
           'isReference' => { 'eq' => true }
