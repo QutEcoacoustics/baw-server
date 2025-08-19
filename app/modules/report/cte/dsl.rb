@@ -13,10 +13,11 @@ module Report
         base.instance_variable_set(:@_depends_on, {})
         base.instance_variable_set(:@_default_options, {})
         base.instance_variable_set(:@_select_block, nil)
+        base.instance_variable_set(:@_suffix, nil)
 
         # class-level accessors for configuration
         class << base
-          attr_accessor :_table_name, :_depends_on, :_default_options, :_select_block
+          attr_accessor :_table_name, :_depends_on, :_default_options, :_select_block, :_suffix
         end
 
         base.class_eval do
@@ -33,7 +34,7 @@ module Report
           # suffix, and the select statement (block).
           define_method(:initialize) do |name = self.class._table_name,
                                          dependencies: self.class._depends_on,
-                                         suffix: nil,
+                                         suffix: self.class._suffix,
                                          options: {},
                                          &blk|
             blk ||= self.class._select_block
@@ -92,6 +93,10 @@ module Report
         # Arel::Nodes::SqlLiteral
         def select(&blk)
           @_select_block = blk
+        end
+
+        def suffix(sfx)
+          @_suffix = sfx&.to_sym
         end
       end
 

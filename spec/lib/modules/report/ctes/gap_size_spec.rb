@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-describe Report::Ctes::Coverage::GapSize do
+describe Report::Ctes::Coverage::IntervalGapSize do
   include SqlHelpers::Example
-  subject { Report::Ctes::Coverage::GapSize.new(options: params) }
+  subject { Report::Ctes::Coverage::IntervalGapSize.new(options: params) }
 
   let(:actual) { subject.select_manager.to_sql }
   let(:params) {
@@ -35,15 +35,15 @@ describe Report::Ctes::Coverage::GapSize do
 
     start_end_times.each_with_index do |(start_time, end_time), index|
       parameters = { start_time: start_time, end_time: end_time, scaling_factor: scaling_factor }
-      result = Report::Ctes::Coverage::GapSize.new(options: parameters).execute
+      result = Report::Ctes::Coverage::IntervalGapSize.new(options: parameters).execute
       expect(result[0]['gap_size']).to match(expected_results[index])
     end
   end
 end
 
-describe Report::Ctes::Coverage::CoverageEventsSortedSum do
+describe Report::Ctes::Coverage::TrackEventChanges do
   include SqlHelpers::Example
-  subject { Report::Ctes::Coverage::CoverageEventsSortedSum.new(options: params) }
+  subject { Report::Ctes::Coverage::TrackEventChanges.new(options: params) }
 
   let(:actual) { subject.select_manager.to_sql }
   let(:params) {
@@ -59,11 +59,26 @@ describe Report::Ctes::Coverage::CoverageEventsSortedSum do
   before { create(:audio_event_with_tags) }
 
   it 'generates the correct #select_manager SQL' do
+    debugger
     expected_sql = <<~SQL.squish
-      SELECT "coverage_events"."group_id", "coverage_events"."event_time",
-              (SUM("coverage_events"."delta") OVER (PARTITION BY "coverage_events"."group_id" ORDER BY "coverage_events"."event_time", "coverage_events"."delta" DESC)) AS "running_sum"
-      FROM "coverage_events"
+      SELECT "stacked_temporal_events"."group_id",
+        "stacked_temporal_events"."event_time",
+        (
+          LEAD("stacked_temporal_events"."event_time") OVER (
+            PARTITION BY "stacked_temporal_events"."group_id"
+            ORDER BY "stacked_temporal_events"."event_time"
+          )
+        ) AS "next_event_time",
+        (
+          SUM("stacked_temporal_events"."delta") OVER (
+            PARTITION BY "stacked_temporal_events"."group_id"
+            ORDER BY "stacked_temporal_events"."event_time",
+              "stacked_temporal_events"."delta" DESC
+          )
+        ) AS "running_sum"
+      FROM "stacked_temporal_events"
     SQL
+      .gsub(/\s+(\(|\)) (\(|\))/, '\1\2')
     comparison_sql(actual, expected_sql)
   end
 
@@ -89,19 +104,36 @@ describe Report::Ctes::Coverage::Coverage do
 
   before { create(:audio_event_with_tags) }
 
-  it 'generates the correct #select_manager SQL' do
-    expected_sql = <<~SQL.squish
-      SELECT json_agg(jsonb_build_object('range', tsrange(CAST("final_coverage"."coverage_start" AS timestamp without time zone),
-                                                          CAST("final_coverage"."coverage_end" AS timestamp without time zone), '[)'),
-                                         'density',
-                                          ROUND("final_coverage"."density", 3)))
-      AS "coverage"
-      FROM "final_coverage"
-    SQL
-    comparison_sql(actual, expected_sql)
+  context 'standard coverage report (without grouping by analysis)' do
+    it 'generates the correct #select_manager SQL' do
+      expected_sql = <<~SQL.squish
+        SELECT json_agg(jsonb_build_object('range', tsrange(CAST("interval_density"."coverage_start" AS timestamp without time zone),
+                                                            CAST("interval_density"."coverage_end" AS timestamp without time zone), '[)'),
+                                           'density',
+                                            ROUND("interval_density"."density", 3)))
+        AS "coverage"
+        FROM "interval_density"
+      SQL
+      comparison_sql(actual, expected_sql)
+    end
+
+    it 'executes' do
+      expect(subject.execute).to be_a(PG::Result)
+    end
   end
 
-  it 'executes' do
-    expect(subject.execute).to be_a(PG::Result)
+  context 'coverage report with grouping by analysis' do
+    subject {
+      Report::Ctes::Coverage::Coverage.new(suffix: 'analysis', options: params.merge({ analysis_result: true }))
+    }
+
+    let(:report) {
+      Report::AudioEvents.new(options: params)
+    }
+
+    it 'executes' do
+      debugger
+      expect(subject.execute).to be_a(PG::Result)
+    end
   end
 end

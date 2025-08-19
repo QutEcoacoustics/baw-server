@@ -23,7 +23,7 @@ module Report
     class Node
       extend Report::Cte::Dsl
       attr_reader :options, :_initial_dependencies
-      attr_accessor :name, :select_block
+      attr_accessor :name, :select_block, :suffix
 
       # Initializes a new Cte node.
       #
@@ -101,6 +101,8 @@ module Report
           case dep
           in Node
             dep
+          in Class => klass if klass <= ForceSuffix
+            klass.new(options: @options)
           in Class => klass if klass <= Cte::Node
             klass.new(suffix: @suffix, options: @options)
           else
@@ -193,8 +195,6 @@ module Report
 
       private
 
-      attr_reader :suffix
-
       def validate_select(select)
         raise ArgumentError, 'Either a block or select must be provided' if select.nil?
         raise ArgumentError, "Select must be a Proc, got: #{select.class.name}" unless select.is_a?(Proc)
@@ -233,5 +233,7 @@ module Report
           "error while calling block: #{@block} for node: #{@name}\n#{e.message}\n}"
       end
     end
+
+    module ForceSuffix end
   end
 end

@@ -34,7 +34,7 @@ module Report
             select.join(event_coverage, Arel::Nodes::OuterJoin)
               .on(interval_coverage[:result].eq(event_coverage[:result])
                          .and(interval_coverage[:group_id].eq(event_coverage[:group_id])))
-              .order(interval_coverage[:result], coverage_intervals[:group_id])
+              .order(interval_coverage[:result], interval_coverage[:group_id])
           else
             select.join(event_coverage, Arel::Nodes::OuterJoin)
               .on(interval_coverage[:group_id].eq(event_coverage[:group_id]))
