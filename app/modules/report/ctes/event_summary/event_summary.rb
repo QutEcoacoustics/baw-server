@@ -16,6 +16,12 @@ module Report
             .project(event_summaries_aliased.right.json_agg.as('event_summaries'))
             .from(event_summaries_aliased)
         end
+
+        def self.format_result(result, base_key = 'event_summaries', suffix: nil)
+          key = suffix ? "#{base_key}_#{suffix}" : base_key
+
+          Decode.row_with_tsrange result, key
+        end
       end
     end
   end

@@ -29,6 +29,11 @@ module Report
 
           interval_density.project(json.json_agg.as(name.to_s))
         end
+
+        def self.format_result(result, base_key = 'coverage', suffix: nil)
+          key = suffix ? "#{base_key}_#{suffix}" : base_key
+          Decode.row_with_tsrange result, key
+        end
       end
     end
   end

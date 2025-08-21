@@ -81,6 +81,12 @@ module Baw
         end
       end
 
+      class Distinct < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('DISTINCT', expr)
+        end
+      end
+
       class ArrayConstructor < ::Arel::Nodes::Node
         include ::Arel::AliasPredication
         include ArrayFunctions

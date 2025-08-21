@@ -16,6 +16,11 @@ module Report
           .project(cumulative_table_aliased.right.row_to_json.json_agg.as('accumulation_series'))
           .from(cumulative_table_aliased)
       end
+
+      def self.format_result(result, base_key = 'accumulation_series', suffix: nil)
+        key = suffix ? "#{base_key}_#{suffix}" : base_key
+        Decode.row_with_tsrange result, key
+      end
     end
   end
 end

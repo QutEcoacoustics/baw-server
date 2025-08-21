@@ -21,6 +21,10 @@ module Baw
     module AttributeExtensions
       include NodeExtensions
 
+      def distinct
+        Baw::Arel::Nodes::Distinct.new([self])
+      end
+
       def unqualified
         ::Arel::Nodes::UnqualifiedColumn.new(self)
       end
