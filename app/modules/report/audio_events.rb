@@ -73,13 +73,13 @@ module Report
         provenance_ids: Decode.array(result_hash['provenance_ids']),
         generated_date: DateTime.now,
         bucket_count: accumulation_series.length,
-        audio_events_count: result_hash['audio_events_count'],
+        audio_events_count: result_hash['audio_event_count'],
         audio_recording_ids: Decode.array(result_hash['audio_recording_ids']),
         event_summaries: Report::Ctes::EventSummary::EventSummary.format_result(result_hash),
         accumulation_series: accumulation_series,
         composition_series: Report::Ctes::EventComposition.format_result(result_hash),
         coverage: Report::Ctes::Coverage::Coverage.format_result(result_hash),
-        coverage_analysis: Report::Ctes::Coverage::Coverage.format_result(result_hash, :analysis)
+        coverage_analysis: Report::Ctes::Coverage::Coverage.format_result(result_hash, suffix: 'analysis')
       }
     end
   end

@@ -20,7 +20,14 @@ module Report
         def self.format_result(result, base_key = 'event_summaries', suffix: nil)
           key = suffix ? "#{base_key}_#{suffix}" : base_key
 
-          Decode.row_with_tsrange result, key
+          transform_event_summary = lambda { |item|
+            events_data = item['events'].first
+            events_data.merge!('consensus' => events_data['consensus'].round(3)) if events_data['consensus']
+
+            item.merge('events' => events_data)
+          }
+
+          Decode.json result[key], &transform_event_summary
         end
       end
     end
