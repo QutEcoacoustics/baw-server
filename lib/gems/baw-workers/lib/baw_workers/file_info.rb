@@ -13,28 +13,38 @@ module BawWorkers
     # Get info for an existing file.
     # @param [String] source
     # @return [Hash] information about an existing file
-    def audio_info(source)
-      # based on how harvester gets file hash.
-      generated_file_hash = "SHA256::#{generate_hash(source).hexdigest}"
+    def audio_info(source, file_info)
+      if file_info[:file_hash].blank?
+        # based on how harvester gets file hash.
+        generated_file_hash = "SHA256::#{generate_hash(source).hexdigest}"
+        file_info[:file_hash] = generated_file_hash
+      end
 
       # integrity
       integrity_check = @audio.integrity_check(source)
+      file_info[:errors] = integrity_check[:errors]
 
-      # get file info using ffmpeg
-      info = @audio.info(source)
+      file_info[:extension] = File.extname(source).delete('.') if file_info[:extension].blank?
 
-      {
-        file: source,
-        extension: File.extname(source).delete('.'),
-        errors: integrity_check[:errors],
-        file_hash: generated_file_hash,
-        media_type: info[:media_type],
-        sample_rate_hertz: info[:sample_rate].to_i,
-        duration_seconds: info[:duration_seconds].to_f.round(3),
-        bit_rate_bps: info[:bit_rate_bps],
-        data_length_bytes: info[:data_length_bytes],
-        channels: info[:channels]
-      }
+      [:media_type, :sample_rate_hertz, :duration_seconds, :bit_rate_bps, :data_length_bytes, :channels].any? do |key|
+        file_info[key].blank?
+      end => need_to_run_ffmpeg
+
+      if need_to_run_ffmpeg
+        # get file info using ffmpeg
+        info = @audio.info(source)
+
+        file_info = file_info.merge({
+          media_type: info[:media_type],
+          sample_rate_hertz: info[:sample_rate].to_i,
+          duration_seconds: info[:duration_seconds].to_f.round(3),
+          bit_rate_bps: info[:bit_rate_bps],
+          data_length_bytes: info[:data_length_bytes],
+          channels: info[:channels]
+        })
+      end
+
+      file_info
     end
 
     # @param [string] source
@@ -125,13 +135,20 @@ module BawWorkers
     # @param [String] source
     # @param [String] utc_offset
     # @return [Hash] file properties
-    def advanced(source, utc_offset = nil, throw: true)
+    def advanced(source, file_info, utc_offset = nil, throw: true)
       file_name = File.basename(source)
 
+      # so we always want to parse this date format because it is special to our website
       info = file_name_all(file_name)
-      info = file_name_datetime(file_name, utc_offset, throw:) if info.empty?
 
-      info
+      if info.empty?
+        # if we already have a recorded_date we don't need to do this again
+        return file_info if file_info[:recorded_date].present?
+
+        file_info.merge(file_name_datetime(file_name, utc_offset, throw:))
+      else
+        file_info.merge(info)
+      end
     end
 
     # Check that this file's extension is valid.

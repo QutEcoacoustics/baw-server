@@ -49,7 +49,7 @@ describe Emu do
     it 'can apply a fix' do
       actual = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
 
-      expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+      expect(actual.records.first).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,
         log: "\n",
         records: an_instance_of(Array),
@@ -193,6 +193,33 @@ describe Emu do
           }
         }
       )
+    end
+  end
+
+  context 'when extracting metadata' do
+    it 'can extract metadata' do
+      path = Fixtures.bar_lt_file
+
+      actual = Emu::Metadata.extract(path)
+
+      expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+        success: true,
+        log: "\n",
+        records: an_instance_of(Array),
+        time_taken: a_value_within(1.0).of(3.5)
+      )
+
+      expect(actual).to be_an_instance_of(Array).and(include(
+        a_hash_including(
+          'calculated_checksum' => {
+            'type' => 'SHA256',
+            'value' => '3bb32933cd8b9139bea325ef256f07afc4fb4ed53e6a1982dd85947afebce1dd'
+          },
+          'duration_seconds' => 14_389.684535147392290249433106,
+          'start_date' => '2020-08-01T00:00:00+10:00',
+          'local_start_date' => '2020-08-01T00:00:00'
+        )
+      ))
     end
   end
 

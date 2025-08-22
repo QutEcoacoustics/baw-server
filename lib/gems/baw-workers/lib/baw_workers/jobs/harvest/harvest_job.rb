@@ -408,27 +408,72 @@ module BawWorkers
         def extract_metadata
           # this hash replaces most of the information traditionally gathered from harvest.yml files
           directory_info = harvest.find_mapping_for_path(harvest_item.path)
+          utc_offset = directory_info&.utc_offset
 
           path = harvest_item.absolute_path
 
-          basic_info = file_info_service.basic(path)
-          advanced_info = file_info_service.advanced(path, directory_info&.utc_offset, throw: false)
-          audio_info = file_info_service.audio_info(path)
+          file_info = directory_info.to_h
 
-          directory_info
-            .to_h
+          file_info = file_info.merge(file_info_service.basic(path))
+          file_info = extract_metadata_with_emu(path, file_info, utc_offset)
+
+          file_info = file_info_service.advanced(path, file_info, directory_info&.utc_offset, throw: false)
+          file_info = file_info_service.audio_info(path, file_info)
+
+          file_info
             .merge({
               uploader_id: harvest.creator_id,
               notes: {
                 relative_path: harvest_item.path
               }
             })
-            .merge(basic_info)
-            .merge(advanced_info)
-            .merge(audio_info)
             .except(:raw, :separator, :file, :errors, :file_path) => file_info
 
           harvest_item.info = harvest_item.info.new(file_info:)
+        end
+
+        # ok so EMU can extract a lot of metadata, but I'm not sure:
+        # - if it fully replaced our existing metadata extraction
+        # - and what to do with additional data.
+        # TODO: integrate more of EMU's metadata into our system when we can
+        # @param path [Pathname] the path to extract metadata from
+        # @param file_info [Hash] the current file_info hash to add to
+        # @param utc_offset [String] the backup utc_offset
+        # @return [Hash] that adhere's to the old file_info format.
+        def extract_metadata_with_emu(path, file_info, utc_offset)
+          result = Emu::Metadata.extract(path)
+
+          return file_info unless result.success?
+
+          metadata = result.records.first
+
+          recorded_date = metadata[:start_date]&.then { |absolute|
+            begin
+              next Time.iso8601(absolute) if absolute.present?
+
+              # maybe we have a local date time instead?
+              local = metadata[:local_start_date]
+              next nil unless utc_offset.present? && local.present?
+
+              Time.iso8601(local + utc_offset)
+            rescue ArgumentError
+              nil
+            end
+          }
+
+          file_info.merge(
+            file_hash: metadata[:calculated_checksum]&.then { "#{_1[:type]}::#{_1[:value]}" },
+            # I am not going to parse this into a Time object because Ruby does not support
+            # local times and so we can only parse it incorrectly.
+            recorded_date_local: metadata[:local_start_date],
+            recorded_date:,
+            channels: metadata[:channels],
+            media_type: metadata[:media_type],
+            utc_offset: recorded_date&.strftime('%:z'),
+            bit_rate_bps: metadata[:bits_per_second],
+            duration_seconds: metadata[:duration_seconds],
+            sample_rate_hertz: metadata[:sample_rate_hertz]
+          )
         end
 
         def validate

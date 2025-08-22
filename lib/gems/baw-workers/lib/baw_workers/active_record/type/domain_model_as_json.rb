@@ -21,7 +21,7 @@ module BawWorkers
         end
 
         def deserialize(value)
-          deserialized = super(value)
+          deserialized = super
           return nil if ignore_nil && deserialized.nil?
 
           begin
@@ -33,12 +33,9 @@ module BawWorkers
           target_class.new(deserialized)
         end
 
-        # rubocop:disable Lint/UselessMethodDefinition
         def serialize(value)
-          # noop currently, we expect the value to provide an as_json method
-          super(value)
+          ::ActiveSupport::JSON.encode(value, { time_precision: 6 })
         end
-        # rubocop:enable Lint/UselessMethodDefinition
       end
     end
   end
