@@ -78,8 +78,8 @@ module Report
         event_summaries: Report::Ctes::EventSummary::EventSummary.format_result(result_hash),
         accumulation_series: accumulation_series,
         composition_series: Report::Ctes::EventComposition.format_result(result_hash),
-        coverage: Report::Ctes::Coverage::Coverage.format_result(result_hash),
-        coverage_analysis: Report::Ctes::Coverage::Coverage.format_result(result_hash, suffix: 'analysis')
+        coverage_series: { recording: Report::Ctes::Coverage::Coverage.format_result(result_hash),
+                           analysis: Report::Ctes::Coverage::Coverage.format_result(result_hash, suffix: 'analysis') }
       }
     end
   end

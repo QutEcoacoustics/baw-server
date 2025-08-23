@@ -18,13 +18,26 @@ describe 'Audio Event Reports' do
   let(:site_two) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
 
   let(:writer_token) { Creation::Common.create_user_token(creator) }
+  # let(:default_filter) {
+  #   {
+  #     filter: {},
+  #     options: {
+  #       bucket_size: 'day',
+  #       start_time: start_date,
+  #       end_time: start_date + report_length
+  #     }
+  #   }
+  # }
   let(:default_filter) {
     {
       filter: {},
       options: {
-        bucket_size: 'day',
-        start_time: start_date,
-        end_time: start_date + report_length
+        start_time: start_date.iso8601,
+        end_time: (start_date + report_length).iso8601,
+        scaling_factor: 1920,
+        lower_field: :recorded_date,
+        upper_field: :end_date, # see Report::Ctes::BaseEventReport
+        interval: '1 day'
       }
     }
   }

@@ -13,8 +13,10 @@ class ReportsController < ApplicationController
     scope = filter_as_relation(base_scope, parameters)
 
     result = call_report(scope, parameters)
+    formatted_result = format_report(result)
 
-    render json: result, status: :ok
+    debugger
+    render json: formatted_result, status: :ok
   end
 
   # Normalise filter parameters, extracted from Api::Response#response
@@ -53,5 +55,9 @@ class ReportsController < ApplicationController
       .merge({ base_scope: scope.arel })
 
     Report::AudioEvents.new(options: options).execute
+  end
+
+  def format_report(result)
+    Report::AudioEvents.format_result(result)
   end
 end

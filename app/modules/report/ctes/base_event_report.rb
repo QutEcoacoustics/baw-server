@@ -4,43 +4,40 @@ module Report
   module Ctes
     # Base class for event reports that use time series data.
 
-    # @see Report::Ctes::BucketAllocate
-    # @see Report::Ctes::BaseVerification
-    # @see Report::Ctes::SortWithLag
-    # @see Report::Ctes::EventComposition
+    # Immediate decendants:
+    #  @see Report::Ctes::BucketAllocate
+    #  @see Report::Ctes::BaseVerification
+    #  @see Report::Ctes::SortWithLag
+    #  @see Report::Ctes::EventComposition
+    #
+    # AudioEvent report root node:
+    # @see Report::AudioEvents
     class BaseEventReport < Report::Cte::Node
       include Cte::Dsl
 
       table_name :base_table
 
-      # TODO: actually needs the scope you get from filter as relation
-      # base_scope needs to match the query structure returned by
-      # Access::ByPermission.audio_events (it has the required joins) so
-      # User.new is used here as a placeholder, to get a working scope that
-      # allows this Cte to execute with defaults but should return no results.
-      #
-      # @example Specifying a base scope for the report
-      #   Report::AudioEvents.new(options: { base_scope: Access::ByPermission.audio_events(current_user).arel })
-      def self.default_filter_as_relation_scope
-        filter_query = Filter::Query.new(
-          { value: 0 },
-          Access::ByPermission.audio_events(User.first),
-          AudioEvent,
-          AudioEvent.filter_settings
-        )
-        filter_query.query_without_paging_sorting.arel
-      end
-
-      default_options base_scope: default_filter_as_relation_scope
-
-      def self.base_scope
-        # dup, or else successive calls will append to the same base_scope
-        options[:base_scope].dup if options[:base_scope].is_a?(Arel::SelectManager)
-      end
+      default_options base_scope: -> { default_relation_scope }
 
       select do
         selection = joins.call(base_scope)
         selection.project(attributes)
+      end
+
+      # The reason for joins here, instead of #joins method, is that in the report controler,
+      # a scope is returned to base the requery on, which includes audio_recording and site sites.
+      # Otherwise, they are projected twice, causing ambiguous reference errors.
+      def self.default_relation_scope
+        query = AudioEvent.joins(audio_recording: [:site])
+        query.select(:audio_recording_id, :provenance_id).arel
+      end
+
+      def self.base_scope
+        scope = options[:base_scope]
+        scope = scope.call if scope.is_a?(Proc)
+
+        # dup, or else successive calls will append to the same base_scope
+        scope.dup if scope.is_a?(Arel::SelectManager)
       end
 
       def self.joins
@@ -61,7 +58,6 @@ module Report
           Arel.sql(AudioEvent.arel_start_absolute),
           Arel.sql(audio_recording_end_date),
           audio_events[:id].as('audio_event_id'),
-          audio_events[:audio_recording_id],
           audio_events[:score].as('score'),
           regions[:id].as('region_id'),
           sites[:id].as('site_id'),
