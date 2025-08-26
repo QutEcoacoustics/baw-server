@@ -1,0 +1,128 @@
+# Docker Compose configuration for CI environments
+# This file removes bind mounts and is optimized for GitHub Actions
+# Based on the main docker-compose.yml but with CI-specific modifications
+
+services:
+  redis:
+    image: redis:6-alpine
+    networks:
+      - baw_network
+
+  db:
+    image: postgres:14
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./provision/db
+        target: /docker-entrypoint-initdb.d
+    networks:
+      - baw_network
+    environment:
+      POSTGRES_PASSWORD: password
+
+  upload_test:
+    image: drakkan/sftpgo:v2.2.3-alpine
+    depends_on:
+      - db
+    environment:
+      RAILS_ENV: test
+      SFTPGO_DATA_PROVIDER__NAME: baw_test_sftpgo
+      SFTPGO_DEFAULT_ADMIN_USERNAME: admin
+      SFTPGO_DEFAULT_ADMIN_PASSWORD: password
+    networks:
+      baw_network:
+        aliases:
+          - upload.test
+    ports:
+      - "8081:8080"
+      - "2023:2022"
+      - "8091:8090"
+    volumes:
+      - type: bind
+        source: ./provision/upload/config
+        target: /var/lib/sftpgo
+      - test-data:/data/test
+
+  analysis_test:
+    build:
+      context: provision/analysis/
+      dockerfile: ./Dockerfile
+    image: baw_server_analysis_mock
+    init: true
+    environment:
+      RAILS_ENV: test
+    networks:
+      - baw_network
+    ports:
+      - "2024:22"
+    restart: on-failure:3
+    tty: true
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - test-data:/data/test
+
+  workers_test:
+    # This will be replaced by the built image in CI
+    image: baw-server:ci
+    command: ./provision/rerun.sh bin/baw-workers baw:worker:run
+    depends_on:
+      - db
+      - redis
+    environment:
+      RAILS_ENV: test
+      RERUN_FORCE_POLLING: ~
+    networks:
+      - baw_network
+    restart: on-failure
+    volumes:
+      - test-data:/data/test
+    working_dir: /home/baw_web/baw-server
+
+  scheduler_test:
+    # This will be replaced by the built image in CI
+    image: baw-server:ci
+    command: ./provision/rerun.sh bin/baw-workers baw:worker:run_scheduler
+    depends_on:
+      - db
+      - redis
+    environment:
+      RAILS_ENV: test
+      RERUN_FORCE_POLLING: ~
+    networks:
+      - baw_network
+    restart: on-failure
+    volumes:
+      - test-data:/data/test
+    working_dir: /home/baw_web/baw-server
+
+  web:
+    # This will be replaced by the built image in CI
+    image: baw-server:ci
+    command: sleep infinity
+    init: true
+    depends_on:
+      - db
+      - redis
+      - upload_test
+      - workers_test
+      - scheduler_test
+      - analysis_test
+    environment:
+      RAILS_ENV: test
+      MIGRATE_DB: "false"
+    user: baw_web
+    volumes:
+      - test-data:/data/test
+    ports:
+      - "3000:3000"
+    networks:
+      - baw_network
+
+networks:
+  baw_network: null
+
+volumes:
+  postgres-data: null
+  test-data: null
