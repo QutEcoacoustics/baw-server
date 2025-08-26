@@ -1,5 +1,21 @@
 # Changelog
 
+## [13.7.0](https://github.com/QutEcoacoustics/baw-server/tree/13.7.0) (2025-08-26)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.6.4...13.7.0)
+
+**Implemented enhancements:**
+
+- Adds support for parsing metadata from files with emu [\#816](https://github.com/QutEcoacoustics/baw-server/pull/816) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Files created with Frontier Labs localisation firmware upload as wrong time [\#812](https://github.com/QutEcoacoustics/baw-server/issues/812)
+
+## [13.6.4](https://github.com/QutEcoacoustics/baw-server/tree/13.6.4) (2025-08-18)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.6.2...13.6.4)
+
 ## [13.6.2](https://github.com/QutEcoacoustics/baw-server/tree/13.6.2) (2025-08-18)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.0.1...13.6.2)
