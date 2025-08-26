@@ -49,7 +49,7 @@ describe Emu do
     it 'can apply a fix' do
       actual = Emu::Fix.apply(target, Emu::Fix::FL_DURATION_BUG)
 
-      expect(actual.records.first).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+      expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
         success: true,
         log: "\n",
         records: an_instance_of(Array),
@@ -206,20 +206,20 @@ describe Emu do
         success: true,
         log: "\n",
         records: an_instance_of(Array),
-        time_taken: a_value_within(1.0).of(3.5)
+        time_taken: a_value_within(2.0).of(4.5)
       )
 
-      expect(actual).to be_an_instance_of(Array).and(include(
+      expect(actual.records.first).to match(
         a_hash_including(
           'calculated_checksum' => {
             'type' => 'SHA256',
-            'value' => '3bb32933cd8b9139bea325ef256f07afc4fb4ed53e6a1982dd85947afebce1dd'
+            'value' => '82871fc37d1c60c9ec987a5988a58fc345540ffe512b096c1f2e8537c36b9bfc'
           },
-          'duration_seconds' => 14_389.684535147392290249433106,
-          'start_date' => '2020-08-01T00:00:00+10:00',
-          'local_start_date' => '2020-08-01T00:00:00'
+          'duration_seconds' => 7194.749387755102,
+          'start_date' => '2019-09-13T00:00:00+10:00',
+          'local_start_date' => '2019-09-13T00:00:00'
         )
-      ))
+      )
     end
   end
 

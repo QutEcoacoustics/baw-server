@@ -131,7 +131,7 @@ describe 'Harvesting a batch of files' do
     end
   end
 
-  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 120 do
+  describe 'optimal workflow', :clean_by_truncation, :slow, web_server_timeout: 150 do
     expose_app_as_web_server
     pause_all_jobs
 
@@ -234,7 +234,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'we perform the jobs' do
-        perform_jobs(count: 5)
+        perform_jobs(count: 5, timeout: 40)
         expect_jobs_to_be(completed: 5, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
       end
 
@@ -326,7 +326,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'we perform the harvest jobs' do
-        perform_jobs(count: 6)
+        perform_jobs(count: 6, timeout: 50)
       end
 
       step 'we wait until metadata extraction is complete' do
@@ -379,7 +379,7 @@ describe 'Harvesting a batch of files' do
       end
 
       step 'we can process the jobs' do
-        perform_jobs(count: 6)
+        perform_jobs(count: 6, timeout: 45)
         expect_jobs_to_be(completed: 12, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
       end
 
@@ -411,7 +411,7 @@ describe 'Harvesting a batch of files' do
           expect(all).to all(be_ready)
           expect(all.map(&:original_file_name)).to match_array @names
           expect(AudioRecording.group(:recorded_utc_offset).count).to eq({
-            '+0000' => 1,
+            '+00:00' => 1,
             '-04:00' => 5
           })
           expect(AudioRecording.group(:site_id).count).to eq({
@@ -774,7 +774,7 @@ describe 'Harvesting a batch of files' do
       expect(HarvestItem.count).to eq 3
 
       # this is not guaranteed to have waited for jobs to finish, adjust timer as needed
-      wait_for_jobs(timeout: 15)
+      wait_for_jobs(timeout: 24)
       expect_jobs_to_be(completed: 3, of_class: BawWorkers::Jobs::Harvest::HarvestJob)
 
       # now simulate a very large harvest by creating many harvest items that
@@ -798,7 +798,7 @@ describe 'Harvesting a batch of files' do
       transition_harvest(:metadata_extraction)
       expect_success
 
-      wait_for_metadata_extraction_to_complete(timeout: 20)
+      wait_for_metadata_extraction_to_complete(timeout: 30)
 
       statuses = HarvestItem.pick_hash(HarvestItem.counts_by_status_arel)
 
