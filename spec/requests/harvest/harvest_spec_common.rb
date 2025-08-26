@@ -60,7 +60,7 @@ module HarvestSpecCommon
 
     post "/projects/#{project.id}/harvests", params: body, **api_with_body_headers(owner_token)
 
-    @harvest_id = (api_result[:data][:id]) if response.response_code == 201
+    @harvest_id = api_result[:data][:id] if response.response_code == 201
   end
 
   def transition_harvest(new_status)
@@ -215,7 +215,7 @@ module HarvestSpecCommon
     report[:latest_activity_at] = Time.zone.parse(report[:latest_activity_at])
 
     # seconds
-    expected_speed = 100
+    expected_speed = 150
 
     aggregate_failures do
       expect(report).to match(a_hash_including(

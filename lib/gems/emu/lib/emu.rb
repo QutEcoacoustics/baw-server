@@ -67,8 +67,8 @@ module Emu
 
     # split output by line
     records = output
-              .split("\n")
-              .map(&method(:parse_record))
+      .split("\n")
+      .map(&method(:parse_record))
 
     logger.debug('Ran emu executable', command: all_args.join(' '), status:, log: error, time_taken: time.total,
       output:)

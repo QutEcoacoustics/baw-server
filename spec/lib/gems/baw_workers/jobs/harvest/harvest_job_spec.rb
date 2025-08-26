@@ -93,11 +93,11 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           uploader_id: harvest.creator_id,
           bit_rate_bps: 239_920,
           modified_time: be_an_instance_of(String),
-          recorded_date: '2021-10-12T13:24:57.000+10:00',
+          recorded_date: '2021-10-12T13:24:57.000000+10:00',
           duration_seconds: 70.0,
           data_length_bytes: 822_281,
           sample_rate_hertz: 44_100.0,
-          recorded_date_local: '2021-10-12T13:24:57.000+00:00'
+          recorded_date_local: '2021-10-12T13:24:57.000000+00:00'
         },
         validations: []
       }

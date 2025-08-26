@@ -6,7 +6,7 @@ module BawWeb
   def self.with_precision(precision)
     return yield if precision.nil?
 
-    unless precision >= 0 && precision <= 9 && precision.is_a?(Integer)
+    unless precision.is_a?(Integer) && precision.between?(0, 9)
       raise ArgumentError, 'Precision mut be an integer between 0 and 9'
     end
 

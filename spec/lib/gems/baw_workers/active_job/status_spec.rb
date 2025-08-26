@@ -498,6 +498,7 @@ describe BawWorkers::ActiveJob::Status do
   describe 'retry', :slow do
     let(:job) { Fixtures::RetryableJob.perform_later!("will_retry#{Time.zone.now.strftime('%m%d%YT%H%M%S')}") }
 
+    # If this test is failing, try restarting the scheduler container
     it 'merges messages for retries' do
       # dereference to kick it it off
       original_time = job.status.time

@@ -71,7 +71,7 @@ ENV RAILS_ENV=production \
 
 
 # "Install" our metadata utility
-COPY --from=qutecoacoustics/emu:7.0.3 --chown==${app_user} /emu /emu
+COPY --from=qutecoacoustics/emu:7.1.0 --chown==${app_user} /emu /emu
 
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}

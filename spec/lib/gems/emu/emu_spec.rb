@@ -196,6 +196,33 @@ describe Emu do
     end
   end
 
+  context 'when extracting metadata' do
+    it 'can extract metadata' do
+      path = Fixtures.bar_lt_file
+
+      actual = Emu::Metadata.extract(path)
+
+      expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+        success: true,
+        log: "\n",
+        records: an_instance_of(Array),
+        time_taken: a_value_within(2.0).of(4.5)
+      )
+
+      expect(actual.records.first).to match(
+        a_hash_including(
+          'calculated_checksum' => {
+            'type' => 'SHA256',
+            'value' => '82871fc37d1c60c9ec987a5988a58fc345540ffe512b096c1f2e8537c36b9bfc'
+          },
+          'duration_seconds' => 7194.749387755102,
+          'start_date' => '2019-09-13T00:00:00+10:00',
+          'local_start_date' => '2019-09-13T00:00:00'
+        )
+      )
+    end
+  end
+
   context 'when listing fixes' do
     it 'can list fixes' do
       actual = Emu::Fix.list
