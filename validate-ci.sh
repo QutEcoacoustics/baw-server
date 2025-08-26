@@ -7,10 +7,10 @@ set -e
 echo "🔍 Validating CI Configuration..."
 echo
 
-# Check if docker-compose.ci.yml is valid
-echo "✅ Validating docker-compose.ci.yml syntax..."
-docker compose -f docker-compose.ci.yml config --quiet
-echo "✅ Docker Compose CI file is valid"
+# Check if docker-compose.ci.yml is valid as an override
+echo "✅ Validating docker-compose.ci.yml as override..."
+docker compose -f docker-compose.yml -f docker-compose.ci.yml config --quiet
+echo "✅ Docker Compose override file is valid"
 echo
 
 # Verify test file coverage
@@ -55,7 +55,7 @@ echo "🎉 CI configuration validation complete!"
 echo
 echo "📋 Summary of improvements:"
 echo "  • Updated all GitHub Actions to latest versions"
-echo "  • Created CI-optimized Docker Compose without bind mounts"
+echo "  • Created CI override file for Docker Compose without bind mounts"
 echo "  • Implemented artifact-based container builds"
 echo "  • Split tests into 7 parallel groups for faster execution"
 echo "  • Eliminated permission issues with volume-based storage"

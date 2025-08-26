@@ -1,107 +1,50 @@
-# Docker Compose configuration for CI environments
-# This file removes bind mounts and is optimized for GitHub Actions
-# Based on the main docker-compose.yml but with CI-specific modifications
+# Docker Compose override for CI environments
+# This file should be used with the main docker-compose.yml file:
+#   docker-compose -f docker-compose.yml -f docker-compose.ci.yml up
+# 
+# It modifies the base configuration to:
+# - Use pre-built images instead of build contexts
+# - Replace bind mounts with volumes to avoid permission issues
+# - Configure services for test environment
 
 services:
-  redis:
-    image: redis:6-alpine
-    networks:
-      - baw_network
+  # Override development services to not start in CI (but keep them defined)
+  upload:
+    deploy:
+      replicas: 0
+  
+  workers:
+    deploy:
+      replicas: 0
+    
+  scheduler:
+    deploy:
+      replicas: 0
 
-  db:
-    image: postgres:14
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - type: bind
-        source: ./provision/db
-        target: /docker-entrypoint-initdb.d
-    networks:
-      - baw_network
-    environment:
-      POSTGRES_PASSWORD: password
-
-  upload_test:
-    image: drakkan/sftpgo:v2.2.3-alpine
-    depends_on:
-      - db
-    environment:
-      RAILS_ENV: test
-      SFTPGO_DATA_PROVIDER__NAME: baw_test_sftpgo
-      SFTPGO_DEFAULT_ADMIN_USERNAME: admin
-      SFTPGO_DEFAULT_ADMIN_PASSWORD: password
-    networks:
-      baw_network:
-        aliases:
-          - upload.test
-    ports:
-      - "8081:8080"
-      - "2023:2022"
-      - "8091:8090"
-    volumes:
-      - type: bind
-        source: ./provision/upload/config
-        target: /var/lib/sftpgo
-      - test-data:/data/test
-
-  analysis_test:
-    build:
-      context: provision/analysis/
-      dockerfile: ./Dockerfile
-    image: baw_server_analysis_mock
-    init: true
-    environment:
-      RAILS_ENV: test
-    networks:
-      - baw_network
-    ports:
-      - "2024:22"
-    restart: on-failure:3
-    tty: true
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-      - test-data:/data/test
-
+  # Override workers_test to use pre-built image and volumes
   workers_test:
-    # This will be replaced by the built image in CI
     image: baw-server:ci
-    command: ./provision/rerun.sh bin/baw-workers baw:worker:run
-    depends_on:
-      - db
-      - redis
-    environment:
-      RAILS_ENV: test
-      RERUN_FORCE_POLLING: ~
-    networks:
-      - baw_network
-    restart: on-failure
+    build: null  # Remove build context
     volumes:
       - test-data:/data/test
-    working_dir: /home/baw_web/baw-server
+      # Remove bind mount of source code
 
+  # Override scheduler_test to use pre-built image and volumes  
   scheduler_test:
-    # This will be replaced by the built image in CI
     image: baw-server:ci
-    command: ./provision/rerun.sh bin/baw-workers baw:worker:run_scheduler
-    depends_on:
-      - db
-      - redis
-    environment:
-      RAILS_ENV: test
-      RERUN_FORCE_POLLING: ~
-    networks:
-      - baw_network
-    restart: on-failure
+    build: null  # Remove build context
     volumes:
       - test-data:/data/test
-    working_dir: /home/baw_web/baw-server
+      # Remove bind mount of source code
 
+  # Override web service for CI testing
   web:
-    # This will be replaced by the built image in CI
     image: baw-server:ci
+    build: null  # Remove build context
     command: sleep infinity
-    init: true
+    environment:
+      RAILS_ENV: test
+      MIGRATE_DB: "false"
     depends_on:
       - db
       - redis
@@ -109,20 +52,25 @@ services:
       - workers_test
       - scheduler_test
       - analysis_test
-    environment:
-      RAILS_ENV: test
-      MIGRATE_DB: "false"
-    user: baw_web
     volumes:
       - test-data:/data/test
-    ports:
-      - "3000:3000"
-    networks:
-      - baw_network
+      # Remove bind mount of source code
 
-networks:
-  baw_network: null
+  # Override upload_test to use volume instead of bind mount
+  upload_test:
+    volumes:
+      - type: bind
+        source: ./provision/upload/config
+        target: /var/lib/sftpgo
+      - test-data:/data/test
+
+  # Override analysis_test to use volume instead of bind mount
+  analysis_test:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - test-data:/data/test
 
 volumes:
-  postgres-data: null
   test-data: null

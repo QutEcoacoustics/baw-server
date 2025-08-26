@@ -100,17 +100,17 @@ jobs:
 
       - name: Start services
         run: |
-          docker compose -f docker-compose.ci.yml up --detach --wait --timeout 120
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           
       - name: Debugging
         run: |
-          docker compose -f docker-compose.ci.yml ps
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
           docker ps
         if: ${{ always() }}
           
       - name: Prepare test database
         run: |
-          docker compose -f docker-compose.ci.yml exec -T web rake baw:db_prepare
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake baw:db_prepare
         env:
           RAILS_ENV: test
 
@@ -118,25 +118,25 @@ jobs:
         run: |
           case "${{ matrix.test-group }}" in
             "api")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/api --format progress --format html --out rspec_results_api.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/api --format progress --format html --out rspec_results_api.html
               ;;
             "permissions")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/permissions --format progress --format html --out rspec_results_permissions.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/permissions --format progress --format html --out rspec_results_permissions.html
               ;;
             "requests")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/requests --format progress --format html --out rspec_results_requests.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/requests --format progress --format html --out rspec_results_requests.html
               ;;
             "unit")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/unit spec/lib spec/support/matchers --format progress --format html --out rspec_results_unit.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/unit spec/lib spec/support/matchers --format progress --format html --out rspec_results_unit.html
               ;;
             "features-capabilities")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/features spec/capabilities --format progress --format html --out rspec_results_features.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/features spec/capabilities --format progress --format html --out rspec_results_features.html
               ;;
             "models-controllers-routing")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/models spec/controllers spec/routing spec/views spec/migrations --format progress --format html --out rspec_results_other.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/models spec/controllers spec/routing spec/views spec/migrations --format progress --format html --out rspec_results_other.html
               ;;
             "acceptance-other")
-              docker compose -f docker-compose.ci.yml exec -T web rspec spec/acceptance --format progress --format html --out rspec_results_acceptance.html
+              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/acceptance --format progress --format html --out rspec_results_acceptance.html
               ;;
           esac
         env:
@@ -158,7 +158,7 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose -f docker-compose.ci.yml down
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
 
   # Generate API documentation (only on master branch push)
   docs:
@@ -187,14 +187,14 @@ jobs:
           sed -i "s|image: baw-server:ci|image: ${IMAGE_TAG}|g" docker-compose.ci.yml
 
       - name: Start services
-        run: docker compose -f docker-compose.ci.yml up --detach --wait --timeout 120
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
 
       - name: Generate API docs
-        run: docker compose -f docker-compose.ci.yml exec -T web generate_docs.sh
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
 
       - name: Stop services
         if: always()
-        run: docker compose -f docker-compose.ci.yml down
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
 
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v5
