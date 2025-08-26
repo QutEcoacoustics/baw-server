@@ -2,16 +2,18 @@
 
 module Report
   module Ctes
-    # Base class for event reports that use time series data.
-
-    # Immediate decendants:
-    #  @see Report::Ctes::BucketAllocate
-    #  @see Report::Ctes::BaseVerification
-    #  @see Report::Ctes::SortWithLag
-    #  @see Report::Ctes::EventComposition
+    # The base node for audio event reports
     #
-    # AudioEvent report root node:
-    # @see Report::AudioEvents
+    # Provides the minimum required fields and joins needed for other CTEs that build on this data.
+    #
+    # Immediate descendants / downstream nodes:
+    #  @see Report::AudioEvents the root node for audio event reports
+    #  @see Report::Ctes::BaseVerification
+    #  @see Report::Ctes::BucketAllocate
+    #  @see Report::Ctes::CompositionSeries
+    #  @see Report::Ctes::SortTemporalEvents
+    #  @see Report::Ctes::EventSummary::BinSeries
+    #  @see Report::Ctes::EventSummary::ScoreHistogram
     class BaseEventReport < Report::Cte::Node
       include Cte::Dsl
 
@@ -24,9 +26,11 @@ module Report
         selection.project(attributes)
       end
 
-      # The reason for joins here, instead of #joins method, is that in the report controler,
-      # a scope is returned to base the requery on, which includes audio_recording and site sites.
-      # Otherwise, they are projected twice, causing ambiguous reference errors.
+      # The starting point for building this Cte is an active record relation that includes audio_recordings and sites
+      # tables. This is because the base_scope passed in from the controller will already have these joins applied (by
+      # Access::ByPermission.audio_events). Otherwise, fall back to this default scope.
+      #
+      # ! This is convenient for testing but probably unsafe
       def self.default_relation_scope
         query = AudioEvent.joins(audio_recording: [:site])
         query.select(:audio_recording_id, :provenance_id).arel
@@ -52,7 +56,6 @@ module Report
         }
       end
 
-      # @return [Array<Arel::Attributes>] the attributes to select
       def self.attributes
         [
           Arel.sql(AudioEvent.arel_start_absolute),

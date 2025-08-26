@@ -17,21 +17,8 @@ module Report
       }
     end
 
-    # This isn't what I wanted. I would like a way to include a dependency
-    # Class more than once, without having to make a new subclass for it. You
-    # can achieve the same outcome by using the registry, but that would require
-    # the caller of this node to initialise and inject the dependency node with
-    # the options and suffix
-    # With the current design, just initialising the dependency node as part
-    # of this template would also not work, because when the AudioEvents report
-    # is executed, that node and it's ancestors won't be initialised with the
-    # request options.
     def self.coverage_analysis
-      Report::Ctes::Coverage::Coverage.dup
-        .tap { |dup| dup._suffix = :analysis }
-        .tap { |dup| dup._select_block = dup._select_block.dup }
-        .tap { |dup| dup._default_options = dup._default_options.merge(analysis_result: true) }
-        .tap { |dup| dup._depends_on = dup._depends_on }.include(Report::Cte::ForceSuffix)
+      Report::Ctes::Coverage::Coverage.new_with_suffix(:analysis, analysis_result: true)
     end
 
     depends_on do

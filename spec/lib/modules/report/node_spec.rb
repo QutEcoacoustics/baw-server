@@ -199,6 +199,30 @@ describe Report::Cte::Node do
       expect(node.collect).to eq([dep, node])
     end
 
+    it 'returns more nodes in topological order including self' do
+      #  A -> B -> C -> E -> D
+      #   \------------------^
+      test_data = [[:table_a, {}],
+                   [:table_b, { table_a: :table_a }],
+                   [:table_c, { table_b: :table_b }],
+                   [:table_e, { table_c: :table_c }],
+                   [:table_d, { table_a: :table_a, table_e: :table_e }]]
+
+      test_data.each_with_object({}) do |(name, depends), nodes|
+        depends_transformed = depends.transform_values { |dep_name| nodes[dep_name] }
+        nodes[name] = Report::Cte::Node.new(name, dependencies: depends_transformed) {
+          Arel::SelectManager.new
+        }
+      end => nodes
+
+      expected_sql = <<~SQL.squish
+        WITH "table_a" AS (SELECT), "table_b" AS (SELECT), "table_c" AS (SELECT), "table_e" AS (SELECT) SELECT
+      SQL
+
+      expect(nodes[:table_d].collect).to eq(nodes.values)
+      expect(nodes[:table_d].to_sql).to eq(expected_sql)
+    end
+
     context 'with registry injection' do
       dep_class = Class.new(Report::Cte::Node) do
         def initialize(name = :dep_node, suffix: nil, options: {}, select: -> { users.project(users[:id]) })

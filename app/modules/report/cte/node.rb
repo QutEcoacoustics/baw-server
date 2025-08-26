@@ -22,7 +22,7 @@ module Report
     # uninstantiated dependencies when it is resolved.
     class Node
       extend Report::Cte::Dsl
-      attr_reader :options, :_initial_dependencies
+      attr_reader :options, :initial_dependencies
       attr_accessor :name, :select_block, :suffix
 
       # Initializes a new Cte node.
@@ -191,6 +191,36 @@ module Report
       # Convenience method to execute the Cte query against the database
       def execute(registry = {})
         ActiveRecord::Base.connection.execute(to_sql(registry))
+      end
+
+      def inspect
+        "#<#{self.class.name} #{attributes_for_inspect.map { |key, value| "@#{key}=#{value.inspect}" }.join(', ')}>"
+      end
+
+      def attributes_for_inspect
+        [
+          [:name, name],
+          [:dependencies, initial_dependencies],
+          [:options, options]
+        ]
+      end
+
+      # This isn't what I wanted. I would like a way to include a dependency
+      # Class more than once, without having to make a new subclass for it. You
+      # can achieve the same outcome by using the registry, but that would require
+      # the caller of this node to initialise and inject the dependency node with
+      # the options and suffix
+      # With the current design, just initialising the dependency node as part
+      # of this template would also not work, because when the AudioEvents report
+      # is executed, that node and it's ancestors won't be initialised with the
+      # request options.
+      def self.new_with_suffix(suffix, **options)
+        dup
+          .tap { |dup| dup._suffix = suffix }
+          .tap { |dup| dup._select_block = dup._select_block.dup }
+          .tap { |dup| dup._default_options = dup._default_options.merge(**options) }
+          .tap { |dup| dup._depends_on = dup._depends_on }
+          .include(Report::Cte::ForceSuffix)
       end
 
       private

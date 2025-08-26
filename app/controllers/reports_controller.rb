@@ -15,7 +15,6 @@ class ReportsController < ApplicationController
     result = call_report(scope, parameters)
     formatted_result = format_report(result)
 
-    debugger
     render json: formatted_result, status: :ok
   end
 
