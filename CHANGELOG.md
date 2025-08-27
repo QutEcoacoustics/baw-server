@@ -1,5 +1,21 @@
 # Changelog
 
+## [13.7.2](https://github.com/QutEcoacoustics/baw-server/tree/13.7.2) (2025-08-27)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.7.1...13.7.2)
+
+**Fixed bugs:**
+
+- Verification route raises forbidden for owner user for upsert route [\#820](https://github.com/QutEcoacoustics/baw-server/issues/820)
+
+**Merged pull requests:**
+
+- Fixes faulty find\_keys for verifications upsert [\#824](https://github.com/QutEcoacoustics/baw-server/pull/824) ([atruskie](https://github.com/atruskie))
+
+## [13.7.1](https://github.com/QutEcoacoustics/baw-server/tree/13.7.1) (2025-08-27)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.7.0...13.7.1)
+
 ## [13.7.0](https://github.com/QutEcoacoustics/baw-server/tree/13.7.0) (2025-08-26)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.6.4...13.7.0)
