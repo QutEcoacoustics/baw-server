@@ -97,7 +97,7 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
           duration_seconds: 70.0,
           data_length_bytes: 822_281,
           sample_rate_hertz: 44_100.0,
-          recorded_date_local: '2021-10-12T13:24:57.000000+00:00'
+          recorded_date_local: '2021-10-12T13:24:57'
         },
         validations: []
       }

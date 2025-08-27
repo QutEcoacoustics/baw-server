@@ -222,15 +222,35 @@ module BawWorkers
     # @return [Hash] info from file name
     def file_name_datetime(file_name, utc_offset = nil, throw: true)
       result = {}
-      regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T|\$)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
-      file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
+      regex = /^(.*?)(\d{4})(\d{2})(\d{2})(-|_|T|\$)?(\d{2})(\d{2})(\d{2})(\.?\d{1,9})?([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
+      file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, factional, offset, suffix, extension|
+        has_factional = factional.present?
+        factional = has_factional ? factional&.ltrim('.') : ''
+        precision = has_factional ? factional.length : 0
+        second += has_factional ? ".#{factional}" : ''
+        offset = offset.then { |o|
+          case o
+          in 'Z'
+            'Z'
+          in /^[+\-]\d{1,2}:\d{2}$/
+            o
+          in /^[+\-]\d{1,2}$/
+            "#{o}:00"
+          in /^[+\-]\d{4}$/
+            o.insert(3, ':')
+          else
+            ''
+          end
+        }
+
         result[:raw] = {
           year:, month:, day:,
           hour:, min: minute, sec: second,
-          offset: offset.presence || '',
+          offset:,
           ext: extension
         }
-        available_offset = offset || utc_offset
+
+        available_offset = offset.presence || utc_offset
         if available_offset.blank? && throw
           raise BawWorkers::Exceptions::HarvesterConfigurationError,
             'No UTC offset provided and file name did not contain a utc offset.'
@@ -238,13 +258,17 @@ module BawWorkers
 
         result[:utc_offset] = available_offset
 
-        result[:recorded_date_local] =
-          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, nil)
+        # ruby doesn't really support local times, so we're parsing this but immediately converting back to
+        # a string without the offset to ensure we don't pass around invalid Time instances (
+        # if we did keep it has a time, it would have utc_offset of 0)
+        result[:recorded_date_local] = Time
+          .new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_r, nil)
+          .iso8601(precision).slice(0..-7)
 
         if available_offset.blank?
           nil
         else
-          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset])
+          Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_r, result[:utc_offset])
         end => recorded_date
         result[:recorded_date] = recorded_date
 

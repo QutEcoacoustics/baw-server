@@ -17,28 +17,6 @@ def expect_empty_file_name(file_name)
   end
 end
 
-def expect_correct_file_name(file_name, expected_hash)
-  it file_name do |example|
-    file_name = example.metadata[:description]
-
-    result = file_info.file_name_datetime(file_name, '+00:00')
-    expected_result = expected_hash
-    expect(result).to eq(expected_result)
-
-    unless ['20150727T133138Z.wav',
-            'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext',
-            'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3',
-            'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3'].include?(file_name)
-      expect {
-        file_info.file_name_datetime(file_name)
-      }.to raise_error(
-        BawWorkers::Exceptions::HarvesterConfigurationError,
-        'No UTC offset provided and file name did not contain a utc offset.'
-      )
-    end
-  end
-end
-
 describe BawWorkers::FileInfo do
   include_context 'shared_test_helpers'
 
@@ -165,51 +143,28 @@ describe BawWorkers::FileInfo do
       end
     end
 
-    context 'valid' do
+    context 'valid with no offset' do
       {
-        'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3' =>
-            { raw: {
-                year: '2014', month: '03', day: '01',
-                hour: '08', min: '50', sec: '31',
-                offset: '+06:30', ext: 'mp3'
-              },
-              utc_offset: '+06:30',
-              recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
-              recorded_date: Time.parse('2014-03-01T08:50:31.000+06:30'),
-              prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
-              extension: 'mp3' },
-        'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3' =>
+        'sdncv*_-T&^%34jd_20140301_085031blah_T-suffix.mp3' =>
               { raw: {
                   year: '2014', month: '03', day: '01',
                   hour: '08', min: '50', sec: '31',
-                  offset: '-0630', ext: 'mp3'
+                  offset: '', ext: 'mp3'
                 },
-                utc_offset: '-0630',
-                recorded_date_local: Time.parse('2014-03-01T08:50:31.000+00:00'),
-                recorded_date: Time.parse('2014-03-01T08:50:31.000-06:30'),
+                utc_offset: '+10:00',
+                recorded_date_local: '2014-03-01T08:50:31',
+                recorded_date: Time.parse('2014-03-01T08:50:31.000+10:00'),
                 prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
                 extension: 'mp3' },
-        # AT 2022: no longer supporting the short utc offset format
-        # 'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext' =>
-        #       { raw: {
-        #         year: '2014', month: '03', day: '01',
-        #         hour: '08', min: '50', sec: '31',
-        #         offset: '-7', ext: 'ext'
-        #       },
-        #         utc_offset: '-7',
-        #         recorded_date_local: '2014-03-01T08:50:31.000-07:00',
-        #         recorded_date: '2014-03-01T08:50:31.000-07:00',
-        #         prefix: 'blah_T-suffix', separator: '-', suffix: 's:dncv*_-T&^%34jd',
-        #         extension: 'ext' },
         '20150727133138.wav' =>
               { raw: {
                   year: '2015', month: '07', day: '27',
                   hour: '13', min: '31', sec: '38',
                   offset: '', ext: 'wav'
                 },
-                utc_offset: '+00:00',
-                recorded_date_local: '2015-07-27T13:31:38.000+00:00',
-                recorded_date: '2015-07-27T13:31:38.000+00:00',
+                utc_offset: '+10:00',
+                recorded_date_local: '2015-07-27T13:31:38',
+                recorded_date: Time.parse('2015-07-27T13:31:38.000+10:00'),
                 prefix: '', separator: '', suffix: '',
                 extension: 'wav' },
         'blah_T-suffix20140301085031:dncv*_-T&^%34jd.ext' =>
@@ -218,9 +173,9 @@ describe BawWorkers::FileInfo do
                   hour: '08', min: '50', sec: '31',
                   offset: '', ext: 'ext'
                 },
-                utc_offset: '+00:00',
-                recorded_date_local: '2014-03-01T08:50:31.000+00:00',
-                recorded_date: '2014-03-01T08:50:31.000+00:00',
+                utc_offset: '+10:00',
+                recorded_date_local: '2014-03-01T08:50:31',
+                recorded_date: Time.parse('2014-03-01T08:50:31.000+10:00'),
                 prefix: 'blah_T-suffix', separator: '', suffix: ':dncv*_-T&^%34jd',
                 extension: 'ext' },
         'SERF_20130314_000021_000.wav' =>
@@ -229,20 +184,20 @@ describe BawWorkers::FileInfo do
                   hour: '00', min: '00', sec: '21',
                   offset: '', ext: 'wav'
                 },
-                utc_offset: '+00:00',
-                recorded_date_local: '2013-03-14T00:00:21.000+00:00',
-                recorded_date: '2013-03-14T00:00:21.000+00:00',
+                utc_offset: '+10:00',
+                recorded_date_local: '2013-03-14T00:00:21',
+                recorded_date: Time.parse('2013-03-14T00:00:21.000+10:00'),
                 prefix: 'SERF_', separator: '_', suffix: '_000',
                 extension: 'wav' },
-        '20150727T133138Z.wav' =>
+        '20150727T133138.wav' =>
               { raw: {
                   year: '2015', month: '07', day: '27',
                   hour: '13', min: '31', sec: '38',
-                  offset: 'Z', ext: 'wav'
+                  offset: '', ext: 'wav'
                 },
-                utc_offset: 'Z',
-                recorded_date_local: '2015-07-27T13:31:38.000+00:00',
-                recorded_date: '2015-07-27T13:31:38.000Z',
+                utc_offset: '+10:00',
+                recorded_date_local: '2015-07-27T13:31:38',
+                recorded_date: Time.parse('2015-07-27T13:31:38.000+10:00'),
                 prefix: '', separator: 'T', suffix: '',
                 extension: 'wav' },
         '20160506$175304.wav' =>
@@ -251,14 +206,132 @@ describe BawWorkers::FileInfo do
                   hour: '17', min: '53', sec: '04',
                   offset: '', ext: 'wav'
                 },
-                utc_offset: '+00:00',
-                recorded_date_local: '2016-05-06T17:53:04.000+00:00',
-                recorded_date: '2016-05-06T17:53:04.000+00:00',
+                utc_offset: '+10:00',
+                recorded_date_local: '2016-05-06T17:53:04',
+                recorded_date: Time.parse('2016-05-06T17:53:04.000+10:00'),
                 prefix: '', separator: '$', suffix: '',
                 extension: 'wav' }
 
       }.each do |file_name, expected_hash|
-        expect_correct_file_name(file_name, expected_hash)
+        it file_name do |example|
+          file_name = example.metadata[:description]
+
+          result = file_info.file_name_datetime(file_name, '+10:00')
+          expected_result = expected_hash
+          expect(result).to eq(expected_result)
+
+          expect {
+            file_info.file_name_datetime(file_name)
+          }.to raise_error(
+            BawWorkers::Exceptions::HarvesterConfigurationError,
+            'No UTC offset provided and file name did not contain a utc offset.'
+          )
+        end
+      end
+    end
+  end
+
+  context 'valid with offset' do
+    {
+      'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3' =>
+          { raw: {
+              year: '2014', month: '03', day: '01',
+              hour: '08', min: '50', sec: '31',
+              offset: '+06:30', ext: 'mp3'
+            },
+            utc_offset: '+06:30',
+            recorded_date_local: '2014-03-01T08:50:31',
+            recorded_date: Time.parse('2014-03-01T08:50:31.000+06:30'),
+            prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
+            extension: 'mp3' },
+      'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3' =>
+              { raw: {
+                  year: '2014', month: '03', day: '01',
+                  hour: '08', min: '50', sec: '31',
+                  offset: '-06:30', ext: 'mp3'
+                },
+                utc_offset: '-06:30',
+                recorded_date_local: '2014-03-01T08:50:31',
+                recorded_date: Time.parse('2014-03-01T08:50:31.000-06:30'),
+                prefix: 'sdncv*_-T&^%34jd_', separator: '_', suffix: 'blah_T-suffix',
+                extension: 'mp3' },
+      # AT 2022: no longer supporting the short utc offset format
+      # 'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext' =>
+      #       { raw: {
+      #         year: '2014', month: '03', day: '01',
+      #         hour: '08', min: '50', sec: '31',
+      #         offset: '-7', ext: 'ext'
+      #       },
+      #         utc_offset: '-7',
+      #         recorded_date_local: '2014-03-01T08:50:31.000-07:00',
+      #         recorded_date: '2014-03-01T08:50:31.000-07:00',
+      #         prefix: 'blah_T-suffix', separator: '-', suffix: 's:dncv*_-T&^%34jd',
+      #         extension: 'ext' },
+
+      '20150727T133138Z.wav' =>
+              { raw: {
+                  year: '2015', month: '07', day: '27',
+                  hour: '13', min: '31', sec: '38',
+                  offset: 'Z', ext: 'wav'
+                },
+                utc_offset: 'Z',
+                recorded_date_local: '2015-07-27T13:31:38',
+                recorded_date: Time.parse('2015-07-27T13:31:38.000Z'),
+                prefix: '', separator: 'T', suffix: '',
+                extension: 'wav' },
+
+      # Need to parse the start part of this date
+      'S20250810T055925.588602+1000_E20250810T065920.474809+1000_-19.52783+145.67668.wav' => {
+        raw: {
+          year: '2025', month: '08', day: '10',
+          hour: '05', min: '59', sec: '25.588602',
+          offset: '+10:00', ext: 'wav'
+        },
+        utc_offset: '+10:00',
+        recorded_date_local: '2025-08-10T05:59:25.588602',
+        recorded_date: Time.parse('2025-08-10T05:59:25.588602+10:00'),
+        prefix: 'S', separator: 'T', suffix: '_E20250810T065920.474809+1000_-19.52783+145.67668',
+        extension: 'wav'
+      },
+      # A historical format, similar to above, that does not delimit fractional seconds
+      'S20201217T223224616+0000_E20201217T223321833+0000_-26.8133+153.0677.wav' => {
+        raw: {
+          year: '2020', month: '12', day: '17',
+          hour: '22', min: '32', sec: '24.616',
+          offset: '+00:00', ext: 'wav'
+        },
+        utc_offset: '+00:00',
+        recorded_date_local: '2020-12-17T22:32:24.616',
+        recorded_date: Time.parse('2020-12-17T22:32:24.616000+00:00'),
+        prefix: 'S', separator: 'T', suffix: '_E20201217T223321833+0000_-26.8133+153.0677',
+        extension: 'wav'
+      },
+      # A general high precision timestamp
+      '20250810T055925.588602+1000_-19.52783+145.67668.wav' => {
+        raw: {
+          year: '2025', month: '08', day: '10',
+          hour: '05', min: '59', sec: '25.588602',
+          offset: '+10:00', ext: 'wav'
+        },
+        utc_offset: '+10:00',
+        recorded_date_local: '2025-08-10T05:59:25.588602',
+        recorded_date: Time.parse('2025-08-10T05:59:25.588602+10:00'),
+        prefix: '', separator: 'T', suffix: '_-19.52783+145.67668',
+        extension: 'wav'
+      }
+
+    }.each do |file_name, expected_hash|
+      it file_name do |example|
+        file_name = example.metadata[:description]
+
+        result = file_info.file_name_datetime(file_name)
+        expected_result = expected_hash
+        expect(result).to eq(expected_result)
+
+        # there should be do difference because these examples include their offsets
+        result = file_info.file_name_datetime(file_name, '+10:00')
+        expected_result = expected_hash
+        expect(result).to eq(expected_result)
       end
     end
   end
