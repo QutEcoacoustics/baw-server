@@ -259,4 +259,52 @@ describe ApplicationController, type: :controller do
       expect(response.body).to eq('Ability')
     end
   end
+
+  describe 'invalid upsert find_keys' do
+    controller(VerificationsController) do
+      skip_before_action :authenticate_user!
+      skip_authorization_check
+
+      def create_or_update
+        # the find keys are not unique enough - need creator as well
+        do_load_or_new_resource(verification_params, find_keys: [:audio_event_id, :tag_id])
+
+        # rest of implementation not needed for test
+        raise NotImplementedError, 'intentionally not implemented'
+      end
+    end
+
+    let(:current_user) { create(:user) }
+    let(:another_user) { create(:user) }
+    let(:tag) { create(:tag) }
+    let(:audio_event) { create(:audio_event) }
+
+    before do
+      create(:verification, audio_event:, tag:, creator: another_user)
+      create(:verification, audio_event:, tag:, creator: current_user)
+    end
+
+    it 'fails if upsert find_keys match more than one record' do
+      routes.draw do
+        put '/verifications' => 'verifications#create_or_update', defaults: { format: 'json' }
+      end
+
+      bypass_rescue
+
+      expect {
+        request.env['HTTP_AUTHORIZATION'] = Creation::Common.create_user_token(current_user)
+        put :create_or_update, params: {
+          verification: {
+            audio_event_id: audio_event.id,
+            tag_id: tag.id,
+            confirmed: Verification::CONFIRMATION_TRUE
+          },
+          format: 'json'
+        }
+      }.to raise_error(CustomErrors::UpsertMatchNotUnique) { |error|
+        expect(error.message).to include('Upsert could not find a unique record with the given find keys')
+        expect(error.info).to match(hash_including(find_keys: [:audio_event_id, :tag_id]))
+      }
+    end
+  end
 end

@@ -9,11 +9,6 @@ describe 'Verifications' do
     create(:verification, audio_event:, creator: writer_user, confirmed: Verification::CONFIRMATION_FALSE)
   end
 
-  let(:update_verification) {
-    create(:verification, audio_event:, creator: writer_user, confirmed: Verification::CONFIRMATION_SKIP)
-  }
-  let(:second_event) { create(:audio_event, audio_recording:, creator: writer_user) }
-
   it 'can update a verification' do
     payload = {
       verification: {
@@ -32,46 +27,72 @@ describe 'Verifications' do
     )
   end
 
-  it 'can upsert a verification when a matching record exists' do
-    payload = {
-      verification: {
-        audio_event_id: update_verification.audio_event_id,
-        tag_id: update_verification.tag_id,
-        confirmed: Verification::CONFIRMATION_UNSURE
-      }
-    }
+  ['owner', 'writer'].each do |role|
+    describe "upserts for #{role}" do
+      let(:current_user) { send("#{role}_user") }
+      let(:current_user_token) { send("#{role}_token") }
+      before do
+        # we're creating an extra pre-existing verification so we can ensure the upsert
+        # find_by keys are correct
+        # See https://github.com/QutEcoacoustics/baw-server/issues/820
+        create(:verification, audio_event:, creator: admin_user, tag:, confirmed: Verification::CONFIRMATION_TRUE)
 
-    put '/verifications',
-      params: payload, **api_with_body_headers(writer_token)
+        # we update the existing verification so that it is owned by user under test
+        verification.update_attribute(:creator_id, current_user.id)
+      end
 
-    expect(response).to have_http_status(:ok)
-    expect(api_data).to include(
-      audio_event_id: update_verification.audio_event_id,
-      creator_id: writer_user.id,
-      tag_id: update_verification.tag_id,
-      confirmed: Verification::CONFIRMATION_UNSURE
-    )
-  end
+      # we need something to vary for the insert case,
+      # so we'll create a new audio event to hang a different verification off of
+      let(:second_event) { create(:audio_event, audio_recording:, creator: current_user) }
 
-  it 'can upsert a new verification when no matching record exists' do
-    payload = {
-      verification: {
-        audio_event_id: second_event.id,
-        tag_id: tag.id,
-        confirmed: Verification::CONFIRMATION_SKIP
-      }
-    }
-    put '/verifications',
-      params: payload, **api_with_body_headers(writer_token)
+      it 'can upsert a verification when a matching record exists (update)' do
+        payload = {
+          verification: {
+            audio_event_id: verification.audio_event_id,
+            tag_id: verification.tag_id,
+            confirmed: Verification::CONFIRMATION_TRUE
+          }
+        }
 
-    expect(response).to have_http_status(201)
-    expect(Verification.count).to eq(4)
-    expect(api_data).to include(
-      audio_event_id: second_event.id,
-      creator_id: writer_user.id,
-      tag_id: tag.id,
-      confirmed: Verification::CONFIRMATION_SKIP
-    )
+        put '/verifications',
+          params: payload, **api_with_body_headers(current_user_token)
+
+        expect(response).to have_http_status(:ok)
+        expect(api_data).to include(
+          # id should update existing record, so we match old id
+          id: verification.id,
+          audio_event_id: verification.audio_event_id,
+          creator_id: current_user.id,
+          tag_id: verification.tag_id,
+          confirmed: Verification::CONFIRMATION_TRUE
+        )
+      end
+
+      it 'can upsert a new verification when no matching record exists (create)' do
+        old_count = Verification.count
+        payload = {
+          verification: {
+            # so in this case, only the audio event id varies
+            audio_event_id: second_event.id,
+            tag_id: verification.tag_id,
+            confirmed: Verification::CONFIRMATION_TRUE
+          }
+        }
+        put '/verifications',
+          params: payload, **api_with_body_headers(current_user_token)
+
+        expect(response).to have_http_status(:created)
+        expect(Verification.count).to eq(old_count + 1)
+        expect(api_data).to include(
+          # this should of resulted in a new record, so we don't match old id
+          id: not_eq(verification.id),
+          audio_event_id: second_event.id,
+          creator_id: current_user.id,
+          tag_id: verification.tag_id,
+          confirmed: Verification::CONFIRMATION_TRUE
+        )
+      end
+    end
   end
 
   it 'can filter verifications by confirmed status' do

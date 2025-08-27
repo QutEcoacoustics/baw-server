@@ -349,12 +349,23 @@ module Api
 
       current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
 
-      resource = current_filter.query.find_by(upsert_params.slice(*find_keys))
+      # we mimic find_sole_by here but we don't necessarily want raise to if not found
+      # all `sole` does is retrieve two records - if there is more than one it raises
+      resource, undesired = current_filter.query.where(upsert_params.slice(*find_keys)).take(2)
+
+      # ! Note the detection for faulty keys will only work if there is more
+      # ! than one entry already in the database. If there is exactly one
+      # ! we could just be fetching the incorrect resource instead.
+
+      # not discerning enough
+      raise CustomErrors::UpsertMatchNotUnique.new(find_keys:) if undesired.present?
 
       if resource.nil?
+        # create
         do_new_resource
         do_set_attributes(upsert_params)
       else
+        # update
         set_resource(resource)
         do_set_attributes(upsert_params.except(*find_keys))
       end
