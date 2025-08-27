@@ -66,7 +66,7 @@ class VerificationsController < ApplicationController
 
   # PUT /verifications
   def create_or_update
-    do_load_or_new_resource(verification_params, find_keys: [:audio_event_id, :tag_id])
+    do_load_or_new_resource(verification_params, find_keys: [:audio_event_id, :tag_id, :creator_id])
     do_authorize_instance
 
     return respond_change_fail unless @verification.save
@@ -101,7 +101,7 @@ class VerificationsController < ApplicationController
   def verification_params
     params.require(:verification).permit(
       :confirmed, :audio_event_id, :tag_id
-    )
+    ).merge(creator_id: current_user.id)
   end
 
   def verification_update_params

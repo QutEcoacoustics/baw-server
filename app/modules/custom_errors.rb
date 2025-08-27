@@ -200,6 +200,16 @@ module CustomErrors
     end
   end
 
+  class UpsertMatchNotUnique < CustomError
+    def initialize(message = nil, find_keys:)
+      super(message)
+      @status_code = :internal_server_error
+      @prefix = 'Upsert could not find a unique record with the given find keys'
+      @info = { find_keys: find_keys }
+      @should_notify_error = true
+    end
+  end
+
   class RequestedMediaDurationInvalid < UnprocessableEntityError; end
 
   # 400 Bad request
