@@ -58,8 +58,8 @@ module Report
 
       def self.attributes
         [
-          Arel.sql(AudioEvent.arel_start_absolute),
-          Arel.sql(audio_recording_end_date),
+          AudioEvent.arel_start_absolute.as('start_time_absolute'),
+          AudioRecording.arel_recorded_end_date.as('end_date'),
           audio_events[:id].as('audio_event_id'),
           audio_events[:score].as('score'),
           regions[:id].as('region_id'),
@@ -82,10 +82,6 @@ module Report
       def self.tags = Tag.arel_table
       def self.regions = Region.arel_table
       def self.sites = Site.arel_table
-
-      def self.audio_recording_end_date
-        'audio_recordings.recorded_date + CAST(audio_recordings.duration_seconds || \' seconds\' as interval) AS end_date'
-      end
     end
   end
 end

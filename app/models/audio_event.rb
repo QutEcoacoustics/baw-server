@@ -439,11 +439,11 @@ class AudioEvent < ApplicationRecord
   end
 
   def self.arel_start_absolute
-    'audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute'
+    Arel.sql('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval)')
   end
 
   def self.arel_end_absolute
-    'audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute'
+    Arel.sql('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval)')
   end
 
   private

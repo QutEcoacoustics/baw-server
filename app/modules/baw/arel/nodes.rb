@@ -83,7 +83,7 @@ module Baw
 
       class Distinct < ::Arel::Nodes::NamedFunction
         def initialize(expr)
-          super('DISTINCT', expr)
+          super('distinct', expr)
         end
       end
 
