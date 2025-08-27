@@ -50,11 +50,6 @@ module Api
       new_spec_fields_hash
     end
 
-    # def get_filter_settings(item_class)
-    #   @filter_settings_cache ||= {}
-    #   @filter_settings_cache[item_class] ||= item_class.filter_settings
-    # end
-
     # Add custom fields to an item.
     # @param [Object] item A single item from the response.
     # @param [Object] user current_user
@@ -74,7 +69,6 @@ module Api
       additional_data.deep_transform_keys!(&:to_s)
 
       filter_settings = item.class.filter_settings
-      # filter_settings = get_filter_settings(item.class)
       item_new = item
 
       # add custom fields if filter_settings specifies a lambda for custom_fields
@@ -317,6 +311,7 @@ module Api
       raise ArgumentError, 'opts must be a hash' unless opts.is_a?(Hash)
 
       filter_settings = klass&.try(:filter_settings)
+
       # check we can get filter settings and that capabilities are defined for this class
       unless filter_settings in {capabilities: Hash}
         opts[:capabilities] = nil
