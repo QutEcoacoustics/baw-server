@@ -269,8 +269,8 @@ describe ApplicationController, type: :controller do
         # the find keys are not unique enough - need creator as well
         do_load_or_new_resource(verification_params, find_keys: [:audio_event_id, :tag_id])
 
-        # rest om implementation not needed for test
-        raise 'unreachable'
+        # rest of implementation not needed for test
+        raise NotImplementedError, 'intentionally not implemented'
       end
     end
 
