@@ -346,6 +346,8 @@ class AudioEvent < ApplicationRecord
     projects_sites = Arel::Table.new(:projects_sites)
     audio_events_tags = Tagging.arel_table
     tags = Tag.arel_table
+    audio_event_import_files = AudioEventImportFile.arel_table
+    audio_event_imports = AudioEventImport.arel_table
 
     timezone_name = 'UTC' if timezone_name.blank?
     timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
@@ -431,6 +433,10 @@ class AudioEvent < ApplicationRecord
         .where(sites[:deleted_at].eq(nil))
         .join(regions, Arel::Nodes::OuterJoin).on(regions[:id].eq(sites[:region_id]))
         .where(regions[:deleted_at].eq(nil))
+        .join(audio_event_import_files, Arel::Nodes::OuterJoin)
+        .on(audio_event_import_files[:id].eq(audio_events[:audio_event_import_file_id]))
+        .join(audio_event_imports, Arel::Nodes::OuterJoin)
+        .on(audio_event_imports[:id].eq(audio_event_import_files[:audio_event_import_id]))
         .order(audio_events[:id].desc)
         .with(verification_cte)
         .project(
@@ -483,6 +489,10 @@ class AudioEvent < ApplicationRecord
           verification_cte_table[:verification_unsure],
           verification_cte_table[:verification_decisions],
           verification_cte_table[:verification_consensus],
+          audio_events[:audio_event_import_file_id].as('audio_event_import_file_id'),
+          audio_event_import_files[:path].as('audio_event_import_file_name'),
+          audio_event_import_files[:audio_event_import_id].as('audio_event_import_id'),
+          audio_event_imports[:name].as('audio_event_import_name'),
           Arel::Nodes::SqlLiteral.new(
             "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
                              '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
