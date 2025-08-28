@@ -23,7 +23,7 @@ services:
 
   # Override workers_test to use pre-built image and volumes
   workers_test:
-    image: baw-server:ci
+    image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
     volumes:
       - test-data:/data/test
@@ -31,7 +31,7 @@ services:
 
   # Override scheduler_test to use pre-built image and volumes  
   scheduler_test:
-    image: baw-server:ci
+    image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
     volumes:
       - test-data:/data/test
@@ -39,7 +39,7 @@ services:
 
   # Override web service for CI testing
   web:
-    image: baw-server:ci
+    image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
     command: sleep infinity
     environment:

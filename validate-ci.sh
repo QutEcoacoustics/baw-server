@@ -13,29 +13,32 @@ docker compose -f docker-compose.yml -f docker-compose.ci.yml config --quiet
 echo "✅ Docker Compose override file is valid"
 echo
 
-# Verify test file coverage
-echo "📊 Test file distribution:"
-echo "  API specs: $(find spec/api -name "*_spec.rb" | wc -l)"
-echo "  Permission specs: $(find spec/permissions -name "*_spec.rb" 2>/dev/null | wc -l)"
-echo "  Request specs: $(find spec/requests -name "*_spec.rb" 2>/dev/null | wc -l)"
-echo "  Unit specs (inc. lib): $(find spec/unit spec/lib spec/support/matchers -name "*_spec.rb" 2>/dev/null | wc -l)"
-echo "  Features+Capabilities: $(find spec/features spec/capabilities -name "*_spec.rb" 2>/dev/null | wc -l)"
-echo "  Models+Controllers+etc: $(find spec/models spec/controllers spec/routing spec/views spec/migrations -name "*_spec.rb" 2>/dev/null | wc -l)"
-echo "  Acceptance: $(find spec/acceptance -name "*_spec.rb" 2>/dev/null | wc -l)"
-
-total_categorized=$(($(find spec/api -name "*_spec.rb" | wc -l) + $(find spec/permissions -name "*_spec.rb" 2>/dev/null | wc -l) + $(find spec/requests -name "*_spec.rb" 2>/dev/null | wc -l) + $(find spec/unit spec/lib spec/support/matchers -name "*_spec.rb" 2>/dev/null | wc -l) + $(find spec/features spec/capabilities -name "*_spec.rb" 2>/dev/null | wc -l) + $(find spec/models spec/controllers spec/routing spec/views spec/migrations -name "*_spec.rb" 2>/dev/null | wc -l) + $(find spec/acceptance -name "*_spec.rb" 2>/dev/null | wc -l)))
+# Test the dynamic matrix generation
+echo "🔬 Testing dynamic test matrix generation..."
+ruby generate-test-matrix.rb > /tmp/matrix-test.json
+buckets=$(ruby -e "require 'json'; puts JSON.parse(File.read('/tmp/matrix-test.json'))['include'].length")
 total_specs=$(find spec -name "*_spec.rb" | wc -l)
 
-echo "  Total categorized: $total_categorized"
+echo "  Generated $buckets test buckets"
 echo "  Total spec files: $total_specs"
 
-if [ "$total_categorized" -eq "$total_specs" ]; then
-    echo "✅ All test files are properly categorized!"
+# Verify all buckets have files
+bucket_files=0
+for i in $(seq 1 $buckets); do
+  if [ -f "test-bucket-$i.txt" ]; then
+    files_in_bucket=$(wc -l < "test-bucket-$i.txt")
+    echo "  Bucket $i: $files_in_bucket files"
+    bucket_files=$((bucket_files + files_in_bucket))
+  else
+    echo "❌ Missing test-bucket-$i.txt"
+    exit 1
+  fi
+done
+
+if [ "$bucket_files" -eq "$total_specs" ]; then
+    echo "✅ All $total_specs test files are properly distributed across buckets!"
 else
-    echo "❌ Missing $(($total_specs - $total_categorized)) test files from categorization"
-    echo "Uncategorized files:"
-    # Find uncategorized files
-    comm -23 <(find spec -name "*_spec.rb" | sort) <({ find spec/api -name "*_spec.rb"; find spec/permissions -name "*_spec.rb" 2>/dev/null; find spec/requests -name "*_spec.rb" 2>/dev/null; find spec/unit spec/lib spec/support/matchers -name "*_spec.rb" 2>/dev/null; find spec/features spec/capabilities -name "*_spec.rb" 2>/dev/null; find spec/models spec/controllers spec/routing spec/views spec/migrations -name "*_spec.rb" 2>/dev/null; find spec/acceptance -name "*_spec.rb" 2>/dev/null; } | sort)
+    echo "❌ Bucket distribution error: $bucket_files files in buckets vs $total_specs total files"
     exit 1
 fi
 
@@ -50,13 +53,16 @@ else
     echo "ℹ️  Install 'actionlint' for workflow validation"
 fi
 
+# Cleanup test files
+rm -f test-bucket-*.txt /tmp/matrix-test.json
+
 echo
 echo "🎉 CI configuration validation complete!"
 echo
 echo "📋 Summary of improvements:"
-echo "  • Updated all GitHub Actions to latest versions"
-echo "  • Created CI override file for Docker Compose without bind mounts"
-echo "  • Implemented artifact-based container builds"
-echo "  • Split tests into 7 parallel groups for faster execution"
+echo "  • Updated all GitHub Actions to latest versions with cached LFS"
+echo "  • Created CI override file with environment variable image reference"
+echo "  • Implemented dynamic test matrix with even distribution"
+echo "  • Simplified test execution with docker cp approach"
 echo "  • Eliminated permission issues with volume-based storage"
 echo "  • Added proper caching and modern container registry usage"

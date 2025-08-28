@@ -14,6 +14,27 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Generate test matrix dynamically by dividing spec files into buckets
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Cached LFS checkout
+        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+        
+      - name: Generate test matrix
+        id: set-matrix
+        run: |
+          ruby generate-test-matrix.rb > matrix.json
+          echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+          
+      - name: Upload test bucket files
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-buckets
+          path: test-bucket-*.txt
+
   # Build the Docker image and save it as an artifact
   build:
     runs-on: ubuntu-latest
@@ -22,10 +43,8 @@ jobs:
       image-tags: ${{ steps.meta.outputs.tags }}
     
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
+      - name: Cached LFS checkout
+        uses: nschloe/action-cached-lfs-checkout@v1.2.3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -59,29 +78,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            trimmed=false
+            trimmed=true
 
   # Test jobs that run in parallel using the built image
   test:
-    needs: build
+    needs: [build, generate-matrix]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        test-group:
-          - api
-          - permissions
-          - requests
-          - unit
-          - features-capabilities
-          - models-controllers-routing
-          - acceptance-other
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
           
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Cached LFS checkout
+        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+
+      - name: Download test bucket files
+        uses: actions/download-artifact@v4
         with:
-          lfs: true
+          name: test-buckets
 
       - name: Login to Container Registry
         uses: docker/login-action@v3
@@ -90,75 +104,61 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update docker-compose with built image
-        run: |
-          # Extract the first tag from the build job output
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          echo "Using image: $IMAGE_TAG"
-          # Update the CI compose file to use the built image
-          sed -i "s|image: baw-server:ci|image: ${IMAGE_TAG}|g" docker-compose.ci.yml
-
       - name: Start services
         run: |
+          # Extract the first tag from the build job output and set as environment variable
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          echo "Using image: $IMAGE_TAG"
+          export CI_IMAGE="$IMAGE_TAG"
           docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+        env:
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           
       - name: Debugging
         run: |
           docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
           docker ps
         if: ${{ always() }}
-          
-      - name: Prepare test database
-        run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake baw:db_prepare
         env:
-          RAILS_ENV: test
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
-      - name: Run ${{ matrix.test-group }} tests
+      - name: Run bucket ${{ matrix.bucket }} tests
         run: |
-          case "${{ matrix.test-group }}" in
-            "api")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/api --format progress --format html --out rspec_results_api.html
-              ;;
-            "permissions")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/permissions --format progress --format html --out rspec_results_permissions.html
-              ;;
-            "requests")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/requests --format progress --format html --out rspec_results_requests.html
-              ;;
-            "unit")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/unit spec/lib spec/support/matchers --format progress --format html --out rspec_results_unit.html
-              ;;
-            "features-capabilities")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/features spec/capabilities --format progress --format html --out rspec_results_features.html
-              ;;
-            "models-controllers-routing")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/models spec/controllers spec/routing spec/views spec/migrations --format progress --format html --out rspec_results_other.html
-              ;;
-            "acceptance-other")
-              docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rspec spec/acceptance --format progress --format html --out rspec_results_acceptance.html
-              ;;
-          esac
+          # Copy test file list to container
+          docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/app/test-files.txt
+          
+          # Run tests using the file list
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
+            if [ -f /app/test-files.txt ]; then
+              cat /app/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
+            else
+              echo "No test files found for bucket ${{ matrix.bucket }}"
+              exit 1
+            fi
+          '
         env:
           RAILS_ENV: test
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: rspec-test-results-${{ matrix.test-group }}
+          name: rspec-test-results-bucket-${{ matrix.bucket }}
           path: rspec_results_*.html
 
       - name: Upload test logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-logs-${{ matrix.test-group }}
+          name: test-logs-bucket-${{ matrix.bucket }}
           path: log/*test.log
 
       - name: Stop services
         if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+        env:
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
   # Generate API documentation (only on master branch push)
   docs:
@@ -167,10 +167,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Cached LFS checkout
+        uses: nschloe/action-cached-lfs-checkout@v1.2.3
         with:
-          lfs: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Container Registry
@@ -180,21 +179,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update docker-compose with built image
+      - name: Start services
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           echo "Using image: $IMAGE_TAG"
-          sed -i "s|image: baw-server:ci|image: ${IMAGE_TAG}|g" docker-compose.ci.yml
-
-      - name: Start services
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          export CI_IMAGE="$IMAGE_TAG"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+        env:
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Generate API docs
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
+        env:
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Stop services
         if: always()
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+        env:
+          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v5
