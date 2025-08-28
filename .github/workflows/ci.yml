@@ -64,7 +64,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,prefix={{branch}}-
+            type=sha
             
       - name: Build and push Docker image
         id: build
@@ -109,26 +109,24 @@ jobs:
           # Extract the first tag from the build job output and set as environment variable
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           echo "Using image: $IMAGE_TAG"
-          export CI_IMAGE="$IMAGE_TAG"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           
       - name: Debugging
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
           docker ps
         if: ${{ always() }}
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Run bucket ${{ matrix.bucket }} tests
         run: |
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          
           # Copy test file list to container
-          docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/app/test-files.txt
+          docker cp test-bucket-${{ matrix.bucket }}.txt $(CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/app/test-files.txt
           
           # Run tests using the file list
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
             if [ -f /app/test-files.txt ]; then
               cat /app/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
             else
@@ -138,7 +136,6 @@ jobs:
           '
         env:
           RAILS_ENV: test
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -156,9 +153,9 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+        run: |
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
 
   # Generate API documentation (only on master branch push)
   docs:
@@ -183,21 +180,18 @@ jobs:
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           echo "Using image: $IMAGE_TAG"
-          export CI_IMAGE="$IMAGE_TAG"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
 
       - name: Generate API docs
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+        run: |
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
 
       - name: Stop services
         if: always()
-        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+        run: |
+          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
 
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -242,23 +236,18 @@ jobs:
       - name: Generate changelog
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          export CI_IMAGE="$IMAGE_TAG"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake changelog
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake changelog
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
         env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate API docs
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          export CI_IMAGE="$IMAGE_TAG"
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml down
-        env:
-          CI_IMAGE: $(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
 
       - name: Set VERSION and commit changes
         run: |
