@@ -490,7 +490,7 @@ class AudioEvent < ApplicationRecord
           verification_cte_table[:verification_decisions],
           verification_cte_table[:verification_consensus],
           audio_events[:audio_event_import_file_id].as('audio_event_import_file_id'),
-          audio_event_import_files[:path].as('audio_event_import_file_name'),
+          Arel::Nodes::NamedFunction.new('basename', [audio_event_import_files[:path]]).as('audio_event_import_file_name'),
           audio_event_import_files[:audio_event_import_id].as('audio_event_import_id'),
           audio_event_imports[:name].as('audio_event_import_name'),
           Arel::Nodes::SqlLiteral.new(
