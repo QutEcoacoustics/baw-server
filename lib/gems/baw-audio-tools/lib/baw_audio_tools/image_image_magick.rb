@@ -13,13 +13,13 @@ module BawAudioTools
 
     def info_command(source)
       cmd_format = '"width:%[fx:w]|||height:%[fx:h]|||media_type:%m"'
-      "#{@image_magick_identify_exe} -quiet -regard-warnings -ping -format #{cmd_format} \"#{source}\""
+      "#{@image_magick_identify_exe} -quiet -regard-warnings -ping -format #{cmd_format} '#{source}'"
     end
 
     def parse_info_output(output)
       # contains key value output (separate on first colon(:))
       result = {}
-      output.strip.split(/\|\|\|/).each do |line|
+      output.strip.split('|||').each do |line|
         next unless line.include?(':')
 
         colon_index = line.index(':')
@@ -34,12 +34,13 @@ module BawAudioTools
     def check_for_errors(execute_msg)
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
-      if !stderr.blank? && stderr.include?(ERROR_UNABLE_TO_OPEN)
+      if stderr.present? && stderr.include?(ERROR_UNABLE_TO_OPEN)
         raise Exceptions::FileCorruptError, "Image magick could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && stderr.include?(ERROR_IMAGE_FORMAT)
-        raise Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t#{execute_msg[:execute_msg]}"
-      end
+      return unless stderr.present? && stderr.include?(ERROR_IMAGE_FORMAT)
+
+      raise Exceptions::NotAnImageFileError,
+        "Image magick was given a non-image file.\n\t#{execute_msg[:execute_msg]}"
     end
 
     def modify_command(source, target)
@@ -55,7 +56,7 @@ module BawAudioTools
 
       cmd_remove_dc_value = arg_remove_dc_value
 
-      "#{@image_magick_convert_exe} -quiet \"#{source}\" #{cmd_remove_dc_value} \"#{target}\""
+      "#{@image_magick_convert_exe} -quiet '#{source}' #{cmd_remove_dc_value} '#{target}'"
     end
 
     def arg_remove_dc_value

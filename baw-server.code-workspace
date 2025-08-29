@@ -339,7 +339,15 @@
     "rubyLsp.featureFlags": {
       "all": true
     },
-    "rubyLsp.featuresConfiguration": {}
+    "rubyLsp.featuresConfiguration": {
+      "codeLens": {
+        "enableAll": true
+      },
+      "inlayHint": {
+        "enableAll": true
+      }
+    },
+    "testExplorer.addToEditorContextMenu": true
   },
   "extensions": {
     "recommendations": [

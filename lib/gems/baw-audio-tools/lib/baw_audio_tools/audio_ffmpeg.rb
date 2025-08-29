@@ -21,14 +21,15 @@ module BawAudioTools
     end
 
     def info_command(source)
-      "#{@ffprobe_executable} -hide_banner -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
+      "#{@ffprobe_executable} -hide_banner -sexagesimal -print_format default -show_error -show_streams -show_format '#{source}'"
     end
 
     def integrity_command(source)
-      "#{@ffmpeg_executable} -hide_banner -loglevel repeat+verbose -nostdin -i \"#{source}\" -codec copy -f null -"
+      "#{@ffmpeg_executable} -hide_banner -loglevel repeat+verbose -nostdin -i '#{source}' -codec copy -f null -"
     end
 
-    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil,
+                       sample_rate = nil)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
       raise ArgumentError, "Source and Target are the same file: #{target}" if source == target
@@ -50,13 +51,13 @@ module BawAudioTools
       #   from O(n) to O(1), which makes a big difference on longer files!
       #   For a 2 hour file cut speed drop to < 3 seconds, from 8.25 seconds.
       # See: https://github.com/QutEcoacoustics/baw-server/pull/498
-      audio_cmd = "#{@ffmpeg_executable} -hide_banner #{cmd_offsets} -i \"#{source}\" #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\" -nostdin -y"
+      audio_cmd = "#{@ffmpeg_executable} -hide_banner #{cmd_offsets} -i '#{source}' #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} '#{codec_info[:target]}' -nostdin -y"
       cmd = ''
 
       if codec_info[:target] == codec_info[:old_target]
         cmd = audio_cmd
       else
-        partial_cmd = "\"#{codec_info[:target]}\" \"#{codec_info[:old_target]}\""
+        partial_cmd = "'#{codec_info[:target]}' '#{codec_info[:old_target]}'"
         separator_move = '; mv'
         cmd = "#{audio_cmd} #{separator_move} #{partial_cmd}"
       end
@@ -68,17 +69,17 @@ module BawAudioTools
       #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      if !stderr.blank? && /#{ERROR_FRAME_SIZE_1}/.match(stderr)
+      if stderr.present? && /#{ERROR_FRAME_SIZE_1}/.match(stderr)
         raise Exceptions::FileCorruptError,
-              "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
+          "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && /#{ERROR_FRAME_SIZE_2}/.match(stderr)
+      if stderr.present? && /#{ERROR_FRAME_SIZE_2}/.match(stderr)
         raise Exceptions::FileCorruptError,
-              "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
+          "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && /#{ERROR_END_OF_FILE}/i.match(stderr)
-        raise Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
-      end
+      return unless stderr.present? && /#{ERROR_END_OF_FILE}/i.match(stderr)
+
+      raise Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
     end
 
     def check_integrity_output(execute_msg)
@@ -103,33 +104,33 @@ module BawAudioTools
       stderr.each_line do |line|
         match_result = /\A\[(.+?) @ 0x.+?\] (.*)/.match(line)
         item = nil
-        item = check_integrity_item(id: match_result[1], description: match_result[2]) unless match_result.blank?
-        result[:warnings].push(item) unless item.blank?
+        item = check_integrity_item(id: match_result[1], description: match_result[2]) if match_result.present?
+        result[:warnings].push(item) if item.present?
 
         if /: End of file$/ =~ line
           result[:warnings].push(id: 'end of file', description: 'End of file')
         end
 
         read_packets_match = /Total: (\d+) packets \((\d+) bytes\) demuxed/.match(line)
-        unless read_packets_match.blank?
+        if read_packets_match.present?
           result[:info][:read][:packets] = read_packets_match[1]
           result[:info][:read][:bytes] = read_packets_match[2]
         end
 
         read_frames_match = /(\d+) frames decoded \((\d+) samples\);/.match(line)
-        unless read_frames_match.blank?
+        if read_frames_match.present?
           result[:info][:read][:frames] = read_frames_match[1]
           result[:info][:read][:samples] = read_frames_match[2]
         end
 
         write_packets_match = /Total: (\d+) packets \((\d+) bytes\) muxed/.match(line)
-        unless write_packets_match.blank?
+        if write_packets_match.present?
           result[:info][:write][:packets] = write_packets_match[1]
           result[:info][:write][:bytes] = write_packets_match[2]
         end
 
         write_frames_match = /(\d+) frames encoded \((\d+) samples\);/.match(line)
-        unless write_frames_match.blank?
+        if write_frames_match.present?
           result[:info][:write][:frames] = write_frames_match[1]
           result[:info][:write][:samples] = write_frames_match[2]
         end
@@ -158,7 +159,7 @@ module BawAudioTools
       match_info = mod_stderr.match(match_regex)
       mod_stderr = mod_stderr.gsub(match_regex, '')
 
-      unless match_info.blank?
+      if match_info.present?
         @logger.warn(@class_name) {
           "Found and removed '#{match_info}' in ffmpeg output."
         }
@@ -220,7 +221,7 @@ module BawAudioTools
 
     def arg_channel(channel)
       cmd_arg = ''
-      unless channel.blank?
+      if channel.present?
         channel_number = channel.to_i
         cmd_arg = if channel_number < 1
                     # mix down to mono
@@ -235,7 +236,7 @@ module BawAudioTools
 
     def arg_sample_rate(sample_rate)
       cmd_arg = ''
-      unless sample_rate.blank?
+      if sample_rate.present?
         # -ar Set the audio sampling frequency (default = 44100 Hz).
         # -ab Set the audio bitrate in bit/s (default = 64k).
         cmd_arg = " -ar #{sample_rate} "
@@ -248,14 +249,14 @@ module BawAudioTools
 
       # start offset
       # -ss Seek to given time position in seconds. hh:mm:ss[.xxx] syntax is also supported.
-      unless start_offset.blank?
+      if start_offset.present?
         start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%3N')
         cmd_arg = " -ss #{start_offset_formatted}"
       end
 
       # end offset
       # -t Restrict the transcoded/captured video sequence to the duration specified in seconds. hh:mm:ss[.xxx] syntax is also supported.
-      unless end_offset.blank?
+      if end_offset.present?
         #end_offset_formatted = Time.at(modify_parameters[:end_offset]).utc.strftime('%H:%M:%S.%3N')
         end_offset_raw = end_offset.to_f
         end_offset_time = Time.at(end_offset_raw).utc

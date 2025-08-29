@@ -326,9 +326,9 @@ RSpec.configure do |config|
 end
 
 # type hints for solargraph - these are never executed
-# rubocop:disable RSpec/EmptyExampleGroup, RSpec/RSpec/DescribeClass
-RSpec.describe '', :skip do
+# rubocop:disable RSpec/EmptyExampleGroup, RSpec/DescribeClass
+RSpec.describe '', skip: 'this is just type hints for solargraph' do
   extend Baw::Stepwise::ExampleGroup
   include Baw::Stepwise::Example
 end
-# rubocop:enable RSpec/EmptyExampleGroup
+# rubocop:enable RSpec/EmptyExampleGroup, RSpec/DescribeClass

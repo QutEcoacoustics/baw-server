@@ -11,7 +11,7 @@ module BawAudioTools
 
     def info_command(source)
       # sox std out contains info
-      "#{@shntool_executable} info \"#{source}\""
+      "#{@shntool_executable} info '#{source}'"
     end
 
     def parse_info_output(output)
@@ -42,9 +42,9 @@ module BawAudioTools
     def check_for_errors(execute_msg)
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
-      if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        raise Exceptions::AudioToolError, "shntool cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
-      end
+      return unless stderr.present? && stderr.include?(ERROR_NO_HANDLER)
+
+      raise Exceptions::AudioToolError, "shntool cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
     end
 
     def modify_command(source, _source_info, target, _start_offset = nil, _end_offset = nil)
@@ -54,18 +54,18 @@ module BawAudioTools
       #-a str Prefix str to base part of output filenames
       #-d dir Specify output directory
       #-n fmt Specifies  the  file  count output format.  The default is %02d, which gives two-digit zero-padded numbers (01, 02, 03, ...).
-      "#{@shntool_executable} split -O never -a \"#{File.dirname(target)}\" -d #{File.basename(target)} -n \"\" \"#{source}\" \"#{target}\" "
+      "#{@shntool_executable} split -O never -a '#{File.dirname(target)}' -d '#{File.basename(target)}' -n '' '#{source}' '#{target}' "
     end
 
     def arg_offsets(start_offset, end_offset)
       cmd_arg = ''
 
-      unless start_offset.blank?
+      if start_offset.present?
         start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += "trim =#{start_offset_formatted}"
       end
 
-      unless end_offset.blank?
+      if end_offset.present?
         end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += if start_offset.blank?
                      # if start offset was not included, include audio from the start of the file.
