@@ -313,7 +313,12 @@ describe AudioEvent do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus", 'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus","audio_events"."audio_event_import_file_id"
+      AS"audio_event_import_file_id",
+      COALESCE(basename("audio_event_import_files"."path"),"active_storage_blobs"."filename")
+      AS "audio_event_import_file_name","audio_event_import_files"."audio_event_import_id"
+      AS "audio_event_import_id","audio_event_imports"."name"
+      AS "audio_event_import_name",'http://web/listen/'||"audio_recordings"."id"||'?start='||(floor("audio_events"."start_time_seconds"/30)*30)||'&end='||((floor("audio_events"."start_time_seconds"/30)*30)+30)
       AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
@@ -333,6 +338,28 @@ describe AudioEvent do
       LEFT OUTER
       JOIN "regions"
       ON "regions"."id" = "sites"."region_id"
+      LEFT
+      OUTER
+      JOIN"audio_event_import_files"
+      ON"audio_event_import_files"."id"="audio_events"."audio_event_import_file_id"
+      LEFT
+      OUTER
+      JOIN"audio_event_imports"
+      ON"audio_event_imports"."id"="audio_event_import_files"."audio_event_import_id"
+      LEFT
+      OUTER
+      JOIN"active_storage_attachments"
+      ON("active_storage_attachments"."record_id"="audio_event_import_files"."id")
+      AND("active_storage_attachments"."record_type"='
+      Audio
+      Event
+      Import
+      File')
+      AND("active_storage_attachments"."name"='file')
+      LEFT
+      OUTER
+      JOIN"active_storage_blobs"
+      ON"active_storage_blobs"."id"="active_storage_attachments"."blob_id"
       WHERE "audio_events"."deleted_at"
       IS
       NULL
@@ -368,8 +395,7 @@ describe AudioEvent do
     expect(a_mod).to eq(b_mod)
   end
 
-  it 'constructs the expected sql for annotation download (timezone:
- Brisbane)' do
+  it 'constructs the expected sql for annotation download (timezone: Brisbane)' do
     query =
       AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane')
 
@@ -534,7 +560,12 @@ describe AudioEvent do
       WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
       AND
       NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus", 'http://web/listen/'|| "audio_recordings"."id" || '?start=' || (floor("audio_events"."start_time_seconds" / 30) * 30) || '&end=' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)
+      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus","audio_events"."audio_event_import_file_id"
+      AS"audio_event_import_file_id",
+      COALESCE(basename("audio_event_import_files"."path"),"active_storage_blobs"."filename")
+      AS "audio_event_import_file_name","audio_event_import_files"."audio_event_import_id"
+      AS "audio_event_import_id","audio_event_imports"."name"
+      AS "audio_event_import_name",'http://web/listen/'||"audio_recordings"."id"||'?start='||(floor("audio_events"."start_time_seconds"/30)*30)||'&end='||((floor("audio_events"."start_time_seconds"/30)*30)+30)
       AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
       AS "library_url"
       FROM "audio_events"
@@ -554,6 +585,28 @@ describe AudioEvent do
       LEFT OUTER
       JOIN "regions"
       ON "regions"."id" = "sites"."region_id"
+      LEFT
+      OUTER
+      JOIN"audio_event_import_files"
+      ON"audio_event_import_files"."id"="audio_events"."audio_event_import_file_id"
+      LEFT
+      OUTER
+      JOIN"audio_event_imports"
+      ON"audio_event_imports"."id"="audio_event_import_files"."audio_event_import_id"
+      LEFT
+      OUTER
+      JOIN"active_storage_attachments"
+      ON("active_storage_attachments"."record_id"="audio_event_import_files"."id")
+      AND("active_storage_attachments"."record_type"='
+      Audio
+      Event
+      Import
+      File')
+      AND("active_storage_attachments"."name"='file')
+      LEFT
+      OUTER
+      JOIN"active_storage_blobs"
+      ON"active_storage_blobs"."id"="active_storage_attachments"."blob_id"
       WHERE "audio_events"."deleted_at"
       IS
       NULL
@@ -697,6 +750,22 @@ describe AudioEvent do
     returned_event_ids = AudioEvent.connection.select_all(query).pluck('audio_event_id')
 
     expect(returned_event_ids).to eq([other_audio_event.id])
+  end
+
+  describe 'download events' do
+    create_entire_hierarchy
+    it 'includes import details in annotation download' do
+      query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
+      results = AudioEvent.connection.select_all(query).to_a
+
+      first = results.first
+      expect(first).to match(a_hash_including(
+        'audio_event_import_file_id' => audio_event_import_file.id,
+        'audio_event_import_file_name' => audio_event_import_file.name,
+        'audio_event_import_id' => audio_event_import.id,
+        'audio_event_import_name' => audio_event_import.name
+      ))
+    end
   end
 
   describe 'verifications query for annotation downloads' do
