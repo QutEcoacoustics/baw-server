@@ -8,6 +8,22 @@
 # - Configure services for test environment
 
 services:
+  # Init container to fix volume permissions
+  volume-permissions:
+    image: ${CI_IMAGE:-baw-server:ci}
+    user: root
+    command: |
+      sh -c '
+        echo "Setting up volume permissions for baw_web user (1000:1000)..."
+        chown -R 1000:1000 /data/test
+        chmod -R 755 /data/test
+        echo "Volume permissions setup complete"
+      '
+    volumes:
+      - test-data:/data/test
+    deploy:
+      replicas: 0  # This service is only run manually via docker compose run
+
   # Override development services to not start in CI (but keep them defined)
   upload:
     deploy:
@@ -25,7 +41,6 @@ services:
   workers_test:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
-    user: root  # Run as root in CI to avoid volume permission issues
     volumes:
       - test-data:/data/test
       # Remove bind mount of source code
@@ -34,7 +49,6 @@ services:
   scheduler_test:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
-    user: root  # Run as root in CI to avoid volume permission issues
     volumes:
       - test-data:/data/test
       # Remove bind mount of source code
@@ -44,7 +58,6 @@ services:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
     command: sleep infinity
-    user: root  # Run as root in CI to avoid volume permission issues
     environment:
       RAILS_ENV: test
       MIGRATE_DB: "false"

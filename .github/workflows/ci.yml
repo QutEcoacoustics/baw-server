@@ -109,6 +109,11 @@ jobs:
           # Extract the first tag from the build job output and set as environment variable
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           echo "Using image: $IMAGE_TAG"
+          
+          # First, set up volume permissions
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
+          
+          # Then start the main services
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           
       - name: Debugging
@@ -183,6 +188,11 @@ jobs:
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           echo "Using image: $IMAGE_TAG"
+          
+          # First, set up volume permissions
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
+          
+          # Then start the main services
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
 
       - name: Generate API docs
@@ -239,6 +249,10 @@ jobs:
       - name: Generate changelog
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          
+          # Set up volume permissions first
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
+          
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake changelog
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
@@ -248,6 +262,10 @@ jobs:
       - name: Generate API docs
         run: |
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
+          
+          # Set up volume permissions first
+          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
+          
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
