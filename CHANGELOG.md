@@ -1,11 +1,21 @@
 # Changelog
 
-## [13.7.2](https://github.com/QutEcoacoustics/baw-server/tree/13.7.2) (2025-08-27)
+## [13.8.1](https://github.com/QutEcoacoustics/baw-server/tree/13.8.1) (2025-08-29)
 
-[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.7.2...13.7.2)
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.7.2...13.8.1)
+
+**Fixed bugs:**
+
+- Need to single quote paths to files used by audio tools. [\#825](https://github.com/QutEcoacoustics/baw-server/issues/825)
+
+**Closed issues:**
+
+- add audio\_event\_file\_import\_id to annotation download csv [\#826](https://github.com/QutEcoacoustics/baw-server/issues/826)
 
 **Merged pull requests:**
 
+- Fix quoting [\#828](https://github.com/QutEcoacoustics/baw-server/pull/828) ([atruskie](https://github.com/atruskie))
+- Add audio\_event\_import\_file\_id and related fields to annotation CSV download [\#827](https://github.com/QutEcoacoustics/baw-server/pull/827) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Fixes faulty find\_keys for verifications upsert [\#824](https://github.com/QutEcoacoustics/baw-server/pull/824) ([atruskie](https://github.com/atruskie))
 
 ## [13.7.2](https://github.com/QutEcoacoustics/baw-server/tree/13.7.2) (2025-08-27)
