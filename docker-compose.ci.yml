@@ -1,0 +1,92 @@
+# Docker Compose override for CI environments
+# This file should be used with the main docker-compose.yml file:
+#   docker-compose -f docker-compose.yml -f docker-compose.ci.yml up
+# 
+# It modifies the base configuration to:
+# - Use pre-built images instead of build contexts
+# - Replace bind mounts with volumes to avoid permission issues
+# - Configure services for test environment
+
+services:
+  # Init container to fix volume permissions
+  volume-permissions:
+    image: ${CI_IMAGE:-baw-server:ci}
+    user: root
+    command: |
+      sh -c '
+        echo "Setting up volume permissions for baw_web user (1000:1000)..."
+        chown -R 1000:1000 /data/test
+        chmod -R 755 /data/test
+        echo "Volume permissions setup complete"
+      '
+    volumes:
+      - test-data:/data/test
+    deploy:
+      replicas: 0  # This service is only run manually via docker compose run
+
+  # Override development services to not start in CI (but keep them defined)
+  upload:
+    deploy:
+      replicas: 0
+  
+  workers:
+    deploy:
+      replicas: 0
+    
+  scheduler:
+    deploy:
+      replicas: 0
+
+  # Override workers_test to use pre-built image and volumes
+  workers_test:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+    volumes:
+      - test-data:/data/test
+      # Remove bind mount of source code
+
+  # Override scheduler_test to use pre-built image and volumes  
+  scheduler_test:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+    volumes:
+      - test-data:/data/test
+      # Remove bind mount of source code
+
+  # Override web service for CI testing
+  web:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+    command: sleep infinity
+    environment:
+      RAILS_ENV: test
+      MIGRATE_DB: "false"
+    depends_on:
+      - db
+      - redis
+      - upload_test
+      - workers_test
+      - scheduler_test
+      - analysis_test
+    volumes:
+      - test-data:/data/test
+      # Remove bind mount of source code
+
+  # Override upload_test to use volume instead of bind mount
+  upload_test:
+    volumes:
+      - type: bind
+        source: ./provision/upload/config
+        target: /var/lib/sftpgo
+      - test-data:/data/test
+
+  # Override analysis_test to use volume instead of bind mount
+  analysis_test:
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - test-data:/data/test
+
+volumes:
+  test-data: null
