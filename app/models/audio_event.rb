@@ -348,6 +348,7 @@ class AudioEvent < ApplicationRecord
     tags = Tag.arel_table
     audio_event_import_files = AudioEventImportFile.arel_table
     audio_event_imports = AudioEventImport.arel_table
+    active_storage_blobs = ActiveStorage::Blob.arel_table
 
     timezone_name = 'UTC' if timezone_name.blank?
     timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
@@ -437,6 +438,12 @@ class AudioEvent < ApplicationRecord
         .on(audio_event_import_files[:id].eq(audio_events[:audio_event_import_file_id]))
         .join(audio_event_imports, Arel::Nodes::OuterJoin)
         .on(audio_event_imports[:id].eq(audio_event_import_files[:audio_event_import_id]))
+        .join(ActiveStorage::Attachment.arel_table, Arel::Nodes::OuterJoin)
+        .on(ActiveStorage::Attachment.arel_table[:record_id].eq(audio_event_import_files[:id])
+            .and(ActiveStorage::Attachment.arel_table[:record_type].eq('AudioEventImportFile'))
+            .and(ActiveStorage::Attachment.arel_table[:name].eq('file')))
+        .join(active_storage_blobs, Arel::Nodes::OuterJoin)
+        .on(active_storage_blobs[:id].eq(ActiveStorage::Attachment.arel_table[:blob_id]))
         .order(audio_events[:id].desc)
         .with(verification_cte)
         .project(
@@ -490,7 +497,7 @@ class AudioEvent < ApplicationRecord
           verification_cte_table[:verification_decisions],
           verification_cte_table[:verification_consensus],
           audio_events[:audio_event_import_file_id].as('audio_event_import_file_id'),
-          Arel::Nodes::NamedFunction.new('basename', [audio_event_import_files[:path]]).as('audio_event_import_file_name'),
+          AudioEventImportFile.name_arel.as('audio_event_import_file_name'),
           audio_event_import_files[:audio_event_import_id].as('audio_event_import_id'),
           audio_event_imports[:name].as('audio_event_import_name'),
           Arel::Nodes::SqlLiteral.new(
