@@ -78,7 +78,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            trimmed=true
+            trimmed=false
 
   # Test jobs that run in parallel using the built image
   test:
@@ -125,8 +125,11 @@ jobs:
           # Copy test file list to container
           docker cp test-bucket-${{ matrix.bucket }}.txt $(CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/home/baw_web/baw-server/test-files.txt
           
-          # Run tests using the file list
+          # Install test dependencies and run tests using the file list
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
+            # Ensure test dependencies are installed
+            bundle install --with test
+            
             if [ -f /home/baw_web/baw-server/test-files.txt ]; then
               cat /home/baw_web/baw-server/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
             else
