@@ -123,12 +123,12 @@ jobs:
           IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
           
           # Copy test file list to container
-          docker cp test-bucket-${{ matrix.bucket }}.txt $(CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/app/test-files.txt
+          docker cp test-bucket-${{ matrix.bucket }}.txt $(CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/home/baw_web/baw-server/test-files.txt
           
           # Run tests using the file list
           CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
-            if [ -f /app/test-files.txt ]; then
-              cat /app/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
+            if [ -f /home/baw_web/baw-server/test-files.txt ]; then
+              cat /home/baw_web/baw-server/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
             else
               echo "No test files found for bucket ${{ matrix.bucket }}"
               exit 1
