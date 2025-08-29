@@ -67,6 +67,10 @@ class AudioEventImportFile < ApplicationRecord
     base / path
   end
 
+  def name
+    file.attached? ? file.filename : File.basename(path)
+  end
+
   # validations
   validates :file_hash, presence: true
   validate :validate_path_exists, if: -> { path.present? }
