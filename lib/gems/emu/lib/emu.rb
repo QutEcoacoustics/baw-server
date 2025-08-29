@@ -59,6 +59,7 @@ module Emu
 
     output, error, status = nil
     time = Benchmark.measure do
+      # NOTE: the use of Open3.capture3 means we don't need to worry about shell expansion of funny characters
       output, error, status = Open3.capture3(*all_args)
     end
 

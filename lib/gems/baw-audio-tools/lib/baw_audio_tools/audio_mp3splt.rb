@@ -21,8 +21,7 @@ module BawAudioTools
       target_no_ext = target.basename('.*')
       cmd_offsets = arg_offsets(start_offset, end_offset)
 
-      mp3splt_command = "#{@mp3splt_executable} -q -d \"#{target_dirname}\" -o \"#{target_no_ext}\" \"#{source}\" #{cmd_offsets}"
-      mp3splt_command
+      "#{@mp3splt_executable} -q -d '#{target_dirname}' -o '#{target_no_ext}' '#{source}' #{cmd_offsets}"
     end
 
     def arg_offsets(start_offset, end_offset)
@@ -34,7 +33,7 @@ module BawAudioTools
         start_offset = ' 0.0 '
       else
         start_offset = start_offset.to_f
-        start_offset = ' ' + (start_offset / 60.0).floor.to_s + '.' + format('%05.2f', (start_offset % 60)) + ' '
+        start_offset = ' ' + (start_offset / 60.0).floor.to_s + '.' + format('%05.2f', start_offset % 60) + ' '
         start_offset_num = start_offset.to_f
       end
 
@@ -44,7 +43,7 @@ module BawAudioTools
         cmd_arg += ' EOF '
       else
         end_offset = end_offset.to_f
-        end_offset_formatted = (end_offset / 60.0).floor.to_s + '.' + format('%05.2f', (end_offset % 60))
+        end_offset_formatted = (end_offset / 60.0).floor.to_s + '.' + format('%05.2f', end_offset % 60)
         cmd_arg += " #{end_offset_formatted} "
       end
 

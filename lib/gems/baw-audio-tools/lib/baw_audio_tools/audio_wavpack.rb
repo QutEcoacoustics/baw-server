@@ -12,11 +12,11 @@ module BawAudioTools
     end
 
     def info_command(source)
-      "#{@wavpack_executable} -s \"#{source}\""
+      "#{@wavpack_executable} -s '#{source}'"
     end
 
     def integrity_command(source)
-      "#{@wavpack_executable} -v \"#{source}\""
+      "#{@wavpack_executable} -v '#{source}'"
     end
 
     def parse_info_output(output)
@@ -40,15 +40,16 @@ module BawAudioTools
       #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
+      if stderr.present? && stderr.include?(ERROR_CANNOT_OPEN)
         raise Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
+      if stderr.present? && stderr.include?(ERROR_NOT_VALID)
         raise Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
-        raise Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
-      end
+      return unless stderr.present? && stderr.include?(ERROR_NOT_COMPATIBLE)
+
+      raise Exceptions::AudioToolError,
+        "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
     end
 
     def check_integrity_output(execute_msg)
@@ -96,19 +97,18 @@ module BawAudioTools
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
 
-      wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" -o \"#{target}\""
-      wvunpack_command
+      "#{@wavpack_executable} #{cmd_offsets} '#{source}' -o '#{target}'"
     end
 
     def arg_offsets(start_offset, end_offset)
       # formatted time: hh:mm:ss.ss
       cmd_arg = '-t -q'
-      unless start_offset.blank?
+      if start_offset.present?
         start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += " --skip=#{start_offset_formatted}"
       end
 
-      unless end_offset.blank?
+      if end_offset.present?
         end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += " --until=#{end_offset_formatted}"
       end

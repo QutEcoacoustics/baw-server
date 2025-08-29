@@ -13,12 +13,12 @@ module BawAudioTools
 
     def info_command_stat(source)
       # sox std err contains stat output
-      "#{@sox_executable} -V2 \"#{source}\" -n stat"
+      "#{@sox_executable} -V2 '#{source}' -n stat"
     end
 
     def info_command_info(source)
       # sox std out contains info
-      "#{@sox_executable} --info -V2 \"#{source}\""
+      "#{@sox_executable} --info -V2 '#{source}'"
     end
 
     def parse_info_output(execute_msg)
@@ -39,15 +39,16 @@ module BawAudioTools
     def check_for_errors(execute_msg)
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
-      if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
+      if stderr.present? && stderr.include?(ERROR_CANNOT_OPEN)
         raise Exceptions::FileCorruptError, "sox could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
-      if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        raise Exceptions::AudioToolError, "sox cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
-      end
+      return unless stderr.present? && stderr.include?(ERROR_NO_HANDLER)
+
+      raise Exceptions::AudioToolError, "sox cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
     end
 
-    def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
+    def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil, channel = nil,
+                       sample_rate = nil)
       raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
       raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
@@ -58,7 +59,7 @@ module BawAudioTools
       sample_rate = arg_sample_rate(sample_rate)
       cmd_channel = arg_channel(channel)
 
-      "#{@sox_executable} -q -V4 \"#{source}\" \"#{target}\" #{cmd_offsets} #{sample_rate} #{cmd_channel}"
+      "#{@sox_executable} -q -V4 '#{source}' '#{target}' #{cmd_offsets} #{sample_rate} #{cmd_channel}"
     end
 
     def spectrogram_command(
@@ -96,9 +97,9 @@ module BawAudioTools
       # sox command to create a spectrogram from an audio file
       # -V is for verbose
       # -n indicates no output audio file
-      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} " \
+      "#{@sox_executable} -V '#{source}' -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} " \
         "#{cmd_spectrogram} #{cmd_pixels_second} #{cmd_colour} #{cmd_window} #{cmd_window_function} " \
-        "-o \"#{target}\""
+        "-o '#{target}'"
     end
 
     def self.window_options
@@ -132,7 +133,7 @@ module BawAudioTools
 
     def arg_channel(channel)
       cmd_arg = ''
-      unless channel.blank?
+      if channel.present?
         channel_number = channel.to_i
         if channel_number < 1
           # mix down to mono
@@ -151,7 +152,7 @@ module BawAudioTools
 
     def arg_sample_rate(sample_rate)
       cmd_arg = ''
-      unless sample_rate.blank?
+      if sample_rate.present?
         # resample quality: medium (m), high (h), veryhigh (v)
         # -s steep filter (band-width = 99%)
         # -a allow aliasing/imaging above the pass-band
@@ -180,12 +181,12 @@ module BawAudioTools
 
       cmd_arg = ''
 
-      unless start_offset.blank?
+      if start_offset.present?
         start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += "trim #{start_offset_formatted}"
       end
 
-      unless end_offset.blank?
+      if end_offset.present?
         end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
         cmd_arg += if start_offset.blank?
                      # if start offset was not included, include audio from the start of the file.
@@ -206,7 +207,7 @@ module BawAudioTools
       cmd_arg = ''
       all_window_options = AudioSox.window_options.join(', ')
 
-      unless window.blank?
+      if window.present?
         window_param = window.to_i
         unless AudioSox.window_options.include? window_param
           raise ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'."
@@ -226,7 +227,7 @@ module BawAudioTools
       cmd_arg = ''
       all_window_function_options = AudioSox.window_function_options.join(', ')
 
-      unless window_function.blank?
+      if window_function.present?
 
         window_function_param = window_function.to_s
         unless AudioSox.window_function_options.map { |wf| wf }.include? window_function_param
@@ -273,7 +274,7 @@ module BawAudioTools
       # processing quantization reasons; if so, SoX will report the actual number used
       # (viewable when the SoX global option −V is in effect). See also −x and −d.
       cmd_arg = ''
-      if !sample_rate.blank? && !window_size.blank?
+      if sample_rate.present? && window_size.present?
         pixels_per_second = sample_rate.to_f / window_size
         cmd_arg = "-X #{pixels_per_second}"
       end

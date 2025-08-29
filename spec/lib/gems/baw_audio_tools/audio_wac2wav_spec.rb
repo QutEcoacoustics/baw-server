@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-
-
 describe BawAudioTools::AudioWac2wav do
   include_context 'common'
   include_context 'audio base'
@@ -23,7 +21,7 @@ describe BawAudioTools::AudioWac2wav do
       target = temp_file(extension: '.wav')
 
       cmd = wac2wav.modify_command(source, target)
-      expected = "wac2wavcmd < \"#{source}\" > \"#{target}\""
+      expected = "wac2wavcmd < '#{source}' > '#{target}'"
 
       expect(cmd).to eq(expected)
     end
@@ -33,17 +31,18 @@ describe BawAudioTools::AudioWac2wav do
         source = audio_file_wac_1
         info = wac2wav.info(source)
         expect(info).to eq(version: 1, channels: 2, frame_size: 128, block_size: 32, media_type: 'audio/x-waac',
-                           flags: { wac: 0, triggered: 0, gps: 0, tag: 0 },
-                           sample_rate: 22_050, sample_count: 145_024, seek_size: 16, bit_rate_bps: 16,
-                           seek_entries: 8192, data_length_bytes: 394_644, duration_seconds: 6.577)
+          flags: { wac: 0, triggered: 0, gps: 0, tag: 0 },
+          sample_rate: 22_050, sample_count: 145_024, seek_size: 16, bit_rate_bps: 16,
+          seek_entries: 8192, data_length_bytes: 394_644, duration_seconds: 6.577)
       end
+
       it 'succeeds for second test wac file' do
         source = audio_file_wac_2
         info = wac2wav.info(source)
         expect(info).to eq(version: 2, channels: 2, frame_size: 128, block_size: 32, media_type: 'audio/x-waac',
-                           flags: { wac: 8, triggered: 0, gps: 0, tag: 0 },
-                           sample_rate: 22_050, sample_count: 1_328_768, seek_size: 16, bit_rate_bps: 16,
-                           seek_entries: 8192, data_length_bytes: 974_218, duration_seconds: 60.262)
+          flags: { wac: 8, triggered: 0, gps: 0, tag: 0 },
+          sample_rate: 22_050, sample_count: 1_328_768, seek_size: 16, bit_rate_bps: 16,
+          seek_entries: 8192, data_length_bytes: 974_218, duration_seconds: 60.262)
       end
     end
 

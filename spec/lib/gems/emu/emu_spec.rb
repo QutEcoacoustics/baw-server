@@ -248,4 +248,16 @@ describe Emu do
       records: an_instance_of(Array)
     )
   end
+
+  it 'can handle files with bash expansion characters' do
+    file = temp_file(basename: 'weird $PATH [*]file.flac')
+    file.make_symlink(Fixtures.audio_file_mono)
+    actual = Emu::Metadata.extract(file)
+
+    expect(actual).to be_an_instance_of(Emu::ExecuteResult).and having_attributes(
+      success: true,
+      log: a_string_including("\n"),
+      records: an_instance_of(Array).and(include(a_hash_including('path' => file.to_s)))
+    )
+  end
 end

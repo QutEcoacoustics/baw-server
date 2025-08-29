@@ -70,7 +70,7 @@ module BawAudioTools
       raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       # wac file is read from stdin, wav file is written to stdout
-      "#{@wac2wav_executable} < \"#{source}\" > \"#{target}\""
+      "#{@wac2wav_executable} < '#{source}' > '#{target}'"
     end
   end
 end
