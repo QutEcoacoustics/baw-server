@@ -107,14 +107,15 @@ FactoryBot.define do
 
     trait :with_date_range do
       transient do
-        start_date { '2025-01-01 T00:00:00Z' }
+        start_date { Time.parse('2025-01-01 T00:00:00Z') }
       end
 
       # start from 0; start_date inclusive
       sequence :recorded_date, 0 do |n|
-        (DateTime.parse(start_date) + n.days).to_s
+        (start_date + n.days).to_s
       end
     end
+
     factory :audio_recording_with_audio_events_and_bookmarks,
       traits: [:with_audio_events, :with_bookmarks, :status_ready]
     factory :audio_recording_with_date_range,

@@ -16,9 +16,6 @@ module Report
   module TimeSeries
     module_function
 
-    extend Report::ArelHelpers
-    include Report::ArelHelpers
-
     # A hash mapping of valid bucket size strings (keys) for reporting
     #   and their corresponding PostgreSQL interval strings (values).
     BUCKET_ENUM = {

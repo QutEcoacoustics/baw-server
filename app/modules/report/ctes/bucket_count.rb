@@ -4,7 +4,9 @@ module Report
   module Ctes
     class BucketCount < Report::Cte::Node
       extend Report::TimeSeries
+
       include Cte::Dsl
+      include Report::ValidateOptions
 
       table_name :bucket_count
 
@@ -22,10 +24,14 @@ module Report
         }
       end
 
-      select do
-        calculator = interval_calculators[options[:interval]] || interval_calculators['default']
+      validate_with Report::IntervalContract
 
+      select do
+        # at this stage, the 'interval' field is already a projected field on the dependency table TsRangeAndInterval,
+        # but we can just check the options field again to select the appropriate calculation method
+        calculator = interval_calculators[options[:interval]] || interval_calculators['default']
         bucket_count_expr = calculator.call(ts_range)
+
         ts_range.project(
           ts_range[:time_range],
           ts_range[:bucket_interval],
@@ -33,6 +39,10 @@ module Report
         )
       end
 
+      # the point of this step is to calculate the minimum number of buckets that cover the report time range in the
+      # default case, such as daily or weekly buckets, it's a simple division of the time range duration by the bucket
+      # interval duration. but for 'month' and 'year' intervals, the default calculation is not accurate because months
+      # and years have variable lengths. so we need special calculations for those cases.
       def self.interval_calculators
         # don't let the cop add a space before the division operator
         # rubocop:disable Layout/SpaceAroundOperators

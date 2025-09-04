@@ -22,17 +22,22 @@ module Report
     # uninstantiated dependencies when it is resolved.
     class Node
       extend Report::Cte::Dsl
+
+      attr_accessor :name, :select_block, :suffix, :validation_contract
       attr_reader :options, :initial_dependencies
-      attr_accessor :name, :select_block, :suffix
+
+      class << self
+        attr_accessor :_suffix, :_testing
+      end
 
       # Initializes a new Cte node.
       #
       # @param name [Symbol] The name of the node.
-      # @param dependencies [Array<Node|Class>] The Cte nodes this node depends on.
-      # @param suffix [Symbol, nil] An optional suffix to append to the node name.
+      # @param dependencies [Hash{Symbol=>Node, Class>}] Hash where key is the name to use for a dependency node or template that this node depends on.
       # @param select [Arel::SelectManager, Arel::Nodes::SqlLiteral, nil] An Arel select statement.
-      # @param options [Hash] A hash of options to be used by the select block.
-      # @param block [Proc] A block that generates the select statement.
+      # @param suffix [Symbol, nil] An optional suffix to append to the node name.
+      # @param options [Hash] A hash of options to be used by the select block or propogated to uninitialized dependencies.
+      # @param block [Proc] A block that generates the select statement. Used if 'select' is not provided
       def initialize(name,
                      dependencies: {},
                      suffix: nil,
@@ -40,11 +45,18 @@ module Report
                      select: nil,
                      &block)
         @name = suffix ? :"#{name}_#{suffix}" : name.to_sym
+        # if self.class.respond_to?(:_suffix) && self.class._suffix
+        #   @suffix = self.class._suffix
+        # else
+        #   @suffix = suffix
+        # end
+
         @initial_dependencies = default_dependencies(Hash(dependencies))
         @suffix = suffix
         @select_block = block || validate_select(select)
-
         @options = default_options.merge(options)
+
+        validate_options
       end
 
       # Default options for the node. Subclasses can define this to set their
@@ -53,6 +65,8 @@ module Report
       def default_options
         {}
       end
+
+      def validate_options(options); end
 
       def default_dependencies(dependencies)
         # The dependency arguement allows overriding the default dependencies
@@ -81,12 +95,10 @@ module Report
       # @return [Arel::SelectManager]
       def select_manager
         case select
-        when Arel::SelectManager
+        when Arel::SelectManager, Arel::Nodes::UnionAll
           select
         when Arel::Nodes::SqlLiteral
           Arel::SelectManager.new.project(select)
-        when Arel::Nodes::UnionAll
-          select
         else
           raise ArgumentError, "Unsupported select type: #{select.class.name} for node: #{name}"
         end
@@ -193,6 +205,7 @@ module Report
         ActiveRecord::Base.connection.execute(to_sql(registry))
       end
 
+      # the default inspect gets unruly with the recursive structure
       def inspect
         "#<#{self.class.name} #{attributes_for_inspect.map { |key, value| "@#{key}=#{value.inspect}" }.join(', ')}>"
       end

@@ -3,6 +3,7 @@
 module Report
   module Ctes
     # This is the root CTE for the tag accumulation aggregated result
+    # @see Report::Ctes::BucketCumulativeUnique
     class AggTagAccumulation < Report::Cte::Node
       include Cte::Dsl
 
