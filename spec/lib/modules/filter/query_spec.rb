@@ -535,28 +535,26 @@ describe Filter::Query do
       compare_filter_sql(request_body_obj, complex_result)
     end
 
-    #     it 'using include_aggregate and group_by' do
-    #       request_body_obj = {
-    #           projection: {
-    #               include_aggregate: {
-    #                   recorded_date: {
-    #                       extract: :month
-    #                   },
-    #                   site_id: :sum,
-    #                   status: nil,
-    #               },
-    #               group_by: [:status]
-    #           }
-    #       }
-    #       complex_result =
-    #           "SELECT \
-    # EXTRACT (month,"audio_recordings"."recorded_date"), \
-    # sum("audio_recordings"."site_id"), \
-    #           "audio_recordings"."site_id" \
-    # FROM"audio_recordings" \
-    # GROUPBY"audio_recordings"."status""
-    #       compare_filter_sql(request_body_obj, complex_result)
-    #     end
+    it 'works with our new syntax' do
+      body = {
+        projection: {
+          only: [:id, :site_id, :media_type],
+          add: [:duration_seconds],
+          # not an error to remove non-included field
+          remove: [:media_type, :created_date]
+        }
+      }
+
+      complex_result = <<~SQL.squish
+        SELECT  "audio_recordings"."id", "audio_recordings"."site_id", "audio_recordings"."duration_seconds"
+        FROM "audio_recordings"
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."status" = 'ready')
+        ORDER BY "audio_recordings"."recorded_date" DESC
+        LIMIT 25 OFFSET 0
+      SQL
+      compare_filter_sql(body, complex_result)
+    end
   end
 
   context 'complex query' do

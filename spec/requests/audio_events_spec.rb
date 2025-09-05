@@ -487,6 +487,44 @@ describe '/audio_events' do
         )
       ]
     end
+
+    it 'can project verification ids and a summary' do
+      v1 = create(:verification, :correct, creator: reader_user, audio_event: isolated_audio_event, tag:)
+      v2 = create(:verification, :incorrect, creator: admin_user, audio_event: isolated_audio_event, tag:)
+
+      body = {
+        filter: {
+          id: { eq: isolated_audio_event.id }
+        },
+        projection: {
+          add: ['verification_summary', 'verification_ids']
+        },
+        sorting: {
+          order_by: 'id',
+          direction: 'asc'
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(
+          start_time_seconds: isolated_audio_event.start_time_seconds,
+          end_time_seconds: isolated_audio_event.end_time_seconds,
+          verification_ids: [v1.id, v2.id],
+          verification_summary: [a_hash_including(
+            tag_id: tag.id,
+            count: 2,
+            correct: 1,
+            incorrect: 1,
+            skip: 0,
+            unsure: 0
+          )]
+        )
+      ]
+    end
   end
 
   context('with reference events') do

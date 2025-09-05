@@ -128,6 +128,71 @@ class AudioEvent < ApplicationRecord
     )
   end
 
+  # Get the associated taggings as an array of json objects
+  # @return [Arel::SelectManager]
+  def self.associated_taggings_arel
+    taggings = Tagging.arel_table
+    inner_table = Arel::Table.new(:taggings_inner)
+
+    inner = taggings
+      .project(taggings[:id], taggings[:audio_event_id], taggings[:tag_id], taggings[:created_at], taggings[:updated_at], taggings[:creator_id], taggings[:updater_id])
+      .where(taggings[:audio_event_id].eq(arel_table[:id]))
+      .ast
+
+    Arel::SelectManager
+      .new(Arel.grouping(inner)
+      .as(inner_table.name))
+      .project(Arel.sql(inner_table.name).row_to_json.json_agg)
+      .ast => outer
+
+    Arel.grouping(outer)
+  end
+
+  def self.associated_verification_ids_arel
+    verifications = Verification.arel_table
+    inner_table = Arel::Table.new(:verifications_inner)
+
+    inner = verifications
+      .project(verifications[:id])
+      .where(verifications[:audio_event_id].eq(arel_table[:id]))
+      .ast
+
+    Arel::SelectManager
+      .new(Arel.grouping(inner)
+      .as(inner_table.name))
+      .project(Arel.sql(inner_table.name).array_agg)
+      .ast => outer
+
+    Arel.grouping(outer)
+  end
+
+  def self.verification_summary_arel
+    verifications = Verification.arel_table
+    inner_table = Arel::Table.new(:verifications_inner)
+
+    confirmation_columns = Verification::CONFIRMATION_ENUM.values.map { |value|
+      verifications[:confirmed].count.filter(verifications[:confirmed].eq(value)).as(value)
+    }
+
+    inner = verifications
+      .project(
+        verifications[:tag_id],
+        verifications[Arel.star].count.as('count'),
+        *confirmation_columns
+      )
+      .where(verifications[:audio_event_id].eq(arel_table[:id]))
+      .group(verifications[:tag_id])
+      .ast
+
+    Arel::SelectManager
+      .new(Arel.grouping(inner)
+      .as(inner_table.name))
+      .project(Arel.sql(inner_table.name).row_to_json.json_agg)
+      .ast => outer
+
+    Arel.grouping(outer)
+  end
+
   # Allows this model to infer its timezone when included with larger queries
   # constructed by filter args.
   def self.with_timezone
@@ -148,26 +213,18 @@ class AudioEvent < ApplicationRecord
                      :created_at, :creator_id, :updated_at,
                      :duration_seconds,
                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score,
-                     :start_date, :end_date],
+                     :start_date, :end_date,
+                     # this one is rendered by default for back compatibility
+                     :taggings,
+                     # these two are intentionally not rendered by default
+                     :verification_ids, :verification_summary],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
                       :is_reference,
                       :creator_id, :updated_at, :created_at,
-                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score],
-      custom_fields: lambda { |item, _user|
-                       # do a query for the attributes that may not be in the projection
-                       fresh_audio_event = AudioEvent.find(item.id)
-
-                       audio_event_hash = {}
-
-                       audio_event_hash[:taggings] =
-                         Tagging
-                           .where(audio_event_id: fresh_audio_event.id)
-                           .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
-
-                       [item, audio_event_hash]
-                     },
+                      :audio_event_import_file_id, :import_file_index, :provenance_id, :channel, :score,
+                      :taggings],
       custom_fields2: {
         duration_seconds: {
           query_attributes: [],
@@ -186,6 +243,24 @@ class AudioEvent < ApplicationRecord
           transform: nil,
           arel: AudioEvent.end_date_arel,
           type: :datetime
+        },
+        taggings: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.associated_taggings_arel,
+          type: :array
+        },
+        verification_ids: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.associated_verification_ids_arel,
+          type: :array
+        },
+        verification_summary: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.verification_summary_arel,
+          type: :array
         }
       },
       new_spec_fields: lambda { |_user|
@@ -310,6 +385,27 @@ class AudioEvent < ApplicationRecord
               **Api::Schema.updater_and_creator_user_stamps
             }
           }
+        },
+        verification_ids: {
+          type: 'array',
+          items: {
+            type: Api::Schema.id(read_only: true)
+          }
+        },
+        verification_summary: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tag_id: Api::Schema.id,
+              count: { type: 'integer' },
+              confirmed: { type: 'integer' },
+              unconfirmed: { type: 'integer' },
+              unsure: { type: 'integer' },
+              skipped: { type: 'integer' }
+            }
+          },
+          readOnly: true
         },
         audio_event_import_file_id: Api::Schema.id(nullable: true, read_only: true),
         import_file_index: { type: ['null', 'integer'], readOnly: true },

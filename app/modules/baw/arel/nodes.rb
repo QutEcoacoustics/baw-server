@@ -28,11 +28,13 @@ module Baw
 
       class DoUpdateSetValues < OnConflictAction
         include Comparable
+
         attr_accessor :values, :where
       end
 
       class DoUpdateSetExpression < OnConflictAction
         include Comparable
+
         attr_accessor :expression
       end
 
@@ -92,6 +94,24 @@ module Baw
       class Unnest < ::Arel::Nodes::NamedFunction
         def initialize(expr)
           super('unnest', expr)
+        end
+      end
+
+      class ToJson < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('to_json', expr)
+        end
+      end
+
+      class JsonAgg < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('json_agg', expr)
+        end
+      end
+
+      class RowToJson < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('row_to_json', expr)
         end
       end
 

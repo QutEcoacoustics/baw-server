@@ -150,6 +150,108 @@ describe AudioEvent do
     end
   end
 
+  context 'with associated_taggings_arel' do
+    create_audio_recordings_hierarchy
+
+    let!(:audio_event) { create(:audio_event, :with_tags, audio_recording:) }
+
+    it 'returns taggings as an array of hashes' do
+      result = AudioEvent.select(:id, AudioEvent.associated_taggings_arel.as('taggings')).sole
+
+      tagging = audio_event.taggings.sole.as_json
+
+      expect(result.as_json).to match(
+        a_hash_including(
+          'id' => audio_event.id,
+          'taggings' => a_kind_of(Array) & contain_exactly(
+            a_hash_including(
+              'id' => tagging['id'],
+              'audio_event_id' => audio_event.id,
+              'tag_id' => tagging['tag_id'],
+              'created_at' => tagging['created_at'],
+              'updated_at' => tagging['updated_at'],
+              'creator_id' => tagging['creator_id'],
+              'updater_id' => tagging['updater_id']
+            )
+          )
+        )
+      )
+    end
+  end
+
+  context 'with associated_verification_ids_arel' do
+    create_audio_recordings_hierarchy
+
+    let!(:audio_event) { create(:audio_event, :with_tags, audio_recording:) }
+
+    before do
+      create(:verification, audio_event:, tag: audio_event.tags.first, creator: audio_event.creator)
+    end
+
+    it 'returns verifications as an array of ids' do
+      result = AudioEvent.select(:id, AudioEvent.associated_verification_ids_arel.as('verification_ids')).sole
+
+      verification_ids = [audio_event.verifications.sole.id]
+
+      expect(result.as_json).to match(
+        a_hash_including(
+          'id' => audio_event.id,
+          'verification_ids' => verification_ids
+        )
+      )
+    end
+  end
+
+  context 'with verification_summary_arel' do
+    create_audio_recordings_hierarchy
+
+    let!(:audio_event) { create(:audio_event, :with_tags, audio_recording:) }
+    let(:tag) { audio_event.tags.first }
+    let(:tag2) { create(:tag, creator: audio_event.creator) }
+
+    before do
+      [
+        [writer_user, tag, :correct],
+        [reader_user, tag, :incorrect],
+        [owner_user, tag, :skip],
+        [harvester_user, tag, :unsure],
+        [admin_user, tag, :correct],
+        [writer_user, tag2, :correct],
+        [admin_user, tag2, :correct]
+      ].each do |creator, tag, confirmed|
+        create(:verification, audio_event:, tag:, creator:, confirmed:)
+      end
+    end
+
+    it 'returns verifications as an array of hashes' do
+      result = AudioEvent.select(:id, AudioEvent.verification_summary_arel.as('verification_summary')).sole
+
+      expect(result.as_json).to match(
+        a_hash_including(
+          'id' => audio_event.id,
+          'verification_summary' => [
+            {
+              'tag_id' => tag.id,
+              'count' => 5,
+              'correct' => 2,
+              'incorrect' => 1,
+              'skip' => 1,
+              'unsure' => 1
+            },
+            {
+              'tag_id' => tag2.id,
+              'count' => 2,
+              'correct' => 2,
+              'incorrect' => 0,
+              'skip' => 0,
+              'unsure' => 0
+            }
+          ]
+        )
+      )
+    end
+  end
+
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
     query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
     sql = <<~SQL.squish

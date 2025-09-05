@@ -50,6 +50,19 @@ module Baw
       def seconds
         Nodes::MakeInterval.new(seconds: self)
       end
+
+      # to_json conflicts with Ruby's to_json method
+      def pg_to_json
+        Baw::Arel::Nodes::ToJson.new([self])
+      end
+
+      def json_agg
+        Baw::Arel::Nodes::JsonAgg.new([self])
+      end
+
+      def row_to_json
+        Baw::Arel::Nodes::RowToJson.new([self])
+      end
     end
 
     module ArrayFunctions

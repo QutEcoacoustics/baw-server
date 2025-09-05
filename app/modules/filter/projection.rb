@@ -209,8 +209,8 @@ module Filter
       if has_new_keys
         {
           only: projection.fetch(:only, render_fields),
-          add: projection.fetch(:include, []),
-          remove: projection.fetch(:exclude, [])
+          add: projection.fetch(:add, []),
+          remove: projection.fetch(:remove, [])
         }
       else
         # we already validated we only have one key

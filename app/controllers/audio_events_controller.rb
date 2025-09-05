@@ -5,6 +5,13 @@ class AudioEventsController < ApplicationController
 
   skip_authorization_check only: [:show]
 
+  def should_skip_bullet?
+    # Bullet raises a  false positive here... our custom fields load an attribute from the database, but if attribute
+    # has the same name as the association, bullet gets confused and thinks we should have eager loaded the association
+    # TODO: fix, it's probably bad practice to load custom fields that can clash with active record attributes
+    action_sym == :filter
+  end
+
   # GET /audio_recordings/:audio_recording_id/audio_events
   def index
     do_authorize_class

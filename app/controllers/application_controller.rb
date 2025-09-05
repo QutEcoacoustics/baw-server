@@ -21,6 +21,8 @@ class ApplicationController < ActionController::Base
   # CanCan - always check authorization
   check_authorization if: :should_check_authorization?
 
+  around_action :skip_bullet, if: -> { defined?(Bullet) && Bullet.enable? && should_skip_bullet? }
+
   layout :select_layout
 
   def default_url_options
@@ -77,5 +79,19 @@ class ApplicationController < ActionController::Base
     return false if devise_controller?
 
     true
+  end
+
+  def should_skip_bullet?
+    false
+  end
+
+  private
+
+  def skip_bullet
+    previous_value = Bullet.enable?
+    Bullet.enable = false
+    yield
+  ensure
+    Bullet.enable = previous_value
   end
 end

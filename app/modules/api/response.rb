@@ -98,9 +98,7 @@ module Api
 
       # project using filter projection or default fields
       effective_projection = opts[:projected_fields]
-      unless effective_projection.is_a?(Set)
-        raise 'effective_projection must be an Set'
-      end
+      raise 'effective_projection must be an Set' unless effective_projection.is_a?(Set)
 
       (effective_projection +
        # backwards compatible hack: custom fields always used to be included,
