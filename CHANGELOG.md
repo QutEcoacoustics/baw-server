@@ -1,16 +1,29 @@
 # Changelog
 
+## [13.8.4](https://github.com/QutEcoacoustics/baw-server/tree/13.8.4) (2025-09-05)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.8.1...13.8.4)
+
+**Fixed bugs:**
+
+- New projection syntax doesn't actually work for `add` and `remove` [\#836](https://github.com/QutEcoacoustics/baw-server/issues/836)
+- Audio events without region fail `projects.id` association filter [\#833](https://github.com/QutEcoacoustics/baw-server/issues/833)
+
+**Closed issues:**
+
+- audio\_event models should contain associated verifications [\#721](https://github.com/QutEcoacoustics/baw-server/issues/721)
+
 ## [13.8.1](https://github.com/QutEcoacoustics/baw-server/tree/13.8.1) (2025-08-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.7.2...13.8.1)
 
+**Implemented enhancements:**
+
+- add audio\_event\_file\_import\_id to annotation download csv [\#826](https://github.com/QutEcoacoustics/baw-server/issues/826)
+
 **Fixed bugs:**
 
 - Need to single quote paths to files used by audio tools. [\#825](https://github.com/QutEcoacoustics/baw-server/issues/825)
-
-**Closed issues:**
-
-- add audio\_event\_file\_import\_id to annotation download csv [\#826](https://github.com/QutEcoacoustics/baw-server/issues/826)
 
 **Merged pull requests:**
 

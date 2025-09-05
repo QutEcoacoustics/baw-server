@@ -165,6 +165,7 @@ paths:
                     - provenance_id
                     - channel
                     - score
+                    - taggings
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -196,10 +197,10 @@ paths:
                   - id: 1
                     audio_event_id: 1
                     tag_id: 1
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 4
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1045,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-08-29T05:07:53.473Z'
+                  created_at: '2025-09-05T06:16:58.237Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -2015,7 +2016,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.7.2 from http://web:3000.
+                  Version 13.8.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2055,7 +2056,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.7.2"
+                Write-Information "Acoustic Workbench downloader script version 13.8.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2237,7 +2238,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.7.2 from http://web:3000.
+                  Version 13.8.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2277,7 +2278,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.7.2"
+                Write-Information "Acoustic Workbench downloader script version 13.8.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -4317,10 +4318,10 @@ paths:
                   - id: 60
                     audio_event_id: 60
                     tag_id: 60
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 370
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4382,10 +4383,10 @@ paths:
                   - id: 61
                     audio_event_id: 61
                     tag_id: 61
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 374
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4452,10 +4453,10 @@ paths:
                   - id: 62
                     audio_event_id: 62
                     tag_id: 62
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 383
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4579,6 +4580,7 @@ paths:
                     - provenance_id
                     - channel
                     - score
+                    - taggings
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -4610,10 +4612,10 @@ paths:
                   - id: 65
                     audio_event_id: 65
                     tag_id: 65
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 400
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -4669,6 +4671,7 @@ paths:
                     - provenance_id
                     - channel
                     - score
+                    - taggings
                   sorting:
                     order_by: created_at
                     direction: desc
@@ -4700,10 +4703,10 @@ paths:
                   - id: 66
                     audio_event_id: 66
                     tag_id: 66
-                    created_at: '2020-01-02T03:04:05.677Z'
-                    updated_at: '2020-01-02T03:04:05.677Z'
                     creator_id: 404
                     updater_id: 
+                    created_at: '2020-01-02T03:04:05.677Z'
+                    updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -5293,7 +5296,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: YKJAlldg1g5Ujc9TmvofBb4Hymw-UZlOSUJGi2J1FNc
+                  auth_token: C7_2ftttxIUkOKzu-xLPnjVJe5xxvVsmRb7xTQyyNIY
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5349,7 +5352,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: WNM4BgwdewPPm_xgzEkj2p6k-CGo1ITv5NSlsRQ_vDc
+                  auth_token: XPuQjdrjVBiSQu_8i502tD_E-EqNjtlFihI28iQz12o
                   user_name: Admin
                   user_id: 1
               schema:
@@ -13693,6 +13696,31 @@ components:
                 - string
                 format: date-time
                 readOnly: true
+        verification_ids:
+          type: array
+          items:
+            type:
+              "$ref": "#/components/schemas/id"
+              readOnly: true
+        verification_summary:
+          type: array
+          items:
+            type: object
+            properties:
+              tag_id:
+                "$ref": "#/components/schemas/id"
+                readOnly: true
+              count:
+                type: integer
+              confirmed:
+                type: integer
+              unconfirmed:
+                type: integer
+              unsure:
+                type: integer
+              skipped:
+                type: integer
+          readOnly: true
         audio_event_import_file_id:
           "$ref": "#/components/schemas/nullableId"
           readOnly: true
