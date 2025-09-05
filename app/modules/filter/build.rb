@@ -597,17 +597,17 @@ module Filter
     # @param [Array<Hash>] joins
     # @return [Array<Hash>, Boolean] joins, match
     def build_joins(model, associations, joins = [])
-      associations.each do |analysis_job|
-        model_join = analysis_job[:join]
-        model_on = analysis_job[:on]
+      associations.each do |association|
+        model_join = association[:join]
+        model_on = association[:on]
 
         join = { join: model_join, on: model_on }
 
         return [[join], true] if model == model_join
 
-        next unless analysis_job.include?(:associations)
+        next unless association.include?(:associations)
 
-        assoc = analysis_job[:associations]
+        assoc = association[:associations]
         assoc_joins, match = build_joins(model, assoc, joins + [join])
 
         return [[join] + assoc_joins, true] if match
