@@ -217,4 +217,52 @@ describe 'HarvestJob can deal with overlaps in harvest', :clean_by_truncation do
       expect(AudioRecording.count).to eq 0
     end
   end
+
+  # https://github.com/QutEcoacoustics/baw-server/issues/840
+  it 'works with start and end times' do
+    harvest.mappings = [
+      BawWorkers::Jobs::Harvest::Mapping.new(
+        path: 'D2_5227',
+        site_id: site.id,
+        utc_offset: nil,
+        recursive: true
+      )
+    ]
+    harvest.save!
+
+    # obfuscated location because this was generated from a real user
+    location = '-12.34567+123.45678'
+    a_name = "S20250723T195959.667155+1000_E20250723T205954.622398+1000_#{location}.wav"
+    b_name = "S20250723T205959.346019+1000_E20250723T215954.301326+1000_#{location}.wav"
+
+    temp_a = generate_audio(a_name, sine_frequency: 440, sample_rate: 44_100, duration: 3594.82)
+    temp_b = generate_audio(b_name, sine_frequency: 880, sample_rate: 44_100, duration: 3594.82)
+
+    a_paths = copy_fixture_to_harvest_directory(temp_a, harvest,
+      sub_directories: ['D2_5227', 'D2_00050917', "D2_20250723_SCHED [#{location}]"])
+    b_paths = copy_fixture_to_harvest_directory(temp_b, harvest,
+      sub_directories: ['D2_5227', 'D2_00050917', "D2_20250723_SCHED [#{location}]"])
+
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, a_paths.harvester_relative_path, should_harvest: true)
+    BawWorkers::Jobs::Harvest::HarvestJob.enqueue_file(harvest, b_paths.harvester_relative_path, should_harvest: true)
+
+    perform_jobs(count: 2)
+    expect_jobs_to_be completed: 2, of_class: BawWorkers::Jobs::Harvest::HarvestJob
+
+    aggregate_failures do
+      expect(HarvestItem.count).to eq 2
+      item1, item2 = HarvestItem.order(:id)
+      expect(item1).to be_completed
+      expect(item2).to be_completed
+
+      expect(item1.info.error).to be_nil
+      expect(item2.info.error).to be_nil
+
+      expect(item1.info.to_h[:validations]).to match []
+      expect(item2.info.to_h[:validations]).to match []
+
+      # both recordings were added without failure
+      expect(AudioRecording.count).to eq 2
+    end
+  end
 end
