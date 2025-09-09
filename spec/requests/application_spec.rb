@@ -27,6 +27,41 @@ describe 'Common behaviour' do
     expect(response.headers).not_to have_key('X-Error-Message')
   end
 
+  # https://github.com/QutEcoacoustics/baw-server/issues/841
+  describe 'routing errors, with exception_notifier grouping' do
+    around do |example|
+      ExceptionNotifier.error_grouping = true
+      example.run
+    ensure
+      ExceptionNotifier.error_grouping = false
+    end
+
+    let(:url) { 'https://api.staging.ecosounds.org/audio_recordings/704106/media?start_offset=567&end_offset=570' }
+
+    it 'can handle a routing error (GET)' do
+      headers = {
+        'Accept' => '*/*'
+      }
+      get(url, params: nil, headers:)
+
+      expect(response).to have_http_status(:not_found)
+      expect(api_result['meta']['error']['details']).to eq('Could not find the requested page.')
+    end
+
+    it 'can handle a routing error (HEAD)' do
+      headers = {
+        'Accept' => '*/*'
+      }
+
+      # this used to trigger a 500 before the patch to handle nil errors in render_error
+      head(url, params: nil, headers:)
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.headers).to have_key('X-Error-Type')
+      expect(response.headers).to have_key('X-Error-Message')
+    end
+  end
+
   it 'can handle malformed post requests' do
     # a json value encoded in a string (malformed)
     body = "{\r\n  \"password\": \"password\",\r\n  \"email\": \"SladeAA\"\r\n}"
