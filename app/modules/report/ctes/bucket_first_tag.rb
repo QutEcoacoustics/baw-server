@@ -4,12 +4,11 @@ module Report
   module Ctes
     # To get an accumulated count of unique tags, we first need to know where
     # the tag is first seem (at which bucket).
-    class BucketFirstTag < Report::Cte::Node
-      include Cte::Dsl
+    class BucketFirstTag < Report::Cte::NodeTemplate
 
       table_name :bucket_first_tag
 
-      depends_on bucket_allocate: Report::Ctes::BucketAllocate
+      depdendencies bucket_allocate: Report::Ctes::BucketAllocate
 
       select do
         window = Arel::Nodes::Window.new.partition(bucket_allocate[:tag_id]).order(bucket_allocate[:bucket])

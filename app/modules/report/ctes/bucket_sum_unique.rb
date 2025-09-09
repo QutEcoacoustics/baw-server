@@ -2,12 +2,11 @@
 
 module Report
   module Ctes
-    class BucketSumUnique < Report::Cte::Node
-      include Cte::Dsl
+    class BucketSumUnique < Report::Cte::NodeTemplate
 
       table_name :bucket_sum_unique
 
-      depends_on first_tag: Report::Ctes::BucketFirstTag
+      depdendencies first_tag: Report::Ctes::BucketFirstTag
 
       select do
         first_tag.project(

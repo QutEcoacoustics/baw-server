@@ -1,178 +1,62 @@
 # frozen_string_literal: true
 
 module Report
-  # Everthing is a Cte node
   module Cte
-    # Represent a Cte node in a dependency graph.
-    #
-    # This class should be subclassed to define templates for Cte nodes. See # `Cte::Dsl`.
-    #
-    # The idea is to lazily resolve attributes only when needed, including
-    # dependencies and the select block, and memoizing the results to improve
-    # performance. The class supports dependency injection via a registry,
-    # options propagation for customizing behavior, and flexible select logic
-    # via blocks.
-    #
-    # The registry and lazy graph resolution mean that Ctes in dependency
-    # hierarchies can be automatically shared and re-used across queries. If you
-    # need to reuse a query (a Cte + all its dependencies), but with different
-    # logic applied (e.g. injecting a different set of options, or a different
-    # select block), a node can be instantiated with a suffix. The suffix is
-    # applied to the table name, and will propagate the suffix to all
-    # uninstantiated dependencies when it is resolved.
     class Node
-      extend Report::Cte::Dsl
+      attr_reader :name, :options
 
-      attr_accessor :name, :select_block, :suffix, :validation_contract
-      attr_reader :options, :initial_dependencies
+      def initialize(name, suffix: nil, select: nil, dependencies: {}, options: {}, &block)
+        assert_proc_given(select || block)
 
-      class << self
-        attr_accessor :_suffix, :_testing
+        @name = TableName.new(name, suffix)
+        @options = options
+
+        @select_proc = select || block
+        @evaluate_select_proc = NodeEvaluator.new
+
+        @passed_depedencies = dependencies
+        @dependency_initialiser = Dependencies::Initialiser.new(cascade_attributes: cascade_attributes.call)
+        @resolve_graph = Dependencies::TopologicalSort.new
       end
 
-      # Initializes a new Cte node.
-      #
-      # @param name [Symbol] The name of the node.
-      # @param dependencies [Hash{Symbol=>Node, Class>}] Hash where key is the name to use for a dependency node or template that this node depends on.
-      # @param select [Arel::SelectManager, Arel::Nodes::SqlLiteral, nil] An Arel select statement.
-      # @param suffix [Symbol, nil] An optional suffix to append to the node name.
-      # @param options [Hash] A hash of options to be used by the select block or propogated to uninitialized dependencies.
-      # @param block [Proc] A block that generates the select statement. Used if 'select' is not provided
-      def initialize(name,
-                     dependencies: {},
-                     suffix: nil,
-                     options: {},
-                     select: nil,
-                     &block)
-        @name = suffix ? :"#{name}_#{suffix}" : name.to_sym
-        # if self.class.respond_to?(:_suffix) && self.class._suffix
-        #   @suffix = self.class._suffix
-        # else
-        #   @suffix = suffix
-        # end
+      def assert_proc_given(proc_given)
+        return if proc_given
 
-        @initial_dependencies = default_dependencies(Hash(dependencies))
-        @suffix = suffix
-        @select_block = block || validate_select(select)
-        @options = default_options.merge(options)
-
-        validate_options
+        raise ArgumentError, 'Select or a block is required to initialize a Node'
       end
 
-      # Default options for the node. Subclasses can define this to set their
-      # own defaults.
-      # @return [Hash]
-      def default_options
-        {}
+      def cascade_attributes = -> { { suffix: name.suffix, options: options } }
+
+      def arel_table = @arel_table ||= Arel::Table.new(@name.table_name)
+
+      def arel_node = @arel_node ||= arel_select.as(@name.table_name)
+
+      def arel_select
+        @arel_select ||= @evaluate_select_proc.using(method_definitions).evaluate(@select_block)
       end
 
-      def validate_options(options); end
-
-      def default_dependencies(dependencies)
-        # The dependency arguement allows overriding the default dependencies
-        # defined in the template class. Merging the dependency argument
-        # into any templated dependencies allows for partial overrides.
-        self.class.respond_to?(:_depends_on) ? self.class._depends_on.merge(dependencies) : dependencies
+      def method_definitions
+        dependencies
+          .transform_values(&:arel_table)
+          .merge(options: options)
+          .merge(name: @name.table_name)
       end
 
-      # Return an Arel::Table for the Cte
-      # We memoize the table to avoid redundant creation and ensure consistency.
-      # @return [Arel::Table]
-      def table
-        @table ||= Arel::Table.new(@name)
-      end
-
-      # Create the Arel node representing the Cte
-      # @return [Arel::Nodes::As]
-      # ! actually returns Arel::Nodes::TableAlias. Does it ever return nodes as?
-      # Does it matter? can they be used interchangably? their left and right are different
-      # Table alias seems more flexible since you can use it as a subquery in from
-      def node
-        @node ||= select_manager.as(table.name)
-      end
-
-      # Returns `select` as an Arel::SelectManager.
-      # @return [Arel::SelectManager]
-      def select_manager
-        case select
-        when Arel::SelectManager, Arel::Nodes::UnionAll
-          select
-        when Arel::Nodes::SqlLiteral
-          Arel::SelectManager.new.project(select)
-        else
-          raise ArgumentError, "Unsupported select type: #{select.class.name} for node: #{name}"
-        end
-      end
-
-      # Resolve the dependency nodes and memoize the result. Instantiates them
-      # if they are classes, propagating options and suffix.
-      #
-      # @return [Array<Node>]
       def dependencies
-        @dependencies ||= @initial_dependencies.transform_values { |dep|
-          case dep
-          in Node
-            dep
-          in Class => klass if klass <= ForceSuffix
-            klass.new(options: @options)
-          in Class => klass if klass <= Cte::Node
-            klass.new(suffix: @suffix, options: @options)
-          else
-            raise ArgumentError,
-              "Dependency must be a Node or subclass, got: #{dep.class.name} (#{dep.inspect})"
-          end
-        }
+        @dependencies ||= @dependency_initialiser.call(@passed_depedencies)
       end
 
-      # Collect all nodes in the dependency graph, including self if `root` is
-      # true (default), returning them in topological order. Supports dependency
-      # injection of nodes via a registry; nodes in the registry will be used
-      # instead of creating new instances.
-      #
-      # Note: When injecting a node, the key in the registry must match the name
-      # that a node *will have*, in the case of any suffix being applied.
-      #
-      # @param registry [Hash] Hash mapping node names to instances for injection
-      # @param root [Boolean] Whether to include the current node in the result
-      # @return [Array<Node>]
-      def collect(registry = {}, root: true)
+      def collect(registry = {})
+        without_self(resolve_graph(registry))
+      end
+
+      def resolve_graph(registry = {})
         @registry ||= registry
-        result = resolve_dependency_graph(Set.new, [], @registry)
-        result.reject! { |node| node.name == name } unless root
-        result
+        @resolve_graph.traverse(self, @registry)
       end
 
-      # Resolve the dependency graph using topological sort. The idea is to
-      # traverse dependencies in a depth-first manner, ensuring Ctes are defined
-      # before they are referenced in the SQL.
-      #
-      # The shared registry caches resolved nodes, allowing nodes to be re-used
-      # rather than re-instantiated.
-      #
-      # @param visited [Set] The set of node names already visited
-      # @param result [Array] The topologically sorted list of nodes.
-      # @param registry [Hash] The registry cache
-      # @return [Array<Node>]
-      def resolve_dependency_graph(visited = Set.new, result = [], registry = {})
-        # first use the registry to fetch an existing node with the same name.
-        # otherwise continue to resolve self.
-        node_to_resolve = registry.fetch(name, self)
-        registry[node_to_resolve.name] = node_to_resolve
-
-        return result if visited.include?(node_to_resolve.name)
-
-        visited.add(node_to_resolve.name)
-
-        # Recursively resolve dependencies of the current `node_to_resolve`.
-        # Calling #dependencies here returns the memoized array of dependencies
-        # for the node being resolved.
-        node_to_resolve.dependencies.values.each do |dep|
-          dep_instance = registry.fetch(dep.name, dep)
-          dep_instance.resolve_dependency_graph(visited, result, registry)
-        end
-
-        result << node_to_resolve unless result.include?(node_to_resolve)
-        result
+      def without_self(graph)
+        graph.reject { |node| node.name == name }
       end
 
       # Generates the Arel representation of this Cte node as a query, including
@@ -189,10 +73,7 @@ module Report
         select_expr = select_manager.dup
         return select_expr if dependencies.empty?
 
-        # Collect all dependency Cte::Node nodes (but not self, so root is
-        # false) and get their Arel::Nodes node representations.
-        dependency_arel_nodes = collect(registry, root: false).map(&:node)
-
+        dependency_arel_nodes = collect(registry).map(&:node)
         select_expr.with(dependency_arel_nodes)
       end
 
@@ -206,77 +87,25 @@ module Report
       end
 
       # the default inspect gets unruly with the recursive structure
-      def inspect
-        "#<#{self.class.name} #{attributes_for_inspect.map { |key, value| "@#{key}=#{value.inspect}" }.join(', ')}>"
+      def pretty_print(pp)
+        pp.object_group(self) do
+          pp.seplist(attributes_for_inspect) do |pair| # Loops over your specified [key, value] pairs
+            k, v = pair
+            pp.breakable ' '
+            pp.text "#{k}=" # Uses the provided key directly (e.g., :name becomes "name=")
+            pp.pp v
+          end
+        end
       end
 
       def attributes_for_inspect
         [
           [:name, name],
-          [:dependencies, initial_dependencies],
+          [:passed_dependencies, @passed_dependencies],
+          [:dependencies, @dependencies || 'nil || unevaluated'],
           [:options, options]
         ]
       end
-
-      # This isn't what I wanted. I would like a way to include a dependency
-      # Class more than once, without having to make a new subclass for it. You
-      # can achieve the same outcome by using the registry, but that would require
-      # the caller of this node to initialise and inject the dependency node with
-      # the options and suffix
-      # With the current design, just initialising the dependency node as part
-      # of this template would also not work, because when the AudioEvents report
-      # is executed, that node and it's ancestors won't be initialised with the
-      # request options.
-      def self.new_with_suffix(suffix, **options)
-        dup
-          .tap { |dup| dup._suffix = suffix }
-          .tap { |dup| dup._select_block = dup._select_block.dup }
-          .tap { |dup| dup._default_options = dup._default_options.merge(**options) }
-          .tap { |dup| dup._depends_on = dup._depends_on }
-          .include(Report::Cte::ForceSuffix)
-      end
-
-      private
-
-      def validate_select(select)
-        raise ArgumentError, 'Either a block or select must be provided' if select.nil?
-        raise ArgumentError, "Select must be a Proc, got: #{select.class.name}" unless select.is_a?(Proc)
-
-        select
-      end
-
-      # Generates the Arel select statement for this Cte by evaluating the stored
-      # block. The result is memoized.
-      # @return [Arel::SelectManager, Arel::Nodes::SqlLiteral]
-      # @raise [ArgumentError] If no block was provided
-      def select
-        @select ||= if @select_block
-                      call_block_with_dependencies
-                    else
-                      raise ArgumentError, "(node: #{@name}) requires a select block"
-                    end
-      end
-
-      # Execute the block within a context that provides access to the
-      # Arel::Tables of any dependecies, and the options hash.
-      def call_block_with_dependencies
-        resolved_deps = dependencies.transform_values(&:table)
-        Report::Cte::SelectContext.execute_with_context(
-          @name,
-          @select_block,
-          resolved_deps,
-          @options
-        )
-        # context = Report::Cte::SelectContext.new(resolved_deps, @options)
-        # context.instance_exec(&@select_block)
-      rescue StandardError => e
-        # If the block raises an error, we want to provide a clear message
-        # indicating which node and block caused the issue.
-        raise StandardError,
-          "error while calling block: #{@block} for node: #{@name}\n#{e.message}\n}"
-      end
     end
-
-    module ForceSuffix end
   end
 end

@@ -2,15 +2,14 @@
 
 module Report
   module Ctes
-    class BucketCount < Report::Cte::Node
+    class BucketCount < Report::Cte::NodeTemplate
       extend Report::TimeSeries
 
-      include Cte::Dsl
-      include Report::ValidateOptions
+      include Report::Validation
 
       table_name :bucket_count
 
-      depends_on ts_range: Report::Ctes::TsRangeAndInterval
+      depdendencies ts_range: Report::Ctes::TsRangeAndInterval
 
       # ! need to think about options patterns some more
       # ! interval is needed here explicitly but dependency ts_range also needs options. it has defaults
@@ -24,7 +23,7 @@ module Report
         }
       end
 
-      validate_with Report::IntervalContract
+      validate_with Report::Validation::Interval
 
       select do
         # at this stage, the 'interval' field is already a projected field on the dependency table TsRangeAndInterval,

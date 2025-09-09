@@ -2,8 +2,7 @@
 
 module Report
   module Ctes
-    class TsRangeAndInterval < Report::Cte::Node
-      include Cte::Dsl
+    class TsRangeAndInterval < Report::Cte::NodeTemplate
 
       table_name :time_range_and_interval
 

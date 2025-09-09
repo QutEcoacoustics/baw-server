@@ -2,12 +2,11 @@
 
 module Report
   module Ctes
-    class BucketCumulativeUnique < Report::Cte::Node
-      include Cte::Dsl
+    class BucketCumulativeUnique < Report::Cte::NodeTemplate
 
       table_name :bucket_cumulative_unique
 
-      depends_on bucket_time_series: Report::Ctes::BucketTimeSeries, sum_unique: Report::Ctes::BucketSumUnique
+      depdendencies bucket_time_series: Report::Ctes::BucketTimeSeries, sum_unique: Report::Ctes::BucketSumUnique
 
       select do
         window = Arel::Nodes::Window.new.order(bucket_time_series[:bucket_number])

@@ -5,10 +5,9 @@ module Report
     module EventSummary
       # Aggregate all results into event_summaries JSON for reporting
       # Each row is a tag/provenance summary with event and score histogram data
-      class EventSummaryJson < Report::Cte::Node
-        include Report::Cte::Dsl
+      class EventSummaryJson < Report::Cte::NodeTemplate
         table_name :event_summary_json
-        depends_on event_summary_statistics: Report::Ctes::EventSummary::EventSummaryStatistics,
+        depdendencies event_summary_statistics: Report::Ctes::EventSummary::EventSummaryStatistics,
           bin_series_scores: Report::Ctes::EventSummary::BinSeriesScores
         select do
           # NOTE: the event_summaries are tag + audio_event (tagging) centric;

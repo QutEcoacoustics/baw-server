@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Report
-  module ValidateOptions
+  module Validation
     def self.included(base)
       base.extend ClassMethods
       base.instance_variable_set(:@_validation_contract, nil)

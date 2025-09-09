@@ -8,13 +8,12 @@ module Report
     # atm tightly coupled to a base table that has start_time_absolute, tag_id
     # and score columns. decouple in the future; just requires a timestamp field on
     # the base table as input, and desired output projection fields
-    class BucketAllocate < Report::Cte::Node
+    class BucketAllocate < Report::Cte::NodeTemplate
       extend Report::TimeSeries
-      include Cte::Dsl
 
       table_name :bucket_allocate
 
-      depends_on bucket_count: Report::Ctes::BucketCount, base_table: Report::Ctes::BaseEventReport
+      depdendencies bucket_count: Report::Ctes::BucketCount, base_table: Report::Ctes::BaseEventReport
 
       select do
         width_bucket_expr = Arel::Nodes::NamedFunction.new('width_bucket', [

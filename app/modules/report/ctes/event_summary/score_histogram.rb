@@ -11,10 +11,9 @@ module Report
       # bin_series: Generate complete series of bins for each tag/provenance (CROSS JOIN)
       # bin_series_scores: Aggregate bin fractions into arrays
       # scores are binned into 50 buckets for unique tag/provenance
-      class ScoreHistogram < Report::Cte::Node
-        include Report::Cte::Dsl
+      class ScoreHistogram < Report::Cte::NodeTemplate
         table_name :score_histogram
-        depends_on base_table: Report::Ctes::BaseEventReport
+        depdendencies base_table: Report::Ctes::BaseEventReport
 
         SCORE_BINS = 50
 

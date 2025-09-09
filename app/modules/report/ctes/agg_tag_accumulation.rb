@@ -4,12 +4,11 @@ module Report
   module Ctes
     # This is the root CTE for the tag accumulation aggregated result
     # @see Report::Ctes::BucketCumulativeUnique
-    class AggTagAccumulation < Report::Cte::Node
-      include Cte::Dsl
+    class AggTagAccumulation < Report::Cte::NodeTemplate
 
       table_name :tag_accumulation
 
-      depends_on bucket_cumulative_unique: Report::Ctes::BucketCumulativeUnique
+      depdendencies bucket_cumulative_unique: Report::Ctes::BucketCumulativeUnique
 
       select do
         cumulative_table_aliased = bucket_cumulative_unique.as('t')

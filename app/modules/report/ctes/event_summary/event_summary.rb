@@ -3,12 +3,11 @@
 module Report
   module Ctes
     module EventSummary
-      class EventSummary < Report::Cte::Node
-        include Report::Cte::Dsl
+      class EventSummary < Report::Cte::NodeTemplate
 
         table_name :event_summary
 
-        depends_on event_summary_json: Report::Ctes::EventSummary::EventSummaryJson
+        depdendencies event_summary_json: Report::Ctes::EventSummary::EventSummaryJson
 
         select do
           event_summaries_aliased = event_summary_json.as('e')

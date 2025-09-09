@@ -2,12 +2,11 @@
 
 module Report
   module Ctes
-    class CompositionSeries < Report::Cte::Node
-      include Cte::Dsl
+    class CompositionSeries < Report::Cte::NodeTemplate
 
       table_name :composition_series
 
-      depends_on bucket_time_series: Report::Ctes::BucketTimeSeries,
+      depdendencies bucket_time_series: Report::Ctes::BucketTimeSeries,
         base_table: Report::Ctes::BaseEventReport,
         base_verification: Report::Ctes::BaseVerification
 

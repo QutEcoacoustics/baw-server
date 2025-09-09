@@ -4,10 +4,9 @@ module Report
   module Ctes
     module EventSummary
       # Statistics per tag/prevenance for audio events
-      class EventSummaryStatistics < Report::Cte::Node
-        include Report::Cte::Dsl
+      class EventSummaryStatistics < Report::Cte::NodeTemplate
         table_name :event_summary_statistics
-        depends_on verification_consensus: Report::Ctes::EventSummary::VerificationConsensus
+        depdendencies verification_consensus: Report::Ctes::EventSummary::VerificationConsensus
         select do
           verification_consensus.project(
             verification_consensus[:tag_id],

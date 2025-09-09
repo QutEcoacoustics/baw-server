@@ -4,10 +4,9 @@ module Report
   module Ctes
     module EventSummary
       # get the complete series of bins 1 to 50 for unique tag_id and provenance_id
-      class BinSeries < Report::Cte::Node
-        include Report::Cte::Dsl
+      class BinSeries < Report::Cte::NodeTemplate
         table_name :bin_series
-        depends_on base_table: Report::Ctes::BaseEventReport
+        depdendencies base_table: Report::Ctes::BaseEventReport
         select do
           generate_series = Report::TimeSeries.generate_series(50).as('bin_id')
           cross_join = Arel::Nodes::StringJoin.new(Arel.sql('CROSS JOIN ?', generate_series))

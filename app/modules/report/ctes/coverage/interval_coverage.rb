@@ -5,11 +5,10 @@ module Report
     module Coverage
       # Project the minimum start and maximum end time for each interval group
       # If analysis_result is true, group by result and project result field
-      class IntervalCoverage < Report::Cte::Node
-        include Report::Cte::Dsl
+      class IntervalCoverage < Report::Cte::NodeTemplate
 
         table_name :interval_coverage
-        depends_on categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
+        depdendencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
 
         select do
           fields = [

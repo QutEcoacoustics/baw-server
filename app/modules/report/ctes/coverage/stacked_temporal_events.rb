@@ -11,11 +11,10 @@ module Report
       # ci = Report::Ctes::Coverage::CoverageEvents.new(options: params)
       # cov = ci.select_manager.as('cov')
       # ActiveRecord::Base.connection.execute(Arel::SelectManager.new.project(Arel.star).from(cov).with(ci.collect(root: false).map(&:node)).to_sql)
-      class StackedTemporalEvents < Report::Cte::Node
-        include Report::Cte::Dsl
+      class StackedTemporalEvents < Report::Cte::NodeTemplate
 
         table_name :stacked_temporal_events
-        depends_on categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
+        depdendencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
 
         # stack all start and end times into a single column
         # add a column 'delta' with value 1 for start times and -1 for end times

@@ -10,10 +10,9 @@ module Report
       # and end time of a single recording, or two separate recordings.
       #
       # we want to know the duration of time covered by events within an interval
-      class EventCoverage < Report::Cte::Node
-        include Report::Cte::Dsl
+      class EventCoverage < Report::Cte::NodeTemplate
         table_name :event_coverage
-        depends_on track_event_changes: Report::Ctes::Coverage::TrackEventChanges
+        depdendencies track_event_changes: Report::Ctes::Coverage::TrackEventChanges
 
         select do
           next_event_time = Arel::Nodes::SqlLiteral.new('next_event_time')

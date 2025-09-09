@@ -8,12 +8,11 @@ module Report
     # @see Report::Ctes::BucketFirstTag
     # @see Report::Ctes::BucketTsRange
     # @see Report::Ctes::TsRangeAndInterval
-    class BaseVerification < Report::Cte::Node
-      include Cte::Dsl
+    class BaseVerification < Report::Cte::NodeTemplate
 
       table_name :base_verification
 
-      depends_on base_table: Report::Ctes::BaseEventReport
+      depdendencies base_table: Report::Ctes::BaseEventReport
 
       select do
         Arel::SelectManager.new.project(

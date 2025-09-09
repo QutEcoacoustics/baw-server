@@ -5,12 +5,11 @@ module Report
     # Time series aggregation across dimensions (time, tag_id) that
     # counts distinct audio events and verifications per group. Expect nrows
     # to be equal to the number of tags * number of buckets.
-    class EventComposition < Report::Cte::Node
-      include Cte::Dsl
+    class EventComposition < Report::Cte::NodeTemplate
 
       table_name :event_composition
 
-      depends_on composition_series: Report::Ctes::CompositionSeries
+      depdendencies composition_series: Report::Ctes::CompositionSeries
 
       select do
         composition_series_aliased = composition_series.as('c')
@@ -19,7 +18,10 @@ module Report
           .from(composition_series_aliased)
       end
 
+      # post-processing to calculate the ratio of tag count to total tags in bin
       def self.format_result(result, base_key = 'composition_series', suffix: nil)
+        # TODO: refactor. this is: construct the key needed to fetch the result
+        # ideally you wouldn't need to do this. you could call this on the instance of node and it just uses its own key?
         key = suffix ? "#{base_key}_#{suffix}" : base_key
         opts = {
           count_key: 'count',

@@ -8,12 +8,11 @@ module Report
       # previous end time is a derived column (null for the first row)
       # representing the end_time of the previous row. getting this here so it
       # can be used to classify events into groups in the next step
-      class SortTemporalEvents < Report::Cte::Node
-        include Report::Cte::Dsl
+      class SortTemporalEvents < Report::Cte::NodeTemplate
 
         table_name :sort_temporal_events
 
-        depends_on source: BaseEventReport
+        depdendencies source: BaseEventReport
 
         # lower and upper field are the attribute names of timestamp columns on
         # the `source` table dependency that will be used to calculate coverage

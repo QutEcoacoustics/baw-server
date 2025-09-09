@@ -10,10 +10,9 @@ module Report
       #   { confirmed: correct, category_count: 1 }
       #   { confirmed: incorrect, category_count: 1 }
       # ratio is the ratio of category_count to total_count, for each group
-      class VerificationCount < Report::Cte::Node
-        include Report::Cte::Dsl
+      class VerificationCount < Report::Cte::NodeTemplate
         table_name :verification_count
-        depends_on base_verification: Report::Ctes::BaseVerification
+        depdendencies base_verification: Report::Ctes::BaseVerification
         select do
           window = Arel::Nodes::Window.new.partition(
             base_verification[:tag_id],

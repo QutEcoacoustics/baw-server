@@ -6,12 +6,10 @@ module Report
       # categorise each row into a group, starting from 0.
       # group id is incremented by 1 when the start time is greater than the
       # previous end time + gap size
-      class CategoriseIntervals < Report::Cte::Node
-        include Report::Cte::Dsl
-
+      class CategoriseIntervals < Report::Cte::NodeTemplate
         table_name :categorise_intervals
 
-        depends_on sort_temporal_events: Report::Ctes::Coverage::SortTemporalEvents,
+        depdendencies sort_temporal_events: Report::Ctes::Coverage::SortTemporalEvents,
           gap_size_table: Report::Ctes::Coverage::IntervalGapSize
 
         select do
