@@ -13,7 +13,7 @@ module Report
       # scores are binned into 50 buckets for unique tag/provenance
       class ScoreHistogram < Report::Cte::NodeTemplate
         table_name :score_histogram
-        depdendencies base_table: Report::Ctes::BaseEventReport
+        dependencies base_table: Report::Ctes::BaseEventReport
 
         SCORE_BINS = 50
 

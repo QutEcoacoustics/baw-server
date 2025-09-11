@@ -10,7 +10,7 @@ module Report
         # project the 'next_event_time' field, which will be used to calculate the
         # duration of events and groups
         table_name :track_event_changes
-        depdendencies stacked_temporal_events: Report::Ctes::Coverage::StackedTemporalEvents
+        dependencies stacked_temporal_events: Report::Ctes::Coverage::StackedTemporalEvents
 
         select do
           window_partitions = [stacked_temporal_events[:group_id]]

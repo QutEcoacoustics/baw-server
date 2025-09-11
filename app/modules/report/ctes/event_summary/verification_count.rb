@@ -12,7 +12,7 @@ module Report
       # ratio is the ratio of category_count to total_count, for each group
       class VerificationCount < Report::Cte::NodeTemplate
         table_name :verification_count
-        depdendencies base_verification: Report::Ctes::BaseVerification
+        dependencies base_verification: Report::Ctes::BaseVerification
         select do
           window = Arel::Nodes::Window.new.partition(
             base_verification[:tag_id],

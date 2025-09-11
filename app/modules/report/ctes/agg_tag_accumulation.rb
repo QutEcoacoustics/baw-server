@@ -8,7 +8,7 @@ module Report
 
       table_name :tag_accumulation
 
-      depdendencies bucket_cumulative_unique: Report::Ctes::BucketCumulativeUnique
+      dependencies bucket_cumulative_unique: Report::Ctes::BucketCumulativeUnique
 
       select do
         cumulative_table_aliased = bucket_cumulative_unique.as('t')

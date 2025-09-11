@@ -12,7 +12,7 @@ module Report
 
       table_name :base_verification
 
-      depdendencies base_table: Report::Ctes::BaseEventReport
+      dependencies base_table: Report::Ctes::BaseEventReport
 
       select do
         Arel::SelectManager.new.project(

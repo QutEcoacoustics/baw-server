@@ -5,7 +5,7 @@ module Report
     class AudioEvents < Report::Cte::NodeTemplate
       self.default_name = 'audio_event_report'
 
-      default_options do
+      options do
         {
           bucket_size: 'day',
           start_time: nil, # report start time
@@ -16,9 +16,9 @@ module Report
         }
       end
 
-      class CoverageAnalysis < Report::Ctes::AudioEvents
-        self.default_suffix = 'audio_event_report'
-        self.default_options = default_options.merge!(analysis_result: true)
+      coverage_analysis_template = Class.new(Report::Ctes::Coverage::Coverage) do
+        self.default_suffix = 'analysis'
+        self.default_options = default_options.merge(analysis_result: true)
       end
 
       self.default_dependencies = {
@@ -27,7 +27,7 @@ module Report
         composition: Report::Ctes::EventComposition,
         event_summary: Report::Ctes::EventSummary::EventSummary,
         coverage: Report::Ctes::Coverage::Coverage,
-        coverage_analysis: Report::Ctes::AudioEvents::CoverageAnalysis
+        coverage_analysis: coverage_analysis_template
       }
 
       self.default_select = lambda {

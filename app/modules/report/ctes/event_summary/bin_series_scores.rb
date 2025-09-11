@@ -5,7 +5,7 @@ module Report
     module EventSummary
       class BinSeriesScores < Report::Cte::NodeTemplate
         table_name :bin_series_scores
-        depdendencies bin_series: Report::Ctes::EventSummary::BinSeries,
+        dependencies bin_series: Report::Ctes::EventSummary::BinSeries,
           score_bin_fractions: Report::Ctes::EventSummary::ScoreBinFractions
 
         select do

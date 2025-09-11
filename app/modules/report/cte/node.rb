@@ -3,6 +3,12 @@
 module Report
   module Cte
     class Node
+      TableName = Data.define(:base_name, :suffix) {
+        def table_name = suffix ? apply_suffix : base_name.to_sym
+
+        def apply_suffix = :"#{base_name}_#{suffix}"
+      }
+
       attr_reader :name, :options
 
       def initialize(name, suffix: nil, select: nil, dependencies: {}, options: {}, &block)
@@ -14,9 +20,9 @@ module Report
         @select_proc = select || block
         @evaluate_select_proc = NodeEvaluator.new
 
-        @passed_depedencies = dependencies
-        @dependency_initialiser = Dependencies::Initialiser.new(cascade_attributes: cascade_attributes.call)
-        @resolve_graph = Dependencies::TopologicalSort.new
+        @passed_dependencies = dependencies
+        @dependency_initializer = DependencyInitializer.new(cascade_attributes: cascade_attributes.call)
+        @resolve_graph = TopologicalSort.new
       end
 
       def assert_proc_given(proc_given)
@@ -29,10 +35,12 @@ module Report
 
       def arel_table = @arel_table ||= Arel::Table.new(@name.table_name)
 
-      def arel_node = @arel_node ||= arel_select.as(@name.table_name)
+      def arel_node = @arel_node ||= arel_select.as(arel_table.name)
 
       def arel_select
-        @arel_select ||= @evaluate_select_proc.using(method_definitions).evaluate(@select_block)
+        @arel_select ||= @evaluate_select_proc.using(method_definitions).evaluate(@select_proc)
+      rescue StandardError => e
+        raise "Error evaluating select for CTE #{@name.table_name}: #{e.message}", e.backtrace
       end
 
       def method_definitions
@@ -43,7 +51,7 @@ module Report
       end
 
       def dependencies
-        @dependencies ||= @dependency_initialiser.call(@passed_depedencies)
+        @dependencies ||= @dependency_initializer.call(@passed_dependencies)
       end
 
       def collect(registry = {})
@@ -70,10 +78,10 @@ module Report
       # @return [Arel::SelectManager]
       def to_arel(registry = {})
         # otherwise the select manager is modified by #with
-        select_expr = select_manager.dup
+        select_expr = arel_select.dup
         return select_expr if dependencies.empty?
 
-        dependency_arel_nodes = collect(registry).map(&:node)
+        dependency_arel_nodes = collect(registry).map(&:arel_node)
         select_expr.with(dependency_arel_nodes)
       end
 
@@ -86,13 +94,17 @@ module Report
         ActiveRecord::Base.connection.execute(to_sql(registry))
       end
 
+      def inspect
+        attrs = attributes_for_inspect.map { |key, value| "#{key}=#{value.inspect}" }.join(', ')
+        "#<#{self.class.name} #{attrs}>"
+      end
+
       # the default inspect gets unruly with the recursive structure
       def pretty_print(pp)
-        pp.object_group(self) do
-          pp.seplist(attributes_for_inspect) do |pair| # Loops over your specified [key, value] pairs
-            k, v = pair
-            pp.breakable ' '
-            pp.text "#{k}=" # Uses the provided key directly (e.g., :name becomes "name=")
+        klass_name = self.class.name || self.class.inspect
+        pp.group(1, "#<#{klass_name} ", '>') do
+          pp.seplist(attributes_for_inspect) do |k, v|
+            pp.text "#{k}="
             pp.pp v
           end
         end
@@ -101,8 +113,8 @@ module Report
       def attributes_for_inspect
         [
           [:name, name],
-          [:passed_dependencies, @passed_dependencies],
-          [:dependencies, @dependencies || 'nil || unevaluated'],
+          [:passed_dependencies, @passed_dependencies || {}],
+          [:dependencies, @dependencies&.keys || []],
           [:options, options]
         ]
       end

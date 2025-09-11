@@ -18,7 +18,7 @@ module Report
 
       table_name :base_table
 
-      default_options base_scope: -> { default_relation_scope }
+      options base_scope: -> { default_relation_scope }
 
       select do
         selection = joins.call(base_scope)

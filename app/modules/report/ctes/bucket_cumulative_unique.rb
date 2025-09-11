@@ -6,7 +6,7 @@ module Report
 
       table_name :bucket_cumulative_unique
 
-      depdendencies bucket_time_series: Report::Ctes::BucketTimeSeries, sum_unique: Report::Ctes::BucketSumUnique
+      dependencies bucket_time_series: Report::Ctes::BucketTimeSeries, sum_unique: Report::Ctes::BucketSumUnique
 
       select do
         window = Arel::Nodes::Window.new.order(bucket_time_series[:bucket_number])

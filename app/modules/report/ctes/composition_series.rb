@@ -6,7 +6,7 @@ module Report
 
       table_name :composition_series
 
-      depdendencies bucket_time_series: Report::Ctes::BucketTimeSeries,
+      dependencies bucket_time_series: Report::Ctes::BucketTimeSeries,
         base_table: Report::Ctes::BaseEventReport,
         base_verification: Report::Ctes::BaseVerification
 

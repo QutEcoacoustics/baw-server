@@ -8,7 +8,7 @@ module Report
       class IntervalCoverage < Report::Cte::NodeTemplate
 
         table_name :interval_coverage
-        depdendencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
+        dependencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
 
         select do
           fields = [

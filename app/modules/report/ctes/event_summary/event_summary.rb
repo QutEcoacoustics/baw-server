@@ -7,7 +7,7 @@ module Report
 
         table_name :event_summary
 
-        depdendencies event_summary_json: Report::Ctes::EventSummary::EventSummaryJson
+        dependencies event_summary_json: Report::Ctes::EventSummary::EventSummaryJson
 
         select do
           event_summaries_aliased = event_summary_json.as('e')

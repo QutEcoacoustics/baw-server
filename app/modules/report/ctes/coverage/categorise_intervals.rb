@@ -9,7 +9,7 @@ module Report
       class CategoriseIntervals < Report::Cte::NodeTemplate
         table_name :categorise_intervals
 
-        depdendencies sort_temporal_events: Report::Ctes::Coverage::SortTemporalEvents,
+        dependencies sort_temporal_events: Report::Ctes::Coverage::SortTemporalEvents,
           gap_size_table: Report::Ctes::Coverage::IntervalGapSize
 
         select do

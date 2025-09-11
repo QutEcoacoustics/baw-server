@@ -6,7 +6,7 @@ module Report
       # calculate the fraction of scores in each bin, relative to the total for that tag/provenance group
       class ScoreBinFractions < Report::Cte::NodeTemplate
         table_name :score_bin_fractions
-        depdendencies score_bins: Report::Ctes::EventSummary::ScoreHistogram
+        dependencies score_bins: Report::Ctes::EventSummary::ScoreHistogram
         select do
           null_if_count = null_if(score_bins[:group_count], 0)
           score_bins.project(

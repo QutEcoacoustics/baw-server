@@ -2,6 +2,8 @@
 
 describe 'TableExpression::Collection' do
   # the correct order is A -> B -> C -> E -> D
+  #                       \------------------^
+
   test_data = [['table_a'], ['table_b'], ['table_c'], ['table_d'], ['table_e']]
   dependencies = [[], [:table_a], [:table_b], [:table_a, :table_e], [:table_c]]
 

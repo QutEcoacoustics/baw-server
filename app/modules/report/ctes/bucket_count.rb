@@ -3,13 +3,12 @@
 module Report
   module Ctes
     class BucketCount < Report::Cte::NodeTemplate
-      extend Report::TimeSeries
-
       include Report::Validation
+      extend Report::TimeSeries
 
       table_name :bucket_count
 
-      depdendencies ts_range: Report::Ctes::TsRangeAndInterval
+      dependencies ts_range: Report::Ctes::TsRangeAndInterval
 
       # ! need to think about options patterns some more
       # ! interval is needed here explicitly but dependency ts_range also needs options. it has defaults
@@ -17,7 +16,7 @@ module Report
       # ! so if a dependency cte has required options, you would need to pass those in when using a node that depends on it
       # another example, if using Ctes::EventComposition, it's not clear that you should pass options that will go down
       # to tsrangeandinterval
-      default_options do
+      options do
         {
           interval: '1 day'
         }

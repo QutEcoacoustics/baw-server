@@ -6,7 +6,7 @@ module Report
 
       table_name :time_range_and_interval
 
-      default_options do
+      options do
         {
           start_time: Time.utc(2000, 1, 1),
           end_time: Time.utc(2000, 1, 7),

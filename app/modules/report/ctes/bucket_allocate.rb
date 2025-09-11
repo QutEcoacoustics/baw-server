@@ -13,7 +13,7 @@ module Report
 
       table_name :bucket_allocate
 
-      depdendencies bucket_count: Report::Ctes::BucketCount, base_table: Report::Ctes::BaseEventReport
+      dependencies bucket_count: Report::Ctes::BucketCount, base_table: Report::Ctes::BaseEventReport
 
       select do
         width_bucket_expr = Arel::Nodes::NamedFunction.new('width_bucket', [

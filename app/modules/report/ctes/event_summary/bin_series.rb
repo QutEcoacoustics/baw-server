@@ -6,7 +6,7 @@ module Report
       # get the complete series of bins 1 to 50 for unique tag_id and provenance_id
       class BinSeries < Report::Cte::NodeTemplate
         table_name :bin_series
-        depdendencies base_table: Report::Ctes::BaseEventReport
+        dependencies base_table: Report::Ctes::BaseEventReport
         select do
           generate_series = Report::TimeSeries.generate_series(50).as('bin_id')
           cross_join = Arel::Nodes::StringJoin.new(Arel.sql('CROSS JOIN ?', generate_series))

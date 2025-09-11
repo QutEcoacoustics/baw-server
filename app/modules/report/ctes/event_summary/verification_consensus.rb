@@ -8,7 +8,7 @@ module Report
       # consensus for a given audio event
       class VerificationConsensus < Report::Cte::NodeTemplate
         table_name :verification_consensus
-        depdendencies verification_count: Report::Ctes::EventSummary::VerificationCount
+        dependencies verification_count: Report::Ctes::EventSummary::VerificationCount
         select do
           verification_count.project(
             verification_count[:tag_id],

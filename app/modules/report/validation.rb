@@ -17,11 +17,11 @@ module Report
       end
     end
 
-    def validate_options
+    def validate_options(opts)
       contract = self.class.contract_registered_for_my_class
       return unless contract
 
-      result = contract.call(options)
+      result = contract.call(opts)
 
       return result.to_h if result.success?
 

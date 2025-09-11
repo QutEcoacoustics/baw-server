@@ -8,7 +8,7 @@ module Report
 
       table_name :bucket_time_series
 
-      depdendencies bucket_count: Report::Ctes::BucketCount
+      dependencies bucket_count: Report::Ctes::BucketCount
 
       select do
         series = generate_series(bucket_count[:bucket_count].ceil).to_sql

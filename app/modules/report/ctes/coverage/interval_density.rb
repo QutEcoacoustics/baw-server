@@ -5,7 +5,7 @@ module Report
     module Coverage
       class IntervalDensity < Report::Cte::NodeTemplate
         table_name :interval_density
-        depdendencies interval_coverage: Report::Ctes::Coverage::IntervalCoverage,
+        dependencies interval_coverage: Report::Ctes::Coverage::IntervalCoverage,
           event_coverage: Report::Ctes::Coverage::EventCoverage
 
         select do

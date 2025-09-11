@@ -8,7 +8,7 @@ module Report
 
       table_name :bucket_first_tag
 
-      depdendencies bucket_allocate: Report::Ctes::BucketAllocate
+      dependencies bucket_allocate: Report::Ctes::BucketAllocate
 
       select do
         window = Arel::Nodes::Window.new.partition(bucket_allocate[:tag_id]).order(bucket_allocate[:bucket])

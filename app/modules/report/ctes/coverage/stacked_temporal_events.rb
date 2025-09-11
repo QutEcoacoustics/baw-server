@@ -14,7 +14,7 @@ module Report
       class StackedTemporalEvents < Report::Cte::NodeTemplate
 
         table_name :stacked_temporal_events
-        depdendencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
+        dependencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
 
         # stack all start and end times into a single column
         # add a column 'delta' with value 1 for start times and -1 for end times

@@ -9,7 +9,7 @@ module Report
 
       table_name :event_composition
 
-      depdendencies composition_series: Report::Ctes::CompositionSeries
+      dependencies composition_series: Report::Ctes::CompositionSeries
 
       select do
         composition_series_aliased = composition_series.as('c')

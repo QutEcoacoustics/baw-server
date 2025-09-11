@@ -5,12 +5,11 @@ module Report
     module Coverage
       # returns a CTE with a field named using the table_name at evaluation time
       class Coverage < Report::Cte::NodeTemplate
-
         table_name :coverage
 
-        depdendencies interval_density: Report::Ctes::Coverage::IntervalDensity
+        dependencies interval_density: Report::Ctes::Coverage::IntervalDensity
 
-        default_options project_field_as: 'coverage', analysis_result: false
+        options analysis_result: false
 
         select do
           range = Report::TimeSeries.arel_tsrange(interval_density[:coverage_start], interval_density[:coverage_end])

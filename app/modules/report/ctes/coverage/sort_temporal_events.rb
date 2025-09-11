@@ -9,14 +9,13 @@ module Report
       # representing the end_time of the previous row. getting this here so it
       # can be used to classify events into groups in the next step
       class SortTemporalEvents < Report::Cte::NodeTemplate
-
         table_name :sort_temporal_events
 
-        depdendencies source: BaseEventReport
+        dependencies base_table: BaseEventReport
 
         # lower and upper field are the attribute names of timestamp columns on
-        # the `source` table dependency that will be used to calculate coverage
-        default_options do
+        # the `base_table` table dependency that will be used to calculate coverage
+        options do
           {
             analysis_result: false,
             lower_field: nil,
@@ -26,18 +25,17 @@ module Report
 
         select do
           analysis_result = options.fetch(:analysis_result)
-          time_lower = source[options[:lower_field]]
-          time_upper = source[options[:upper_field]]
+          time_lower = base_table[options[:lower_field]]
+          time_upper = base_table[options[:upper_field]]
 
           window = build_window(
-            partition_by: analysis_result ? source[:result] : nil,
+            partition_by: analysis_result ? base_table[:result] : nil,
             sort_by: time_lower
           )
 
           lag = build_lag(time_upper, window)
-          fields = fields(time_lower, time_upper, lag, result: analysis_result ? source[:result] : nil)
-
-          source.project(fields)
+          fields = fields(time_lower, time_upper, lag, result: analysis_result ? base_table[:result] : nil)
+          base_table.project(*fields)
         end
 
         def self.build_window(sort_by:, partition_by: nil)

@@ -7,7 +7,7 @@ module Report
       class IntervalGapSize < Report::Cte::NodeTemplate
         table_name :interval_gap_size
 
-        default_options start_time: nil, end_time: nil, scaling_factor: 1920
+        options start_time: nil, end_time: nil, scaling_factor: 1920
 
         select do
           start_time, end_time, scaling_factor = options.values_at(:start_time, :end_time, :scaling_factor)

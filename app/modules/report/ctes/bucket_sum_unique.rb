@@ -6,7 +6,7 @@ module Report
 
       table_name :bucket_sum_unique
 
-      depdendencies first_tag: Report::Ctes::BucketFirstTag
+      dependencies first_tag: Report::Ctes::BucketFirstTag
 
       select do
         first_tag.project(
