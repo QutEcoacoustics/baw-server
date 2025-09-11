@@ -66,11 +66,12 @@ RSpec.shared_context(
     @audio_event_import = AudioEventImport.find(api_data[:id])
   end
 
-  def submit(file, commit: true, additional_tags: [], user: writer_token)
+  def submit(file, commit: true, additional_tags: [], user: writer_token, minimum_score: nil)
     body = {
       audio_event_import_file: {
         file: with_file(file),
-        additional_tag_ids: additional_tags.map(&:id)
+        additional_tag_ids: additional_tags.map(&:id),
+        minimum_score:
       },
       commit:
     }
@@ -78,8 +79,17 @@ RSpec.shared_context(
     post "/audio_event_imports/#{@audio_event_import.id}/files", params: body, **form_multipart_headers(user)
   end
 
-  def assert_success(committed:, name:, imported_events: [], additional_tags: [])
-    expect_success
+  def assert_success(
+    committed:,
+    name:,
+    parsed_events: [],
+    additional_tags: [],
+    minimum_score: nil,
+    imported_count: nil
+  )
+    imported_events = @audio_event_import
+      .audio_event_import_files
+      .flat_map(&:audio_events)
 
     expect(api_data).to match(a_hash_including(
       id: committed ? be_an_instance_of(Integer) : be_nil,
@@ -90,13 +100,13 @@ RSpec.shared_context(
       path: committed ? be_a(String) : be_nil,
       name:,
       committed:,
-      imported_events:
+      imported_events: parsed_events,
+      parsed_count: parsed_events.size,
+      imported_count: imported_count || imported_events.size,
+      minimum_score:
     ))
 
     # our safe guard for the insert_all! method
-    imported_events = @audio_event_import
-      .audio_event_import_files
-      .flat_map(&:audio_events)
     expect(imported_events).to all(be_valid)
 
     id = api_data[:id]

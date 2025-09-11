@@ -28,7 +28,7 @@ describe '/audio_event_imports' do
   it 'can do a basic import' do
     create_import
     submit(raven_example, commit: true)
-    assert_success(committed: true, name: raven_filename, imported_events: [
+    assert_success(committed: true, name: raven_filename, parsed_events: [
       a_hash_including(
         id: be_an_instance_of(Integer),
         errors: [],
@@ -55,7 +55,7 @@ describe '/audio_event_imports' do
   it 'does not commit if commit is false' do
     create_import
     submit(raven_example, commit: false)
-    assert_success(committed: false, name: raven_filename, imported_events: [
+    assert_success(committed: false, name: raven_filename, parsed_events: [
       a_hash_including(
         id: nil,
         errors: [],
@@ -83,7 +83,7 @@ describe '/audio_event_imports' do
     assert_success(
       committed: true,
       name: raven_filename,
-      imported_events: [
+      parsed_events: [
         a_hash_including(
           id: be_an_instance_of(Integer),
           errors: [],
@@ -120,7 +120,7 @@ describe '/audio_event_imports' do
     assert_success(
       committed: true,
       name: raven_filename,
-      imported_events: [
+      parsed_events: [
         a_hash_including(
           id: be_an_instance_of(Integer),
           errors: [],
@@ -159,7 +159,7 @@ describe '/audio_event_imports' do
       assert_success(
         committed: true,
         name: raven_filename,
-        imported_events: [
+        parsed_events: [
           a_hash_including(
             id: be_an_instance_of(Integer),
             errors: [],
@@ -189,7 +189,7 @@ describe '/audio_event_imports' do
       assert_success(
         committed: false,
         name: 'generic_example.csv',
-        imported_events: [
+        parsed_events: [
           a_hash_including(
             id: nil,
             errors: [],
@@ -200,7 +200,8 @@ describe '/audio_event_imports' do
             ]
           )
         ],
-        additional_tags: [machine_generated_tag]
+        additional_tags: [machine_generated_tag],
+        imported_count: 0
       )
     end
 
@@ -216,7 +217,7 @@ describe '/audio_event_imports' do
       assert_success(
         committed: true,
         name: 'generic_example.csv',
-        imported_events: [
+        parsed_events: [
           a_hash_including(
             id: be_an_instance_of(Integer),
             errors: [],
@@ -227,7 +228,8 @@ describe '/audio_event_imports' do
             ]
           )
         ],
-        additional_tags: [machine_generated_tag]
+        additional_tags: [machine_generated_tag],
+        imported_count: 1
       )
     end
 

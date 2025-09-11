@@ -51,7 +51,8 @@ module Api
         :score,
         :Confidence,
         # the probability the event is a true positive - JCU format
-        :TP
+        :TP,
+        allow_nil: true
       ),
       tags: TagTransformer.new(
         :tag,
@@ -68,6 +69,11 @@ module Api
         :'AUTO-ID'
       )
     }.freeze
+
+    REJECTION_SCORE_BELOW_MINIMUM = :score_below_minimum
+    REJECTION_REASONS = [
+      REJECTION_SCORE_BELOW_MINIMUM
+    ].freeze
 
     include Dry::Monads::Do.for(:parse)
     include Dry::Monads[:result]
@@ -99,17 +105,9 @@ module Api
       @any_error ||= false
     end
 
-    def audio_event_validator_commit
-      @audio_event_validator_commit ||= AudioEventValidation.new(commit: true)
-    end
-
-    def audio_event_validator_no_commit
-      @audio_event_validator_no_commit ||= AudioEventValidation.new(commit: false)
-    end
-
     # @return [Dry::Validation::Contract]
-    def audio_event_validator(will_commit:)
-      will_commit ? audio_event_validator_commit : audio_event_validator_no_commit
+    def audio_event_validator(will_commit:, score_minimum:)
+      @audio_event_validator ||= AudioEventValidation.new(commit: will_commit, score_required: score_minimum.present?)
     end
 
     # @param import [AudioEventImportFile] the import we're attaching to
@@ -118,7 +116,15 @@ module Api
     # @param provenance [Provenance, nil] the provenance to use for the imported events
     # @param audio_recording [AudioRecording, nil] an audio recording to use
     #   which will override any in the file or filename (a scope).
-    def initialize(import_file, creator, additional_tags: [], provenance: nil, audio_recording: nil)
+    # @param score_minimum [Numeric, nil] if set, any events with a score below this will be rejected
+    def initialize(
+      import_file,
+      creator,
+      additional_tags: [],
+      provenance: nil,
+      audio_recording: nil,
+      score_minimum: nil
+    )
       raise 'import_file must be an AudioEventImportFile' unless import_file.is_a?(AudioEventImportFile)
       raise 'additional_tags must be Tags' unless additional_tags&.all? { |t| t.is_a?(Tag) }
       raise 'creator must be a User' unless creator.is_a?(User)
@@ -126,6 +132,7 @@ module Api
       unless audio_recording.nil? || audio_recording.is_a?(AudioRecording)
         raise 'audio_recording must be an AudioRecording'
       end
+      raise 'score_minimum must be a number or nil' unless score_minimum.nil? || score_minimum.is_a?(Numeric)
 
       self.audio_event_import_file = import_file
       self.creator = creator
@@ -138,6 +145,8 @@ module Api
         creator_id: creator.id
       )
 
+      @score_minimum = score_minimum
+
       # @type [Array<Hash>]
       @audio_events = []
       # @type [Array<Array<Tag>>]
@@ -148,13 +157,19 @@ module Api
       #  containing the ids of the created audio events in order.
       @audio_event_ids = []
 
+      # @type [Array<Array<Hash>>, nil] the reasons for rejections for each event
+      #   These are not fatal errors, just reasons why we may have filtered out an event.
+      #   Has the same structure as validation messages in @errors
+      @rejections = nil
+      @rejection_count = 0
+
       @audio_recording_ids = Set.new
     end
 
     # Returns any new [Tag] instances created while parsing
-    # @return [Array<Tag>]
+    # @return [Set<Tag>]
     def new_tags
-      tag_cache.cache.values.filter(&:new_record?)
+      tag_cache.cache.values.filter(&:new_record?).to_set
     end
 
     # Returns the parsed events in a format suitable for the API.
@@ -168,6 +183,7 @@ module Api
         event = @audio_events[i]
         event[:tags] = @tag_list[i].map { |tag| tag_to_hash(tag) }
         event[:errors] = @errors[i]&.errors(full: false)&.map(&:to_h) || []
+        event[:rejections] = @rejections[i] || []
         event[:id] = @audio_event_ids[i]
 
         event
@@ -207,32 +223,44 @@ module Api
 
         raise ActiveRecord::Rollback if result.failure?
 
-        # save any new tags
-        new_tags = self.new_tags
-        logger.measure_info('save new tags', count: new_tags.count) do
-          new_tags.each(&:save!)
-        end
+        # retrieve the subset of audio events to save
+        accepted_audio_events => [accepted_event_indices, events_to_commit]
 
         # save the audio events
         # @type [Array<Integer>]
-        @audio_event_ids = logger.measure_info('save audio events', count: @audio_events.count) {
+        inserted_ids = logger.measure_info('save audio events', count: events_to_commit.count) {
           AudioEvent
-            .insert_all!(@audio_events, record_timestamps: true)
+            .insert_all!(events_to_commit, record_timestamps: true)
             .pluck('id')
         }
 
+        update_ids_with_inserted_ids(accepted_event_indices, inserted_ids)
+
         import_permissions_check(@audio_event_import_file)
 
-        raise 'sanity check failed' unless @audio_event_ids.length == @audio_events.length
+        # collect all Tag objects referenced by accepted events
+        accepted_tags = @tag_list.values_at(*accepted_event_indices).flatten.compact.to_set
+
+        # only save new (unsaved) tags that are actually used by accepted events
+        new_tags_to_save = new_tags & accepted_tags
+
+        logger.measure_info('save new tags', count: new_tags_to_save.count) do
+          new_tags_to_save.each(&:save!)
+        end
 
         # expand tags to taggings
-        taggings = logger.measure_info('expand taggings') {
-          expand_to_taggings
+        accepted_taggings = logger.measure_info('expand taggings') {
+          expand_to_taggings(accepted_event_indices)
         }
 
-        logger.measure_info('save taggings', count: taggings.count) do
-          Tagging.insert_all!(taggings, returning: false, record_timestamps: true)
+        logger.measure_info('save taggings', count: accepted_taggings.count) do
+          Tagging.insert_all!(accepted_taggings, returning: false, record_timestamps: true)
         end
+
+        # lastly update the import file stats (this is done before saving as well in #parse)
+        audio_event_import_file.imported_count = inserted_ids.size
+        audio_event_import_file.parsed_count = @audio_events.length
+        audio_event_import_file.save!
 
         result = Success()
       end
@@ -253,6 +281,11 @@ module Api
 
       size = data.length
 
+      # update stats on source object - done again in #parse_and_commit after save
+      audio_event_import_file.imported_count = 0
+      audio_event_import_file.parsed_count = size
+      audio_event_import_file.minimum_score = @score_minimum if @score_minimum.present?
+
       return Failure('must have at least one audio event but 0 were found') if size.zero?
 
       default_audio_recording_id = parse_filename(filename)
@@ -265,6 +298,7 @@ module Api
       @audio_events = Array.new(size)
       @tag_list = Array.new(size)
       @errors = Array.new(size)
+      @rejections = Array.new(size)
 
       (0...size).each do |i|
         datum = data[i]
@@ -275,16 +309,42 @@ module Api
 
       return Failure('Validation failed') if any_error?
 
+      return Failure('All events were rejected') if @rejection_count == size
+
       Success()
     end
 
     private
 
+    # Returns the subset of audio events that were accepted (not rejected).
+    # @return [(Array<Integer>, Array<Hash>)] the indices and events that were accepted
+    def accepted_audio_events
+      accepted_indices = []
+      accepted_events = []
+      @audio_events.each_with_index do |event, index|
+        next if @rejections[index].present?
+
+        accepted_indices << index
+        accepted_events << event
+      end
+
+      [accepted_indices, accepted_events]
+    end
+
+    def update_ids_with_inserted_ids(accepted_event_indices, inserted_ids)
+      raise 'sanity check failed' unless accepted_event_indices.length == inserted_ids.length
+
+      accepted_event_indices.each_with_index do |event_index, index|
+        @audio_event_ids[event_index] = inserted_ids[index]
+      end
+    end
+
     # @return [Array<Hash>] a list of taggings to add
-    def expand_to_taggings
-      @audio_event_ids
-        .zip(@tag_list)
-        .flat_map { |audio_event_id, tags|
+    def expand_to_taggings(accepted_event_indices)
+      accepted_event_indices.flat_map { |accepted_index|
+        audio_event_id = @audio_event_ids[accepted_index]
+        tags = @tag_list[accepted_index]
+
         tags.map { |tag|
           { audio_event_id:, tag_id: tag.id, creator_id: creator.id }
         }
@@ -439,7 +499,7 @@ module Api
     end
 
     def validate_audio_event(data, will_commit:)
-      audio_event_validator(will_commit:).call(data)
+      audio_event_validator(will_commit:, score_minimum: @score_minimum).call(data)
     end
 
     # Converts a hash into an audio_event
@@ -489,6 +549,8 @@ module Api
       @audio_events[index] = final
       @tag_list[index] = tags
       @errors[index] = result
+
+      apply_rejections(final, index)
 
       # don't want to add extra validation messages if the audio recording id is already invalid
       @audio_recording_ids.add(audio_recording_id) unless result.error?(:audio_recording_id)
@@ -541,6 +603,20 @@ module Api
       return item_id if item_id
 
       default_audio_recording_id
+    end
+
+    def apply_rejections(event, index)
+      # Should we reject events below the score threshold?
+      return if @score_minimum.nil?
+
+      event.fetch(:score, nil) => score
+
+      # we're only here if score filtering is enabled, so reject events that have no score
+      # as well as those below the threshold
+      return unless score.nil? || score < @score_minimum
+
+      (@rejections[index] ||= []) << { score: REJECTION_SCORE_BELOW_MINIMUM }
+      @rejection_count += 1
     end
 
     def validate_audio_recording_ids_exist_and_we_have_permission

@@ -7,6 +7,9 @@
 #  id                                                                                             :bigint           not null, primary key
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
 #  file_hash(Hash of the file contents used for uniqueness checking)                              :text
+#  imported_count(Number of events parsed minus rejections)                                       :integer          default(0), not null
+#  minimum_score(Minimum score threshold actually used)                                           :decimal(, )
+#  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
 #  created_at                                                                                     :datetime         not null
 #  analysis_jobs_item_id                                                                          :integer
@@ -73,6 +76,7 @@ class AudioEventImportFile < ApplicationRecord
 
   # validations
   validates :file_hash, presence: true
+  validates :minimum_score, allow_nil: true, numericality: true
   validate :validate_path_exists, if: -> { path.present? }
   validate :validate_analysis_association_and_path_or_file
   validate :validate_path_xor_attachment
@@ -84,7 +88,7 @@ class AudioEventImportFile < ApplicationRecord
   def self.filter_settings
     common_fields = [
       :id, :additional_tag_ids, :path, :name, :audio_event_import_id, :analysis_jobs_item_id,
-      :created_at, :file_hash
+      :created_at, :file_hash, :minimum_score, :imported_count, :parsed_count
     ]
     {
       valid_fields: common_fields,
@@ -119,7 +123,8 @@ class AudioEventImportFile < ApplicationRecord
                          {
                            additional_tags: [],
                            file: nil,
-                           audio_event_import_id: nil
+                           audio_event_import_id: nil,
+                           minimum_score: nil
                          }
                        },
       controller: :audio_event_import_files,
@@ -179,8 +184,10 @@ class AudioEventImportFile < ApplicationRecord
         name: { type: 'string', readOnly: true },
         created_at: Api::Schema.date(read_only: true),
         audio_event_import_id: Api::Schema.id(read_only: true),
-        analysis_jobs_item_id: Api::Schema.id(nullable: true, read_only: true)
-
+        analysis_jobs_item_id: Api::Schema.id(nullable: true, read_only: true),
+        minimum_score: { type: ['null', 'number'], readOnly: true },
+        imported_count: { type: 'integer', readOnly: true },
+        parsed_count: { type: 'integer', readOnly: true }
       },
       required: [
         :id,
@@ -190,7 +197,8 @@ class AudioEventImportFile < ApplicationRecord
         :name,
         :created_at,
         :audio_event_import_id,
-        :analysis_jobs_item_id
+        :analysis_jobs_item_id,
+        :minimum_score
       ]
     }
   end
@@ -231,7 +239,15 @@ class AudioEventImportFile < ApplicationRecord
                           type: 'array',
                           items: {
                             type: 'object'
-                          }
+                          },
+                          description: 'A detailed list of validation errors that stopped this event being imported, and caused a failure'
+                        },
+                        rejections: {
+                          type: 'array',
+                          items: {
+                            type: 'object'
+                          },
+                          description: 'A detailed list of reasons why this event was not imported'
                         }
                       }
                     }

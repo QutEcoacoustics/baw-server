@@ -56,6 +56,8 @@ class AnalysisJobsItem < ApplicationRecord
 
   has_many :audio_event_import_files, inverse_of: :analysis_jobs_item, dependent: :destroy
 
+  belongs_to :analysis_jobs_script, optional: true, foreign_key: [:analysis_job_id, :script_id]
+
   # ensure we allow with_discarded here for race condition where analysis job
   # has been soft deleted while job items are still updating
   belongs_to :analysis_job, -> { with_discarded }, inverse_of: :analysis_jobs_items

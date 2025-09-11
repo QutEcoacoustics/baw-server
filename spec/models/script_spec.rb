@@ -8,6 +8,7 @@
 #  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
 #  description                                                                                                          :string
 #  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
+#  event_import_minimum_score(Minimum score threshold for importing events, if any)                                     :decimal(, )
 #  executable_command                                                                                                   :text             not null
 #  executable_settings                                                                                                  :text
 #  executable_settings_media_type                                                                                       :string(255)      default("text/plain")
@@ -110,7 +111,7 @@ describe Script do
       ['_', false],
       ['a*a', false]
     ].each do |identifier, expected|
-      it "validates the analysis identifier #{identifier} is #{expected ? '' : 'in'}valid" do
+      it "validates the analysis identifier #{identifier} is #{'in' unless expected}valid" do
         expect(build(:script, analysis_identifier: identifier)).to be_valid if expected
         expect(build(:script, analysis_identifier: identifier)).not_to be_valid unless expected
       end
@@ -133,6 +134,23 @@ describe Script do
       expect(third).not_to be_valid
 
       expect(fourth).to be_valid
+    end
+  end
+
+  describe 'event import minimum score' do
+    it 'validates the event import minimum score is a number' do
+      expect(build(:script, event_import_minimum_score: 'not a number')).not_to be_valid
+    end
+
+    it 'validates the event import minimum score can be nil' do
+      expect(build(:script, event_import_minimum_score: nil)).to be_valid
+    end
+
+    it 'validates the event import minimum score cannot be set without a glob' do
+      expect(build(:script, event_import_minimum_score: 12.3, event_import_glob: nil)).not_to be_valid
+      expect(build(:script, event_import_minimum_score: 12.3, event_import_glob: '')).not_to be_valid
+      expect(build(:script, event_import_minimum_score: 12.3, event_import_glob: 'some_glob')).to be_valid
+      expect(build(:script, event_import_minimum_score: nil, event_import_glob: 'some_glob')).to be_valid
     end
   end
 

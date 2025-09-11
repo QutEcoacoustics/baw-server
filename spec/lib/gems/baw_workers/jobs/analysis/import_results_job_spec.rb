@@ -14,8 +14,8 @@ describe BawWorkers::Jobs::Analysis::ImportResultsJob do
   before do
     create_analysis_result_file(analysis_jobs_item, Pathname('sub_folder/generic_example.csv'), content:
     <<~CSV
-      audio_recording_id          ,start_time_seconds,end_time_seconds,low_frequency_hertz,high_frequency_hertz,tag
-      #{audio_recording.id},123               ,456             ,100                ,500                 ,Birb
+      audio_recording_id          ,start_time_seconds,end_time_seconds,low_frequency_hertz,high_frequency_hertz,tag,score
+      #{audio_recording.id},123               ,456             ,100                ,500                 ,Birb,0.8
     CSV
     )
   end
@@ -60,6 +60,48 @@ describe BawWorkers::Jobs::Analysis::ImportResultsJob do
     ))
   end
 
+  describe 'will use the minimum score if set' do
+    def common(custom_score:)
+      script = analysis_jobs_item.script
+      script.update!(event_import_minimum_score: 0.75)
+
+      analysis_jobs_script = analysis_jobs_item.analysis_jobs_script
+      analysis_jobs_script.update!(event_import_minimum_score: custom_score)
+
+      analysis_jobs_item.result_success!
+
+      BawWorkers::Jobs::Analysis::ImportResultsJob.perform_now(analysis_jobs_item.id)
+      status = expect_performed_jobs(
+        1,
+        of_class: BawWorkers::Jobs::Analysis::ImportResultsJob
+      ).first
+      expect(status).to be_completed
+
+      analysis_jobs_item.reload
+    end
+
+    it 'marks as failed if no events are above the threshold' do
+      common(custom_score: 0.90)
+
+      expect(analysis_jobs_item.reload.import_success).to be false
+      expect(analysis_jobs_item.error).to include('all events were rejected')
+      import = analysis_jobs_item.analysis_job.audio_event_imports.first
+      expect(AudioEvent.by_import(import.id).count).to eq(0)
+    end
+
+    it 'imports if events are above the threshold' do
+      common(custom_score: 0.70)
+
+      expect(analysis_jobs_item.reload.import_success).to be true
+      import = analysis_jobs_item.analysis_job.audio_event_imports.first
+      expect(AudioEvent.by_import(import.id).count).to eq(1)
+
+      # stores the threshold actually used too
+      import_file = import.audio_event_import_files.sole
+      expect(import_file.minimum_score).to eq(0.70)
+    end
+  end
+
   it 'sets the error on failure' do
     analysis_jobs_item.result_success!
     create_analysis_result_file(analysis_jobs_item, Pathname('sub_folder/generic_example.csv'), content:
@@ -76,7 +118,8 @@ describe BawWorkers::Jobs::Analysis::ImportResultsJob do
       of_class: BawWorkers::Jobs::Analysis::ImportResultsJob
     ).first
 
-    expect(status).to be_failed
+    expect(status).to be_completed
+
     expect(analysis_jobs_item.reload.import_success).to be false
     message = "Failure importing `sub_folder/generic_example.csv`, validation failed: 'start_time_seconds is missing'"
     expect(analysis_jobs_item.error).to include(message)

@@ -13,6 +13,7 @@ module Api
     # loaded from the database.
     class AudioEventValidation < Dry::Validation::Contract
       option :commit
+      option :score_required
 
       # no coercion here; everything should have already been coerced
       schema do
@@ -58,6 +59,14 @@ module Api
         next if low <= high
 
         key.failure('must be less than or equal to `high_frequency_hertz`')
+      end
+
+      # not specifying :score key for rule because we want this rule to run even if :score key is missing
+      rule do
+        # note, it's still valid for score to be nil
+        next unless score_required && !values.key?(:score)
+
+        key(:score).failure('is missing and required when importing with a minimum score threshold')
       end
 
       # rule(:audio_recording_id) do

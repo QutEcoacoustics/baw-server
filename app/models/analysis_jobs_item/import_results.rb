@@ -19,6 +19,7 @@ class AnalysisJobsItem
       audio_recording = AudioRecording.with_discarded.find(audio_recording_id)
       script = Script.find(script_id)
       provenance = Provenance.with_discarded.find(script.provenance_id)
+      analysis_jobs_script = AnalysisJobsScript.find_by(analysis_job_id:, script_id:)
 
       # scan for files with valid extension
       files = scan_results_directory(script.event_import_glob)
@@ -37,13 +38,15 @@ class AnalysisJobsItem
         raise NotImplementedError, 'Results have already been imported, don\'t know how to handle this'
       end
 
+      score_minimum = analysis_jobs_script&.event_import_minimum_score || script.event_import_minimum_score
+
       # finally import the results
       failures = []
       ActiveRecord::Base.transaction do
         files.each do |file|
           Rails.logger.info "Importing results from #{file}"
 
-          result = import_results(file, import, audio_recording, provenance)
+          result = import_results(file, import, audio_recording, provenance, score_minimum)
 
           # either all work or they don't
           next unless result.failure?
@@ -97,7 +100,7 @@ class AnalysisJobsItem
       @create_or_find_audio_event_import
     end
 
-    def import_results(file, import, audio_recording, provenance)
+    def import_results(file, import, audio_recording, provenance, score_minimum)
       # create the import file
       import_file = AudioEventImportFile.create!(
         audio_event_import_id: import.id,
@@ -111,14 +114,16 @@ class AnalysisJobsItem
         analysis_job.creator,
         provenance:,
         # force events to be associated with the audio recording
-        audio_recording:
+        audio_recording:,
+        score_minimum:
       )
 
       result = parser.parse_and_commit(file.read, file.basename.to_s)
 
       if result.failure?
         summary = parser.summarize_errors.format_inline_list(quote: "'")
-        new_message = "#{result.failure}: #{summary}"
+        summary = ": #{summary}" if summary.present?
+        new_message = "#{result.failure}#{summary}"
         result = Dry::Monads.Failure(new_message)
       end
 
