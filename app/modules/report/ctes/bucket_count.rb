@@ -56,19 +56,22 @@ module Report
             lower, upper = bounds(ts_range, :time_range)
             months_diff = ((upper.extract('year') - lower.extract('year')) * 12) +
                           (upper.extract('month') - lower.extract('month'))
-            partial = partial_bucket_counter(lower, upper, 'month')
+            partial = partial_bucket_count(lower, upper, 'month')
             ts_range.project(months_diff + partial)
           },
           '1 year' => lambda { |ts_range|
             lower, upper = bounds(ts_range, :time_range)
             years_diff = upper.extract('year') - lower.extract('year')
-            partial = partial_bucket_counter(lower, upper, 'year')
+            partial = partial_bucket_count(lower, upper, 'year')
             ts_range.project(years_diff + partial)
           }
         }
       end
 
       # helper to return upper and lower bounds of a time range field
+      # note: in the report context, field is the 'time_range' field on the ts_range table
+      # this field is type `tsrange`.
+      # the result of calling lower or upper on `tsrange` is a `timestamp without time zone` type
       def self.bounds(table, field)
         lower_ts = table[field].lower
         upper_ts = upper(table[field])
@@ -79,7 +82,7 @@ module Report
       # subtracting a datetime truncated to month/year from itself gives a
       # remainder of days + hours:minutes:seconds. if the upper remainder is
       # greater than the lower, add 1 to the bucket count to cover the remainder
-      def self.partial_bucket_case(lower_ts, upper_ts, unit)
+      def self.partial_bucket_count(lower_ts, upper_ts, unit)
         Arel::Nodes::Case.new.when(
           (upper_ts - date_trunc(unit, upper_ts)) >
           (lower_ts - date_trunc(unit, lower_ts))
