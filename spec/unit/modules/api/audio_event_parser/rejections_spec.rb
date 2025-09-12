@@ -4,8 +4,6 @@ describe Api::AudioEventParser do
   include_context 'audio_event_parser'
 
   describe 'rejections' do
-    # Focus: score-based rejections (minimum score threshold)
-
     let(:csv) {
       <<~CSV
         audio_recording_id,start_time_seconds,end_time_seconds,low_frequency_hertz,high_frequency_hertz,score,tag
@@ -32,6 +30,7 @@ describe Api::AudioEventParser do
         serialized = parser.serialize_audio_events
         expect(serialized.size).to eq 4
 
+        # scores greater than or equal to score_minimum are accepted
         expect(serialized[0]).to match(a_hash_including(
           id: a_kind_of(Integer),
           rejections: []

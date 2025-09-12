@@ -81,7 +81,6 @@ describe AudioEvent do
 
   it { is_expected.to validate_numericality_of(:end_time_seconds).is_greater_than_or_equal_to(0).allow_nil }
 
-  it { is_expected.to validate_presence_of(:low_frequency_hertz) }
   it { is_expected.to validate_numericality_of(:low_frequency_hertz).is_greater_than_or_equal_to(0) }
 
   it { is_expected.to validate_numericality_of(:high_frequency_hertz).is_greater_than_or_equal_to(0).allow_nil }

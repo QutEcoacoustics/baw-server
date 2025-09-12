@@ -1256,7 +1256,14 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL.squish
-        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score"
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score", (
+        SELECT json_agg(row_to_json(taggings_inner))
+        FROM (
+        SELECT "audio_events_tags"."id", "audio_events_tags"."audio_event_id", "audio_events_tags"."tag_id", "audio_events_tags"."created_at", "audio_events_tags"."updated_at", "audio_events_tags"."creator_id", "audio_events_tags"."updater_id"
+        FROM "audio_events_tags"
+        WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id")
+        AS "taggings_inner")
+        AS "taggings"
         FROM "audio_events"
         INNER
         JOIN "audio_recordings"
@@ -1339,7 +1346,14 @@ describe Filter::Query do
       )
 
       expected_sql = <<~SQL.squish
-        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score", ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
+        SELECT "audio_events"."id", "audio_events"."audio_recording_id", "audio_events"."start_time_seconds", "audio_events"."end_time_seconds", "audio_events"."low_frequency_hertz", "audio_events"."high_frequency_hertz", "audio_events"."is_reference", "audio_events"."creator_id", "audio_events"."updated_at", "audio_events"."created_at", "audio_events"."audio_event_import_file_id", "audio_events"."import_file_index", "audio_events"."provenance_id", "audio_events"."channel", "audio_events"."score", (
+        SELECT json_agg(row_to_json(taggings_inner))
+        FROM (
+        SELECT "audio_events_tags"."id", "audio_events_tags"."audio_event_id", "audio_events_tags"."tag_id", "audio_events_tags"."created_at", "audio_events_tags"."updated_at", "audio_events_tags"."creator_id", "audio_events_tags"."updater_id"
+        FROM "audio_events_tags"
+        WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id")
+        AS "taggings_inner")
+        AS "taggings", ("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
         AS "duration_seconds"
         FROM "audio_events"
         INNER JOIN "audio_recordings"

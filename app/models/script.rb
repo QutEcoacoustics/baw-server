@@ -302,6 +302,7 @@ class Script < ApplicationRecord
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
         event_import_glob: { type: 'string', readOnly: true },
+        event_import_minimum_score: { type: ['number', 'null'], format: 'float', readOnly: true },
         provenance_id: Api::Schema.id(read_only: false),
         resources: { '$ref' => '#/components/schemas/resources' }
       },

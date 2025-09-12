@@ -107,7 +107,7 @@ module Api
 
     # @return [Dry::Validation::Contract]
     def audio_event_validator(will_commit:, score_minimum:)
-      @audio_event_validator ||= AudioEventValidation.new(commit: will_commit, score_required: score_minimum.present?)
+      AudioEventValidation.new(commit: will_commit, score_required: score_minimum.present?)
     end
 
     # @param import [AudioEventImportFile] the import we're attaching to
@@ -157,10 +157,10 @@ module Api
       #  containing the ids of the created audio events in order.
       @audio_event_ids = []
 
-      # @type [Array<Array<Hash>>, nil] the reasons for rejections for each event
+      # @type [Array<Array<Hash>>] the reasons for rejections for each event
       #   These are not fatal errors, just reasons why we may have filtered out an event.
       #   Has the same structure as validation messages in @errors
-      @rejections = nil
+      @rejections = []
       @rejection_count = 0
 
       @audio_recording_ids = Set.new
