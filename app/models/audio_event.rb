@@ -74,7 +74,11 @@ class AudioEvent < ApplicationRecord
   validates :is_reference, inclusion: { in: [true, false] }
   validates :start_time_seconds, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :end_time_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :low_frequency_hertz, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  # AT 2025: changed to allow nil. This is a rather significant change and could break older clients.
+  # Unfortunately the reality is that many new recognizers do not provide frequency data.
+  # We also previously supported nil lower frequency via audio event imports, so relaxing this constraint
+  # is necessary to match import behaviour.
+  validates :low_frequency_hertz, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :high_frequency_hertz, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :channel, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 

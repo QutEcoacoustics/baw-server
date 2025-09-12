@@ -139,11 +139,13 @@ class AudioEventImportFilesController < ApplicationController
   def audio_event_import_file_params
     import_params = params
       .require(:audio_event_import_file)
-      .reverse_merge({ additional_tag_ids: [] })
-      .permit(:file, :audio_event_import_id, additional_tag_ids: [])
+      .reverse_merge({ additional_tag_ids: [], minimum_score: nil })
+      .permit(:file, :audio_event_import_id, :minimum_score, additional_tag_ids: [])
 
     import_params[:additional_tag_ids] =
       validate_params_array_of_ids(name: 'additional_tag_ids', value: import_params[:additional_tag_ids])
+
+    import_params[:minimum_score] = BigDecimal(import_params[:minimum_score]) if import_params[:minimum_score].present?
 
     return import_params.to_h if import_params[:file].is_a? ActionDispatch::Http::UploadedFile
 
@@ -159,7 +161,8 @@ class AudioEventImportFilesController < ApplicationController
       @audio_event_import_file,
       current_user,
       additional_tags: @audio_event_import_file.additional_tags,
-      provenance:
+      provenance:,
+      score_minimum: @audio_event_import_file.minimum_score
     )
 
     if commit?

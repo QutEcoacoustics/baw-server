@@ -16,4 +16,9 @@ RSpec.shared_context 'audio_event_parser' do
   let!(:tag_crickets) {
     create(:tag, text: 'crickets', type_of_tag: :common_name, is_taxonomic: true)
   }
+
+  before do
+    # rollback factory binding just to make test assertions simpler
+    AudioEvent.where(audio_event_import_file_id: import_file.id).delete_all
+  end
 end

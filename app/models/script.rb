@@ -8,6 +8,7 @@
 #  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
 #  description                                                                                                          :string
 #  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
+#  event_import_minimum_score(Minimum score threshold for importing events, if any)                                     :decimal(, )
 #  executable_command                                                                                                   :text             not null
 #  executable_settings                                                                                                  :text
 #  executable_settings_media_type                                                                                       :string(255)      default("text/plain")
@@ -65,6 +66,7 @@ class Script < ApplicationRecord
     }
 
   validates :provenance, presence: true
+  validates :event_import_minimum_score, allow_nil: true, numericality: true
 
   #validates :resources, json: { message: ->(errors) { errors }, schema: Api::Schema::RESOURCES_PATH }
   validate :check_version_increase, on: :create
@@ -74,6 +76,8 @@ class Script < ApplicationRecord
 
   validate :settings_are_consistent
   validate :executable_command_does_not_use_settings_when_not_provided
+
+  validate :score_minimum_only_set_with_glob
 
   # A filesystem safe version of a name.
   # E.g. "Analysis Programs Acoustic Indices" -> "ap-indices"
@@ -224,12 +228,12 @@ class Script < ApplicationRecord
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
                      :executable_settings_name, :executable_command, :executable_settings,
                      :version, :created_at, :creator_id, :is_last_version, :is_first_version,
-                     :is_last_version, :is_first_version, :event_import_glob, :provenance_id],
+                     :is_last_version, :is_first_version, :event_import_glob, :provenance_id, :event_import_minimum_score],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
                       :executable_settings_media_type,
                       :executable_settings_name, :executable_command,
                       :version, :created_at, :creator_id,
-                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id, :resources],
+                      :is_last_version, :is_first_version, :event_import_glob, :provenance_id, :resources, :event_import_minimum_score],
       text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type,
                     :executable_settings_name, :executable_command, :executable_settings],
       custom_fields: lambda { |item, _user|
@@ -298,6 +302,7 @@ class Script < ApplicationRecord
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
         event_import_glob: { type: 'string', readOnly: true },
+        event_import_minimum_score: { type: ['number', 'null'], format: 'float', readOnly: true },
         provenance_id: Api::Schema.id(read_only: false),
         resources: { '$ref' => '#/components/schemas/resources' }
       },
@@ -377,6 +382,12 @@ class Script < ApplicationRecord
     return if executable_settings.nil? && executable_settings_name.blank? && executable_settings_media_type.blank?
 
     errors.add(:base, 'executable settings, name, and media type must all be present or all be blank')
+  end
+
+  def score_minimum_only_set_with_glob
+    return if event_import_glob.present? || event_import_minimum_score.nil?
+
+    errors.add(:event_import_minimum_score, 'can only be set when event_import_glob is also set')
   end
 
   def set_group_id

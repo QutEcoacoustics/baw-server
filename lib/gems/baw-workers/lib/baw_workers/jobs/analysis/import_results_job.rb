@@ -32,7 +32,8 @@ module BawWorkers
             item.import_success = false
             item.append_error(result.failure.join(".\n"))
             item.save!
-            failed!(*result.failure)
+            # we used to call `failed!` here - but that's not accurate. Bad data is not the same as the job failing.
+            completed!(*result.failure)
           else
             item.import_success = true
             item.save!

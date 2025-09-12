@@ -8,6 +8,7 @@
 #  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
 #  description                                                                                                          :string
 #  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
+#  event_import_minimum_score(Minimum score threshold for importing events, if any)                                     :decimal(, )
 #  executable_command                                                                                                   :text             not null
 #  executable_settings                                                                                                  :text
 #  executable_settings_media_type                                                                                       :string(255)      default("text/plain")

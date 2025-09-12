@@ -4,9 +4,10 @@
 #
 # Table name: analysis_jobs_scripts
 #
-#  custom_settings(Custom settings for this script and analysis job) :text
-#  analysis_job_id                                                   :integer          not null, primary key
-#  script_id                                                         :integer          not null, primary key
+#  custom_settings(Custom settings for this script and analysis job)                                             :text
+#  event_import_minimum_score(Minimum score threshold for importing events, if any, custom to this analysis job) :decimal(, )
+#  analysis_job_id                                                                                               :integer          not null, primary key
+#  script_id                                                                                                     :integer          not null, primary key
 #
 # Foreign Keys
 #
@@ -21,4 +22,5 @@ class AnalysisJobsScript < ApplicationRecord
   belongs_to :script
 
   validates :custom_settings, length: { minimum: 1, maximum: 512.kilobytes }, allow_nil: true
+  validates :event_import_minimum_score, allow_nil: true, numericality: true
 end

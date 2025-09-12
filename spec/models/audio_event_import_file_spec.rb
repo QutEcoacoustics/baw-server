@@ -7,6 +7,9 @@
 #  id                                                                                             :bigint           not null, primary key
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
 #  file_hash(Hash of the file contents used for uniqueness checking)                              :text
+#  imported_count(Number of events parsed minus rejections)                                       :integer          default(0), not null
+#  minimum_score(Minimum score threshold actually used)                                           :decimal(, )
+#  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
 #  created_at                                                                                     :datetime         not null
 #  analysis_jobs_item_id                                                                          :integer

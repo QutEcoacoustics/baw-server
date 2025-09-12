@@ -530,7 +530,8 @@ ALTER SEQUENCE public.analysis_jobs_items_id_seq OWNED BY public.analysis_jobs_i
 CREATE TABLE public.analysis_jobs_scripts (
     analysis_job_id integer NOT NULL,
     script_id integer NOT NULL,
-    custom_settings text
+    custom_settings text,
+    event_import_minimum_score numeric
 );
 
 
@@ -539,6 +540,13 @@ CREATE TABLE public.analysis_jobs_scripts (
 --
 
 COMMENT ON COLUMN public.analysis_jobs_scripts.custom_settings IS 'Custom settings for this script and analysis job';
+
+
+--
+-- Name: COLUMN analysis_jobs_scripts.event_import_minimum_score; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_scripts.event_import_minimum_score IS 'Minimum score threshold for importing events, if any, custom to this analysis job';
 
 
 --
@@ -619,6 +627,9 @@ CREATE TABLE public.audio_event_import_files (
     additional_tag_ids integer[],
     created_at timestamp(6) without time zone NOT NULL,
     file_hash text,
+    minimum_score numeric,
+    imported_count integer DEFAULT 0 NOT NULL,
+    parsed_count integer DEFAULT 0 NOT NULL,
     CONSTRAINT path_and_analysis_jobs_item CHECK ((((path IS NOT NULL) AND (analysis_jobs_item_id IS NOT NULL)) OR ((path IS NULL) AND (analysis_jobs_item_id IS NULL))))
 );
 
@@ -642,6 +653,27 @@ COMMENT ON COLUMN public.audio_event_import_files.additional_tag_ids IS 'Additio
 --
 
 COMMENT ON COLUMN public.audio_event_import_files.file_hash IS 'Hash of the file contents used for uniqueness checking';
+
+
+--
+-- Name: COLUMN audio_event_import_files.minimum_score; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.minimum_score IS 'Minimum score threshold actually used';
+
+
+--
+-- Name: COLUMN audio_event_import_files.imported_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.imported_count IS 'Number of events parsed minus rejections';
+
+
+--
+-- Name: COLUMN audio_event_import_files.parsed_count; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.parsed_count IS 'Number of events parsed from this file';
 
 
 --
@@ -728,8 +760,8 @@ CREATE TABLE public.audio_events (
     channel integer,
     provenance_id integer,
     score numeric,
-    audio_event_import_file_id integer,
-    import_file_index integer
+    import_file_index integer,
+    audio_event_import_file_id bigint
 );
 
 
@@ -1797,7 +1829,8 @@ CREATE TABLE public.scripts (
     executable_settings_name character varying,
     resources jsonb,
     provenance_id integer,
-    event_import_glob character varying
+    event_import_glob character varying,
+    event_import_minimum_score numeric
 );
 
 
@@ -1827,6 +1860,13 @@ COMMENT ON COLUMN public.scripts.resources IS 'Resources required by this script
 --
 
 COMMENT ON COLUMN public.scripts.event_import_glob IS 'Glob pattern to match result files that should be imported as audio events';
+
+
+--
+-- Name: COLUMN scripts.event_import_minimum_score; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.event_import_minimum_score IS 'Minimum score threshold for importing events, if any';
 
 
 --
@@ -4431,6 +4471,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250909090000'),
 ('20250723051530'),
 ('20250714045539'),
 ('20250430021003'),

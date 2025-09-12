@@ -45,7 +45,7 @@ describe 'Common behaviour' do
       get(url, params: nil, headers:)
 
       expect(response).to have_http_status(:not_found)
-      expect(api_result['meta']['error']['details']).to eq('Could not find the requested page.')
+      expect(api_result[:meta][:error][:details]).to eq('Could not find the requested page.')
     end
 
     it 'can handle a routing error (HEAD)' do
