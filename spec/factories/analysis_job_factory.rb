@@ -13,7 +13,7 @@
 #  ongoing(If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.) :boolean          default(FALSE), not null
 #  overall_count                                                                                                                                                                           :integer          not null
 #  overall_data_length_bytes                                                                                                                                                               :bigint           default(0), not null
-#  overall_duration_seconds                                                                                                                                                                :decimal(14, 4)   not null
+#  overall_duration_seconds                                                                                                                                                                :float            not null
 #  overall_status                                                                                                                                                                          :string           not null
 #  overall_status_modified_at                                                                                                                                                              :datetime         not null
 #  resume_count(Count of resumptions)                                                                                                                                                      :integer          default(0), not null

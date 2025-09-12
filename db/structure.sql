@@ -325,7 +325,7 @@ CREATE TABLE public.analysis_jobs (
     overall_status character varying NOT NULL,
     overall_status_modified_at timestamp without time zone NOT NULL,
     overall_count integer NOT NULL,
-    overall_duration_seconds numeric(14,4) NOT NULL,
+    overall_duration_seconds double precision NOT NULL,
     overall_data_length_bytes bigint DEFAULT 0 NOT NULL,
     filter jsonb,
     system_job boolean DEFAULT false NOT NULL,
@@ -4471,6 +4471,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20250912033944'),
 ('20250909090000'),
 ('20250723051530'),
 ('20250714045539'),

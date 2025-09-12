@@ -13,7 +13,7 @@
 #  ongoing(If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.) :boolean          default(FALSE), not null
 #  overall_count                                                                                                                                                                           :integer          not null
 #  overall_data_length_bytes                                                                                                                                                               :bigint           default(0), not null
-#  overall_duration_seconds                                                                                                                                                                :decimal(14, 4)   not null
+#  overall_duration_seconds                                                                                                                                                                :float            not null
 #  overall_status                                                                                                                                                                          :string           not null
 #  overall_status_modified_at                                                                                                                                                              :datetime         not null
 #  resume_count(Count of resumptions)                                                                                                                                                      :integer          default(0), not null
@@ -421,15 +421,25 @@ class AnalysisJob < ApplicationRecord
   # associated recordings.
   # @return [Hash<Symbol, Numeric>]
   def overall_statistics_query
-    AnalysisJobsItem
-      .for_analysis_job(id)
-      .joins(:audio_recording)
+    AudioRecording
+      .joins(
+        AudioRecording.arel_table.join(
+          AnalysisJobsItem
+            .arel_table
+            .where(AnalysisJobsItem.arel_table[:analysis_job_id].eq(id))
+            .project(AnalysisJobsItem.arel_table[:audio_recording_id])
+            .distinct
+            .as(AnalysisJobsItem.table_name)
+        )
+        .on(AudioRecording.arel_table[:id].eq(AnalysisJobsItem.arel_table[:audio_recording_id]))
+        .join_sources
+      )
       .pick_hash({
         overall_count: Arel.star.count.coalesce(0),
         overall_duration_seconds:
-        AudioRecording.arel_table[:duration_seconds].cast('decimal').sum.coalesce(0),
+          AudioRecording.arel_table[:duration_seconds].cast(:float).sum.coalesce(0),
         overall_data_length_bytes:
-        AudioRecording.arel_table[:data_length_bytes].cast('bigint').sum.coalesce(0)
+          AudioRecording.arel_table[:data_length_bytes].cast('bigint').sum.coalesce(0)
       })
   end
 

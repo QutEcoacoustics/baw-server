@@ -13,7 +13,7 @@
 #  ongoing(If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.) :boolean          default(FALSE), not null
 #  overall_count                                                                                                                                                                           :integer          not null
 #  overall_data_length_bytes                                                                                                                                                               :bigint           default(0), not null
-#  overall_duration_seconds                                                                                                                                                                :decimal(14, 4)   not null
+#  overall_duration_seconds                                                                                                                                                                :float            not null
 #  overall_status                                                                                                                                                                          :string           not null
 #  overall_status_modified_at                                                                                                                                                              :datetime         not null
 #  resume_count(Count of resumptions)                                                                                                                                                      :integer          default(0), not null
@@ -89,6 +89,29 @@ describe AnalysisJob do
     expect(subject.errors[:analysis_jobs_scripts]).to eq ["can't be blank"]
   end
 
+  it 'can store really large duration values' do
+    expect {
+      create(:analysis_job, overall_duration_seconds: 999_999_999_999.9999).save!
+    }.not_to raise_error
+
+    expect(AnalysisJob.find_by(overall_duration_seconds: 999_999_999_999.9999)).to be_present
+  end
+
+  describe 'overall statistics' do
+    create_audio_recordings_hierarchy
+    create_analysis_jobs_matrix(scripts_count: 2, audio_recordings_count: 3)
+
+    it 'works as expected' do
+      analysis_job = analysis_jobs_matrix[:analysis_jobs].first
+
+      stats = analysis_job.overall_statistics_query
+
+      expect(stats[:overall_count]).to eq(3)
+      expect(stats[:overall_duration_seconds]).to eq(180_000) # from the factory
+      expect(stats[:overall_data_length_bytes]).to eq(11_400) # from the factory
+    end
+  end
+
   # elsewhere we test the permissions for setting system_job or not
   # here we just test that the validation works
   describe 'system job and project id exclusion' do
@@ -130,6 +153,7 @@ describe AnalysisJob do
 
   describe 'filter_as_relation' do
     include SqlHelpers::Example
+
     create_audio_recordings_hierarchy
 
     before do
@@ -469,15 +493,35 @@ describe AnalysisJob do
   end
 
   describe 'state machine' do
+    create_audio_recordings_hierarchy
+
     let(:analysis_job) {
-      create(:analysis_job)
+      create(:analysis_job, overall_count: 0, overall_duration_seconds: 0, overall_data_length_bytes: 0, project:,
+        creator: owner_user)
     }
 
     pause_all_jobs
 
+    def assert_updated_stats(count: nil, duration: nil, data_length: nil)
+      analysis_job.reload
+
+      expect(analysis_job.overall_count).to eq(count || AudioRecording.count)
+      expect(analysis_job.overall_duration_seconds).to eq(duration || AudioRecording.sum(:duration_seconds))
+      expect(analysis_job.overall_data_length_bytes).to eq(data_length || AudioRecording.sum(:data_length_bytes))
+    end
+
+    it 'starts in the preparing state' do
+      expect(analysis_job).to be_preparing
+
+      assert_updated_stats(count: 0, duration: 0, data_length: 0)
+    end
+
     it 'defines the process event' do
       expect(analysis_job).to transition_from(:preparing).to(:processing).on_event(:process)
       expect(analysis_job.started_at).not_to be_nil
+
+      analysis_job.save!
+      assert_updated_stats
     end
 
     it 'defines the suspend event' do
@@ -521,11 +565,17 @@ describe AnalysisJob do
     end
 
     it 'defines an amend event' do
+      # we should see stats increase
+      create(:audio_recording, site:, creator: owner_user)
       analysis_job.ongoing = true
 
       expect(analysis_job.amend_count).to eq(0)
       expect(analysis_job).to transition_from(:completed).to(:processing).on_event(:amend)
       expect(analysis_job.amend_count).to eq(1)
+
+      analysis_job.save!
+
+      assert_updated_stats
     end
 
     it 'the amend event is only available for ongoing jobs' do
