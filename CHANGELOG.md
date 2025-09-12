@@ -1,5 +1,22 @@
 # Changelog
 
+## [13.9.1](https://github.com/QutEcoacoustics/baw-server/tree/13.9.1) (2025-09-12)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.8.4...13.9.1)
+
+**Implemented enhancements:**
+
+- Allow importing events that satisfy a certain score [\#843](https://github.com/QutEcoacoustics/baw-server/issues/843)
+
+**Fixed bugs:**
+
+- Sending HEAD request to 404 page results in 500 response [\#841](https://github.com/QutEcoacoustics/baw-server/issues/841)
+- Amend job failing [\#829](https://github.com/QutEcoacoustics/baw-server/issues/829)
+
+**Merged pull requests:**
+
+- Add minimum score threshold functionality for audio event imports [\#845](https://github.com/QutEcoacoustics/baw-server/pull/845) ([atruskie](https://github.com/atruskie))
+
 ## [13.8.4](https://github.com/QutEcoacoustics/baw-server/tree/13.8.4) (2025-09-05)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.8.1...13.8.4)

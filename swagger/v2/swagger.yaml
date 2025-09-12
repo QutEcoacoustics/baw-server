@@ -1046,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-09-05T06:16:58.237Z'
+                  created_at: '2025-09-12T05:59:25.682Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -1567,6 +1567,7 @@ paths:
                     - event_import_glob
                     - provenance_id
                     - resources
+                    - event_import_minimum_score
                   sorting:
                     order_by: name
                     direction: asc
@@ -1601,6 +1602,7 @@ paths:
                     walltime: 
                     mem: 1000000.0
                     ngpus: 
+                  event_import_minimum_score: 
                   description_html: "<p>script description 18</p>\n"
                   description_html_tagline: script description 18
               schema:
@@ -1664,6 +1666,7 @@ paths:
                     walltime: 
                     mem: 1000000.0
                     ngpus: 
+                  event_import_minimum_score: 
                   description_html: "<p>script description 19</p>\n"
                   description_html_tagline: script description 19
               schema:
@@ -1715,6 +1718,7 @@ paths:
                     - event_import_glob
                     - provenance_id
                     - resources
+                    - event_import_minimum_score
                   sorting:
                     order_by: name
                     direction: asc
@@ -1749,6 +1753,7 @@ paths:
                     walltime: 
                     mem: 1000000.0
                     ngpus: 
+                  event_import_minimum_score: 
                   description_html: "<p>script description 20</p>\n"
                   description_html_tagline: script description 20
               schema:
@@ -2016,7 +2021,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.8.1 from http://web:3000.
+                  Version 13.8.4 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2056,7 +2061,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.8.1"
+                Write-Information "Acoustic Workbench downloader script version 13.8.4"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2238,7 +2243,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.8.1 from http://web:3000.
+                  Version 13.8.4 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2278,7 +2283,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.8.1"
+                Write-Information "Acoustic Workbench downloader script version 13.8.4"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -5296,7 +5301,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: C7_2ftttxIUkOKzu-xLPnjVJe5xxvVsmRb7xTQyyNIY
+                  auth_token: R-qj1C2Z4iljFk9BTLOAecqNR1CPIxA2LAZtLssNXuM
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5352,7 +5357,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: XPuQjdrjVBiSQu_8i502tD_E-EqNjtlFihI28iQz12o
+                  auth_token: t0JrydmpxjpmNxef3JDVqCvjvHe33ioc92qhVP9LGOQ
                   user_name: Admin
                   user_id: 1
               schema:
@@ -6578,6 +6583,9 @@ paths:
                     - analysis_jobs_item_id
                     - created_at
                     - file_hash
+                    - minimum_score
+                    - imported_count
+                    - parsed_count
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -6598,6 +6606,9 @@ paths:
                   analysis_jobs_item_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
+                  minimum_score: 
+                  imported_count: 0
+                  parsed_count: 0
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6657,6 +6668,9 @@ paths:
                   analysis_jobs_item_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: 8191953553fdd333aad59076d5d93ec7a6f5c5c400942e4808673b9d53250bb0ed068f6af701781b2e04682ea43f2b2b8e6b3434630c414062cafbcd6eabbe9e
+                  minimum_score: 
+                  imported_count: 1
+                  parsed_count: 1
                   imported_events:
                   - audio_recording_id: 123
                     start_time_seconds: 123.0
@@ -6673,6 +6687,7 @@ paths:
                     - id: 101
                       text: Birb
                     errors: []
+                    rejections: []
                     id: 102
                   committed: true
               schema:
@@ -6707,6 +6722,15 @@ paths:
                                 type: array
                                 items:
                                   type: object
+                                description: A detailed list of validation errors
+                                  that stopped this event being imported, and caused
+                                  a failure
+                              rejections:
+                                type: array
+                                items:
+                                  type: object
+                                description: A detailed list of reasons why this event
+                                  was not imported
                         readOnly: true
                       committed:
                         type: boolean
@@ -6737,6 +6761,9 @@ paths:
                   analysis_jobs_item_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: 8123ba26cab77c0c4e8b46c5e9f66e55d9cc8b71e997f06d2f746bcf37fcf8ffbdf952266eaa42e4d87b6c207e9f8216c865f7384650dc51330cfa6ab0caf023
+                  minimum_score: 
+                  imported_count: 0
+                  parsed_count: 1
                   imported_events:
                   - audio_recording_id: 999999999
                     start_time_seconds: 123.0
@@ -6755,6 +6782,7 @@ paths:
                     errors:
                     - audio_recording_id:
                       - does not exist
+                    rejections: []
                     id: 
                   committed: true
               schema:
@@ -6789,6 +6817,15 @@ paths:
                                 type: array
                                 items:
                                   type: object
+                                description: A detailed list of validation errors
+                                  that stopped this event being imported, and caused
+                                  a failure
+                              rejections:
+                                type: array
+                                items:
+                                  type: object
+                                description: A detailed list of reasons why this event
+                                  was not imported
                         readOnly: true
                       committed:
                         type: boolean
@@ -6842,6 +6879,9 @@ paths:
                     - analysis_jobs_item_id
                     - created_at
                     - file_hash
+                    - minimum_score
+                    - imported_count
+                    - parsed_count
                   sorting:
                     order_by: created_at
                     direction: asc
@@ -6862,6 +6902,9 @@ paths:
                   analysis_jobs_item_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
+                  minimum_score: 
+                  imported_count: 0
+                  parsed_count: 0
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -7023,6 +7066,9 @@ paths:
                   analysis_jobs_item_id: 
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
+                  minimum_score: 
+                  imported_count: 0
+                  parsed_count: 0
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -7063,6 +7109,7 @@ paths:
                   additional_tags: []
                   file: 
                   audio_event_import_id: 
+                  minimum_score: 
   "/sites/{id}":
     put:
       summary: update site
@@ -12938,6 +12985,12 @@ components:
         event_import_glob:
           type: string
           readOnly: true
+        event_import_minimum_score:
+          type:
+          - number
+          - 'null'
+          format: float
+          readOnly: true
         provenance_id:
           "$ref": "#/components/schemas/id"
           readOnly: false
@@ -13605,6 +13658,17 @@ components:
         analysis_jobs_item_id:
           "$ref": "#/components/schemas/nullableId"
           readOnly: true
+        minimum_score:
+          type:
+          - 'null'
+          - number
+          readOnly: true
+        imported_count:
+          type: integer
+          readOnly: true
+        parsed_count:
+          type: integer
+          readOnly: true
       required:
       - id
       - additional_tag_ids
@@ -13614,6 +13678,7 @@ components:
       - created_at
       - audio_event_import_id
       - analysis_jobs_item_id
+      - minimum_score
     audio_event:
       type: object
       properties:
