@@ -8,8 +8,7 @@ module Report
     # @see Report::Ctes::BucketFirstTag
     # @see Report::Ctes::BucketTsRange
     # @see Report::Ctes::TsRangeAndInterval
-    class BaseVerification < Report::Cte::NodeTemplate
-
+    class BaseVerification < Cte::NodeTemplate
       table_name :base_verification
 
       dependencies base_table: Report::Ctes::BaseEventReport

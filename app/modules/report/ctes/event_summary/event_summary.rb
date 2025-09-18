@@ -3,8 +3,7 @@
 module Report
   module Ctes
     module EventSummary
-      class EventSummary < Report::Cte::NodeTemplate
-
+      class EventSummary < Cte::NodeTemplate
         table_name :event_summary
 
         dependencies event_summary_json: Report::Ctes::EventSummary::EventSummaryJson

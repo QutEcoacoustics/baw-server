@@ -11,8 +11,7 @@ module Report
       # ci = Report::Ctes::Coverage::CoverageEvents.new(options: params)
       # cov = ci.select_manager.as('cov')
       # ActiveRecord::Base.connection.execute(Arel::SelectManager.new.project(Arel.star).from(cov).with(ci.collect(root: false).map(&:node)).to_sql)
-      class StackedTemporalEvents < Report::Cte::NodeTemplate
-
+      class StackedTemporalEvents < Cte::NodeTemplate
         table_name :stacked_temporal_events
         dependencies categorise_intervals: Report::Ctes::Coverage::CategoriseIntervals
 

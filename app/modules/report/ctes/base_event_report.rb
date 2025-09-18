@@ -14,8 +14,7 @@ module Report
     #  @see Report::Ctes::SortTemporalEvents
     #  @see Report::Ctes::EventSummary::BinSeries
     #  @see Report::Ctes::EventSummary::ScoreHistogram
-    class BaseEventReport < Report::Cte::NodeTemplate
-
+    class BaseEventReport < Cte::NodeTemplate
       table_name :base_table
 
       options base_scope: -> { default_relation_scope }

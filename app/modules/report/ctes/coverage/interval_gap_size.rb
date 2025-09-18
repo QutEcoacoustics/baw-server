@@ -4,7 +4,7 @@ module Report
   module Ctes
     module Coverage
       # TODO: might be a good idea to return the gap size value in the report
-      class IntervalGapSize < Report::Cte::NodeTemplate
+      class IntervalGapSize < Cte::NodeTemplate
         table_name :interval_gap_size
 
         options start_time: nil, end_time: nil, scaling_factor: 1920

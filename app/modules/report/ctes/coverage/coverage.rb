@@ -4,7 +4,7 @@ module Report
   module Ctes
     module Coverage
       # returns a CTE with a field named using the table_name at evaluation time
-      class Coverage < Report::Cte::NodeTemplate
+      class Coverage < Cte::NodeTemplate
         table_name :coverage
 
         dependencies interval_density: Report::Ctes::Coverage::IntervalDensity

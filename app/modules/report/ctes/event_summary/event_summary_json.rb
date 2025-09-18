@@ -5,7 +5,7 @@ module Report
     module EventSummary
       # Aggregate all results into event_summaries JSON for reporting
       # Each row is a tag/provenance summary with event and score histogram data
-      class EventSummaryJson < Report::Cte::NodeTemplate
+      class EventSummaryJson < Cte::NodeTemplate
         table_name :event_summary_json
         dependencies event_summary_statistics: Report::Ctes::EventSummary::EventSummaryStatistics,
           bin_series_scores: Report::Ctes::EventSummary::BinSeriesScores

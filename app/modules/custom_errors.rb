@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module CustomErrors
-  # Some errors we need not to be handled bby our custom error code.
+  # Some errors we need not to be handled by our custom error code.
   # Want them to just raise all the way to the top and not even generate a proper
   # api response.
   # These should all be internal server errors.

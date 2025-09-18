@@ -5,10 +5,13 @@ module Report
     class DependencyInitializer
       attr_reader :attributes
 
+      # @param cascade_attributes [Hash] Attributes to pass to dependency classes when initializing
       def initialize(cascade_attributes: {})
         @attributes = cascade_attributes
       end
 
+      # @param dependencies [Hash{Symbol => Report::Cte::Node, Class}]
+      # @return [Hash{Symbol => Report::Cte::Node}]
       def call(dependencies)
         dependencies.transform_values { |dep|
           case dep
@@ -23,9 +26,11 @@ module Report
       end
 
       def unknown_dependency(dep)
-        raise ArgumentError,
-          "Dependency must be a Node or subclass, got: #{dep.class.name} (#{dep.inspect})"
+        raise DependencyError,
+          "Dependency must be a Node instance or subclass, got: #{dep.class.name} (#{dep.inspect})"
       end
+
+      class DependencyError < StandardError; end
     end
   end
 end

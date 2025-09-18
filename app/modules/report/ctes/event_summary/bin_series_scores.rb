@@ -3,7 +3,7 @@
 module Report
   module Ctes
     module EventSummary
-      class BinSeriesScores < Report::Cte::NodeTemplate
+      class BinSeriesScores < Cte::NodeTemplate
         table_name :bin_series_scores
         dependencies bin_series: Report::Ctes::EventSummary::BinSeries,
           score_bin_fractions: Report::Ctes::EventSummary::ScoreBinFractions

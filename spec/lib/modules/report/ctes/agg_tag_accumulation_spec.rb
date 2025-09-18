@@ -140,7 +140,7 @@ describe Report::Ctes do
       end
     end
 
-    describe Report::Ctes::AggTagAccumulation do
+    describe Report::Ctes::Accumulation do
       it 'generates the correct #select_manager SQL' do
         expected_sql = <<~SQL.squish
           SELECT

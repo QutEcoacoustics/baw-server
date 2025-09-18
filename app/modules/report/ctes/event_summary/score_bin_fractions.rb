@@ -4,7 +4,7 @@ module Report
   module Ctes
     module EventSummary
       # calculate the fraction of scores in each bin, relative to the total for that tag/provenance group
-      class ScoreBinFractions < Report::Cte::NodeTemplate
+      class ScoreBinFractions < Cte::NodeTemplate
         table_name :score_bin_fractions
         dependencies score_bins: Report::Ctes::EventSummary::ScoreHistogram
         select do

@@ -6,7 +6,7 @@ module Report
       # Calculate consensus for each event
       # Selects the maximum value of the ratio for each group: this is the
       # consensus for a given audio event
-      class VerificationConsensus < Report::Cte::NodeTemplate
+      class VerificationConsensus < Cte::NodeTemplate
         table_name :verification_consensus
         dependencies verification_count: Report::Ctes::EventSummary::VerificationCount
         select do

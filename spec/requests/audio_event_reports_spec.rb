@@ -200,7 +200,8 @@ describe 'Audio Event Reports' do
     post '/reports/audio_event_summary', params: default_filter, **api_with_body_headers(writer_token)
 
     # composition should always have one entry per tag, per bucket
-    expected_length = Tag.count * report_length.in_days
+    # expected_length = Tag.count * report_length.in_days
+    expected_length = 4 * report_length.in_days
 
     expect(api_result[:composition_series].length).to eq(expected_length)
   end

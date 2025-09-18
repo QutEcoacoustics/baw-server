@@ -8,7 +8,7 @@ module Report
       # previous end time is a derived column (null for the first row)
       # representing the end_time of the previous row. getting this here so it
       # can be used to classify events into groups in the next step
-      class SortTemporalEvents < Report::Cte::NodeTemplate
+      class SortTemporalEvents < Cte::NodeTemplate
         table_name :sort_temporal_events
 
         dependencies base_table: BaseEventReport

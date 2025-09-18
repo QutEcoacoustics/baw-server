@@ -3,7 +3,7 @@
 module Report
   module Ctes
     module Coverage
-      class IntervalDensity < Report::Cte::NodeTemplate
+      class IntervalDensity < Cte::NodeTemplate
         table_name :interval_density
         dependencies interval_coverage: Report::Ctes::Coverage::IntervalCoverage,
           event_coverage: Report::Ctes::Coverage::EventCoverage

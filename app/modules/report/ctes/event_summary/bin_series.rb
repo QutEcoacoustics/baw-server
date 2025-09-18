@@ -4,7 +4,7 @@ module Report
   module Ctes
     module EventSummary
       # get the complete series of bins 1 to 50 for unique tag_id and provenance_id
-      class BinSeries < Report::Cte::NodeTemplate
+      class BinSeries < Cte::NodeTemplate
         table_name :bin_series
         dependencies base_table: Report::Ctes::BaseEventReport
         select do

@@ -6,7 +6,7 @@ module Report
       # calculate the running sum of the delta values for each group
       # when the delta is positive there is an event active within the group
       # when the delta is 0 it indicates a gap in the group
-      class TrackEventChanges < Report::Cte::NodeTemplate
+      class TrackEventChanges < Cte::NodeTemplate
         # project the 'next_event_time' field, which will be used to calculate the
         # duration of events and groups
         table_name :track_event_changes

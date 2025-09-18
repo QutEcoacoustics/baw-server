@@ -5,7 +5,6 @@ module Report
     class Node
       TableName = Data.define(:base_name, :suffix) {
         def table_name = suffix ? apply_suffix : base_name.to_sym
-
         def apply_suffix = :"#{base_name}_#{suffix}"
       }
 
@@ -13,13 +12,10 @@ module Report
 
       def initialize(name, suffix: nil, select: nil, dependencies: {}, options: {}, &block)
         assert_proc_given(select || block)
-
         @name = TableName.new(name, suffix)
         @options = options
-
         @select_proc = select || block
         @evaluate_select_proc = NodeEvaluator.new
-
         @passed_dependencies = dependencies
         @dependency_initializer = DependencyInitializer.new(cascade_attributes: cascade_attributes.call)
         @resolve_graph = TopologicalSort.new
@@ -32,15 +28,13 @@ module Report
       end
 
       def cascade_attributes = -> { { suffix: name.suffix, options: options } }
-
       def arel_table = @arel_table ||= Arel::Table.new(@name.table_name)
-
       def arel_node = @arel_node ||= arel_select.as(arel_table.name)
 
       def arel_select
         @arel_select ||= @evaluate_select_proc.using(method_definitions).evaluate(@select_proc)
       rescue StandardError => e
-        raise "Error evaluating select for CTE #{@name.table_name}: #{e.message}", e.backtrace
+        "Error evaluating select for node '#{@name.table_name}': #{e.message}"
       end
 
       def method_definitions
@@ -51,7 +45,11 @@ module Report
       end
 
       def dependencies
-        @dependencies ||= @dependency_initializer.call(@passed_dependencies)
+        @dependencies ||= begin
+          @dependency_initializer.call(@passed_dependencies)
+        rescue StandardError
+          raise "Error initializing dependencies for node '#{@name.table_name}'"
+        end
       end
 
       def collect(registry = {})
@@ -68,7 +66,7 @@ module Report
       end
 
       # Generates the Arel representation of this Cte node as a query, including
-      # all its dependencies.
+      # all it's dependencies.
       #
       # This is like getting the WITH clause that contains all dependency Ctes,
       # followed by the main select statement from the current node. If there are

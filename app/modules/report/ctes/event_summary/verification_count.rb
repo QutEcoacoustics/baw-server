@@ -10,7 +10,7 @@ module Report
       #   { confirmed: correct, category_count: 1 }
       #   { confirmed: incorrect, category_count: 1 }
       # ratio is the ratio of category_count to total_count, for each group
-      class VerificationCount < Report::Cte::NodeTemplate
+      class VerificationCount < Cte::NodeTemplate
         table_name :verification_count
         dependencies base_verification: Report::Ctes::BaseVerification
         select do

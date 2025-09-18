@@ -47,7 +47,8 @@ class ReportsController < ApplicationController
   end
 
   def report_template
-    Report::Ctes::AudioEvents
+    # just this one for now
+    Report::Ctes::AudioEventSummary
   end
 
   def report_options_with_scope(scope, parameters)
