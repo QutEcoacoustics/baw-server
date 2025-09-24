@@ -2,18 +2,28 @@
 
 module Report
   module Ctes
-    # Use the width_bucket function to return a query that categorises input
-    # data by bucket number
+    # Use the width_bucket function to categorise audio_events into buckets.
+    # Project tag id and score, for calculating unique tags later.
     #
-    # atm tightly coupled to a base table that has start_time_absolute, tag_id
-    # and score columns. decouple in the future; just requires a timestamp field on
-    # the base table as input, and desired output projection fields
+    # == query output
+    #
+    #  emits columns:
+    #    bucket (int)  --  the bucket number for an input value
+    #    tag_id (int)
+    #    score  (int)
+    #
+    # @note for the audio event report, the default value for
+    #   base_table.start_time_abolsute is audio_event start time.
+    #   but you could use a custom base_table with any timestamp data in this
+    #   field. then subclass this template to override base_table, or use the
+    #   Cte::Node registry to inject it.
     module Accumulation
       class BucketAllocate < Cte::NodeTemplate
         extend Report::TimeSeries
 
         table_name :bucket_allocate
 
+        # BucketCount provides the arguments used in width_bucket
         dependencies bucket_count: BucketCount, base_table: BaseEventReport
 
         select do

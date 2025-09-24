@@ -2,8 +2,41 @@
 
 module Report
   module Ctes
+    #
+    # The Coverage module provides a namespace for CTE templates used for
+    # calculating temporal coverage of events, such as audio recordings or
+    # analysis jobs.
+    #
+    # It works by grouping discrete temporal events into continuous intervals
+    # and then calculating the density of events within each interval. This is
+    # useful for visualizing the completeness of a dataset over a time range.
+    #
     module Coverage
-      # returns a CTE with a field named using the table_name at evaluation time
+      #
+      # Root CTE template for a temporal coverage result.
+      #
+      # Defines a CTE that formats the results of {IntervalDensity} into a JSON
+      # array representing the coverage series.
+      #
+      # The `analysis_result` option can be used to calculate the coverage of
+      # audio_events by distinct analysis result types.
+      #
+      # == query output
+      #
+      #  emits column:
+      #    coverage (json) -- an array of coverage interval objects. The name of
+      #                       this column is dynamic and depends on the table_name
+      #                       of the node instance.
+      #
+      #  emits json fields in coverage[*]:
+      #    range (string)                   -- tsrange literal in canonical form, inclusive start, exclusive end
+      #    density (numeric)                -- the density ([0,1], rounded to 3 places) of events in the interval
+      #    type (analysis_jobs_item_result) -- (optional) the analysis result type, if `analysis_result` is true
+      #
+      # @example Basic usage
+      #   result = Report::Ctes::Coverage::Coverage.execute
+      #   series = Report::Ctes::Coverage::Coverage.format_result(result.first)
+      #
       class Coverage < Cte::NodeTemplate
         table_name :coverage
 

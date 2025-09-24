@@ -3,6 +3,12 @@
 module Report
   module Ctes
     module Accumulation
+      # For each bucket, sum the number of tags that were seen for the first time
+      #
+      # == query output
+      #  emits columns:
+      #    sum_new_tags (int)  -- number of new tags seen in this bucket
+      #    bucket (int)        -- the bucket number
       class BucketSumUnique < Cte::NodeTemplate
         table_name :bucket_sum_unique
 

@@ -3,7 +3,16 @@
 module Report
   module Ctes
     module Accumulation
-      # Generate a series of tsrange values, one for each bucket in a time series
+      # Defines a CTE that generates a series of time buckets for a given time range
+      # and count of buckets.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    bucket_number (int) -- sequential bucket index, 1-based
+      #    time_bucket   (tsrange) -- the time range for this bucket, [inclusive start, exclusive end)
+      #
+      #  emits rows: one per bucket, from 1 to bucket_count
       class BucketTimeSeries < Cte::NodeTemplate
         extend Report::TimeSeries
 

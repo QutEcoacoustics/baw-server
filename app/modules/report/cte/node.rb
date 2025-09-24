@@ -34,7 +34,7 @@ module Report
       def arel_select
         @arel_select ||= @evaluate_select_proc.using(method_definitions).evaluate(@select_proc)
       rescue StandardError => e
-        "Error evaluating select for node '#{@name.table_name}': #{e.message}"
+        raise "Error evaluating select for node '#{@name.table_name}': #{e.message}"
       end
 
       def method_definitions

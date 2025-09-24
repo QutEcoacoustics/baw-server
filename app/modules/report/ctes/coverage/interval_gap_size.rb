@@ -3,10 +3,25 @@
 module Report
   module Ctes
     module Coverage
-      # TODO: might be a good idea to return the gap size value in the report
+      # Defines a CTE that calculates a single `gap_size` interval value.
+      #
+      # This value represents the minimum duration between two temporal events
+      # for them to be considered part of separate, discontinuous intervals.
+      # It is calculated by dividing the total duration of the report's time
+      # range by a scaling factor.
+      #
+      # == query output
+      #
+      #  emits column: gap_size (interval) -- the calculated minimum gap size
+      #
+      # @todo It might be a good idea to return the calculated gap size value in the report
       class IntervalGapSize < Cte::NodeTemplate
         table_name :interval_gap_size
 
+        # @param options [Hash] the default options hash
+        # @option options [Time] :start_time The start of the time range (required)
+        # @option options [Time] :end_time The end of the time range (required)
+        # @option options [Integer] :scaling_factor (1920) The scaling factor to use for coverage
         options start_time: nil, end_time: nil, scaling_factor: 1920
 
         select do

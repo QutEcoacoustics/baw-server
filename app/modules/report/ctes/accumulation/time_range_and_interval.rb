@@ -3,6 +3,10 @@
 module Report
   module Ctes
     module Accumulation
+      # Defines a CTE that provides configuration values for time series analysis
+      #
+      # Projects input options specifying a reporting period (start and end
+      # time) and an interval to use for temporal aggregation (bucketing)
       class TimeRangeAndInterval < Cte::NodeTemplate
         table_name :time_range_and_interval
 

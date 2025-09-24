@@ -4,7 +4,7 @@ module Report
   module Ctes
     # CTE node representing the audio events report
     #
-    # audio_event_report
+    # audio_event_summary
     # ├── base_table
     # ├── tag_accumulation
     # │   └── bucket_cumulative_unique

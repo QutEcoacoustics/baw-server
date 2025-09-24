@@ -30,7 +30,7 @@ module Report
 
       def initialize(suffix: nil, options: {})
         new_suffix = resolve_suffix(suffix)
-        new_options = default_options.merge(options)
+        new_options = default_options.merge(options.symbolize_keys)
         validate_options new_options
 
         super(
