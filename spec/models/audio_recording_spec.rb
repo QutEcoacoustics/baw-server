@@ -520,6 +520,16 @@ describe AudioRecording do
     expect(actual).to eq("#{uuid}.wav")
   end
 
+  # https://github.com/QutEcoacoustics/baw-server/issues/855
+  it 'returns the correct extension for audio/wave' do
+    ar = build(:audio_recording, media_type: 'audio/wave')
+    aggregate_failures do
+      expect(ar.original_format_calculated).to eq('wav')
+      expect(ar.canonical_filename).to end_with('.wav')
+      expect(ar.friendly_name).to end_with('.wav')
+    end
+  end
+
   describe 'friendly names' do
     let!(:site) { create(:site) }
     let!(:audio_recording) { create(:audio_recording, site:) }
