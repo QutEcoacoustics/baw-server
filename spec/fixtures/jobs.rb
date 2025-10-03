@@ -209,4 +209,13 @@ module Fixtures
       end
     end
   end
+
+  class SshJob < FixtureJob
+    perform_expects
+
+    def perform
+      output = BawWorkers::Config.batch_analysis.connection.send(:execute, 'echo "hello world"')
+      push_message("output: #{output}")
+    end
+  end
 end

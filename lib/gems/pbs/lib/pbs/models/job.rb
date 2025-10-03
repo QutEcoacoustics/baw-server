@@ -253,6 +253,10 @@ module PBS
       #   @return [Hash<string,string>]
       attribute? :estimated, ::BawApp::Types::Hash.map(::BawApp::Types::Symbol, ::BawApp::Types::String).optional
 
+      # TODO: support coercing from numerical states for job_state
+      # See https://github.com/openpbs/openpbs/blob/30c29c22b52ca7aafc398d15a3702cc52b39fcf8/src/include/job.h#L822-L829
+      # https://github.com/openpbs/openpbs/blob/master/src/modules/python/pbs/v1/_base_types.py#L910-L944
+
       def begun?
         job_state.start_with?('B')
       end
