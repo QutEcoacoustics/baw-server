@@ -1046,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-09-12T05:59:25.682Z'
+                  created_at: '2025-10-03T04:49:43.356Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -2021,7 +2021,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.8.4 from http://web:3000.
+                  Version 13.9.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2061,7 +2061,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.8.4"
+                Write-Information "Acoustic Workbench downloader script version 13.9.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2243,7 +2243,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.8.4 from http://web:3000.
+                  Version 13.9.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2283,7 +2283,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.8.4"
+                Write-Information "Acoustic Workbench downloader script version 13.9.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -5301,7 +5301,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: R-qj1C2Z4iljFk9BTLOAecqNR1CPIxA2LAZtLssNXuM
+                  auth_token: FVu1VIza595UrxG5bmcy68_6mFUNqm4TDY-80J_LFKE
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5357,7 +5357,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: t0JrydmpxjpmNxef3JDVqCvjvHe33ioc92qhVP9LGOQ
+                  auth_token: RzuvvkDqw1_doRMde0M6hj1j4dOXmsFFTmGUn9oR6TM
                   user_name: Admin
                   user_id: 1
               schema:

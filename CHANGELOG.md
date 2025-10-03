@@ -1,5 +1,17 @@
 # Changelog
 
+## [13.9.2](https://github.com/QutEcoacoustics/baw-server/tree/13.9.2) (2025-10-03)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.9.1...13.9.2)
+
+**Fixed bugs:**
+
+- Original audio downloads are using the wrong extension in [\#855](https://github.com/QutEcoacoustics/baw-server/issues/855)
+
+**Merged pull requests:**
+
+- Adds support for the audio/wave mime type [\#858](https://github.com/QutEcoacoustics/baw-server/pull/858) ([atruskie](https://github.com/atruskie))
+
 ## [13.9.1](https://github.com/QutEcoacoustics/baw-server/tree/13.9.1) (2025-09-12)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.8.4...13.9.1)
