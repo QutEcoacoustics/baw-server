@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-
-
 describe 'mime type extension patch' do
   let(:mime_types) {
     [
       ['audio/x-wav', 'wav'],
+      ['audio/wave', 'wav'],
       ['audio/wav', 'wav'],
       ['audio/vnd.wave', 'wav'],
       ['audio/mp3', 'mp3'],

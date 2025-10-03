@@ -146,6 +146,15 @@ module Fixtures
   end
   # rubocop:enable Naming/MethodName
 
+  # A song meter mini file - totally normal
+  def self.smm_file
+    ensure_exists FILES_PATH / 'WA_SMM' / '3.4_Normal' / 'SMM215_20231117_095200.wav'
+  end
+
+  def self.fl_file
+    ensure_exists FILES_PATH / 'FL' / 'Unknown' / '20220530_140528_Rec.wav'
+  end
+
   #
   # Check a fixture exists
   #

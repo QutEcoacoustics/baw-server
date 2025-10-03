@@ -250,6 +250,27 @@ describe BawWorkers::Jobs::Harvest::HarvestJob, :clean_by_truncation do
         expect_delayed_jobs(1)
       end
 
+      # https://github.com/QutEcoacoustics/baw-server/issues/855
+      it 'uses the correct extension for audio/wave files' do
+        @paths = copy_fixture_to_harvest_directory(
+          Fixtures.fl_file,
+          harvest
+        )
+
+        enqueue_and_perform(should_harvest: true)
+
+        # should have harvested
+        expect(AudioRecording.count).to eq 1
+        audio_recording = AudioRecording.first
+
+        expect(audio_recording.media_type).to eq 'audio/wave'
+
+        dir = audio_original.possible_paths_dir({ uuid: audio_recording.uuid }).first
+        filename = audio_original.file_name_uuid({ uuid: audio_recording.uuid, original_format: 'wav' })
+        v3_name_path = "#{dir}/#{filename}"
+        expect(audio_recording.original_file_paths).to eq [v3_name_path]
+      end
+
       it 'deletes the harvest file after a period of time' do
         enqueue_and_perform(should_harvest: true)
 
