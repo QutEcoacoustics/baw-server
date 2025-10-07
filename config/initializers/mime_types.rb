@@ -3,5 +3,4 @@
 # Add new mime types for use in respond_to blocks:
 # Mime::Type.register "text/richtext", :rtf
 
-# registered in baw-app instead
-
+# registered in lib/gems/baw-app/lib/initializers/register_mime_types.rb instead.
