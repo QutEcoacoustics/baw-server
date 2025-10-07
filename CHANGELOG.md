@@ -1,5 +1,13 @@
 # Changelog
 
+## [13.10.0](https://github.com/QutEcoacoustics/baw-server/tree/13.10.0) (2025-10-07)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.9.2...13.10.0)
+
+**Implemented enhancements:**
+
+- Add parsing support for full ISO8601 datestamps [\#859](https://github.com/QutEcoacoustics/baw-server/issues/859)
+
 ## [13.9.2](https://github.com/QutEcoacoustics/baw-server/tree/13.9.2) (2025-10-03)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.9.1...13.9.2)
