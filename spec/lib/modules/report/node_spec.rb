@@ -160,7 +160,7 @@ describe Report::Cte::Node do
         expect(dep_instance.name).to eq(:dep_node)
       end
 
-      it 'propogates suffix and options from the receiver node' do
+      it 'propagates suffix and options from the receiver node' do
         node = Report::Cte::Node.new(:test_node, suffix: :v1, options: { limit: 10 },
           dependencies: { dep: dep_class }) {
           users.project(users[:id])

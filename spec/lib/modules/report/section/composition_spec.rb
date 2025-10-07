@@ -13,7 +13,7 @@ describe 'Report::Section::Composition' do
     expected_sql = <<~SQL.squish
       SELECT
         "bucketed_time_series"."bucket_number",
-        "bucketed_time_series"."time_bucket" AS "range",
+        "bucketed_time_series"."range" AS "range",
         distinct_tags.tag_id,
         COUNT(DISTINCT "audio_events"."audio_event_id") AS "count",
         (SUM(COUNT(DISTINCT "audio_events"."audio_event_id")) OVER (PARTITION BY "bucketed_time_series"."bucket_number")) AS "total_tags_in_bin",
@@ -24,7 +24,7 @@ describe 'Report::Section::Composition' do
         SELECT DISTINCT tag_id FROM base_table
       ) distinct_tags
       LEFT OUTER JOIN "audio_events" ON (
-        "bucketed_time_series"."time_bucket" @> "audio_events"."start_time_absolute"
+        "bucketed_time_series"."range" @> "audio_events"."start_time_absolute"
       ) AND (
         "audio_events"."tag_id" = "distinct_tags"."tag_id"
       )
@@ -65,7 +65,7 @@ describe 'Report::Section::Composition' do
       )
       GROUP BY
         "bucketed_time_series"."bucket_number",
-        "bucketed_time_series"."time_bucket",
+        "bucketed_time_series"."range",
         distinct_tags.tag_id
       ORDER BY
         distinct_tags.tag_id,

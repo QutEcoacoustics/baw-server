@@ -64,9 +64,9 @@ module Report
           bucket_size: 'day',
           start_time: nil, # report start time
           end_time: nil, # report end time
-          scaling_factor: 1920, # coverage scaling factor
+          scaling_factor: 1920, # coverage
           lower_field: :recorded_date, # coverage
-          upper_field: :end_date # coverage
+          upper_field: :recorded_end_date # coverage
         }
       end
 

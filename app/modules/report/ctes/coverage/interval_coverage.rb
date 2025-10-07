@@ -3,16 +3,8 @@
 module Report
   module Ctes
     module Coverage
-      # Defines a CTE that calculates the start and end times for each
-      # continuous interval of temporal events.
-      #
-      # It groups the events by the `group_id` from the {CategoriseIntervals} CTE
-      # and finds the minimum start time and maximum end time for each group.
-      # This effectively collapses the individual events within a continuous
-      # sequence into a single row representing the entire interval.
-      #
-      # If the `analysis_result` option is true, it also groups by the `result`
-      # column, creating separate intervals for each analysis result type.
+      # Defines a CTE that returns the start and end time for each grouping
+      # (interval) of temporal events.
       #
       # == query output
       #

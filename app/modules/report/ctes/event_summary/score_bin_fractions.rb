@@ -3,7 +3,21 @@
 module Report
   module Ctes
     module EventSummary
-      # calculate the fraction of scores in each bin, relative to the total for that tag/provenance group
+      #
+      # Calculates the fraction of scores in each histogram bin.
+      #
+      # This CTE takes the binned score data from {ScoreHistogram} and calculates
+      # the fraction of the total scores that fall into each bin for a given
+      # tag/provenance group.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    tag_id (int)            -- the id of the tag
+      #    provenance_id (int)     -- the id of the provenance
+      #    bin_id (int)            -- the bin number for the score
+      #    bin_fraction (numeric)  -- the fraction of events in the bin, rounded to 3 decimal places
+      #
       class ScoreBinFractions < Cte::NodeTemplate
         table_name :score_bin_fractions
         dependencies score_bins: Report::Ctes::EventSummary::ScoreHistogram
@@ -13,8 +27,6 @@ module Report
             score_bins[:tag_id],
             score_bins[:provenance_id],
             score_bins[:bin_id],
-            score_bins[:bin_count],
-            score_bins[:group_count],
             (score_bins[:bin_count].cast('numeric') / null_if_count).round(3).as('bin_fraction')
           )
         end

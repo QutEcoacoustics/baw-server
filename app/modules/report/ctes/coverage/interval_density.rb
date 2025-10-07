@@ -8,11 +8,11 @@ module Report
       #
       # It joins the `interval_coverage` CTE (which defines the bounds of each
       # interval) with the `event_coverage` CTE (which calculates the total
-      # duration of events within each interval).
+      # duration of actual event coverage within each interval).
       #
-      # The density is calculated as the ratio of the total covered seconds to the
-      # total duration of the interval. A density of 1.0 means the interval is
-      # completely covered by events, while a density less than 1.0 indicates
+      # The density is calculated as the ratio of the total covered seconds to
+      # the total duration of the interval. A density of 1.0 means the interval
+      # is completely covered by events, while a density less than 1.0 indicates
       # gaps.
       #
       # If the `analysis_result` option is true, density is calculated separately
@@ -21,13 +21,13 @@ module Report
       # == query output
       #
       #  inherits columns from `interval_coverage`:
-      #    group_id       (bigint)                        -- sequential group index, 0-based
+      #    group_id       (bigint)                       -- sequential group index, 0-based
       #    coverage_start (timestamp without time zone)  -- the start time of the continuous interval
       #    coverage_end   (timestamp without time zone)  -- the end time of the continuous interval
       #    result         (analysis_jobs_item_result)    -- (optional) the analysis result type
       #
       #  inherits columns from `event_coverage`:
-      #    total_covered_seconds (numeric) -- total duration of events within the interval
+      #    total_covered_seconds (numeric) -- total duration of actual event coverage within the interval
       #
       #  emits columns:
       #    interval_seconds (numeric) -- total duration of the interval

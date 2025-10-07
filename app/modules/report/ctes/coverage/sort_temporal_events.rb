@@ -3,32 +3,47 @@
 module Report
   module Ctes
     module Coverage
-      # This CTE uses two input fields that represent the lower/upper time boundaries
-      # of the entity (e.g. audio_recording) for which coverage will be calculated.
-      # Rows are ordered by the lower_field. If the analysis_result options is true, the data is partitioned by
-      # the 'result' field (AnalysisJobsItem result) when ordered.
-      # The CTE projection returns the lower/upper fields, a previous end time column (null for first row),
-      # and the 'result' status if applicable.
-      # The previous end time row will be used to classify 'events' into groups.
+      # Prepares temporal data for interval analysis
+      #
+      # This CTE takes a base table of temporal events, with the expected format
+      # of lower_field, upper_field (i.e. start time, end time).
+      #
+      # It returns rows ordered by the lower field, and a column `prev_end` with
+      # the end time of the previous event. This is used by {CategoriseIntervals}
+      # to classify events into groups based on the gaps between them.
+      #
+      # If the `analysis_result` option is true, the events are partitioned by
+      # the `result` column before sorting, so that each result type is treated
+      # as a separate sequence.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    start_time (timestamp)
+      #    end_time   (timestamp)
+      #    prev_end   (timestamp)             -- the end time of the previous event (in the group), or NULL if it is the first
+      #    result (analysis_jobs_item_result) -- (optional) if analysis_result is true, the analysis result field
+      #
+      #  emits rows: one per event from the base table
       class SortTemporalEvents < Cte::NodeTemplate
         table_name :sort_temporal_events
 
         dependencies base_table: BaseEventReport
 
-        # lower and upper field are the attribute names of timestamp columns on
-        # the `base_table` table dependency that will be used to calculate coverage intervals
+        # Default options for an audio report, using start/end times of audio recordings
         #
-        # for the audio events report these fields are: recorded_date, end_date
+        # @return [Hash{Symbol => Object}] options
+        # @options options [Symbol] :lower_field (:recorded_date) the attribute name of the lower time bound column
+        # @options options [Symbol] :upper_field (:recorded_end_date) the attribute name of the upper time bound column
+        # @options options [Boolean] :analysis_result (false) whether to partition by a `result` column
         options do
           {
-            analysis_result: false,
-            lower_field: nil,
-            upper_field: nil
+            lower_field: :recorded_date,
+            upper_field: :recorded_end_date,
+            analysis_result: false
           }
         end
 
-        # given a lower and upper, and an optional partition by clause
-        # project audio recording start_time, end_time, prev_end time, and the 'result' status (if applicable)
         select do
           analysis_result = options.fetch(:analysis_result)
           time_lower = base_table[options[:lower_field]]

@@ -3,13 +3,24 @@
 module Report
   module Ctes
     module EventSummary
-      # Count verifications per tag/provenance/audio_event/confirmed
-      # Calculates category_count and ratio for each group
-      # one row per tag/provenance/audio_event/'confirmed category'
-      # category_count is calculated as per grouping and would give tuples like:
-      #   { confirmed: correct, category_count: 1 }
-      #   { confirmed: incorrect, category_count: 1 }
-      # ratio is the ratio of category_count to total_count, for each group
+      #
+      # Counts verifications per tag, provenance, audio event, and confirmation status.
+      #
+      # This CTE calculates the count of verifications for each category (e.g.,
+      # 'correct', 'incorrect') and the ratio of each category's count to the
+      # total count for the group.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    tag_id (int) -- the id of the tag
+      #    provenance_id (int) -- the id of the provenance
+      #    audio_event_id (int) -- the id of the audio event
+      #    score (numeric) -- the score of the audio event
+      #    confirmed (boolean) -- the confirmation status of the verification
+      #    category_count (int) -- the number of verifications in the category
+      #    ratio (float) -- the ratio of category_count to the total verifications for the event
+      #
       class VerificationCount < Cte::NodeTemplate
         table_name :verification_count
         dependencies base_verification: Report::Ctes::BaseVerification

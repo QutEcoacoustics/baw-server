@@ -3,8 +3,18 @@
 module Report
   module Ctes
     module EventSummary
-      # Aggregate all results into event_summaries JSON for reporting
-      # Each row is a tag/provenance summary with event and score histogram data
+      #
+      # This CTE formats the outputs of {EventSummaryStatistics} and
+      # {BinSeriesScores} into JSON objects, for each tag/provenance pair.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    provenance_id (int) -- the id of the provenance
+      #    tag_id (int) -- the id of the tag
+      #    events (jsonb) -- a JSON object with event statistics (count, verifications, consensus)
+      #    score_histogram (jsonb) -- a JSON object with score histogram data (bins, std dev, mean, min, max)
+      #
       class EventSummaryJson < Cte::NodeTemplate
         table_name :event_summary_json
         dependencies event_summary_statistics: Report::Ctes::EventSummary::EventSummaryStatistics,

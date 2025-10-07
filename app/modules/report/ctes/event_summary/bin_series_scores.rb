@@ -3,6 +3,21 @@
 module Report
   module Ctes
     module EventSummary
+      #
+      # Aggregates score bin fractions into an array for each tag/provenance group.
+      #
+      # This CTE joins the complete series of bins from {BinSeries} with the
+      # calculated bin fractions from {ScoreBinFractions}. It coalesces missing
+      # bin fractions to 0 and aggregates them into a single array, ensuring a
+      # complete histogram data series.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    tag_id (int) -- the id of the tag
+      #    provenance_id (int) -- the id of the provenance
+      #    bin_fraction (array[numeric]) -- an array of bin fractions for the histogram
+      #
       class BinSeriesScores < Cte::NodeTemplate
         table_name :bin_series_scores
         dependencies bin_series: Report::Ctes::EventSummary::BinSeries,

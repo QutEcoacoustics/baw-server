@@ -66,7 +66,7 @@ describe Report::Ctes do
           SELECT
             bucket_number,
             tsrange(lower(time_range) + ((bucket_number - 1) * bucket_interval),
-                    lower(time_range) + (bucket_number * bucket_interval)) AS "time_bucket"
+                    lower(time_range) + (bucket_number * bucket_interval)) AS "range"
           FROM "bucket_count"
           CROSS JOIN generate_series(1, CEIL("bucket_count"."bucket_count")) AS bucket_number
         SQL
@@ -129,7 +129,7 @@ describe Report::Ctes do
         expected_sql = <<-SQL.squish
           SELECT
             "bucket_time_series"."bucket_number",
-            "bucket_time_series"."time_bucket" AS "range",
+            "bucket_time_series"."range" AS "range",
             CAST(COALESCE(SUM("bucket_sum_unique"."sum_new_tags") OVER (ORDER BY "bucket_time_series"."bucket_number"), 0) AS int) AS "count"
           FROM "bucket_time_series"
           LEFT OUTER JOIN "bucket_sum_unique" ON "bucket_time_series"."bucket_number" = "bucket_sum_unique"."bucket"

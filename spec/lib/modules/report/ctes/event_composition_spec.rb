@@ -27,7 +27,7 @@ describe 'Report Composition Ctes' do
       expected_sql = <<~SQL.squish
         SELECT
           "bucket_time_series"."bucket_number",
-          "bucket_time_series"."time_bucket" AS "range",
+          "bucket_time_series"."range" AS "range",
           distinct_tags.tag_id,
           COUNT(DISTINCT "base_table"."audio_event_id") AS "count",
           (SUM(COUNT(DISTINCT "base_table"."audio_event_id")) OVER (PARTITION BY "bucket_time_series"."bucket_number")) AS "total_tags_in_bin",
@@ -38,7 +38,7 @@ describe 'Report Composition Ctes' do
           SELECT DISTINCT tag_id FROM base_table
         ) distinct_tags
         LEFT OUTER JOIN "base_table" ON (
-          "bucket_time_series"."time_bucket" @> "base_table"."start_time_absolute"
+          "bucket_time_series"."range" @> "base_table"."start_time_absolute"
         ) AND (
           "base_table"."tag_id" = "distinct_tags"."tag_id"
         )
@@ -73,7 +73,7 @@ describe 'Report Composition Ctes' do
             AND ("consensus_ratios"."tag_id" = "distinct_tags"."tag_id")
         GROUP BY
           "bucket_time_series"."bucket_number",
-          "bucket_time_series"."time_bucket",
+          "bucket_time_series"."range",
           distinct_tags.tag_id
         ORDER BY
           distinct_tags.tag_id,

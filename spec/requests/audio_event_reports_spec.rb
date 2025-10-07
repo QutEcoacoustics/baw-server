@@ -18,25 +18,13 @@ describe 'Audio Event Reports' do
   let(:site_two) { create(:site_with_lat_long, projects: [project], region: region, creator: creator) }
 
   let(:writer_token) { Creation::Common.create_user_token(creator) }
-  # let(:default_filter) {
-  #   {
-  #     filter: {},
-  #     options: {
-  #       bucket_size: 'day',
-  #       start_time: start_date,
-  #       end_time: start_date + report_length
-  #     }
-  #   }
-  # }
   let(:default_filter) {
     {
       filter: {},
       options: {
         start_time: start_date.iso8601,
         end_time: (start_date + report_length).iso8601,
-        scaling_factor: 1920,
-        lower_field: :recorded_date,
-        upper_field: :end_date, # see Report::Ctes::BaseEventReport
+        coverage_scaling_factor: 1920,
         interval: '1 day'
       }
     }
@@ -221,6 +209,7 @@ describe 'Audio Event Reports' do
     riflebird_tag_id = Tag.find_by(text: :riflebird).id
     magpie_tag_id = Tag.find_by(text: :magpie).id
     first_provenance_id = Provenance.first.id
+
     expected =
       a_hash_including(
         site_ids: all_site_ids,
@@ -239,8 +228,8 @@ describe 'Audio Event Reports' do
               a_hash_including(
                 max: 0.84,
                 min: 0.12,
-                bins: array_including(0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0),
+                bins: contain_exactly(0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0),
                 mean: 0.414,
                 standard_deviation: 0.334
               )
@@ -254,7 +243,7 @@ describe 'Audio Event Reports' do
               a_hash_including(
                 max: 0.26,
                 min: 0.09,
-                bins: array_including(0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                bins: contain_exactly(0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
                 mean: 0.175,
                 standard_deviation: 0.12
@@ -269,7 +258,7 @@ describe 'Audio Event Reports' do
               a_hash_including(
                 max: 0.86,
                 min: 0.86,
-                bins: array_including(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                bins: contain_exactly(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0),
                 mean: 0.86,
                 standard_deviation: nil
@@ -284,7 +273,7 @@ describe 'Audio Event Reports' do
               a_hash_including(
                 max: 0.26,
                 min: 0.26,
-                bins: array_including(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                bins: contain_exactly(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
                 mean: 0.26,
                 standard_deviation: nil
@@ -387,6 +376,7 @@ describe 'Audio Event Reports' do
           )
         )
       )
+
     actual_without_date = api_result.except(:generated_date)
     expect(actual_without_date).to match(expected)
   end

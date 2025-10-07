@@ -3,6 +3,39 @@
 module Report
   module Ctes
     module EventComposition
+      #
+      # Generates a bucketed time series of event counts and verification
+      # summary statistics for tags; used to examine changes in tag composition
+      # over time.
+      #
+      # Events are grouped by bucket and tag. Returns the count of events, the
+      # count of total events for the bucket, the count of verifications, and
+      # the average consensus.
+      #
+      # Consensus can be considered a measure of the agreement level for a tag
+      # applied to a given event. It is first calculated per event, and then
+      # averaged across audio events within bucket/tag groups:
+      #
+      #   - For each verification `confirmed` value, get the ratio of responses to total verifications
+      #   - The `confirmed` value with the highest ratio is the consensus for an event
+      #   - Return the average consensus ratio of events (ignoring nil values), within bucket/tag groups
+      #
+      # Because this is an average of consensus ratios, it doesn't tell you
+      # anything about the types of consensus, i.e. the `confirmed` values, it
+      # just tells you the average level of agreement for a given tag and time
+      # period.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    bucket_number (numeric)           -- sequential index of the time bucket
+      #    range (tsrange)                   -- the time range of the bucket
+      #    tag_id (int)                      -- the id of the tag
+      #    count (bigint)                    -- number of events for the tag in this bucket
+      #    total_tags_in_bin (numeric)       -- total number of events for all tags in this bucket
+      #    verifications (bigint)            -- number of verifications for the tag in this bucket
+      #    consensus (double precision, nil) -- average consensus score for verified events of the tag in this bucket
+      #
       class CompositionSeries < Cte::NodeTemplate
         table_name :composition_series
 
@@ -57,8 +90,9 @@ module Report
           #
           # Then when joined to the composition series, we join by audio events and
           # tags, so they get placed in the right bucket, and the consensus is
-          # averaged. So it's the average consensus for all audio events in the
-          # bucket, for a tag.
+          # averaged. Average ignores null values, so we end up with an average
+          # consensus for all verified audio events in the bucket, for a tag,
+          # where consensus is not null.
           consensus_ratios = Arel::SelectManager.new
             .project(
               subquery_one_alias[:audio_event_id],
@@ -81,7 +115,7 @@ module Report
           Arel::SelectManager.new
             .project(
               bucket_time_series[:bucket_number],
-              bucket_time_series[:time_bucket].as('range'),
+              bucket_time_series[:range].as('range'),
               Arel.sql('distinct_tags.tag_id'),
               base_table[:audio_event_id].count(true).as('count'), # count of events per tag per bucket
               window_bucket_count.as('total_tags_in_bin'),
@@ -91,7 +125,7 @@ module Report
             .from(bucket_time_series)
             .join(distinct_tags_sql)
             .join(base_table, Arel::Nodes::OuterJoin)
-            .on(bucket_time_series[:time_bucket].contains(base_table[:start_time_absolute])
+            .on(bucket_time_series[:range].contains(base_table[:start_time_absolute])
               .and(base_table[:tag_id].eq(distinct_tags_table[:tag_id])))
             .join(base_verification, Arel::Nodes::OuterJoin)
             .on(base_table[:audio_event_id].eq(base_verification[:audio_event_id])
@@ -101,7 +135,7 @@ module Report
               .and(consensus_ratios_alias[:tag_id].eq(distinct_tags_table[:tag_id])))
             .group(
               bucket_time_series[:bucket_number],
-              bucket_time_series[:time_bucket],
+              bucket_time_series[:range],
               Arel.sql('distinct_tags.tag_id')
             )
             .order(Arel.sql('distinct_tags.tag_id'), bucket_time_series[:bucket_number])

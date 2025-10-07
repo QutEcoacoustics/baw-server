@@ -3,13 +3,21 @@
 module Report
   module Ctes
     module Coverage
-      # within each group, get the sum of the durations of all the events
-      # an event is either a start or end time, and next_end_time does not
-      # necessarily correspond to a separate row in the context of the original
-      # data e.g. event time 0 and next_event_time 10 could represent a start
-      # and end time of a single recording, or two separate recordings.
+      # Calculates the total duration of actual event coverage within each
+      # coverage interval. Used later to determine coverage density.
       #
-      # we want to know the duration of time covered by events within an interval
+      # This CTE sums the durations of all sub-intervals where at least one
+      # event is active (`running_sum` > 0). It measures the "real" coverage
+      # within a group (coverage interval), excluding any gaps.
+      #
+      # == query output
+      #
+      #  emits columns:
+      #    group_id (bigint)                  -- interval group id
+      #    total_covered_seconds (numeric)    -- the total 'actual' coverage in seconds for the group
+      #    result (analysis_jobs_item_result) -- (optional) if analysis_result is true, the analysis result
+      #
+      #  emits rows: one per group
       class EventCoverage < Cte::NodeTemplate
         table_name :event_coverage
         dependencies track_event_changes: Report::Ctes::Coverage::TrackEventChanges

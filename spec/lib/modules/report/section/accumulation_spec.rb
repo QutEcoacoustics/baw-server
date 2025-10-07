@@ -39,7 +39,7 @@ describe 'Report::Section::Accumulation' do
     expected_sql = <<~SQL.squish
       SELECT
         bucket_number,
-        tsrange(lower(time_range) + ((bucket_number - 1) * bucket_interval), lower(time_range) + (bucket_number * bucket_interval)) AS "time_bucket"
+        tsrange(lower(time_range) + ((bucket_number - 1) * bucket_interval), lower(time_range) + (bucket_number * bucket_interval)) AS "range"
       FROM "number_of_buckets"
       CROSS JOIN generate_series(1, CEIL("number_of_buckets"."bucket_count")) AS bucket_number
     SQL
@@ -96,7 +96,7 @@ describe 'Report::Section::Accumulation' do
     expected_sql = <<~SQL.squish
       SELECT
         "bucketed_time_series"."bucket_number",
-        "bucketed_time_series"."time_bucket" AS "range",
+        "bucketed_time_series"."range" AS "range",
         CAST(COALESCE(SUM("sum_unique_tags_by_bucket"."sum_new_tags") OVER (ORDER BY "bucketed_time_series"."bucket_number"), 0) AS int) AS "count"
       FROM "bucketed_time_series"
       LEFT OUTER JOIN "sum_unique_tags_by_bucket" ON "bucketed_time_series"."bucket_number" = "sum_unique_tags_by_bucket"."bucket"

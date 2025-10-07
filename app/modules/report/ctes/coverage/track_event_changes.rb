@@ -4,7 +4,7 @@ module Report
   module Ctes
     module Coverage
       # Defines a CTE that tracks the number of overlapping temporal events at
-      # each point in time within a continuous interval.
+      # each point in time within a continuous interval grouping.
       #
       # It uses the `stacked_temporal_events` CTE, which provides a timeline of
       # start and end points for all events. This CTE calculates a `running_sum`
@@ -14,7 +14,7 @@ module Report
       # A `running_sum` greater than 0 indicates that at least one event is
       # active. The `next_event_time` column is also added to mark the timestamp
       # of the next change. This is used by {EventCoverage} to calculate the
-      # durations of actual event coverage, within a coverage period.
+      # duration of actual event coverage within a coverage interval.
       #
       # If the `analysis_result` option is true, these calculations are
       # partitioned by the `result` column.

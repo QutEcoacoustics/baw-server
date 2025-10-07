@@ -10,7 +10,7 @@ module Report
       #
       #  emits columns:
       #    bucket_number (int) -- sequential bucket index, 1-based
-      #    time_bucket   (tsrange) -- the time range for this bucket, [inclusive start, exclusive end)
+      #    range   (tsrange) -- the time range for this bucket, `[inclusive start, exclusive end)`
       #
       #  emits rows: one per bucket, from 1 to bucket_count
       class BucketTimeSeries < Cte::NodeTemplate
@@ -27,7 +27,7 @@ module Report
           # ! magic string bucket_interval
           range_from = Arel.sql('lower(time_range) + ((? - 1) * bucket_interval)', series_alias)
           range_to = Arel.sql('lower(time_range) + (? * bucket_interval)', series_alias)
-          ts_range = Arel.sql('tsrange(?, ?)', range_from, range_to).as('time_bucket')
+          ts_range = Arel.sql('tsrange(?, ?)', range_from, range_to).as('range')
 
           bucket_count
             .project(series_alias, ts_range)

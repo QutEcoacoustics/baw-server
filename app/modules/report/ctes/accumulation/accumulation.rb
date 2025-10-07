@@ -25,7 +25,7 @@ module Report
       #
       #  emits json fields in accumulation_series[*]:
       #    bucket_number (int) -- sequential bucket index, 1-based
-      #    range (string)      -- tsrange literal in canonical form, inclusive start, exclusive end
+      #    range (string)      -- tsrange literal in canonical form, `[inclusive start, exclusive end)`
       #    count (int)         -- cumulative total up to and including this bucket
       #
       # @todo add output field accumulation_series[*].error

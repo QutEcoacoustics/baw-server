@@ -4,12 +4,17 @@ module Report
   module Ctes
     #
     # The Coverage module provides a namespace for CTE templates used for
-    # calculating temporal coverage of events, such as audio recordings or
-    # analysis jobs.
+    # calculating temporal coverage of events, such as audio recordings.
     #
     # It works by grouping discrete temporal events into continuous intervals
-    # and then calculating the density of events within each interval. This is
-    # useful for visualizing the completeness of a dataset over a time range.
+    # and then calculating the density of actual event coverage within each
+    # interval. This is useful for visualising the completeness of a dataset
+    # over a time range.
+    #
+    # A 'gap size' appraoch is used to determine when events are considered part
+    # of the same continuous interval or separate intervals. This means the
+    # number of intervals emitted won't exceed a set scaling factor (such as
+    # pixels available to display the graphed result).
     #
     module Coverage
       #

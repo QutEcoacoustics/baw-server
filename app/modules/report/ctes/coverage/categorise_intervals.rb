@@ -5,10 +5,10 @@ module Report
     module Coverage
       # Defines a CTE that groups temporal events into continuous intervals.
       #
-      # It categorises each row from the `sort_temporal_events` CTE into a group,
-      # starting from 0. A new group is started when the time between an event's
-      # start and the previous event's end is larger than the calculated `gap_size`.
-      # This is used to identify continuous blocks of audio coverage.
+      # It categorises each row from the `sort_temporal_events` CTE into a
+      # group, starting from 0. A new group is started when the time between an
+      # event's start and the previous event's end is larger than the calculated
+      # `gap_size`.
       #
       # If the `analysis_result` option is true, grouping is done separately for
       # each distinct value of the `result` column (see {AnalysisJobsItem}),

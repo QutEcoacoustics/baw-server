@@ -5,9 +5,15 @@ module Report
     # The base node for audio event reports
     #
     # Provides the minimum required fields and joins needed for other CTEs that build on this data.
+    # Audio events can have multiple tags (via taggings), so the output is one row per tagging.
+    #
+    # == query output
+    #
+    #  emits rows: one per tagging
+    #
+    # @see Report::AudioEvents the root node for audio event reports
     #
     # Immediate descendants / downstream nodes:
-    #  @see Report::AudioEvents the root node for audio event reports
     #  @see Report::Ctes::BaseVerification
     #  @see Report::Ctes::BucketAllocate
     #  @see Report::Ctes::CompositionSeries
@@ -57,7 +63,7 @@ module Report
       def self.attributes
         [
           AudioEvent.arel_start_absolute.as('start_time_absolute'),
-          AudioRecording.arel_recorded_end_date.as('end_date'),
+          AudioRecording.arel_recorded_end_date.as('recorded_end_date'),
           audio_events[:id].as('audio_event_id'),
           audio_events[:score].as('score'),
           regions[:id].as('region_id'),

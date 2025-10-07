@@ -30,7 +30,7 @@ module Report
           sum_unique_tags_over_window = sum_unique[:sum_new_tags].sum.over(window)
           bucket_time_series.project(
             bucket_time_series[:bucket_number],
-            bucket_time_series[:time_bucket].as('range'),
+            bucket_time_series[:range],
             sum_unique_tags_over_window.coalesce(0).cast('int').as('count')
           )
             .join(sum_unique, Arel::Nodes::OuterJoin)
