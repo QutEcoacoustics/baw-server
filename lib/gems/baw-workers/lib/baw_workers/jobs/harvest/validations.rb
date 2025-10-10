@@ -53,7 +53,7 @@ module BawWorkers
 
               results << result
 
-              # no point in continuing if it is impossible to resovle
+              # no point in continuing if it is impossible to resolve
               throw :halt if result&.status == ValidationResult::STATUS_NOT_FIXABLE
             end
           end

@@ -237,6 +237,9 @@ module BawWorkers
 
           extract_metadata
 
+          # extract metadata can add validations and bail early
+          return move_to_failed unless valid?
+
           validate
 
           mark_status(HarvestItem::STATUS_METADATA_GATHERED)
@@ -360,6 +363,21 @@ module BawWorkers
           harvest_item.info = harvest_item.info.new(validations: results.compact)
         end
 
+        # sometimes we just want to check that the file exists - e.g. it can be moved by another process
+        # If fails, adds a validation to the harvest item
+        def validate_exist?
+          result = Validations::FileExists.instance.validate(harvest_item)
+
+          # valid if result is nil
+          return true if result.nil?
+
+          harvest_item.info = harvest_item.info.new(
+            validations: harvest_item.info.validations + [result]
+          )
+
+          false
+        end
+
         def apply_fixes
           file_path = harvest_item.absolute_path
           logger.measure_debug('Fixing file with emu') do
@@ -412,10 +430,14 @@ module BawWorkers
 
           path = harvest_item.absolute_path
 
+          return unless validate_exist?
+
           file_info = directory_info.to_h
 
           file_info = file_info.merge(file_info_service.basic(path))
           file_info = extract_metadata_with_emu(path, file_info, utc_offset)
+
+          return file_info unless valid?
 
           file_info = file_info_service.advanced(path, file_info, directory_info&.utc_offset, throw: false)
           file_info = file_info_service.audio_info(path, file_info)
@@ -444,6 +466,13 @@ module BawWorkers
           result = Emu::Metadata.extract(path)
 
           return file_info unless result.success?
+
+          # If no records were found, return the original file_info unmodified
+          # This can happen if EMU can't read the file for some reason
+          if result.records.empty?
+            validate_exist?
+            return file_info
+          end
 
           metadata = result.records.first
 
