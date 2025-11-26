@@ -114,9 +114,9 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @param [Array<Integer>] project_ids
       # @return [ActiveRecord::Relation] sites
-      def sites(user, levels: Access::Core.levels, project_ids: nil)
+      def sites(user, levels: Access::Core.levels, project_ids: nil, query: nil)
         # project can be nil
-        query = Site.all
+        query ||= Site.all
         permission_sites(user, levels, query, project_ids:)
       end
 

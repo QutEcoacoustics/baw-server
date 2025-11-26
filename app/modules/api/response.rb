@@ -31,12 +31,11 @@ module Api
     # @param [Object] user current_user
     # @param [Hash] _opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare_new(item, user, _opts = {})
+    def prepare_new(item, user, _opts = {}, filter_settings:)
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
 
-      filter_settings = item.class.filter_settings
       item_new = item
 
       # add new spec fields if filter_settings specifies a lambda for new_spec_fields
@@ -56,7 +55,7 @@ module Api
     # @param [Hash] additional_data Additional data to be merged into the item.
     # @param [Hash] opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare(item, user, additional_data, opts = {})
+    def prepare(item, user, additional_data, opts = {}, filter_settings:)
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
@@ -67,8 +66,6 @@ module Api
       end
 
       additional_data.deep_transform_keys!(&:to_s)
-
-      filter_settings = item.class.filter_settings
 
       # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
@@ -347,7 +344,7 @@ module Api
       opts[:projection] = filter_query.projection if filter_query.projection.present?
       # projected_fields is not nil if query_projection was called, which always was with query_without_paging_sorting
       opts[:projected_fields] = filter_query.projected_fields
-      opts[:capabilities] = filter_query.capabilities if filter_query.capabilities.present?
+      opts[:capabilities] = filter_settings[:capabilities] if filter_settings[:capabilities].present?
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,
         :filter, :projection,

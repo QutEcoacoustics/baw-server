@@ -3,7 +3,8 @@
 require 'active_support/concern'
 
 module Filter
-  # Provides custom filters for composing queries.
+  # Provides the projection and custom field methods for single item queries
+  # without the paging and filtering methods needed for multi-item queries.
   module Custom
     extend ActiveSupport::Concern
     extend Comparison
@@ -40,28 +41,28 @@ module Filter
     # @param [Float] annotation_duration
     # @return [Arel::Nodes::Node] projection
     def project_distance(freq_min, freq_max, annotation_duration)
-      if !freq_min.blank? || !freq_max.blank? || !annotation_duration.blank?
-        select_string = []
+      return unless freq_min.present? || freq_max.present? || annotation_duration.present?
 
-        unless freq_min.blank?
-          validate_float(freq_min)
-          select_string.push("power(audio_events.low_frequency_hertz - #{freq_min}, 2)")
-        end
+      select_string = []
 
-        unless freq_max.blank?
-          validate_float(freq_max)
-          select_string.push("power(audio_events.high_frequency_hertz - #{freq_max}, 2)")
-        end
-
-        unless annotation_duration.blank?
-          validate_float(annotation_duration)
-          select_string.push("power((audio_events.end_time_seconds - audio_events.start_time_seconds) - #{annotation_duration}, 2)")
-        end
-
-        sql = 'sqrt(' + select_string.join(' + ') + ') as distance_calc'
-
-        Arel::Nodes::SqlLiteral.new(sql)
+      if freq_min.present?
+        validate_float(freq_min)
+        select_string.push("power(audio_events.low_frequency_hertz - #{freq_min}, 2)")
       end
+
+      if freq_max.present?
+        validate_float(freq_max)
+        select_string.push("power(audio_events.high_frequency_hertz - #{freq_max}, 2)")
+      end
+
+      if annotation_duration.present?
+        validate_float(annotation_duration)
+        select_string.push("power((audio_events.end_time_seconds - audio_events.start_time_seconds) - #{annotation_duration}, 2)")
+      end
+
+      sql = 'sqrt(' + select_string.join(' + ') + ') as distance_calc'
+
+      Arel::Nodes::SqlLiteral.new(sql)
     end
 
     # Compose special project ids 'in' filter.
@@ -73,16 +74,16 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_sites_from_projects(field, filter_name, filter_value, table, valid_fields)
       # construct special conditions
-      if table.name == 'sites' && field == :project_ids
-        # filter by many-to-many projects <-> sites
-        unless filter_name == :in
-          raise CustomErrors::FilterArgumentError, "Project_ids permits only 'in' filter, got #{filter_name}."
-        end
-
-        projects_sites_table = Arel::Table.new(:projects_sites)
-        special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], filter_value))
-        compose_in(table, :id, valid_fields, special_value)
+      return unless table.name == 'sites' && field == :project_ids
+      # filter by many-to-many projects <-> sites
+      unless filter_name == :in
+        raise CustomErrors::FilterArgumentError, "Project_ids permits only 'in' filter, got #{filter_name}."
       end
+
+      projects_sites_table = Arel::Table.new(:projects_sites)
+      special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table,
+        :project_id, [:project_id], filter_value))
+      compose_in(table, :id, valid_fields, special_value)
     end
   end
 end

@@ -56,7 +56,7 @@ describe 'HarvestJob', :clean_by_truncation do
         {
           name: :does_not_exist,
           status: :not_fixable,
-          message: 'File /data/test/harvester_to_do/harvest_1/audio.wav does not exist'
+          message: "File #{harvest_item.absolute_path} does not exist"
         }
       ]
     end

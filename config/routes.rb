@@ -509,6 +509,27 @@ Rails.application.routes.draw do
     match 'stats', via: [:get, :post], on: :collection, defaults: { format: 'json' }
   end
 
+  concern :groupable do |options|
+    group_children = options.fetch(:by, nil)
+
+    raise ArgumentError, 'You must provide :by option to :groupable concern' if group_children.nil?
+
+    parent_controller = @scope[:scope_level_resource].controller
+    collection do
+      scope module: parent_controller do
+        group_children.each do |child|
+          match "group_by/#{child}",
+            via: [:get, :post],
+            defaults: { format: 'json' },
+
+            controller: 'group_by',
+            action: "group_#{parent_controller}_by_#{child}",
+            as: "group_by_#{child}"
+        end
+      end
+    end
+  end
+
   concern :archivable do
     # https://github.com/QutEcoacoustics/baw-server/wiki/API:-Archiving
     # both of these are 'action like' even though they do call `:invoke` on the controller
@@ -793,7 +814,9 @@ Rails.application.routes.draw do
   match 'sites/orphans/filter' => 'sites#orphans', via: [:get, :post], defaults: { format: 'json' }
 
   # shallow path to sites
-  resources :sites, except: [:edit], defaults: { format: 'json' }, as: 'shallow_site', concerns: [:filterable]
+  resources :sites, except: [:edit], defaults: { format: 'json' }, as: 'shallow_site', concerns: [:filterable] do
+    concerns :groupable, by: [:audio_events]
+  end
 
   # shallow regions
   resources :regions, except: [:edit], defaults: { format: 'json' }, as: 'shallow_region', concerns: [:filterable]

@@ -355,7 +355,7 @@ class Ability
     end
 
     # available to any user, including guest
-    can [:index, :filter, :new], Site
+    can [:index, :filter, :new, :group_sites_by_audio_events], Site
   end
 
   def to_audio_recording(user, _is_guest)

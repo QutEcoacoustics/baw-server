@@ -13,6 +13,24 @@ module Baw
       Baw::Arel::Nodes::MakeInterval.new(seconds:)
     end
 
+    def obfuscate_location(latitude, longitude, jitter_amount:, salt:, jitter_exclusion: nil, obfuscated: nil)
+      ::Baw::Arel::Nodes::ObfuscateLocation.new(
+        latitude,
+        longitude,
+        wrap_value(jitter_amount),
+        wrap_value(salt),
+        wrap_value(jitter_exclusion),
+        wrap_value(obfuscated)
+      )
+    end
+
+    def wrap_value(value)
+      return value if ::Arel.arel_node?(value)
+      return nil if value.nil?
+
+      ::Arel::Nodes::BindParam.new(value)
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.
