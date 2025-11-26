@@ -15,7 +15,7 @@ class HarvestItemsController < ApplicationController
     path = @harvest.harvester_relative_path(path)
 
     respond_to { |format|
-      query =  HarvestItem.includes([:harvest]).project_directory_listing(list_permissions, path)
+      query =  HarvestItem.includes(:harvest).project_directory_listing(list_permissions, path)
       format.json do
         @harvest_items, opts = Settings.api_response.response_advanced(
           api_filter_params,

@@ -194,30 +194,11 @@ module ApiSpecHelpers
     end
 
     def schema_for_single
-      schema allOf: [
-        { '$ref' => '#/components/schemas/standard_response' },
-        {
-          type: 'object',
-          properties: {
-            data: (get_parent_param :baw_model_schema)
-          }
-        }
-      ]
+      schema(**Api::Schema.standard_single_response(get_parent_param(:baw_model_schema)))
     end
 
     def schema_for_many
-      schema allOf: [
-        { '$ref' => '#/components/schemas/standard_response' },
-        {
-          type: 'object',
-          properties: {
-            data: {
-              type: 'array',
-              items: (get_parent_param :baw_model_schema)
-            }
-          }
-        }
-      ]
+      schema(**Api::Schema.standard_array_response(get_parent_param(:baw_model_schema)))
     end
 
     # the way rspec creates describe blocks makes each new

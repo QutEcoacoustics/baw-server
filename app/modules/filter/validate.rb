@@ -396,10 +396,12 @@ module Filter
       validate_array(value[:text_fields]) if value.include?(:text_fields)
       validate_array_items(value[:text_fields]) if value.include?(:text_fields)
 
-      unless value[:controller].is_a?(Symbol)
-        raise CustomErrors::FilterArgumentError, 'Controller name must be a symbol.'
-      end
-      raise CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
+      # Relaxing filter settings controller validation as controller does not seem to be used anywhere in Filter
+      # TODO: Remove controller from filter settings entirely if not used
+      # unless value[:controller].is_a?(Symbol)
+      #   raise CustomErrors::FilterArgumentError, 'Controller name must be a symbol.'
+      # end
+      # raise CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
 
       validate_hash(value[:defaults])
 
@@ -435,7 +437,7 @@ module Filter
           validate_closure(capability[:can_item], [:item]) if capability[:can_list]
 
           validate_hash_key(capability, :details, [Proc])
-          validate_closure(capability[:details], [:can, item, klass]) if capability[:details]
+          validate_closure(capability[:details], [:can, :item, :klass]) if capability[:details]
         end
       end
 
@@ -454,6 +456,16 @@ module Filter
           validate_hash_key(custom_definition, :arel,
             [NilClass, Arel::Nodes::Node, Arel::Nodes::SqlLiteral, Arel::Attributes::Attribute])
           validate_hash_key(custom_definition, :type, [Symbol]) unless custom_definition[:arel].nil?
+
+          # validate render: option - can be true, false, or a lambda (item, user, effective_projection)
+          if custom_definition.key?(:render)
+            render_value = custom_definition[:render]
+            unless render_value.is_a?(TrueClass) || render_value.is_a?(FalseClass) || render_value.is_a?(Proc)
+              raise CustomErrors::FilterArgumentError,
+                'render must be true, false, or a Proc'
+            end
+            validate_closure(render_value, [:item, :user, :effective_projection]) if render_value.is_a?(Proc)
+          end
 
           next if custom_definition[:joins].nil?
 

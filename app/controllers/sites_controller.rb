@@ -134,7 +134,7 @@ class SitesController < ApplicationController
     template = BawWorkers::Jobs::Harvest::Metadata.generate_yaml(
       @project.id,
       @site.id,
-      (@project.writers + @project.owners + [@project.creator, current_user]),
+      @project.writers + @project.owners + [@project.creator, current_user],
       recursive: false
     )
 
@@ -158,7 +158,8 @@ class SitesController < ApplicationController
           api_filter_params,
           @sites,
           Site,
-          Site.filter_settings
+          # you have to be admin to access this route, so no obfuscation necessary
+          Site.filter_settings(should_obfuscate: false)
         )
         respond_filter(filter_response, opts)
       }
@@ -178,6 +179,7 @@ class SitesController < ApplicationController
       Site,
       Site.filter_settings
     )
+
     respond_filter(filter_response, opts)
   end
 
@@ -237,17 +239,41 @@ class SitesController < ApplicationController
   end
 
   def list_permissions
+    # Use ByPermissionTable to add the effective permissions CTE.
+    # This allows calculated fields like latitude/longitude to use permission-based
+    # Arel expressions that depend on the CTE being present.
     if @project.nil?
-      Access::ByPermission.sites(current_user)
+      Access::ByPermissionTable.sites(current_user, level: Access::Permission::READER)
     else
-      Access::ByPermission.sites(current_user, project_ids: [@project.id])
+      Access::ByPermissionTable.sites(current_user, level: Access::Permission::READER, project_ids: [@project.id])
+    end
+  end
+
+  # Provides a base query with the effective permissions CTE for single item queries.
+  # This allows calculated fields like latitude/longitude to use permission-based
+  # Arel expressions that depend on the CTE being present.
+  def base_query_for_single
+    # We use the ByPermissionTable to add the effective permissions CTE so obfuscated
+    # location can work. But we don't use it to filter authorized results.
+    # For a single record, authorization is done after loading the record.
+    if @project.nil?
+      Access::ByPermissionTable.sites(current_user, level: Access::Permission::NONE)
+    else
+      Access::ByPermissionTable.sites(current_user, level: Access::Permission::NONE, project_ids: [@project.id])
     end
   end
 
   def site_params(for_create:)
-    result = params.require(:site).permit(
-      :name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, :region_id, project_ids: []
-    )
+    permit_keys = [
+      :name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, :region_id,
+      { project_ids: [] }
+    ]
+
+    # these permit keys used to be gated behind a permission check, but,
+    # only owners can update or create sites, so there is no functional need.
+    permit_keys += [:obfuscated_latitude, :obfuscated_longitude, :custom_obfuscated_location]
+
+    result = params.require(:site).permit(permit_keys)
 
     # normalize the project_ids between the route parameter and the body
     # route param does not exist for shallow routes

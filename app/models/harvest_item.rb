@@ -34,6 +34,7 @@ require(BawApp.root / 'app/serializers/hash_serializer')
 #
 class HarvestItem < ApplicationRecord
   extend Enumerize
+
   # optional audio recording - when a harvested audio file is complete, it will match a recording
   belongs_to :audio_recording, optional: true
 
@@ -313,24 +314,23 @@ class HarvestItem < ApplicationRecord
     dir_cols = all_columns.map { |col|
       case col
       when table[:path].name then with_dir_columns_table[current_dir_col].as(table[:path].name)
-      when harvest_id_name then (with_dir_columns_table[harvest_id_name]).maximum.as(harvest_id_name)
+      when harvest_id_name then with_dir_columns_table[harvest_id_name].maximum.as(harvest_id_name)
       else Arel.null.as(col)
       end
     }
 
-    # rubocop:disable Style/NonNilCheck, Naming/AsciiIdentifiers
-    list_query = Arel::Nodes::Union.new(
+    # .with will UNION ALL the array items together
+    list_query = [
       # child dirs
       with_dir_columns_table
-        .where((with_dir_columns_table[current_dir_col] != nil).⋀(with_dir_columns_table[dir_col] != path_query_bind))
+        .where(with_dir_columns_table[current_dir_col].not_eq(nil).and(with_dir_columns_table[dir_col].not_eq(path_query_bind)))
         .group(with_dir_columns_table[current_dir_col])
         .project(*dir_cols, *dir_status_cols),
       # child files
       with_dir_columns_table
-        .where(with_dir_columns_table[dir_col] == path_query_bind)
+        .where(with_dir_columns_table[dir_col].eq(path_query_bind))
         .project(*all_columns, *file_status_cols)
-    )
-    # rubocop:enable Style/NonNilCheck, Naming/AsciiIdentifiers
+    ]
 
     HarvestItem
       .with(base_query: relation, with_dir_columns:, list_query:)

@@ -4,31 +4,36 @@
 #
 # Table name: sites
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :bigint
-#  image_updated_at   :datetime
-#  latitude           :decimal(9, 6)
-#  longitude          :decimal(9, 6)
-#  name               :string           not null
-#  notes              :text
-#  rails_tz           :string(255)
-#  tzinfo_tz          :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  region_id          :integer
-#  updater_id         :integer
+#  id                   :integer          not null, primary key
+#  custom_obfuscated_location :boolean          default(FALSE), not null
+#  deleted_at           :datetime
+#  description          :text
+#  image_content_type   :string
+#  image_file_name      :string
+#  image_file_size      :bigint
+#  image_updated_at     :datetime
+#  latitude             :decimal(9, 6)
+#  longitude            :decimal(9, 6)
+#  name                 :string           not null
+#  notes                :text
+#  obfuscated_latitude  :decimal(9, 6)
+#  obfuscated_longitude :decimal(9, 6)
+#  rails_tz             :string(255)
+#  tzinfo_tz            :string(255)
+#  created_at           :datetime
+#  updated_at           :datetime
+#  creator_id           :integer          not null
+#  deleter_id           :integer
+#  region_id            :integer
+#  updater_id           :integer
 #
 # Indexes
 #
-#  index_sites_on_creator_id  (creator_id)
-#  index_sites_on_deleter_id  (deleter_id)
-#  index_sites_on_updater_id  (updater_id)
+#  index_sites_on_creator_id            (creator_id)
+#  index_sites_on_deleter_id            (deleter_id)
+#  index_sites_on_obfuscated_latitude   (obfuscated_latitude)
+#  index_sites_on_obfuscated_longitude  (obfuscated_longitude)
+#  index_sites_on_updater_id            (updater_id)
 #
 # Foreign Keys
 #
@@ -71,10 +76,18 @@ class Site < ApplicationRecord
   # See https://en.wikipedia.org/wiki/Decimal_degrees
   # (neighborhood, street, about 333m)
   JITTER_RANGE = 0.003
+  # Don't allow jitter within 10% of the jitter range. Expressed as unit interval.
+  JITTER_EXCLUSION = 0.1
+  # Don't allow values that are too close to the original location
+  JITTER_EXCLUSION_RANGE = JITTER_RANGE * JITTER_EXCLUSION
 
   # add deleted_at and deleter_id
   acts_as_discardable
   also_discards :audio_recordings, batch: true
+
+  # Automatically update obfuscated coordinates when location changes
+  # but only if the obfuscated location was system-generated (not user-provided)
+  before_validation :update_obfuscated_location, if: :should_update_obfuscated_location?
 
   # association validations
   #validates_associated :creator
@@ -142,6 +155,13 @@ class Site < ApplicationRecord
     "#{safe_name}_#{id}"
   end
 
+  def self.project_ids_arel
+    ps = ProjectsSite.arel_table
+    s = Site.arel_table
+
+    ps.project(ps[:project_id].array_agg).where(ps[:site_id].eq(s[:id]))
+  end
+
   def get_bookmark
     Bookmark.where(audio_recording: audio_recordings).order(:updated_at).first
   end
@@ -170,48 +190,58 @@ class Site < ApplicationRecord
 
   renders_markdown_for :description
 
-  def custom_latitude
-    value = self[:latitude]
-    if location_obfuscated && value.present?
-      Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX, location_jitter_seed)
+  # Replaces `custom_latitude`. Returns obfuscated latitude if location is obfuscated.
+  def public_latitude
+    if location_obfuscated
+      obfuscated_latitude
     else
-      value
+      latitude
     end
   end
 
-  def custom_longitude
-    value = self[:longitude]
-    if location_obfuscated && value.present?
-      Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed)
+  # Replaces `custom_longitude`. Returns obfuscated longitude if location is obfuscated.
+  def public_longitude
+    if location_obfuscated
+      obfuscated_longitude
     else
-      value
+      longitude
     end
   end
 
+  # This method is a little funny.
+  # If `location_obfuscated` was returned in a query, then that value is used.
+  # Otherwise, the obfuscation is calculated with another query.
   def location_obfuscated
-    return @location_obfuscated if defined?(@location_obfuscated)
+    return self['location_obfuscated'] if has_attribute?('location_obfuscated')
 
-    if projects.empty?
-      @location_obfuscated = true
-      return @location_obfuscated
-    end
+    return true if Current.user.nil?
 
-    Access::Core.check_orphan_site!(self)
-    is_owner = Access::Core.can_any?(Current.user, :owner, projects)
+    return false if Current.user.admin?
+
+    # if no associated projects, we can't determine permissions, so obfuscate
+    return true if projects.empty?
+
+    is_owner = Access::Core.can_any?(Current.user, Access::Permission::OWNER, projects)
 
     # obfuscate if level is less than owner
-    @location_obfuscated = !is_owner
-
-    @location_obfuscated
+    !is_owner
   end
 
   def location_jitter_seed
     # random numbers for jitters will be stable for given coordinates
     # but changing coordinates will change the jitter
-    (((latitude || 0) * 1e12) + ((longitude || 0) * 1e6)).to_i
+    # We combine latitude, longitude, and name hash to produce a unique seed.
+    # There may be overlap, but the db stores location to 9 digits (6 after decimal)
+    # so my spreading out over magnitudes of 9 should reduce collisions greatly.
+    # Using site name ensures uniqueness even for identical coordinates.
+    (((latitude || 0) * 1e18) + ((longitude || 0) * 1e9) + name.hash).to_i
   end
 
   def self.add_location_jitter(value, min, max, seed)
+    return nil if value.nil?
+
+    raise ArgumentError, 'Seed must be an integer' unless seed.is_a?(Integer)
+
     # create a stable jitter by using the given seed
     # but ensure a different seed is used for lat/long by incorporating the max
     generator = Random.new(seed * max)
@@ -242,20 +272,91 @@ class Site < ApplicationRecord
     modified_value
   end
 
+  # For use in batch queries that may need to obfuscate location on a per row basis.
+  # This function assumes you have the effective permissions CTE available
+  # somewhere in your query.
+  def self.should_return_obfuscated_location_arel(should_obfuscate: nil)
+    return Arel::Nodes::SqlLiteral.new('FALSE') if should_obfuscate == false
+    return Arel::Nodes::SqlLiteral.new('TRUE') if should_obfuscate == true
+
+    # should hide location: is permission level < :owner?
+    Access::EffectivePermission.build_maximum_level_predicate(Access::Permission::OWNER)
+  end
+
+  def self.latitude_arel(should_obfuscate: nil)
+    return arel_table[:latitude] if should_obfuscate == false
+    return arel_table[:obfuscated_latitude] if should_obfuscate == true
+
+    Arel::Nodes::Case.new
+      .when(should_return_obfuscated_location_arel)
+      .then(arel_table[:obfuscated_latitude])
+      .else(arel_table[:latitude])
+  end
+
+  def self.longitude_arel(should_obfuscate: nil)
+    return arel_table[:longitude] if should_obfuscate == false
+    return arel_table[:obfuscated_longitude] if should_obfuscate == true
+
+    Arel::Nodes::Case.new
+      .when(should_return_obfuscated_location_arel)
+      .then(arel_table[:obfuscated_longitude])
+      .else(arel_table[:longitude])
+  end
+
   def only_one_site_per_project
-    return if project_ids.count == 1
+    return if project_ids.one?
 
     errors.add(:project_ids, 'Site must belong to exactly one project')
   end
 
+  # Updates the obfuscated coordinates based on current latitude/longitude
+  def update_obfuscated_location
+    raise 'Cannot generate obfuscated coordinates if custom_obfuscated_location is true' if custom_obfuscated_location
+
+    self.obfuscated_latitude = Site.add_location_jitter(
+      latitude, Site::LATITUDE_MIN, Site::LATITUDE_MAX, location_jitter_seed
+    )
+
+    self.obfuscated_longitude = Site.add_location_jitter(
+      longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed
+    )
+  end
+
+  private
+
+  # Determines if the obfuscated location should be auto-updated
+  # Only update if:
+  # - The obfuscated location is system-generated (not user-provided), AND
+  # - Either latitude or longitude has changed (for existing records)
+  def should_update_obfuscated_location?
+    # Never auto-update if custom obfuscation is enabled
+    return false if custom_obfuscated_location
+
+    # For new records, always generate if not using custom obfuscation
+    return true if new_record?
+
+    # For existing records, only update if coordinates changed
+    latitude_changed? || longitude_changed?
+  end
+
   # Define filter api settings
-  def self.filter_settings
+  # @param opts [Hash] options for filter settings
+  # @option opts [Boolean, nil] :should_obfuscate - if true, latitude/longitude will always be obfuscated.
+  #   If false, latitude/longitude will never be obfuscated. If nil, obfuscation depends on user permissions.
+  # @return [Hash] filter settings
+  def self.filter_settings(**opts)
+    should_obfuscate = opts.fetch(:should_obfuscate, nil)
+
     {
       valid_fields: [:id, :name, :description, :notes, :creator_id,
-                     :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id],
+                     :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at, :region_id,
+                     :custom_latitude, :custom_longitude, :longitude, :latitude, :location_obfuscated,
+                     :obfuscated_latitude, :obfuscated_longitude, :custom_obfuscated_location],
       render_fields: [:id, :name, :description, :notes, :creator_id,
                       :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at,
-                      :region_id, :custom_latitude, :custom_longitude, :location_obfuscated],
+                      :region_id,
+                      :custom_latitude, :custom_longitude, :longitude, :latitude, :location_obfuscated,
+                      :obfuscated_latitude, :obfuscated_longitude, :custom_obfuscated_location],
       text_fields: [:description, :name],
       custom_fields: lambda { |item, _user|
                        # item can be nil or a new record
@@ -275,23 +376,67 @@ class Site < ApplicationRecord
                        [item, site_hash]
                      },
       custom_fields2: {
+        # latitude and longitude return obfuscated values for non-owners
+        # custom_latitude and custom_longitude are kept for backwards compatibility
+        latitude: {
+          query_attributes: [],
+          transform: nil,
+          arel: latitude_arel(should_obfuscate:),
+          type: :decimal
+        },
+        longitude: {
+          query_attributes: [],
+          transform: nil,
+          arel: longitude_arel(should_obfuscate:),
+          type: :decimal
+        },
         custom_latitude: {
-          query_attributes: [:latitude, :id],
-          transform: ->(item) { item&.custom_latitude },
-          arel: nil,
-          type: nil
+          query_attributes: [],
+          transform: nil,
+          arel: latitude_arel(should_obfuscate:),
+          type: :decimal
         },
         custom_longitude: {
-          query_attributes: [:longitude, :id],
-          transform: ->(item) { item&.custom_longitude },
-          arel: nil,
-          type: nil
+          query_attributes: [],
+          transform: nil,
+          arel: longitude_arel(should_obfuscate:),
+          type: :decimal
         },
         location_obfuscated: {
-          query_attributes: [:id],
-          transform: ->(item) { item&.location_obfuscated },
-          arel: nil,
-          type: nil
+          query_attributes: [],
+          transform: nil,
+          arel: should_return_obfuscated_location_arel(should_obfuscate:),
+          type: :boolean
+        },
+        obfuscated_latitude: {
+          query_attributes: [],
+          transform: nil,
+          arel: Site.arel_table[:obfuscated_latitude],
+          type: :decimal,
+          render: lambda { |item, _user, _effective_projection|
+            # only render obfuscated coordinates for owner users
+            !item.location_obfuscated
+          }
+        },
+        obfuscated_longitude: {
+          query_attributes: [],
+          transform: nil,
+          arel: Site.arel_table[:obfuscated_longitude],
+          type: :decimal,
+          render: lambda { |item, _user, _effective_projection|
+            # only render obfuscated coordinates for owner users
+            !item.location_obfuscated
+          }
+        },
+        custom_obfuscated_location: {
+          query_attributes: [],
+          transform: nil,
+          arel: Site.arel_table[:custom_obfuscated_location],
+          type: :boolean,
+          render: lambda { |item, _user, _effective_projection|
+            # only render for owner users
+            !item.location_obfuscated
+          }
         }
       },
       new_spec_fields: lambda { |user| # rubocop:disable Lint/UnusedBlockArgument
@@ -351,17 +496,23 @@ class Site < ApplicationRecord
         notes: { type: 'string' },
         project_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
         location_obfuscated: { type: 'boolean' },
-        custom_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90 },
-        custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180 },
+        # latitude/longitude are aliases for custom_latitude/custom_longitude
+        latitude: { type: ['number', 'null'], minimum: -90, maximum: 90 },
+        longitude: { type: ['number', 'null'], minimum: -180, maximum: 180 },
+        custom_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90, deprecated: true, read_only: true },
+        custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180, deprecated: true, read_only: true },
+        obfuscated_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90, readOnly: false },
+        obfuscated_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180, readOnly: false },
+        custom_obfuscated_location: { type: 'boolean' },
         timezone_information: Api::Schema.timezone_information,
         image_urls: Api::Schema.image_urls,
-        region_id: { '$ref' => '#/components/schemas/nullableId' }
+        region_id: Api::Schema.id(nullable: true)
       },
       required: [
         :id, :name, :description, :description_html, :description_html_tagline,
         :creator_id, :created_at, :updater_id, :updated_at, :deleter_id,
-        :deleted_at, :notes, :project_ids, :location_obfuscated, :custom_latitude,
-        :custom_longitude, :timezone_information, :image_urls, :region_id
+        :deleted_at, :notes, :project_ids, :location_obfuscated, :latitude,
+        :longitude, :timezone_information, :image_urls, :region_id
       ]
     }.freeze
   end

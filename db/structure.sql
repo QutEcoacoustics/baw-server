@@ -1944,7 +1944,10 @@ CREATE TABLE public.sites (
     description text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255),
-    region_id integer
+    region_id integer,
+    obfuscated_longitude numeric(9,6),
+    obfuscated_latitude numeric(9,6),
+    custom_obfuscated_location boolean DEFAULT false NOT NULL
 );
 
 
@@ -3525,6 +3528,20 @@ CREATE INDEX index_sites_on_deleter_id ON public.sites USING btree (deleter_id);
 
 
 --
+-- Name: index_sites_on_obfuscated_latitude; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sites_on_obfuscated_latitude ON public.sites USING btree (obfuscated_latitude);
+
+
+--
+-- Name: index_sites_on_obfuscated_longitude; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_sites_on_obfuscated_longitude ON public.sites USING btree (obfuscated_longitude);
+
+
+--
 -- Name: index_sites_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4464,7 +4481,8 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
-('20251126025112'),
+('20260113000000'),
+('20251103151227'),
 ('20250912033944'),
 ('20250909090000'),
 ('20250723051530'),

@@ -73,48 +73,6 @@ describe 'Sites' do
     end
   end
 
-  context 'with filter queries' do
-    it 'can project lat and long' do
-      body = {
-        projection: { include: [:name, :custom_latitude, :custom_longitude, :location_obfuscated] },
-        filter: { id: { eq: site.id } }
-      }
-
-      post '/sites/filter', params: body, **api_with_body_headers(reader_token)
-
-      expect_success
-      expect_number_of_items(1)
-
-      expect(api_data).to match([a_hash_including(
-        name: site.name,
-        custom_latitude: be_within(1).of(site.latitude).and(not_eq(site.latitude)),
-        custom_longitude: be_within(1).of(site.longitude).and(not_eq(site.longitude)),
-        location_obfuscated: true
-      )])
-    end
-
-    it 'can project lat and long (does not obfuscate for owner)' do
-      body = {
-        projection: { include: [:name, :custom_latitude, :custom_longitude, :location_obfuscated] },
-        filter: { id: { eq: site.id } }
-      }
-
-      expect(site.projects).not_to be_empty
-
-      post '/sites/filter', params: body, **api_with_body_headers(owner_token)
-
-      expect_success
-      expect_number_of_items(1)
-
-      expect(api_data).to match([a_hash_including(
-        name: site.name,
-        custom_latitude: site.latitude.to_f,
-        custom_longitude: site.longitude.to_f,
-        location_obfuscated: false
-      )])
-    end
-  end
-
   describe 'accidental assignment bug' do
     # https://github.com/QutEcoacoustics/baw-server/issues/679
     let(:site) { create(:site) }
@@ -273,6 +231,438 @@ describe 'Sites' do
       get "/projects/#{site.projects.first.id}/sites/filter", **api_headers(owner_token)
 
       expect_success
+    end
+  end
+
+  context 'with locations' do
+    describe 'location fields in API response' do
+      it 'renders all location fields by default for readers' do
+        get "/sites/#{site.id}", **api_headers(reader_token)
+
+        expect_success
+        expect(api_data).to match a_hash_including(
+          latitude: site.obfuscated_latitude,
+          longitude: site.obfuscated_longitude,
+          location_obfuscated: true,
+          # backwards compatibility
+          custom_latitude: site.obfuscated_latitude,
+          custom_longitude: site.obfuscated_longitude
+        )
+
+        # These internal columns should not be exposed in the API for non-owner users
+        expect(api_data).not_to include(:obfuscated_latitude, :obfuscated_longitude, :custom_obfuscated_location)
+      end
+
+      ['admin', 'owner'].each do |user|
+        it "shows the real coordinates to the #{user} user" do
+          get "/sites/#{site.id}", **api_headers(send("#{user}_token"))
+
+          expect_success
+
+          expect(api_data).to match a_hash_including(
+            latitude: site.latitude,
+            longitude: site.longitude,
+            location_obfuscated: false,
+            obfuscated_latitude: site.obfuscated_latitude,
+            obfuscated_longitude: site.obfuscated_longitude,
+            custom_obfuscated_location: false,
+            # backwards compatibility
+            custom_latitude: site.latitude,
+            custom_longitude: site.longitude
+          )
+        end
+      end
+    end
+
+    context 'when projecting' do
+      it 'can project lat and long (obfuscates for reader)' do
+        body = {
+          projection: {
+            only: [:name, :latitude, :longitude, :custom_latitude, :custom_longitude, :location_obfuscated]
+          },
+          filter: { id: { eq: site.id } }
+        }
+
+        post '/sites/filter', params: body, **api_with_body_headers(reader_token)
+
+        expect_success
+        expect_number_of_items(1)
+
+        expect(api_data).to match([a_hash_including(
+          name: site.name,
+          latitude: site.obfuscated_latitude,
+          longitude: site.obfuscated_longitude,
+          # backwards compatibility
+          custom_latitude: site.obfuscated_latitude,
+          custom_longitude: site.obfuscated_longitude,
+          location_obfuscated: true
+        )])
+      end
+
+      it 'can project lat and long (obfuscates for writer)' do
+        body = {
+          projection: {
+            only: [:name, :latitude, :longitude, :custom_latitude, :custom_longitude, :location_obfuscated]
+          },
+          filter: { id: { eq: site.id } }
+        }
+
+        post '/sites/filter', params: body, **api_with_body_headers(writer_token)
+
+        expect_success
+        expect_number_of_items(1)
+
+        expect(api_data).to match([a_hash_including(
+          name: site.name,
+          latitude: site.obfuscated_latitude,
+          longitude: site.obfuscated_longitude,
+          # backwards compatibility
+          custom_latitude: site.obfuscated_latitude,
+          custom_longitude: site.obfuscated_longitude,
+          location_obfuscated: true
+        )])
+      end
+
+      it 'can project lat and long (does not obfuscate for owner)' do
+        body = {
+          projection: {
+            only: [:name, :latitude, :longitude, :custom_latitude, :custom_longitude, :location_obfuscated]
+          },
+          filter: { id: { eq: site.id } }
+        }
+
+        expect(site.projects).not_to be_empty
+
+        post '/sites/filter', params: body, **api_with_body_headers(owner_token)
+
+        expect_success
+        expect_number_of_items(1)
+
+        expect(api_data).to match([a_hash_including(
+          name: site.name,
+          latitude: site.latitude,
+          longitude: site.longitude,
+          # backwards compatibility
+          custom_latitude: site.latitude.to_f,
+          custom_longitude: site.longitude.to_f,
+          location_obfuscated: false
+        )])
+      end
+    end
+
+    context 'when filtering' do
+      before do
+        site.update!(
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: -80,
+          obfuscated_longitude: 120,
+          custom_obfuscated_location: true
+        )
+      end
+
+      def bounding_box_query(lat_min, lat_max, long_min, long_max)
+        {
+          filter: {
+            and: [
+              { latitude: { gt: lat_min } },
+              { latitude: { lt: lat_max } },
+              { longitude: { gt: long_min } },
+              { longitude: { lt: long_max } }
+            ]
+          }
+        }
+      end
+
+      it 'uses obfuscated coordinates for readers (with matching bounding box)' do
+        body = bounding_box_query(-81, -79, 119, 121)
+
+        post '/sites/filter', params: body, **api_with_body_headers(reader_token)
+
+        expect_success
+        expect_number_of_items(1)
+        expect(api_data.first[:id]).to eq(site.id)
+      end
+
+      it 'does not return site for readers (with non-matching bounding box)' do
+        # these are the real coordinates, so should not match
+        body = bounding_box_query(-28, -27, 152, 154)
+
+        post '/sites/filter', params: body, **api_with_body_headers(reader_token)
+
+        expect_success
+        expect_number_of_items(0)
+      end
+
+      it 'uses real coordinates for owners' do
+        body = bounding_box_query(-28, -27, 152, 154)
+
+        post '/sites/filter', params: body, **api_with_body_headers(owner_token)
+
+        expect_success
+        expect_number_of_items(1)
+        expect(api_data.first[:id]).to eq(site.id)
+      end
+
+      it 'does not return site for owners (with non-matching bounding box)' do
+        # these are the obfuscated coordinates, so should not match
+        body = bounding_box_query(-81, -79, 119, 121)
+
+        post '/sites/filter', params: body, **api_with_body_headers(owner_token)
+
+        expect_success
+        expect_number_of_items(0)
+      end
+    end
+
+    context 'when updating locations' do
+      before do
+        site.update!(
+          latitude: -27.5,
+          longitude: 153.0
+        )
+      end
+
+      it 'allows owners to update site locations' do
+        params = {
+          site: {
+            latitude: -30.0,
+            longitude: 150.0
+          }
+        }
+
+        patch "/sites/#{site.id}", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          latitude: -30.0,
+          longitude: 150.0,
+          obfuscated_latitude: not_eq(-30.0).and(be_within(Site::JITTER_RANGE).of(-30.0)),
+          obfuscated_longitude: not_eq(150.0).and(be_within(Site::JITTER_RANGE).of(150.0))
+        ))
+      end
+
+      it 'allows owners to set custom obfuscated locations' do
+        params = {
+          site: {
+            custom_obfuscated_location: true,
+            obfuscated_latitude: -45.0,
+            obfuscated_longitude: 100.0
+          }
+        }
+
+        patch "/sites/#{site.id}", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: -45.0,
+          obfuscated_longitude: 100.0,
+          custom_obfuscated_location: true
+        ))
+
+        site.reload
+        expect(site.custom_obfuscated_location).to be true
+      end
+
+      it 'allows owners to set custom obfuscated locations (that are nil)' do
+        params = {
+          site: {
+            custom_obfuscated_location: true,
+            obfuscated_latitude: nil,
+            obfuscated_longitude: nil
+          }
+        }
+
+        patch "/sites/#{site.id}", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: nil,
+          obfuscated_longitude: nil,
+          custom_obfuscated_location: true
+        ))
+
+        site.reload
+        expect(site.custom_obfuscated_location).to be true
+      end
+
+      it 'does not update custom obfuscated locations when updating lat/long when using custom obfuscated locations' do
+        site.update!(
+          obfuscated_latitude: -40.0,
+          obfuscated_longitude: 110.0,
+          custom_obfuscated_location: true
+        )
+
+        params = {
+          site: {
+            latitude: -30.0,
+            longitude: 150.0
+          }
+        }
+
+        patch "/sites/#{site.id}", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          latitude: -30.0,
+          longitude: 150.0,
+          obfuscated_latitude: -40.0,
+          obfuscated_longitude: 110.0,
+          custom_obfuscated_location: true
+        ))
+
+        site.reload
+        expect(site.custom_obfuscated_location).to be true
+      end
+
+      it 'can undo custom obfuscated locations' do
+        # first set a custom location
+        site.update!(
+          custom_obfuscated_location: true
+        )
+
+        params = {
+          site: {
+            custom_obfuscated_location: false
+          }
+        }
+
+        patch "/sites/#{site.id}", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: not_eq(-45.0).and(be_within(Site::JITTER_RANGE).of(-27.5)),
+          obfuscated_longitude: not_eq(100.0).and(be_within(Site::JITTER_RANGE).of(153.0))
+        ))
+
+        site.reload
+        expect(site.custom_obfuscated_location).to be false
+      end
+    end
+
+    context 'when creating sites with custom obfuscated locations' do
+      it 'allows owners to create a site with custom obfuscated location' do
+        params = {
+          site: {
+            name: 'site with custom obfuscation',
+            latitude: -27.5,
+            longitude: 153.0,
+            custom_obfuscated_location: true,
+            obfuscated_latitude: -45.0,
+            obfuscated_longitude: 100.0
+          }
+        }
+
+        post "/projects/#{project.id}/sites", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          name: 'site with custom obfuscation',
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: -45.0,
+          obfuscated_longitude: 100.0,
+          custom_obfuscated_location: true
+        ))
+
+        created_site = Site.find(api_data[:id])
+        expect(created_site.custom_obfuscated_location).to be true
+        expect(created_site.obfuscated_latitude).to eq(-45.0)
+        expect(created_site.obfuscated_longitude).to eq(100.0)
+      end
+
+      it 'allows owners to create a site with custom obfuscated location set to nil' do
+        params = {
+          site: {
+            name: 'site with nil obfuscation',
+            latitude: -27.5,
+            longitude: 153.0,
+            custom_obfuscated_location: true,
+            obfuscated_latitude: nil,
+            obfuscated_longitude: nil
+          }
+        }
+
+        post "/projects/#{project.id}/sites", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          name: 'site with nil obfuscation',
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: nil,
+          obfuscated_longitude: nil,
+          custom_obfuscated_location: true
+        ))
+
+        created_site = Site.find(api_data[:id])
+        expect(created_site.custom_obfuscated_location).to be true
+        expect(created_site.obfuscated_latitude).to be_nil
+        expect(created_site.obfuscated_longitude).to be_nil
+      end
+
+      it 'auto-generates obfuscated location when custom_obfuscated_location is false' do
+        params = {
+          site: {
+            name: 'site with auto obfuscation',
+            latitude: -27.5,
+            longitude: 153.0
+          }
+        }
+
+        post "/projects/#{project.id}/sites", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        expect(api_data).to match(a_hash_including(
+          name: 'site with auto obfuscation',
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: not_eq(-27.5).and(be_within(Site::JITTER_RANGE).of(-27.5)),
+          obfuscated_longitude: not_eq(153.0).and(be_within(Site::JITTER_RANGE).of(153.0)),
+          custom_obfuscated_location: false
+        ))
+      end
+
+      it 'ignores obfuscated_latitude/longitude when custom_obfuscated_location is false' do
+        params = {
+          site: {
+            name: 'site ignoring custom values',
+            latitude: -27.5,
+            longitude: 153.0,
+            custom_obfuscated_location: false,
+            obfuscated_latitude: -45.0,
+            obfuscated_longitude: 100.0
+          }
+        }
+
+        post "/projects/#{project.id}/sites", params:, **api_with_body_headers(owner_token)
+
+        expect_success
+
+        # obfuscated values should be auto-generated, not the ones we provided
+        expect(api_data).to match(a_hash_including(
+          name: 'site ignoring custom values',
+          latitude: -27.5,
+          longitude: 153.0,
+          obfuscated_latitude: not_eq(-45.0).and(be_within(Site::JITTER_RANGE).of(-27.5)),
+          obfuscated_longitude: not_eq(100.0).and(be_within(Site::JITTER_RANGE).of(153.0)),
+          custom_obfuscated_location: false
+        ))
+      end
     end
   end
 end

@@ -509,6 +509,27 @@ Rails.application.routes.draw do
     match 'stats', via: [:get, :post], on: :collection, defaults: { format: 'json' }
   end
 
+  concern :groupable do |options|
+    group_parents = options.fetch(:by, nil)
+
+    raise ArgumentError, 'You must provide :by option to :groupable concern' if group_parents.nil?
+
+    child_controller = @scope[:scope_level_resource].controller
+    collection do
+      scope module: child_controller do
+        group_parents.each do |parent|
+          match "group_by/#{parent}",
+            via: [:get, :post],
+            defaults: { format: 'json' },
+
+            controller: 'group_by',
+            action: "group_#{child_controller}_by_#{parent}",
+            as: "group_by_#{parent}"
+        end
+      end
+    end
+  end
+
   concern :archivable do
     # https://github.com/QutEcoacoustics/baw-server/wiki/API:-Archiving
     # both of these are 'action like' even though they do call `:invoke` on the controller
@@ -761,6 +782,8 @@ Rails.application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [], defaults: { format: 'json' }, concerns: [:filterable] do
+    concerns :groupable, by: [:sites]
+
     resources :audio_event_comments, except: [:edit], defaults: { format: 'json' }, path: :comments, as: :comments,
       concerns: [:filterable]
   end

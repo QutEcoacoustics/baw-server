@@ -207,6 +207,51 @@ module Api
               },
               required: ['meta', 'data']
             },
+            filter_payload_filter: {
+              type: 'object'
+            },
+            filter_payload_paging: {
+              type: 'object',
+              properties: {
+                items: { type: 'integer', minimum: 1 },
+                page: { type: 'integer', minimum: 1 },
+                disable_paging: { type: 'boolean' }
+              }
+            },
+            filter_payload_sort: {
+              type: 'object',
+              properties: {
+                order_by: { type: 'string' },
+                direction: { type: 'string', enum: ['asc', 'desc'] }
+              }
+            },
+            filter_payload_projection: {
+              type: 'object',
+              properties: {
+                include: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  deprecated: true
+                },
+                exclude: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  deprecated: true
+                },
+                only: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                add: {
+                  type: 'array',
+                  items: { type: 'string' }
+                },
+                remove: {
+                  type: 'array',
+                  items: { type: 'string' }
+                }
+              }
+            },
             cms_blob: {
               type: 'object',
               required: [

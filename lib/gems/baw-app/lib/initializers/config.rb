@@ -18,6 +18,10 @@ class BawConfigContract < Dry::Validation::Contract
         required(:queue).filled(:string)
       end
 
+      required(:maintenance).hash do
+        required(:queue).filled(:string)
+      end
+
       required(:media).hash do
         required(:queue).filled(:string)
         required(:cache_to_redis).filled(:bool)

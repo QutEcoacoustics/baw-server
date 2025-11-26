@@ -1,5 +1,3 @@
-
-
 describe Access do
   # https://github.com/QutEcoacoustics/baw-server/issues/333
   context 'a user has multiple assigned permissions' do
@@ -7,8 +5,8 @@ describe Access do
 
     def test_level_name
       levels = Access::Core.user_levels(owner_user, project)
-
-      Access::Core.get_level_name(levels)
+      highest_level = Access::Core.highest(levels)
+      Access::Core.get_level_name(highest_level)
     end
 
     example 'a user is an owner and also has logged in read permissions' do

@@ -21,10 +21,10 @@ module  Filter
     # @return [Set<Symbol>]
     attr_reader :projected_fields
 
-    def initialize(parameters, model, filter_settings)
+    def initialize(parameters, model, filter_settings, base_query: nil)
       @model = model
       @table = relation_table(model)
-      @initial_query = relation_all(model)
+      @initial_query = base_query || relation_all(model)
       validate_filter_settings(filter_settings)
 
       # we really only care about a small subset of the filter settings
