@@ -76,6 +76,19 @@ module Baw
         end
       end
 
+      class ObfuscateLocation < ::Arel::Nodes::NamedFunction
+        def initialize(latitude, longitude, jitter_amount, salt, jitter_exclusion = nil, obfuscated = nil)
+          args = [latitude, longitude, jitter_amount, salt]
+          args << jitter_exclusion unless jitter_exclusion.nil?
+          args << obfuscated unless obfuscated.nil?
+
+          super(
+            'obfuscate_location',
+            args
+          )
+        end
+      end
+
       # Allows casting a timestamp to a particular UTC offset (either with a timezone or offset)
       class AsTimeZone < ::Arel::Nodes::Function
         RETURN_TYPE = :datetime

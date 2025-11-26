@@ -396,10 +396,10 @@ module Filter
       validate_array(value[:text_fields]) if value.include?(:text_fields)
       validate_array_items(value[:text_fields]) if value.include?(:text_fields)
 
-      unless value[:controller].is_a?(Symbol)
-        raise CustomErrors::FilterArgumentError, 'Controller name must be a symbol.'
-      end
-      raise CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
+      # unless value[:controller].is_a?(Symbol)
+      #   raise CustomErrors::FilterArgumentError, 'Controller name must be a symbol.'
+      # end
+      # raise CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
 
       validate_hash(value[:defaults])
 

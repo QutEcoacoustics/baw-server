@@ -37,29 +37,6 @@
 #  sites_deleter_id_fk  (deleter_id => users.id)
 #  sites_updater_id_fk  (updater_id => users.id)
 #
-latitudes = [
-  { -100 => false },
-  { -91 => false },
-  { -90 => true },
-  { -89 => true },
-  { 0 => true },
-  { 89 => true },
-  { 90 => true },
-  { 91 => false },
-  { 100 => false }
-]
-
-longitudes = [
-  { -200 => false },
-  { -181 => false },
-  { -180 => true },
-  { -179 => true },
-  { 0 => true },
-  { 179 => true },
-  { 180 => true },
-  { 181 => false },
-  { 200 => false }
-]
 
 describe Site do
   it 'has a valid factory' do
@@ -83,113 +60,142 @@ describe Site do
     expect(s.errors[:name].size).to eq 1
   end
 
-  it 'obfuscates locations' do
-    s = Site.new(latitude: -30.0873, longitude: 145.894)
+  describe 'location obfuscation' do
+    latitudes = [
+      { -100 => false },
+      { -91 => false },
+      { -90 => true },
+      { -89 => true },
+      { 0 => true },
+      { 89 => true },
+      { 90 => true },
+      { 91 => false },
+      { 100 => false }
+    ]
 
-    aggregate_failures do
-      expect(s.custom_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
-      expect(s.custom_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
+    longitudes = [
+      { -200 => false },
+      { -181 => false },
+      { -180 => true },
+      { -179 => true },
+      { 0 => true },
+      { 179 => true },
+      { 180 => true },
+      { 181 => false },
+      { 200 => false }
+    ]
+    it 'obfuscates locations' do
+      s = Site.new(latitude: -30.0873, longitude: 145.894)
 
-      jitter_exclude_range = Site::JITTER_RANGE * 0.1
-      expect(s.custom_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
-      expect(s.custom_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
+      aggregate_failures do
+        expect(s.custom_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
+        expect(s.custom_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
+
+        jitter_exclude_range = Site::JITTER_RANGE * 0.1
+        expect(s.custom_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
+        expect(s.custom_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
+      end
     end
-  end
 
-  it 'location obfuscation is stable' do
-    s1 = Site.new(latitude: -30.0873, longitude: 145.894)
-    s2 = Site.new(latitude: -30.0873, longitude: 145.894)
+    it 'can obfuscate locations in sql' do
+      s = Site.new(latitude: -30.0873, longitude: 145.894)
+    end
 
-    # tiny one digit change in longitude
-    s3 = Site.new(latitude: -30.0873, longitude: 145.895)
+    it 'location obfuscation is stable' do
+      s1 = Site.new(latitude: -30.0873, longitude: 145.894)
+      s2 = Site.new(latitude: -30.0873, longitude: 145.894)
 
-    # tiny one digit change in latitude
-    s4 = Site.new(latitude: -30.0872, longitude: 145.894)
+      # tiny one digit change in longitude
+      s3 = Site.new(latitude: -30.0873, longitude: 145.895)
 
-    expect(s1.custom_latitude).to eq(s2.custom_latitude)
-    expect(s1.custom_latitude).to eq(s2.custom_latitude)
+      # tiny one digit change in latitude
+      s4 = Site.new(latitude: -30.0872, longitude: 145.894)
 
-    expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
-    expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
+      expect(s1.custom_latitude).to eq(s2.custom_latitude)
+      expect(s1.custom_latitude).to eq(s2.custom_latitude)
 
-    expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
-    expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
-  end
+      expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
+      expect(s1.custom_latitude).not_to eq(s3.custom_latitude)
 
-  it 'obfuscates lat/longs properly' do
-    original_lat = -23.0
-    original_lng = 127.0
-    s = build(:site, :with_lat_long)
+      expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
+      expect(s1.custom_latitude).not_to eq(s4.custom_latitude)
+    end
 
-    jitter_range = Site::JITTER_RANGE
-    jitter_exclude_range = Site::JITTER_RANGE * 0.1
+    it 'obfuscates lat/longs properly' do
+      original_lat = -23.0
+      original_lng = 127.0
+      s = build(:site, :with_lat_long)
 
-    lat_min = Site::LATITUDE_MIN
-    lat_max = Site::LATITUDE_MAX
-    lng_min = Site::LONGITUDE_MIN
-    lng_max = Site::LONGITUDE_MAX
+      jitter_range = Site::JITTER_RANGE
+      jitter_exclude_range = Site::JITTER_RANGE * 0.1
 
-    100.times {
-      s.latitude = original_lat
-      s.longitude = original_lng
+      lat_min = Site::LATITUDE_MIN
+      lat_max = Site::LATITUDE_MAX
+      lng_min = Site::LONGITUDE_MIN
+      lng_max = Site::LONGITUDE_MAX
 
-      jit_lat = Site.add_location_jitter(s.latitude, lat_min, lat_max, s.location_jitter_seed)
-      jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max, s.location_jitter_seed)
+      100.times {
+        s.latitude = original_lat
+        s.longitude = original_lng
 
-      expect(jit_lat).to be_within(jitter_range).of(s.latitude)
-      expect(jit_lat).not_to be_within(jitter_exclude_range).of(s.latitude)
+        jit_lat = Site.add_location_jitter(s.latitude, lat_min, lat_max, s.location_jitter_seed)
+        jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max, s.location_jitter_seed)
 
-      expect(jit_lng).to be_within(jitter_range).of(s.longitude)
-      expect(jit_lng).not_to be_within(jitter_exclude_range).of(s.longitude)
-    }
-  end
+        expect(jit_lat).to be_within(jitter_range).of(s.latitude)
+        expect(jit_lat).not_to be_within(jitter_exclude_range).of(s.latitude)
 
-  it 'returns nil for obfuscated location when inputs are nil' do
-    s1 = Site.new(latitude: nil, longitude: 145.894)
-    s2 = Site.new(latitude: -30.0873, longitude: nil)
-    s3 = Site.new(latitude: nil, longitude: nil)
+        expect(jit_lng).to be_within(jitter_range).of(s.longitude)
+        expect(jit_lng).not_to be_within(jitter_exclude_range).of(s.longitude)
+      }
+    end
 
-    expect([s1.custom_latitude, s2.custom_latitude, s3.custom_latitude]).to match(
-      [
-        nil,
-        be_within(Site::JITTER_RANGE).of(-30.0873),
-        nil
-      ]
-    )
+    it 'returns nil for obfuscated location when inputs are nil' do
+      s1 = Site.new(latitude: nil, longitude: 145.894)
+      s2 = Site.new(latitude: -30.0873, longitude: nil)
+      s3 = Site.new(latitude: nil, longitude: nil)
 
-    expect([s1.custom_longitude, s2.custom_longitude, s3.custom_longitude]).to match(
-      [
-        be_within(Site::JITTER_RANGE).of(145.894),
-        nil,
-        nil
-      ]
-    )
-  end
+      expect([s1.custom_latitude, s2.custom_latitude, s3.custom_latitude]).to match(
+        [
+          nil,
+          be_within(Site::JITTER_RANGE).of(-30.0873),
+          nil
+        ]
+      )
 
-  it 'latitude should be within the range [-90, 90]' do
-    site = build(:site)
+      expect([s1.custom_longitude, s2.custom_longitude, s3.custom_longitude]).to match(
+        [
+          be_within(Site::JITTER_RANGE).of(145.894),
+          nil,
+          nil
+        ]
+      )
+    end
 
-    latitudes.each { |value, pass|
-      site.latitude = value
-      if pass
-        expect(site).to be_valid
-      else
-        expect(site).not_to be_valid
-      end
-    }
-  end
+    it 'latitude should be within the range [-90, 90]' do
+      site = build(:site)
 
-  it 'longitudes should be within the range [-180, 180]' do
-    site = build(:site)
+      latitudes.each { |value, pass|
+        site.latitude = value
+        if pass
+          expect(site).to be_valid
+        else
+          expect(site).not_to be_valid
+        end
+      }
+    end
 
-    longitudes.each { |value, pass|
-      site.longitude = value
-      if pass
-        expect(site).to be_valid
-      else
-        expect(site).not_to be_valid
-      end
-    }
+    it 'longitudes should be within the range [-180, 180]' do
+      site = build(:site)
+
+      longitudes.each { |value, pass|
+        site.longitude = value
+        if pass
+          expect(site).to be_valid
+        else
+          expect(site).not_to be_valid
+        end
+      }
+    end
   end
 
   it { is_expected.to have_many(:projects).through(:projects_sites) }

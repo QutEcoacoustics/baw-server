@@ -34,6 +34,8 @@
 #  scripts_creator_id_fk  (creator_id => users.id)
 #  scripts_group_id_fk    (group_id => scripts.id)
 #
+#
+#
 class Script < ApplicationRecord
   # DEFAULT_SCRIPT_NAME = 'default'
   # DEFAULT_SCRIPT_IDENTIFIER = 'default'

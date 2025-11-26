@@ -120,6 +120,7 @@
       "Phusion",
       "PIDFILE",
       "pids",
+      "plpgsql",
       "posix",
       "postgesql",
       "postgres",
@@ -347,7 +348,9 @@
         "enableAll": true
       }
     },
-    "testExplorer.addToEditorContextMenu": true
+    "testExplorer.addToEditorContextMenu": true,
+    "github.copilot.chat.agent.thinkingTool": true,
+    "github.copilot.chat.alternateGptPrompt.enabled": true
   },
   "extensions": {
     "recommendations": [

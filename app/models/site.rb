@@ -71,6 +71,10 @@ class Site < ApplicationRecord
   # See https://en.wikipedia.org/wiki/Decimal_degrees
   # (neighborhood, street, about 333m)
   JITTER_RANGE = 0.003
+  # Don't allow jitter within 10% of the jitter range. Expressed as unit interval.
+  JITTER_EXCLUSION = 0.1
+  # Don't allow values that are too close to the original location
+  JITTER_EXCLUSION_RANGE = JITTER_RANGE * JITTER_EXCLUSION
 
   # add deleted_at and deleter_id
   acts_as_discardable
@@ -140,6 +144,13 @@ class Site < ApplicationRecord
   # @return [String]
   def unique_safe_name
     "#{safe_name}_#{id}"
+  end
+
+  def self.project_ids_arel
+    ps = ProjectsSite.arel_table
+    s = Site.arel_table
+
+    ps.project(ps[:project_id].array_agg).where(ps[:site_id].eq(s[:id]))
   end
 
   def get_bookmark
@@ -242,8 +253,37 @@ class Site < ApplicationRecord
     modified_value
   end
 
+  def self.jitter_locations_table
+    Arel::Table.new(:jittered_site_locations)
+  end
+
+  def self.jitter_locations_arel(query, table, latitude_attribute, longitude_attribute, current_user:)
+    table ||= arel_table
+
+    # tie obfuscation to user access level
+    permissions_to_see_location = Arel::Table.new(:permissions_to_see_location)
+
+    Arel
+    permissions = Access::ByPermission.sites(current_user, :owner, query:)
+
+    sub_query = Arel::Nodes::Lateral.new(
+      Arel.obfuscate_location(
+        table[latitude_attribute],
+        table[longitude_attribute],
+        jitter_amount: JITTER_RANGE,
+        salt: table[:id],
+        jitter_exclusion: JITTER_EXCLUSION_RANGE,
+        obfuscated: false
+      )
+    ).as(jitter_locations_table.name)
+
+    join = table.join(sub_query).join_sources
+
+    query.joins(join)
+  end
+
   def only_one_site_per_project
-    return if project_ids.count == 1
+    return if project_ids.one?
 
     errors.add(:project_ids, 'Site must belong to exactly one project')
   end
