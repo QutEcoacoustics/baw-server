@@ -13,7 +13,7 @@ module Emu
     def extract(path)
       raise ArgumentError, 'path must exist and be pathname' unless path.is_a?(Pathname) && path.exist?
 
-      Emu.execute('metadata', path)
+      Emu.execute('metadata', '--no-wamd-offsets', path)
     end
   end
 end
