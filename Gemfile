@@ -149,9 +149,6 @@ gem 'pg'
 # in particular, we use `cast`, and `coalesce`
 gem 'arel_extensions', '>= 2.1.0'
 
-# allows for adding common table expressions to queries
-gem 'activerecord-cte'
-
 # MODELS
 # -------------------------------------
 gem 'activerecord_json_validator'

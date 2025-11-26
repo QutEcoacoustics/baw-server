@@ -22,7 +22,7 @@ module AudioRecordings
         AudioRecording.filter_settings
       )
 
-      filter = build_filter_response_as_filter_query(query, opts)
+      filter = build_filter_response_as_filter_query(query, opts, filter_settings: AudioRecording.filter_settings)
       # ensure the needed fields (and only them) are returned
       filter[:projection] = { only: [:id, :recorded_date, :'sites.name', :site_id, :canonical_file_name] }
 

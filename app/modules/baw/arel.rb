@@ -13,6 +13,25 @@ module Baw
       Baw::Arel::Nodes::MakeInterval.new(seconds:)
     end
 
+    # Create a COALESCE function node.
+    # This exists because there is undesired functionality in ArelExtensions that
+    # tries to get the type of the column from the db schema.
+    # This fails for virtual tables (eg. CTEs) because they don't exist in the schema
+    # causing very confusing errors (because it fails silently, the transaction fails
+    # and not actual error is shown).
+    # TODO: can we remove ArelExtensions entirely?
+    # @return [::Arel::Nodes::Function]
+    def coalesce(*expressions)
+      ::Arel::Nodes::NamedFunction.new 'COALESCE', expressions
+    end
+
+    def wrap_value(value)
+      return value if ::Arel.arel_node?(value)
+      return nil if value.nil?
+
+      ::Arel::Nodes::BindParam.new(value)
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.

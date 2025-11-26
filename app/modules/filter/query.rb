@@ -27,7 +27,7 @@ module Filter
       :valid_fields, :text_fields, :filter_settings,
       :parameters, :filter, :projection, :qsp_text_filter,
       :qsp_generic_filters, :paging, :sorting, :build,
-      :custom_fields2, :capabilities
+      :custom_fields2
 
     # The fields actually requested by any projection (default or not)
     # after flattening. If projection was not requested this will be equivalent to `render_fields`.
@@ -76,7 +76,6 @@ module Filter
       @default_sort_direction = filter_settings[:defaults][:direction]
       @default_filter = filter_settings[:defaults].fetch(:filter, nil)
       @custom_fields2 = filter_settings[:custom_fields2] || {}
-      @capabilities = filter_settings[:capabilities] || {}
       set_archived_param(parameters)
 
       @build = Build.new(@table, filter_settings)

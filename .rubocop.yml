@@ -115,6 +115,11 @@ Rails/Output:
   Exclude:
     # the rails logger isn't available when patches are running
     - '**/patches/**'
+Rails/SquishedSQLHeredocs:
+  Enabled: true
+  Exclude:
+    # We want neat syntax for migrations, especially for SQL functions
+    - '**/db/migrate/**'
 # https://github.com/rubocop/rubocop-rspec/issues/795
 RSpec/DescribedClass:
   EnforcedStyle: explicit

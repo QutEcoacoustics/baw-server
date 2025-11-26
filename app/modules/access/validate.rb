@@ -9,17 +9,23 @@ module Access
       # @return [Symbol,nil] level
       def level(level)
         # ensure we choose just one element if an array was accidentally passed
-        level = level.first if level.is_a?(Array)
+        if level.is_a?(Array)
+          raise 'Deprecated: level should not be an array' if BawApp.dev_or_test?
+
+          level = level.first
+        end
 
         return nil if level.blank?
 
         case level.to_s
         when 'reader', 'read'
-          :reader
+          Permission::READER
         when 'writer', 'write'
-          :writer
+          Permission::WRITER
         when 'owner', 'own'
-          :owner
+          Permission::OWNER
+        when 'none', nil
+          nil
         else
           valid_levels = Access::Core.levels.map(&:to_s)
           raise ArgumentError, "Access level '#{level}' is not in available levels '#{valid_levels}'."
@@ -32,7 +38,7 @@ module Access
       def role(role)
         role = role[0] if role.is_a?(Array) && role.size == 1
         valid_roles = Access::Core.roles.map(&:to_s)
-        is_valid = !role.blank? && valid_roles.include?(role.to_s.to_sym)
+        is_valid = role.present? && valid_roles.include?(role.to_s.to_sym)
         raise ArgumentError, "User role '#{role}' is not in available roles '#{valid_roles}'." unless is_valid
 
         role

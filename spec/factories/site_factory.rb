@@ -4,31 +4,35 @@
 #
 # Table name: sites
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :bigint
-#  image_updated_at   :datetime
-#  latitude           :decimal(9, 6)
-#  longitude          :decimal(9, 6)
-#  name               :string           not null
-#  notes              :text
-#  rails_tz           :string(255)
-#  tzinfo_tz          :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  region_id          :integer
-#  updater_id         :integer
+#  id                   :integer          not null, primary key
+#  deleted_at           :datetime
+#  description          :text
+#  image_content_type   :string
+#  image_file_name      :string
+#  image_file_size      :bigint
+#  image_updated_at     :datetime
+#  latitude             :decimal(9, 6)
+#  longitude            :decimal(9, 6)
+#  name                 :string           not null
+#  notes                :text
+#  obfuscated_latitude  :decimal(9, 6)
+#  obfuscated_longitude :decimal(9, 6)
+#  rails_tz             :string(255)
+#  tzinfo_tz            :string(255)
+#  created_at           :datetime
+#  updated_at           :datetime
+#  creator_id           :integer          not null
+#  deleter_id           :integer
+#  region_id            :integer
+#  updater_id           :integer
 #
 # Indexes
 #
-#  index_sites_on_creator_id  (creator_id)
-#  index_sites_on_deleter_id  (deleter_id)
-#  index_sites_on_updater_id  (updater_id)
+#  index_sites_on_creator_id            (creator_id)
+#  index_sites_on_deleter_id            (deleter_id)
+#  index_sites_on_obfuscated_latitude   (obfuscated_latitude)
+#  index_sites_on_obfuscated_longitude  (obfuscated_longitude)
+#  index_sites_on_updater_id            (updater_id)
 #
 # Foreign Keys
 #
@@ -58,6 +62,8 @@ FactoryBot.define do
       latitude { Random.rand(-90.0..90.0) }
       # -180 and 180 degrees
       longitude { Random.rand(-180.0..180.0) }
+
+      custom_obfuscated_location { false }
     end
 
     # the after(:create) yields two values; the instance itself and the

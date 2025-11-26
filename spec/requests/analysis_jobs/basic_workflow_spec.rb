@@ -12,7 +12,8 @@ describe 'AnalysisJobs', :clean_by_truncation do
 
     step 'we should see updated stats' do
       # 10 recordings, 2 scripts, 20 job items
-      assert_job_totals(overall_count: 20)
+      # overall count counts audio recordings, not job items, hence 10 not 20
+      assert_job_totals(overall_count: 10)
       assert_job_progress(status_new_count: 20, transition_queue_count: 20, result_empty_count: 20)
 
       # nothing in redis - scheduled job takes care on enqueueing

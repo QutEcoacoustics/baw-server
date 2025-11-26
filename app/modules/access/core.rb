@@ -24,16 +24,16 @@ module Access
         }
       end
 
-      # Get all the valid levels.
+      # Get all the valid level names.
       # @return [Array<Symbol>]
       def levels
         Access::Core.levels_hash.keys
       end
 
-      # Get value indicating no access level.
-      # @return [nil]
+      # Get a name representing no access level.
+      # @return [Symbol]
       def levels_none
-        nil
+        Permission::NONE
       end
 
       # Get a hash with symbols, names, action words for the available roles.

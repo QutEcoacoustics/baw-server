@@ -99,6 +99,8 @@ actions:
     cache_to_redis: true
   audio_check:
     queue: maintenance_<%= BawApp.env %>
+  maintenance:
+    queue: maintenance_<%= BawApp.env %>
   active_storage:
     queue: active_storage_<%= BawApp.env %>
   active_job_default:

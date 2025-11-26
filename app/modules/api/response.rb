@@ -31,12 +31,11 @@ module Api
     # @param [Object] user current_user
     # @param [Hash] _opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare_new(item, user, _opts = {})
+    def prepare_new(item, user, _opts = {}, filter_settings:)
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
 
-      filter_settings = item.class.filter_settings
       item_new = item
 
       # add new spec fields if filter_settings specifies a lambda for new_spec_fields
@@ -56,7 +55,7 @@ module Api
     # @param [Hash] additional_data Additional data to be merged into the item.
     # @param [Hash] opts the options for additional information.
     # @return [Hash] prepared item
-    def prepare(item, user, additional_data, opts = {})
+    def prepare(item, user, additional_data, opts = {}, filter_settings:)
       unless item.is_a?(ActiveRecord::Base)
         raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
       end
@@ -67,8 +66,6 @@ module Api
       end
 
       additional_data.deep_transform_keys!(&:to_s)
-
-      filter_settings = item.class.filter_settings
 
       # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
@@ -81,10 +78,11 @@ module Api
       custom_fields_keys = custom_fields_hash.keys
 
       # get newer sort of custom fields, and keep only string keys and transforms
-      custom_fields_hash2 = filter_settings
-        .fetch(:custom_fields2, {})
+      custom_fields2 = filter_settings.fetch(:custom_fields2, {})
+      custom_fields2_hash = custom_fields2
         # for calculated fields, they may not have a transform function, so skip those
         # and just use the value returned from the database
+        # TODO: i don't think this reject actually does anything useful any more - consider removing
         .reject { |_key, value| value[:transform].nil? }
         .transform_values { |value| value[:transform] }
         .transform_keys(&:to_s)
@@ -93,20 +91,34 @@ module Api
         item&.as_json,
         additional_data,
         custom_fields_hash,
-        custom_fields_hash2
+        custom_fields2_hash
       )
 
       # project using filter projection or default fields
       effective_projection = opts[:projected_fields]
       raise 'effective_projection must be an Set' unless effective_projection.is_a?(Set)
 
-      (effective_projection +
+      (effective_projection.to_set(&:to_s) +
        # backwards compatible hack: custom fields always used to be included,
        # no matter the projection
        custom_fields_keys +
        # rendered by default but not defined is filter settings
        additional_data.keys
       ) => final_rendered_fields
+
+      # Evaluate render: callbacks for custom_fields2 and remove/add fields that should not be rendered
+      custom_fields2.each do |field_name, definition|
+        render = definition[:render]
+        next if render.nil?
+
+        render = render.call(item, user, final_rendered_fields) if render.is_a?(Proc)
+
+        if render
+          final_rendered_fields.add(field_name.to_s)
+        else
+          final_rendered_fields.delete(field_name.to_s)
+        end
+      end
 
       # subset the item to only include the fields we want
       hashed_item = hashed_item.slice(*final_rendered_fields.map(&:to_s))
@@ -347,7 +359,7 @@ module Api
       opts[:projection] = filter_query.projection if filter_query.projection.present?
       # projected_fields is not nil if query_projection was called, which always was with query_without_paging_sorting
       opts[:projected_fields] = filter_query.projected_fields
-      opts[:capabilities] = filter_query.capabilities if filter_query.capabilities.present?
+      opts[:capabilities] = filter_settings[:capabilities] if filter_settings[:capabilities].present?
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,
         :filter, :projection,

@@ -76,6 +76,14 @@ module Api
       }
     end
 
+    # Override this method in your controller to provide a custom base query for Filter::Single.
+    # This is useful when you need to add CTEs or joins for custom calculated fields.
+    # Note: this should not do authorization checks - those are done on the found object later.
+    # @return [ActiveRecord::Relation, nil] the base query, or nil to use the default (Model.all)
+    def base_query_for_single
+      nil
+    end
+
     # Simply gets the id route parameter.
     # Defined so you can override it in your controller if you need to.
     # @return [String, Integer, nil]
@@ -102,11 +110,12 @@ module Api
       get_resource.send(:"#{attribute_name}=", current_user.id) if responds && is_blank && current_user_valid
     end
 
-    def respond_index(opts = {})
+    def respond_index(opts = {}, filter_settings: nil)
       opts[:projected_fields] ||= default_projected_fields_for_single
+      filter_settings ||= self.filter_settings
 
       items = get_resource_plural.map { |item|
-        Settings.api_response.prepare(item, current_user, nil, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts, filter_settings:)
       }
 
       Settings.api_response.add_capabilities!(opts, resource_class)
@@ -115,14 +124,15 @@ module Api
     end
 
     # also used for update_success and new
-    def respond_show(additional_data = nil)
+    def respond_show(additional_data = nil, filter_settings: nil)
       item_resource = get_or_reload_resource
+      filter_settings ||= self.filter_settings
 
       opts = {
         projected_fields: default_projected_fields_for_single
       }
 
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts, filter_settings:)
 
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
 
@@ -130,10 +140,12 @@ module Api
       render json: built_response, status: :ok, layout: false
     end
 
-    def respond_new
+    def respond_new(filter_settings: nil)
       item_resource = get_resource
 
-      item = Settings.api_response.prepare_new(item_resource, current_user)
+      filter_settings ||= self.filter_settings
+
+      item = Settings.api_response.prepare_new(item_resource, current_user, filter_settings:)
 
       opts = {}
       # Can't think of a valid context for this currently
@@ -143,14 +155,15 @@ module Api
       render json: built_response, status: :ok, layout: false
     end
 
-    def respond_create_success(location = nil, additional_data = nil)
+    def respond_create_success(location = nil, additional_data = nil, filter_settings: nil)
       item_resource = get_or_reload_resource
+      filter_settings ||= self.filter_settings
 
       opts = {
         projected_fields: default_projected_fields_for_single
       }
 
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts, filter_settings:)
 
       Settings.api_response.add_capabilities!(opts, resource_class, item_resource)
 
@@ -171,15 +184,16 @@ module Api
       render json: built_response, status: :unprocessable_content, layout: false
     end
 
-    def respond_change_fail_with_resource(additional_data = nil)
+    def respond_change_fail_with_resource(additional_data = nil, filter_settings: nil)
       item_resource = get_resource
       item_resource = get_or_reload_resource if item_resource.persisted?
+      filter_settings ||= self.filter_settings
 
       opts = {
         projected_fields: default_projected_fields_for_single
       }
 
-      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts)
+      item = Settings.api_response.prepare(item_resource, current_user, additional_data, opts, filter_settings:)
 
       built_response = Settings.api_response.build(
         :unprocessable_content,
@@ -207,9 +221,11 @@ module Api
       )
     end
 
-    def respond_filter(content, opts = {})
+    def respond_filter(content, opts = {}, filter_settings: nil)
+      filter_settings ||= self.filter_settings
+
       items = content.map { |item|
-        Settings.api_response.prepare(item, current_user, nil, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts, filter_settings:)
       }
 
       Settings.api_response.add_capabilities!(opts, resource_class)
@@ -259,10 +275,10 @@ module Api
     # request.
     # @return [Hash] - a hash including filter, paging, and sorting sub-hashes suitable for
     #  passing to the filter POST method.
-    def build_filter_response_as_filter_query(content, opts = {})
+    def build_filter_response_as_filter_query(content, opts = {}, filter_settings:)
       # add custom fields
       items = content.map { |item|
-        Settings.api_response.prepare(item, current_user, nil, opts)
+        Settings.api_response.prepare(item, current_user, nil, opts, filter_settings:)
       }
 
       # build out the normal response
@@ -331,7 +347,12 @@ module Api
     def do_load_resource
       # we augment the query here to allow us to fetch information needed for custom fields
       # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
-      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
+      current_filter = Filter::Single.new(
+        default_filter_parameters_for_single,
+        resource_class,
+        filter_settings,
+        base_query: base_query_for_single
+      )
 
       resource = find_resource(current_filter.query)
 
@@ -347,7 +368,12 @@ module Api
       raise ArgumentError, 'find_keys must not be empty' if find_keys.blank?
       raise ArgumentError, 'find_keys must contain symbols' unless find_keys.all?(Symbol)
 
-      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
+      current_filter = Filter::Single.new(
+        default_filter_parameters_for_single,
+        resource_class,
+        filter_settings,
+        base_query: base_query_for_single
+      )
 
       # we mimic find_sole_by here but we don't necessarily want raise to if not found
       # all `sole` does is retrieve two records - if there is more than one it raises
@@ -392,7 +418,12 @@ module Api
 
       # we augment the query here to allow us to fetch information needed for custom fields
       # Fixes https://github.com/QutEcoacoustics/baw-server/issues/565
-      current_filter = Filter::Single.new(default_filter_parameters_for_single, resource_class, filter_settings)
+      current_filter = Filter::Single.new(
+        default_filter_parameters_for_single,
+        resource_class,
+        filter_settings,
+        base_query: base_query_for_single
+      )
 
       resource = current_filter.query.find(resource.id)
 

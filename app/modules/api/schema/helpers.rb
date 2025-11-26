@@ -5,6 +5,37 @@ module Api
     # A small module that helps output boilerplate JSON schema definitions.
     # All the declarations here could be inlined with no ill-effect.
     module Helpers
+      def standard_array_response(item_schema)
+        {
+          allOf: [
+            { '$ref' => '#/components/schemas/standard_response' },
+            {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: item_schema
+                }
+              }
+            }
+          ]
+        }
+      end
+
+      def standard_single_response(item_schema)
+        {
+          allOf: [
+            { '$ref' => '#/components/schemas/standard_response' },
+            {
+              type: 'object',
+              properties: {
+                data: item_schema
+              }
+            }
+          ]
+        }
+      end
+
       def id(nullable: false, read_only: true)
         { '$ref' => nullable ? '#/components/schemas/nullableId' : '#/components/schemas/id', readOnly: read_only }
       end
@@ -98,6 +129,18 @@ module Api
           },
           required: false,
           allowEmptyValue: true
+        }
+      end
+
+      def filter_payload(filter: true, sorting: true, paging: true, projection: true)
+        {
+          type: 'object',
+          properties: {
+            filter: filter ? { '$ref' => '#/components/schemas/filter_payload_filter' } : nil,
+            sort: sorting ? { '$ref' => '#/components/schemas/filter_payload_sort' } : nil,
+            page: paging ? { '$ref' => '#/components/schemas/filter_payload_paging' } : nil,
+            projection: projection ? { '$ref' => '#/components/schemas/filter_payload_projection' } : nil
+          }
         }
       end
     end

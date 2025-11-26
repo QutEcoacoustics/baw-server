@@ -419,6 +419,10 @@ class AnalysisJob < ApplicationRecord
 
   # Queries current analysis jobs items and returns a hash of statistics for the
   # associated recordings.
+  # Note this does not count audio recordings multiple times if there are multiple
+  # analysis jobs items for the same recording.
+  # The purpose is to get some sense of the audio recordings being processed by this job,
+  # and counting size/duration multiple times would distort that.
   # @return [Hash<Symbol, Numeric>]
   def overall_statistics_query
     AudioRecording
