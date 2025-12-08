@@ -191,8 +191,8 @@ describe 'Projects' do
 
     it 'can filter on has_audio' do
       # The default "create_entire_hierarchy" creates projects with audio by default.
-      # So we need to create a project without audio to test filtering by the negative cases.
-      create(:project, creator: reader_user)
+      # Therefore, we need to destroy all audio so that projects match the filter.
+      AudioRecording.destroy_all
 
       body = {
         filter: {
