@@ -109,11 +109,6 @@ describe Project do
       project = create(:project)
       create(:site, projects: [project], region: nil)
 
-      # Create another project with audio to ensure we don't get a false positive
-      other_project = create(:project)
-      other_site = create(:site, projects: [other_project], region: nil)
-      create(:audio_recording, site: other_site)
-
       result = Project.select(:id, Project.has_audio_arel?.as('has_audio'))
         .where(id: project.id)
         .sole
@@ -130,14 +125,13 @@ describe Project do
       # In all of the other tests, we have tested projects with sites directly assigned to them.
       # To ensure that our relationship works with regions, I create a project with no directly assigned sites and put
       # all sites under regions.
-      #
-      # Similar to the previous test, the first region assigned to this project will have a site with no audio to ensure
-      # that we are correctly checking all sites.
 
       project = create(:project)
       region = create(:region, project: project)
 
-      # Create site in region. Factory/Validation ensures it is associated with the project.
+      # Similar to the previous test, the first region assigned to this project will have a site with no audio to ensure
+      # that we are correctly checking all sites.
+      create(:site, region: region)
       site = create(:site, region: region)
 
       create(:audio_recording, site: site)

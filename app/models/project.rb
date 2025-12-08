@@ -111,8 +111,8 @@ class Project < ApplicationRecord
                      :license,
                      # This field is intentionally excluded from the render_fields so that it is not emitted by default
                      # and needs to be explicitly included using filter projection.
-                     # I don't include this field by default because it introduces a join on the audio_recordings table
-                     # which can slow down queries when it is not needed.
+                     # I don't include this field by default because it introduces a joins on the site and
+                     # audio_recordings table which can slow down queries when it is not needed.
                      :has_audio],
       render_fields: [:id, :name, :description, :creator_id,
                       :created_at,
