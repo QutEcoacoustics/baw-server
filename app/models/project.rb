@@ -108,7 +108,12 @@ class Project < ApplicationRecord
                      :updated_at,
                      :deleter_id,
                      :deleted_at,
-                     :license],
+                     :license,
+                     # This field is intentionally excluded from the render_fields so that it is not emitted by default
+                     # and needs to be explicitly included using filter projection.
+                     # I don't include this field by default because it introduces a join on the audio_recordings table
+                     # which can slow down queries when it is not needed.
+                     :has_audio],
       render_fields: [:id, :name, :description, :creator_id,
                       :created_at,
                       :updater_id,
@@ -136,6 +141,14 @@ class Project < ApplicationRecord
                        project_hash[:access_level] = Project.access_level(item, user)
                        [item, project_hash]
                      },
+      custom_fields2: {
+        has_audio: {
+          query_attributes: [],
+          transform: nil,
+          arel: Project.has_audio_arel?,
+          type: :boolean
+        }
+      },
       new_spec_fields: lambda { |_user|
                          {
                            name: nil,
@@ -223,7 +236,8 @@ class Project < ApplicationRecord
         access_level: Api::Schema.permission_levels,
         allow_original_download: Api::Schema.permission_levels,
         allow_audio_upload: { type: 'boolean' },
-        license: { type: ['string', 'null'] }
+        license: { type: ['string', 'null'] },
+        has_audio: { type: 'boolean', readOnly: true }
       },
       required: [
         :id,
@@ -251,6 +265,28 @@ class Project < ApplicationRecord
   def self.access_level(project, user)
     levels = Access::Core.user_levels(user, project)
     Access::Core.highest(levels)
+  end
+
+  # @return [Boolean]
+  def self.has_audio_arel?
+    audio_recordings_table = AudioRecording.arel_table
+    project_table = Project.arel_table
+    site_table = Site.arel_table
+
+    # A temporary (currently empty) table for the join between the sites and project tables.
+    projects_sites_table = Arel::Table.new(:projects_sites)
+
+    # We reduce the number of fields returned to just the id so that there is less data to process.
+    # Additionally, we use a select + limit query instead of using a count query so that the database can stop querying
+    # as soon as it finds one matching record instead of having to count all matching records.
+    query = audio_recordings_table
+      .project(audio_recordings_table[:id])
+      .join(site_table).on(audio_recordings_table[:site_id].eq(site_table[:id]))
+      .join(projects_sites_table).on(site_table[:id].eq(projects_sites_table[:site_id]))
+      .where(projects_sites_table[:project_id].eq(project_table[:id]))
+      .take(1)
+
+    Arel::Nodes::Exists.new(query)
   end
 
   private

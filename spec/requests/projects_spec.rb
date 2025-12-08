@@ -168,6 +168,30 @@ describe 'Projects' do
       actual_count = Access::ByPermission.projects(writer_user).count
       expect_has_paging(page: 1, items: 2, total: actual_count)
     end
+
+    it 'can project has_audio' do
+      body = {
+        projection: {
+          add: [:has_audio]
+        }
+      }
+
+      post '/projects/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect(api_data).to match [
+        a_hash_including(:has_audio)
+      ]
+    end
+
+    it 'does not include has_audio when not included in projection' do
+      post '/projects/filter', params: {}, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect(api_data).to match [
+        a_hash_excluding(:has_audio)
+      ]
+    end
   end
 
   describe 'regions' do
