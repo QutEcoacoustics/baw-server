@@ -142,7 +142,7 @@ class Project < ApplicationRecord
         has_audio: {
           query_attributes: [],
           transform: nil,
-          arel: Project.has_audio_arel?,
+          arel: Project.audio_exists_arel,
           type: :boolean
         }
       },
@@ -264,21 +264,21 @@ class Project < ApplicationRecord
     Access::Core.highest(levels)
   end
 
-  # @return [Boolean]
-  def self.has_audio_arel?
-    audio_recordings_table = AudioRecording.arel_table
-    project_table = Project.arel_table
-    site_table = Site.arel_table
+  # @return [Arel::Nodes::Exists]
+  def self.audio_exists_arel(projects_table = nil)
+    p = projects_table || arel_table
+    ar = AudioRecording.arel_table
+    s = Site.arel_table
 
     # A temporary (currently empty) table for the join between the sites and project tables.
-    projects_sites_table = Arel::Table.new(:projects_sites)
+    ps = Arel::Table.new(:projects_sites)
 
     # Select just id, and limit to 1, as that is all we need to test if any record exists
-    query = audio_recordings_table
-      .project(audio_recordings_table[:id])
-      .join(site_table).on(audio_recordings_table[:site_id].eq(site_table[:id]))
-      .join(projects_sites_table).on(site_table[:id].eq(projects_sites_table[:site_id]))
-      .where(projects_sites_table[:project_id].eq(project_table[:id]))
+    query = ar
+      .project(ar[:id])
+      .join(s).on(ar[:site_id].eq(s[:id]))
+      .join(ps).on(s[:id].eq(ps[:site_id]))
+      .where(ps[:project_id].eq(p[:id]))
       .take(1)
 
     Arel::Nodes::Exists.new(query)

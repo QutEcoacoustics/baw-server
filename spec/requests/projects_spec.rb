@@ -179,18 +179,34 @@ describe 'Projects' do
       post '/projects/filter', params: body, **api_with_body_headers(reader_token)
 
       expect_success
-      expect(api_data).to match [
-        a_hash_including(:has_audio)
-      ]
+      expect(api_data).to all(a_hash_including(has_audio: true))
     end
 
     it 'does not include has_audio when not included in projection' do
       post '/projects/filter', params: {}, **api_with_body_headers(reader_token)
 
       expect_success
-      expect(api_data).to match [
-        a_hash_excluding(:has_audio)
-      ]
+      expect(api_data).to all(a_hash_excluding(:has_audio))
+    end
+
+    it 'can filter on has_audio' do
+      # The default "create_entire_hierarchy" creates projects with audio by default.
+      # So we need to create a project without audio to test filtering by the negative cases.
+      create(:project, creator: reader_user)
+
+      body = {
+        filter: {
+          has_audio: { eq: false }
+        },
+        projection: {
+          add: [:has_audio]
+        }
+      }
+
+      post '/projects/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect(api_data).to all(a_hash_including(has_audio: false))
     end
   end
 

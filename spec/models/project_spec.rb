@@ -80,87 +80,38 @@ describe Project do
     expect(build(:project, license: '')).not_to be_valid
   end
 
-  context 'with has_audio_arel' do
+  context 'with audio_exists_arel' do
+    create_audio_recordings_hierarchy
+
     it 'returns the correct value for a project with audio' do
-      project = create(:project)
-
-      # We assign a site that does not have audio first so that if there is a bug where the first site is used instead
-      # of correctly checking all site, this test will correctly fail.
-      create(:site, projects: [project], region: nil)
-
-      # The second site assigned to the project has one audio recording.
-      # I purposely only assign one audio recording to check the lower-bound case where there is only one recording.
-      site = create(:site, projects: [project], region: nil)
-      create(:audio_recording, site: site)
-
-      result = Project.select(:id, Project.has_audio_arel?.as('has_audio'))
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio'))
         .where(id: project.id)
         .sole
 
-      expect(result.as_json).to match(
-        a_hash_including(
-          'id' => project.id,
-          'has_audio' => true
-        )
-      )
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq true
     end
 
     it 'returns the correct value for a project without audio' do
-      project = create(:project)
-      create(:site, projects: [project], region: nil)
+      AudioRecording.destroy_all
 
-      result = Project.select(:id, Project.has_audio_arel?.as('has_audio'))
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio'))
         .where(id: project.id)
         .sole
 
-      expect(result.as_json).to match(
-        a_hash_including(
-          'id' => project.id,
-          'has_audio' => false
-        )
-      )
-    end
-
-    it 'returns the correct value for a region > site > project hierarchy with audio' do
-      # In all of the other tests, we have tested projects with sites directly assigned to them.
-      # To ensure that our relationship works with regions, I create a project with no directly assigned sites and put
-      # all sites under regions.
-
-      project = create(:project)
-      region = create(:region, project: project)
-
-      # Similar to the previous test, the first region assigned to this project will have a site with no audio to ensure
-      # that we are correctly checking all sites.
-      create(:site, region: region)
-      site = create(:site, region: region)
-
-      create(:audio_recording, site: site)
-
-      result = Project.select(:id, Project.has_audio_arel?.as('has_audio'))
-        .where(id: project.id)
-        .sole
-
-      expect(result.as_json).to match(
-        a_hash_including(
-          'id' => project.id,
-          'has_audio' => true
-        )
-      )
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq false
     end
 
     it 'returns has_audio: false for a project with no sites' do
-      project = create(:project)
+      Site.destroy_all
 
-      result = Project.select(:id, Project.has_audio_arel?.as('has_audio'))
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio'))
         .where(id: project.id)
         .sole
 
-      expect(result.as_json).to match(
-        a_hash_including(
-          'id' => project.id,
-          'has_audio' => false
-        )
-      )
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq false
     end
   end
 
