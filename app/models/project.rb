@@ -282,11 +282,8 @@ class Project < ApplicationRecord
     query = audio_recordings_table
       .project(audio_recordings_table[:id])
       .join(site_table).on(audio_recordings_table[:site_id].eq(site_table[:id]))
-      .join(projects_sites_table).on(
-        site_table[:id].eq(projects_sites_table[:site_id]).and(
-          projects_sites_table[:project_id].eq(project_table[:id])
-        )
-      )
+      .join(projects_sites_table).on(site_table[:id].eq(projects_sites_table[:site_id]))
+      .where(projects_sites_table[:project_id].eq(project_table[:id]))
       .take(1)
 
     Arel::Nodes::Exists.new(query)
