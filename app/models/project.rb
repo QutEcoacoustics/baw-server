@@ -273,9 +273,7 @@ class Project < ApplicationRecord
     # A temporary (currently empty) table for the join between the sites and project tables.
     projects_sites_table = Arel::Table.new(:projects_sites)
 
-    # We reduce the number of fields returned to just the id so that there is less data to process.
-    # Additionally, we use a select + limit query instead of using a count query so that the database can stop querying
-    # as soon as it finds one matching record instead of having to count all matching records.
+    # Select just id, and limit to 1, as that is all we need to test if any record exists
     query = audio_recordings_table
       .project(audio_recordings_table[:id])
       .join(site_table).on(audio_recordings_table[:site_id].eq(site_table[:id]))
