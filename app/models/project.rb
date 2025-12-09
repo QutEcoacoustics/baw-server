@@ -271,7 +271,7 @@ class Project < ApplicationRecord
     s = Site.arel_table
 
     # A temporary (currently empty) table for the join between the sites and project tables.
-    ps = Arel::Table.new(:projects_sites)
+    ps = ProjectsSite.arel_table
 
     # Select just id, and limit to 1, as that is all we need to test if any record exists
     query = ar
