@@ -190,7 +190,7 @@ describe 'Projects' do
     end
 
     it 'can filter on has_audio' do
-      project2 = Common.create_project(owner_user) 
+      project2 = Creation::Common.create_project(owner_user)
       create(:read_permission, creator: owner_user, user: reader_user, project: project2)
 
       body = {
@@ -206,7 +206,7 @@ describe 'Projects' do
 
       expect_success
       expect(api_data).to match([
-         a_hash_including(has_audio: false, id: id: project2.id)
+        a_hash_including(has_audio: false, id: project2.id)
       ])
     end
   end
