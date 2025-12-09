@@ -93,9 +93,7 @@ describe Project do
     it 'returns the correct value for a project without audio' do
       AudioRecording.destroy_all
 
-      result = Project.select(:id, Project.audio_exists_arel.as('has_audio'))
-        .where(id: project.id)
-        .sole
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio')).find(project.id)
 
       expect(result.id).to eq project.id
       expect(result.has_audio).to eq false
