@@ -190,9 +190,8 @@ describe 'Projects' do
     end
 
     it 'can filter on has_audio' do
-      # The default "create_entire_hierarchy" creates projects with audio by default.
-      # Therefore, we need to destroy all audio so that projects match the filter.
-      AudioRecording.destroy_all
+      project2 = Common.create_project(owner_user) 
+      create(:read_permission, creator: owner_user, user: reader_user, project: project2)
 
       body = {
         filter: {
@@ -206,7 +205,9 @@ describe 'Projects' do
       post '/projects/filter', params: body, **api_with_body_headers(reader_token)
 
       expect_success
-      expect(api_data).to all(a_hash_including(has_audio: false))
+      expect(api_data).to match([
+         a_hash_including(has_audio: false, id: id: project2.id)
+      ])
     end
   end
 
