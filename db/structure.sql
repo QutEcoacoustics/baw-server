@@ -2902,20 +2902,6 @@ CREATE INDEX audio_recordings_created_updated_at ON public.audio_recordings USIN
 
 
 --
--- Name: audio_recordings_icase_file_hash_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX audio_recordings_icase_file_hash_id_idx ON public.audio_recordings USING btree (lower((file_hash)::text), id);
-
-
---
--- Name: audio_recordings_icase_file_hash_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX audio_recordings_icase_file_hash_idx ON public.audio_recordings USING btree (lower((file_hash)::text));
-
-
---
 -- Name: audio_recordings_icase_uuid_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3179,6 +3165,13 @@ CREATE INDEX index_audio_recordings_on_creator_id ON public.audio_recordings USI
 --
 
 CREATE INDEX index_audio_recordings_on_deleter_id ON public.audio_recordings USING btree (deleter_id);
+
+
+--
+-- Name: index_audio_recordings_on_file_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_recordings_on_file_hash ON public.audio_recordings USING btree (file_hash);
 
 
 --
@@ -4471,6 +4464,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20251126025112'),
 ('20250912033944'),
 ('20250909090000'),
 ('20250723051530'),
