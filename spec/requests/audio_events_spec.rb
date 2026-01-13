@@ -525,6 +525,37 @@ describe '/audio_events' do
         )
       ]
     end
+
+    it 'can filter by verification_count' do
+      with_verifications = isolated_audio_event
+
+      create(:verification, :correct, creator: reader_user, audio_event: with_verifications, tag: create(:tag))
+      create(:verification, :incorrect, creator: admin_user, audio_event: with_verifications, tag: create(:tag))
+
+      body = {
+        filter: {
+          verification_count: { eq: 2 }
+        },
+        projection: {
+          add: ['verification_count']
+        },
+        sorting: {
+          order_by: 'id',
+          direction: 'asc'
+        }
+      }
+
+      post '/audio_events/filter', params: body, **api_with_body_headers(reader_token)
+
+      expect_success
+      expect_number_of_items(1)
+      expect(api_data).to match [
+        a_hash_including(
+          id: with_verifications.id,
+          verification_count: 2
+        )
+      ]
+    end
   end
 
   context('with reference events') do

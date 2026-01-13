@@ -170,6 +170,16 @@ class AudioEvent < ApplicationRecord
     Arel.grouping(outer)
   end
 
+  def self.verification_count_arel
+    verifications = Verification.arel_table
+
+    Arel.grouping(
+      verifications
+        .project(verifications[:id].count)
+        .where(verifications[:audio_event_id].eq(arel_table[:id]))
+    )
+  end
+
   def self.verification_summary_arel
     verifications = Verification.arel_table
     inner_table = Arel::Table.new(:verifications_inner)
@@ -221,7 +231,9 @@ class AudioEvent < ApplicationRecord
                      # this one is rendered by default for back compatibility
                      :taggings,
                      # these two are intentionally not rendered by default
-                     :verification_ids, :verification_summary],
+                     :verification_ids, :verification_summary,
+                     # computed aggregate fields
+                     :verification_count],
       render_fields: [:id, :audio_recording_id,
                       :start_time_seconds, :end_time_seconds,
                       :low_frequency_hertz, :high_frequency_hertz,
@@ -259,6 +271,12 @@ class AudioEvent < ApplicationRecord
           transform: nil,
           arel: AudioEvent.associated_verification_ids_arel,
           type: :array
+        },
+        verification_count: {
+          query_attributes: [],
+          transform: nil,
+          arel: AudioEvent.verification_count_arel,
+          type: :integer
         },
         verification_summary: {
           query_attributes: [],
@@ -411,6 +429,7 @@ class AudioEvent < ApplicationRecord
           },
           readOnly: true
         },
+        verification_count: { type: 'integer', readOnly: true },
         audio_event_import_file_id: Api::Schema.id(nullable: true, read_only: true),
         import_file_index: { type: ['null', 'integer'], readOnly: true },
         provenance_id: Api::Schema.id(nullable: true),
