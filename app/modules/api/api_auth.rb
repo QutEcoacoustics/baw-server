@@ -35,9 +35,11 @@ module Api
 
     # Simply calls current_user to trigger authentication.
     # We override only so we can customize our API response body.
-    def authenticate_user!
+    # @param _opts [Hash] options (not used) - for compatibility with Devise method signature
+    def authenticate_user!(_opts = {})
       # ripped off https://github.com/heartcombo/devise/blob/6d32d2447cc0f3739d9732246b5a5bde98d9e032/lib/devise/controllers/helpers.rb#L99-L119
       # if valid user then all good
+      # current_user calls warden.authenticate which will set warden.result
       return if current_user
 
       # if there was something wrong with authentication (like an invalid token)
