@@ -108,7 +108,9 @@ class Project < ApplicationRecord
                      :updated_at,
                      :deleter_id,
                      :deleted_at,
-                     :license],
+                     :license,
+                     # Omitted by default for performance reasons (inline sub-query with many joins)
+                     :has_audio],
       render_fields: [:id, :name, :description, :creator_id,
                       :created_at,
                       :updater_id,
@@ -136,6 +138,14 @@ class Project < ApplicationRecord
                        project_hash[:access_level] = Project.access_level(item, user)
                        [item, project_hash]
                      },
+      custom_fields2: {
+        has_audio: {
+          query_attributes: [],
+          transform: nil,
+          arel: Project.audio_exists_arel,
+          type: :boolean
+        }
+      },
       new_spec_fields: lambda { |_user|
                          {
                            name: nil,
@@ -223,7 +233,8 @@ class Project < ApplicationRecord
         access_level: Api::Schema.permission_levels,
         allow_original_download: Api::Schema.permission_levels,
         allow_audio_upload: { type: 'boolean' },
-        license: { type: ['string', 'null'] }
+        license: { type: ['string', 'null'] },
+        has_audio: { type: 'boolean', readOnly: true }
       },
       required: [
         :id,
@@ -251,6 +262,26 @@ class Project < ApplicationRecord
   def self.access_level(project, user)
     levels = Access::Core.user_levels(user, project)
     Access::Core.highest(levels)
+  end
+
+  # @return [Arel::Nodes::Exists]
+  def self.audio_exists_arel(projects_table = nil)
+    p = projects_table || arel_table
+    ar = AudioRecording.arel_table
+    s = Site.arel_table
+
+    # A temporary (currently empty) table for the join between the sites and project tables.
+    ps = ProjectsSite.arel_table
+
+    # Select just id, and limit to 1, as that is all we need to test if any record exists
+    query = ar
+      .project(ar[:id])
+      .join(s).on(ar[:site_id].eq(s[:id]))
+      .join(ps).on(s[:id].eq(ps[:site_id]))
+      .where(ps[:project_id].eq(p[:id]))
+      .take(1)
+
+    Arel::Nodes::Exists.new(query)
   end
 
   private
