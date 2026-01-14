@@ -4,31 +4,35 @@
 #
 # Table name: sites
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :bigint
-#  image_updated_at   :datetime
-#  latitude           :decimal(9, 6)
-#  longitude          :decimal(9, 6)
-#  name               :string           not null
-#  notes              :text
-#  rails_tz           :string(255)
-#  tzinfo_tz          :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  region_id          :integer
-#  updater_id         :integer
+#  id                   :integer          not null, primary key
+#  deleted_at           :datetime
+#  description          :text
+#  image_content_type   :string
+#  image_file_name      :string
+#  image_file_size      :bigint
+#  image_updated_at     :datetime
+#  latitude             :decimal(9, 6)
+#  longitude            :decimal(9, 6)
+#  name                 :string           not null
+#  notes                :text
+#  obfuscated_latitude  :decimal(9, 6)
+#  obfuscated_longitude :decimal(9, 6)
+#  rails_tz             :string(255)
+#  tzinfo_tz            :string(255)
+#  created_at           :datetime
+#  updated_at           :datetime
+#  creator_id           :integer          not null
+#  deleter_id           :integer
+#  region_id            :integer
+#  updater_id           :integer
 #
 # Indexes
 #
-#  index_sites_on_creator_id  (creator_id)
-#  index_sites_on_deleter_id  (deleter_id)
-#  index_sites_on_updater_id  (updater_id)
+#  index_sites_on_creator_id            (creator_id)
+#  index_sites_on_deleter_id            (deleter_id)
+#  index_sites_on_obfuscated_latitude   (obfuscated_latitude)
+#  index_sites_on_obfuscated_longitude  (obfuscated_longitude)
+#  index_sites_on_updater_id            (updater_id)
 #
 # Foreign Keys
 #
@@ -102,6 +106,20 @@ class Site < ApplicationRecord
     message: "%<value>s must be greater than or equal to #{Site::LONGITUDE_MIN} and less than or equal to #{Site::LONGITUDE_MAX}"
   }, allow_nil: true
 
+  validates :obfuscated_latitude, numericality: {
+    only_integer: false,
+    greater_than_or_equal_to: Site::LATITUDE_MIN,
+    less_than_or_equal_to: Site::LATITUDE_MAX,
+    message: "%<value>s must be greater than or equal to #{Site::LATITUDE_MIN} and less than or equal to #{Site::LATITUDE_MAX}"
+  }, allow_nil: true
+
+  validates :obfuscated_longitude, numericality: {
+    only_integer: false,
+    greater_than_or_equal_to: Site::LONGITUDE_MIN,
+    less_than_or_equal_to: Site::LONGITUDE_MAX,
+    message: "%<value>s must be greater than or equal to #{Site::LONGITUDE_MIN} and less than or equal to #{Site::LONGITUDE_MAX}"
+  }, allow_nil: true
+
   validates_attachment_content_type :image,
     content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
@@ -153,6 +171,41 @@ class Site < ApplicationRecord
     ps.project(ps[:project_id].array_agg).where(ps[:site_id].eq(s[:id]))
   end
 
+  def self.owner_sites_relation(user)
+    Access::ByPermission.sites(user, :owner).select(:id).distinct
+  end
+
+  def self.visible_latitude_arel(user, site_table: arel_table, owner_table_alias: Arel::Table.new(:owner_sites))
+    obfuscated_or_true = Arel::Nodes::NamedFunction.new(
+      'COALESCE',
+      [site_table[:obfuscated_latitude], site_table[:latitude]]
+    )
+
+    Arel::Nodes::Case
+      .new(owner_table_alias[:id])
+      .when(nil).then(obfuscated_or_true)
+      .else(site_table[:latitude])
+  end
+
+  def self.visible_longitude_arel(user, site_table: arel_table, owner_table_alias: Arel::Table.new(:owner_sites))
+    obfuscated_or_true = Arel::Nodes::NamedFunction.new(
+      'COALESCE',
+      [site_table[:obfuscated_longitude], site_table[:longitude]]
+    )
+
+    Arel::Nodes::Case
+      .new(owner_table_alias[:id])
+      .when(nil).then(obfuscated_or_true)
+      .else(site_table[:longitude])
+  end
+
+  def self.location_obfuscated_arel(_user, site_table: arel_table, owner_table_alias: Arel::Table.new(:owner_sites))
+    Arel::Nodes::Case
+      .new(owner_table_alias[:id])
+      .when(nil).then(Arel.sql('TRUE'))
+      .else(Arel.sql('FALSE'))
+  end
+
   def get_bookmark
     Bookmark.where(audio_recording: audio_recordings).order(:updated_at).first
   end
@@ -182,20 +235,22 @@ class Site < ApplicationRecord
   renders_markdown_for :description
 
   def custom_latitude
-    value = self[:latitude]
-    if location_obfuscated && value.present?
-      Site.add_location_jitter(value, Site::LATITUDE_MIN, Site::LATITUDE_MAX, location_jitter_seed)
+    if location_obfuscated
+      # if nil, do not backfill from un-obfuscated value, as that would
+      # defeat the purpose of obfuscation
+      obfuscated_latitude
     else
-      value
+      self[:latitude]
     end
   end
 
   def custom_longitude
-    value = self[:longitude]
-    if location_obfuscated && value.present?
-      Site.add_location_jitter(value, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed)
+    if location_obfuscated
+      # if nil, do not backfill from un-obfuscated value, as that would
+      # defeat the purpose of obfuscation
+      obfuscated_longitude
     else
-      value
+      self[:longitude]
     end
   end
 

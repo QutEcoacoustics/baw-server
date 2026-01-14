@@ -14,17 +14,30 @@ module Sites
     def group_sites_by_audio_events
       do_authorize_group_classes(Site, AudioEvent)
 
+      site_table = Site.arel_table
+      region_table = Region.arel_table
+
       parent = Group.new(
         model: Site,
-        base_query: Access::ByPermission.sites(current_user)
-          .joins(:region)
-          .joins(Arel.obfuscate_location(s[:latitude], s[:longitude], jitter_amount: 0.03, salt: s[:id])),
+        base_query:
+          # TODO: it would be better if we could role the effective permissions query
+          # and the by permission query into one to avoid double joining the permissions table
+          Access::EffectivePermission.add_effective_permissions_cte(
+            Access::ByPermission.sites(current_user),
+            current_user
+          )
+          .joins(:region),
         projections: {
-          site_id: Site.arel_table[:id],
-          region_id: Region.arel_table[:id],
-          project_ids: Arel.grouping(Site.project_ids_arel)
+          site_id: site_table[:id],
+          region_id: region_table[:id],
+          project_ids: Arel.grouping(Site.project_ids_arel),
+          latitude: Site.visible_latitude_arel(Current.user, site_table:, owner_table_alias: owner_sites_alias),
+          longitude: Site.visible_longitude_arel(Current.user, site_table:, owner_table_alias: owner_sites_alias),
+          location_obfuscated: Site.location_obfuscated_arel(Current.user, site_table:,
+            owner_table_alias: owner_sites_alias)
         }
       )
+
       child = Group.new(
         model: AudioEvent,
         base_query: Access::ByPermission.audio_events(current_user),
@@ -39,7 +52,7 @@ module Sites
         filter_settings: AudioEvent.filter_settings,
         joins: { audio_recording: :site }
       )
-      debugger
+
       respond_group_by(result, opts)
     end
   end

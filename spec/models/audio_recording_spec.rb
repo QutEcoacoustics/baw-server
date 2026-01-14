@@ -29,17 +29,16 @@
 #
 # Indexes
 #
-#  audio_recordings_created_updated_at      (created_at,updated_at)
-#  audio_recordings_icase_file_hash_id_idx  (lower((file_hash)::text), id)
-#  audio_recordings_icase_file_hash_idx     (lower((file_hash)::text))
-#  audio_recordings_icase_uuid_id_idx       (lower((uuid)::text), id)
-#  audio_recordings_icase_uuid_idx          (lower((uuid)::text))
-#  audio_recordings_uuid_uidx               (uuid) UNIQUE
-#  index_audio_recordings_on_creator_id     (creator_id)
-#  index_audio_recordings_on_deleter_id     (deleter_id)
-#  index_audio_recordings_on_site_id        (site_id)
-#  index_audio_recordings_on_updater_id     (updater_id)
-#  index_audio_recordings_on_uploader_id    (uploader_id)
+#  audio_recordings_created_updated_at    (created_at,updated_at)
+#  audio_recordings_icase_uuid_id_idx     (lower((uuid)::text), id)
+#  audio_recordings_icase_uuid_idx        (lower((uuid)::text))
+#  audio_recordings_uuid_uidx             (uuid) UNIQUE
+#  index_audio_recordings_on_creator_id   (creator_id)
+#  index_audio_recordings_on_deleter_id   (deleter_id)
+#  index_audio_recordings_on_file_hash    (file_hash)
+#  index_audio_recordings_on_site_id      (site_id)
+#  index_audio_recordings_on_updater_id   (updater_id)
+#  index_audio_recordings_on_uploader_id  (uploader_id)
 #
 # Foreign Keys
 #
