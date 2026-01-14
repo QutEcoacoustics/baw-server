@@ -62,7 +62,7 @@ module Sites
       ep_inner = Arel::Table.new(:effective_permissions, as: 'ep_inner')
       
       owner_sites_subquery = ps_inner
-        .project(ps_inner[:site_id].as('id').distinct)
+        .project(ps_inner[:site_id].as('id'))
         .join(p_inner)
         .on(ps_inner[:project_id].eq(p_inner[:id]))
         .join(ep_inner, Arel::Nodes::OuterJoin)
@@ -70,6 +70,7 @@ module Sites
         .where(
           ep_inner[:effective_level].coalesce(::Permission::LEVEL_TO_INTEGER_MAP[::Permission::NONE]).gteq(owner_level)
         )
+        .distinct
       
       base_sites_query = base_sites_query
         .joins(
