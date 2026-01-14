@@ -381,9 +381,8 @@ module Access
       # @param levels [Array<Symbol>]
       # @param query [ActiveRecord::Relation]
       # @param project_ids [Array<Integer>] filter by project if it is specified
-      # @param or_conditions [Object] result of any Arel::Predications method
       # @return [ActiveRecord::Relation]
-      def permission_sites(user, levels, query, project_ids: nil, _or_conditions: nil)
+      def permission_sites(user, levels, query, project_ids: nil)
         is_admin, query = permission_admin(user, levels, query)
 
         #   EXISTS
@@ -496,6 +495,9 @@ module Access
         end
       end
 
+      # Normalizes levels and determines if EXISTS or NOT EXISTS should be used
+      # @param levels [Array<Symbol>]
+      # @return [Array<(Array<Symbol>, Boolean)>] normalized levels and a should exists flag
       def calculate_levels(levels)
         # levels can be nil to indicate get projects user has no access
         levels = Access::Validate.levels(levels)

@@ -84,6 +84,7 @@ module Creation
     def create_anon_hierarchy
       prepare_users
       prepare_project_anon
+      prepare_dataset
 
       let!(:site_anon) {
         Common.create_site(owner_user, project_anon)
