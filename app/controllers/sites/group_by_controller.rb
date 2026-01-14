@@ -54,19 +54,29 @@ module Sites
 
       # For location obfuscation, we need to determine if user is an owner of ANY project
       # containing the site. We use a LEFT OUTER JOIN to a derived table of owner sites.
-      # The effective_permissions CTE is already available and joined to projects,
-      # so we can reference it in this subquery.
+      # The effective_permissions CTE is already available and can be referenced in this subquery.
+      
+      # Build the owner sites subquery using Arel for safety
+      ps_inner = Arel::Table.new(:projects_sites, as: 'ps_inner')
+      p_inner = Arel::Table.new(:projects, as: 'p_inner')
+      ep_inner = Arel::Table.new(:effective_permissions, as: 'ep_inner')
+      
+      owner_sites_subquery = ps_inner
+        .project(ps_inner[:site_id].as('id').distinct)
+        .join(p_inner)
+        .on(ps_inner[:project_id].eq(p_inner[:id]))
+        .join(ep_inner, Arel::Nodes::OuterJoin)
+        .on(p_inner[:id].eq(ep_inner[:project_id]))
+        .where(
+          ep_inner[:effective_level].coalesce(::Permission::LEVEL_TO_INTEGER_MAP[::Permission::NONE]).gteq(owner_level)
+        )
+      
       base_sites_query = base_sites_query
         .joins(
-          Arel.sql(
-            "LEFT OUTER JOIN (
-              SELECT DISTINCT ps_inner.site_id AS id
-              FROM projects_sites ps_inner
-              INNER JOIN projects p_inner ON ps_inner.project_id = p_inner.id
-              LEFT OUTER JOIN effective_permissions ep_inner ON p_inner.id = ep_inner.project_id
-              WHERE COALESCE(ep_inner.effective_level, 0) >= #{owner_level}
-            ) #{owner_sites_table.name} ON sites.id = #{owner_sites_table.name}.id"
-          )
+          site_table
+            .join(owner_sites_subquery.as(owner_sites_table.name), Arel::Nodes::OuterJoin)
+            .on(site_table[:id].eq(owner_sites_table[:id]))
+            .join_sources
         )
         .distinct
 
