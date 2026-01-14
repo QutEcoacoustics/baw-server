@@ -88,9 +88,9 @@ module Sites
           site_id: site_table[:id],
           region_id: region_table[:id],
           project_ids: Arel.grouping(Site.project_ids_arel),
-          latitude: Site.visible_latitude_arel(Current.user, site_table:, owner_table_alias: owner_sites_table),
-          longitude: Site.visible_longitude_arel(Current.user, site_table:, owner_table_alias: owner_sites_table),
-          location_obfuscated: Site.location_obfuscated_arel(Current.user, site_table:,
+          latitude: Site.visible_latitude_arel(current_user, site_table:, owner_table_alias: owner_sites_table),
+          longitude: Site.visible_longitude_arel(current_user, site_table:, owner_table_alias: owner_sites_table),
+          location_obfuscated: Site.location_obfuscated_arel(current_user, site_table:,
             owner_table_alias: owner_sites_table)
         }
       )
