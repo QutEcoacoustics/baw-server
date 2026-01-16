@@ -150,7 +150,7 @@ gem 'pg'
 gem 'arel_extensions', '>= 2.1.0'
 
 # allows for adding common table expressions to queries
-gem 'activerecord-cte'
+#gem 'activerecord-cte'
 
 # MODELS
 # -------------------------------------

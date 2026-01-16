@@ -33,7 +33,7 @@ module Access
       # Get value indicating no access level.
       # @return [nil]
       def levels_none
-        nil
+        Permission::NONE
       end
 
       # Get a hash with symbols, names, action words for the available roles.

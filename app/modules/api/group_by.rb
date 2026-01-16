@@ -98,6 +98,7 @@ module Api
           *parent.projections.map { |name, expression| expression.as(name.to_s) },
           *child.projections.keys.map { |name| grouped_table[name.to_s] }
         )
+        .order(parent_table[:id])
 
       # We're intentionally not doing a filter query or an active record query here.
       # The goal is speed and efficiency

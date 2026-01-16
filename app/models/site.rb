@@ -4,31 +4,35 @@
 #
 # Table name: sites
 #
-#  id                 :integer          not null, primary key
-#  deleted_at         :datetime
-#  description        :text
-#  image_content_type :string
-#  image_file_name    :string
-#  image_file_size    :bigint
-#  image_updated_at   :datetime
-#  latitude           :decimal(9, 6)
-#  longitude          :decimal(9, 6)
-#  name               :string           not null
-#  notes              :text
-#  rails_tz           :string(255)
-#  tzinfo_tz          :string(255)
-#  created_at         :datetime
-#  updated_at         :datetime
-#  creator_id         :integer          not null
-#  deleter_id         :integer
-#  region_id          :integer
-#  updater_id         :integer
+#  id                   :integer          not null, primary key
+#  deleted_at           :datetime
+#  description          :text
+#  image_content_type   :string
+#  image_file_name      :string
+#  image_file_size      :bigint
+#  image_updated_at     :datetime
+#  latitude             :decimal(9, 6)
+#  longitude            :decimal(9, 6)
+#  name                 :string           not null
+#  notes                :text
+#  obfuscated_latitude  :decimal(9, 6)
+#  obfuscated_longitude :decimal(9, 6)
+#  rails_tz             :string(255)
+#  tzinfo_tz            :string(255)
+#  created_at           :datetime
+#  updated_at           :datetime
+#  creator_id           :integer          not null
+#  deleter_id           :integer
+#  region_id            :integer
+#  updater_id           :integer
 #
 # Indexes
 #
-#  index_sites_on_creator_id  (creator_id)
-#  index_sites_on_deleter_id  (deleter_id)
-#  index_sites_on_updater_id  (updater_id)
+#  index_sites_on_creator_id            (creator_id)
+#  index_sites_on_deleter_id            (deleter_id)
+#  index_sites_on_obfuscated_latitude   (obfuscated_latitude)
+#  index_sites_on_obfuscated_longitude  (obfuscated_longitude)
+#  index_sites_on_updater_id            (updater_id)
 #
 # Foreign Keys
 #
@@ -202,6 +206,11 @@ class Site < ApplicationRecord
   def location_obfuscated
     return @location_obfuscated if defined?(@location_obfuscated)
 
+    if Current.user&.admin?
+      @location_obfuscated = false
+      return @location_obfuscated
+    end
+
     if projects.empty?
       @location_obfuscated = true
       return @location_obfuscated
@@ -253,33 +262,26 @@ class Site < ApplicationRecord
     modified_value
   end
 
-  def self.jitter_locations_table
-    Arel::Table.new(:jittered_site_locations)
+  # For use in batch queries for
+  # This function assumes you have the effective permissions CTE available
+  # somewhere in your query.
+  def self.should_return_obfuscated_location_arel
+    # should hide location: is permission level < :owner?
+    Access::EffectivePermission.build_maximum_level_predicate(Access::Permission::OWNER)
   end
 
-  def self.jitter_locations_arel(query, table, latitude_attribute, longitude_attribute, current_user:)
-    table ||= arel_table
+  def self.latitude_arel
+    Arel::Nodes::Case.new
+      .when(should_return_obfuscated_location_arel)
+      .then(arel_table[:obfuscated_latitude])
+      .else(arel_table[:latitude])
+  end
 
-    # tie obfuscation to user access level
-    permissions_to_see_location = Arel::Table.new(:permissions_to_see_location)
-
-    Arel
-    permissions = Access::ByPermission.sites(current_user, :owner, query:)
-
-    sub_query = Arel::Nodes::Lateral.new(
-      Arel.obfuscate_location(
-        table[latitude_attribute],
-        table[longitude_attribute],
-        jitter_amount: JITTER_RANGE,
-        salt: table[:id],
-        jitter_exclusion: JITTER_EXCLUSION_RANGE,
-        obfuscated: false
-      )
-    ).as(jitter_locations_table.name)
-
-    join = table.join(sub_query).join_sources
-
-    query.joins(join)
+  def self.longitude_arel
+    Arel::Nodes::Case.new
+      .when(should_return_obfuscated_location_arel)
+      .then(arel_table[:obfuscated_longitude])
+      .else(arel_table[:longitude])
   end
 
   def only_one_site_per_project

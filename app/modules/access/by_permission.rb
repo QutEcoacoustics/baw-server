@@ -310,8 +310,10 @@ module Access
       private
 
       def permission_admin(user, levels, query)
-        # since admin can access everything, any deny level returns nothing
-        # admin users have owner access to everything
+        # a query asking for things we *don't* have access to should return nothing
+        # but since admin can access everything, such a query would fail and return everything, which is
+        # nonsensical. So we special case it here and ensure that admin asking for things it doesn't have access to
+        # gets no results.
 
         is_admin = Access::Core.is_admin?(user)
         if is_admin

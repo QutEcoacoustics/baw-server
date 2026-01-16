@@ -16,13 +16,15 @@ module Sites
 
       parent = Group.new(
         model: Site,
-        base_query: Access::ByPermission.sites(current_user)
-          .joins(:region)
-          .joins(Arel.obfuscate_location(s[:latitude], s[:longitude], jitter_amount: 0.03, salt: s[:id])),
+        base_query: Access::ByPermissionTable.sites(current_user, level: Access::Permission::READER)
+          .joins(:region),
         projections: {
           site_id: Site.arel_table[:id],
           region_id: Region.arel_table[:id],
-          project_ids: Arel.grouping(Site.project_ids_arel)
+          project_ids: Arel.grouping(Site.project_ids_arel),
+          location_obfuscated: Site.should_return_obfuscated_location_arel,
+          latitude: Site.latitude_arel,
+          longitude: Site.longitude_arel
         }
       )
       child = Group.new(
@@ -39,7 +41,7 @@ module Sites
         filter_settings: AudioEvent.filter_settings,
         joins: { audio_recording: :site }
       )
-      debugger
+
       respond_group_by(result, opts)
     end
   end
