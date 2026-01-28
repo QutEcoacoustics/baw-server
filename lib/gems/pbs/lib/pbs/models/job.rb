@@ -5,7 +5,7 @@ module PBS
     # Represents a jobs on a PBS cluster
     #
     # PBS's JSON output is atrocious. Sometimes numbers are strings (e.g. Exit_status),
-    # sometimes numbers aren't event numbers in strings (e.g. timestamp is known to be `^K` sometimes).
+    # sometimes numbers aren't even numbers in strings (e.g. timestamp is known to be `^K` sometimes).
     # Almost always fields will be missing if the job is not in a certain state.
     #
     # "0.725ccdf1a5fb": {
