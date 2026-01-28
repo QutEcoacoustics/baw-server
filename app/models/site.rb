@@ -4,28 +4,28 @@
 #
 # Table name: sites
 #
-#  id                   :integer          not null, primary key
+#  id                         :integer          not null, primary key
 #  custom_obfuscated_location :boolean          default(FALSE), not null
-#  deleted_at           :datetime
-#  description          :text
-#  image_content_type   :string
-#  image_file_name      :string
-#  image_file_size      :bigint
-#  image_updated_at     :datetime
-#  latitude             :decimal(9, 6)
-#  longitude            :decimal(9, 6)
-#  name                 :string           not null
-#  notes                :text
-#  obfuscated_latitude  :decimal(9, 6)
-#  obfuscated_longitude :decimal(9, 6)
-#  rails_tz             :string(255)
-#  tzinfo_tz            :string(255)
-#  created_at           :datetime
-#  updated_at           :datetime
-#  creator_id           :integer          not null
-#  deleter_id           :integer
-#  region_id            :integer
-#  updater_id           :integer
+#  deleted_at                 :datetime
+#  description                :text
+#  image_content_type         :string
+#  image_file_name            :string
+#  image_file_size            :bigint
+#  image_updated_at           :datetime
+#  latitude                   :decimal(9, 6)
+#  longitude                  :decimal(9, 6)
+#  name                       :string           not null
+#  notes                      :text
+#  obfuscated_latitude        :decimal(9, 6)
+#  obfuscated_longitude       :decimal(9, 6)
+#  rails_tz                   :string(255)
+#  tzinfo_tz                  :string(255)
+#  created_at                 :datetime
+#  updated_at                 :datetime
+#  creator_id                 :integer          not null
+#  deleter_id                 :integer
+#  region_id                  :integer
+#  updater_id                 :integer
 #
 # Indexes
 #

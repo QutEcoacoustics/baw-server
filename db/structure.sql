@@ -1952,6 +1952,13 @@ CREATE TABLE public.sites (
 
 
 --
+-- Name: COLUMN sites.custom_obfuscated_location; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.sites.custom_obfuscated_location IS 'True if the obfuscated location was set by the user or false if generated';
+
+
+--
 -- Name: sites_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -4482,6 +4489,7 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20260113000000'),
+('20251126025112'),
 ('20251103151227'),
 ('20250912033944'),
 ('20250909090000'),
