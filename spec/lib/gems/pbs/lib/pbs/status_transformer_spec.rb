@@ -186,4 +186,22 @@ describe PBS::Transformers::StatusTransformer do
 
     expect(result.to_h).to match(expected)
   end
+
+  # PBS sometimes returns exit status as a string
+  # https://github.com/QutEcoacoustics/baw-server/issues/875
+  # https://github.com/QutEcoacoustics/baw-server/issues/878
+  # https://github.com/QutEcoacoustics/baw-server/issues/880
+  it 'coerces exit status to integer' do
+    modified_raw = JSON.parse(raw, PBS::Connection::JSON_PARSER_OPTIONS)
+    modified_raw['Jobs']['0.725ccdf1a5fb']['Exit_status'] = '-29' # string instead of integer
+
+    t = PBS::Transformers::StatusTransformer.new
+    result = t.call(modified_raw)
+
+    expect(result).to be_an_instance_of(PBS::Models::JobList)
+
+    first_job = result.jobs['0.725ccdf1a5fb']
+    expect(first_job).to be_an_instance_of(PBS::Models::Job)
+    expect(first_job.exit_status).to eq(-29)
+  end
 end

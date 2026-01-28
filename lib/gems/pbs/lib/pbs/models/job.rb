@@ -3,6 +3,11 @@
 module PBS
   module Models
     # Represents a jobs on a PBS cluster
+    #
+    # PBS's JSON output is atrocious. Sometimes numbers are strings (e.g. Exit_status),
+    # sometimes numbers aren't even numbers in strings (e.g. timestamp is known to be `^K` sometimes).
+    # Almost always fields will be missing if the job is not in a certain state.
+    #
     # "0.725ccdf1a5fb": {
     #   "Job_Name": "testname",
     #   "Job_Owner": "pbsuser@725ccdf1a5fb",
@@ -155,7 +160,7 @@ module PBS
 
       # @!attribute [r] priority
       #   @return [Number]
-      attribute :priority, ::BawApp::Types::Nominal::Integer
+      attribute :priority, ::BawApp::Types::Params::Integer
 
       # @!attribute [r] qtime
       #   @return [Time]
@@ -183,7 +188,7 @@ module PBS
 
       # @!attribute [r] substate
       #   @return [Time]
-      attribute :substate, ::BawApp::Types::Nominal::Integer
+      attribute :substate, ::BawApp::Types::Params::Integer
 
       # @!attribute [r] variable_list
       #   @return [Hash<string,string>]
@@ -199,15 +204,15 @@ module PBS
 
       # @!attribute [r] run_count
       #   @return [Integer]
-      attribute? :run_count, ::BawApp::Types::Nominal::Integer
+      attribute? :run_count, ::BawApp::Types::Params::Integer
 
       # @!attribute [r] stageout_status
       #   @return [Number]
-      attribute? :stageout_status, ::BawApp::Types::Nominal::Integer
+      attribute? :stageout_status, ::BawApp::Types::Params::Integer
 
       # @!attribute [r] exit_status
       #   @return [Number]
-      attribute? :exit_status, ::BawApp::Types::Nominal::Integer
+      attribute? :exit_status, ::BawApp::Types::Params::Integer
 
       # @!attribute [r] submit_arguments
       #   @return [String]

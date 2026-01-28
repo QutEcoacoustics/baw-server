@@ -375,15 +375,22 @@ module PBS
       false
     end
 
-    # Map the exist status returned by PBS to a state recognized
+    # Map the exit status returned by PBS to a state recognized
     # by an [AnalysisJobsItem]
     # @param exit_status [Integer] the exit status returned by PBS
     # @return [Symbol] the state
     def self.map_exit_status_to_state(exit_status)
       return nil if exit_status.nil?
 
+      unless exit_status.is_a?(Integer)
+        raise ArgumentError,
+          "exit_status (#{exit_status}) must be an Integer, got #{exit_status.class}"
+      end
+
       # PBSReferenceGuide2022.1.pdf page RG-377
       return :success if exit_status == ExitStatus::JOB_EXEC_OK
+
+      # Negative exit statuses are PBS-specific codes indicating job termination reasons
       return :killed if ExitStatus::PBS_SPECIAL.include?(exit_status)
       return :failed if ExitStatus::NORMAL.include?(exit_status)
 

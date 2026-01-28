@@ -2,6 +2,7 @@
 
 module PBS
   # https://github.com/openpbs/openpbs/blob/618c69f06e3580cf099b676ea0e437b98006d376/src/include/job.h#L967
+  # https://2026.help.altair.com/2026.0/PBS%20Professional/PBSReference2026.0.pdf RG-386
   module ExitStatus
     # qdel cancellation is done via a SIGTERM
     CANCELLED_EXIT_STATUS = 256 + Signal.list['TERM']
@@ -40,6 +41,8 @@ module PBS
     JOB_EXEC_KILL_CPUT = -28
     JOB_EXEC_KILL_WALLTIME = -29
     JOB_EXEC_JOINJOB = -30
+    JOB_EXEC_KILL_HPMEM = -31
+    JOB_EXEC_RERUN_ZOMBIE_JOB = -32
 
     MAP = {
       JOB_EXEC_OK => 'job exec successful',
@@ -71,7 +74,9 @@ module PBS
       JOB_EXEC_KILL_MEM => 'job exec failed due to exceeding mem',
       JOB_EXEC_KILL_CPUT => 'job exec failed due to exceeding cput',
       JOB_EXEC_KILL_WALLTIME => 'job exec failed due to exceeding walltime',
-      JOB_EXEC_JOINJOB => 'Job exec failed due to join job error'
+      JOB_EXEC_JOINJOB => 'Job exec failed due to join job error',
+      JOB_EXEC_KILL_HPMEM => 'Job exec failed due to exceeding hpmem',
+      JOB_EXEC_RERUN_ZOMBIE_JOB => 'Job execution hung due to re-imaged mom or lost job info from MoM'
     }.freeze
 
     def self.map(exit_status)
