@@ -41,7 +41,7 @@ describe PBS::ExitStatus do
       expect(PBS::ExitStatus.map(PBS::ExitStatus::JOB_EXEC_RERUN_MS_FAIL))
         .to eq 'Mother superior connection failed'
       expect(PBS::ExitStatus.map(PBS::ExitStatus::JOB_EXEC_KILL_HPMEM))
-        .to eq 'Job exec failed due to hook rejection; delete the job (sister)'
+        .to eq 'Job exec failed due to exceeding hpmem'
       expect(PBS::ExitStatus.map(PBS::ExitStatus::JOB_EXEC_RERUN_ZOMBIE_JOB))
         .to eq 'Job execution hung due to re-imaged mom or lost job info from MoM'
     end
