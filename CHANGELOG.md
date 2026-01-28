@@ -1,5 +1,33 @@
 # Changelog
 
+## [14.2.4](https://github.com/QutEcoacoustics/baw-server/tree/14.2.4) (2026-01-28)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.10.0...14.2.4)
+
+**Implemented enhancements:**
+
+- Audio event cluster service/controller [\#852](https://github.com/QutEcoacoustics/baw-server/issues/852)
+- document new projection api [\#823](https://github.com/QutEcoacoustics/baw-server/issues/823)
+
+**Fixed bugs:**
+
+- Argument error in registrations\#edit [\#885](https://github.com/QutEcoacoustics/baw-server/issues/885)
+- analysis jobs: remote status check Unknown exit status: -20 [\#880](https://github.com/QutEcoacoustics/baw-server/issues/880)
+- analysis job: unknown exit code -17 when qstat-ing [\#878](https://github.com/QutEcoacoustics/baw-server/issues/878)
+- Analysis jobs:   Unknown exit status: -29 [\#875](https://github.com/QutEcoacoustics/baw-server/issues/875)
+- Bug in harvest [\#861](https://github.com/QutEcoacoustics/baw-server/issues/861)
+- New EMU enhanced datetime parser causing some issues [\#854](https://github.com/QutEcoacoustics/baw-server/issues/854)
+
+**Closed issues:**
+
+- add verification\_count custom field to audio events [\#884](https://github.com/QutEcoacoustics/baw-server/issues/884)
+- Slow queries decreasing harvest performance [\#745](https://github.com/QutEcoacoustics/baw-server/issues/745)
+
+**Merged pull requests:**
+
+- Fix PBS job status parsing [\#887](https://github.com/QutEcoacoustics/baw-server/pull/887) ([atruskie](https://github.com/atruskie))
+- Site event count [\#868](https://github.com/QutEcoacoustics/baw-server/pull/868) ([atruskie](https://github.com/atruskie))
+
 ## [13.10.0](https://github.com/QutEcoacoustics/baw-server/tree/13.10.0) (2025-10-07)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.9.2...13.10.0)

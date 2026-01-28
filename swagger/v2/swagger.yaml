@@ -1046,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2025-10-07T05:30:51.275Z'
+                  created_at: '2026-01-28T06:30:10.962Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -2021,7 +2021,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.9.2 from http://web:3000.
+                  Version 13.10.0 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2061,7 +2061,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.9.2"
+                Write-Information "Acoustic Workbench downloader script version 13.10.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2243,7 +2243,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 13.9.2 from http://web:3000.
+                  Version 13.10.0 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2283,7 +2283,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 13.9.2"
+                Write-Information "Acoustic Workbench downloader script version 13.10.0"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -5301,7 +5301,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: bvlUnv7tPGiZkEWkZC8MSSJEvQUwtPHvWoyflTNfHDs
+                  auth_token: MB9PMjEoVq9Y_i3XUWxHklHsoGmfY22AEBZzgWc4tpY
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5357,7 +5357,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: EpEEYFVtLUAFJ3iBrvLrHrofSqqFYruGM3AYVK477Uo
+                  auth_token: h7V35yeqe2QhXEt1BPeG1PQb6hRw-4DD_h6vZt9d_NE
                   user_name: Admin
                   user_id: 1
               schema:
@@ -7150,10 +7150,15 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 133
-                  custom_latitude: -0.937287
-                  custom_longitude: -48.840125
+                  region_id: 132
+                  custom_latitude: 
+                  custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
                   - 139
                   timezone_information: 
@@ -7256,7 +7261,12 @@ paths:
                   region_id: 135
                   custom_latitude: 78.128773
                   custom_longitude: 105.77013
+                  longitude: 105.77013
+                  latitude: 78.128773
                   location_obfuscated: false
+                  obfuscated_latitude: 78.12703
+                  obfuscated_longitude: 105.76867
+                  custom_obfuscated_location: false
                   project_ids:
                   - 142
                   timezone_information: 
@@ -7329,10 +7339,15 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 137
-                  custom_latitude: 89.108853
-                  custom_longitude: 69.704671
+                  region_id: 136
+                  custom_latitude: 
+                  custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
                   - 143
                   timezone_information: 
@@ -7438,7 +7453,12 @@ paths:
                   region_id: 139
                   custom_latitude: 
                   custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
                   - 146
                   timezone_information: 
@@ -7514,7 +7534,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -7540,7 +7565,12 @@ paths:
                   region_id: 140
                   custom_latitude: -55.960786
                   custom_longitude: -0.032519
+                  longitude: -0.032519
+                  latitude: -55.960786
                   location_obfuscated: false
+                  obfuscated_latitude: -55.96132
+                  obfuscated_longitude: -0.03155
+                  custom_obfuscated_location: false
                   project_ids:
                   - 147
                   timezone_information: 
@@ -7614,7 +7644,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -7640,7 +7675,12 @@ paths:
                   region_id: 141
                   custom_latitude: -79.836222
                   custom_longitude: -12.749936
+                  longitude: -12.749936
+                  latitude: -79.836222
                   location_obfuscated: false
+                  obfuscated_latitude: -79.83669
+                  obfuscated_longitude: -12.75162
+                  custom_obfuscated_location: false
                   project_ids:
                   - 148
                   timezone_information: 
@@ -8906,7 +8946,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -8932,7 +8977,12 @@ paths:
                   region_id: 167
                   custom_latitude: 
                   custom_longitude: 
-                  location_obfuscated: true
+                  longitude: 
+                  latitude: 
+                  location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids: []
                   timezone_information: 
                   image_urls:
@@ -9005,7 +9055,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -9031,7 +9086,12 @@ paths:
                   region_id: 169
                   custom_latitude: 
                   custom_longitude: 
-                  location_obfuscated: true
+                  longitude: 
+                  latitude: 
+                  location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids: []
                   timezone_information: 
                   image_urls:
@@ -11051,6 +11111,185 @@ paths:
       responses:
         '204':
           description: successful
+  "/audio_events/group_by/sites":
+    post:
+      summary: Gets audio events grouped by site with filter
+      tags:
+      - audio_events
+      description: |
+        Returns a list of sites with counts of audio events per site.
+        The filter parameter is applied to audio events (not sites).
+        Results only include sites the user has reader access to.
+        Location coordinates may be obfuscated based on user permissions.
+      parameters: []
+      security:
+      - auth_token_header: []
+      responses:
+        '200':
+          description: filters audio events by tag
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  filter:
+                    tags.id:
+                      eq: 161
+                data:
+                - site_id: 208
+                  region_id: 211
+                  project_ids:
+                  - 222
+                  location_obfuscated: false
+                  latitude: 81.212414
+                  longitude: 166.041348
+                  audio_event_count: 1
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          site_id:
+                            "$ref": "#/components/schemas/id"
+                            readOnly: true
+                          region_id:
+                            "$ref": "#/components/schemas/nullableId"
+                            readOnly: true
+                          project_ids:
+                            type: array
+                            items:
+                              "$ref": "#/components/schemas/id"
+                              readOnly: true
+                          location_obfuscated:
+                            type: boolean
+                          latitude:
+                            type:
+                            - number
+                            - 'null'
+                            minimum: -90
+                            maximum: 90
+                          longitude:
+                            type:
+                            - number
+                            - 'null'
+                            minimum: -180
+                            maximum: 180
+                          audio_event_count:
+                            type: integer
+                        required:
+                        - site_id
+                        - region_id
+                        - project_ids
+                        - location_obfuscated
+                        - latitude
+                        - longitude
+                        - audio_event_count
+        '422':
+          description: rejects paging parameters
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 422
+                  message: Unprocessable Content
+                  error:
+                    details: 'The request could not be understood: Paging, sorting,
+                      and projection parameters are not allowed in group by requests.'
+                data: 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter:
+                  "$ref": "#/components/schemas/filter_payload_filter"
+                sort: 
+                page: 
+                projection: 
+    get:
+      summary: Gets audio events grouped by site
+      tags:
+      - audio_events
+      description: |
+        Returns a list of sites with counts of audio events per site.
+        The filter parameter is applied to audio events (not sites).
+        Results only include sites the user has reader access to.
+        Location coordinates may be obfuscated based on user permissions.
+      security:
+      - auth_token_header: []
+      parameters: []
+      responses:
+        '200':
+          description: audio events grouped by site retrieved
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                - site_id: 209
+                  region_id: 212
+                  project_ids:
+                  - 223
+                  location_obfuscated: false
+                  latitude: -74.242029
+                  longitude: 123.674524
+                  audio_event_count: 1
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          site_id:
+                            "$ref": "#/components/schemas/id"
+                            readOnly: true
+                          region_id:
+                            "$ref": "#/components/schemas/nullableId"
+                            readOnly: true
+                          project_ids:
+                            type: array
+                            items:
+                              "$ref": "#/components/schemas/id"
+                              readOnly: true
+                          location_obfuscated:
+                            type: boolean
+                          latitude:
+                            type:
+                            - number
+                            - 'null'
+                            minimum: -90
+                            maximum: 90
+                          longitude:
+                            type:
+                            - number
+                            - 'null'
+                            minimum: -180
+                            maximum: 180
+                          audio_event_count:
+                            type: integer
+                        required:
+                        - site_id
+                        - region_id
+                        - project_ids
+                        - location_obfuscated
+                        - latitude
+                        - longitude
+                        - audio_event_count
   "/datasets":
     get:
       summary: list datasets
@@ -11095,15 +11334,15 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 155
-                  name: gen_dataset_name154
-                  description: dataset description 154
+                - id: 161
+                  name: gen_dataset_name160
+                  description: dataset description 160
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 946
+                  creator_id: 970
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 154</p>\n"
-                  description_html_tagline: dataset description 154
+                  description_html: "<p>dataset description 160</p>\n"
+                  description_html_tagline: dataset description 160
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11136,15 +11375,15 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 157
-                  name: gen_dataset_name156
-                  description: dataset description 156
+                  id: 163
+                  name: gen_dataset_name162
+                  description: dataset description 162
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 156</p>\n"
-                  description_html_tagline: dataset description 156
+                  description_html: "<p>dataset description 162</p>\n"
+                  description_html_tagline: dataset description 162
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11187,15 +11426,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 158
-                  name: gen_dataset_name157
-                  description: dataset description 157
+                  id: 164
+                  name: gen_dataset_name163
+                  description: dataset description 163
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 955
+                  creator_id: 979
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 157</p>\n"
-                  description_html_tagline: dataset description 157
+                  description_html: "<p>dataset description 163</p>\n"
+                  description_html_tagline: dataset description 163
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11232,15 +11471,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 159
-                  name: gen_dataset_name159
-                  description: dataset description 159
+                  id: 165
+                  name: gen_dataset_name165
+                  description: dataset description 165
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 959
+                  creator_id: 983
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
-                  description_html: "<p>dataset description 159</p>\n"
-                  description_html_tagline: dataset description 159
+                  description_html: "<p>dataset description 165</p>\n"
+                  description_html_tagline: dataset description 165
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11282,15 +11521,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 160
-                  name: gen_dataset_name161
-                  description: dataset description 161
+                  id: 166
+                  name: gen_dataset_name167
+                  description: dataset description 167
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 964
+                  creator_id: 988
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
-                  description_html: "<p>dataset description 161</p>\n"
-                  description_html_tagline: dataset description 161
+                  description_html: "<p>dataset description 167</p>\n"
+                  description_html_tagline: dataset description 167
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11334,7 +11573,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: datasets/161
+                      original_route: datasets/167
                       original_http_method: DELETE
                 data: 
   "/datasets/new":
@@ -11407,15 +11646,15 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 163
-                  name: gen_dataset_name164
-                  description: dataset description 164
+                - id: 169
+                  name: gen_dataset_name170
+                  description: dataset description 170
                   created_at: '2020-01-02T03:04:05.677Z'
-                  creator_id: 977
+                  creator_id: 1001
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
-                  description_html: "<p>dataset description 164</p>\n"
-                  description_html_tagline: dataset description 164
+                  description_html: "<p>dataset description 170</p>\n"
+                  description_html_tagline: dataset description 170
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11469,7 +11708,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -11478,26 +11722,31 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/226/sites/filter?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/232/sites/filter?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
-                - id: 212
-                  name: site name 213
-                  description: site description 213
-                  notes: note number 213
-                  creator_id: 981
+                - id: 218
+                  name: site name 219
+                  description: site description 219
+                  notes: note number 219
+                  creator_id: 1005
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 215
-                  custom_latitude: -80.690348
-                  custom_longitude: -160.401292
+                  region_id: 221
+                  custom_latitude: 7.608389
+                  custom_longitude: 38.885711
+                  longitude: 38.885711
+                  latitude: 7.608389
                   location_obfuscated: false
+                  obfuscated_latitude: 7.60716
+                  obfuscated_longitude: 38.88467
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 226
+                  - 232
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11520,8 +11769,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 213</p>\n"
-                  description_html_tagline: site description 213
+                  description_html: "<p>site description 219</p>\n"
+                  description_html_tagline: site description 219
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11603,22 +11852,27 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 214
-                  name: site name 216
-                  description: site description 216
-                  notes: note number 216
-                  creator_id: 989
+                  id: 220
+                  name: site name 222
+                  description: site description 222
+                  notes: note number 222
+                  creator_id: 1013
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 218
-                  custom_latitude: -13.747064
-                  custom_longitude: 24.413241
+                  region_id: 223
+                  custom_latitude: 
+                  custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 228
+                  - 234
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11641,8 +11895,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 216</p>\n"
-                  description_html_tagline: site description 216
+                  description_html: "<p>site description 222</p>\n"
+                  description_html_tagline: site description 222
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11690,22 +11944,27 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 215
-                  name: site name 217
-                  description: site description 217
-                  notes: note number 217
-                  creator_id: 996
+                  id: 221
+                  name: site name 223
+                  description: site description 223
+                  notes: note number 223
+                  creator_id: 1020
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 219
-                  custom_latitude: -64.834007
-                  custom_longitude: -167.766614
+                  region_id: 225
+                  custom_latitude: 79.427151
+                  custom_longitude: -94.40422
+                  longitude: -94.40422
+                  latitude: 79.427151
                   location_obfuscated: false
+                  obfuscated_latitude: 79.42884
+                  obfuscated_longitude: -94.40311
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 230
+                  - 236
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11728,8 +11987,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 217</p>\n"
-                  description_html_tagline: site description 217
+                  description_html: "<p>site description 223</p>\n"
+                  description_html_tagline: site description 223
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11772,22 +12031,27 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 216
-                  name: site name 219
-                  description: site description 219
-                  notes: note number 219
-                  creator_id: 1000
+                  id: 222
+                  name: site name 225
+                  description: site description 225
+                  notes: note number 225
+                  creator_id: 1024
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 221
-                  custom_latitude: 1.717382
-                  custom_longitude: 141.215262
+                  region_id: 226
+                  custom_latitude: 
+                  custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 231
+                  - 237
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11810,8 +12074,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 219</p>\n"
-                  description_html_tagline: site description 219
+                  description_html: "<p>site description 225</p>\n"
+                  description_html_tagline: site description 225
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11882,22 +12146,27 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 219
-                  name: site name 222
-                  description: site description 222
-                  notes: note number 222
+                  id: 225
+                  name: site name 228
+                  description: site description 228
+                  notes: note number 228
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 224
+                  region_id: 
                   custom_latitude: 
                   custom_longitude: 
+                  longitude: 
+                  latitude: 
                   location_obfuscated: false
+                  obfuscated_latitude: 
+                  obfuscated_longitude: 
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 234
+                  - 240
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -11920,8 +12189,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 222</p>\n"
-                  description_html_tagline: site description 222
+                  description_html: "<p>site description 228</p>\n"
+                  description_html_tagline: site description 228
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -11977,7 +12246,12 @@ paths:
                     - region_id
                     - custom_latitude
                     - custom_longitude
+                    - longitude
+                    - latitude
                     - location_obfuscated
+                    - obfuscated_latitude
+                    - obfuscated_longitude
+                    - custom_obfuscated_location
                   sorting:
                     order_by: name
                     direction: asc
@@ -11986,26 +12260,31 @@ paths:
                     items: 25
                     total: 1
                     max_page: 1
-                    current: http://web:3000/projects/236/sites?direction=asc&items=25&order_by=name&page=1
+                    current: http://web:3000/projects/242/sites?direction=asc&items=25&order_by=name&page=1
                     previous: 
                     next: 
                 data:
-                - id: 220
-                  name: site name 223
-                  description: site description 223
-                  notes: note number 223
-                  creator_id: 1018
+                - id: 226
+                  name: site name 229
+                  description: site description 229
+                  notes: note number 229
+                  creator_id: 1042
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 
                   updated_at: '2020-01-02T03:04:05.677Z'
                   deleter_id: 
                   deleted_at: 
-                  region_id: 225
-                  custom_latitude: -8.045459
-                  custom_longitude: 82.552085
+                  region_id: 231
+                  custom_latitude: 49.810792
+                  custom_longitude: 177.93295
+                  longitude: 177.93295
+                  latitude: 49.810792
                   location_obfuscated: false
+                  obfuscated_latitude: 49.81151
+                  obfuscated_longitude: 177.93326
+                  custom_obfuscated_location: false
                   project_ids:
-                  - 236
+                  - 242
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -12028,8 +12307,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 223</p>\n"
-                  description_html_tagline: site description 223
+                  description_html: "<p>site description 229</p>\n"
+                  description_html_tagline: site description 229
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -12202,6 +12481,54 @@ components:
       required:
       - meta
       - data
+    filter_payload_filter:
+      type: object
+    filter_payload_paging:
+      type: object
+      properties:
+        items:
+          type: integer
+          minimum: 1
+        page:
+          type: integer
+          minimum: 1
+        disable_paging:
+          type: boolean
+    filter_payload_sort:
+      type: object
+      properties:
+        order_by:
+          type: string
+        direction:
+          type: string
+          enum:
+          - asc
+          - desc
+    filter_payload_projection:
+      type: object
+      properties:
+        include:
+          type: array
+          items:
+            type: string
+          deprecated: true
+        exclude:
+          type: array
+          items:
+            type: string
+          deprecated: true
+        only:
+          type: array
+          items:
+            type: string
+        add:
+          type: array
+          items:
+            type: string
+        remove:
+          type: array
+          items:
+            type: string
     cms_blob:
       type: object
       required:
@@ -13070,18 +13397,50 @@ components:
             "$ref": "#/components/schemas/id"
         location_obfuscated:
           type: boolean
+        latitude:
+          type:
+          - number
+          - 'null'
+          minimum: -90
+          maximum: 90
+        longitude:
+          type:
+          - number
+          - 'null'
+          minimum: -180
+          maximum: 180
         custom_latitude:
           type:
           - number
           - 'null'
           minimum: -90
           maximum: 90
+          deprecated: true
+          read_only: true
         custom_longitude:
           type:
           - number
           - 'null'
           minimum: -180
           maximum: 180
+          deprecated: true
+          read_only: true
+        obfuscated_latitude:
+          type:
+          - number
+          - 'null'
+          minimum: -90
+          maximum: 90
+          readOnly: false
+        obfuscated_longitude:
+          type:
+          - number
+          - 'null'
+          minimum: -180
+          maximum: 180
+          readOnly: false
+        custom_obfuscated_location:
+          type: boolean
         timezone_information:
           "$ref": "#/components/schemas/timezone_information"
           readOnly: false
@@ -13089,6 +13448,7 @@ components:
           "$ref": "#/components/schemas/image_urls"
         region_id:
           "$ref": "#/components/schemas/nullableId"
+          readOnly: true
       required:
       - id
       - name
@@ -13104,8 +13464,8 @@ components:
       - notes
       - project_ids
       - location_obfuscated
-      - custom_latitude
-      - custom_longitude
+      - latitude
+      - longitude
       - timezone_information
       - image_urls
       - region_id
@@ -13785,6 +14145,9 @@ components:
                 type: integer
               skipped:
                 type: integer
+          readOnly: true
+        verification_count:
+          type: integer
           readOnly: true
         audio_event_import_file_id:
           "$ref": "#/components/schemas/nullableId"
