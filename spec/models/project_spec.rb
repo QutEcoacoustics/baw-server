@@ -80,6 +80,35 @@ describe Project do
     expect(build(:project, license: '')).not_to be_valid
   end
 
+  context 'with audio_exists_arel' do
+    create_audio_recordings_hierarchy
+
+    it 'returns the correct value for a project with audio' do
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio')).find(project.id)
+
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq true
+    end
+
+    it 'returns the correct value for a project without audio' do
+      AudioRecording.destroy_all
+
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio')).find(project.id)
+
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq false
+    end
+
+    it 'returns has_audio: false for a project with no sites' do
+      Site.destroy_all
+
+      result = Project.select(:id, Project.audio_exists_arel.as('has_audio')).find(project.id)
+
+      expect(result.id).to eq project.id
+      expect(result.has_audio).to eq false
+    end
+  end
+
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   #it { should validate_attachment_content_type(:image).
   #                allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
