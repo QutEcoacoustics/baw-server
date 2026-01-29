@@ -54,6 +54,7 @@ module BawWorkers
           ) => predicate
 
           Site
+            .with_discarded
             .where(custom_obfuscated_location: false)
             .where(predicate)
         end
