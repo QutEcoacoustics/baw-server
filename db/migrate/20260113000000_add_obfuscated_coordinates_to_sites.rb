@@ -25,7 +25,8 @@ class AddObfuscatedCoordinatesToSites < ActiveRecord::Migration[8.0]
 
     up_only do
       # Enqueue the backfill job after the migration transaction commits
-      BawWorkers::Jobs::Maintenance::BackfillSitesObfuscatedLocationsJob.perform_later
+      # Wait a minute to ensure workers are ready
+      BawWorkers::Jobs::Maintenance::BackfillSitesObfuscatedLocationsJob.set(wait: 2.minutes).perform_later
     end
   end
 end
