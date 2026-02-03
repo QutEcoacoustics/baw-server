@@ -245,7 +245,9 @@ module Api
         new_tags_to_save = new_tags & accepted_tags
 
         logger.measure_info('save new tags', count: new_tags_to_save.count) do
-          new_tags_to_save.each(&:save!)
+          new_tags_to_save.each do |tag|
+            save_or_find_tag!(tag)
+          end
         end
 
         # expand tags to taggings
@@ -293,7 +295,8 @@ module Api
       # transform
 
       # this layout looks convoluted but we're trying to optimize a hot loop:
-      # array of structs is often slower arrays of arrays
+      # array of structs is often slower than arrays of arrays
+      # plus we can batch insert per table if the records are split apart
       @any_error = false
       @audio_events = Array.new(size)
       @tag_list = Array.new(size)
@@ -315,6 +318,31 @@ module Api
     end
 
     private
+
+    # Save a new tag, or if another job has already created a tag with the same
+    # text (race condition), find and use the existing tag instead.
+    # Updates the tag in-place if an existing tag is found.
+    # https://github.com/QutEcoacoustics/baw-server/issues/891
+    # @param tag [Tag] the new tag to save
+    # @raise [ActiveRecord::RecordInvalid] if the tag cannot be saved for reasons other than uniqueness
+    # @return [true]
+    def save_or_find_tag!(tag)
+      tag.save!
+    rescue ActiveRecord::RecordInvalid => e
+      # There aren't many reasons for save to fail other than uniqueness so we just query on the assumption
+      # another job created this tag in between our check and save - find the existing one
+      existing_tag = tag_cache.find_and_update_cache(tag.text)
+
+      # if it is any other error, just re-raise
+      raise e if existing_tag.nil?
+
+      # Update all references to the new tag to use the existing tag instead
+      @tag_list.each do |tags|
+        tags&.map! { |t| t == tag ? existing_tag : t }
+      end
+
+      true
+    end
 
     # Returns the subset of audio events that were accepted (not rejected).
     # @return [(Array<Integer>, Array<Hash>)] the indices and events that were accepted

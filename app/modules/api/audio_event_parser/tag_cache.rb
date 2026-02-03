@@ -32,6 +32,12 @@ module Api
         Tag.first_with_text(text)
       end
 
+      def find_and_update_cache(text)
+        tag = find_tag(text)
+        @cache[text] = tag if tag.present?
+        tag
+      end
+
       def new_tag(text)
         Tag.new(
           text:,
