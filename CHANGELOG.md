@@ -1,5 +1,18 @@
 # Changelog
 
+## [14.2.6](https://github.com/QutEcoacoustics/baw-server/tree/14.2.6) (2026-02-03)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.5...14.2.6)
+
+**Fixed bugs:**
+
+- range arror for analysis jobs\_item\_id [\#889](https://github.com/QutEcoacoustics/baw-server/issues/889)
+- analysis jobs: remote status check Unknown exit status: -32 [\#879](https://github.com/QutEcoacoustics/baw-server/issues/879)
+
+## [14.2.5](https://github.com/QutEcoacoustics/baw-server/tree/14.2.5) (2026-01-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.4...14.2.5)
+
 ## [14.2.4](https://github.com/QutEcoacoustics/baw-server/tree/14.2.4) (2026-01-28)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/13.10.0...14.2.4)
