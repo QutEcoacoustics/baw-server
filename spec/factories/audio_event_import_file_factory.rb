@@ -12,7 +12,7 @@
 #  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
 #  created_at                                                                                     :datetime         not null
-#  analysis_jobs_item_id                                                                          :integer
+#  analysis_jobs_item_id                                                                          :bigint
 #  audio_event_import_id                                                                          :integer          not null
 #
 # Indexes

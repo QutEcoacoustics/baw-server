@@ -622,7 +622,7 @@ ALTER SEQUENCE public.audio_event_comments_id_seq OWNED BY public.audio_event_co
 CREATE TABLE public.audio_event_import_files (
     id bigint NOT NULL,
     audio_event_import_id integer NOT NULL,
-    analysis_jobs_item_id integer,
+    analysis_jobs_item_id bigint,
     path character varying,
     additional_tag_ids integer[],
     created_at timestamp(6) without time zone NOT NULL,
@@ -4488,6 +4488,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260203031109'),
 ('20260113000000'),
 ('20251126025112'),
 ('20251103151227'),
