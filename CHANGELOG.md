@@ -1,5 +1,14 @@
 # Changelog
 
+## [14.2.7](https://github.com/QutEcoacoustics/baw-server/tree/14.2.7) (2026-02-03)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.6...14.2.7)
+
+**Fixed bugs:**
+
+- Race condition in audio event parser [\#891](https://github.com/QutEcoacoustics/baw-server/issues/891)
+- BirdNET CSV import failing [\#890](https://github.com/QutEcoacoustics/baw-server/issues/890)
+
 ## [14.2.6](https://github.com/QutEcoacoustics/baw-server/tree/14.2.6) (2026-02-03)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.5...14.2.6)
