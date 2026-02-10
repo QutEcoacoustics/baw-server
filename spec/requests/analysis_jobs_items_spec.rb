@@ -46,4 +46,18 @@ describe 'AnalysisJobsItems' do
       expect(analysis_jobs_item.reload.status).to eq(AnalysisJobsItem::STATUS_WORKING)
     end
   end
+
+  describe 'filtering' do
+    # https://github.com/QutEcoacoustics/baw-server/issues/893
+    it 'can filter by project_id' do
+      # need to test this works with old style projects_site association
+      site.update_column(:region_id, nil)
+
+      params = { filter: { 'projects.id': { eq: project.id } } }
+      post "/analysis_jobs/#{analysis_job.id}/items/filter", params: params, **api_headers(owner_token)
+
+      expect_success
+      expect(api_data).to match([hash_including(id: analysis_jobs_item.id)])
+    end
+  end
 end

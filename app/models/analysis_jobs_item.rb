@@ -253,14 +253,15 @@ class AnalysisJobsItem < ApplicationRecord
                 {
                   join: Region,
                   on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
-                  available: true,
-                  associations: [
-                    {
-                      join: Project,
-                      on: Region.arel_table[:project_id].eq(Project.arel_table[:id]),
-                      available: true
-                    }
-                  ]
+                  available: true
+                  # TODO: re-enable when we finally remove projects_sites
+                  # associations: [
+                  #   {
+                  #     join: Project,
+                  #     on: Region.arel_table[:project_id].eq(Project.arel_table[:id]),
+                  #     available: true
+                  #   }
+                  # ]
                 },
                 {
                   join: Arel::Table.new(:projects_sites),
