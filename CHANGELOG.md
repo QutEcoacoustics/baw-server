@@ -1,5 +1,23 @@
 # Changelog
 
+## [14.5.1](https://github.com/QutEcoacoustics/baw-server/tree/14.5.1) (2026-02-11)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.7...14.5.1)
+
+**Implemented enhancements:**
+
+- Add `audio_event_import` QSP to audio event csv download [\#866](https://github.com/QutEcoacoustics/baw-server/issues/866)
+- Annotation download CSV should include score [\#846](https://github.com/QutEcoacoustics/baw-server/issues/846)
+
+**Fixed bugs:**
+
+- cannot filter analysis jobs items by projects.id if their site does not contain a region [\#893](https://github.com/QutEcoacoustics/baw-server/issues/893)
+- Annotation download route is slow [\#892](https://github.com/QutEcoacoustics/baw-server/issues/892)
+
+**Merged pull requests:**
+
+- Refactor audio events download functionality [\#894](https://github.com/QutEcoacoustics/baw-server/pull/894) ([atruskie](https://github.com/atruskie))
+
 ## [14.2.7](https://github.com/QutEcoacoustics/baw-server/tree/14.2.7) (2026-02-03)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.6...14.2.7)
