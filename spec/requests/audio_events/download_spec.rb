@@ -12,7 +12,7 @@ describe '/audio_events/download' do
       audio_event_import_file:
     )
 
-    get "/projects/#{project.id}/audio_events/download?audio_event_import_id=#{audio_event_import_file.id}",
+    get "/projects/#{project.id}/audio_events/download?audio_event_import_id=#{audio_event_import.id}",
       headers: auth_header(writer_token)
 
     expect_success
