@@ -402,16 +402,16 @@ class Ability
   def to_audio_event(user, is_guest)
     # cannot use block for #index, #filter
     # GET|POST  /audio_events/filter                                        audio_events#filter {:format=>"json"}
-    # GET       /audio_recordings/:audio_recording_id/audio_events/download audio_events#download {:format=>"csv"}
+    # GET       /audio_recordings/:audio_recording_id/audio_events/download audio_events/download#download {:format=>"csv"}
     # GET       /audio_recordings/:audio_recording_id/audio_events          audio_events#index {:format=>"json"}
     # POST      /audio_recordings/:audio_recording_id/audio_events          audio_events#create {:format=>"json"}
     # GET       /audio_recordings/:audio_recording_id/audio_events/new      audio_events#new {:format=>"json"}
     # GET       /audio_recordings/:audio_recording_id/audio_events/:id      audio_events#show {:format=>"json"}
     # PATCH|PUT /audio_recordings/:audio_recording_id/audio_events/:id      audio_events#update {:format=>"json"}
     # DELETE    /audio_recordings/:audio_recording_id/audio_events/:id      audio_events#destroy {:format=>"json"}
-    # GET       /projects/:project_id/audio_events/download                 audio_events#download {:format=>"csv"}
-    # GET       /projects/:project_id/sites/:site_id/audio_events/download  audio_events#download {:format=>"csv"}
-    # GET       /user_accounts/:user_id/audio_events/download               audio_events#download {:format=>"csv"}
+    # GET       /projects/:project_id/audio_events/download                 audio_events/download#download {:format=>"csv"}
+    # GET       /projects/:project_id/sites/:site_id/audio_events/download  audio_events/download#download {:format=>"csv"}
+    # GET       /user_accounts/:user_id/audio_events/download               audio_events/download#download {:format=>"csv"}
 
     # any user, including guest, with reader permissions on project can #show an audio_event
     can [:show], AudioEvent do |audio_event|

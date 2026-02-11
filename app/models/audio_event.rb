@@ -449,8 +449,9 @@ class AudioEvent < ApplicationRecord
   # @param [Float] start_offset
   # @param [Float] end_offset
   # @param [String] timezone_name
+  # @param [AudioEventImport] import filter by import
   # @return [Arel:SelectManager]
-  def self.csv_query(user, project, region, site, audio_recording, start_offset, end_offset, timezone_name)
+  def self.csv_query(user, project, region, site, audio_recording, start_offset, end_offset, timezone_name, import)
     # NOTE: if other modifications are made to the default_scope (like acts_as_discardable does),
     # manually constructed queries like this need to be updated to match
     # (search for ':deleted_at' to find the relevant places)
@@ -459,14 +460,11 @@ class AudioEvent < ApplicationRecord
     # e.g. AudioEvent.all.ast.cores[0].wheres
     # but was more trouble to use than directly constructing Arel
     audio_events = AudioEvent.arel_table
-    users = User.arel_table
     audio_recordings = AudioRecording.arel_table
     sites = Site.arel_table
     regions = Region.arel_table
     projects = Project.arel_table
     projects_sites = Arel::Table.new(:projects_sites)
-    audio_events_tags = Tagging.arel_table
-    tags = Tag.arel_table
     audio_event_import_files = AudioEventImportFile.arel_table
     audio_event_imports = AudioEventImport.arel_table
     active_storage_attachments = ActiveStorage::Attachment.arel_table
@@ -477,6 +475,8 @@ class AudioEvent < ApplicationRecord
     field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset&.utc_offset || 0)
     field_suffix = "#{timezone_offset&.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
       '')}".parameterize.underscore
+
+    url_base = "http://#{Settings.host.name}/"
 
     timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
     format_offset = timezone_offset.utc_offset.zero? ? 'Z' : field_suffix_offset
@@ -490,183 +490,124 @@ class AudioEvent < ApplicationRecord
         '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)'
       )
 
-    projects_agg = Arel::Nodes::SqlLiteral.new(
-      'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')'
-    )
-    simple_tags_agg = Arel::Nodes::SqlLiteral.new(
-      'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text", \'|\')'
-    )
-    simple_tags_ids = Arel::Nodes::SqlLiteral.new(
-      'string_agg(CAST("tags"."id" as varchar), \'|\')'
-    )
-    other_tags_agg = Arel::Nodes::SqlLiteral.new(
-      'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text" || \':\' || "tags"."type_of_tag", \'|\')'
-    )
-    other_tags_ids = Arel::Nodes::SqlLiteral.new(
-      'string_agg(CAST("tags"."id" as varchar), \'|\')'
-    )
-
-    url_base = "http://#{Settings.host.name}/"
-
-    projects_aggregate =
-      projects_sites
-        .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
-        .where(projects[:deleted_at].eq(nil))
-        .where(projects_sites[:site_id].eq(sites[:id]))
-        .project(projects_agg)
-
-    tags_common =
-      tags
-        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-        .where(tags[:type_of_tag].eq('common_name'))
-
-    tags_common_aggregate = tags_common.clone.project(simple_tags_agg)
-    tags_common_ids = tags_common.clone.project(simple_tags_ids)
-
-    tags_species =
-      tags
-        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-        .where(tags[:type_of_tag].eq('species_name'))
-
-    tags_species_aggregate = tags_species.clone.project(simple_tags_agg)
-    tags_species_ids = tags_species.clone.project(simple_tags_ids)
-
-    tags_others =
-      tags
-        .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
-        .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
-        .where(tags[:type_of_tag].in(['species_name', 'common_name']).not)
-
-    tags_others_aggregate = tags_others.clone.project(other_tags_agg)
-    tags_others_ids = tags_others.clone.project(other_tags_ids)
-
-    verification_cte_table, verification_cte = verification_summary_cte
-
-    query =
-      audio_events
-        .join(verification_cte_table, Arel::Nodes::OuterJoin)
-        .on(audio_events[:id].eq(verification_cte_table[:audio_event_id]))
-        .where(audio_events[:deleted_at].eq(nil))
-        .join(users).on(users[:id].eq(audio_events[:creator_id]))
-        .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
-        .where(audio_recordings[:deleted_at].eq(nil))
-        .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
-        .where(sites[:deleted_at].eq(nil))
-        .join(regions, Arel::Nodes::OuterJoin).on(regions[:id].eq(sites[:region_id]))
-        .where(regions[:deleted_at].eq(nil))
-        .join(audio_event_import_files, Arel::Nodes::OuterJoin)
-        .on(audio_event_import_files[:id].eq(audio_events[:audio_event_import_file_id]))
-        .join(audio_event_imports, Arel::Nodes::OuterJoin)
-        .on(audio_event_imports[:id].eq(audio_event_import_files[:audio_event_import_id]))
-        .join(active_storage_attachments, Arel::Nodes::OuterJoin)
-        .on(active_storage_attachments[:record_id].eq(audio_event_import_files[:id])
-            .and(active_storage_attachments[:record_type].eq('AudioEventImportFile'))
-            .and(active_storage_attachments[:name].eq('file')))
-        .join(active_storage_blobs, Arel::Nodes::OuterJoin)
-        .on(active_storage_blobs[:id].eq(active_storage_attachments[:blob_id]))
-        .order(audio_events[:id].desc)
-        .with(verification_cte)
-        .project(
-          audio_events[:id].as('audio_event_id'),
-          audio_recordings[:id].as('audio_recording_id'),
-          audio_recordings[:uuid].as('audio_recording_uuid'),
-          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-            format_date).as("audio_recording_start_date_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-            format_time).as("audio_recording_start_time_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
-            format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-            format_date).as("event_created_at_date_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-            format_time).as("event_created_at_time_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
-            format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
-          projects_aggregate.as('projects'),
-          regions[:id].as('region_id'),
-          regions[:name].as('region_name'),
-          sites[:id].as('site_id'),
-          sites[:name].as('site_name'),
-          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-            format_date).as("event_start_date_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-            format_time).as("event_start_time_#{field_suffix}"),
-          function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
-            format_iso8601).as("event_start_datetime_#{field_suffix}"),
-          audio_events[:start_time_seconds].as('event_start_seconds'),
-          audio_events[:end_time_seconds].as('event_end_seconds'),
-          infix_operation(:-, audio_events[:end_time_seconds],
-            audio_events[:start_time_seconds]).as('event_duration_seconds'),
-          audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
-          audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
-          audio_events[:is_reference].as('is_reference'),
-          audio_events[:creator_id].as('created_by'),
-          audio_events[:updater_id].as('updated_by'),
-          tags_common_aggregate.as('common_name_tags'),
-          tags_common_ids.as('common_name_tag_ids'),
-          tags_species_aggregate.as('species_name_tags'),
-          tags_species_ids.as('species_name_tag_ids'),
-          tags_others_aggregate.as('other_tags'),
-          tags_others_ids.as('other_tag_ids'),
-          verification_cte_table[:verifications],
-          verification_cte_table[:verification_counts],
-          verification_cte_table[:verification_correct],
-          verification_cte_table[:verification_incorrect],
-          verification_cte_table[:verification_skip],
-          verification_cte_table[:verification_unsure],
-          verification_cte_table[:verification_decisions],
-          verification_cte_table[:verification_consensus],
-          audio_events[:audio_event_import_file_id].as('audio_event_import_file_id'),
-          AudioEventImportFile.name_arel.as('audio_event_import_file_name'),
-          audio_event_import_files[:audio_event_import_id].as('audio_event_import_id'),
-          audio_event_imports[:name].as('audio_event_import_name'),
-          Arel::Nodes::SqlLiteral.new(
-            "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
-                             '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
-                             '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
-          )
-              .as('listen_url'),
-          Arel::Nodes::SqlLiteral.new(
-            "'#{url_base}library/' || \"audio_recordings\".\"id\" || '/audio_events/' || audio_events.id"
-          )
-              .as('library_url')
-        )
-
-    # ensure deleted projects are not included
-    site_ids_for_live_project_ids = projects
-      .where(projects[:deleted_at].eq(nil))
-      .join(projects_sites).on(projects[:id].eq(projects_sites[:project_id]))
-      .where(sites[:id].eq(projects_sites[:site_id]))
-      .project(sites[:id]).distinct
-
-    query = query.where(sites[:id].in(site_ids_for_live_project_ids))
-
-    query = query.where(users[:id].eq(user.id)) if user
-
+    # Build the site filter subquery to scope CTEs.
+    # This avoids aggregating tags/verifications for audio events outside the result set.
+    site_filter = nil
     if project
-      site_ids = sites
+      site_filter = sites
         .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
         .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
         .where(projects[:deleted_at].eq(nil))
         .where(projects[:id].eq(project.id))
         .project(sites[:id]).distinct
-
-      query = query.where(sites[:id].in(site_ids))
+    elsif site
+      site_filter = sites.where(sites[:id].eq(site.id)).project(sites[:id])
+    elsif region
+      site_filter = sites.where(sites[:region_id].eq(region.id)).project(sites[:id])
     end
 
-    query = query.where(regions[:id].eq(region.id)) if region
+    # Build event filter CTE — materializes filtered audio_event IDs once,
+    # then tags/verifications CTEs and the final query all reference it.
+    # Dependency chain: event_filter_cte -> (tags_cte, verifications_cte) -> final query
+    event_filter_cte_table, event_filter_cte = audio_event_filter_cte(
+      site_filter, user, audio_recording, start_offset, end_offset, project, import
+    )
 
-    query = query.where(sites[:id].eq(site.id)) if site
+    verification_cte_table, verification_cte = verification_summary_cte(event_filter_cte_table)
+    tags_cte_table, tags_cte = tags_summary_cte(event_filter_cte_table)
+    projects_cte_table, projects_cte = projects_by_site_cte(site_filter)
 
-    query = query.where(audio_recordings[:id].eq(audio_recording.id)) if audio_recording
-
-    query = query.where(audio_events[:end_time_seconds].gteq(start_offset)) if start_offset
-
-    query = query.where(audio_events[:start_time_seconds].lteq(end_offset)) if end_offset
-
-    query
+    audio_events
+      .join(event_filter_cte_table).on(audio_events[:id].eq(event_filter_cte_table[:id]))
+      .join(verification_cte_table, Arel::Nodes::OuterJoin)
+      .on(audio_events[:id].eq(verification_cte_table[:audio_event_id]))
+      .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
+      .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
+      .where(sites[:deleted_at].eq(nil))
+      .join(regions, Arel::Nodes::OuterJoin).on(regions[:id].eq(sites[:region_id]))
+      .where(regions[:deleted_at].eq(nil))
+      .join(audio_event_import_files, Arel::Nodes::OuterJoin)
+      .on(audio_event_import_files[:id].eq(audio_events[:audio_event_import_file_id]))
+      .join(audio_event_imports, Arel::Nodes::OuterJoin)
+      .on(audio_event_imports[:id].eq(audio_event_import_files[:audio_event_import_id]))
+      .join(active_storage_attachments, Arel::Nodes::OuterJoin)
+      .on(active_storage_attachments[:record_id].eq(audio_event_import_files[:id])
+            .and(active_storage_attachments[:record_type].eq('AudioEventImportFile'))
+            .and(active_storage_attachments[:name].eq('file')))
+      .join(active_storage_blobs, Arel::Nodes::OuterJoin)
+      .on(active_storage_blobs[:id].eq(active_storage_attachments[:blob_id]))
+      .join(tags_cte_table, Arel::Nodes::OuterJoin)
+      .on(audio_events[:id].eq(tags_cte_table[:audio_event_id]))
+      .join(projects_cte_table, Arel::Nodes::OuterJoin)
+      .on(sites[:id].eq(projects_cte_table[:site_id]))
+      .order(audio_events[:id].desc)
+      .with(event_filter_cte, verification_cte, tags_cte, projects_cte)
+      .project(
+        audio_events[:id].as('audio_event_id'),
+        audio_recordings[:id].as('audio_recording_id'),
+        audio_recordings[:uuid].as('audio_recording_uuid'),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+          format_date).as("audio_recording_start_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+          format_time).as("audio_recording_start_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval,
+          format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+          format_date).as("event_created_at_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+          format_time).as("event_created_at_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval,
+          format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
+        projects_cte_table[:projects],
+        regions[:id].as('region_id'),
+        regions[:name].as('region_name'),
+        sites[:id].as('site_id'),
+        sites[:name].as('site_name'),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+          format_date).as("event_start_date_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+          format_time).as("event_start_time_#{field_suffix}"),
+        function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval,
+          format_iso8601).as("event_start_datetime_#{field_suffix}"),
+        audio_events[:start_time_seconds].as('event_start_seconds'),
+        audio_events[:end_time_seconds].as('event_end_seconds'),
+        infix_operation(:-, audio_events[:end_time_seconds],
+          audio_events[:start_time_seconds]).as('event_duration_seconds'),
+        audio_events[:low_frequency_hertz],
+        audio_events[:high_frequency_hertz],
+        audio_events[:score],
+        audio_events[:is_reference],
+        audio_events[:creator_id].as('created_by'),
+        audio_events[:updater_id].as('updated_by'),
+        tags_cte_table[:common_name_tags],
+        tags_cte_table[:common_name_tag_ids],
+        tags_cte_table[:species_name_tags],
+        tags_cte_table[:species_name_tag_ids],
+        tags_cte_table[:other_tags],
+        tags_cte_table[:other_tag_ids],
+        verification_cte_table[:verifications],
+        verification_cte_table[:verification_counts],
+        verification_cte_table[:verification_correct],
+        verification_cte_table[:verification_incorrect],
+        verification_cte_table[:verification_skip],
+        verification_cte_table[:verification_unsure],
+        verification_cte_table[:verification_decisions],
+        verification_cte_table[:verification_consensus],
+        audio_events[:audio_event_import_file_id].as('audio_event_import_file_id'),
+        AudioEventImportFile.name_arel.as('audio_event_import_file_name'),
+        audio_event_import_files[:audio_event_import_id].as('audio_event_import_id'),
+        audio_event_imports[:name].as('audio_event_import_name'),
+        Arel::Nodes::SqlLiteral.new(
+          "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' \
+                           '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' \
+                           '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)'
+        )
+            .as('listen_url'),
+        Arel::Nodes::SqlLiteral.new(
+          "'#{url_base}library/' || \"audio_recordings\".\"id\" || '/audio_events/' || audio_events.id"
+        )
+            .as('library_url')
+      )
   end
 
   def self.in_site(site)
@@ -742,10 +683,143 @@ class AudioEvent < ApplicationRecord
     Arel::Nodes::InfixOperation.new(operation, value1, value2)
   end
 
+  # Build a CTE that materializes filtered audio_event IDs.
+  # This is evaluated once and referenced by tags_cte, verifications_cte, and the final query.
+  # @param site_filter [Arel::SelectManager, nil] subquery selecting allowed site IDs
+  # @param user [User, nil] filter by creator
+  # @param audio_recording [AudioRecording, nil] filter by recording
+  # @param start_offset [Float, nil] minimum end_time_seconds
+  # @param end_offset [Float, nil] maximum start_time_seconds
+  # @param project [Project, nil] when present, skip the live-projects filter (already scoped)
+  # @param import [AudioEventImport, nil] filter by import
+  # @return [Array<Arel::Table, Arel::Nodes::As>]
+  def self.audio_event_filter_cte(site_filter, user, audio_recording, start_offset, end_offset, project, import)
+    audio_events = AudioEvent.arel_table
+    audio_recordings = AudioRecording.arel_table
+    projects = Project.arel_table
+    projects_sites = ProjectsSite.arel_table
+    audio_event_import_files = AudioEventImportFile.arel_table
+    imports = AudioEventImport.arel_table
+
+    event_filter_query = audio_events
+      .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
+      .where(audio_events[:deleted_at].eq(nil))
+      .where(audio_recordings[:deleted_at].eq(nil))
+
+    event_filter_query = event_filter_query.where(audio_recordings[:site_id].in(site_filter)) if site_filter
+    event_filter_query = event_filter_query.where(audio_recordings[:id].eq(audio_recording.id)) if audio_recording
+    event_filter_query = event_filter_query.where(audio_events[:creator_id].eq(user.id)) if user
+    event_filter_query = event_filter_query.where(audio_events[:end_time_seconds].gteq(start_offset)) if start_offset
+    event_filter_query = event_filter_query.where(audio_events[:start_time_seconds].lteq(end_offset)) if end_offset
+
+    if import
+      event_filter_query = event_filter_query
+        .join(audio_event_import_files).on(audio_event_import_files[:id].eq(audio_events[:audio_event_import_file_id]))
+        .join(imports).on(imports[:id].eq(audio_event_import_files[:audio_event_import_id]))
+        .where(imports[:id].eq(import.id))
+    end
+
+    # ensure deleted projects are not included — skip if project filter already ensures this
+    unless project
+      site_ids_for_live_project_ids = projects_sites
+        .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+        .where(projects[:deleted_at].eq(nil))
+        .project(projects_sites[:site_id]).distinct
+
+      event_filter_query = event_filter_query.where(audio_recordings[:site_id].in(site_ids_for_live_project_ids))
+    end
+
+    event_filter_query = event_filter_query.project(audio_events[:id])
+
+    event_filter_cte_table = Arel::Table.new(:event_filter_cte_table)
+    event_filter_cte = Arel::Nodes::As.new(event_filter_cte_table, event_filter_query)
+    [event_filter_cte_table, event_filter_cte]
+  end
+
+  # Construct tags summary, aggregated by audio event, returned as a common
+  # table expression. Replaces 6 correlated subqueries with a single CTE.
+  # @param event_filter_cte_table [Arel::Table] CTE table to scope by audio_event_ids
+  # @return [Array<Arel::Table, Arel::Nodes::As>]
+  def self.tags_summary_cte(event_filter_cte_table)
+    audio_events_tags = Tagging.arel_table
+    tags = Tag.arel_table
+
+    tags_select = audio_events_tags
+      .join(tags).on(tags[:id].eq(audio_events_tags[:tag_id]))
+      .join(event_filter_cte_table).on(
+        audio_events_tags[:audio_event_id].eq(event_filter_cte_table[:id])
+      )
+
+    tags_select = tags_select
+      .group(audio_events_tags[:audio_event_id])
+      .project(
+        audio_events_tags[:audio_event_id],
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" = 'common_name' " \
+          "THEN CAST(\"tags\".\"id\" as varchar) || ':' || \"tags\".\"text\" END, '|')"
+        ).as('common_name_tags'),
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" = 'common_name' " \
+          "THEN CAST(\"tags\".\"id\" as varchar) END, '|')"
+        ).as('common_name_tag_ids'),
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" = 'species_name' " \
+          "THEN CAST(\"tags\".\"id\" as varchar) || ':' || \"tags\".\"text\" END, '|')"
+        ).as('species_name_tags'),
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" = 'species_name' " \
+          "THEN CAST(\"tags\".\"id\" as varchar) END, '|')"
+        ).as('species_name_tag_ids'),
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" NOT IN ('species_name', 'common_name') " \
+          "THEN CAST(\"tags\".\"id\" as varchar) || ':' || \"tags\".\"text\" || ':' || \"tags\".\"type_of_tag\" END, '|')"
+        ).as('other_tags'),
+        Arel::Nodes::SqlLiteral.new(
+          "string_agg(CASE WHEN \"tags\".\"type_of_tag\" NOT IN ('species_name', 'common_name') " \
+          "THEN CAST(\"tags\".\"id\" as varchar) END, '|')"
+        ).as('other_tag_ids')
+      )
+
+    tags_cte_table = Arel::Table.new(:tags_cte_table)
+    tags_cte = Arel::Nodes::As.new(tags_cte_table, tags_select)
+    [tags_cte_table, tags_cte]
+  end
+
+  # Construct projects summary, aggregated by site, returned as a common
+  # table expression. Replaces a correlated subquery with a single CTE.
+  # @param site_filter [Arel::SelectManager, nil] optional subquery to scope by site_ids
+  # @return [Array<Arel::Table, Arel::Nodes::As>]
+  def self.projects_by_site_cte(site_filter = nil)
+    projects = Project.arel_table
+    projects_sites = Arel::Table.new(:projects_sites)
+
+    projects_agg = Arel::Nodes::SqlLiteral.new(
+      'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')'
+    )
+
+    projects_select = projects_sites
+      .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+      .where(projects[:deleted_at].eq(nil))
+
+    projects_select = projects_select.where(projects_sites[:site_id].in(site_filter)) if site_filter
+
+    projects_select = projects_select
+      .group(projects_sites[:site_id])
+      .project(
+        projects_sites[:site_id],
+        projects_agg.as('projects')
+      )
+
+    projects_cte_table = Arel::Table.new(:projects_cte_table)
+    projects_cte = Arel::Nodes::As.new(projects_cte_table, projects_select)
+    [projects_cte_table, projects_cte]
+  end
+
   # Construct verification summary, aggregated by audio event and tag, returned
   # as a common table expression.
+  # @param event_filter_cte_table [Arel::Table] CTE table to scope by audio_event_ids
   # @return [Array<Arel::Table, Arel::Nodes::As>]
-  def self.verification_summary_cte
+  def self.verification_summary_cte(event_filter_cte_table)
     verifications = Verification.arel_table
     tags = Tag.arel_table
 
@@ -776,6 +850,11 @@ class AudioEvent < ApplicationRecord
 
     verification_subquery = verifications
       .join(tags).on(verifications[:tag_id].eq(tags[:id]))
+      .join(event_filter_cte_table).on(
+        verifications[:audio_event_id].eq(event_filter_cte_table[:id])
+      )
+
+    verification_subquery = verification_subquery
       .group(verifications[:audio_event_id], verifications[:tag_id], tags[:text])
       .project(
         verifications[:audio_event_id],

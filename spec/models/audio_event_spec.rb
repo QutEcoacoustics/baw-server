@@ -252,494 +252,78 @@ describe AudioEvent do
   end
 
   it 'constructs the expected sql for annotation download (timezone: UTC)' do
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
-    sql = <<~SQL.squish
-      WITH "verification_cte_table"
-      AS(
-      SELECT "verification_table"."audio_event_id", string_agg(
-      CAST("verification_table"."tag_id" as varchar) ||':'|| "tag_text",'|')
-      AS "verifications", string_agg(
-      CAST("verification_table"."verification_counts" as varchar),'|')
-      AS "verification_counts", string_agg(
-      CAST("verification_table"."verification_correct" as varchar),'|')
-      AS "verification_correct", string_agg(
-      CAST("verification_table"."verification_incorrect" as varchar),'|')
-      AS "verification_incorrect", string_agg(
-      CAST("verification_table"."verification_skip" as varchar),'|')
-      AS "verification_skip", string_agg(
-      CAST("verification_table"."verification_unsure" as varchar),'|')
-      AS "verification_unsure", string_agg("verification_table"."verification_decisions",'|')
-      AS "verification_decisions", string_agg(
-      CAST("verification_table"."verification_consensus" as varchar),'|')
-      AS "verification_consensus"
-      FROM(
-      SELECT"verification_subquery".*,(
-      SELECT label
-      FROM(
-      VALUES('correct',verification_subquery.verification_correct),('incorrect',verification_subquery.verification_incorrect),('skip',verification_subquery.verification_skip),('unsure',verification_subquery.verification_unsure))
-      AS v(label,count)
-      ORDER BY count
-      DESC
-      LIMIT 1)
-      AS "verification_decisions",
-      ROUND(
-      GREATEST ("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")/
-      CAST("verification_subquery"."verification_counts"
-      AS numeric), 2)
-      AS "verification_consensus"
-      FROM(
-      SELECT "verifications"."audio_event_id","verifications"."tag_id","tags"."text"
-      AS "tag_text",
-      COUNT("verifications"."confirmed")
-      AS "verification_counts",(
-      COUNT (*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'correct'))
-      AS "verification_correct",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'incorrect'))
-      AS "verification_incorrect",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'skip'))
-      AS "verification_skip",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed"='unsure'))
-      AS "verification_unsure"
-      FROM "verifications"
-      INNER
-      JOIN "tags"
-      ON "verifications"."tag_id" = "tags"."id"
-      GROUP BY
-      "verifications"."audio_event_id","verifications"."tag_id","tags"."text") "verification_subquery") "verification_table"
-      GROUP BY
-      "verification_table"."audio_event_id")
-      SELECT "audio_events"."id"
-      AS "audio_event_id","audio_recordings"."id"
-      AS "audio_recording_id","audio_recordings"."uuid"
-      AS "audio_recording_uuid",to_char("audio_recordings"."recorded_date" +
-      INTERVAL '0 seconds', 'YYYY-MM-DD')
-      AS "audio_recording_start_date_utc_00_00",to_char("audio_recordings"."recorded_date" +
-      INTERVAL '0 seconds', 'HH24:MI:SS')
-      AS "audio_recording_start_time_utc_00_00",to_char("audio_recordings"."recorded_date" +
-      INTERVAL '0 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-      AS "audio_recording_start_datetime_utc_00_00",to_char("audio_events"."created_at" +
-      INTERVAL '0 seconds', 'YYYY-MM-DD')
-      AS "event_created_at_date_utc_00_00",to_char("audio_events"."created_at" +
-      INTERVAL '0 seconds', 'HH24:MI:SS')
-      AS "event_created_at_time_utc_00_00",to_char("audio_events"."created_at" +
-      INTERVAL '0 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-      AS "event_created_at_datetime_utc_00_00",(
-             SELECT string_agg(
-               CAST("projects"."id" as varchar) || ':' || "projects"."name", '|')
-      FROM "projects_sites"
-      INNER
-      JOIN "projects"
-      ON "projects"."id" = "projects_sites"."project_id"
-      WHERE "projects"."deleted_at"
-      IS
-      NULL
-      AND "projects_sites"."site_id" = "sites"."id") "projects", "regions"."id"
-      AS "region_id", "regions"."name"
-      AS "region_name", "sites"."id"
-      AS "site_id", "sites"."name"
-      AS "site_name",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '0 seconds', 'YYYY-MM-DD')
-      AS "event_start_date_utc_00_00",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '0 seconds', 'HH24:MI:SS')
-      AS "event_start_time_utc_00_00",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '0 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-      AS "event_start_datetime_utc_00_00","audio_events"."start_time_seconds"
-      AS "event_start_seconds","audio_events"."end_time_seconds"
-      AS "event_end_seconds",("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
-      AS "event_duration_seconds","audio_events"."low_frequency_hertz"
-      AS "low_frequency_hertz","audio_events"."high_frequency_hertz"
-      AS "high_frequency_hertz","audio_events"."is_reference"
-      AS "is_reference","audio_events"."creator_id"
-      AS "created_by", "audio_events"."updater_id"
-      AS "updated_by",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') "common_name_tags",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') "common_name_tag_ids",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') "species_name_tags",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') "species_name_tag_ids",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text" || ':' || "tags"."type_of_tag", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND
-      NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tags",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND
-      NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus","audio_events"."audio_event_import_file_id"
-      AS"audio_event_import_file_id",
-      COALESCE(basename("audio_event_import_files"."path"),"active_storage_blobs"."filename")
-      AS "audio_event_import_file_name","audio_event_import_files"."audio_event_import_id"
-      AS "audio_event_import_id","audio_event_imports"."name"
-      AS "audio_event_import_name",'http://web/listen/'||"audio_recordings"."id"||'?start='||(floor("audio_events"."start_time_seconds"/30)*30)||'&end='||((floor("audio_events"."start_time_seconds"/30)*30)+30)
-      AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
-      AS "library_url"
-      FROM "audio_events"
-      LEFT
-      OUTER
-      JOIN"verification_cte_table"
-      ON"audio_events"."id"="verification_cte_table"."audio_event_id"
-      INNER
-      JOIN "users"
-      ON "users"."id" = "audio_events"."creator_id"
-      INNER
-      JOIN "audio_recordings"
-      ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
-      INNER
-      JOIN "sites"
-      ON "sites"."id" = "audio_recordings"."site_id"
-      LEFT OUTER
-      JOIN "regions"
-      ON "regions"."id" = "sites"."region_id"
-      LEFT
-      OUTER
-      JOIN"audio_event_import_files"
-      ON"audio_event_import_files"."id"="audio_events"."audio_event_import_file_id"
-      LEFT
-      OUTER
-      JOIN"audio_event_imports"
-      ON"audio_event_imports"."id"="audio_event_import_files"."audio_event_import_id"
-      LEFT
-      OUTER
-      JOIN"active_storage_attachments"
-      ON("active_storage_attachments"."record_id"="audio_event_import_files"."id")
-      AND("active_storage_attachments"."record_type"='
-      Audio
-      Event
-      Import
-      File')
-      AND("active_storage_attachments"."name"='file')
-      LEFT
-      OUTER
-      JOIN"active_storage_blobs"
-      ON"active_storage_blobs"."id"="active_storage_attachments"."blob_id"
-      WHERE "audio_events"."deleted_at"
-      IS
-      NULL
-      AND "audio_recordings"."deleted_at"
-      IS
-      NULL
-      AND "sites"."deleted_at"
-      IS
-      NULL
-      AND "regions"."deleted_at"
-      IS
-      NULL
-      AND "sites"."id"
-      IN (
-        SELECT
-      DISTINCT "sites"."id"
-      FROM "projects"
-      INNER
-      JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id"
-      WHERE "projects"."deleted_at"
-      IS
-      NULL
-      AND "sites"."id" = "projects_sites"."site_id")
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+    sql = query.to_sql
 
-      ORDER
-      BY "audio_events"."id"
-      DESC
-    SQL
+    # verify four CTEs are present: event_filter first, then tags/verifications depend on it
+    expect(sql).to include('WITH "event_filter_cte_table" AS')
+    expect(sql).to include('"verification_cte_table" AS')
+    expect(sql).to include('"tags_cte_table" AS')
+    expect(sql).to include('"projects_cte_table" AS')
 
-    a_mod = query.to_sql.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-    b_mod = sql.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-    expect(a_mod).to eq(b_mod)
+    # verify event_filter_cte is defined first in the WITH clause
+    event_filter_pos = sql.index('"event_filter_cte_table" AS')
+    verification_pos = sql.index('"verification_cte_table" AS')
+    tags_pos = sql.index('"tags_cte_table" AS')
+    expect(event_filter_pos).to be < verification_pos
+    expect(event_filter_pos).to be < tags_pos
+
+    # verify tags/verifications CTEs join on event_filter_cte_table
+    expect(sql).to include('INNER JOIN "event_filter_cte_table" ON "audio_events_tags"."audio_event_id" = "event_filter_cte_table"."id"')
+    expect(sql).to include('INNER JOIN "event_filter_cte_table" ON "verifications"."audio_event_id" = "event_filter_cte_table"."id"')
+
+    # verify INNER JOIN on event_filter_cte_table
+    expect(sql).to include('INNER JOIN "event_filter_cte_table"')
+
+    # verify CTE-based columns replaced correlated subqueries
+    expect(sql).to include('"tags_cte_table"."common_name_tags"')
+    expect(sql).to include('"tags_cte_table"."species_name_tags"')
+    expect(sql).to include('"tags_cte_table"."other_tags"')
+    expect(sql).to include('"projects_cte_table"."projects"')
+
+    # verify CTE joins
+    expect(sql).to include('LEFT OUTER JOIN "tags_cte_table"')
+    expect(sql).to include('LEFT OUTER JOIN "projects_cte_table"')
+
+    # verify raw timestamps formatted via to_char
+    expect(sql).to include('to_char')
+    expect(sql).to include('audio_recording_start_date_utc_00_00')
+    expect(sql).to include('event_created_at_date_utc_00_00')
+    expect(sql).to include('event_start_date_utc_00_00')
+
+    # verify users INNER JOIN removed
+    expect(sql).not_to include('INNER JOIN "users"')
+
+    # verify live projects filter is in the event_filter CTE (not the final query)
+    expect(sql).to include('SELECT DISTINCT "projects_sites"."site_id" FROM "projects_sites"')
+
+    # verify no correlated tag subqueries remain
+    expect(sql).not_to match(/SELECT\s+string_agg.*FROM\s+"tags"\s+INNER\s+JOIN\s+"audio_events_tags"/)
   end
 
   it 'constructs the expected sql for annotation download (timezone: Brisbane)' do
     query =
-      AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane')
+      AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, 'Brisbane', nil)
+    sql = query.to_sql
 
-    sql = <<~SQL.squish
-      WITH "verification_cte_table"\n
-      AS (\n
-      SELECT "verification_table"."audio_event_id", string_agg(
-      CAST("verification_table"."tag_id"asvarchar)||':'||"tag_text",'|')
-      AS "verifications", string_agg(
-      CAST("verification_table"."verification_counts"as varchar),'|')
-      AS "verification_counts", string_agg(
-      CAST("verification_table"."verification_correct"as varchar),'|')
-      AS "verification_correct", string_agg(
-      CAST("verification_table"."verification_incorrect"as varchar),'|')
-      AS "verification_incorrect", string_agg(
-      CAST("verification_table"."verification_skip"as varchar),'|')
-      AS "verification_skip", string_agg(
-      CAST("verification_table"."verification_unsure"as varchar),'|')
-      AS "verification_unsure", string_agg("verification_table"."verification_decisions",'|')
-      AS "verification_decisions", string_agg(
-      CAST("verification_table"."verification_consensus"as varchar),'|')
-      AS "verification_consensus"
-      FROM(
-      SELECT"verification_subquery".*,(
-      SELECT label
-      FROM(
-      VALUES('correct',verification_subquery.verification_correct),('incorrect',verification_subquery.verification_incorrect),('skip',verification_subquery.verification_skip),('unsure',verification_subquery.verification_unsure))
-      AS v(label,count)
-      ORDER BY count
-      DESC
-      LIMIT 1)
-      AS "verification_decisions",
-      ROUND(
-      GREATEST ("verification_subquery"."verification_correct","verification_subquery"."verification_incorrect","verification_subquery"."verification_skip","verification_subquery"."verification_unsure")/
-      CAST("verification_subquery"."verification_counts"
-      AS numeric), 2)
-      AS "verification_consensus"
-      FROM(
-      SELECT "verifications"."audio_event_id","verifications"."tag_id","tags"."text"
-      AS "tag_text",
-      COUNT("verifications"."confirmed")
-      AS "verification_counts",(
-      COUNT (*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'correct'))
-      AS "verification_correct",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'incorrect'))
-      AS "verification_incorrect",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed" = 'skip'))
-      AS "verification_skip",(
-      COUNT(*)
-      FILTER(
-      WHERE "verifications"."confirmed"='unsure'))
-      AS"verification_unsure"
-      FROM"verifications"
-      INNER
-      JOIN"tags"
-      ON"verifications"."tag_id"="tags"."id"
-      GROUP
-      BY"verifications"."audio_event_id","verifications"."tag_id","tags"."text")"verification_subquery")"verification_table"
-      GROUP
-      BY"verification_table"."audio_event_id")
-      SELECT "audio_events"."id"
-      AS "audio_event_id","audio_recordings"."id"
-      AS "audio_recording_id","audio_recordings"."uuid"
-      AS "audio_recording_uuid",to_char("audio_recordings"."recorded_date" +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD')
-      AS "audio_recording_start_date_brisbane_10_00", to_char("audio_recordings"."recorded_date" +
-      INTERVAL '36000 seconds', 'HH24:MI:SS')
-      AS "audio_recording_start_time_brisbane_10_00",to_char("audio_recordings"."recorded_date" +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"+10:00"')
-      AS "audio_recording_start_datetime_brisbane_10_00",to_char("audio_events"."created_at" +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD')
-      AS "event_created_at_date_brisbane_10_00",to_char("audio_events"."created_at" +
-      INTERVAL '36000 seconds', 'HH24:MI:SS')
-      AS "event_created_at_time_brisbane_10_00",to_char("audio_events"."created_at" +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"+10:00"')
-      AS "event_created_at_datetime_brisbane_10_00",(
-        SELECT string_agg(
-          CAST("projects"."id" as varchar) || ':' || "projects"."name", '|')
-      FROM "projects_sites"
-      INNER
-      JOIN "projects"
-      ON "projects"."id" = "projects_sites"."project_id"
-      WHERE "projects"."deleted_at"
-      IS
-      NULL
-      AND "projects_sites"."site_id" = "sites"."id") "projects", "regions"."id"
-      AS "region_id", "regions"."name"
-      AS "region_name", "sites"."id"
-      AS "site_id", "sites"."name"
-      AS "site_name",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD')
-      AS "event_start_date_brisbane_10_00",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '36000 seconds', 'HH24:MI:SS')
-      AS "event_start_time_brisbane_10_00",to_char("audio_recordings"."recorded_date" +
-      CAST("audio_events"."start_time_seconds" || ' seconds' as interval) +
-      INTERVAL '36000 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"+10:00"')
-      AS "event_start_datetime_brisbane_10_00","audio_events"."start_time_seconds"
-      AS "event_start_seconds","audio_events"."end_time_seconds"
-      AS "event_end_seconds",("audio_events"."end_time_seconds" - "audio_events"."start_time_seconds")
-      AS "event_duration_seconds","audio_events"."low_frequency_hertz"
-      AS "low_frequency_hertz","audio_events"."high_frequency_hertz"
-      AS "high_frequency_hertz","audio_events"."is_reference"
-      AS "is_reference","audio_events"."creator_id"
-      AS "created_by", "audio_events"."updater_id"
-      AS "updated_by",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') "common_name_tags",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'common_name') "common_name_tag_ids",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') "species_name_tags",(
-             SELECT string_agg(
-               CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND "tags"."type_of_tag" = 'species_name') "species_name_tag_ids",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar) || ':' || "tags"."text" || ':' || "tags"."type_of_tag", '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND
-      NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tags",(
-        SELECT string_agg(
-          CAST("tags"."id" as varchar), '|')
-      FROM "tags"
-      INNER
-      JOIN "audio_events_tags"
-      ON "audio_events_tags"."tag_id" = "tags"."id"
-      WHERE "audio_events_tags"."audio_event_id" = "audio_events"."id"
-      AND
-      NOT ("tags"."type_of_tag"
-      IN ('species_name', 'common_name'))) "other_tag_ids","verification_cte_table"."verifications","verification_cte_table"."verification_counts","verification_cte_table"."verification_correct","verification_cte_table"."verification_incorrect","verification_cte_table"."verification_skip","verification_cte_table"."verification_unsure","verification_cte_table"."verification_decisions","verification_cte_table"."verification_consensus","audio_events"."audio_event_import_file_id"
-      AS"audio_event_import_file_id",
-      COALESCE(basename("audio_event_import_files"."path"),"active_storage_blobs"."filename")
-      AS "audio_event_import_file_name","audio_event_import_files"."audio_event_import_id"
-      AS "audio_event_import_id","audio_event_imports"."name"
-      AS "audio_event_import_name",'http://web/listen/'||"audio_recordings"."id"||'?start='||(floor("audio_events"."start_time_seconds"/30)*30)||'&end='||((floor("audio_events"."start_time_seconds"/30)*30)+30)
-      AS "listen_url",'http://web/library/' || "audio_recordings"."id" || '/audio_events/' || audio_events.id
-      AS "library_url"
-      FROM "audio_events"
-      LEFT
-      OUTER
-      JOIN"verification_cte_table"
-      ON"audio_events"."id"="verification_cte_table"."audio_event_id"
-      INNER
-      JOIN "users"
-      ON "users"."id" = "audio_events"."creator_id"
-      INNER
-      JOIN "audio_recordings"
-      ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
-      INNER
-      JOIN "sites"
-      ON "sites"."id" = "audio_recordings"."site_id"
-      LEFT OUTER
-      JOIN "regions"
-      ON "regions"."id" = "sites"."region_id"
-      LEFT
-      OUTER
-      JOIN"audio_event_import_files"
-      ON"audio_event_import_files"."id"="audio_events"."audio_event_import_file_id"
-      LEFT
-      OUTER
-      JOIN"audio_event_imports"
-      ON"audio_event_imports"."id"="audio_event_import_files"."audio_event_import_id"
-      LEFT
-      OUTER
-      JOIN"active_storage_attachments"
-      ON("active_storage_attachments"."record_id"="audio_event_import_files"."id")
-      AND("active_storage_attachments"."record_type"='
-      Audio
-      Event
-      Import
-      File')
-      AND("active_storage_attachments"."name"='file')
-      LEFT
-      OUTER
-      JOIN"active_storage_blobs"
-      ON"active_storage_blobs"."id"="active_storage_attachments"."blob_id"
-      WHERE "audio_events"."deleted_at"
-      IS
-      NULL
-      AND "audio_recordings"."deleted_at"
-      IS
-      NULL
-      AND "sites"."deleted_at"
-      IS
-      NULL
-      AND "regions"."deleted_at"
-      IS
-      NULL
-      AND "sites"."id"
-      IN (
-        SELECT
-      DISTINCT "sites"."id"
-      FROM "projects"
-      INNER
-      JOIN "projects_sites"
-      ON "projects"."id" = "projects_sites"."project_id"
-      WHERE "projects"."deleted_at"
-      IS
-      NULL
-      AND "sites"."id" = "projects_sites"."site_id")
-      ORDER
-      BY "audio_events"."id"
-      DESC
-    SQL
+    # verify four CTEs are present
+    expect(sql).to include('WITH "event_filter_cte_table" AS')
+    expect(sql).to include('"verification_cte_table" AS')
+    expect(sql).to include('"tags_cte_table" AS')
+    expect(sql).to include('"projects_cte_table" AS')
 
-    a_mod = query.to_sql.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-    b_mod = sql.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
-    expect(a_mod).to eq(b_mod)
+    # verify CTE-based columns replaced correlated subqueries
+    expect(sql).to include('"tags_cte_table"."common_name_tags"')
+    expect(sql).to include('"projects_cte_table"."projects"')
+
+    # verify to_char formatting with Brisbane timezone
+    expect(sql).to include('to_char')
+    expect(sql).to include('brisbane_10_00')
+    expect(sql).to include("INTERVAL '36000 seconds'")
+
+    # verify event_filter CTE and INNER JOIN
+    expect(sql).to include('INNER JOIN "event_filter_cte_table"')
+    expect(sql).to include('SELECT DISTINCT "projects_sites"."site_id" FROM "projects_sites"')
   end
 
   it 'excludes deleted projects, sites, audio_recordings, and audio_events from annotation download' do
@@ -776,7 +360,7 @@ describe AudioEvent do
     end
 
     # check that AudioEvent.csv_query returns only non-deleted items
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
@@ -828,7 +412,7 @@ describe AudioEvent do
     end
 
     # check that AudioEvent.csv_query returns unique audio events
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
     query_sql = query.to_sql
     formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
@@ -847,17 +431,26 @@ describe AudioEvent do
     other_audio_recording = create(:audio_recording, site: other_site, creator: user)
     other_audio_event = create(:audio_event, audio_recording: other_audio_recording, creator: user)
 
-    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil).to_sql
-    returned_event_ids = AudioEvent.connection.select_all(query).pluck('audio_event_id')
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+    returned_event_ids = AudioEvent.connection.select_all(query.to_sql).pluck('audio_event_id')
 
     expect(returned_event_ids).to eq([other_audio_event.id])
   end
 
-  describe 'download events' do
+  it 'includes score in csv_query results' do
+    audio_event = create(:audio_event, score: 0.75)
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+    results = AudioEvent.connection.select_all(query.to_sql).to_a
+    event = results.find { |r| r['audio_event_id'] == audio_event.id }
+    expect(event).to include('score' => 0.75)
+  end
+
+  describe 'csv_query and imports' do
     create_entire_hierarchy
+
     it 'includes import details in annotation download' do
-      query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil)
-      results = AudioEvent.connection.select_all(query).to_a
+      query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+      results = AudioEvent.connection.select_all(query.to_sql).to_a
 
       first = results.first
       expect(first).to match(a_hash_including(
@@ -867,9 +460,22 @@ describe AudioEvent do
         'audio_event_import_name' => audio_event_import.name
       ))
     end
+
+    it 'can filter by import in annotation download' do
+      audio_event.update!(audio_event_import_file: audio_event_import_file)
+
+      query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil, nil, audio_event_import)
+      results = AudioEvent.connection.select_all(query.to_sql).to_a
+      expect(results.count).to eq(1)
+      expect(results.first).to match(a_hash_including(
+        'audio_event_id' => audio_event.id,
+        'audio_event_import_file_id' => audio_event_import_file.id,
+        'audio_event_import_id' => audio_event_import.id
+      ))
+    end
   end
 
-  describe 'verifications query for annotation downloads' do
+  describe 'verifications query for csv_query' do
     create_entire_hierarchy
 
     # set up a new event, with two tags and taggings
@@ -914,12 +520,14 @@ describe AudioEvent do
     end
 
     it 'aggregates verifications from multiple tags correctly' do
-      verification_cte_table, query_cte = AudioEvent.verification_summary_cte
+      # Build an unfiltered event_filter CTE (selects all non-deleted audio_events)
+      event_filter_cte_table, event_filter_cte = AudioEvent.audio_event_filter_cte(nil, nil, nil, nil, nil, nil, nil)
+      verification_cte_table, query_cte = AudioEvent.verification_summary_cte(event_filter_cte_table)
 
       query = AudioEvent.arel_table.join(verification_cte_table)
         .on(AudioEvent.arel_table[:id].eq(verification_cte_table[:audio_event_id]))
         .project(verification_cte_table[Arel.star])
-        .with(query_cte)
+        .with(event_filter_cte, query_cte)
 
       results = AudioEvent.connection.select_all(query.to_sql)
 
