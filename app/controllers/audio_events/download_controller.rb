@@ -66,11 +66,10 @@ module AudioEvents
       if params_cleaned[:audio_event_import_id]
         import = AudioEventImport.where(id: params_cleaned[:audio_event_import_id].to_i).first
         if import.present?
-          authorize! :show, import
-          # We check authorization on the import, but we don't want this to be
-          # the only factor we auth since imports can be accessible even if you
-          # don't have access to the underlying audio events.
-          #is_authorized = true
+          # Do not perform standalone authorization on the import here.
+          # Access to the underlying audio events is controlled by the parent
+          # resources (project/site/region/audio_recording/user) and their
+          # respective authorization checks and query scoping.
         end
       end
 
