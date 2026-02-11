@@ -756,7 +756,7 @@ Rails.application.routes.draw do
     end
     resources :audio_events, except: [:edit], defaults: { format: 'json' }, concerns: [:filterable] do
       collection do
-        get 'download', defaults: { format: 'csv' }
+        get 'download' => 'audio_events/download#download', defaults: { format: 'csv' }
       end
       resources :tags, only: [:index], defaults: { format: 'json' }
       resources :taggings, except: [:edit], defaults: { format: 'json' }
@@ -802,13 +802,13 @@ Rails.application.routes.draw do
   get '/user_accounts/:user_id/taggings' => 'taggings#user_index', as: :user_taggings, defaults: { format: 'json' }
 
   # audio event csv download routes
-  get '/projects/:project_id/audio_events/download' => 'audio_events#download',
+  get '/projects/:project_id/audio_events/download' => 'audio_events/download#download',
     defaults: { format: 'csv' }, as: :download_project_audio_events
-  get '/projects/:project_id/regions/:region_id/audio_events/download' => 'audio_events#download',
+  get '/projects/:project_id/regions/:region_id/audio_events/download' => 'audio_events/download#download',
     defaults: { format: 'csv' }, as: :download_region_audio_events
-  get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download',
+  get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events/download#download',
     defaults: { format: 'csv' }, as: :download_site_audio_events
-  get '/user_accounts/:user_id/audio_events/download' => 'audio_events#download',
+  get '/user_accounts/:user_id/audio_events/download' => 'audio_events/download#download',
     defaults: { format: 'csv' }, as: :download_user_audio_events
 
   # path for orphaned sites

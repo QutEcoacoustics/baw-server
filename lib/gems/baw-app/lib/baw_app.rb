@@ -95,6 +95,13 @@ module BawApp
     env == 'production'
   end
 
+  # Returns true if we're running in a CI environment.
+  # Tests for the presence of the `CI` environment variable, which is commonly set in CI environments.
+  # @return [Boolean]
+  def ci?
+    ENV.key?('CI')
+  end
+
   def log_to_stdout?
     return false if rspec?
 

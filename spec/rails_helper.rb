@@ -107,6 +107,7 @@ WebMock.disable_net_connect!(**WEBMOCK_DISABLE_ARGS)
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
 include Warden::Test::Helpers
+
 Warden.test_mode!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in

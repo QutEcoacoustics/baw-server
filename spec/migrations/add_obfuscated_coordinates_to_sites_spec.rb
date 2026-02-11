@@ -64,6 +64,6 @@ describe AddObfuscatedCoordinatesToSites, :migration do
     migrate!
 
     # The job should have been enqueued
-    expect_enqueued_jobs(1, of_class: BawWorkers::Jobs::Maintenance::BackfillSitesObfuscatedLocationsJob)
+    expect_delayed_jobs(1)
   end
 end

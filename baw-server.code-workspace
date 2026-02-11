@@ -112,6 +112,7 @@
       "ncpus",
       "ngpus",
       "nodoc",
+      "ntuples",
       "numericality",
       "organisation",
       "pageable",
