@@ -103,7 +103,7 @@ module AudioEvents
 
       unless is_authorized
         raise CustomErrors::RoutingArgumentError,
-          'must provide existing audio_recording_id, start_offset, and end_offset or project_id or or region_id or site_id or user_id'
+          'must provide existing (audio_recording_id, start_offset, and end_offset) or project_id, region_id, site_id, or user_id'
       end
 
       # create file name

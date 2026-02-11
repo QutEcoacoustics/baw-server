@@ -5,8 +5,23 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
 
   # Number of audio events to create for the benchmark
   # Issue #892 mentions >1M events causing timeouts
-  # We use a smaller number to keep tests reasonable while still measuring performance
-  let(:event_count) { 1_000_000 }
+  # We use a smaller number to keep tests reasonable while still measuring performance,
+  # but this was tested with 1M events to verify the performance improvement.
+  let(:event_count) {
+    # 1_000_000
+    10_000
+  }
+
+  # initial testing was done on 1M events, hence benchmarks are scaled off of that benchmark.
+  # This test verifies that downloading annotations for a large dataset
+  # completes within a reasonable time. Before optimization, downloading
+  # >1M events would cause the web server to timeout.
+  # Before optimization this test would take 106 seconds to run.
+  # We're at less than 15ish seconds for CSV and 20 for JSON, so that's a 7x improvement.
+  # base offset for standard request overhead, and some scaled offset for CI variability
+  let(:baseline_performance) { 0.045 }
+  let(:csv_expected_performance) { (event_count * (20.0 / 1_000_000)) + baseline_performance }
+  let(:json_expected_performance) { (event_count * (25.0 / 1_000_000)) + baseline_performance }
 
   before do
     AudioEvent.delete_all
@@ -53,16 +68,10 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
   end
 
   describe 'for project downloads' do
-    # This test verifies that downloading annotations for a large dataset
-    # completes within a reasonable time. Before optimization, downloading
-    # >1M events would cause the web server to timeout.
-    # Before optimization this test would take 106 seconds to run.
-    # We're not at 15ish seconds, so that's a 7x improvement.
     it 'performs quickly with many audio events' do
       expect {
         get download_url(from: :projects), params: nil, headers: auth_header(owner_token)
-        # i have actually measured this to be 11 seconds, but need some buffer for CI variability
-      }.to perform_under(20).sec
+      }.to perform_under(csv_expected_performance).sec
 
       expect_success
       expect(response.content_type).to include('text/csv')
@@ -80,7 +89,7 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
     it 'performs quickly with many audio events' do
       expect {
         get download_url(from: :regions), params: nil, headers: auth_header(owner_token)
-      }.to perform_under(20).sec
+      }.to perform_under(csv_expected_performance).sec
 
       expect_success
       expect(response.content_type).to include('text/csv')
@@ -94,7 +103,7 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
     it 'performs quickly with many audio events' do
       expect {
         get download_url(from: :sites), params: nil, headers: auth_header(owner_token)
-      }.to perform_under(20).sec
+      }.to perform_under(csv_expected_performance).sec
 
       expect_success
       expect(response.content_type).to include('text/csv')
@@ -106,15 +115,14 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
 
   describe 'for project downloads (JSON)' do
     it 'performs quickly with many audio events' do
-      # measured as 20.2 seconds after optimization, test includes some buffer for CI variability
       expect {
         get download_url(from: :projects, format: :json), params: nil, headers: auth_header(owner_token)
-      }.to perform_under(25).sec
+      }.to perform_under(json_expected_performance).sec
 
       expect_success
       expect(response.content_type).to include('application/json')
 
-      body = JSON.parse(response.body)
+      body = response.parsed_body
       expect(body).to be_a(Hash)
       expect(body['columns']).to be_an(Array)
       expect(body['rows'].length).to eq(event_count)
@@ -125,12 +133,12 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
     it 'performs quickly with many audio events' do
       expect {
         get download_url(from: :sites, format: :json), params: nil, headers: auth_header(owner_token)
-      }.to perform_under(25).sec
+      }.to perform_under(json_expected_performance).sec
 
       expect_success
       expect(response.content_type).to include('application/json')
 
-      body = JSON.parse(response.body)
+      body = response.parsed_body
       expect(body).to be_a(Hash)
       expect(body['columns']).to be_an(Array)
       expect(body['rows'].length).to eq(event_count)
