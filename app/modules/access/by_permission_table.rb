@@ -38,6 +38,28 @@ module Access
       apply(user, query, level:, levels:, project_ids:)
     end
 
+    # Returns a query for audio events the user has at least the given level of permission for.
+    # Audio events are accessible if the user has permission on the project that contains the
+    # audio recording's site, OR if the audio event is a reference event.
+    # ! currently not used (I thought it was needed for another task but it wasn't)
+    # ! but it's a good implementation and is tested so keeping it for now.
+    # @param user [User]
+    # @param level [Symbol] the minimum permission level (see Permission levels)
+    # @param levels [Array<Symbol>] alternative to level, an array of specific permission levels (see Permission levels)
+    # @param project_ids [Array<Integer>] optional list of project IDs to reduce the scale of permissions joined
+    # @return [ActiveRecord::Relation<AudioEvent>] the approved audio events
+    def audio_events(user, level: nil, levels: nil, project_ids: nil)
+      query = AudioEvent.joins(audio_recording: { site: :projects })
+
+      apply(user, query, level:, levels:, project_ids:) { |predicate|
+        # Reference audio events are always accessible regardless of permission
+        ae = AudioEvent.arel_table
+        reference_predicate = ae[:is_reference].eq(true)
+
+        predicate.or(reference_predicate)
+      }
+    end
+
     def apply(user, query, level:, levels: nil, project_ids: nil)
       user = Access::Validate.user(user)
       validate_levels(level, levels)
@@ -51,6 +73,8 @@ module Access
       else
         build_minimum_level_predicate(level)
       end => predicate
+
+      predicate = yield predicate if block_given?
 
       predicate = predicate.and(Project.arel_table[:id].in(project_ids)) if project_ids.present?
 
