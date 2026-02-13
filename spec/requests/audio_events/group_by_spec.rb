@@ -87,4 +87,34 @@ describe 'audio_events/group_by' do
 
     check_locations(api_data, true)
   end
+
+  # https://github.com/QutEcoacoustics/baw-server/issues/895
+  it 'returns results when site has no region' do
+    site.update_column(:region_id, nil)
+
+    get '/audio_events/group_by/sites', **api_headers(owner_token)
+
+    expect_success
+
+    expect(api_data).to match [
+      a_hash_including(
+        site_id: site.id,
+        region_id: nil,
+        project_ids: [
+          project.id
+        ],
+        audio_event_count: 6
+      ),
+      a_hash_including(
+        site_id: site2.id,
+        region_id: region.id,
+        project_ids: [
+          project.id
+        ],
+        audio_event_count: 3
+      )
+    ]
+
+    check_locations(api_data, false)
+  end
 end

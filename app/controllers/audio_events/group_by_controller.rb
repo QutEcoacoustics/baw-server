@@ -16,8 +16,10 @@ module AudioEvents
 
       parent = Group.new(
         model: Site,
-        base_query: Access::ByPermissionTable.sites(current_user, level: Access::Permission::READER)
-          .joins(:region),
+        base_query: Access::ByPermissionTable
+          .sites(current_user, level: Access::Permission::READER)
+          # TODO: change back to #joins once we remove projects_sites
+          .left_joins(:region),
         projections: {
           site_id: Site.arel_table[:id],
           region_id: Region.arel_table[:id],
