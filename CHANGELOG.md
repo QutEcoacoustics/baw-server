@@ -1,5 +1,13 @@
 # Changelog
 
+## [14.5.2](https://github.com/QutEcoacoustics/baw-server/tree/14.5.2) (2026-02-13)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.5.1...14.5.2)
+
+**Fixed bugs:**
+
+- Audio event group by sites endpoint can return no results incorrectly [\#895](https://github.com/QutEcoacoustics/baw-server/issues/895)
+
 ## [14.5.1](https://github.com/QutEcoacoustics/baw-server/tree/14.5.1) (2026-02-11)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.2.7...14.5.1)
