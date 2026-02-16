@@ -8,6 +8,8 @@
 #  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
 #  description                                                                                                          :string
 #  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
+#  event_import_include_top(Limit import to the top N results per tag per file)                                         :integer
+#  event_import_include_top_per(Apply top filtering per this interval, in seconds)                                      :integer
 #  event_import_minimum_score(Minimum score threshold for importing events, if any)                                     :decimal(, )
 #  executable_command                                                                                                   :text             not null
 #  executable_settings                                                                                                  :text
@@ -151,6 +153,54 @@ describe Script do
       expect(build(:script, event_import_minimum_score: 12.3, event_import_glob: '')).not_to be_valid
       expect(build(:script, event_import_minimum_score: 12.3, event_import_glob: 'some_glob')).to be_valid
       expect(build(:script, event_import_minimum_score: nil, event_import_glob: 'some_glob')).to be_valid
+    end
+  end
+
+  describe 'top N filtering validations' do
+    it 'validates include_top is a positive integer when set' do
+      expect(build(:script, event_import_include_top: -1, event_import_glob: 'glob')).not_to be_valid
+      expect(build(:script, event_import_include_top: 0, event_import_glob: 'glob')).not_to be_valid
+    end
+
+    it 'validates include_top_per is a positive integer when set' do
+      expect(build(:script, event_import_include_top_per: 0, event_import_glob: 'glob')).not_to be_valid
+      expect(build(:script, event_import_include_top_per: -5, event_import_glob: 'glob')).not_to be_valid
+    end
+
+    it 'allows include_top alone' do
+      script = build(:script, event_import_include_top: 5, event_import_include_top_per: nil,
+        event_import_glob: 'glob')
+      expect(script).to be_valid
+    end
+
+    it 'validates that include_top_per requires include_top' do
+      script = build(:script, event_import_include_top: nil, event_import_include_top_per: 10,
+        event_import_glob: 'glob')
+      expect(script).not_to be_valid
+      expect(script.errors[:event_import_include_top_per]).to include('can only be set when event_import_include_top is also set')
+    end
+
+    it 'allows both to be set' do
+      script = build(:script, event_import_include_top: 5, event_import_include_top_per: 10,
+        event_import_glob: 'glob')
+      expect(script).to be_valid
+    end
+
+    it 'allows both to be nil' do
+      script = build(:script, event_import_include_top: nil, event_import_include_top_per: nil,
+        event_import_glob: 'glob')
+      expect(script).to be_valid
+    end
+
+    it 'validates the top N filtering cannot be set without a glob' do
+      expect(build(:script, event_import_include_top: 5, event_import_include_top_per: 10,
+        event_import_glob: nil)).not_to be_valid
+      expect(build(:script, event_import_include_top: 5, event_import_include_top_per: 10,
+        event_import_glob: '')).not_to be_valid
+      expect(build(:script, event_import_include_top: 5, event_import_include_top_per: 10,
+        event_import_glob: 'some_glob')).to be_valid
+      expect(build(:script, event_import_include_top: nil, event_import_include_top_per: nil,
+        event_import_glob: 'some_glob')).to be_valid
     end
   end
 

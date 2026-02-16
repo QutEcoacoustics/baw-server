@@ -531,7 +531,9 @@ CREATE TABLE public.analysis_jobs_scripts (
     analysis_job_id integer NOT NULL,
     script_id integer NOT NULL,
     custom_settings text,
-    event_import_minimum_score numeric
+    event_import_minimum_score numeric,
+    event_import_include_top integer,
+    event_import_include_top_per integer
 );
 
 
@@ -547,6 +549,20 @@ COMMENT ON COLUMN public.analysis_jobs_scripts.custom_settings IS 'Custom settin
 --
 
 COMMENT ON COLUMN public.analysis_jobs_scripts.event_import_minimum_score IS 'Minimum score threshold for importing events, if any, custom to this analysis job';
+
+
+--
+-- Name: COLUMN analysis_jobs_scripts.event_import_include_top; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_scripts.event_import_include_top IS 'Limit import to the top N results per tag per file, custom to this analysis job';
+
+
+--
+-- Name: COLUMN analysis_jobs_scripts.event_import_include_top_per; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.analysis_jobs_scripts.event_import_include_top_per IS 'Apply top filtering per this interval, in seconds, custom to this analysis job';
 
 
 --
@@ -630,6 +646,8 @@ CREATE TABLE public.audio_event_import_files (
     minimum_score numeric,
     imported_count integer DEFAULT 0 NOT NULL,
     parsed_count integer DEFAULT 0 NOT NULL,
+    include_top integer,
+    include_top_per integer,
     CONSTRAINT path_and_analysis_jobs_item CHECK ((((path IS NOT NULL) AND (analysis_jobs_item_id IS NOT NULL)) OR ((path IS NULL) AND (analysis_jobs_item_id IS NULL))))
 );
 
@@ -674,6 +692,20 @@ COMMENT ON COLUMN public.audio_event_import_files.imported_count IS 'Number of e
 --
 
 COMMENT ON COLUMN public.audio_event_import_files.parsed_count IS 'Number of events parsed from this file';
+
+
+--
+-- Name: COLUMN audio_event_import_files.include_top; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.include_top IS 'Limit import to the top N results per tag per file';
+
+
+--
+-- Name: COLUMN audio_event_import_files.include_top_per; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.audio_event_import_files.include_top_per IS 'Apply top filtering per this interval, in seconds';
 
 
 --
@@ -1830,7 +1862,9 @@ CREATE TABLE public.scripts (
     resources jsonb,
     provenance_id integer,
     event_import_glob character varying,
-    event_import_minimum_score numeric
+    event_import_minimum_score numeric,
+    event_import_include_top integer,
+    event_import_include_top_per integer
 );
 
 
@@ -1867,6 +1901,20 @@ COMMENT ON COLUMN public.scripts.event_import_glob IS 'Glob pattern to match res
 --
 
 COMMENT ON COLUMN public.scripts.event_import_minimum_score IS 'Minimum score threshold for importing events, if any';
+
+
+--
+-- Name: COLUMN scripts.event_import_include_top; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.event_import_include_top IS 'Limit import to the top N results per tag per file';
+
+
+--
+-- Name: COLUMN scripts.event_import_include_top_per; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.scripts.event_import_include_top_per IS 'Apply top filtering per this interval, in seconds';
 
 
 --
@@ -4488,6 +4536,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260216000000'),
 ('20260203031109'),
 ('20260113000000'),
 ('20251126025112'),

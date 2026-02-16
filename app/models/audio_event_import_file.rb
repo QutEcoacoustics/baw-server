@@ -8,6 +8,8 @@
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
 #  file_hash(Hash of the file contents used for uniqueness checking)                              :text
 #  imported_count(Number of events parsed minus rejections)                                       :integer          default(0), not null
+#  include_top(Limit import to the top N results per tag per file)                                :integer
+#  include_top_per(Apply top filtering per this interval, in seconds)                             :integer
 #  minimum_score(Minimum score threshold actually used)                                           :decimal(, )
 #  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
@@ -77,10 +79,13 @@ class AudioEventImportFile < ApplicationRecord
   # validations
   validates :file_hash, presence: true
   validates :minimum_score, allow_nil: true, numericality: true
+  validates :include_top, allow_nil: true, numericality: { only_integer: true, greater_than: 0 }
+  validates :include_top_per, allow_nil: true, numericality: { only_integer: true, greater_than: 0 }
   validate :validate_path_exists, if: -> { path.present? }
   validate :validate_analysis_association_and_path_or_file
   validate :validate_path_xor_attachment
   validate :tags_exist
+  validate :top_filtering_consistent
   validate :attachment_acceptable, if: -> { file.attached? }
   validate :attachment_unique, if: -> { file.attached? }
   validate :attachment_size, if: -> { file.attached? }
@@ -88,7 +93,7 @@ class AudioEventImportFile < ApplicationRecord
   def self.filter_settings
     common_fields = [
       :id, :additional_tag_ids, :path, :name, :audio_event_import_id, :analysis_jobs_item_id,
-      :created_at, :file_hash, :minimum_score, :imported_count, :parsed_count
+      :created_at, :file_hash, :minimum_score, :imported_count, :parsed_count, :include_top, :include_top_per
     ]
     {
       valid_fields: common_fields,
@@ -124,7 +129,9 @@ class AudioEventImportFile < ApplicationRecord
                            additional_tags: [],
                            file: nil,
                            audio_event_import_id: nil,
-                           minimum_score: nil
+                           minimum_score: nil,
+                           include_top: nil,
+                           include_top_per: nil
                          }
                        },
       controller: :audio_event_import_files,
@@ -187,7 +194,9 @@ class AudioEventImportFile < ApplicationRecord
         analysis_jobs_item_id: Api::Schema.id(nullable: true, read_only: true),
         minimum_score: { type: ['null', 'number'], readOnly: true },
         imported_count: { type: 'integer', readOnly: true },
-        parsed_count: { type: 'integer', readOnly: true }
+        parsed_count: { type: 'integer', readOnly: true },
+        include_top: { type: ['null', 'integer'], readOnly: true },
+        include_top_per: { type: ['null', 'integer'], readOnly: true }
       },
       required: [
         :id,
@@ -198,7 +207,9 @@ class AudioEventImportFile < ApplicationRecord
         :created_at,
         :audio_event_import_id,
         :analysis_jobs_item_id,
-        :minimum_score
+        :minimum_score,
+        :include_top,
+        :include_top_per
       ]
     }
   end
@@ -325,6 +336,13 @@ class AudioEventImportFile < ApplicationRecord
     return if additional_tag_ids.blank?
 
     errors.add(:additional_tag_ids, 'contains invalid tag ids') unless additional_tags.count == additional_tag_ids.count
+  end
+
+  def top_filtering_consistent
+    # include_top_per depends on include_top, but include_top can work alone
+    return if include_top_per.nil? || include_top.present?
+
+    errors.add(:include_top_per, 'can only be set when include_top is also set')
   end
 
   def attachment_acceptable

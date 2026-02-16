@@ -70,7 +70,7 @@ module Api
         values
           .flatten
           .if_then(!multi, &:first)
-          .then(&Some)
+          .then(&Maybe)
       end
 
       # Transform a value

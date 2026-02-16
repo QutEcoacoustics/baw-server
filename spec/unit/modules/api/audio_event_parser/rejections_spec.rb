@@ -22,7 +22,11 @@ describe Api::AudioEventParser do
 
     context 'with a score_minimum' do
       it 'rejects events below the threshold or with missing score while accepting others' do
-        parser = Api::AudioEventParser.new(import_file, writer_user, score_minimum: 0.5)
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: 0.5)
+        )
         result = parser.parse_and_commit(csv, 'test.csv')
 
         expect(result).to be_success
@@ -63,7 +67,11 @@ describe Api::AudioEventParser do
       end
 
       it 'fails the import when all events are rejected' do
-        parser = Api::AudioEventParser.new(import_file, writer_user, score_minimum: 20.0)
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: 20.0)
+        )
         result = parser.parse_and_commit(csv, 'all_rejected.csv')
 
         expect(result).to be_failure.and(have_attributes(failure: 'All events were rejected'))
@@ -82,13 +90,17 @@ describe Api::AudioEventParser do
         expect_updated_stats(imported: 0, parsed: 0)
       end
 
-      it 'score becomes a required field if a minimum is set' do
+      it 'score becomes a required field for a file if a minimum is set' do
         csv = <<~CSV
           audio_recording_id,start_time_seconds,end_time_seconds,low_frequency_hertz,high_frequency_hertz,tag
           #{audio_recording.id},0,1,100,500,crickets
         CSV
 
-        parser = Api::AudioEventParser.new(import_file, writer_user, score_minimum: 0.5)
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: 0.5)
+        )
         result = parser.parse_and_commit(csv, 'test.csv')
 
         expect(result).to be_failure.and(have_attributes(failure: 'Validation failed'))
@@ -98,7 +110,35 @@ describe Api::AudioEventParser do
           a_hash_including(
             id: nil,
             errors: [
-              { score: ['is missing and required when importing with a minimum score threshold'] }
+              { score: ['is missing and required when importing with a minimum score threshold or top N filtering'] }
+            ]
+          )
+        ])
+      end
+
+      it 'score becomes a required field for an event if a minimum is set' do
+        csv = <<~CSV
+          audio_recording_id,start_time_seconds,end_time_seconds,low_frequency_hertz,high_frequency_hertz,tag,score
+          #{audio_recording.id},0,1,100,500,crickets,25
+          #{audio_recording.id},0,1,100,500,crickets,
+        CSV
+
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: 0.5)
+        )
+        result = parser.parse_and_commit(csv, 'test.csv')
+
+        expect(result).to be_failure.and(have_attributes(failure: 'Validation failed'))
+
+        serialized = parser.serialize_audio_events
+        expect(serialized).to match([
+          a_hash_including(errors: [], rejections: []),
+          a_hash_including(
+            id: nil,
+            errors: [
+              { score: ['is missing and required when importing with a minimum score threshold or top N filtering'] }
             ]
           )
         ])
@@ -107,7 +147,11 @@ describe Api::AudioEventParser do
 
     context 'without a score_minimum' do
       it 'does not reject any events even if scores are low or missing' do
-        parser = Api::AudioEventParser.new(import_file, writer_user, score_minimum: nil)
+        parser = Api::AudioEventParser.new(
+          import_file,
+          writer_user,
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: nil)
+        )
         result = parser.parse_and_commit(csv, 'test.csv')
 
         expect(result).to be_success

@@ -139,13 +139,15 @@ class AudioEventImportFilesController < ApplicationController
   def audio_event_import_file_params
     import_params = params
       .require(:audio_event_import_file)
-      .reverse_merge({ additional_tag_ids: [], minimum_score: nil })
-      .permit(:file, :audio_event_import_id, :minimum_score, additional_tag_ids: [])
+      .reverse_merge({ additional_tag_ids: [], minimum_score: nil, include_top: nil, include_top_per: nil })
+      .permit(:file, :audio_event_import_id, :minimum_score, :include_top, :include_top_per, additional_tag_ids: [])
 
     import_params[:additional_tag_ids] =
       validate_params_array_of_ids(name: 'additional_tag_ids', value: import_params[:additional_tag_ids])
 
     import_params[:minimum_score] = BigDecimal(import_params[:minimum_score]) if import_params[:minimum_score].present?
+    import_params[:include_top] = Integer(import_params[:include_top]) if import_params[:include_top].present?
+    import_params[:include_top_per] = Integer(import_params[:include_top_per]) if import_params[:include_top_per].present?
 
     return import_params.to_h if import_params[:file].is_a? ActionDispatch::Http::UploadedFile
 
@@ -157,12 +159,19 @@ class AudioEventImportFilesController < ApplicationController
   # parent and events in a single transaction
   # @return [Array(Array<AudioEvent>, ::Dry::Monads::Result] the audio events and the result of the parsing
   def process_file(file)
+    # construct filtering parameters
+    filtering = Api::AudioEventParser::FilteringParameters.new(
+      score_minimum: @audio_event_import_file.minimum_score,
+      include_top: @audio_event_import_file.include_top,
+      include_top_per: @audio_event_import_file.include_top_per
+    )
+
     parser = Api::AudioEventParser.new(
       @audio_event_import_file,
       current_user,
       additional_tags: @audio_event_import_file.additional_tags,
       provenance:,
-      score_minimum: @audio_event_import_file.minimum_score
+      filtering:
     )
 
     if commit?

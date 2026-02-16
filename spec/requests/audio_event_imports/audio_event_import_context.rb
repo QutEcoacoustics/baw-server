@@ -66,12 +66,14 @@ RSpec.shared_context(
     @audio_event_import = AudioEventImport.find(api_data[:id])
   end
 
-  def submit(file, commit: true, additional_tags: [], user: writer_token, minimum_score: nil)
+  def submit(file, commit: true, additional_tags: [], user: writer_token, minimum_score: nil, include_top: nil, include_top_per: nil)
     body = {
       audio_event_import_file: {
         file: with_file(file),
         additional_tag_ids: additional_tags.map(&:id),
-        minimum_score:
+        minimum_score:,
+        include_top:,
+        include_top_per:
       },
       commit:
     }
@@ -85,6 +87,8 @@ RSpec.shared_context(
     parsed_events: [],
     additional_tags: [],
     minimum_score: nil,
+    include_top: nil,
+    include_top_per: nil,
     imported_count: nil
   )
     imported_events = @audio_event_import
@@ -103,7 +107,9 @@ RSpec.shared_context(
       imported_events: parsed_events,
       parsed_count: parsed_events.size,
       imported_count: imported_count || imported_events.size,
-      minimum_score:
+      minimum_score:,
+      include_top:,
+      include_top_per:
     ))
 
     # our safe guard for the insert_all! method

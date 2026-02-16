@@ -8,6 +8,8 @@
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
 #  file_hash(Hash of the file contents used for uniqueness checking)                              :text
 #  imported_count(Number of events parsed minus rejections)                                       :integer          default(0), not null
+#  include_top(Limit import to the top N results per tag per file)                                :integer
+#  include_top_per(Apply top filtering per this interval, in seconds)                             :integer
 #  minimum_score(Minimum score threshold actually used)                                           :decimal(, )
 #  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
