@@ -71,9 +71,38 @@ module Api
     }.freeze
 
     REJECTION_SCORE_BELOW_MINIMUM = :score_below_minimum
+    REJECTION_NOT_IN_TOP_N = :not_in_top_n
     REJECTION_REASONS = [
-      REJECTION_SCORE_BELOW_MINIMUM
+      REJECTION_SCORE_BELOW_MINIMUM,
+      REJECTION_NOT_IN_TOP_N
     ].freeze
+
+    # Data struct to package filtering parameters
+    # @attr score_minimum [Numeric, nil] minimum score threshold - events below this are rejected
+    # @attr include_top [Integer, nil] limit import to top N results per tag (per interval if include_top_per is set)
+    # @attr include_top_per [Integer, nil] time interval in seconds to subdivide filtering (requires include_top)
+    FilteringParameters = Data.define(
+      :score_minimum,
+      :include_top,
+      :include_top_per
+    ) {
+      def initialize(score_minimum: nil, include_top: nil, include_top_per: nil)
+        raise 'score_minimum must be a number or nil' unless score_minimum.nil? || score_minimum.is_a?(Numeric)
+        raise 'include_top must be an integer or nil' unless include_top.nil? || include_top.is_a?(Integer)
+        raise 'include_top_per must be an integer or nil' unless include_top_per.nil? || include_top_per.is_a?(Integer)
+
+        # include_top_per depends on include_top, but include_top can work alone
+        if include_top_per.present? && include_top.nil?
+          raise 'include_top_per can only be set when include_top is also set'
+        end
+
+        super
+      end
+
+      def score_required?
+        score_minimum.present? || include_top.present?
+      end
+    }
 
     include Dry::Monads::Do.for(:parse)
     include Dry::Monads[:result]
@@ -106,24 +135,24 @@ module Api
     end
 
     # @return [Dry::Validation::Contract]
-    def audio_event_validator(will_commit:, score_minimum:)
-      AudioEventValidation.new(commit: will_commit, score_required: score_minimum.present?)
+    def audio_event_validator(will_commit:, filtering:)
+      AudioEventValidation.new(commit: will_commit, score_required: filtering&.score_required?)
     end
 
-    # @param import [AudioEventImportFile] the import we're attaching to
+    # @param import_file [AudioEventImportFile] the import we're attaching to
     # @param creator [User] the user used to create the audio events
-    # @param additional_tags [Array<Tag>>] any tags we wish to add to imported events
+    # @param additional_tags [Array<Tag>] any tags we wish to add to imported events
     # @param provenance [Provenance, nil] the provenance to use for the imported events
     # @param audio_recording [AudioRecording, nil] an audio recording to use
     #   which will override any in the file or filename (a scope).
-    # @param score_minimum [Numeric, nil] if set, any events with a score below this will be rejected
+    # @param filtering [FilteringParameters, nil] filtering parameters for score and top N filtering
     def initialize(
       import_file,
       creator,
       additional_tags: [],
       provenance: nil,
       audio_recording: nil,
-      score_minimum: nil
+      filtering: nil
     )
       raise 'import_file must be an AudioEventImportFile' unless import_file.is_a?(AudioEventImportFile)
       raise 'additional_tags must be Tags' unless additional_tags&.all? { |t| t.is_a?(Tag) }
@@ -132,7 +161,9 @@ module Api
       unless audio_recording.nil? || audio_recording.is_a?(AudioRecording)
         raise 'audio_recording must be an AudioRecording'
       end
-      raise 'score_minimum must be a number or nil' unless score_minimum.nil? || score_minimum.is_a?(Numeric)
+      unless filtering.nil? || filtering.is_a?(FilteringParameters)
+        raise 'filtering must be a FilteringParameters or nil'
+      end
 
       self.audio_event_import_file = import_file
       self.creator = creator
@@ -145,7 +176,7 @@ module Api
         creator_id: creator.id
       )
 
-      @score_minimum = score_minimum
+      @filtering = filtering || FilteringParameters.new
 
       # @type [Array<Hash>]
       @audio_events = []
@@ -286,7 +317,9 @@ module Api
       # update stats on source object - done again in #parse_and_commit after save
       audio_event_import_file.imported_count = 0
       audio_event_import_file.parsed_count = size
-      audio_event_import_file.minimum_score = @score_minimum if @score_minimum.present?
+      audio_event_import_file.minimum_score = @filtering.score_minimum if @filtering.score_minimum.present?
+      audio_event_import_file.include_top = @filtering.include_top if @filtering.include_top.present?
+      audio_event_import_file.include_top_per = @filtering.include_top_per if @filtering.include_top_per.present?
 
       return Failure('must have at least one audio event but 0 were found') if size.zero?
 
@@ -311,6 +344,9 @@ module Api
       validate_audio_recording_ids_exist_and_we_have_permission
 
       return Failure('Validation failed') if any_error?
+
+      # Apply top N per T filtering if configured
+      apply_top_n_filtering if @filtering.include_top.present?
 
       return Failure('All events were rejected') if @rejection_count == size
 
@@ -527,7 +563,7 @@ module Api
     end
 
     def validate_audio_event(data, will_commit:)
-      audio_event_validator(will_commit:, score_minimum: @score_minimum).call(data)
+      audio_event_validator(will_commit:, filtering: @filtering).call(data)
     end
 
     # Converts a hash into an audio_event
@@ -635,16 +671,79 @@ module Api
 
     def apply_rejections(event, index)
       # Should we reject events below the score threshold?
-      return if @score_minimum.nil?
+      return if @filtering.score_minimum.nil?
 
       event.fetch(:score, nil) => score
 
-      # we're only here if score filtering is enabled, so reject events that have no score
-      # as well as those below the threshold
-      return unless score.nil? || score < @score_minimum
+      # we're only here if score filtering is enabled,
+      # but validation should have already caught missing scores
+      return if score.nil?
+
+      # and reject if below the threshold
+      return if score >= @filtering.score_minimum
 
       (@rejections[index] ||= []) << { score: REJECTION_SCORE_BELOW_MINIMUM }
       @rejection_count += 1
+    end
+
+    # Apply top N per T interval filtering
+    # This filters events to keep only the top N events per tag per time interval
+    def apply_top_n_filtering
+      # Build a rejection set to track which event indices should be rejected
+      # An event is rejected if it's not in the top N for ANY of its tags in the interval
+      rejection_set = Set.new
+
+      # Calculate time interval divisor once
+      include_top_per = @filtering.include_top_per || Float::INFINITY
+
+      # Collect events with their data and build tag index in single pass
+      # Hash maps tag -> array of event indices
+      tag_to_indices = Hash.new { |h, k| h[k] = [] }
+      all_tags = Set.new
+
+      @audio_events.each_with_index do |event, index|
+        # Skip already rejected events
+        next if @rejections[index].present?
+
+        # Skip events with no score (can't rank them) - should already be invalid
+        next if event[:score].nil?
+
+        # if there is no tag attached to an event, we ignore it
+        tags = @tag_list[index] || []
+        interval = (event[:start_time_seconds] / include_top_per).floor
+
+        # Build tag index and tag set
+        tags.each do |tag|
+          tag_to_indices[tag] << {
+            index:,
+            event:,
+            interval:
+          }
+
+          all_tags.add(tag)
+        end
+      end
+
+      # Process each tag independently using the tag index
+      all_tags.each do |tag|
+        # Get all events with this tag using the index
+        events_with_tag = tag_to_indices[tag]
+
+        # Group by interval
+        events_with_tag.group_by { |e| e[:interval] }.each_value do |interval_events|
+          # Sort by score descending and get indices to reject
+          sorted_by_score = interval_events.sort_by { |e| -e[:event][:score] }
+          to_reject = sorted_by_score.drop(@filtering.include_top)
+
+          to_reject.each { |e| rejection_set.add(e[:index]) }
+        end
+      end
+
+      # Mark all events in rejection set
+      rejection_set.each do |index|
+        (@rejections[index] ||= []) << { score: REJECTION_NOT_IN_TOP_N }
+        @rejection_count += 1
+      end
     end
 
     def validate_audio_recording_ids_exist_and_we_have_permission

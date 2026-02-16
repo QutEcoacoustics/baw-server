@@ -127,7 +127,7 @@ describe Api::AudioEventParser do
           writer_user,
           provenance:,
           audio_recording:,
-          score_minimum: 0.5
+          filtering: Api::AudioEventParser::FilteringParameters.new(score_minimum: 0.5)
         )
 
         result = parser.parse_and_commit(birdnet2, birdnet2_basename)

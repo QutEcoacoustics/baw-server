@@ -8,6 +8,8 @@
 #  additional_tag_ids(Additional tag ids applied for this import)                                 :integer          is an Array
 #  file_hash(Hash of the file contents used for uniqueness checking)                              :text
 #  imported_count(Number of events parsed minus rejections)                                       :integer          default(0), not null
+#  include_top(Limit import to the top N results per tag per file)                                :integer
+#  include_top_per(Apply top filtering per this interval, in seconds)                             :integer
 #  minimum_score(Minimum score threshold actually used)                                           :decimal(, )
 #  parsed_count(Number of events parsed from this file)                                           :integer          default(0), not null
 #  path(Path to the file on disk, relative to the analysis job item. Not used for uploaded files) :string
@@ -136,6 +138,45 @@ describe AudioEventImportFile do
         .first => with_field
 
       expect(with_field[:name]).to eq(model.file.blob.filename.to_s)
+    end
+  end
+
+  describe 'top N filtering validations' do
+    it 'validates include_top is a positive integer when set' do
+      subject.include_top = -1
+      expect(subject).not_to be_valid
+      expect(subject.errors[:include_top]).to include('must be greater than 0')
+    end
+
+    it 'validates include_top_per is a positive integer when set' do
+      subject.include_top_per = 0
+      expect(subject).not_to be_valid
+      expect(subject.errors[:include_top_per]).to include('must be greater than 0')
+    end
+
+    it 'allows nil for both include_top and include_top_per' do
+      subject.include_top = nil
+      subject.include_top_per = nil
+      expect(subject).to be_valid
+    end
+
+    it 'allows include_top alone' do
+      subject.include_top = 5
+      subject.include_top_per = nil
+      expect(subject).to be_valid
+    end
+
+    it 'validates that include_top_per requires include_top' do
+      subject.include_top = nil
+      subject.include_top_per = 10
+      expect(subject).not_to be_valid
+      expect(subject.errors[:include_top_per]).to include('can only be set when include_top is also set')
+    end
+
+    it 'allows both to be set' do
+      subject.include_top = 5
+      subject.include_top_per = 10
+      expect(subject).to be_valid
     end
   end
 

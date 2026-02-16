@@ -66,7 +66,7 @@ module Api
         # note, it's still valid for score to be nil
         next unless score_required && !values.key?(:score)
 
-        key(:score).failure('is missing and required when importing with a minimum score threshold')
+        key(:score).failure('is missing and required when importing with a minimum score threshold or top N filtering')
       end
 
       # rule(:audio_recording_id) do

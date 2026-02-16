@@ -39,6 +39,15 @@ class AnalysisJobsItem
       end
 
       score_minimum = analysis_jobs_script&.event_import_minimum_score || script.event_import_minimum_score
+      include_top = analysis_jobs_script&.event_import_include_top || script.event_import_include_top
+      include_top_per = analysis_jobs_script&.event_import_include_top_per || script.event_import_include_top_per
+
+      # construct filtering parameters
+      filtering = Api::AudioEventParser::FilteringParameters.new(
+        score_minimum:,
+        include_top:,
+        include_top_per:
+      )
 
       # finally import the results
       failures = []
@@ -46,7 +55,7 @@ class AnalysisJobsItem
         files.each do |file|
           Rails.logger.info "Importing results from #{file}"
 
-          result = import_results(file, import, audio_recording, provenance, score_minimum)
+          result = import_results(file, import, audio_recording, provenance, filtering)
 
           # either all work or they don't
           next unless result.failure?
@@ -100,7 +109,7 @@ class AnalysisJobsItem
       @create_or_find_audio_event_import
     end
 
-    def import_results(file, import, audio_recording, provenance, score_minimum)
+    def import_results(file, import, audio_recording, provenance, filtering)
       # create the import file
       import_file = AudioEventImportFile.create!(
         audio_event_import_id: import.id,
@@ -115,7 +124,7 @@ class AnalysisJobsItem
         provenance:,
         # force events to be associated with the audio recording
         audio_recording:,
-        score_minimum:
+        filtering:
       )
 
       result = parser.parse_and_commit(file.read, file.basename.to_s)
