@@ -21,20 +21,16 @@ services:
         chmod -R 755 /data/test
         echo "Data volume permissions fixed"
         
-        # Fix application directory permissions (especially log directory)
-        chown -R 1000:1000 /home/baw_web/baw-server
-        chmod -R 755 /home/baw_web/baw-server
-        
-        # Ensure log directory exists and has proper permissions
-        mkdir -p /home/baw_web/baw-server/log
+        # Fix log volume permissions
         chown -R 1000:1000 /home/baw_web/baw-server/log
         chmod -R 755 /home/baw_web/baw-server/log
+        echo "Log volume permissions fixed"
         
-        echo "Application directory permissions fixed"
         echo "Permissions setup complete"
       '
     volumes:
       - test-data:/data/test
+      - test-logs:/home/baw_web/baw-server/log
     deploy:
       replicas: 0  # This service is only run manually via docker compose run
 
@@ -84,6 +80,7 @@ services:
       - analysis_test
     volumes:
       - test-data:/data/test
+      - test-logs:/home/baw_web/baw-server/log
       # Remove bind mount of source code
 
   # Override upload_test to use volume instead of bind mount
@@ -104,3 +101,4 @@ services:
 
 volumes:
   test-data: null
+  test-logs: null
