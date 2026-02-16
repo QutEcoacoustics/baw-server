@@ -72,12 +72,18 @@ services:
       RAILS_ENV: test
       MIGRATE_DB: "false"
     depends_on:
-      - db
-      - redis
-      - upload_test
-      - workers_test
-      - scheduler_test
-      - analysis_test
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      upload_test:
+        condition: service_started
+      workers_test:
+        condition: service_started
+      scheduler_test:
+        condition: service_started
+      analysis_test:
+        condition: service_started
     volumes:
       - test-data:/data/test
       - test-logs:/home/baw_web/baw-server/log
