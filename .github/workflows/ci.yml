@@ -87,6 +87,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    
+    env:
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
           
     steps:
       - name: Cached LFS checkout
@@ -110,13 +113,12 @@ jobs:
 
       - name: Fix permissions for bind mounts
         run: |
-          # Ensure the runner user (UID 1001) can access files owned by baw_web (UID 1000)
+          # Ensure all files are owned by baw_web (UID 1000) so containers can access them
           sudo chown -R 1000:1000 .
           
       - name: Start services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
           echo "Using image: $CI_IMAGE"
           docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
@@ -124,7 +126,6 @@ jobs:
       - name: Debugging
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
           docker compose ps
           docker ps
@@ -133,7 +134,6 @@ jobs:
       - name: Run bucket ${{ matrix.bucket }} tests
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
           RAILS_ENV: test
         run: |
           # Copy test file list to container
@@ -169,7 +169,6 @@ jobs:
       - name: Stop services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         if: always()
         run: docker compose down
 
@@ -178,6 +177,9 @@ jobs:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    env:
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
     
     steps:
       - name: Cached LFS checkout
@@ -202,7 +204,6 @@ jobs:
       - name: Start services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
           echo "Using image: $CI_IMAGE"
           docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
@@ -210,13 +211,11 @@ jobs:
       - name: Generate API docs
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: docker compose exec -T web generate_docs.sh
 
       - name: Stop services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         if: always()
         run: docker compose down
 
@@ -234,6 +233,9 @@ jobs:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/'))
+
+    env:
+      COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
 
     steps:
       - name: Cached LFS checkout
@@ -270,7 +272,6 @@ jobs:
       - name: Generate changelog
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
@@ -280,7 +281,6 @@ jobs:
       - name: Generate API docs
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
           docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           docker compose exec -T web generate_docs.sh
