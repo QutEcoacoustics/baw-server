@@ -113,7 +113,7 @@ jobs:
 
       - name: Fix permissions for bind mounts
         run: |
-          # Ensure all files are owned by baw_web (UID 1000) so containers can access them
+          # Ensure all repository files are owned by baw_web (UID 1000) so containers can access them
           sudo chown -R 1000:1000 .
           
       - name: Start services
@@ -134,7 +134,6 @@ jobs:
       - name: Run bucket ${{ matrix.bucket }} tests
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-          RAILS_ENV: test
         run: |
           # Copy test file list to container
           docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
