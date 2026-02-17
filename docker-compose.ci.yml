@@ -4,36 +4,9 @@
 # 
 # It modifies the base configuration to:
 # - Use pre-built images instead of build contexts
-# - Replace bind mounts with volumes to avoid permission issues
 # - Configure services for test environment
 
 services:
-  # Init container to fix volume permissions
-  volume-permissions:
-    image: ${CI_IMAGE:-baw-server:ci}
-    user: root
-    command: |
-      sh -c '
-        echo "Setting up permissions for baw_web user (1000:1000)..."
-        
-        # Fix data volume permissions
-        chown -R 1000:1000 /data/test
-        chmod -R 755 /data/test
-        echo "Data volume permissions fixed"
-        
-        # Fix log volume permissions
-        chown -R 1000:1000 /home/baw_web/baw-server/log
-        chmod -R 755 /home/baw_web/baw-server/log
-        echo "Log volume permissions fixed"
-        
-        echo "Permissions setup complete"
-      '
-    volumes:
-      - test-data:/data/test
-      - test-logs:/home/baw_web/baw-server/log
-    deploy:
-      replicas: 0  # This service is only run manually via docker compose run
-
   # Override development services to not start in CI (but keep them defined)
   upload:
     deploy:
@@ -47,21 +20,15 @@ services:
     deploy:
       replicas: 0
 
-  # Override workers_test to use pre-built image and volumes
+  # Override workers_test to use pre-built image
   workers_test:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
-    volumes:
-      - test-data:/data/test
-      # Remove bind mount of source code
 
-  # Override scheduler_test to use pre-built image and volumes  
+  # Override scheduler_test to use pre-built image
   scheduler_test:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
-    volumes:
-      - test-data:/data/test
-      # Remove bind mount of source code
 
   # Override web service for CI testing
   web:
@@ -84,27 +51,3 @@ services:
         condition: service_started
       analysis_test:
         condition: service_started
-    volumes:
-      - test-data:/data/test
-      - test-logs:/home/baw_web/baw-server/log
-      # Remove bind mount of source code
-
-  # Override upload_test to use volume instead of bind mount
-  upload_test:
-    volumes:
-      - type: bind
-        source: ./provision/upload/config
-        target: /var/lib/sftpgo
-      - test-data:/data/test
-
-  # Override analysis_test to use volume instead of bind mount
-  analysis_test:
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-      - test-data:/data/test
-
-volumes:
-  test-data: null
-  test-logs: null

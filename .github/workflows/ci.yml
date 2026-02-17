@@ -104,34 +104,43 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Start services
+      - name: Set image tag
+        id: image
+        run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
+
+      - name: Fix permissions for bind mounts
         run: |
-          # Extract the first tag from the build job output and set as environment variable
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          echo "Using image: $IMAGE_TAG"
+          # Ensure the runner user (UID 1001) can access files owned by baw_web (UID 1000)
+          sudo chown -R 1000:1000 .
           
-          # First, set up volume permissions
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
-          
-          # Then start the main services
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+      - name: Start services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+        run: |
+          echo "Using image: $CI_IMAGE"
+          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
           
       - name: Debugging
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps
+          docker compose ps
           docker ps
         if: ${{ always() }}
 
       - name: Run bucket ${{ matrix.bucket }} tests
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+          RAILS_ENV: test
         run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          
           # Copy test file list to container
-          docker cp test-bucket-${{ matrix.bucket }}.txt $(CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml ps -q web):/home/baw_web/baw-server/test-files.txt
+          docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
           
           # Install test dependencies and run tests using the file list
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web bash -c '
+          docker compose exec -T web bash -c '
             # Ensure test dependencies are installed
             bundle install --with test
             
@@ -142,8 +151,6 @@ jobs:
               exit 1
             fi
           '
-        env:
-          RAILS_ENV: test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -160,10 +167,11 @@ jobs:
           path: log/*test.log
 
       - name: Stop services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         if: always()
-        run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+        run: docker compose down
 
   # Generate API documentation (only on master branch push)
   docs:
@@ -184,27 +192,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image tag
+        id: image
+        run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
+
+      - name: Fix permissions for bind mounts
+        run: sudo chown -R 1000:1000 .
+
       - name: Start services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          echo "Using image: $IMAGE_TAG"
-          
-          # First, set up volume permissions
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
-          
-          # Then start the main services
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          echo "Using image: $CI_IMAGE"
+          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
 
       - name: Generate API docs
-        run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+        run: docker compose exec -T web generate_docs.sh
 
       - name: Stop services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         if: always()
-        run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+        run: docker compose down
 
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -234,6 +248,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image tag
+        id: image
+        run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
+
       - name: Calculate git describe
         id: tagger
         shell: pwsh
@@ -246,29 +264,27 @@ jobs:
           }
           echo "tag=$last_line" >> $env:GITHUB_OUTPUT
 
+      - name: Fix permissions for bind mounts
+        run: sudo chown -R 1000:1000 .
+
       - name: Generate changelog
-        run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          
-          # Set up volume permissions first
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
-          
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web rake changelog
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
         env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          docker compose exec -T web rake changelog
+          docker compose down
 
       - name: Generate API docs
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
         run: |
-          IMAGE_TAG=$(echo "${{ needs.build.outputs.image-tags }}" | head -n1)
-          
-          # Set up volume permissions first
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm volume-permissions
-          
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T web generate_docs.sh
-          CI_IMAGE="$IMAGE_TAG" docker compose -f docker-compose.yml -f docker-compose.ci.yml down
+          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          docker compose exec -T web generate_docs.sh
+          docker compose down
 
       - name: Set VERSION and commit changes
         run: |
