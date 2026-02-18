@@ -38,7 +38,7 @@ services:
     command: sleep infinity
     environment:
       RAILS_ENV: test
-      MIGRATE_DB: "false"
+      MIGRATE_DB: "true"
     depends_on:
       db:
         condition: service_started
