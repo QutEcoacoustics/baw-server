@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: workbench-server
   DOCKER_BUILDKIT: 1
   REGISTRY: ghcr.io
-  TEST_BUCKETS: 7
+  TEST_BUCKETS: 16
 
 jobs:
   # Generate test matrix dynamically by dividing spec files into buckets
@@ -155,22 +155,16 @@ jobs:
               # If tests failed, retry only the failed tests
               if [ $TEST_EXIT_CODE -ne 0 ]; then
                 echo "::warning::Tests failed on first attempt, retrying only failed tests..."
+
+                rspec --only-failures --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}_retry.html
+                RETRY_EXIT_CODE=$?
                 
-                # Check if rspec status file exists for --only-failures to work
-                if [ -f .rspec_status ]; then
-                  rspec --only-failures --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}_retry.html
-                  RETRY_EXIT_CODE=$?
-                  
-                  if [ $RETRY_EXIT_CODE -eq 0 ]; then
-                    echo "::notice::Tests passed on retry - possible flaky tests in bucket ${{ matrix.bucket }}"
-                  fi
-                  
-                  # Exit with the retry exit code
-                  exit $RETRY_EXIT_CODE
-                else
-                  echo "::warning::No .rspec_status file found, cannot retry failed tests. Skipping retry."
-                  exit $TEST_EXIT_CODE
+                if [ $RETRY_EXIT_CODE -eq 0 ]; then
+                  echo "::notice::Tests passed on retry - possible flaky tests in bucket ${{ matrix.bucket }}"
                 fi
+                
+                # Exit with the retry exit code
+                exit $RETRY_EXIT_CODE
               fi
               
               exit $TEST_EXIT_CODE
