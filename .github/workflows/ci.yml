@@ -21,8 +21,10 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Cached LFS checkout
-        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
         
       - name: Generate test matrix
         id: set-matrix
@@ -121,7 +123,7 @@ jobs:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
         run: |
           echo "Using image: $CI_IMAGE"
-          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          docker compose --profile test up --detach --wait --timeout 120
           
       - name: Debugging
         env:
@@ -205,7 +207,7 @@ jobs:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
         run: |
           echo "Using image: $CI_IMAGE"
-          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
+          docker compose --profile test up --detach --wait --timeout 120
 
       - name: Generate API docs
         env:
@@ -268,22 +270,27 @@ jobs:
       - name: Fix permissions for bind mounts
         run: sudo chown -R 1000:1000 .
 
+      - name: Start services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+        run: docker compose --profile test up --detach --wait --timeout 120
+
       - name: Generate changelog
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          docker compose exec -T web rake changelog
-          docker compose down
+        run: docker compose exec -T web rake changelog
 
       - name: Generate API docs
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
-        run: |
-          docker compose up db redis upload_test analysis_test workers_test scheduler_test web --detach --wait --timeout 120
-          docker compose exec -T web generate_docs.sh
-          docker compose down
+        run: docker compose exec -T web generate_docs.sh
+
+      - name: Stop services
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+        if: always()
+        run: docker compose down
 
       - name: Set VERSION and commit changes
         run: |

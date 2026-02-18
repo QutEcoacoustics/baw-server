@@ -34,6 +34,7 @@ services:
   web:
     image: ${CI_IMAGE:-baw-server:ci}
     build: null  # Remove build context
+    profiles: [test]
     command: sleep infinity
     environment:
       RAILS_ENV: test
