@@ -300,6 +300,14 @@ describe PBS::Connection do
       end
 
       # we have a max limit of 5 running jobs
+      # Wait for PBS scheduler to transition jobs from queued to running state
+      running_count = nil
+      (0..10).each do
+        running_count = connection.fetch_running_count.value!
+        break if running_count == 5
+
+        sleep 0.2
+      end
 
       expect(connection.fetch_running_count).to eq Success(5)
       expect(connection.fetch_queued_count).to eq Success(5)
