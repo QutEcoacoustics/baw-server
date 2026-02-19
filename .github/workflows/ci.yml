@@ -118,7 +118,9 @@ jobs:
       - name: Fix permissions for bind mounts
         run: |
           # Ensure all repository files are owned by baw_web (UID 1000) so containers can access them
+          # Restore .git ownership to runner after chown to prevent git config lock errors in cleanup
           sudo chown -R 1000:1000 .
+          sudo chown -R "$(id -u):$(id -g)" .git
           
       - name: Start services
         env:
@@ -233,7 +235,9 @@ jobs:
           echo "tag=$last_line" >> $env:GITHUB_OUTPUT
 
       - name: Fix permissions for bind mounts
-        run: sudo chown -R 1000:1000 .
+        run: |
+          sudo chown -R 1000:1000 .
+          sudo chown -R "$(id -u):$(id -g)" .git
 
       - name: Start services
         env:
