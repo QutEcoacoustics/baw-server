@@ -2,11 +2,6 @@ name: Run tests, publish docker image
 
 on:
   push:
-    branches:
-      - master
-    paths-ignore:
-      - "swagger/**"
-  pull_request:
     paths-ignore:
       - "swagger/**"
 
