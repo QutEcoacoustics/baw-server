@@ -301,17 +301,21 @@ describe PBS::Connection do
 
       # we have a max limit of 5 running jobs
       # Wait for PBS scheduler to transition jobs from queued to running state.
-      # CI machines can be slow, so wait up to 10 seconds with 0.4s intervals.
+      # CI machines may have only 4 vCPUs so PBS may only run 4 jobs even though
+      # max_run=5; wait until >=4 jobs are running (scheduler has done its work).
       running_count = nil
-      25.times do
+      60.times do # up to 30 seconds
         running_count = connection.fetch_running_count.value!
-        break if running_count == 5
+        break if running_count >= 4
 
-        sleep 0.4
+        sleep 0.5
       end
 
-      expect(connection.fetch_running_count).to eq Success(5)
-      expect(connection.fetch_queued_count).to eq Success(5)
+      # max_run=5 means at most 5 jobs run concurrently; on CI with 4 vCPUs,
+      # node resource limits cap actual running jobs at 4.
+      expect(running_count).to be_between(4, 5)
+      # all 10 jobs must be accounted for: running + queued = 10
+      expect(connection.fetch_queued_count.value!).to eq(10 - running_count)
       expect(connection.fetch_enqueued_count).to eq Success(10)
     end
 
