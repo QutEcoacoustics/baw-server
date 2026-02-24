@@ -127,7 +127,7 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
       expect(response.content_type).to include('application/json')
 
       body = response.parsed_body
-      expect(body).to be_a(Hash)
+      expect(body).to be < Hash
       expect(body['columns']).to be_an(Array)
       expect(body['rows'].length).to eq(event_count)
     end
@@ -143,7 +143,7 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
       expect(response.content_type).to include('application/json')
 
       body = response.parsed_body
-      expect(body).to be_a(Hash)
+      expect(body).to be < Hash
       expect(body['columns']).to be_an(Array)
       expect(body['rows'].length).to eq(event_count)
     end
