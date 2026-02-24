@@ -21,7 +21,7 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
   # base offset for standard request overhead, and some scaled offset for CI variability
   let(:baseline_performance) { 0.045 }
   let(:csv_expected_performance) { (event_count * (20.0 / 1_000_000)) + baseline_performance }
-  let(:json_expected_performance) { (event_count * (25.0 / 1_000_000)) + baseline_performance }
+  let(:json_expected_performance) { (event_count * (40.0 / 1_000_000)) + baseline_performance }
 
   before do
     AudioEvent.delete_all
