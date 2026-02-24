@@ -111,9 +111,9 @@ jobs:
         run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
 
       - name: Fix permissions for bind mounts
+        # Ensure all repository files are owned by baw_web (UID 1000) so containers can access them
+        # Restore .git ownership to runner after chown to prevent git config lock errors in cleanup
         run: |
-          # Ensure all repository files are owned by baw_web (UID 1000) so containers can access them
-          # Restore .git ownership to runner after chown to prevent git config lock errors in cleanup
           sudo chown -R 1000:1000 .
           sudo chown -R "$(id -u):$(id -g)" .git
           
@@ -142,7 +142,8 @@ jobs:
           # Install test dependencies and run tests using the file list
           docker compose exec -T web bash -c '
             # Ensure test dependencies are installed
-            bundle install --with test
+            bundle config set with 'test'
+            bundle install
             
             if [ -f /home/baw_web/baw-server/test-files.txt ]; then
               # Run tests and capture exit code
