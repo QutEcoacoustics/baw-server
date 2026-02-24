@@ -32,6 +32,15 @@ module PBSHelpers
           # retry until we can clean all jobs
           logger.error('Failed to clean all PBS jobs, retrying...')
         end
+
+        # Wait for jobs to fully disappear from PBS (e.g. jobs in 'E'/exiting state
+        # may still appear briefly after qdel succeeds).
+        50.times do
+          result = connection.fetch_all_statuses
+          break if result.success? && result.value!.jobs.empty?
+
+          sleep 0.2
+        end
       end
 
       base.after do

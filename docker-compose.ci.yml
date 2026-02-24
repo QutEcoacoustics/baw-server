@@ -1,0 +1,54 @@
+# Docker Compose override for CI environments
+# This file should be used with the main docker-compose.yml file:
+#   docker-compose -f docker-compose.yml -f docker-compose.ci.yml up
+# 
+# It modifies the base configuration to:
+# - Use pre-built images instead of build contexts
+# - Configure services for test environment
+
+services:
+  # Override development services to not start in CI (but keep them defined)
+  upload:
+    deploy:
+      replicas: 0
+  
+  workers:
+    deploy:
+      replicas: 0
+    
+  scheduler:
+    deploy:
+      replicas: 0
+
+  # Override workers_test to use pre-built image
+  workers_test:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+
+  # Override scheduler_test to use pre-built image
+  scheduler_test:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+
+  # Override web service for CI testing
+  web:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
+    profiles: [test]
+    command: sleep infinity
+    environment:
+      RAILS_ENV: test
+      MIGRATE_DB: "true"
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      upload_test:
+        condition: service_started
+      workers_test:
+        condition: service_started
+      scheduler_test:
+        condition: service_started
+      analysis_test:
+        condition: service_started

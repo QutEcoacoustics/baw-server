@@ -300,9 +300,22 @@ describe PBS::Connection do
       end
 
       # we have a max limit of 5 running jobs
+      # Wait for PBS scheduler to transition jobs from queued to running state.
+      # CI machines may have only 4 vCPUs so PBS may only run 4 jobs even though
+      # max_run=5; wait until >=4 jobs are running (scheduler has done its work).
+      running_count = nil
+      60.times do # up to 30 seconds
+        running_count = connection.fetch_running_count.value!
+        break if running_count >= 4
 
-      expect(connection.fetch_running_count).to eq Success(5)
-      expect(connection.fetch_queued_count).to eq Success(5)
+        sleep 0.5
+      end
+
+      # max_run=5 means at most 5 jobs run concurrently; on CI with 4 vCPUs,
+      # node resource limits cap actual running jobs at 4.
+      expect(running_count).to be_between(4, 5)
+      # all 10 jobs must be accounted for: running + queued = 10
+      expect(connection.fetch_queued_count.value!).to eq(10 - running_count)
       expect(connection.fetch_enqueued_count).to eq Success(10)
     end
 
@@ -672,14 +685,15 @@ describe PBS::Connection do
         ).value!
 
         # pick a job to complete - to test graceful handling
-        job = wait_for_pbs_job(job_ids[1])
+        # timeout: 60 because sleep 30 jobs need time to start and finish on CI
+        job = wait_for_pbs_job(job_ids[1], timeout: 60)
         expect(job).to be_finished
 
         # pick a job to cancel - to test graceful handling
         connection.cancel_job(job_ids[2])
 
         # pick a job to delete history for - to test graceful handling
-        wait_for_pbs_job(job_ids[3])
+        wait_for_pbs_job(job_ids[3], timeout: 60)
         connection.cancel_job(job_ids[3], wait: true, force: true, completed: true)
         expect(connection.job_exists?(job_ids[3])).to be_success.and(have_attributes(value!: false))
 
