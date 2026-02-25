@@ -95,7 +95,7 @@ jobs:
         uses: nschloe/action-cached-lfs-checkout@v1.2.3
 
       - name: Download test bucket files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: test-buckets
 
