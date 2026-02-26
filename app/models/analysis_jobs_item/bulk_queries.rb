@@ -51,7 +51,6 @@ class AnalysisJobsItem
             AnalysisJobsItem::TRANSITION_QUEUE, # $4: transition
             # where status is ready
             AudioRecording::STATUS_READY # $5: status
-            # $1 and $2 are reused by position in the NOT EXISTS subquery
           ]
 
           # we use exec_update instead of exec_insert because we want a count of
@@ -155,8 +154,6 @@ class AnalysisJobsItem
     #   $3: created_at (SELECT projection)
     #   $4: transition (SELECT projection)
     #   $5: STATUS_READY (filter WHERE clause from status_ready scope)
-    #   $1 and $2 are referenced by position in the NOT EXISTS subquery so
-    #   the query planner sees only 5 parameters rather than 7.
     # @param filter_query [ActiveRecord::Relation]
     # @return [Baw::Arel::UpsertManager]
     def generate_batch_upsert_query(filter_query)
