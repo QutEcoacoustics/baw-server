@@ -33,6 +33,9 @@ class AnalysisJobsItem
       # arel of ids of audio recordings to generate analysis job items for
       filter_query = analysis_job.filter_as_relation
 
+      # because we use bind parameters we can reuse this query for each script
+      upsert_query = generate_batch_upsert_query(filter_query)
+
       # we do one bulk insert per script, but make sure all inserts are committed
       # atomically (all or nothing).
       count = 0
@@ -40,17 +43,17 @@ class AnalysisJobsItem
         # iterate through each script for the job and create as many records as
         # there are audio recordings that are returned by the filter
         analysis_job.scripts.each do |script|
-          # generate a query per script since script_id and analysis_job_id are
-          # inlined as literals to avoid consuming sequence IDs for existing rows
-          upsert_query = generate_batch_upsert_query(filter_query, script.id, analysis_job.id)
-
           binds = [
             # audio recording id comes from filter query
-            # script_id and analysis_job_id are now inlined as literals in the query
+            script.id,
+            analysis_job.id,
             Time.zone.now,
             AnalysisJobsItem::TRANSITION_QUEUE,
             # where status is ready
-            AudioRecording::STATUS_READY
+            AudioRecording::STATUS_READY,
+            # for the NOT EXISTS subquery - must match the same values used above
+            script.id,
+            analysis_job.id
           ]
 
           # we use exec_update instead of exec_insert because we want a count of
@@ -142,16 +145,23 @@ class AnalysisJobsItem
     private
 
     # Generates a bulk insert query for the given filter query.
+    # Uses bind parameters to avoid sql injection and to allow the query planner
+    # to reuse the query across multiple scripts.
     # The query includes a NOT EXISTS subquery to avoid consuming sequence IDs
     # for rows that already exist (which would happen with ON CONFLICT DO NOTHING).
     # The ON CONFLICT DO NOTHING clause is kept as a safety net for race conditions.
-    # The script_id and analysis_job_id are inlined as integer literals (safe for
-    # integer primary keys) to avoid bind parameter ordering issues.
+    #
+    # Bind parameter order:
+    #   $1: script_id (SELECT projection)
+    #   $2: analysis_job_id (SELECT projection)
+    #   $3: created_at (SELECT projection)
+    #   $4: transition (SELECT projection)
+    #   $5: STATUS_READY (filter WHERE clause from status_ready scope)
+    #   $6: script_id (NOT EXISTS WHERE clause - same value as $1)
+    #   $7: analysis_job_id (NOT EXISTS WHERE clause - same value as $2)
     # @param filter_query [ActiveRecord::Relation]
-    # @param script_id [Integer]
-    # @param analysis_job_id [Integer]
     # @return [Baw::Arel::UpsertManager]
-    def generate_batch_upsert_query(filter_query, script_id, analysis_job_id)
+    def generate_batch_upsert_query(filter_query)
       table = AnalysisJobsItem.arel_table
       ar_table = AudioRecording.arel_table
 
@@ -172,12 +182,10 @@ class AnalysisJobsItem
         filter_arel = filter_query.arel
         raise 'must be a SelectManager' unless filter_arel.is_a?(Arel::SelectManager)
 
-        # Use integer literals for script_id and analysis_job_id (safe for integer PKs)
-        # to avoid consuming bind parameter positions that would complicate ordering.
         filter_arel.project(
           # audio recording id comes from filter query
-          Arel.sql(script_id.to_i.to_s),
-          Arel.sql(analysis_job_id.to_i.to_s),
+          Arel::Nodes::BindParam.new('script_id'),
+          Arel::Nodes::BindParam.new('analysis_job_id'),
           Arel::Nodes::BindParam.new('created_at'),
           Arel::Nodes::BindParam.new('transition')
         )
@@ -188,8 +196,8 @@ class AnalysisJobsItem
         not_exists_subquery = table
           .project(Arel.sql('1'))
           .where(table[:audio_recording_id].eq(ar_table[:id]))
-          .where(table[:script_id].eq(script_id))
-          .where(table[:analysis_job_id].eq(analysis_job_id))
+          .where(table[:script_id].eq(Arel::Nodes::BindParam.new('script_id')))
+          .where(table[:analysis_job_id].eq(Arel::Nodes::BindParam.new('analysis_job_id')))
         filter_arel.where(not_exists_subquery.exists.not)
 
         insert.select = filter_arel

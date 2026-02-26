@@ -77,21 +77,30 @@ describe AnalysisJobsItem do
       end
 
       it 'does not consume sequence IDs for existing records when run again' do
-        # this tests that re-running on already-existing records does not
-        # burn through sequence values (regression test for the upsert sequence issue)
+        # this tests that re-running on already-existing records (plus a batch of
+        # new ones) only consumes sequence IDs for the newly inserted records.
+        # Previously (with ON CONFLICT DO NOTHING without NOT EXISTS), the sequence
+        # would advance by the total number of candidate rows (both old and new),
+        # not just the new ones.
 
-        # first pass - creates 20 records
-        AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
+        # first pass - creates 20 records (10 recordings × 2 scripts)
+        first_insert_count = AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
+        expect(first_insert_count).to be 20
         max_id_after_first = AnalysisJobsItem.maximum(:id)
-        expect(max_id_after_first).not_to be_nil
 
-        # second pass with no new recordings - should insert 0 records
-        insert_count = AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
-        expect(insert_count).to be 0
+        # simulate amending: add 5 new recordings that match the filter
+        create_list(:audio_recording, 5, duration_seconds: 15, site:)
 
-        # the max id (and therefore the sequence) should not have advanced
+        # second pass - should only insert the 10 new records (5 new recordings × 2 scripts)
+        second_insert_count = AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
+        expect(second_insert_count).to be 10
+
         max_id_after_second = AnalysisJobsItem.maximum(:id)
-        expect(max_id_after_second).to eq(max_id_after_first)
+
+        # The sequence should only have advanced by the number of newly inserted records.
+        # Without the NOT EXISTS filter, ON CONFLICT DO NOTHING would consume sequence IDs
+        # for all 15 recordings × 2 scripts = 30 rows, not just the 10 new ones.
+        expect(max_id_after_second - max_id_after_first).to eq second_insert_count
       end
     end
 
