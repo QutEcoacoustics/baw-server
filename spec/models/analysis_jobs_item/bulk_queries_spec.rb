@@ -75,6 +75,24 @@ describe AnalysisJobsItem do
         expect(items).to all(be_new)
         expect(items).to all(be_valid)
       end
+
+      it 'does not consume sequence IDs for existing records when run again' do
+        # this tests that re-running on already-existing records does not
+        # burn through sequence values (regression test for the upsert sequence issue)
+
+        # first pass - creates 20 records
+        AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
+        max_id_after_first = AnalysisJobsItem.maximum(:id)
+        expect(max_id_after_first).not_to be_nil
+
+        # second pass with no new recordings - should insert 0 records
+        insert_count = AnalysisJobsItem.batch_insert_items_for_job(analysis_job)
+        expect(insert_count).to be 0
+
+        # the max id (and therefore the sequence) should not have advanced
+        max_id_after_second = AnalysisJobsItem.maximum(:id)
+        expect(max_id_after_second).to eq(max_id_after_first)
+      end
     end
 
     describe 'batch updates' do
