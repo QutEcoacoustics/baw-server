@@ -11,6 +11,10 @@ env:
   REGISTRY: ghcr.io
   TEST_BUCKETS: 16
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # Generate test matrix dynamically by dividing spec files into buckets
   generate-matrix:
@@ -193,7 +197,7 @@ jobs:
         run: docker compose down
 
   # Push release with version, changelog, docs, tag, and image (only on master branch and tags)
-  push:
+  publish:
     needs: [build, test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/'))
