@@ -20,6 +20,11 @@ services:
     deploy:
       replicas: 0
 
+  # Override analysis_test to use pre-built image
+  analysis_test:
+    image: ${CI_ANALYSIS_IMAGE:-baw_server_analysis_mock}
+    build: null  # Remove build context
+
   # Override workers_test to use pre-built image
   workers_test:
     image: ${CI_IMAGE:-baw-server:ci}
