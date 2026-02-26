@@ -45,19 +45,19 @@ class AnalysisJobsItem
         analysis_job.scripts.each do |script|
           binds = [
             # audio recording id comes from filter query
-            script.id,
-            analysis_job.id,
-            Time.zone.now,
-            AnalysisJobsItem::TRANSITION_QUEUE,
+            script.id,           # $1: script_id
+            analysis_job.id,     # $2: analysis_job_id
+            Time.zone.now,       # $3: created_at
+            AnalysisJobsItem::TRANSITION_QUEUE, # $4: transition
             # where status is ready
-            AudioRecording::STATUS_READY
+            AudioRecording::STATUS_READY # $5: status
           ]
 
           # we use exec_update instead of exec_insert because we want a count of
           # the number of records created which exec_insert does not return.
           result = AnalysisJobsItem.connection.exec_update(
             upsert_query.to_sql,
-            "Bulk upsert analysis job items for analysis job #{analysis_job.id} and script #{script.id}",
+            "Bulk insert analysis job items for analysis job #{analysis_job.id} and script #{script.id}",
             binds
           )
 
@@ -141,13 +141,24 @@ class AnalysisJobsItem
 
     private
 
-    # Generates a bulk upsert query for the given filter query.
-    # Uses bind parameters to avoid sql injection but that also means this
-    # query can be used more than once.
+    # Generates a bulk insert query for the given filter query.
+    # Uses bind parameters to avoid sql injection and to allow the query planner
+    # to reuse the query across multiple scripts.
+    # The query includes a NOT EXISTS subquery to avoid consuming sequence IDs
+    # for rows that already exist (which would happen with ON CONFLICT DO NOTHING).
+    # The ON CONFLICT DO NOTHING clause is kept as a safety net for race conditions.
+    #
+    # Bind parameter order:
+    #   $1: script_id (SELECT projection and NOT EXISTS WHERE clause)
+    #   $2: analysis_job_id (SELECT projection and NOT EXISTS WHERE clause)
+    #   $3: created_at (SELECT projection)
+    #   $4: transition (SELECT projection)
+    #   $5: STATUS_READY (filter WHERE clause from status_ready scope)
     # @param filter_query [ActiveRecord::Relation]
     # @return [Baw::Arel::UpsertManager]
     def generate_batch_upsert_query(filter_query)
       table = AnalysisJobsItem.arel_table
+      ar_table = AudioRecording.arel_table
 
       # prepare a bulk insert
       manager = Baw::Arel::UpsertManager.new(AnalysisJobsItem)
@@ -166,17 +177,36 @@ class AnalysisJobsItem
         filter_arel = filter_query.arel
         raise 'must be a SelectManager' unless filter_arel.is_a?(Arel::SelectManager)
 
+        # Extract bind params so their positions are explicit: $1=script_id, $2=analysis_job_id.
+        # The NOT EXISTS subquery reuses these same positions via Arel.sql('$1')/'$2'
+        # rather than adding new $6/$7 slots.
+        script_id_param = Arel::Nodes::BindParam.new('script_id')       # $1
+        analysis_job_id_param = Arel::Nodes::BindParam.new('analysis_job_id') # $2
+
         filter_arel.project(
           # audio recording id comes from filter query
-          Arel::Nodes::BindParam.new('script_id'),
-          Arel::Nodes::BindParam.new('analysis_job_id'),
+          script_id_param,
+          analysis_job_id_param,
           Arel::Nodes::BindParam.new('created_at'),
           Arel::Nodes::BindParam.new('transition')
         )
 
+        # Add NOT EXISTS to avoid consuming sequence IDs for rows that already exist.
+        # Without this, ON CONFLICT DO NOTHING still calls nextval() for every
+        # candidate row, even those that will be skipped, burning through the sequence.
+        # $1 and $2 are referenced by position to reuse the bind slots defined above.
+        not_exists_subquery = table
+          .project(Arel.sql('1'))
+          .where(table[:audio_recording_id].eq(ar_table[:id]))
+          .where(table[:script_id].eq(Arel.sql('$1')))
+          .where(table[:analysis_job_id].eq(Arel.sql('$2')))
+        filter_arel.where(not_exists_subquery.exists.not)
+
         insert.select = filter_arel
       end)
 
+      # Keep ON CONFLICT DO NOTHING as a safety net for race conditions
+      # (e.g. two workers amending a job simultaneously)
       manager.on_conflict(:do_nothing, nil, nil)
       manager.returning(nil)
 
