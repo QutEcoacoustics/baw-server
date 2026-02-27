@@ -137,8 +137,6 @@ jobs:
         if: ${{ always() }}
 
       - name: Copy specs to run
-        env:
-          CI_IMAGE: ${{ steps.image.outputs.tag }}
         run: |
           docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
 
