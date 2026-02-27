@@ -269,8 +269,6 @@ class Project < ApplicationRecord
     p = projects_table || arel_table
     ar = AudioRecording.arel_table
     s = Site.arel_table
-
-    # A temporary (currently empty) table for the join between the sites and project tables.
     ps = ProjectsSite.arel_table
 
     # Select just id, and limit to 1, as that is all we need to test if any record exists
