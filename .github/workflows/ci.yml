@@ -7,6 +7,7 @@ on:
 
 env:
   IMAGE_NAME: workbench-server
+  ANALYSIS_IMAGE_NAME: workbench-server-pbs
   DOCKER_BUILDKIT: 1
   REGISTRY: ghcr.io
   TEST_BUCKETS: 16
@@ -83,9 +84,52 @@ jobs:
           build-args: |
             trimmed=false
 
+  # Build the analysis_test Docker image and push it to the registry
+  build_analysis_image:
+    runs-on: ubuntu-latest
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Cached LFS checkout
+        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.ANALYSIS_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Build and push analysis test Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: provision/analysis
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=analysis
+          cache-to: type=gha,mode=max,scope=analysis
+
   # Test jobs that run in parallel using the built image
   test:
-    needs: [build, generate-matrix]
+    needs: [build, generate-matrix, build_analysis_image]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -114,6 +158,10 @@ jobs:
         id: image
         run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
 
+      - name: Set analysis image tag
+        id: analysis_image
+        run: echo "tag=$(echo '${{ needs.build_analysis_image.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
+
       - name: Fix permissions for bind mounts
         # Ensure all repository files are owned by baw_web (UID 1000) so containers can access them
         # Restore .git ownership to runner after chown to prevent git config lock errors in cleanup
@@ -124,13 +172,16 @@ jobs:
       - name: Start services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: |
           echo "Using image: $CI_IMAGE"
+          echo "Using analysis image: $CI_ANALYSIS_IMAGE"
           docker compose --profile test up --detach --wait --timeout 120
           
       - name: Debugging
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: |
           docker compose ps
           docker ps
@@ -139,6 +190,7 @@ jobs:
       - name: Run bucket ${{ matrix.bucket }} tests
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: |
           # Copy test file list to container
           docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
@@ -193,12 +245,13 @@ jobs:
       - name: Stop services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         if: always()
         run: docker compose down
 
   # Push release with version, changelog, docs, tag, and image (only on master branch and tags)
   publish:
-    needs: [build, test]
+    needs: [build, test, build_analysis_image]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/'))
 
@@ -222,6 +275,10 @@ jobs:
         id: image
         run: echo "tag=$(echo '${{ needs.build.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
 
+      - name: Set analysis image tag
+        id: analysis_image
+        run: echo "tag=$(echo '${{ needs.build_analysis_image.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
+
       - name: Calculate git describe
         id: tagger
         shell: pwsh
@@ -242,22 +299,26 @@ jobs:
       - name: Start services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: docker compose --profile test up --detach --wait --timeout 120
 
       - name: Generate changelog
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: docker compose exec -T web rake changelog
 
       - name: Generate API docs
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: docker compose exec -T web generate_docs.sh
 
       - name: Stop services
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         if: always()
         run: docker compose down
 
