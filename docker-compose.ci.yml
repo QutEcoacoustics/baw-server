@@ -13,10 +13,14 @@ services:
       replicas: 0
   
   workers:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
     deploy:
       replicas: 0
     
   scheduler:
+    image: ${CI_IMAGE:-baw-server:ci}
+    build: null  # Remove build context
     deploy:
       replicas: 0
 
