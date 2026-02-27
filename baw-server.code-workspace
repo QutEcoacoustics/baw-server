@@ -242,14 +242,14 @@
       "titleBar.inactiveForeground": "#15202b99",
       "statusBarItem.hoverBackground": "#4dbd5e",
       "activityBar.activeBackground": "#97d9a2",
-      "statusBar.background": "#72cb80",
-      "statusBar.foreground": "#15202b",
       "sash.hoverBorder": "#97d9a2",
       "statusBarItem.remoteBackground": "#72cb80",
       "statusBarItem.remoteForeground": "#15202b",
       "tab.activeBackground": "#575757",
       "tab.inactiveBackground": "#04060899",
-      "commandCenter.border": "#15202b99"
+      "commandCenter.border": "#15202b99",
+      "statusBar.background": "#72cb80",
+      "statusBar.foreground": "#15202b"
     },
     "peacock.remoteColor": "#72cb80",
     // "testExplorer.addToEditorContextMenu": true,

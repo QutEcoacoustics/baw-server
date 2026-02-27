@@ -87,7 +87,9 @@ services:
 
   upload_test:
     <<: *upload
-    profiles: [test]
+    profiles:
+      - ""
+      - test
     environment:
       RAILS_ENV: test
       SFTPGO_DATA_PROVIDER__NAME: baw_test_sftpgo
@@ -110,7 +112,9 @@ services:
 
   analysis_test:
     <<: *group_add
-    profiles: [test]
+    profiles:
+      - ""
+      - test
     build:
       context: provision/analysis/
       dockerfile: ./Dockerfile
@@ -157,7 +161,9 @@ services:
 
   workers_test: &worker_test
     <<: *worker
-    profiles: [test]
+    profiles:
+      - ""
+      - test
     volumes:
       - type: bind
         source: ./
@@ -178,7 +184,9 @@ services:
   # This scheduler is basically an idle component.
   scheduler_test:
     <<: *worker_test
-    profiles: [test]
+    profiles:
+      - ""
+      - test
     command: ./provision/rerun.sh bin/baw-workers baw:worker:run_scheduler
     environment:
       RAILS_ENV: test
@@ -224,6 +232,7 @@ services:
       - "3000:3000"
     networks:
       - baw_network
+
 networks:
   baw_network: null
 volumes:
