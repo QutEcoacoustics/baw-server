@@ -187,45 +187,44 @@ jobs:
           docker ps
         if: ${{ always() }}
 
+      - name: Copy specs to run
+        run: |
+          docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
+
       - name: Run bucket ${{ matrix.bucket }} tests
+        id: run_tests
+        continue-on-error: true
         env:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
           CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
         run: |
-          # Copy test file list to container
-          docker cp test-bucket-${{ matrix.bucket }}.txt $(docker compose ps -q web):/home/baw_web/baw-server/test-files.txt
-          
-          # Install test dependencies and run tests using the file list
           docker compose exec -T web bash -c '
             # Ensure test dependencies are installed
-            bundle config set with 'test'
+            bundle config set with test
             bundle install
-            
-            if [ -f /home/baw_web/baw-server/test-files.txt ]; then
-              # Run tests and capture exit code
-              cat /home/baw_web/baw-server/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
-              TEST_EXIT_CODE=$?
-              
-              # If tests failed, retry only the failed tests
-              if [ $TEST_EXIT_CODE -ne 0 ]; then
-                echo "::warning::Tests failed on first attempt, retrying only failed tests..."
 
-                rspec --only-failures --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}_retry.html
-                RETRY_EXIT_CODE=$?
-                
-                if [ $RETRY_EXIT_CODE -eq 0 ]; then
-                  echo "::notice::Tests passed on retry - possible flaky tests in bucket ${{ matrix.bucket }}"
-                fi
-                
-                # Exit with the retry exit code
-                exit $RETRY_EXIT_CODE
-              fi
-              
-              exit $TEST_EXIT_CODE
+            if [ -f /home/baw_web/baw-server/test-files.txt ]; then
+              cat /home/baw_web/baw-server/test-files.txt | xargs rspec --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}.html
             else
               echo "No test files found for bucket ${{ matrix.bucket }}"
               exit 1
             fi
+          '
+
+      - name: Retry failed tests in bucket ${{ matrix.bucket }}
+        if: steps.run_tests.outcome == 'failure'
+        env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+        run: |
+          docker compose exec -T web bash -c '
+            rspec --only-failures --format progress --format html --out rspec_results_bucket_${{ matrix.bucket }}_retry.html
+            RETRY_EXIT_CODE=$?
+
+            if [ $RETRY_EXIT_CODE -eq 0 ]; then
+              echo "::notice::Tests passed on retry - possible flaky tests in bucket ${{ matrix.bucket }}"
+            fi
+
+            exit $RETRY_EXIT_CODE
           '
 
       - name: Upload test results
