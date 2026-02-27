@@ -1,5 +1,29 @@
 # Changelog
 
+## [14.7.1](https://github.com/QutEcoacoustics/baw-server/tree/14.7.1) (2026-02-27)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.5.2...14.7.1)
+
+**Implemented enhancements:**
+
+- CI: split the "Run bucket" step out into multiple steps [\#910](https://github.com/QutEcoacoustics/baw-server/issues/910)
+- Audio event import: top N per T interval filter [\#896](https://github.com/QutEcoacoustics/baw-server/issues/896)
+- Add custom `has_audio` field to project models [\#725](https://github.com/QutEcoacoustics/baw-server/issues/725)
+
+**Fixed bugs:**
+
+- CI: analysis\_test container built in test matrix [\#908](https://github.com/QutEcoacoustics/baw-server/issues/908)
+- Analysis jobs items generation: upserts burning through PK sequence [\#848](https://github.com/QutEcoacoustics/baw-server/issues/848)
+
+**Merged pull requests:**
+
+- CI: split "Run bucket" into discrete steps [\#911](https://github.com/QutEcoacoustics/baw-server/pull/911) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- CI: build analysis\_test container once and reuse across test matrix [\#909](https://github.com/QutEcoacoustics/baw-server/pull/909) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Fix analysis job item generation burning through PK sequence on upsert [\#902](https://github.com/QutEcoacoustics/baw-server/pull/902) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Add top N per time interval filtering for audio event imports [\#897](https://github.com/QutEcoacoustics/baw-server/pull/897) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Add `has_audio` custom field to project model [\#873](https://github.com/QutEcoacoustics/baw-server/pull/873) ([hudson-newey](https://github.com/hudson-newey))
+- Modernize CI with dynamic test matrix, cached LFS, Docker Compose profiles, flaky test retry, and simplified configuration [\#822](https://github.com/QutEcoacoustics/baw-server/pull/822) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.5.2](https://github.com/QutEcoacoustics/baw-server/tree/14.5.2) (2026-02-13)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.5.1...14.5.2)
