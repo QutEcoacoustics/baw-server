@@ -71,6 +71,9 @@ gem 'descriptive-statistics'
 # for sorting hashes by keys
 gem 'deep_sort'
 
+# for templating analysis job commands (stored in the scripts model)
+gem 'liquid'
+
 RAILS_VERSION = '~> 8.0.2'
 
 # RAILS

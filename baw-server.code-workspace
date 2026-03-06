@@ -351,7 +351,10 @@
     },
     "testExplorer.addToEditorContextMenu": true,
     "github.copilot.chat.agent.thinkingTool": true,
-    "github.copilot.chat.alternateGptPrompt.enabled": true
+    "github.copilot.chat.alternateGptPrompt.enabled": true,
+    "chat.tools.terminal.autoApprove": {
+      "rspec": true
+    }
   },
   "extensions": {
     "recommendations": [
