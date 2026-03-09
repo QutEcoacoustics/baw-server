@@ -13,7 +13,7 @@ We have a helper called `test-env` that sets the `RAILS_ENV` to `test`.
 
 ## Running migrations
 
-Because we're in a container that as `RAILS_ENV=development` by default, rails won't run migrations for the test env.
+Because we're in a container that has `RAILS_ENV=development` by default, rails won't run migrations for the test env.
 So to keep things in sync you should run migrations like this:
 
 ```bash

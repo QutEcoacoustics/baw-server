@@ -25,12 +25,12 @@ class ConvertScriptCommandsToLiquidSyntax < ActiveRecord::Migration[8.0]
         SET executable_command =
           regexp_replace(
             executable_command,
-            '\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}',
+            '\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}',
             '{\1}',
             'g'
           )
         WHERE executable_command IS NOT NULL
-          AND executable_command ~ '\{\{[a-zA-Z_][a-zA-Z0-9_]*\}\}';
+          AND executable_command ~ '\{\{\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\}\}';
       SQL
     end
   end

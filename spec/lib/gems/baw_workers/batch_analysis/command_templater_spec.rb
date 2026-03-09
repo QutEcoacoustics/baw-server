@@ -46,7 +46,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     )
   end
 
-  it 'can prints Times as iso8601 string' do
+  it 'can print Time as an ISO8601 string' do
     command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
       'test "{{source}}" "{{output_dir}}"',
       {
@@ -56,6 +56,30 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     )
 
     expect(command).to eq('test "2018-01-01T12:00:00+10:00" "output_dir"')
+  end
+
+  it 'can print ActiveSupport::TimeWithZone as iso8601 string' do
+    time = Time.zone.local(2018, 1, 1, 12, 0, 0)
+    command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+      'test "{{source}}" "{{output_dir}}"',
+      {
+        source: time,
+        output_dir: 'output_dir'
+      }
+    )
+
+    expect(command).to eq("test \"#{time.iso8601}\" \"output_dir\"")
+  end
+
+  it 'can still customize a Time value with filters' do
+    command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+      'test "{{source | date: \'%Y-%m-%d\'}}" placeholder {{output_dir}}',
+      {
+        source: Time.new(2018, 1, 1, 12, 0, 0, '+10:00'),
+        output_dir: 'output_dir'
+      }
+    )
+    expect(command).to eq('test "2018-01-01" placeholder output_dir')
   end
 
   it 'can template multiple placeholders' do
@@ -209,7 +233,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
           'run {{source}} {%donkey source%}one{%else%}three{%endif%}',
           { source: 'source' }
         )
-      }.to raise_error(Liquid::SyntaxError, "Liquid syntax error: Unknown tag 'donkey'")
+      }.to raise_error(ArgumentError, /Liquid syntax error: Unknown tag 'donkey'/)
     end
 
     [
@@ -227,7 +251,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
               latitude: 123
             }
           )
-        }.to raise_error(Liquid::SyntaxError, /Liquid syntax error/)
+        }.to raise_error(ArgumentError, /Liquid syntax error/)
       end
     end
   end

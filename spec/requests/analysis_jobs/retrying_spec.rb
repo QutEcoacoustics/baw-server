@@ -7,7 +7,7 @@ describe 'AnalysisJobs', :clean_by_truncation do
 
   stepwise 'retrying' do
     step 'alter one of the scripts so that it fails' do
-      script_one.update!(executable_command: 'echo "{source} {output_dir}" && exit 1')
+      script_one.update!(executable_command: 'echo "{{source}} {{output_dir}}" && exit 1')
     end
 
     step 'we can create a job' do
@@ -84,7 +84,7 @@ describe 'AnalysisJobs', :clean_by_truncation do
     end
 
     step 'now make it so the jobs do not fail' do
-      script_one.update!(executable_command: 'echo "{source} {output_dir}"')
+      script_one.update!(executable_command: 'echo "{{source}}" "{{output_dir}}"')
     end
 
     step '(3rd attempt) we can retry the job' do

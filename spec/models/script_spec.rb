@@ -90,7 +90,7 @@ describe Script do
         executable_settings_name: nil,
         executable_settings_media_type: nil,
         executable_settings: nil,
-        executable_command: 'echo "{config}" "{source}" "{output_dir}"'
+        executable_command: 'echo "{{config}}" "{{source}}" "{{output_dir}}"'
       )
       expect(script).not_to be_valid
       expect(script.errors[:executable_command]).to eq ['contains one of `config_dir`, `config_basename`, `config` but no settings are provided']
@@ -292,7 +292,7 @@ describe Script do
 
     it 'validates the command can be templated (output)' do
       script = build(:script)
-      script.executable_command = 'echo "{source}"'
+      script.executable_command = 'echo "{{source}}"'
 
       expect(script).not_to be_valid
       expect(script.errors[:executable_command]).to include(
@@ -302,17 +302,17 @@ describe Script do
 
     it 'validates the command can not contain invalid placeholders' do
       script = build(:script)
-      script.executable_command = 'echo "{source} {output_dir} {invalid}"'
+      script.executable_command = 'echo "{{source}}" "{{output_dir}}" "{{invalid}}"'
 
       expect(script).not_to be_valid
       expect(script.errors[:executable_command]).to include(
-        'Invalid placeholder `invalid` in command'
+        'Unknown placeholder `invalid` in command'
       )
     end
 
     it 'allows new lines and tabs in the command' do
       script = build(:script)
-      script.executable_command = "echo \"hello\nwo\trld\" {source_dir} {output_dir}"
+      script.executable_command = "echo \"hello\nwo\trld\" {{source_dir}} {{output_dir}}"
 
       expect(script).to be_valid
     end

@@ -15,21 +15,22 @@ module BawWorkers
     #
     # Multiple substitutions can be made for a single placeholder.
     module CommandTemplater
-      # Makes the default formatting of Time objects the ISO8601 format,
-      # which is more likely to be useful in command templates.
-      # ! This unfortunately is a leaky abstraction
-      # but it is not too bad since one could always use a date filter to format the time as desired.
-      module LiquidFormatOverrides
-        def to_s(obj, seen = {})
-          if obj.is_a?(Time)
-            obj.iso8601
-          else
-            super
-          end
+      # Wraps time-like values to provide ISO8601 output in Liquid templates
+      # without monkey patching Liquid internals globally.
+      class TimeDrop < ::Liquid::Drop
+        def initialize(time)
+          super()
+          @time = time
+        end
+
+        def to_s
+          @time.iso8601
+        end
+
+        def strftime(format)
+          @time.strftime(format)
         end
       end
-
-      ::Liquid::Utils.singleton_class.prepend(LiquidFormatOverrides)
 
       # a directory containing the source audio file to process
       SOURCE_DIR = :source_dir
@@ -97,7 +98,33 @@ module BawWorkers
         validate_required(found)
         validate_missing_values(found, values)
 
-        liquid_template.render!(values.transform_keys(&:to_s), strict_variables: true, strict_filters: true)
+        liquid_template.render!(
+          normalize_values_for_liquid(values),
+          strict_variables: true,
+          strict_filters: true
+        )
+      rescue Liquid::Error => e
+        # Wrap Liquid-specific errors so callers that rescue ArgumentError
+        # continue to work and invalid templates become validation errors.
+        raise ArgumentError, "Invalid Liquid template in command: #{e.message}"
+      end
+
+      def self.normalize_values_for_liquid(values)
+        values
+          .to_h { |key, value|
+            value = TimeDrop.new(value) if time_like_value?(value)
+
+            # liquid requires string keys
+            key = key.to_s
+
+            [key, value]
+          }
+      end
+
+      def self.time_like_value?(value)
+        return true if value.is_a?(Time) || value.is_a?(DateTime)
+
+        defined?(ActiveSupport::TimeWithZone) && value.is_a?(ActiveSupport::TimeWithZone)
       end
 
       def self.extract_placeholders(liquid_template)
@@ -118,6 +145,9 @@ module BawWorkers
         end
       end
 
+      # Validate any placeholders that are present in the command template are also present in the values hash.
+      # This does not mean the values have to non-nil. Indicate a missing value with a nil value,
+      # but the shape of the values hash must be consistent.
       def self.validate_missing_values(placeholders, values)
         placeholders.each do |placeholder|
           next if values.key?(placeholder)
@@ -136,7 +166,8 @@ module BawWorkers
         }
       end
 
-      private_class_method :validate_missing_values, :extract_placeholders, :validate_required
+      private_class_method :validate_missing_values, :extract_placeholders, :validate_required,
+        :normalize_values_for_liquid, :time_like_value?
     end
   end
 end

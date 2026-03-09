@@ -44,7 +44,7 @@ FactoryBot.define do
     sequence(:analysis_identifier) { |n| "script_name_#{n}" }
     sequence(:version) { |n| n }
     sequence(:executable_command) do |n|
-      "echo 'some_binary --source {source_dir} --config {config_dir} --temp-dir {temp_dir} --output {output_dir}  #{n}'"
+      "echo 'some_binary --source {{source_dir}} --config {{config_dir}} --temp-dir {{temp_dir}} --output {{output_dir}}  #{n}'"
     end
     sequence(:executable_settings) { |n| "executable settings #{n}" }
     sequence(:executable_settings_media_type) { |_n| 'text/plain' }
