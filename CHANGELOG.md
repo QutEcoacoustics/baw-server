@@ -1,5 +1,19 @@
 # Changelog
 
+## [14.8.0](https://github.com/QutEcoacoustics/baw-server/tree/14.8.0) (2026-03-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.7.1...14.8.0)
+
+**Implemented enhancements:**
+
+- Add basic templating to command templater [\#915](https://github.com/QutEcoacoustics/baw-server/issues/915)
+
+**Merged pull requests:**
+
+- Added complex logic to command templater [\#917](https://github.com/QutEcoacoustics/baw-server/pull/917) ([atruskie](https://github.com/atruskie))
+- Bump actions/upload-artifact from 4 to 7 [\#913](https://github.com/QutEcoacoustics/baw-server/pull/913) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/download-artifact from 4 to 8 [\#912](https://github.com/QutEcoacoustics/baw-server/pull/912) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [14.7.1](https://github.com/QutEcoacoustics/baw-server/tree/14.7.1) (2026-02-27)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.5.2...14.7.1)
