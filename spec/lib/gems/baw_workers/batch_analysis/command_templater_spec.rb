@@ -34,7 +34,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     command.should eq('test  placeholder ')
   end
 
-  it 'complains in a required placeholder was not used' do
+  it 'complains if a required placeholder was not used' do
     expect {
       BawWorkers::BatchAnalysis::CommandTemplater.format_command(
         'test {{id}} placeholder',
@@ -217,17 +217,16 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
       expect(command).to eq('test source placeholder  --lat 123 --config "/some/path:config" --output "output_dir"')
     end
 
-    it 'does not require keys for placeholders in branches that are not rendered' do
-      command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
-        'run {{source}} {%if config%} --config {{config}}{%endif%} {%if output_dir%}--output {{output_dir}}{%else%}--output default{%endif%}',
-        {
-          source: 'source',
-          config: nil,
-          output_dir: nil
-        }
-      )
-
-      expect(command).to eq('run source  --output default')
+    it 'requires keys for placeholders even if they are used in branches that are not rendered' do
+      expect {
+        BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+          'run {{source}} {%if config%} --config {{config}}{%endif%} {%if output_dir%}--output {{output_dir}}{%else%}--output default{%endif%}',
+          {
+            source: 'source',
+            config: nil
+          }
+        )
+      }.to raise_error(ArgumentError, 'Missing key in values for placeholder `output_dir`')
     end
 
     it 'rejects invalid placeholders in if conditions' do
