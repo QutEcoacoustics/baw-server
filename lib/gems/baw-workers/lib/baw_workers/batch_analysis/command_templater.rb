@@ -15,23 +15,6 @@ module BawWorkers
     #
     # Multiple substitutions can be made for a single placeholder.
     module CommandTemplater
-      # Wraps time-like values to provide ISO8601 output in Liquid templates
-      # without monkey patching Liquid internals globally.
-      class TimeDrop < ::Liquid::Drop
-        def initialize(time)
-          super()
-          @time = time
-        end
-
-        def to_s
-          @time.iso8601
-        end
-
-        def strftime(format)
-          @time.strftime(format)
-        end
-      end
-
       # a directory containing the source audio file to process
       SOURCE_DIR = :source_dir
       # a directory containing the configuration file to use
@@ -112,7 +95,14 @@ module BawWorkers
       def self.normalize_values_for_liquid(values)
         values
           .to_h { |key, value|
-            value = TimeDrop.new(value) if time_like_value?(value)
+            case value
+            in Time | DateTime | ActiveSupport::TimeWithZone
+              TimeDrop.new(value)
+            in Pathname
+              PathnameDrop.new(value)
+            else
+              value
+            end => value
 
             # liquid requires string keys
             key = key.to_s

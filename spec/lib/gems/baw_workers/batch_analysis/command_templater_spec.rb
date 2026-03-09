@@ -82,6 +82,18 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     expect(command).to eq('test "2018-01-01" placeholder output_dir')
   end
 
+  it 'handles Pathname values' do
+    command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+      'test "{{source}}" placeholder {{ output_dir.name }} -f {{output_dir.extname}}',
+      {
+        source: Pathname.new('/path/to/file'),
+        output_dir: Pathname.new('/path/abc.123')
+      }
+    )
+
+    expect(command).to eq('test "/path/to/file" placeholder abc -f .123')
+  end
+
   it 'can template multiple placeholders' do
     command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
       'test "{{source}}" placeholder "{{config}}" "{{source}}" "{{config}}" "{{output_dir}}"',
