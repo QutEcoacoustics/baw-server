@@ -14,14 +14,14 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
         echo "waiting for flag"
         sleep 1
       done
-      cat "{config}" > "settings_result.json"
-      echo 'some_binary --source "{source_dir}" --config "{config_dir}" --temp-dir "{temp_dir}" --output "{output_dir}"' > command_result.txt
-      stat -c '%s' "{source}" > "result.txt"
-      echo "{latitude}" >> "result.txt"
-      echo "{longitude}" >> "result.txt"
-      echo "{timestamp}" >> "result.txt"
-      echo "{id}" >> "result.txt"
-      echo "{uuid}" >> "result.txt"
+      cat "{{config}}" > "settings_result.json"
+      echo 'some_binary --source "{{source_dir}}" --config "{{config_dir}}" --temp-dir "{{temp_dir}}" --output "{{output_dir}}"' > command_result.txt
+      stat -c '%s' "{{source}}" > "result.txt"
+      echo "{{latitude}}" >> "result.txt"
+      echo "{{longitude}}" >> "result.txt"
+      echo "{{timestamp}}" >> "result.txt"
+      echo "{{id}}" >> "result.txt"
+      echo "{{uuid}}" >> "result.txt"
     BASH
   }
 
@@ -104,7 +104,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
   it 'can handle when friendly name is nil' do
     analysis_jobs_item.audio_recording.site = nil
     analysis_jobs_item.script.executable_command = <<~BASH
-      echo 'source={source} {output_dir}'
+      echo 'source={{source}} {{output_dir}}'
     BASH
 
     analysis_jobs_item.queue!
@@ -131,9 +131,9 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
 
     it 'writes an empty config file if the settings are nil' do
       executable_command = <<~BASH
-        echo '{source_dir} {output_dir}'
-        test -f "{config}" && echo 'config exists' || echo 'config does not exist'
-        echo "config file size: $(stat -c '%s' "{config}")"
+        echo '{{source_dir}} {{output_dir}}'
+        test -f "{{config}}" && echo 'config exists' || echo 'config does not exist'
+        echo "config file size: $(stat -c '%s' "{{config}}")"
       BASH
       script.update!(executable_settings: '', executable_command: executable_command)
 
@@ -149,7 +149,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
 
     it 'omits the settings file if the name is nil' do
       executable_command = <<~BASH
-        echo '{source_dir} {output_dir}'
+        echo '{{source_dir}} {{output_dir}}'
         ls -la $TMPDIR/config
       BASH
       script.update!(
@@ -513,7 +513,7 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
     let(:script_command) {
       # make the job wait so we can test state during the working phase
       <<~BASH
-        echo "I'm going to fail {source_dir} {output_dir}"
+        echo "I'm going to fail {{source_dir}} {{output_dir}}"
         cd i_do_not_exist
       BASH
     }

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'liquid'
+
 module BawWorkers
   module BatchAnalysis
     # A class that creates a command string from a template and a list of
@@ -7,12 +9,11 @@ module BawWorkers
     # The template is expected  to include placeholders for at least the SOURCE/
     # SOURCE_DIR and OUTPUT tokens.
     #
-    # The template uses curly brackets to identify placeholders. e.g.
-    # `analysis.exe {source} {output_dir}`.
+    # The template uses Liquid placeholders and tags, e.g.
+    # `analysis.exe {{ source }} {{ output_dir }}` and
+    # `{% if config %}--config {{ config }}{% endif %}`.
     #
     # Multiple substitutions can be made for a single placeholder.
-    #
-    # All substitutions are quoted with double quotes.
     module CommandTemplater
       # a directory containing the source audio file to process
       SOURCE_DIR = :source_dir
@@ -68,53 +69,95 @@ module BawWorkers
         CONFIG
       ].freeze
 
-      module_function
-
       # Template a command string with the given values.
       # @param command [String]
       # @param values [Hash]
       # @return [String]
-      def format_command(command, values)
-        found = Set.new
+      def self.format_command(command, values)
+        liquid_template = Liquid::Template.parse(command, error_mode: :strict2)
+        found = extract_placeholders(liquid_template)
 
-        formatted = command.gsub(/{(.*?)}/) { |_|
-          placeholder = ::Regexp.last_match(1).to_sym
+        validate_allowed(found)
+        validate_required(found)
+        validate_missing_values(found, values)
 
-          raise ArgumentError, "Invalid placeholder `#{placeholder}` in command" unless ALL.include?(placeholder)
-
-          value = values.fetch(placeholder) { |_|
-            raise ArgumentError, "Missing key in values for placeholder `#{placeholder}`"
-          }
-
-          found << placeholder
-
-          value = convert(value)
-
-          value.to_s
-        }
-
-        validate_required(found.to_a)
-
-        formatted
+        liquid_template.render!(
+          normalize_values_for_liquid(values),
+          strict_variables: true,
+          strict_filters: true
+        )
+      rescue Liquid::Error => e
+        # Wrap Liquid-specific errors so callers that rescue ArgumentError
+        # continue to work and invalid templates become validation errors.
+        raise ArgumentError, "Invalid Liquid template in command: #{e.message}"
       end
 
-      def validate_required(found)
+      def self.normalize_values_for_liquid(values)
+        values
+          .to_h { |key, value|
+            case value
+            in Time | DateTime | ActiveSupport::TimeWithZone
+              TimeDrop.new(value)
+            in Pathname
+              PathnameDrop.new(value)
+            else
+              value
+            end => value
+
+            # liquid requires string keys
+            key = key.to_s
+
+            [key, value]
+          }
+      end
+
+      def self.time_like_value?(value)
+        return true if value.is_a?(Time) || value.is_a?(DateTime)
+
+        defined?(ActiveSupport::TimeWithZone) && value.is_a?(ActiveSupport::TimeWithZone)
+      end
+
+      def self.extract_placeholders(liquid_template)
+        Liquid::ParseTreeVisitor
+          .for(liquid_template.root)
+          .add_callback_for(Liquid::VariableLookup) { |node| node.name.to_sym }
+          .visit
+          .flatten
+          .compact
+          .to_set
+      end
+
+      def self.validate_allowed(found)
+        found.each do |placeholder|
+          next if ALL.include?(placeholder)
+
+          raise ArgumentError, "Unknown placeholder `#{placeholder}` in command"
+        end
+      end
+
+      # Validate any placeholders that are present in the command template are also present in the values hash.
+      # This does not mean the values have to non-nil. Indicate a missing value with a nil value,
+      # but the shape of the values hash must be consistent.
+      def self.validate_missing_values(placeholders, values)
+        placeholders.each do |placeholder|
+          next if values.key?(placeholder)
+
+          raise ArgumentError, "Missing key in values for placeholder `#{placeholder}`"
+        end
+      end
+
+      def self.validate_required(found)
+        array = found.to_a
         REQUIRED_COMMAND_PLACEHOLDERS.each { |synonyms|
-          next if synonyms.intersect?(found)
+          next if synonyms.intersect?(array)
 
           options = synonyms.map { |x| "`#{x}`" }.join(' or ')
           raise ArgumentError, "Missing required placeholders in command: #{options}"
         }
       end
 
-      def convert(value)
-        case value
-        when ::Time
-          value.iso8601
-        else
-          value.to_s
-        end
-      end
+      private_class_method :validate_missing_values, :extract_placeholders, :validate_required,
+        :normalize_values_for_liquid, :time_like_value?
     end
   end
 end
