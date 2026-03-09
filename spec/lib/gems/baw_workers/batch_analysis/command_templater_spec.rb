@@ -34,7 +34,7 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
     command.should eq('test  placeholder ')
   end
 
-  it 'complains in a required placeholder was not used' do
+  it 'complains if a required placeholder was not used' do
     expect {
       BawWorkers::BatchAnalysis::CommandTemplater.format_command(
         'test {{id}} placeholder',
