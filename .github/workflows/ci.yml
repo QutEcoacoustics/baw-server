@@ -265,7 +265,7 @@ jobs:
       - name: Cached LFS checkout
         uses: nschloe/action-cached-lfs-checkout@v1.2.3
         with:
-          fetch-depth: 0
+          fetch-depth: 200
 
       - name: Login to Container Registry
         uses: docker/login-action@v3
@@ -282,19 +282,19 @@ jobs:
         id: analysis_image
         run: echo "tag=$(echo '${{ needs.build_analysis_image.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
 
-      - name: Calculate git describe
+      - name: Calculate next version from conventional commits
         id: tagger
-        run: |
-          git fetch --prune --tags
-          # Describe HEAD~ (parent of current commit) so the generated version
-          # number reflects the state before this push. The changelog/docs commit
-          # created later in this job will then carry the resulting tag.
-          description=$(git describe HEAD~)
-          if [ -z "$description" ]; then
-            echo "failed to get git describe"
-            exit 1
-          fi
-          echo "tag=$description" >> $GITHUB_OUTPUT
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Determine the next version without creating a tag yet.
+          # The tag is created after the changelog/docs commit below.
+          dry_run: true
+          # Match existing tag format (e.g. 14.8.0, not v14.8.0)
+          tag_prefix: ""
+          # Fallback bump type when no conventional commit keyword is detected.
+          # Conventional commits (feat/fix/BREAKING CHANGE/!) are handled automatically.
+          default_bump: patch
 
       - name: Fix permissions for bind mounts
         run: |
@@ -312,6 +312,7 @@ jobs:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
           CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_VERSION: ${{ steps.tagger.outputs.new_tag }}
         run: docker compose exec -T web rake changelog
 
       - name: Generate API docs
@@ -329,15 +330,15 @@ jobs:
 
       - name: Set VERSION and commit changes
         run: |
-          echo "${{ steps.tagger.outputs.tag }}" > VERSION
+          echo "${{ steps.tagger.outputs.new_tag }}" > VERSION
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Generated changelog and API docs for version ${{ steps.tagger.outputs.tag }}" -m "[skip ci]"
+          git commit -m "ci: generate changelog and API docs for ${{ steps.tagger.outputs.new_tag }}" -m "[skip ci]"
 
       - name: Create and push tag
         run: |
-          git tag -a -m "Version ${{ steps.tagger.outputs.tag }}" "${{ steps.tagger.outputs.tag }}"
+          git tag -a -m "Version ${{ steps.tagger.outputs.new_tag }}" "${{ steps.tagger.outputs.new_tag }}"
           git push --follow-tags
 
       - name: Set up Docker Buildx
@@ -354,11 +355,11 @@ jobs:
         with:
           build-args: |
             trimmed=true
-            version=${{ steps.tagger.outputs.tag }}
+            version=${{ steps.tagger.outputs.new_tag }}
           context: .
           push: true
-          tags: qutecoacoustics/workbench-server:${{ steps.tagger.outputs.tag }},qutecoacoustics/workbench-server:latest
+          tags: qutecoacoustics/workbench-server:${{ steps.tagger.outputs.new_tag }},qutecoacoustics/workbench-server:latest
           labels: |
-             version=${{ steps.tagger.outputs.tag }}
+             version=${{ steps.tagger.outputs.new_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
