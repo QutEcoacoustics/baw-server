@@ -57,7 +57,7 @@ ENV RAILS_ENV=production \
   APP_NAME=${app_name} \
   BAW_SERVER_VERSION=${version} \
   # enable binstubs to take priority
-  PATH=./bin:$PATH \
+  PATH=/home/${app_user}/${app_name}/bin:$PATH \
   BUNDLE_PATH__SYSTEM="true" \
   # migrate the database before booting the app. Recommended to run once per-deploy across cluster and then disable.
   # Also, must be false for worker instances.
