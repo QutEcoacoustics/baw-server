@@ -20,9 +20,9 @@ describe SessionsController, type: :routing do
     it { expect(put('/my_account')).to route_to('users/registrations#update') }
     it { expect(delete('/my_account')).to route_to('users/registrations#destroy') }
 
-    it { expect(post('/my_account/confirmation')).to route_to('devise/confirmations#create') }
-    it { expect(get('/my_account/confirmation/new')).to route_to('devise/confirmations#new') }
-    it { expect(get('/my_account/confirmation')).to route_to('devise/confirmations#show') }
+    it { expect(post('/my_account/confirmation')).to route_to('users/confirmations#create') }
+    it { expect(get('/my_account/confirmation/new')).to route_to('users/confirmations#new') }
+    it { expect(get('/my_account/confirmation')).to route_to('users/confirmations#show') }
 
     it { expect(post('/my_account/unlock')).to route_to('devise/unlocks#create') }
     it { expect(get('/my_account/unlock/new')).to route_to('devise/unlocks#new') }

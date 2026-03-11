@@ -144,6 +144,12 @@ module BawWeb
     def root_to_do_path
       @root_to_do_path ||= Pathname(actions.harvest.to_do_path).realpath
     end
+
+    # Create or return an existing Client::Routes.
+    # @return [Client::Routes]
+    def client_routes
+      @client_routes ||= Client::Routes.new(host: client.host, port: client.port, protocol: client.protocol)
+    end
   end
 end
 

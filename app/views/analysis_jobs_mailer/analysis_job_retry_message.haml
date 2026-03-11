@@ -15,7 +15,7 @@
 
 %p
   You can get progress updates on your analysis job by clicking
-  =link_to "here", analysis_job_url(@info[:analysis_job])
+  =link_to "here", Settings.client_routes.analysis_job_url(@info[:analysis_job]).to_s
   \.
 
 Additional information:

@@ -619,7 +619,8 @@ Rails.application.routes.draw do
   # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
   devise_for :users,
     path: :my_account,
-    controllers: { sessions: 'users/sessions', registrations: 'users/registrations' }
+    controllers: { sessions: 'users/sessions', registrations: 'users/registrations',
+                   confirmations: 'users/confirmations' }
 
   # devise for RESTful API Authentication, see sessions_controller.rb
   devise_for :users,

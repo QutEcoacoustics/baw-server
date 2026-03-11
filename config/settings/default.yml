@@ -208,7 +208,7 @@ upload_service:
   sftp_port: 2022
 # Configuration for internal microservices
 internal:
-  # array of IPs that we'll accept connect[ions from
+  # array of IPs that we'll accept connections from
   # can be any format that IPAddr.new supports
   allow_list:
     - 172.0.0.0/8
@@ -324,3 +324,9 @@ google_maps:
   api_key: your google maps api key
 permissions:
   any_user_can_create_projects: true
+# Used by Client::Routes to generate external URLs used in emails and other places
+# where we want to link directly to the client.
+client:
+  host: localhost
+  port: 4000
+  protocol: http

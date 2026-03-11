@@ -195,6 +195,16 @@ describe 'Settings' do
     end
   end
 
+  describe 'client settings' do
+    example 'validation is done for client settings' do
+      config = Config::Options.new
+      without_client = Settings.to_hash.except(:client)
+      config.add_source!(without_client)
+
+      expect { config.reload! }.to raise_error(Config::Validation::Error, /client: is missing/)
+    end
+  end
+
   example 'it reads IP in allow_list as an IPAddr class' do
     expect(Settings.internal_allow_ips).to all(
       be_an_instance_of(IPAddr)

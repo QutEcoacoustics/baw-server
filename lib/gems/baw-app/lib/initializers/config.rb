@@ -152,6 +152,14 @@ class BawConfigContract < Dry::Validation::Contract
     end
   }
 
+  ClientSchema = Dry::Schema.define {
+    required(:client).hash do
+      required(:host).filled(:string)
+      required(:port).maybe(:integer, gt?: 0)
+      required(:protocol).filled(included_in?: ['http', 'https'])
+    end
+  }
+
   DEPRECATIONS = [
     :api,
     :endpoints
@@ -169,7 +177,8 @@ class BawConfigContract < Dry::Validation::Contract
     BatchAnalysisSchema,
     OrganizationNames,
     AudioEventFileImport,
-    Authentication
+    Authentication,
+    ClientSchema
   ) do
     required(:trusted_proxies).array(BawApp::Types::IPAddr)
 
