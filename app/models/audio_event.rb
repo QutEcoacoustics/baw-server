@@ -476,7 +476,7 @@ class AudioEvent < ApplicationRecord
     field_suffix = "#{timezone_offset&.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+',
       '')}".parameterize.underscore
 
-    url_base = "http://#{Settings.host.name}/"
+    url_base = Settings.client_routes.home_url.to_s
 
     timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
     format_offset = timezone_offset.utc_offset.zero? ? 'Z' : field_suffix_offset
