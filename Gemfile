@@ -222,6 +222,8 @@ group :development do
 
   # a ruby language server
   gem 'ruby-lsp'
+  gem 'ruby-lsp-rspec', require: false
+
   # solargraph is so slow, we're moving away from it
   gem 'solargraph', '>= 0.56.1'
   gem 'solargraph-rails', '>= 0.3.1'
