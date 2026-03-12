@@ -414,7 +414,7 @@ class User < ApplicationRecord
                          user_hash[:preferences] = fresh_user.preferences
                        end
 
-                       user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin
+                       user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin || is_same_user
 
                        [item, user_hash]
                      },
