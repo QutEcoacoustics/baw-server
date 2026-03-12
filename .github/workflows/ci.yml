@@ -334,15 +334,16 @@ jobs:
 
       - name: Generate changelog
         env:
+          CI_IMAGE: ${{ steps.image.outputs.tag }}
+          CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_VERSION: ${{ needs.check_version.outputs.version }}
         run: |
-          gem install github_changelog_generator --version 1.16.4 --no-document
-          github_changelog_generator \
-            --user QutEcoacoustics \
-            --project baw-server \
-            --since-tag 2.0.1 \
-            --future-release ${{ needs.check_version.outputs.version }} \
-            --verbose
+          docker compose exec -T \
+            -e RAILS_ENV=development \
+            -e NEXT_VERSION \
+            -e CHANGELOG_GITHUB_TOKEN \
+            web rake changelog
 
       - name: Generate API docs
         env:
