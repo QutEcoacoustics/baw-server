@@ -64,4 +64,27 @@ describe 'Users' do
     expect_success
     expect(api_data).to include(contactable: User::CONSENT_NO)
   end
+
+  context 'for is_confirmed field' do
+    it 'is visible to admin when viewing another user' do
+      get "/user_accounts/#{reader_user.id}", **api_headers(admin_token)
+
+      expect_success
+      expect(api_data).to include(is_confirmed: be_in([true, false]))
+    end
+
+    it 'is visible to the user when viewing their own account' do
+      get "/user_accounts/#{reader_user.id}", **api_headers(reader_token)
+
+      expect_success
+      expect(api_data).to include(is_confirmed: be_in([true, false]))
+    end
+
+    it 'is not visible to another non-admin user' do
+      get "/user_accounts/#{reader_user.id}", **api_headers(writer_token)
+
+      expect_success
+      expect(api_data).not_to have_key(:is_confirmed)
+    end
+  end
 end
