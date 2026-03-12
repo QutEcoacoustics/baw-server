@@ -702,6 +702,8 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
+    ruby-lsp-rspec (0.1.29)
+      ruby-lsp (~> 0.26.0)
     ruby-prof (1.7.0)
     ruby-progressbar (1.13.0)
     ruby-vips (2.2.2)
@@ -947,6 +949,7 @@ DEPENDENCIES
   rubocop-rails
   rubocop-rspec
   ruby-lsp
+  ruby-lsp-rspec
   ruby-prof (>= 0.17.0)
   rubyzip (>= 3.0.0.alpha)
   sass-rails
