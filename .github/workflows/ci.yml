@@ -248,11 +248,54 @@ jobs:
         if: always()
         run: docker compose down
 
-  # Push release with version, changelog, docs, tag, and image (only on master branch and tags)
-  publish:
-    needs: [build, test, build_analysis_image]
+  # Determine whether a new release is needed based on conventional commits since the last tag.
+  # Dependabot and all chore: commits are excluded from triggering a release.
+  check_version:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || contains(github.ref, 'refs/tags/'))
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.actor != 'dependabot[bot]'
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.version.outputs.version_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Full history required so the version action can locate the last tag
+          fetch-depth: 0
+
+      - name: Calculate next version from conventional commits
+        id: version
+        uses: PaulHatch/semantic-version@f29500c9d60a99ed5168e39ee367e0976884c46e # v6.0.1
+        with:
+          # Match existing tag format (e.g. 14.8.0, not v14.8.0)
+          tag_prefix: ""
+          # Detect breaking changes via ! or BREAKING CHANGE:
+          major_pattern: "/!:|BREAKING CHANGE:/"
+          # Detect new features
+          minor_pattern: "/feat(\\(.+\\))?:/"
+          # Ignore chore(ci) and chore(deps) commits — dependabot updates are not release-worthy
+          ignore_commits_pattern: "/^chore/"
+          # Search commit body for BREAKING CHANGE footers
+          search_commit_body: true
+
+      - name: Determine if release is needed
+        id: check
+        run: |
+          if [ "${{ steps.version.outputs.version_type }}" != "none" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Push release with version, changelog, docs, tag, and image (only on master when a release is warranted)
+  publish:
+    needs: [build, test, build_analysis_image, check_version]
+    runs-on: ubuntu-latest
+    if: needs.check_version.result == 'success' && needs.check_version.outputs.should_release == 'true'
+
+    permissions:
+      contents: write
+      packages: write
 
     env:
       COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
@@ -278,18 +321,6 @@ jobs:
         id: analysis_image
         run: echo "tag=$(echo '${{ needs.build_analysis_image.outputs.image-tags }}' | head -n1)" >> $GITHUB_OUTPUT
 
-      - name: Calculate git describe
-        id: tagger
-        shell: pwsh
-        run: |
-          $result = @( git fetch --prune && git describe 'HEAD~' )
-          $last_line = $result[-1]
-          if ([string]::IsNullOrWhiteSpace($last_line)) {
-            Write-Output "failed to get git describe, result was: $result"
-            exit 1
-          }
-          echo "tag=$last_line" >> $env:GITHUB_OUTPUT
-
       - name: Fix permissions for bind mounts
         run: |
           sudo chown -R 1000:1000 .
@@ -306,6 +337,7 @@ jobs:
           CI_IMAGE: ${{ steps.image.outputs.tag }}
           CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_VERSION: ${{ needs.check_version.outputs.version }}
         run: docker compose exec -T web rake changelog
 
       - name: Generate API docs
@@ -323,15 +355,15 @@ jobs:
 
       - name: Set VERSION and commit changes
         run: |
-          echo "${{ steps.tagger.outputs.tag }}" > VERSION
+          echo "${{ needs.check_version.outputs.version }}" > VERSION
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Generated changelog and API docs for version ${{ steps.tagger.outputs.tag }}" -m "[skip ci]"
+          git commit -m "ci: generate changelog and API docs for ${{ needs.check_version.outputs.version }}" -m "[skip ci]"
 
       - name: Create and push tag
         run: |
-          git tag -a -m "Version ${{ steps.tagger.outputs.tag }}" "${{ steps.tagger.outputs.tag }}"
+          git tag -a -m "Version ${{ needs.check_version.outputs.version }}" "${{ needs.check_version.outputs.version }}"
           git push --follow-tags
 
       - name: Set up Docker Buildx
@@ -348,11 +380,20 @@ jobs:
         with:
           build-args: |
             trimmed=true
-            version=${{ steps.tagger.outputs.tag }}
+            version=${{ needs.check_version.outputs.version }}
           context: .
           push: true
-          tags: qutecoacoustics/workbench-server:${{ steps.tagger.outputs.tag }},qutecoacoustics/workbench-server:latest
+          tags: qutecoacoustics/workbench-server:${{ needs.check_version.outputs.version }},qutecoacoustics/workbench-server:latest
           labels: |
-             version=${{ steps.tagger.outputs.tag }}
+            org.opencontainers.image.title=Acoustic Workbench Server
+            org.opencontainers.image.description=The ecoacoustics workbench server. Manages the structure and metadata for environmental audio data.
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.check_version.outputs.version }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.vendor=Open Ecoacoustics
+            org.opencontainers.image.authors=Anthony Truskinger, Philip Eichinski, Andrew Schwenke, and contributors
+            org.opencontainers.image.licenses=Apache-2.0
           cache-from: type=gha
           cache-to: type=gha,mode=max
