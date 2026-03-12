@@ -338,7 +338,12 @@ jobs:
           CI_ANALYSIS_IMAGE: ${{ steps.analysis_image.outputs.tag }}
           CHANGELOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_VERSION: ${{ needs.check_version.outputs.version }}
-        run: docker compose exec -T web rake changelog
+        run: |
+          docker compose exec -T \
+            -e RAILS_ENV=development \
+            -e NEXT_VERSION \
+            -e CHANGELOG_GITHUB_TOKEN \
+            web rake changelog
 
       - name: Generate API docs
         env:
