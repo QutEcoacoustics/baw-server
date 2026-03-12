@@ -1,5 +1,25 @@
 # Changelog
 
+## [14.9.0](https://github.com/QutEcoacoustics/baw-server/tree/14.9.0) (2026-03-12)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.8.0...14.9.0)
+
+**Implemented enhancements:**
+
+- User confirmation status is not emitted on user accounts - even if you're the owner [\#923](https://github.com/QutEcoacoustics/baw-server/issues/923)
+
+**Fixed bugs:**
+
+- CI publish step [\#920](https://github.com/QutEcoacoustics/baw-server/issues/920)
+- Fix the CI [\#821](https://github.com/QutEcoacoustics/baw-server/issues/821)
+- analysis jobs mailer template urls direct users to API and not to front end client [\#709](https://github.com/QutEcoacoustics/baw-server/issues/709)
+- Analysis jobs: completed email sends faulty link [\#327](https://github.com/QutEcoacoustics/baw-server/issues/327)
+
+**Merged pull requests:**
+
+- Expose `is_confirmed` to users viewing their own account [\#924](https://github.com/QutEcoacoustics/baw-server/pull/924) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Fix CI publish step: OCI runtime error, permissions, conventional commits versioning, dependabot config, OCI labels, and add commitlint [\#921](https://github.com/QutEcoacoustics/baw-server/pull/921) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.8.0](https://github.com/QutEcoacoustics/baw-server/tree/14.8.0) (2026-03-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.7.1...14.8.0)
