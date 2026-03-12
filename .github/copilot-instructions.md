@@ -21,3 +21,7 @@ rails db:migrate && test-env rails db:migrate
 # and to rollback
 rails db:rollback && test-env rails db:rollback
 ```
+
+## Use conventional commits
+
+Use conventional commits for commit message formatting: https://www.conventionalcommits.org/en/v1.0.0/
