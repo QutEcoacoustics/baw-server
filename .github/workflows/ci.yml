@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Cached LFS checkout
-        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+        uses: nschloe/action-cached-lfs-checkout@v1.2.4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -94,7 +94,7 @@ jobs:
 
     steps:
       - name: Cached LFS checkout
-        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+        uses: nschloe/action-cached-lfs-checkout@v1.2.4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -142,7 +142,7 @@ jobs:
 
     steps:
       - name: Cached LFS checkout
-        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+        uses: nschloe/action-cached-lfs-checkout@v1.2.4
 
       - name: Download test bucket files
         uses: actions/download-artifact@v8
@@ -304,7 +304,7 @@ jobs:
 
     steps:
       - name: Cached LFS checkout
-        uses: nschloe/action-cached-lfs-checkout@v1.2.3
+        uses: nschloe/action-cached-lfs-checkout@v1.2.4
         with:
           fetch-depth: 200
 
