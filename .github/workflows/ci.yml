@@ -336,7 +336,7 @@ jobs:
 
       - name: Ensure gems are installed
         run: |
-          docker compose exec -T web -e RAILS_ENV=development bash -c 'bundle check || bundle install'
+          docker compose exec -T -e RAILS_ENV=development web bash -c 'bundle check || bundle install'
 
       - name: Generate changelog
         env:
