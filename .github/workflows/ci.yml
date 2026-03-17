@@ -6,8 +6,8 @@ on:
       - "swagger/**"
 
 env:
-  IMAGE_NAME: workbench-server
-  ANALYSIS_IMAGE_NAME: workbench-server-pbs
+  IMAGE_NAME: workbench-server-ci
+  ANALYSIS_IMAGE_NAME: workbench-server-pbs-ci
   DOCKER_BUILDKIT: 1
   REGISTRY: ghcr.io
   TEST_BUCKETS: 16
@@ -67,8 +67,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           flavor: |
             latest=false
+          labels: |
+            org.opencontainers.image.description=[DO NOT USE!] The acoustic workbench server for storing and managing ecoacoustic data. This is a CI caching artifact only and it contains test and development dependecies not suitable for production.
           tags: |
-            type=raw,value={{branch}}-{{sha}}
+            type=raw,value={{branch}}-{{sha}}-ci
             type=ref,event=pr
 
       - name: Build and push Docker image
@@ -113,8 +115,12 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.ANALYSIS_IMAGE_NAME }}
           flavor: |
             latest=false
+          labels: |
+            org.opencontainers.image.description=[DO NOT USE!] A PBS server and client used for testing PBS integration with the acoustic workbench server. This is a CI caching artifact only.
+            org.opencontainers.image.licenses=None
+            org.opencontainers.image.title=worbench-server-pbs
           tags: |
-            type=raw,value={{branch}}-{{sha}}
+            type=raw,value={{branch}}-{{sha}}-ci
             type=ref,event=pr
 
       - name: Build and push analysis test Docker image
@@ -368,7 +374,7 @@ jobs:
         run: |
           # we chowned all the files 😮‍💨
           # don't want to change them back though because we're about to build the container again in the following steps
-          setpriv --reuid=1000 --regid=1000 --clear-groups bash -c 'echo "${{ needs.check_version.outputs.version }}" > VERSION'
+          sudo setpriv --reuid=1000 --regid=1000 --clear-groups bash -c 'echo "${{ needs.check_version.outputs.version }}" > VERSION'
           echo "${{ needs.check_version.outputs.version }}" > VERSION
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
