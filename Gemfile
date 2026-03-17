@@ -203,7 +203,7 @@ gem 'config'
 # ASYNC JOBS
 # ------------------------------------
 gem 'redis', '~> 4.1'
-gem 'resque', '~> 2.5'
+gem 'resque', '~> 2.7'
 gem 'resque-job-stats'
 gem 'resque-scheduler'
 
