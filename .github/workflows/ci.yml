@@ -292,7 +292,8 @@ jobs:
         env:
           VERSION_INFO: ${{ toJSON(steps.version.outputs) }}
         run: |
-         echo "Version info: $VERSION_INFO" | jq 'del(.authors)'
+         echo "Version info:"
+         echo "$VERSION_INFO" | jq 'del(.authors)'
           if [ "${{ steps.version.outputs.version_type }}" != "none" ]; then
             echo "::notice::A release container will be published"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
