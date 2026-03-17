@@ -375,7 +375,6 @@ jobs:
           # we chowned all the files 😮‍💨
           # don't want to change them back though because we're about to build the container again in the following steps
           sudo setpriv --reuid=1000 --regid=1000 --clear-groups bash -c 'echo "${{ needs.check_version.outputs.version }}" > VERSION'
-          echo "${{ needs.check_version.outputs.version }}" > VERSION
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
