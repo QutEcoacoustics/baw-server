@@ -1,5 +1,29 @@
 # Changelog
 
+## [14.9.1](https://github.com/QutEcoacoustics/baw-server/tree/14.9.1) (2026-03-17)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.9.0...14.9.1)
+
+**Fixed bugs:**
+
+- CI: fix publish step [\#930](https://github.com/QutEcoacoustics/baw-server/issues/930)
+- Verify no links sent to users are aimed at rails sites [\#654](https://github.com/QutEcoacoustics/baw-server/issues/654)
+- Client-routes [\#922](https://github.com/QutEcoacoustics/baw-server/pull/922) ([andrew-1234](https://github.com/andrew-1234))
+
+**Merged pull requests:**
+
+- chore\(ci\): bump nschloe/action-cached-lfs-checkout from 1.2.3 to 1.2.4 [\#933](https://github.com/QutEcoacoustics/baw-server/pull/933) ([dependabot[bot]](https://github.com/apps/dependabot))
+- CI: fix publish step changelog generation [\#931](https://github.com/QutEcoacoustics/baw-server/pull/931) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- chore\(deps\): bump test-prof from 1.4.2 to 1.5.2 [\#929](https://github.com/QutEcoacoustics/baw-server/pull/929) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump resque from 2.6.0 to 2.7.0 [\#928](https://github.com/QutEcoacoustics/baw-server/pull/928) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump rubocop-rspec from 3.1.0 to 3.9.0 [\#927](https://github.com/QutEcoacoustics/baw-server/pull/927) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump actionview from 8.0.2 to 8.0.4 [\#926](https://github.com/QutEcoacoustics/baw-server/pull/926) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump debug from 1.9.2 to 1.11.1 [\#925](https://github.com/QutEcoacoustics/baw-server/pull/925) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/metadata-action from 5 to 6 [\#919](https://github.com/QutEcoacoustics/baw-server/pull/919) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/build-push-action from 5 to 7 [\#918](https://github.com/QutEcoacoustics/baw-server/pull/918) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/setup-buildx-action from 3 to 4 [\#916](https://github.com/QutEcoacoustics/baw-server/pull/916) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 3 to 4 [\#914](https://github.com/QutEcoacoustics/baw-server/pull/914) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [14.9.0](https://github.com/QutEcoacoustics/baw-server/tree/14.9.0) (2026-03-12)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.8.0...14.9.0)
