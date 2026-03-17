@@ -133,7 +133,7 @@ gem 'recaptcha', require: 'recaptcha/rails'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
 gem 'cancancan', '> 3'
-gem 'devise', '~> 4.9.4'
+gem 'devise', '~> 5.0.3'
 gem 'devise-i18n'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
