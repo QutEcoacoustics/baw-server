@@ -289,9 +289,12 @@ jobs:
       - name: Determine if release is needed
         id: check
         run: |
+         echo "${{ steps.version.outputs}}"
           if [ "${{ steps.version.outputs.version_type }}" != "none" ]; then
+            echo "::notice::A release container will be published"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
           else
+            echo "::notice::A release will container will NOT be published"
             echo "should_release=false" >> "$GITHUB_OUTPUT"
           fi
 
