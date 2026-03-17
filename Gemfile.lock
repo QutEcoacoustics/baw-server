@@ -519,9 +519,9 @@ GEM
     parser (3.3.10.2)
       ast (~> 2.4.1)
       racc
-    passenger (6.0.23)
+    passenger (6.0.26)
       rack (>= 1.6.13)
-      rackup
+      rackup (>= 2.0.0)
       rake (>= 12.3.3)
     patience_diff (1.2.0)
       optimist (~> 3.0)
@@ -605,7 +605,7 @@ GEM
       tsort (>= 0.2)
       zeitwerk (~> 2.6)
     rainbow (3.1.1)
-    rake (13.3.0)
+    rake (13.3.1)
     rb-fsevent (0.11.2)
     rb-inotify (0.11.1)
       ffi (~> 1.0)
