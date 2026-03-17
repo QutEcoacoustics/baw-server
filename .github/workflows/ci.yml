@@ -64,7 +64,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}//${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
           labels: |
