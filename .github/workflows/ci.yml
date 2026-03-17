@@ -274,6 +274,8 @@ jobs:
       - name: Calculate next version from conventional commits
         id: version
         uses: PaulHatch/semantic-version@f29500c9d60a99ed5168e39ee367e0976884c46e # v6.0.1
+        env:
+          ACTIONS_STEP_DEBUG: true
         with:
           # Match existing tag format (e.g. 14.8.0, not v14.8.0)
           tag_prefix: ""
@@ -286,11 +288,14 @@ jobs:
           ignore_commits_pattern: "/^(ci|chore)/"
           # Search commit body for BREAKING CHANGE footers
           search_commit_body: true
+          debug: true
 
       - name: Determine if release is needed
         id: check
+        env:
+          VERSION_INFO: ${{ toJSON(steps.version.outputs) }}
         run: |
-         echo "${{ toJSON(steps.version.outputs) }}"
+         echo "Version info: $VERSION_INFO"
           if [ "${{ steps.version.outputs.version_type }}" != "none" ]; then
             echo "::notice::A release container will be published"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
