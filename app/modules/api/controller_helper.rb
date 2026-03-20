@@ -306,6 +306,23 @@ module Api
       params.permit!
     end
 
+    def api_filter_params_filter_only!
+      if params.key?(:paging) || params.key?(:sort) || params.key?(:projection)
+        raise CustomErrors::UnprocessableEntityError,
+          'Paging, sorting, and projection parameters are not allowed in group by requests.'
+      end
+
+      api_filter_params_filter_only
+    end
+
+    def api_filter_params_filter_only
+      api_filter_params.to_h.slice(:filter)
+    end
+
+    def api_options_params
+      params.require(:options)
+    end
+
     # Filter out only paging parameters from the request.
     # Used in endpoints that are not standard but still need paging.
     # @param [Hash] route_parameters - additional route parameters to include in
