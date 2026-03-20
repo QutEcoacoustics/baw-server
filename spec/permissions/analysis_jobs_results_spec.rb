@@ -22,10 +22,12 @@
     describe "permissions for #{action}" do
       # override the default :index and :show actions to change the assertions
       # directory listing (this is equivalent to :index)
-      with_custom_action(:index, path: '', verb: :get, expect: -> { expect_data_is_hash })
+      with_custom_action(:index, path: '', verb: :get, expect: lambda { |_user, _action|
+        expect_data_is_hash
+      })
       # file blob (this is equivalent to :show)
-      with_custom_action(:show, path: '/Test1/Test2/test-CASE.csv', verb: :get, expect: lambda {
-        expect_binary_response('text/csv')
+      with_custom_action(:show, path: '/Test1/Test2/test-CASE.csv', verb: :get, expect: lambda { |_user, _action|
+        expect_binary_response(mime: 'text/csv')
       })
 
       items_reading = Set[:index, :show]

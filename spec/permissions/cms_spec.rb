@@ -17,12 +17,12 @@ describe 'CMS permissions' do
   end
 
   custom_index = { path: '', verb: :get, expect: lambda { |_user, _action|
-    expect(api_response).to include({
+    expect(api_result).to include({
       slug: 'index'
     })
   }, action: :index }
   custom_show = { path: '{cms_path}', verb: :get, expect: lambda { |_user, _action|
-    expect(api_response).to include({
+    expect(api_result).to include({
       slug: 'credits'
     })
   }, action: :show }

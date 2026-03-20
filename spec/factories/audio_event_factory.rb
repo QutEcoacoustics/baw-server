@@ -78,6 +78,17 @@ FactoryBot.define do
       end
     end
 
+    # using a specific tag
+    trait :using_tag do
+      transient { tag { nil } }
+      after(:create) do |audio_event, evaluator|
+        raise ArgumentError, 'tag must be provided for :using_tag trait' if evaluator.tag.nil?
+
+        create(:tagging, tag: evaluator.tag, audio_event: audio_event, creator: evaluator.creator)
+      end
+    end
+
+    factory :audio_event_using_tag, traits: [:using_tag]
     factory :audio_event_with_tags, traits: [:with_tags]
     factory :audio_event_with_comments, traits: [:with_comments]
     factory :audio_event_with_tags_and_comments, traits: [:with_tags, :with_comments]

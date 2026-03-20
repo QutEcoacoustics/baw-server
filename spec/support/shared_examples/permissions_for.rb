@@ -88,7 +88,7 @@ RSpec.shared_examples 'permissions for' do |options|
       expect_id_matches(route_params[:id])
     when :list
       expect_has_ids(get_expected_list_items(user, action))
-    when is_a?(Proc)
+    when Proc
       instance_exec(user, action, &expect)
     end
   end
