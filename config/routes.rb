@@ -859,6 +859,9 @@ Rails.application.routes.draw do
   # progress events
   resources :progress_events, defaults: { format: 'json' }, concerns: [:filterable]
 
+  # reporting routes
+  post 'reports/tag_accumulation', to: 'reports#tag_accumulation', defaults: { format: 'json' }
+
   # route to the home page of site
   root to: 'public#index'
 

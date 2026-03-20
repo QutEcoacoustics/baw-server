@@ -18,8 +18,8 @@ describe 'Stats permissions' do
   end
 
   with_custom_action(:index, path: '', verb: :get, expect: lambda { |_user, _action|
-    expect(api_response).to include({
-      summary: a_hash
+    expect(api_data).to include({
+      summary: a_kind_of(Hash)
     })
   })
 

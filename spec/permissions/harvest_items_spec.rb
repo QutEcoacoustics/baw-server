@@ -39,8 +39,8 @@ describe 'Harvest items permissions (nested)' do
     path: '',
     verb: :get,
     expect: lambda { |_user, _action|
-      expect(api_response).to include({
-        summary: a_hash
+      expect(api_result).to include({
+        data: a_kind_of(Array)
       })
     }
   )
@@ -114,8 +114,8 @@ describe 'Harvest items permissions (shallow)' do
     path: '',
     verb: :get,
     expect: lambda { |_user, _action|
-      expect(api_response).to include({
-        summary: a_hash
+      expect(api_result).to include({
+        data: a_kind_of(Array)
       })
     }
   )

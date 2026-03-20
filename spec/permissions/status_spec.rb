@@ -18,7 +18,7 @@ describe 'Status permissions' do
   end
 
   with_custom_action(:index, path: '', verb: :get, expect: lambda { |_user, _action|
-    expect(api_response).to include({ status: 'good' })
+    expect(api_result).to include({ status: 'good' })
   })
 
   ensures :admin, :owner, :writer, :reader, :no_access, :harvester, :anonymous,

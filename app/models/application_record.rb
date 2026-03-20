@@ -29,4 +29,26 @@ class ApplicationRecord < ActiveRecord::Base
     scope ||= self
     attributes.keys.zip(scope.pick(*attributes.values)).to_h
   end
+
+  # Sometimes want to execute a generated SQL query that is related to a model,
+  # but the return type is so different that we don't want to cast it into any
+  # particular ActiveRecord model.
+  # This method is similar to exec_query but uses type hints from postgres to
+  # cast result values into primitive types
+  # @param query [#to_sql] e.g. Arel::SelectManager, ActiveRecord::Relation
+  # @return [Array<Hash>]
+  def self.exec_query_casted(query)
+    # We're intentionally not doing a filter query or an active record query here.
+    # The goal is speed and efficiency
+    connection_pool.with_connection do |connection|
+      connection.exec_query(query.to_sql) => result
+      # This is icky. What happens in real rails code is the ActiveRecord::Result
+      # object is consumed by ActiveRecord::Base.instantiate which turns takes
+      # in rows of untyped results and column types turns them into model objects.
+      columns = result.columns.map(&:to_sym)
+      result.cast_values.map do |row|
+        columns.zip(row).to_h
+      end
+    end
+  end
 end

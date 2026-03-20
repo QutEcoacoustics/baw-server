@@ -104,7 +104,7 @@ describe 'audio_events/group_by', type: :request do
         run_test! do
           expect_error(
             :unprocessable_entity,
-            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by requests.'
+            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
       end
@@ -115,7 +115,7 @@ describe 'audio_events/group_by', type: :request do
         run_test! do
           expect_error(
             :unprocessable_entity,
-            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by requests.'
+            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
       end
@@ -126,7 +126,7 @@ describe 'audio_events/group_by', type: :request do
         run_test! do
           expect_error(
             :unprocessable_entity,
-            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by requests.'
+            'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
       end

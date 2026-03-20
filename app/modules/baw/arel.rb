@@ -32,6 +32,24 @@ module Baw
       ::Arel::Nodes::BindParam.new(value)
     end
 
+    # PostgreSQL generate_series(start, stop, step)
+    # @return [::Arel::Nodes::NamedFunction]
+    def generate_series(start, stop, step)
+      ::Arel::Nodes::NamedFunction.new('generate_series', [start, stop, step])
+    end
+
+    # PostgreSQL date_trunc(field, source)
+    # @return [::Arel::Nodes::NamedFunction]
+    def date_trunc(field, source)
+      ::Arel::Nodes::NamedFunction.new('date_trunc', [::Arel::Nodes.build_quoted(field), source])
+    end
+
+    # PostgreSQL tsrange(lower, upper, bounds)
+    # @return [::Arel::Nodes::NamedFunction]
+    def tsrange(lower, upper, bounds = '[)')
+      ::Arel::Nodes::NamedFunction.new('tsrange', [lower, upper, ::Arel::Nodes.build_quoted(bounds)])
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.

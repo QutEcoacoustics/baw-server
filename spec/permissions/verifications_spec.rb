@@ -106,25 +106,26 @@ describe 'Verification permissions (shallow)' do
     end
   end
 
+  let(:another_verification) {
+    {
+      confirmed: Verification::CONFIRMATION_TRUE,
+      audio_event_id: audio_event.id,
+      tag_id: create(:tag).id
+    }
+  }
+
   with_custom_action(
     :create_or_update,
     path: '',
     verb: :put,
     body: lambda {
-      [{
-        'verification' => {
-          confirmed: Verification::CONFIRMATION_TRUE,
-          audio_event_id: audio_event.id,
-          tag_id: create(:tag).id
-        }
-      }, :json]
+      [{ 'verification' => another_verification }, :json]
     },
     expect: lambda { |_user, _action|
-      expect(api_response).to include({
-        summary: a_hash
-      })
+      expect(api_data).to match(a_hash_including(another_verification))
     }
   )
+
   # `writer` user SHOULD be able to DELETE (because they are the verification creator)
   # `writer` user SHOULD be able to PUT (update) (because they are the verification creator)
   the_users :admin, :writer, can_do: everything

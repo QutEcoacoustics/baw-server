@@ -23,7 +23,7 @@ describe AudioEvents::GroupByController do
       path: 'sites',
       verb: :get,
       expect: lambda { |_user, _action|
-        expect(api_response).to include(:data)
+        expect(api_result).to include(:data)
       }
     )
 
