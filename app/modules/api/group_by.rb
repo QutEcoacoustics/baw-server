@@ -27,19 +27,6 @@ module Api
 
     private
 
-    def api_filter_params_filter_only!
-      if params.key?(:paging) || params.key?(:sort) || params.key?(:projection)
-        raise CustomErrors::UnprocessableEntityError,
-          'Paging, sorting, and projection parameters are not allowed in group by requests.'
-      end
-
-      api_filter_params_filter_only
-    end
-
-    def api_filter_params_filter_only
-      api_filter_params.to_h.slice(:filter)
-    end
-
     def group_cte_table
       @group_cte_table ||= Arel::Table.new(:grouped_table)
     end
@@ -94,16 +81,7 @@ module Api
 
       # We're intentionally not doing a filter query or an active record query here.
       # The goal is speed and efficiency
-      parent.model.connection_pool.with_connection do |connection|
-        connection.exec_query(grouped_query.to_sql) => result
-        # This is icky. What happens in real rails code is the ActiveRecord::Result
-        # object is consumed by ActiveRecord::Base.instantiate which turns takes
-        # in rows of untyped results and column types turns them into model objects.
-        columns = result.columns.map(&:to_sym)
-        result.cast_values.map do |row|
-          columns.zip(row).to_h
-        end
-      end => results
+      results = parent.model.exec_query_casted(grouped_query)
 
       [results, opts]
     end

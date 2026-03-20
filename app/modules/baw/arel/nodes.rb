@@ -63,8 +63,8 @@ module Baw
       end
 
       class MakeInterval < NamedFunctionWithNamedArguments
-        def initialize(years: nil, months: nil, days: nil, hours: nil, minutes: nil, seconds: nil)
-          args = { years:, months:, days:, hours:, mins: minutes, secs: seconds }.compact
+        def initialize(years: nil, months: nil, weeks: nil, days: nil, hours: nil, minutes: nil, seconds: nil)
+          args = { years:, months:, weeks:, days:, hours:, mins: minutes, secs: seconds }.compact
 
           raise ArgumentError, 'At least one argument must be supplied' if args.empty?
 
