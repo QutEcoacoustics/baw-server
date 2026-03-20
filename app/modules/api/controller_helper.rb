@@ -309,7 +309,7 @@ module Api
     def api_filter_params_filter_only!
       if params.key?(:paging) || params.key?(:sort) || params.key?(:projection)
         raise CustomErrors::UnprocessableEntityError,
-          'Paging, sorting, and projection parameters are not allowed in group by requests.'
+          'Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
       end
 
       api_filter_params_filter_only

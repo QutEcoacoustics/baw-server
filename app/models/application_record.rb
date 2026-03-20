@@ -38,8 +38,6 @@ class ApplicationRecord < ActiveRecord::Base
   # @param query [#to_sql] e.g. Arel::SelectManager, ActiveRecord::Relation
   # @return [Array<Hash>]
   def self.exec_query_casted(query)
-    # ! Refactor into a common method
-    #
     # We're intentionally not doing a filter query or an active record query here.
     # The goal is speed and efficiency
     connection_pool.with_connection do |connection|

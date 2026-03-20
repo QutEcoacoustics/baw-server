@@ -20,7 +20,7 @@ describe 'reports/tag_accumulation' do
   }
 
   context('with bucket size of day') do
-    it 'returns the correct buckets and ccounts' do
+    it 'returns the correct buckets and counts' do
       body = {
         options: { bucket_size: 'day' },
         filter: {}
