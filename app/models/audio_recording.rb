@@ -128,15 +128,18 @@ class AudioRecording < ApplicationRecord
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: { only_integer: true, greater_than: 0 }
   # file hash validations
-  # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
-  validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
+  # on create, ensure present, unique, starts with 'SHA256::', and exactly 72 chars
+  # case_sensitive is true (default) so Rails does not wrap the column in LOWER(), which would prevent index usage.
+  # Normalization (lowercasing the hash value) is handled by the normalize_file_hash before_validation callback.
+  validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :create
   # on update would usually be the same, but for the audio check this needs to ignore
-  validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
+  validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :update, unless: :missing_hash_value?
 
+  before_validation :normalize_file_hash
   after_initialize :set_uuid
 
   # postgres-specific
@@ -548,6 +551,17 @@ class AudioRecording < ApplicationRecord
 
   def missing_hash_value?
     file_hash == "SHA256#{HASH_TOKEN}"
+  end
+
+  # Normalizes the file_hash before validation by lowercasing the hash value (the part after the protocol prefix).
+  # This ensures the uniqueness check is case-sensitive and can use the database index without LOWER() wrapping.
+  def normalize_file_hash
+    return if file_hash.blank?
+
+    parts = file_hash.split(HASH_TOKEN, 2)
+    return unless parts.length == 2
+
+    self.file_hash = "#{parts[0]}#{HASH_TOKEN}#{parts[1].downcase}"
   end
 
   # Results in:

@@ -198,7 +198,7 @@ describe AudioRecording do
 
     it { is_expected.to validate_presence_of(:file_hash) }
     it { is_expected.to validate_length_of(:file_hash).is_equal_to(72) }
-    it { is_expected.to validate_uniqueness_of(:file_hash).case_insensitive.on(:create) }
+    it { is_expected.to validate_uniqueness_of(:file_hash).on(:create) }
     it { is_expected.not_to allow_value('a' * 72).for(:file_hash) }
 
     # .with_predicates(true).with_multiple(false)
@@ -507,6 +507,42 @@ describe AudioRecording do
       ar = build(:audio_recording, file_hash: 'SHA256::abc::123')
       ar.split_file_hash
     }.to raise_error(RuntimeError, 'Invalid file hash detected (more than one "::" found)')
+  end
+
+  describe 'file_hash normalization' do
+    it 'lowercases the hash value before validation' do
+      uppercase_hash = 'SHA256::' + ('A' * 64)
+      ar = build(:audio_recording, file_hash: uppercase_hash)
+      ar.validate
+
+      expect(ar.file_hash).to eq('SHA256::' + ('a' * 64))
+      expect(ar).to be_valid
+    end
+
+    it 'keeps the protocol prefix unchanged' do
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('a' * 64))
+      ar.validate
+
+      expect(ar.file_hash).to start_with('SHA256::')
+    end
+
+    it 'does not modify a blank file_hash' do
+      ar = build(:audio_recording, file_hash: nil)
+      ar.validate
+
+      expect(ar.file_hash).to be_nil
+    end
+
+    it 'rejects a duplicate hash that differs only in case' do
+      hash_value = 'SHA256::' + ('a' * 64)
+      create(:audio_recording, file_hash: hash_value)
+
+      # Provide the same hash in uppercase — normalisation should lowercase it, making it a duplicate
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('A' * 64))
+      ar.validate
+
+      expect(ar.errors[:file_hash]).not_to be_empty
+    end
   end
 
   it 'can return a canonical filename for an audio recording' do
