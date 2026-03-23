@@ -509,39 +509,28 @@ describe AudioRecording do
     }.to raise_error(RuntimeError, 'Invalid file hash detected (more than one "::" found)')
   end
 
-  describe 'file_hash normalization' do
-    it 'lowercases the hash value before validation' do
-      uppercase_hash = 'SHA256::' + ('A' * 64)
-      ar = build(:audio_recording, file_hash: uppercase_hash)
-      ar.validate
-
-      expect(ar.file_hash).to eq('SHA256::' + ('a' * 64))
-      expect(ar).to be_valid
-    end
-
-    it 'keeps the protocol prefix unchanged' do
+  describe 'file_hash lowercase validation' do
+    it 'accepts a hash value that is already lowercase' do
       ar = build(:audio_recording, file_hash: 'SHA256::' + ('a' * 64))
       ar.validate
 
-      expect(ar.file_hash).to start_with('SHA256::')
+      expect(ar.errors[:file_hash]).to be_empty
     end
 
-    it 'does not modify a blank file_hash' do
-      ar = build(:audio_recording, file_hash: nil)
-      ar.validate
-
-      expect(ar.file_hash).to be_nil
-    end
-
-    it 'rejects a duplicate hash that differs only in case' do
-      hash_value = 'SHA256::' + ('a' * 64)
-      create(:audio_recording, file_hash: hash_value)
-
-      # Provide the same hash in uppercase — normalisation should lowercase it, making it a duplicate
+    it 'rejects a hash value with uppercase characters' do
       ar = build(:audio_recording, file_hash: 'SHA256::' + ('A' * 64))
       ar.validate
 
       expect(ar.errors[:file_hash]).not_to be_empty
+      expect(ar.errors[:file_hash]).to include('hash value must be lowercase hex')
+    end
+
+    it 'rejects a mixed-case hash value' do
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('aAbBcCdD' * 8))
+      ar.validate
+
+      expect(ar.errors[:file_hash]).not_to be_empty
+      expect(ar.errors[:file_hash]).to include('hash value must be lowercase hex')
     end
   end
 

@@ -128,18 +128,23 @@ class AudioRecording < ApplicationRecord
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: { only_integer: true, greater_than: 0 }
   # file hash validations
-  # on create, ensure present, unique, starts with 'SHA256::', and exactly 72 chars
+  # on create, ensure present, unique, starts with 'SHA256::', exactly 72 chars, and hash value is lowercase.
   # case_sensitive is true (default) so Rails does not wrap the column in LOWER(), which would prevent index usage.
-  # Normalization (lowercasing the hash value) is handled by the normalize_file_hash before_validation callback.
+  # Callers must supply a pre-lowercased hash value; we validate rather than silently normalize.
   validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :create
+  validates :file_hash,
+    format: { with: /\ASHA256#{HASH_TOKEN}[a-f0-9]{64}\z/, message: 'hash value must be lowercase hex' },
+    on: :create, allow_blank: true
   # on update would usually be the same, but for the audio check this needs to ignore
   validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :update, unless: :missing_hash_value?
+  validates :file_hash,
+    format: { with: /\ASHA256#{HASH_TOKEN}[a-f0-9]{64}\z/, message: 'hash value must be lowercase hex' },
+    on: :update, unless: :missing_hash_value?, allow_blank: true
 
-  before_validation :normalize_file_hash
   after_initialize :set_uuid
 
   # postgres-specific
@@ -551,17 +556,6 @@ class AudioRecording < ApplicationRecord
 
   def missing_hash_value?
     file_hash == "SHA256#{HASH_TOKEN}"
-  end
-
-  # Normalizes the file_hash before validation by lowercasing the hash value (the part after the protocol prefix).
-  # This ensures the uniqueness check is case-sensitive and can use the database index without LOWER() wrapping.
-  def normalize_file_hash
-    return if file_hash.blank?
-
-    parts = file_hash.split(HASH_TOKEN, 2)
-    return unless parts.length == 2
-
-    self.file_hash = "#{parts[0]}#{HASH_TOKEN}#{parts[1].downcase}"
   end
 
   # Results in:
