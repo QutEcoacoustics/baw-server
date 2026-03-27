@@ -198,7 +198,7 @@ describe AudioRecording do
 
     it { is_expected.to validate_presence_of(:file_hash) }
     it { is_expected.to validate_length_of(:file_hash).is_equal_to(72) }
-    it { is_expected.to validate_uniqueness_of(:file_hash).case_insensitive.on(:create) }
+    it { is_expected.to validate_uniqueness_of(:file_hash).on(:create) }
     it { is_expected.not_to allow_value('a' * 72).for(:file_hash) }
 
     # .with_predicates(true).with_multiple(false)
@@ -507,6 +507,31 @@ describe AudioRecording do
       ar = build(:audio_recording, file_hash: 'SHA256::abc::123')
       ar.split_file_hash
     }.to raise_error(RuntimeError, 'Invalid file hash detected (more than one "::" found)')
+  end
+
+  describe 'file_hash lowercase validation' do
+    it 'accepts a hash value that is already lowercase' do
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('a' * 64))
+      ar.validate
+
+      expect(ar.errors[:file_hash]).to be_empty
+    end
+
+    it 'rejects a hash value with uppercase characters' do
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('A' * 64))
+      ar.validate
+
+      expect(ar.errors[:file_hash]).not_to be_empty
+      expect(ar.errors[:file_hash]).to include('hash value must be lowercase hex')
+    end
+
+    it 'rejects a mixed-case hash value' do
+      ar = build(:audio_recording, file_hash: 'SHA256::' + ('aAbBcCdD' * 8))
+      ar.validate
+
+      expect(ar.errors[:file_hash]).not_to be_empty
+      expect(ar.errors[:file_hash]).to include('hash value must be lowercase hex')
+    end
   end
 
   it 'can return a canonical filename for an audio recording' do

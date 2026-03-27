@@ -128,14 +128,22 @@ class AudioRecording < ApplicationRecord
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: { only_integer: true, greater_than: 0 }
   # file hash validations
-  # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
-  validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
+  # on create, ensure present, unique, starts with 'SHA256::', exactly 72 chars, and hash value is lowercase.
+  # case_sensitive is true (default) so Rails does not wrap the column in LOWER(), which would prevent index usage.
+  # Callers must supply a pre-lowercased hash value; we validate rather than silently normalize.
+  validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :create
+  validates :file_hash,
+    format: { with: /\ASHA256#{HASH_TOKEN}[a-f0-9]{64}\z/, message: 'hash value must be lowercase hex' },
+    on: :create, allow_blank: true
   # on update would usually be the same, but for the audio check this needs to ignore
-  validates :file_hash, presence: true, uniqueness: { case_sensitive: false }, length: { is: 72 },
+  validates :file_hash, presence: true, uniqueness: true, length: { is: 72 },
     format: { with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash" },
     on: :update, unless: :missing_hash_value?
+  validates :file_hash,
+    format: { with: /\ASHA256#{HASH_TOKEN}[a-f0-9]{64}\z/, message: 'hash value must be lowercase hex' },
+    on: :update, unless: :missing_hash_value?, allow_blank: true
 
   after_initialize :set_uuid
 
