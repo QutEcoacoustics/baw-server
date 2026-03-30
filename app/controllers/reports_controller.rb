@@ -4,6 +4,32 @@ class ReportsController < ApplicationController
   include Api::ControllerHelper
   include Api::Reporting
 
+  # POST /reports/tag_frequency
+  # Returns a structured report of tag frequencies over time buckets.
+  # Accepts a filter object where:
+  #   the `filter` is applied to audio events
+  #   the `paging`, `sort` and `projection` options are invalid
+  # Accepts an `options` object where:
+  #   `bucket_size` (required) interval for bucket aggregation
+  def tag_frequency
+    do_authorize_class(:filter, AudioEvent)
+
+    base_query = Access::ByPermissionTable.audio_events(current_user, level: Access::Permission::READER)
+
+    projections = {
+      events: TagFrequency.tag_frequency,
+      total_events_in_bucket: TagFrequency.window_bucket_count # *events with tags
+    }
+
+    results, opts = execute_report(
+      base_query:,
+      template: TagFrequency.new(report_options),
+      projections:
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/tag_accumulation
   # Returns a structured report of cumulative unique tag counts over time buckets.
   # Accepts a filter object where:
