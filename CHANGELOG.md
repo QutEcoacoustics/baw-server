@@ -1,5 +1,21 @@
 # Changelog
 
+## [14.10.0](https://github.com/QutEcoacoustics/baw-server/tree/14.10.0) (2026-03-31)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.9.1...14.10.0)
+
+**Implemented enhancements:**
+
+- CI: clean up old CI images [\#935](https://github.com/QutEcoacoustics/baw-server/issues/935)
+- feat: add reporting module and tag\_accumulation endpoint [\#944](https://github.com/QutEcoacoustics/baw-server/pull/944) ([andrew-1234](https://github.com/andrew-1234))
+
+**Merged pull requests:**
+
+- chore\(deps\): bump passenger from 6.0.23 to 6.0.26 [\#937](https://github.com/QutEcoacoustics/baw-server/pull/937) ([dependabot[bot]](https://github.com/apps/dependabot))
+- feat\(ci\): monthly cleanup workflow for stale CI container images [\#936](https://github.com/QutEcoacoustics/baw-server/pull/936) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- chore\(deps\): bump rexml from 3.4.1 to 3.4.2 [\#934](https://github.com/QutEcoacoustics/baw-server/pull/934) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump rack from 3.1.16 to 3.2.5 [\#932](https://github.com/QutEcoacoustics/baw-server/pull/932) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [14.9.1](https://github.com/QutEcoacoustics/baw-server/tree/14.9.1) (2026-03-17)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.9.0...14.9.1)
