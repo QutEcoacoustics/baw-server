@@ -89,7 +89,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -100,7 +100,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -111,7 +111,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -122,7 +122,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: options'
           )
         end
@@ -138,7 +138,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: options'
           )
         end
@@ -154,7 +154,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: bucket_size'
           )
         end
