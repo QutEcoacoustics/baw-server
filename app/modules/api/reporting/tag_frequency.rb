@@ -10,7 +10,8 @@ module Api
       include CteHelper
 
       EVENTS = Arel::Table.new(:filtered_events)
-      DISTINCT_TAGS = Arel::Table.new(:distinct_tags)
+      TAGS_PER_BUCKET = Arel::Table.new(:event_buckets)
+      BUCKETS_JOINED = Arel::Table.new(:count_tags)
 
       # @param options [Hash]
       # @option options [String] :bucket_size required
@@ -23,31 +24,23 @@ module Api
       def call(query)
         query = query.joins(joins)
 
-        # count events per bucket per tag:
-        Arel::SelectManager.new
-          .project(
-            Bucketer::BUCKETS[:bucket].as('bucket'),
-            DISTINCT_TAGS[:tag_id]
-          )
+        BUCKETS_JOINED
+          .project(BUCKETS_JOINED[:bucket])
           .with(*ctes(query:))
-          .from(Bucketer::BUCKETS)
-          .join(DISTINCT_TAGS).on(Arel.sql('true'))
-          .join(EVENTS, Arel::Nodes::OuterJoin)
-          .on(EVENTS[:tag_id].eq(DISTINCT_TAGS[:tag_id])
-            .and(Bucketer::BUCKETS[:bucket].contains(EVENTS[:start_at])))
-          .group(Bucketer::BUCKETS[:bucket], DISTINCT_TAGS[:tag_id])
-          .order(Bucketer::BUCKETS[:bucket], DISTINCT_TAGS[:tag_id])
+          .group(BUCKETS_JOINED[:bucket])
+          .order(BUCKETS_JOINED[:bucket])
       end
 
-      # project total count of events with tags per bucket. Used to calculate % of events with each tag.
-      def self.window_bucket_count
-        window = Arel::Nodes::Window.new.partition(Bucketer::BUCKETS[:bucket])
-        window_bucket_count = EVENTS[:tag_id].count.sum.over(window)
-      end
-
-      # Arel expression to project tag frequency
-      def self.tag_frequency
-        EVENTS[:tag_id].count
+      # Arel expression for a JSON array of tag_id and event count pairs,
+      # coalescing to an empty array for null tags.
+      def self.tag_frequency_array
+        Arel.json({
+          tag_id: BUCKETS_JOINED[:tag_id],
+          events: BUCKETS_JOINED[:events]
+        })
+          .group
+          .filter(BUCKETS_JOINED[:tag_id].is_not_null)
+          .coalesce('[]')
       end
 
       private
@@ -58,7 +51,8 @@ module Api
         [
           cte(EVENTS, events_cte(query)),
           *@bucketer.bucket_ctes(events_table: EVENTS),
-          cte(DISTINCT_TAGS, distinct_tags_cte)
+          cte(TAGS_PER_BUCKET, tags_per_bucket_cte),
+          cte(BUCKETS_JOINED, buckets_joined)
         ]
       end
 
@@ -72,8 +66,35 @@ module Api
           ).arel
       end
 
-      def distinct_tags_cte
-        EVENTS.project(EVENTS[:tag_id].distinct)
+      # To get tag frequency per bucket, we first aggregate events by bucket and tag_id,
+      # which allows a join to the final bucket series based on bucket
+      # equality in the next CTE, `buckets_joined`.
+      def tags_per_bucket_cte
+        EVENTS.project(
+          EVENTS[:tag_id],
+          Arel.star.count.as('events'),
+          bucket.as('event_bucket')
+        ).group(bucket, EVENTS[:tag_id])
+      end
+
+      def buckets_joined
+        Bucketer::BUCKETS
+          .project(
+            Bucketer::BUCKETS[:bucket],
+            TAGS_PER_BUCKET[:tag_id],
+            TAGS_PER_BUCKET[:events]
+          )
+          .join(TAGS_PER_BUCKET, Arel::Nodes::OuterJoin)
+          .on(TAGS_PER_BUCKET[:event_bucket].eq(Bucketer::BUCKETS[:bucket]))
+      end
+
+      # Replicating the bucket calculation from Bucketer by using date_trunc instead of generate_series
+      def bucket
+        Arel.tsrange(
+          Arel.date_trunc(@bucketer.options.bucket_size, EVENTS[:start_at]),
+          Arel.date_trunc(@bucketer.options.bucket_size,
+            EVENTS[:start_at]) + @bucketer.options.interval_arel
+        )
       end
     end
   end

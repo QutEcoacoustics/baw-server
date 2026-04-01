@@ -17,8 +17,7 @@ class ReportsController < ApplicationController
     base_query = Access::ByPermissionTable.audio_events(current_user, level: Access::Permission::READER)
 
     projections = {
-      events: TagFrequency.tag_frequency,
-      total_events_in_bucket: TagFrequency.window_bucket_count # *events with tags
+      tags: TagFrequency.tag_frequency_array
     }
 
     results, opts = execute_report(

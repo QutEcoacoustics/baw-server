@@ -32,18 +32,10 @@ describe 'reports/tag_frequency' do
     let(:expected_buckets) do
       rec1, rec2, rec3, rec4 = recordings.map { |recording| recording.recorded_date.utc.at_beginning_of_day }
       [
-        { bucket: [rec1, rec1 + period], tag_id: tags[0].id, events: 1, total_events_in_bucket: 2.0 },
-        { bucket: [rec1, rec1 + period], tag_id: tags[1].id, events: 1, total_events_in_bucket: 2.0 },
-        { bucket: [rec1, rec1 + period], tag_id: tags[2].id, events: 0, total_events_in_bucket: 2.0 },
-        { bucket: [rec2, rec2 + period], tag_id: tags[0].id, events: 2, total_events_in_bucket: 2.0 },
-        { bucket: [rec2, rec2 + period], tag_id: tags[1].id, events: 0, total_events_in_bucket: 2.0 },
-        { bucket: [rec2, rec2 + period], tag_id: tags[2].id, events: 0, total_events_in_bucket: 2.0 },
-        { bucket: [rec3, rec3 + period], tag_id: tags[0].id, events: 0, total_events_in_bucket: 0.0 },
-        { bucket: [rec3, rec3 + period], tag_id: tags[1].id, events: 0, total_events_in_bucket: 0.0 },
-        { bucket: [rec3, rec3 + period], tag_id: tags[2].id, events: 0, total_events_in_bucket: 0.0 },
-        { bucket: [rec4, rec4 + period], tag_id: tags[0].id, events: 0, total_events_in_bucket: 2.0 },
-        { bucket: [rec4, rec4 + period], tag_id: tags[1].id, events: 0, total_events_in_bucket: 2.0 },
-        { bucket: [rec4, rec4 + period], tag_id: tags[2].id, events: 2, total_events_in_bucket: 2.0 }
+        { bucket: [rec1, rec1 + period], tags: array_including(a_hash_including(tag_id: tags[0].id, events: 1), a_hash_including(tag_id: tags[1].id, events: 1)) }, #nolint
+        { bucket: [rec2, rec2 + period], tags: [a_hash_including(tag_id: tags[0].id, events: 2)] },
+        { bucket: [rec3, rec3 + period], tags: [] },
+        { bucket: [rec4, rec4 + period], tags: [a_hash_including(tag_id: tags[2].id, events: 2)] }
       ]
     end
 
@@ -51,7 +43,6 @@ describe 'reports/tag_frequency' do
       post '/reports/tag_frequency', params: body, **api_headers(writer_token)
 
       expect_success
-
       expect(api_data).to match(expected_buckets)
     end
   end
