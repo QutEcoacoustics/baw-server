@@ -19,7 +19,7 @@ jobs:
           - baw-server/workbench-server-pbs-ci
     steps:
       - name: Delete CI images older than 1 month (${{ matrix.image }})
-        uses: snok/container-retention-policy@v3
+        uses: snok/container-retention-policy@v3.0.1
         with:
           account: QutEcoacoustics
           account-type: org
