@@ -71,10 +71,6 @@ module Baw
       def seconds
         Nodes::MakeInterval.new(seconds: self)
       end
-
-      def distinct
-        Baw::Arel::Nodes::Distinct.new([self])
-      end
     end
 
     module ExpressionsExtensions

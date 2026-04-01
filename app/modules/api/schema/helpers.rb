@@ -143,6 +143,37 @@ module Api
           }
         }
       end
+
+      def bucket
+        {
+          bucket: {
+            type: 'array',
+            items: { type: 'string', format: 'date-time' },
+            minItems: 2,
+            maxItems: 2,
+            additionalItems: false,
+            additionalProperties: false
+          }
+        }
+      end
+
+      def report_options
+        {
+          properties: {
+            options: {
+              type: 'object',
+              properties: {
+                bucket_size: {
+                  type: 'string',
+                  enum: ['day', 'week', 'month', 'year']
+                }
+              },
+              required: [:bucket_size]
+            }
+          },
+          required: [:options]
+        }
+      end
     end
   end
 end

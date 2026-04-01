@@ -69,11 +69,19 @@ module Api
       # To get tag frequency per bucket, we first aggregate events by bucket and tag_id,
       # which allows a join to the final bucket series based on bucket
       # equality in the next CTE, `buckets_joined`.
+      #
+      # Adding the bucket to the events allows us to group events efficiently.
+      # We use date_trunc to widen an event date into a bucket.
+      #
+      # This pre-grouping is important because it allows us to join on B:B buckets
+      # instead of B:N (buckets to tag count), which is a massive performance win.
       def tags_per_bucket_cte
+        bucket = @bucketer.bucket(column: EVENTS[:start_at])
+
         EVENTS.project(
           EVENTS[:tag_id],
           Arel.star.count.as('events'),
-          bucket.as('event_bucket')
+          bucket.dup.as('event_bucket')
         ).group(bucket, EVENTS[:tag_id])
       end
 
@@ -86,15 +94,6 @@ module Api
           )
           .join(TAGS_PER_BUCKET, Arel::Nodes::OuterJoin)
           .on(TAGS_PER_BUCKET[:event_bucket].eq(Bucketer::BUCKETS[:bucket]))
-      end
-
-      # Adding the bucket to the events allows us to group events efficiently. We use date_trunc to widen an event date into a bucket.
-      def bucket
-        Arel.tsrange(
-          Arel.date_trunc(@bucketer.options.bucket_size, EVENTS[:start_at]),
-          Arel.date_trunc(@bucketer.options.bucket_size,
-            EVENTS[:start_at]) + @bucketer.options.interval_arel
-        )
       end
     end
   end

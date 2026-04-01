@@ -43,6 +43,14 @@ module Api
         ]
       end
 
+      # Use date_trunc to widen an input column time/date into a bucket.
+      def bucket(column:)
+        Arel.tsrange(
+          Arel.date_trunc(@options.bucket_size, column),
+          Arel.date_trunc(@options.bucket_size, column) + @options.interval_arel
+        )
+      end
+
       private
 
       # Use the events to determine bounds for generating the bucket series
@@ -62,9 +70,9 @@ module Api
         # Without `.on` Arel generates INNER JOIN LATERAL (not CROSS JOIN LATERAL?)
         # which causes a syntax error
         BOUNDS
-            .project(Arel.tsrange(lower, upper).as('bucket'))
-            .join(Arel::Nodes::Lateral.new(series))
-            .on(Arel.sql('true'))
+          .project(Arel.tsrange(lower, upper).as('bucket'))
+          .join(Arel::Nodes::Lateral.new(series))
+          .on(Arel.sql('true'))
       end
     end
   end

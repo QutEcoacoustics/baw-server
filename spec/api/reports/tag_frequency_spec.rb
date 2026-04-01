@@ -16,19 +16,17 @@ describe 'reports', type: :request do
         type: 'object',
         additionalProperties: false,
         properties: {
-          bucket: {
-            type: 'array',
-            items: { type: 'string', format: 'date-time' }
-          },
+          **Api::Schema.bucket,
           tags: {
             type: 'array',
             items: {
               type: 'object',
               additionalProperties: false,
               properties: {
-                tag_id: { type: 'integer' },
+                tag_id: { type: Api::Schema.id },
                 events: { type: 'integer' }
-              }
+              },
+              description: 'The number of events with the given tag in the bucket'
             }
           }
         },
@@ -39,20 +37,8 @@ describe 'reports', type: :request do
 
   def self.request_body_schema
     Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false).deep_merge(
-      properties: {
-        options: {
-          type: 'object',
-          properties: {
-            bucket_size: {
-              type: 'string',
-              enum: ['day', 'week', 'month', 'year']
-            }
-          },
-          required: [:bucket_size]
-        }
-      },
-      required: [:options]
-    )
+    Api::Schema.report_options
+  )
   end
 
   path '/reports/tag_frequency' do
