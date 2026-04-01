@@ -88,7 +88,7 @@ module Api
           .on(TAGS_PER_BUCKET[:event_bucket].eq(Bucketer::BUCKETS[:bucket]))
       end
 
-      # Replicating the bucket calculation from Bucketer by using date_trunc instead of generate_series
+      # Adding the bucket to the events allows us to group events efficiently. We use date_trunc to widen an event date into a bucket.
       def bucket
         Arel.tsrange(
           Arel.date_trunc(@bucketer.options.bucket_size, EVENTS[:start_at]),
