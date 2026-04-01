@@ -24,6 +24,6 @@ jobs:
           account: QutEcoacoustics
           account-type: org
           image-names: ${{ matrix.image }}
-          cut-off: 1 month ago UTC
+          cut-off: 1month
           keep-at-least: 1
           token: ${{ secrets.GITHUB_TOKEN }}
