@@ -22,8 +22,7 @@ jobs:
         uses: snok/container-retention-policy@v3.0.1
         with:
           account: QutEcoacoustics
-          account-type: org
           image-names: ${{ matrix.image }}
           cut-off: 1month
-          keep-at-least: 1
+          keep-n-most-recent: 10
           token: ${{ secrets.GITHUB_TOKEN }}
