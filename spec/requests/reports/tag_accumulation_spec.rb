@@ -146,4 +146,22 @@ describe 'reports/tag_accumulation' do
       expect(api_data).to match expected
     end
   end
+
+  it 'formats correctly as CSV' do
+      params = { options: { bucket_size: 'day' }, filter: {} }
+
+      day1 = recordings.min { |recording| recording.recorded_date }.recorded_date.utc.at_beginning_of_day
+
+      post '/reports/tag_accumulation.csv', params:, **api_headers(writer_token, accept: 'text/csv')
+
+      expect_success
+      expect(response.content_type).to include('text/csv')
+
+      expected_csv = <<~CSV
+        "bucket_lower","bucket_upper","cumulative_unique_tag_count"
+        "#{day1.utc.iso8601(3)}","#{(day1 + 1.day).utc.iso8601(3)}","2.0"
+      CSV
+
+      expect(response.body).to start_with(expected_csv)
+    end
 end
