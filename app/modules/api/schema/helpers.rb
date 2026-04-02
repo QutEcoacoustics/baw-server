@@ -132,15 +132,30 @@ module Api
         }
       end
 
-      def filter_payload(filter: true, sorting: true, paging: true, projection: true)
+      def filter_payload(filter: true, sorting: true, paging: true, projection: true, options: nil)
+        required = []
+
+        if options
+          options = {
+            'allOf' => [
+              { '$ref' => '#/components/schemas/filter_payload_options' },
+              options
+            ]
+          }
+
+          required << :options
+        end
+
         {
           type: 'object',
           properties: {
             filter: filter ? { '$ref' => '#/components/schemas/filter_payload_filter' } : nil,
             sort: sorting ? { '$ref' => '#/components/schemas/filter_payload_sort' } : nil,
             page: paging ? { '$ref' => '#/components/schemas/filter_payload_paging' } : nil,
-            projection: projection ? { '$ref' => '#/components/schemas/filter_payload_projection' } : nil
-          }
+            projection: projection ? { '$ref' => '#/components/schemas/filter_payload_projection' } : nil,
+            options: options
+          },
+          required:
         }
       end
 
@@ -152,26 +167,21 @@ module Api
             minItems: 2,
             maxItems: 2,
             additionalItems: false,
-            additionalProperties: false
+            description: 'The start and end of the time bucket as an ISO8601 interval string'
           }
         }
       end
 
       def report_options
         {
+          type: 'object',
           properties: {
-            options: {
-              type: 'object',
-              properties: {
-                bucket_size: {
-                  type: 'string',
-                  enum: ['day', 'week', 'month', 'year']
-                }
-              },
-              required: [:bucket_size]
+            bucket_size: {
+              type: 'string',
+              enum: ['day', 'week', 'month', 'year']
             }
           },
-          required: [:options]
+          required: [:bucket_size]
         }
       end
     end

@@ -24,11 +24,11 @@ describe 'reports', type: :request do
               additionalProperties: false,
               properties: {
                 tag_id: { type: Api::Schema.id },
-                events: { type: 'integer' }
-              },
-              description: 'The number of events with the given tag in the bucket'
+                events: { type: 'integer', description: 'The number of events with the given tag in the bucket' }
+              }
             }
-          }
+          },
+          readOnly: true
         },
         required: [:bucket, :tags]
       }
@@ -36,9 +36,9 @@ describe 'reports', type: :request do
   end
 
   def self.request_body_schema
-    Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false).deep_merge(
-    Api::Schema.report_options
-  )
+    Api::Schema.filter_payload(
+      filter: true, sorting: false, paging: false, projection: false, options: Api::Schema.report_options
+    )
   end
 
   path '/reports/tag_frequency' do

@@ -34,10 +34,11 @@ module Api
       # Arel expression for a JSON array of tag_id and event count pairs,
       # coalescing to an empty array for null tags.
       def self.tag_frequency_array
-        Arel.json({
-          tag_id: BUCKETS_JOINED[:tag_id],
-          events: BUCKETS_JOINED[:events]
-        })
+        Arel
+          .json({
+            tag_id: BUCKETS_JOINED[:tag_id],
+            events: BUCKETS_JOINED[:events]
+          })
           .group
           .filter(BUCKETS_JOINED[:tag_id].is_not_null)
           .coalesce('[]')
@@ -71,18 +72,19 @@ module Api
       # equality in the next CTE, `buckets_joined`.
       #
       # Adding the bucket to the events allows us to group events efficiently.
-      # We use date_trunc to widen an event date into a bucket.
       #
       # This pre-grouping is important because it allows us to join on B:B buckets
       # instead of B:N (buckets to tag count), which is a massive performance win.
       def tags_per_bucket_cte
         bucket = @bucketer.bucket(column: EVENTS[:start_at])
 
-        EVENTS.project(
-          EVENTS[:tag_id],
-          Arel.star.count.as('events'),
-          bucket.dup.as('event_bucket')
-        ).group(bucket, EVENTS[:tag_id])
+        EVENTS
+          .project(
+            EVENTS[:tag_id],
+            Arel.star.count.as('events'),
+            bucket.dup.as('event_bucket')
+          )
+          .group(bucket, EVENTS[:tag_id])
       end
 
       def buckets_joined

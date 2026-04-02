@@ -19,15 +19,16 @@ describe 'reports', type: :request do
           **Api::Schema.bucket,
           cumulative_unique_tag_count: { type: 'number' }
         },
+        readOnly: true,
         required: [:bucket, :cumulative_unique_tag_count]
       }
     )
   end
 
   def self.request_body_schema
-    Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false).deep_merge(
-     Api::Schema.report_options
-   )
+    Api::Schema.filter_payload(
+      filter: true, sorting: false, paging: false, projection: false, options: Api::Schema.report_options
+    )
   end
 
   path '/reports/tag_accumulation' do

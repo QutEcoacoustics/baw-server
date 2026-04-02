@@ -3,7 +3,7 @@
 describe 'reports/tag_frequency' do
   create_audio_recordings_hierarchy
 
-  let(:recording_start) { Time.parse('2000-03-06 07:06:59') }
+  let(:recording_start) { Time.parse('2000-03-06 07:06:59Z').utc }
   let(:tags) { create_list(:tag, 3, creator: writer_user) }
   let(:which_tags) { [[0, 1], [0, 0], nil, [2, 2]] }
   let(:period) { 1.day }
@@ -105,7 +105,7 @@ describe 'reports/tag_frequency' do
   end
 
   context 'with bucket size of month' do
-    let(:recording_start) { Time.parse('2000-01-01 00:00:59') }
+    let(:recording_start) { Time.parse('2000-01-01 00:00:59Z').utc }
     let(:period) { 2.months }
 
     it 'returns the correct buckets and counts' do
@@ -140,7 +140,7 @@ describe 'reports/tag_frequency' do
   end
 
   context 'with bucket size of year' do
-    let(:recording_start) { Time.parse('2000-01-01 00:00:59') }
+    let(:recording_start) { Time.parse('2000-01-01 00:00:59Z').utc }
     let(:period) { 5.months }
 
     it 'returns the correct buckets and counts' do

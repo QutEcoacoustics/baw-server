@@ -44,6 +44,12 @@ module Api
       end
 
       # Use date_trunc to widen an input column time/date into a bucket.
+      # It is often useful to define the buckets in two places:
+      #  - in the bucketer for generating the bucket series (with no gaps for empty buckets)
+      #  - in the source data query for assigning rows to buckets.
+      #
+      # This allows us to group and downscale source data into buckets without
+      # worrying about the performance impact of joining large datasets to a generated bucket series.
       def bucket(column:)
         Arel.tsrange(
           Arel.date_trunc(@options.bucket_size, column),

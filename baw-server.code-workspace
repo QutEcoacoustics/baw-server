@@ -41,6 +41,7 @@
       "concat",
       "constantize",
       "cors",
+      "ctes",
       "Cyclomatic",
       "datestamp",
       "datetime",
