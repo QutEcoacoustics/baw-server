@@ -1,8 +1,9 @@
 ---
-require:
+plugins:
   - rubocop-rspec
-  - rubocop-rails
   - rubocop-factory_bot
+require:
+  - rubocop-rails
 AllCops:
   DisplayCopNames: true
   DisplayStyleGuide: true

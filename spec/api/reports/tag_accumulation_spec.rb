@@ -16,32 +16,18 @@ describe 'reports', type: :request do
         type: 'object',
         additionalProperties: false,
         properties: {
-          bucket: {
-            type: 'array',
-            items: { type: 'string', format: 'date-time' }
-          },
+          **Api::Schema.bucket,
           cumulative_unique_tag_count: { type: 'number' }
         },
+        readOnly: true,
         required: [:bucket, :cumulative_unique_tag_count]
       }
     )
   end
 
   def self.request_body_schema
-    Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false).deep_merge(
-      properties: {
-        options: {
-          type: 'object',
-          properties: {
-            bucket_size: {
-              type: 'string',
-              enum: ['day', 'week', 'month', 'year']
-            }
-          },
-          required: [:bucket_size]
-        }
-      },
-      required: [:options]
+    Api::Schema.filter_payload(
+      filter: true, sorting: false, paging: false, projection: false, options: Api::Schema.report_options
     )
   end
 
@@ -89,7 +75,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -100,7 +86,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -111,7 +97,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: Paging, sorting, and projection parameters are not allowed in group by or reporting requests.'
           )
         end
@@ -122,7 +108,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: options'
           )
         end
@@ -138,7 +124,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: options'
           )
         end
@@ -154,7 +140,7 @@ describe 'reports', type: :request do
 
         run_test! do
           expect_error(
-            :unprocessable_entity,
+            :unprocessable_content,
             'The request could not be understood: param is missing or the value is empty or invalid: bucket_size'
           )
         end

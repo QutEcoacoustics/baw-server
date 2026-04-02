@@ -132,15 +132,56 @@ module Api
         }
       end
 
-      def filter_payload(filter: true, sorting: true, paging: true, projection: true)
+      def filter_payload(filter: true, sorting: true, paging: true, projection: true, options: nil)
+        required = []
+
+        if options
+          options = {
+            'allOf' => [
+              { '$ref' => '#/components/schemas/filter_payload_options' },
+              options
+            ]
+          }
+
+          required << :options
+        end
+
         {
           type: 'object',
           properties: {
             filter: filter ? { '$ref' => '#/components/schemas/filter_payload_filter' } : nil,
             sort: sorting ? { '$ref' => '#/components/schemas/filter_payload_sort' } : nil,
             page: paging ? { '$ref' => '#/components/schemas/filter_payload_paging' } : nil,
-            projection: projection ? { '$ref' => '#/components/schemas/filter_payload_projection' } : nil
+            projection: projection ? { '$ref' => '#/components/schemas/filter_payload_projection' } : nil,
+            options: options
+          },
+          required:
+        }
+      end
+
+      def bucket
+        {
+          bucket: {
+            type: 'array',
+            items: { type: 'string', format: 'date-time' },
+            minItems: 2,
+            maxItems: 2,
+            additionalItems: false,
+            description: 'The start and end of the time bucket as an ISO8601 interval string'
           }
+        }
+      end
+
+      def report_options
+        {
+          type: 'object',
+          properties: {
+            bucket_size: {
+              type: 'string',
+              enum: ['day', 'week', 'month', 'year']
+            }
+          },
+          required: [:bucket_size]
         }
       end
     end

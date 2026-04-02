@@ -252,6 +252,10 @@ module Api
                 }
               }
             },
+            filter_payload_options: {
+              type: 'object',
+              description: 'Options to modify the behavior or shape of a response. Options vary per endpoint.'
+            },
             cms_blob: {
               type: 'object',
               required: [
