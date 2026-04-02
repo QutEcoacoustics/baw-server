@@ -1,5 +1,18 @@
 # Changelog
 
+## [14.11.0](https://github.com/QutEcoacoustics/baw-server/tree/14.11.0) (2026-04-02)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.10.0...14.11.0)
+
+**Implemented enhancements:**
+
+- API CSV download: expand ruby ranges into two columns [\#954](https://github.com/QutEcoacoustics/baw-server/issues/954)
+- feat: add reports/tag\_frequency endpoint [\#956](https://github.com/QutEcoacoustics/baw-server/pull/956) ([andrew-1234](https://github.com/andrew-1234))
+
+**Merged pull requests:**
+
+- feat: expand Ruby Ranges into two CSV columns with ISO 8601 formatting [\#955](https://github.com/QutEcoacoustics/baw-server/pull/955) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.10.0](https://github.com/QutEcoacoustics/baw-server/tree/14.10.0) (2026-03-31)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.9.1...14.10.0)
