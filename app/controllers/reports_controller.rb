@@ -4,6 +4,31 @@ class ReportsController < ApplicationController
   include Api::ControllerHelper
   include Api::Reporting
 
+  # POST /reports/tag_diel_activity
+  # Returns a structured report of tag frequencies over diel time buckets.
+  # Accepts a filter object where:
+  #   the `filter` is applied to audio events
+  #   the `paging`, `sort` and `projection` options are invalid
+  # Accepts an `options` object where:
+  #   `bucket_size` (required) interval for bucket aggregation
+  def tag_diel_activity
+    do_authorize_class(:filter, AudioEvent)
+
+    base_query = Access::ByPermissionTable.audio_events(current_user, level: Access::Permission::READER)
+
+    projections = {
+      tags: TagDielActivity.tag_frequency_array
+    }
+
+    results, opts = execute_report(
+      base_query:,
+      template: TagDielActivity.new(report_options),
+      projections:
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/tag_frequency
   # Returns a structured report of tag frequencies over time buckets.
   # Accepts a filter object where:

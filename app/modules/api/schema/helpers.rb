@@ -159,26 +159,28 @@ module Api
         }
       end
 
-      def bucket
+      def bucket(diel: false)
+        description = diel ? 'in seconds from the start of the diel cycle' : 'as an ISO8601 interval string'
+
         {
           bucket: {
             type: 'array',
-            items: { type: 'string', format: 'date-time' },
+            items: diel ? { type: 'integer' } : { type: 'string', format: 'date-time' },
             minItems: 2,
             maxItems: 2,
             additionalItems: false,
-            description: 'The start and end of the time bucket as an ISO8601 interval string'
+            description: "The start and end of the time bucket #{description}"
           }
         }
       end
 
-      def report_options
+      def report_options(diel: false)
         {
           type: 'object',
           properties: {
             bucket_size: {
               type: 'string',
-              enum: ['day', 'week', 'month', 'year']
+              enum: diel ? ['minute', 'half-hour', 'hour'] : ['day', 'week', 'month', 'year']
             }
           },
           required: [:bucket_size]
