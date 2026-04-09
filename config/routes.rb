@@ -862,6 +862,7 @@ Rails.application.routes.draw do
   # reporting routes
   post 'reports/tag_accumulation(.:format)', to: 'reports#tag_accumulation', defaults: { format: 'json' }
   post 'reports/tag_frequency(.:format)', to: 'reports#tag_frequency', defaults: { format: 'json' }
+  post 'reports/tag_diel_activity(.:format)', to: 'reports#tag_diel_activity', defaults: { format: 'json' }
 
   # route to the home page of site
   root to: 'public#index'

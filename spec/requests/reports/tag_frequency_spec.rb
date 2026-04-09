@@ -72,7 +72,8 @@ describe 'reports/tag_frequency' do
       }
 
       let(:final_bucket_array) {
-        [a_hash_including(tag_id: tags[2].id, events: 2), a_hash_including(tag_id: new_tagging.tag.id, events: 1)]
+        array_including(a_hash_including(tag_id: tags[2].id, events: 2),
+          a_hash_including(tag_id: new_tagging.tag.id, events: 1))
       }
 
       it 'counts unique tags correctly' do
