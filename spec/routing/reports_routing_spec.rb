@@ -19,5 +19,11 @@ RSpec.describe ReportsController, type: :routing do
         route_to('reports#tag_diel_activity', format: 'json')
       )
     }
+
+    it {
+      expect(post('/reports/event_summaries')).to(
+        route_to('reports#event_summaries', format: 'json')
+      )
+    }
   end
 end

@@ -55,21 +55,40 @@ describe 'Reports permissions' do
       end
     })
 
+  with_custom_action(:event_summaries, path: 'event_summaries', verb: :post,
+    body: -> { { options: {}, filter: {} } },
+    expect: lambda { |user, _action|
+      if user == :no_access
+        expect(api_result[:data].length).to eq(0)
+      else
+        expect(api_data).to match([
+          { tag_id: tag.id,
+            provenance_id: nil,
+            events: 1,
+            score_mean: nil,
+            score_stddev: nil,
+            score_minimum: nil,
+            score_maximum: nil,
+            score_histogram: nil }
+        ])
+      end
+    })
+
   # Any authenticated user with at least reader access can use the reports/tag_* endpoints
   ensures :admin, :owner, :writer, :reader,
-    can: [:tag_accumulation, :tag_frequency, :tag_diel_activity],
+    can: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     cannot: [:index, :show, :create, :update, :destroy, :new, :filter],
     fails_with: :not_found
 
   # Users without project access can call these endpoints, but receive no visible tag results
   ensures :no_access,
-    can: [:tag_accumulation, :tag_frequency, :tag_diel_activity],
+    can: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     cannot: [:index, :show, :create, :update, :destroy, :new, :filter],
     fails_with: :not_found
 
   # Harvester cannot access the endpoint
   ensures :harvester,
-    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity],
+    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     fails_with: :forbidden
 
   ensures :harvester,
@@ -78,7 +97,7 @@ describe 'Reports permissions' do
 
   # Anonymous users cannot access the endpoint
   ensures :anonymous,
-    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity],
+    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     fails_with: :unauthorized
 
   ensures :anonymous,
@@ -87,7 +106,7 @@ describe 'Reports permissions' do
 
   # Invalid tokens cannot access the endpoint
   ensures :invalid,
-    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :index, :show, :create, :update, :destroy, :new,
+    cannot: [:tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries, :index, :show, :create, :update, :destroy, :new,
              :filter],
     fails_with: [:unauthorized, :not_found]
 end
