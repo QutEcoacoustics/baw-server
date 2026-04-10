@@ -1,8 +1,44 @@
 # frozen_string_literal: true
 
+# Provides reporting endpoints for audio event analysis
 class ReportsController < ApplicationController
   include Api::ControllerHelper
   include Api::Reporting
+  include ResultFormatters
+
+  # POST /reports/event_summaries
+  # Returns a structured report of event summaries per tag and provenance groupings.
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio events
+  #  the `paging`, `sort` and `projection` options are invalid
+  def event_summaries
+    do_authorize_class(:filter, AudioEvent)
+
+    base_query = Access::ByPermissionTable.audio_events(current_user, level: Access::Permission::READER)
+
+    event_summaries_template = EventSummaries.new
+
+    projections = {
+      summary: event_summaries_template.event_summary
+    }
+
+    results, opts = execute_report(
+      base_query:,
+      template: event_summaries_template,
+      projections:
+    )
+
+    score_keys = [:score_mean, :score_stddev, :score_minimum, :score_maximum, :score_histogram]
+
+    results.map do |row|
+      row => { summary:, **rest }
+
+      histogram = extract_histogram(summary, histogram_key: :score_histogram)
+      rest.merge(ensure_columns(score_keys, histogram))
+    end => results
+
+    respond_report(results, opts)
+  end
 
   # POST /reports/tag_diel_activity
   # Returns a structured report of tag frequencies over diel time buckets.

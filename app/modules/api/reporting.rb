@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Api
+  # Utilities for building, executing and rendering report queries within controllers.
   module Reporting
     # Applies request filters to base_query, passes the filtered relation
     # through a report template, then applies projections to the resulting
@@ -34,6 +35,7 @@ module Api
       query.project(*projections.map { |name, expression| expression.as(name.to_s) })
 
       results = AudioEvent.exec_query_casted(query)
+
       [results, opts]
     end
 

@@ -47,7 +47,7 @@ class ApplicationRecord < ActiveRecord::Base
       # in rows of untyped results and column types turns them into model objects.
       columns = result.columns.map(&:to_sym)
       result.cast_values.map do |row|
-        columns.zip(row).to_h
+        columns.zip(Array(row)).to_h
       end
     end
   end
