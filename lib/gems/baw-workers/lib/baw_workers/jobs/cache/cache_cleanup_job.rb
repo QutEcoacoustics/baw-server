@@ -75,7 +75,7 @@ module BawWorkers
           if enabled
             max_size_bytes = cache_config.max_size_bytes
             min_age_seconds = Settings.actions.cache_cleanup.min_age_seconds
-            deleted_count = cleanup_cache(cache_helper, file_sizes, max_size_bytes, min_age_seconds)
+            deleted_count = cleanup_cache(file_sizes, max_size_bytes, min_age_seconds)
             logger.info("Cleaned up #{deleted_count} files from #{cache_name} cache")
           else
             logger.info("Cache cleanup is disabled for #{cache_name}, skipping")
@@ -170,12 +170,11 @@ module BawWorkers
 
         # Delete files from the cache that exceed the max size, oldest first.
         # Only deletes files older than min_age_seconds.
-        # @param [BawWorkers::Storage::Common] cache_helper
-        # @param [Array<Hash>] file_sizes
+        # @param [Array<Hash>] file_sizes array of { path:, size:, mtime: }
         # @param [Integer] max_size_bytes
         # @param [Integer] min_age_seconds
         # @return [Integer] number of files deleted
-        def cleanup_cache(cache_helper, file_sizes, max_size_bytes, min_age_seconds)
+        def cleanup_cache(file_sizes, max_size_bytes, min_age_seconds)
           total_size = file_sizes.sum { |f| f[:size] }
           return 0 if total_size <= max_size_bytes
 
