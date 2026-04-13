@@ -6,21 +6,27 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
   include_context Baw::Async::RSpec::Reactor
 
   def run_workers(count)
+    @barrier = Async::Barrier.new
+
+    # start the "real" worker first — this picks up j1 (the long-running job)
+    # before the additional workers start, ensuring j1 holds the semaphore
+    reactor.async do
+      @barrier.async do
+        ResqueHelpers::Emulate.resque_worker(Fixtures::FIXTURE_QUEUE, true, false)
+      end
+    end
+
     # allow a little time for our real worker to dequeue
     sleep 0.5
 
     # then emulate additional workers
-    barrier = Async::Barrier.new
     reactor.async do
       count.times do
-        barrier.async do
+        @barrier.async do
           ResqueHelpers::Emulate.resque_worker(Fixtures::FIXTURE_QUEUE, true, false)
         end
       end
     end
-
-    # don't need the task to finish
-    @barrier = barrier
 
     # want time for the workers to start
     sleep 0.5
