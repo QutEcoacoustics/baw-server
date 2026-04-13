@@ -7,8 +7,8 @@ class MiscHelper
     hash_string = '' if hash_string.blank?
     chars_needed = target_char_count - hash_string.to_s.length
 
-    # http://stackoverflow.com/a/3572953/31567
-    range = [*'0'..'9', *'a'..'z']
+    # Use only valid lowercase hex characters so generated hashes pass format validation
+    range = [*'0'..'9', *'a'..'f']
     random_chars = Array.new(chars_needed) { range.sample }.join
 
     "SHA256::#{hash_string}#{random_chars}"
