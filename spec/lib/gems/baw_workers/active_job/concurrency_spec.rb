@@ -6,20 +6,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
   include_context Baw::Async::RSpec::Reactor
 
   def run_workers(count)
+    # Proactively wait for the real container worker to dequeue j1 rather than
+    # relying on a fixed sleep. Once a job is working, the concurrency counter
+    # is incremented and the additional emulated workers will correctly hit the limit.
+    wait_for_a_working_job
+
+    # then start count additional emulated workers (they pick up j2, j3, etc.)
     @barrier = Async::Barrier.new
-
-    # start the "real" worker first — this picks up j1 (the long-running job)
-    # before the additional workers start, ensuring j1 holds the semaphore
-    reactor.async do
-      @barrier.async do
-        ResqueHelpers::Emulate.resque_worker(Fixtures::FIXTURE_QUEUE, true, false)
-      end
-    end
-
-    # allow a little time for our real worker to dequeue
-    sleep 0.5
-
-    # then emulate additional workers
     reactor.async do
       count.times do
         @barrier.async do
@@ -30,6 +23,19 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
     # want time for the workers to start
     sleep 0.5
+  end
+
+  def wait_for_a_working_job(timeout: 10)
+    deadline = Time.now + timeout
+    loop do
+      working = BawWorkers::ResqueApi.statuses(
+        statuses: [BawWorkers::ActiveJob::Status::STATUS_WORKING]
+      )
+      break if working.any?
+      raise "Timed out after #{timeout}s waiting for a job to be picked up by the real worker" if Time.now > deadline
+
+      sleep 0.1
+    end
   end
 
   def cleanup(barrier)
