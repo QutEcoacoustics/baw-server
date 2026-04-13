@@ -82,8 +82,15 @@ describe BawWorkers::Jobs::Cache::CacheCleanupJob do
 
     let(:large_old_files) {
       [
-        { path: '/tmp/cache/old1.mp3', size: 5_000_000_000, mtime: 2.days.ago }, # 5 GB, old
-        { path: '/tmp/cache/old2.mp3', size: 5_000_000_000, mtime: 3.days.ago }  # 5 GB, old
+        { path: '/tmp/cache/audio_old1.mp3', size: 5_000_000_000, mtime: 2.days.ago }, # 5 GB, old
+        { path: '/tmp/cache/audio_old2.mp3', size: 5_000_000_000, mtime: 3.days.ago }  # 5 GB, old
+      ]
+    }
+
+    let(:large_spectrogram_files) {
+      [
+        { path: '/tmp/cache/spec_old1.png', size: 5_000_000_000, mtime: 2.days.ago }, # 5 GB, old
+        { path: '/tmp/cache/spec_old2.png', size: 5_000_000_000, mtime: 3.days.ago }  # 5 GB, old
       ]
     }
 
@@ -95,10 +102,10 @@ describe BawWorkers::Jobs::Cache::CacheCleanupJob do
         large_old_files.each { |f| block.call(f[:path]) }
       end
       allow(BawWorkers::Config.spectrogram_cache_helper).to receive(:existing_files) do |&block|
-        # empty spectrogram cache
+        large_spectrogram_files.each { |f| block.call(f[:path]) }
       end
 
-      large_old_files.each do |file_info|
+      (large_old_files + large_spectrogram_files).each do |file_info|
         stat = instance_double(File::Stat, size: file_info[:size], mtime: file_info[:mtime])
         allow(File).to receive(:stat).with(file_info[:path]).and_return(stat)
       end
@@ -110,25 +117,20 @@ describe BawWorkers::Jobs::Cache::CacheCleanupJob do
       SiteSettings.reset_all_settings!
     end
 
-    it 'deletes old files when total size exceeds max_size_bytes' do
+    it 'deletes old audio files when total size exceeds max_size_bytes' do
       BawWorkers::Jobs::Cache::CacheCleanupJob.perform_now
 
-      # Both files are 10 GB total, max is 10 GB (default), so at least one should be deleted
-      # oldest file is old2.mp3 at 3 days ago
+      # Both audio files are 10 GB total, max is 10 GB (default), so at least one should be deleted
+      # oldest file is audio_old2.mp3 at 3 days ago
       expect(File).to have_received(:delete).at_least(:once)
     end
 
     it 'does not delete files from disabled caches' do
-      spectrogram_cache_helper = BawWorkers::Config.spectrogram_cache_helper
-      allow(spectrogram_cache_helper).to receive(:existing_files) do |&block|
-        large_old_files.each { |f| block.call(f[:path]) }
-      end
-
       BawWorkers::Jobs::Cache::CacheCleanupJob.perform_now
 
-      # Spectrogram cleanup is disabled, so no files from spectrogram cache should be deleted
-      # Only audio cache files can be deleted
-      expect(File).not_to have_received(:delete).with('/tmp/cache/old2.mp3')
+      # Spectrogram cleanup is disabled, so no spectrogram files should be deleted
+      expect(File).not_to have_received(:delete).with('/tmp/cache/spec_old1.png')
+      expect(File).not_to have_received(:delete).with('/tmp/cache/spec_old2.png')
     end
   end
 end
