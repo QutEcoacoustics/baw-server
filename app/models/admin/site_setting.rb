@@ -33,6 +33,32 @@ module Admin
       Settings.batch_analysis.remote_enqueue_limit
     )
 
+    # @!parse
+    #   class << self
+    #     # Whether to enable cleanup for the audio cache.
+    #     # @return [Boolean, nil]
+    #     attr_accessor :audio_cache_cleanup_enabled
+    #   end
+    define_setting(
+      :audio_cache_cleanup_enabled,
+      ::BawApp::Types::Params::Bool.optional,
+      'Whether to enable automatic cleanup of the audio cache. Overrides the settings file value.',
+      Settings.actions.cache_cleanup.audio.enabled
+    )
+
+    # @!parse
+    #   class << self
+    #     # Whether to enable cleanup for the spectrogram cache.
+    #     # @return [Boolean, nil]
+    #     attr_accessor :spectrogram_cache_cleanup_enabled
+    #   end
+    define_setting(
+      :spectrogram_cache_cleanup_enabled,
+      ::BawApp::Types::Params::Bool.optional,
+      'Whether to enable automatic cleanup of the spectrogram cache. Overrides the settings file value.',
+      Settings.actions.cache_cleanup.spectrogram.enabled
+    )
+
     def self.filter_settings
       {
         valid_fields: [:name, :value],
