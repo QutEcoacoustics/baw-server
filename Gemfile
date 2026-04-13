@@ -137,7 +137,7 @@ gem 'devise', '~> 5.0.3'
 gem 'devise-i18n'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
-gem 'bcrypt', '~> 3.1.9'
+gem 'bcrypt', '~> 3.1.22'
 
 # Database gems
 # -------------------------------------
