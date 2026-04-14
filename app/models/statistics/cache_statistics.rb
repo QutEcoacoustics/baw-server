@@ -18,8 +18,8 @@
 #
 # Indexes
 #
-#  index_cache_statistics_on_name                 (name)
-#  index_cache_statistics_on_name_and_created_at  (name, created_at) UNIQUE
+#  index_cache_statistics_on_name        (name)
+#  index_cache_statistics_on_created_at  (created_at)
 #
 module Statistics
   # Stores statistics about a media cache at a point in time.
@@ -37,7 +37,6 @@ module Statistics
     validates :maximum_bytes, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
     validates :mean_bytes, numericality: true, allow_nil: true
     validates :standard_deviation_bytes, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-    validates :name, uniqueness: { scope: :created_at }
 
     # Returns the size_histogram as an array of HistogramBucket value objects.
     # Returns nil if no histogram is stored.

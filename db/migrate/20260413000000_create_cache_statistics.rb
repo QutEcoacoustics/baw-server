@@ -17,6 +17,6 @@ class CreateCacheStatistics < ActiveRecord::Migration[7.2]
     end
 
     add_index :cache_statistics, :name
-    add_index :cache_statistics, [:name, :created_at], unique: true
+    add_index :cache_statistics, :created_at
   end
 end
