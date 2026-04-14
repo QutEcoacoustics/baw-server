@@ -103,23 +103,28 @@ actions:
     queue: maintenance_<%= BawApp.env %>
   cache_cleanup:
     queue: maintenance_<%= BawApp.env %>
-    # a 6-star cron schedule used by resque-scheduler for regularly scheduled jobs
-    # Default: run once a day at 2am UTC
-    schedule: "0 0 2 * * *"
-    # age filter: minimum age of a file in seconds before it is eligible for deletion
-    # Default: 24 hours
-    min_age_seconds: 86400
     # per-cache configuration
     audio:
-      # whether to enable cleanup for this cache (can also be overridden via site_settings)
-      enabled: true
-      # maximum total size of the cache in bytes before cleanup is triggered
+      # a 6-star cron schedule used by resque-scheduler for regularly scheduled jobs
+      # Default: run once a day at 2am UTC
+      schedule: "0 0 2 * * *"
+      # Maximum total cache size in bytes. When exceeded, the oldest files will be deleted
+      # until the cache is within the limit. Deletions from the size condition are independent
+      # of minimum_age_seconds (any file may be deleted when the cache is too large).
+      # Set to null to disable size-based cleanup.
       # Default: 10 GB
       max_size_bytes: 10737418240
+      # Files older than this many seconds are deleted regardless of the cache size.
+      # Set to null to disable age-based cleanup.
+      # Default: 7 days
+      minimum_age_seconds: 604800
     spectrogram:
-      enabled: true
+      # Default: run once a day at 2:30am UTC (offset to avoid simultaneous runs)
+      schedule: "0 30 2 * * *"
       # Default: 10 GB
       max_size_bytes: 10737418240
+      # Default: 7 days
+      minimum_age_seconds: 604800
   active_storage:
     queue: active_storage_<%= BawApp.env %>
   active_job_default:

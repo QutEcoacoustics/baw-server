@@ -3,207 +3,228 @@
 module BawWorkers
   module Jobs
     module Cache
-      # Runs periodically to:
-      # 1. Collect and store statistics about the media caches (audio, spectrogram, etc.)
-      # 2. Clean up cache files that exceed the maximum size or minimum age constraints
+      # Runs for one cache type (audio or spectrogram) to:
+      # 1. Collect and store statistics about the cache
+      # 2. Clean up cache files according to configured conditions:
+      #    - Age-based: delete files older than +minimum_age_seconds+ (if configured)
+      #    - Size-based: delete oldest files until cache is under +max_size_bytes+ (if configured)
       #
-      # Configuration is driven by `Settings.actions.cache_cleanup` with per-cache overrides
-      # available via `SiteSettings`.
+      # Both cleanup conditions are independent and each is optional.
+      # Configuration is in +Settings.actions.cache_cleanup.<cache_name>+.
+      # Enable/disable is controlled per-cache via +SiteSettings+.
       class CacheCleanupJob < BawWorkers::Jobs::ApplicationJob
         HISTOGRAM_BUCKETS = 100
 
+        # Represents a single scanned file.
+        # @!attribute [r] path [String] absolute path to the file
+        # @!attribute [r] size [Integer] file size in bytes
+        # @!attribute [r] mtime [Time] file modification time
+        FileInfo = ::Data.define(:path, :size, :mtime)
+
         queue_as Settings.actions.cache_cleanup.queue
 
-        perform_expects # no arguments
+        perform_expects String
 
-        recurring_at Settings.actions.cache_cleanup.schedule
+        def perform(cache_name)
+          cache_config = Settings.actions.cache_cleanup.public_send(cache_name)
 
-        # Only allow one of these to run at once to avoid concurrent filesystem operations.
-        limit_concurrency_to 1, on_limit: :discard
+          enabled = SiteSettings.public_send(:"#{cache_name}_cache_cleanup_enabled")
+          cache_helper = BawWorkers::Config.public_send(:"#{cache_name}_cache_helper")
 
-        def perform
-          results = []
+          max_size_bytes = cache_config.max_size_bytes
+          minimum_age_seconds = cache_config.minimum_age_seconds
 
-          results << process_cache(
-            :audio,
-            BawWorkers::Config.audio_cache_helper,
-            SiteSettings.audio_cache_cleanup_enabled
+          push_message("Processing #{cache_name} cache (enabled: #{enabled})")
+
+          # always collect stats, regardless of enabled flag
+          pre_stats = logger.measure_info("#{cache_name} cache statistics collected") {
+            collect_and_save_stats(cache_name, cache_helper)
+          }
+
+          push_message(
+            "#{cache_name} cache: #{pre_stats.item_count} files, " \
+            "#{pre_stats.total_bytes} bytes total"
           )
 
-          results << process_cache(
-            :spectrogram,
-            BawWorkers::Config.spectrogram_cache_helper,
-            SiteSettings.spectrogram_cache_cleanup_enabled
-          )
+          if enabled
+            deleted_count, deleted_bytes = logger.measure_info(
+              "#{cache_name} cache cleanup complete"
+            ) {
+              cleanup_cache(pre_stats.files, max_size_bytes, minimum_age_seconds)
+            }
 
-          results.compact
+            push_message("#{cache_name}: deleted #{deleted_count} files (#{deleted_bytes} bytes)")
+
+            if deleted_count.positive?
+              # save updated stats post-cleanup
+              logger.measure_info("#{cache_name} cache post-cleanup statistics collected") {
+                collect_and_save_stats(cache_name, cache_helper)
+              }
+            end
+          else
+            push_message("Cleanup disabled for #{cache_name}, skipping")
+          end
+
+          completed!("Finished #{cache_name} cache cleanup")
         end
 
         def create_job_id
-          ::BawWorkers::ActiveJob::Identity::Generators.generate_timestamp(self)
+          ::BawWorkers::ActiveJob::Identity::Generators.generate_keyed_id(
+            self,
+            { cache: arguments[0] },
+            'CacheCleanupJob'
+          )
         end
 
         def name
-          'CacheCleanupJob'
+          "CacheCleanupJob:#{arguments.first}"
         end
 
         private
 
-        # Process a single cache: collect stats and optionally clean up.
-        # @param [Symbol] cache_name the name of the cache (:audio, :spectrogram)
-        # @param [BawWorkers::Storage::Common] cache_helper the storage helper
-        # @param [Boolean, nil] site_setting_enabled override from database site setting
-        # @return [Statistics::CacheStatistics] the generated statistics record
-        def process_cache(cache_name, cache_helper, site_setting_enabled)
-          cache_config = Settings.actions.cache_cleanup.public_send(cache_name)
-          # site setting overrides config file; fall back to config file value
-          enabled = site_setting_enabled.nil? ? cache_config.enabled : site_setting_enabled
-
-          logger.info("Processing cache: #{cache_name}, enabled: #{enabled}")
-
-          file_sizes = collect_file_sizes(cache_helper)
-
-          stats = build_statistics(cache_name.to_s, file_sizes)
-          stats.save!
-
-          logger.info(
-            "Cache statistics saved for #{cache_name}",
-            size_bytes: stats.size_bytes,
-            item_count: stats.item_count
-          )
-
-          if enabled
-            max_size_bytes = cache_config.max_size_bytes
-            min_age_seconds = Settings.actions.cache_cleanup.min_age_seconds
-            deleted_count = cleanup_cache(file_sizes, max_size_bytes, min_age_seconds)
-            logger.info("Cleaned up #{deleted_count} files from #{cache_name} cache")
-          else
-            logger.info("Cache cleanup is disabled for #{cache_name}, skipping")
-          end
-
-          stats
-        rescue StandardError => e
-          logger.error("Failed to process cache #{cache_name}", exception: e)
-          nil
-        end
-
-        # Collect sizes and mtimes for all files in the cache.
-        # @param [BawWorkers::Storage::Common] cache_helper
-        # @return [Array<Hash>] array of { path:, size:, mtime: }
-        def collect_file_sizes(cache_helper)
+        # Collects file statistics from the cache and persists a CacheStatistics record.
+        # Also stores the scanned file list on the record for use by cleanup.
+        # @param cache_name [String]
+        # @param cache_helper [BawWorkers::Storage::Common]
+        # @return [::Statistics::CacheStatistics] the saved record (with +files+ attribute attached)
+        def collect_and_save_stats(cache_name, cache_helper)
+          # Scan files and build incremental stats in one pass using Welford's online algorithm
           files = []
+          item_count = 0
+          total_bytes = 0
+          minimum_bytes = nil
+          maximum_bytes = nil
+          mean = 0.0
+          m2 = 0.0 # second moment for variance (Welford)
+
           cache_helper.existing_files do |path|
             stat = File.stat(path)
-            files << { path: path, size: stat.size, mtime: stat.mtime }
+            size = stat.size
+            mtime = stat.mtime
+
+            files << FileInfo.new(path:, size:, mtime:)
+
+            item_count += 1
+            total_bytes += size
+            minimum_bytes = minimum_bytes.nil? ? size : [minimum_bytes, size].min
+            maximum_bytes = maximum_bytes.nil? ? size : [maximum_bytes, size].max
+
+            # Welford's online mean/variance
+            delta = size - mean
+            mean += delta / item_count
+            m2 += delta * (size - mean)
+
+            # report progress periodically to avoid flooding Redis
+            push_message("Scanned #{item_count} files...") if (item_count % 10_000).zero?
           rescue Errno::ENOENT
-            # file may have been deleted between listing and stat
+            # file may have been deleted between listing and stat, skip
           end
-          files
-        end
 
-        # Build a Statistics::CacheStatistics record from the collected file data.
-        # @param [String] cache_name
-        # @param [Array<Hash>] file_sizes
-        # @return [Statistics::CacheStatistics]
-        def build_statistics(cache_name, file_sizes)
-          sizes = file_sizes.map { |f| f[:size] }
-          total_size = sizes.sum
-          item_count = sizes.count
+          mean_bytes, std_dev_bytes =
+            if item_count.positive?
+              variance = item_count > 1 ? m2 / item_count : 0.0
+              [mean, Math.sqrt(variance)]
+            else
+              [nil, nil]
+            end
 
-          min_size, max_size, mean_size, std_dev_size = compute_size_stats(sizes)
-          histogram = compute_histogram(sizes, min_size, max_size)
+          report_progress(item_count, item_count, "Scan complete: #{item_count} files, #{total_bytes} bytes")
 
-          Statistics::CacheStatistics.new(
+          histogram = build_histogram(files.map(&:size), minimum_bytes, maximum_bytes)
+
+          record = ::Statistics::CacheStatistics.create!(
             name: cache_name,
-            size_bytes: total_size,
-            item_count: item_count,
-            min_item_size: min_size,
-            max_item_size: max_size,
-            mean_item_size: mean_size,
-            std_dev_item_size: std_dev_size,
-            histogram: histogram,
-            generated_at: Time.zone.now
+            total_bytes:,
+            item_count:,
+            minimum_bytes:,
+            maximum_bytes:,
+            mean_bytes:,
+            standard_deviation_bytes: std_dev_bytes,
+            size_histogram: histogram
           )
+
+          # Attach file list for use by cleanup (not persisted)
+          record.define_singleton_method(:files) { files }
+
+          record
         end
 
-        # Compute min, max, mean, and standard deviation of file sizes.
-        # @param [Array<Integer>] sizes
-        # @return [Array<Integer, Integer, Float, Float>]
-        def compute_size_stats(sizes)
-          return [nil, nil, nil, nil] if sizes.empty?
-
-          min_size = sizes.min
-          max_size = sizes.max
-          mean_size = sizes.sum.to_f / sizes.count
-          variance = sizes.sum { |s| (s - mean_size)**2 } / sizes.count.to_f
-          std_dev_size = Math.sqrt(variance)
-
-          [min_size, max_size, mean_size, std_dev_size]
-        end
-
-        # Compute a 100-bucket histogram of file sizes.
-        # @param [Array<Integer>] sizes
-        # @param [Integer, nil] min_size
-        # @param [Integer, nil] max_size
+        # Build a 100-bucket histogram using +bucket+ as a two-element [lower, upper] tuple.
+        # Returns nil for empty or uniform-size caches.
+        # @param sizes [Array<Integer>]
+        # @param minimum_bytes [Integer, nil]
+        # @param maximum_bytes [Integer, nil]
         # @return [Array<Hash>, nil]
-        def compute_histogram(sizes, min_size, max_size)
-          return nil if sizes.empty? || min_size.nil? || max_size.nil?
-          return nil if min_size == max_size
+        def build_histogram(sizes, minimum_bytes, maximum_bytes)
+          return nil if sizes.empty? || minimum_bytes.nil? || maximum_bytes.nil?
+          return nil if minimum_bytes == maximum_bytes
 
-          range = max_size - min_size
+          range = maximum_bytes - minimum_bytes
           bucket_width = range.to_f / HISTOGRAM_BUCKETS
 
-          buckets = Array.new(HISTOGRAM_BUCKETS, 0)
+          counts = Array.new(HISTOGRAM_BUCKETS, 0)
           sizes.each do |size|
-            bucket_index = [(((size - min_size) / bucket_width)).floor, HISTOGRAM_BUCKETS - 1].min
-            buckets[bucket_index] += 1
+            index = [((size - minimum_bytes) / bucket_width).floor, HISTOGRAM_BUCKETS - 1].min
+            counts[index] += 1
           end
 
-          buckets.map.with_index { |count, i|
+          counts.map.with_index { |count, i|
             {
-              lower: min_size + (i * bucket_width),
-              upper: min_size + ((i + 1) * bucket_width),
-              count: count
+              bucket: [minimum_bytes + (i * bucket_width), minimum_bytes + ((i + 1) * bucket_width)],
+              count:
             }
           }
         end
 
-        # Delete files from the cache that exceed the max size, oldest first.
-        # Only deletes files older than min_age_seconds.
-        # @param [Array<Hash>] file_sizes array of { path:, size:, mtime: }
-        # @param [Integer] max_size_bytes
-        # @param [Integer] min_age_seconds
-        # @return [Integer] number of files deleted
-        def cleanup_cache(file_sizes, max_size_bytes, min_age_seconds)
-          total_size = file_sizes.sum { |f| f[:size] }
-          return 0 if total_size <= max_size_bytes
+        # Delete cache files according to the configured conditions.
+        # Both conditions are independent:
+        # - Age condition: delete any file older than +minimum_age_seconds+
+        # - Size condition: delete oldest files until under +max_size_bytes+
+        #
+        # @param files [Array<FileInfo>]
+        # @param max_size_bytes [Integer, nil] nil disables size-based cleanup
+        # @param minimum_age_seconds [Integer, nil] nil disables age-based cleanup
+        # @return [Array(Integer, Integer)] [deleted_count, deleted_bytes]
+        def cleanup_cache(files, max_size_bytes, minimum_age_seconds)
+          return [0, 0] if files.empty?
 
-          cutoff_time = Time.zone.now - min_age_seconds
-
-          # Only consider files that are old enough to delete
-          eligible_files = file_sizes
-            .select { |f| f[:mtime] < cutoff_time }
-            .sort_by { |f| f[:mtime] } # oldest first
+          cutoff_time = minimum_age_seconds ? (Time.zone.now - minimum_age_seconds.seconds) : nil
+          remaining_bytes = files.sum(&:size)
 
           deleted_count = 0
+          deleted_bytes = 0
 
-          eligible_files.each do |file_info|
-            break if total_size <= max_size_bytes
+          files.sort_by(&:mtime).each do |fi|
+            age_eligible = cutoff_time && fi.mtime < cutoff_time
+            size_eligible = max_size_bytes && remaining_bytes > max_size_bytes
+
+            next unless age_eligible || size_eligible
 
             begin
-              File.delete(file_info[:path])
-              total_size -= file_info[:size]
+              File.delete(fi.path)
               deleted_count += 1
+              deleted_bytes += fi.size
+              remaining_bytes -= fi.size
             rescue Errno::ENOENT
-              # already deleted, adjust size and continue
-              total_size -= file_info[:size]
+              # already deleted; still adjust running total
+              remaining_bytes -= fi.size
             rescue StandardError => e
-              logger.warn("Could not delete cache file #{file_info[:path]}", exception: e)
+              logger.warn("Could not delete cache file #{fi.path}", exception: e)
             end
           end
 
-          deleted_count
+          [deleted_count, deleted_bytes]
         end
+      end
+
+      # Scheduled job for the audio cache.
+      class AudioCacheCleanupJob < CacheCleanupJob
+        recurring_at Settings.actions.cache_cleanup.audio.schedule, args: ['audio']
+      end
+
+      # Scheduled job for the spectrogram cache.
+      class SpectrogramCacheCleanupJob < CacheCleanupJob
+        recurring_at Settings.actions.cache_cleanup.spectrogram.schedule, args: ['spectrogram']
       end
     end
   end

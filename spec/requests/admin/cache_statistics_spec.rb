@@ -4,10 +4,10 @@ describe 'Admin::CacheStatistics' do
   prepare_users
 
   let!(:audio_stats) {
-    create(:cache_statistics, name: 'audio', size_bytes: 1_000_000, item_count: 50, generated_at: 1.hour.ago)
+    create(:cache_statistics, name: 'audio', total_bytes: 1_000_000, item_count: 50)
   }
   let!(:spectrogram_stats) {
-    create(:cache_statistics, name: 'spectrogram', size_bytes: 2_000_000, item_count: 100, generated_at: 2.hours.ago)
+    create(:cache_statistics, name: 'spectrogram', total_bytes: 2_000_000, item_count: 100)
   }
 
   describe 'GET /admin/cache_statistics' do
@@ -16,8 +16,8 @@ describe 'Admin::CacheStatistics' do
 
       expect_success
       expect(api_data).to a_collection_including(
-        a_hash_including(name: 'audio', size_bytes: 1_000_000, item_count: 50),
-        a_hash_including(name: 'spectrogram', size_bytes: 2_000_000, item_count: 100)
+        a_hash_including(name: 'audio', total_bytes: 1_000_000, item_count: 50),
+        a_hash_including(name: 'spectrogram', total_bytes: 2_000_000, item_count: 100)
       )
     end
 
@@ -42,7 +42,7 @@ describe 'Admin::CacheStatistics' do
       expect(api_data).to include(
         id: audio_stats.id,
         name: 'audio',
-        size_bytes: 1_000_000,
+        total_bytes: 1_000_000,
         item_count: 50
       )
     end
@@ -66,7 +66,7 @@ describe 'Admin::CacheStatistics' do
     end
   end
 
-  describe 'GET /admin/cache_statistics/filter' do
+  describe 'POST /admin/cache_statistics/filter' do
     it 'supports filtering by name' do
       post '/admin/cache_statistics/filter',
         params: { filter: { name: { eq: 'audio' } } },
