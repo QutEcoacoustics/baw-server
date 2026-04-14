@@ -19,7 +19,7 @@ module Baw
     # This fails for virtual tables (eg. CTEs) because they don't exist in the schema
     # causing very confusing errors (because it fails silently, the transaction fails
     # and not actual error is shown).
-    # TODO: can we remove ArelExtensions entirely?
+    # ! TODO: remove this patch when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
     # @return [::Arel::Nodes::Function]
     def coalesce(*expressions)
       ::Arel::Nodes::NamedFunction.new 'COALESCE', expressions
