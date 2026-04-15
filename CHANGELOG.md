@@ -1,5 +1,39 @@
 # Changelog
 
+## [14.12.0](https://github.com/QutEcoacoustics/baw-server/tree/14.12.0) (2026-04-15)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.11.1...14.12.0)
+
+**Implemented enhancements:**
+
+- feat: add reports/tag\_diel\_activity endpoint [\#960](https://github.com/QutEcoacoustics/baw-server/pull/960) ([andrew-1234](https://github.com/andrew-1234))
+
+**Fixed bugs:**
+
+- BawWorkers::ActiveJob::Concurrency frequently fails in tests - probably due to poor isolation [\#964](https://github.com/QutEcoacoustics/baw-server/issues/964)
+
+**Merged pull requests:**
+
+- fix: wait for real worker to be working in concurrency spec to prevent job starvation [\#965](https://github.com/QutEcoacoustics/baw-server/pull/965) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- chore\(ci\): bump nschloe/action-cached-lfs-checkout from 1.2.4 to 1.2.5 [\#961](https://github.com/QutEcoacoustics/baw-server/pull/961) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump addressable from 2.8.7 to 2.9.0 [\#959](https://github.com/QutEcoacoustics/baw-server/pull/959) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump rack-session from 2.1.1 to 2.1.2 [\#958](https://github.com/QutEcoacoustics/baw-server/pull/958) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump rack from 3.2.5 to 3.2.6 [\#957](https://github.com/QutEcoacoustics/baw-server/pull/957) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump activesupport from 8.0.4 to 8.0.4.1 [\#949](https://github.com/QutEcoacoustics/baw-server/pull/949) ([dependabot[bot]](https://github.com/apps/dependabot))
+- fix: remove LOWER\(\) from file\_hash uniqueness check to restore index usage [\#947](https://github.com/QutEcoacoustics/baw-server/pull/947) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- chore\(deps\): bump json from 2.19.1 to 2.19.2 [\#942](https://github.com/QutEcoacoustics/baw-server/pull/942) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump loofah from 2.25.0 to 2.25.1 [\#940](https://github.com/QutEcoacoustics/baw-server/pull/940) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump devise from 4.9.4 to 5.0.3 [\#939](https://github.com/QutEcoacoustics/baw-server/pull/939) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(ci\): bump PaulHatch/semantic-version from 6.0.1 to 6.0.2 [\#938](https://github.com/QutEcoacoustics/baw-server/pull/938) ([dependabot[bot]](https://github.com/apps/dependabot))
+
+## [14.11.1](https://github.com/QutEcoacoustics/baw-server/tree/14.11.1) (2026-04-13)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.11.0...14.11.1)
+
+**Fixed bugs:**
+
+- Audio recording validations are slow: harvest performance impacted [\#946](https://github.com/QutEcoacoustics/baw-server/issues/946)
+
 ## [14.11.0](https://github.com/QutEcoacoustics/baw-server/tree/14.11.0) (2026-04-02)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.10.0...14.11.0)
