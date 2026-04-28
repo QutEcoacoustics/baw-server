@@ -20,6 +20,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioRecording,
       template: recording_coverage_template,
       projections: {}
     )
