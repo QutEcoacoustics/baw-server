@@ -50,6 +50,13 @@ module Baw
       ::Arel::Nodes::NamedFunction.new('tsrange', [lower, upper, ::Arel::Nodes.build_quoted(bounds)])
     end
 
+    # Custom PostgreSQL function to get the total sum of the seconds for each tsrange in the multirange
+    # (see AddTsmultirangeTotalSecondsFunction migration)
+    # @return [::Arel::Nodes::NamedFunction]
+    def tsmultirange_total_seconds(multirange)
+      ::Arel::Nodes::NamedFunction.new('tsmultirange_total_seconds', [multirange])
+    end
+
     module NodeExtensions
       # Treat this node as an array.
       # Has no effect other than to allow array-like methods to be called on this node.
@@ -70,6 +77,11 @@ module Baw
       # @return [Baw::Arel::Nodes::MakeInterval]
       def seconds
         Nodes::MakeInterval.new(seconds: self)
+      end
+
+      # Returns the upper bound of a range attribute; Arel already provides `lower`.
+      def upper
+        ::Arel::Nodes::NamedFunction.new('upper', [self])
       end
     end
 
@@ -99,6 +111,10 @@ module Baw
 
       def row_to_json
         Baw::Arel::Nodes::RowToJson.new([self])
+      end
+
+      def range_agg
+        Baw::Arel::Nodes::RangeAgg.new([self])
       end
     end
 

@@ -89,6 +89,53 @@ describe Access::ByPermissionTable do
     end
   end
 
+  context 'with audio_recordings it works as expected' do
+    def common(user)
+      Access::ByPermissionTable
+        .audio_recordings(user, level: Access::Permission::READER)
+        .order(:id)
+        .pluck(:id)
+    end
+
+    example 'for admin' do
+      expect(common(admin_user)).to eq([audio_recording.id, site_anon.id])
+    end
+
+    example 'for owner' do
+      expect(common(owner_user)).to eq([audio_recording.id, site_anon.id])
+    end
+
+    example 'for writer' do
+      expect(common(writer_user)).to eq([audio_recording.id, site_anon.id])
+    end
+
+    example 'for reader' do
+      expect(common(reader_user)).to eq([audio_recording.id, site_anon.id])
+    end
+
+    example 'for anonymous' do
+      expect(common(nil)).to eq([audio_recording_anon.id])
+    end
+
+    example 'with project_ids filter' do
+      expect(
+        Access::ByPermissionTable
+          .audio_recordings(reader_user, level: Access::Permission::READER, project_ids: [project.id])
+          .order(:id)
+          .pluck(:id)
+      ).to eq([audio_recording.id])
+    end
+
+    example 'with project_ids filter excluding all' do
+      expect(
+        Access::ByPermissionTable
+          .audio_recordings(reader_user, level: Access::Permission::READER, project_ids: [another_project.id])
+          .order(:id)
+          .pluck(:id)
+      ).to eq([])
+    end
+  end
+
   context 'with audio_events it works as expected' do
     # audio_event comes from create_entire_hierarchy (in the permissioned project)
 
@@ -203,6 +250,22 @@ describe Access::ByPermissionTable do
 
           by_permission_table_result = Access::ByPermissionTable
             .sites(user, levels: Access::Permission::READER_OR_ABOVE)
+            .order(:id)
+            .pluck(:id)
+
+          expect(by_permission_table_result).to eq(by_permission_result)
+        end
+
+        example 'for audio_recordings' do
+          user = user_name.nil? ? nil : send(user_name)
+
+          by_permission_result = Access::ByPermission
+            .audio_recordings(user, levels: Access::Permission::READER_OR_ABOVE)
+            .order(:id)
+            .pluck(:id)
+
+          by_permission_table_result = Access::ByPermissionTable
+            .audio_recordings(user, levels: Access::Permission::READER_OR_ABOVE)
             .order(:id)
             .pluck(:id)
 
