@@ -6,21 +6,21 @@ class ReportsController < ApplicationController
   include Api::Reporting
   include ResultFormatters
 
-  # POST /reports/coverage
-  # Returns a structured report of audio recording coverage
+  # POST /reports/recording_coverage
+  # Returns a structured report of recording coverage
   # Accepts a filter object where:
   #  the `filter` is applied to audio events
   #  the `paging`, `sort` and `projection` options are invalid
-  def coverage
+  def recording_coverage
     do_authorize_class(:filter, AudioRecording)
 
     base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
 
-    coverage_template = Coverage.new
+    recording_coverage_template = RecordingCoverage.new
 
     results, opts = execute_report(
       base_query:,
-      template: coverage_template,
+      template: recording_coverage_template,
       projections: {}
     )
 

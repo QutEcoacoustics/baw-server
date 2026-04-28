@@ -864,6 +864,7 @@ Rails.application.routes.draw do
   post 'reports/tag_frequency(.:format)', to: 'reports#tag_frequency', defaults: { format: 'json' }
   post 'reports/tag_diel_activity(.:format)', to: 'reports#tag_diel_activity', defaults: { format: 'json' }
   post 'reports/event_summaries(.:format)', to: 'reports#event_summaries', defaults: { format: 'json' }
+  post 'reports/recording_coverage(.:format)', to: 'reports#recording_coverage', defaults: { format: 'json' }
 
   # route to the home page of site
   root to: 'public#index'
