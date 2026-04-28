@@ -186,6 +186,70 @@ module Api
           required: [:bucket_size]
         }
       end
+
+      def coverage_report_options
+        {
+          type: 'object',
+          properties: {
+            bucket_count: {
+              type: 'integer',
+              description: 'The number of buckets to divide the total span of all recordings into for the purposes of calculating the gap threshold.',
+              minimum: 1
+            }
+          },
+          required: [:bucket_count]
+        }
+      end
+
+      def recording_coverage(include_result: false)
+        properties = {
+          site_id: id,
+          coverage: {
+            type: 'array',
+            items: { type: 'string', format: 'date-time' },
+            minItems: 2,
+            maxItems: 2,
+            additionalItems: false,
+            description: 'The inclusive start and exclusive end of the contiguous coverage span'
+          },
+          density: {
+            type: 'number',
+            description: 'The ratio of covered seconds to the total duration of the coverage span',
+            minimum: 0.0,
+            maximum: 1.0
+          },
+          gap_threshold: {
+            type: 'number',
+            description: 'The maximum number of seconds between neighbouring recordings before a new coverage span begins ' \
+                         'Calculated dynamically as 1/bucket_count of the total span of all recordings in the query'
+          }
+        }
+
+        if include_result
+          properties[:result] = {
+            type: 'string',
+            enum: AnalysisJobsItem::ALLOWED_RESULTS,
+            description: 'The analysis job item result type that the coverage was calculated for'
+          }
+        end
+
+        {
+          type: 'object',
+          additionalProperties: false,
+          properties: properties,
+          readOnly: true,
+          required: if include_result
+                      [:site_id, :result, :coverage, :density,
+                       :gap_threshold]
+                    else
+                      [:site_id, :coverage, :density, :gap_threshold]
+                    end
+        }
+      end
+
+      def coverage_report(include_result: false)
+        standard_array_response(recording_coverage(include_result: include_result))
+      end
     end
   end
 end

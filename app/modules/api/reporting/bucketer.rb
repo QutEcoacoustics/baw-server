@@ -73,8 +73,8 @@ module Api
         lower = series.right
         upper = Arel::Nodes::InfixOperation.new('+', lower, interval_arel)
 
-        # Without `.on` Arel generates INNER JOIN LATERAL (not CROSS JOIN LATERAL?)
-        # which causes a syntax error
+        # The SQL generated here is INNER JOIN LATERAL, not CROSS JOIN LATERAL,
+        # and it requires an ON true condition to achieve the same effect.
         BOUNDS
           .project(Arel.tsrange(lower, upper).as('bucket'))
           .join(Arel::Nodes::Lateral.new(series))
