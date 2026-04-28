@@ -6,6 +6,27 @@ class ReportsController < ApplicationController
   include Api::Reporting
   include ResultFormatters
 
+  # POST /reports/coverage
+  # Returns a structured report of audio recording coverage
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio events
+  #  the `paging`, `sort` and `projection` options are invalid
+  def coverage
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    coverage_template = Coverage.new
+
+    results, opts = execute_report(
+      base_query:,
+      template: coverage_template,
+      projections: {}
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/event_summaries
   # Returns a structured report of event summaries per tag and provenance groupings.
   # Accepts a filter object where:
@@ -24,6 +45,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: event_summaries_template,
       projections:
     )
@@ -58,6 +80,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagDielActivity.new(report_options),
       projections:
     )
@@ -83,6 +106,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagFrequency.new(report_options),
       projections:
     )
@@ -109,6 +133,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagAccumulation.new(report_options),
       projections:
     )
