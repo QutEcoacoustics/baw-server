@@ -71,6 +71,11 @@ module Baw
       def seconds
         Nodes::MakeInterval.new(seconds: self)
       end
+
+      # Returns the upper bound of a range attribute; Arel already provides `lower`.
+      def upper
+        ::Arel::Nodes::NamedFunction.new('upper', [self])
+      end
     end
 
     module ExpressionsExtensions

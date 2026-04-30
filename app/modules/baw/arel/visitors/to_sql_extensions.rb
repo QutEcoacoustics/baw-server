@@ -10,6 +10,17 @@ module Baw
       # An extension to https://github.com/rails/rails/blob/main/activerecord/lib/arel/visitors/to_sql.rb.
       # Only valid for postgesql.
       module ToSqlExtensions
+        def visit_Baw_Arel_Nodes_ArrayAgg(o, collector)
+          return visit_Arel_Nodes_NamedFunction(o, collector) unless o.order_expressions.present?
+
+          collector << 'array_agg('
+          visit o.expressions.first, collector
+          collector << ' ORDER BY '
+          collector = inject_join o.order_expressions, collector, ', '
+          collector << ')'
+          collector
+        end
+
         def visit_Baw_Arel_Nodes_UpsertStatement(o, collector)
           # generate the insert first
           visit o.insert, collector

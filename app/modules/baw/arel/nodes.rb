@@ -86,8 +86,15 @@ module Baw
       end
 
       class ArrayAgg < ::Arel::Nodes::NamedFunction
+        attr_reader :order_expressions
+
         def initialize(expr)
           super('array_agg', expr)
+        end
+
+        def order(*exprs)
+          @order_expressions = exprs.flatten
+          self # chainable
         end
       end
 
