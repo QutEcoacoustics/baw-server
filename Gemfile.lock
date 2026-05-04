@@ -486,7 +486,7 @@ GEM
     nenv (0.3.0)
     net-http (0.4.1)
       uri
-    net-imap (0.5.9)
+    net-imap (0.5.14)
       date
       net-protocol
     net-pop (0.1.2)
@@ -822,7 +822,7 @@ GEM
     tilt (2.7.0)
     timecop (0.9.10)
     timeliness (0.5.3)
-    timeout (0.4.3)
+    timeout (0.6.1)
     tins (1.36.1)
       bigdecimal
       sync
