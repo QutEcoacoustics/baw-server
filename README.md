@@ -81,10 +81,13 @@ To start from scratch by **removing all containers, images, and volumes**:
 
     $ docker-compose down --remove-orphans --volumes --rmi local
 
+Removing existing volumes in particular may be required when changing the
+Postgres image major version. 
+
 To rebuild the `web` service / `baw-server` image (e.g. to update dependencies)
 but keep state from our volume:
 
-    $ docker-compose build
+  $ docker compose build
 
 
 ## IDE
