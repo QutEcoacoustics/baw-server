@@ -204,7 +204,7 @@ while ($null -ne ($recordings = Get-NextPage )) {
           -Method HEAD -Headers $headers -SkipHttpErrorCheck -StatusCodeVariable "head_status_code"
 
         if ($head_status_code -ne 200) {
-          Write-Error ("Failed to get recording size for $audio_recording_id ($head_status_code): " + $head_response.Content)
+          Write-Error "Failed to get recording size for $audio_recording_id ($head_status_code)."
           exit 1
         }
 

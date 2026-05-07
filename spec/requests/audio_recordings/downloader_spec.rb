@@ -253,6 +253,7 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
         logger.info(second_output, status:)
 
         expect(second_output).to include('Skipping recording')
+        expect(second_output).not_to include('Downloaded recording')
 
         files = (BawApp.tmp_dir / 'downloader_test').glob('**/*.mp3')
         expect(files.size).to eq(11)
