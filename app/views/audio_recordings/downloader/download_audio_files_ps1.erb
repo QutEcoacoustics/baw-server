@@ -30,6 +30,8 @@ $ ./download_audio_files.ps1
 param(
   # Where to download the recordings. Defaults to the present working directory if not specified.
   $target = $null,
+  # Overwrite existing files without checking their size first.
+  [switch]$clobber,
     # The auth token to use to login to the workbench. You only need to supply an auth token if you want to log in without a password.
   $auth_token = $null,
   # The username to use to login to the workbench. This value's default value is templated when the script is generated. This is not needed if you use an auth_token.
@@ -191,8 +193,41 @@ while ($null -ne ($recordings = Get-NextPage )) {
     New-Item -ItemType Directory -Path $sub_folder -Force | Out-Null
 
     $path = Join-Path $sub_folder $name
+    $recording_url = "$workbench_url/audio_recordings/$audio_recording_id/original"
 
-    Invoke-RestMethod -Uri "$workbench_url/audio_recordings/$audio_recording_id/original" `
+    if (Test-Path $path) {
+      if ($clobber) {
+        Write-Information "File exists for recording $audio_recording_id at $path. Re-downloading because clobber was set."
+      }
+      else {
+        $head_response = Invoke-WebRequest -Uri $recording_url `
+          -Method HEAD -Headers $headers -SkipHttpErrorCheck
+
+        if (-not $head_response.BaseResponse.IsSuccessStatusCode) {
+          Write-Error "Failed to get recording size for $audio_recording_id ($($head_response.StatusCode))."
+          exit 1
+        }
+
+        $expected_size_header = [string]($head_response.Headers["Content-Length"] | Select-Object -First 1)
+        $expected_size = $null
+        if (-not [string]::IsNullOrWhiteSpace($expected_size_header)) {
+          $parsed_expected_size = 0
+          if ([long]::TryParse($expected_size_header, [ref]$parsed_expected_size)) {
+            $expected_size = $parsed_expected_size
+          }
+        }
+        $existing_size = (Get-Item $path).Length
+
+        if (($null -ne $expected_size) -and ($existing_size -eq $expected_size)) {
+          Write-Information "Skipping recording $audio_recording_id at $path (already downloaded, size $existing_size bytes)."
+          continue
+        }
+
+        Write-Information "Re-downloading recording $audio_recording_id at $path (existing size $existing_size bytes, expected $expected_size bytes)."
+      }
+    }
+
+    Invoke-RestMethod -Uri $recording_url `
       -Method GET -Headers $headers -StatusCodeVariable "download_status_code" -OutFile $path
 
     Write-Information "Downloaded recording $audio_recording_id to $path"

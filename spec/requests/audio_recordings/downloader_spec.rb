@@ -41,6 +41,13 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
       expect(response.body).to include('  $workbench_url = "http://web:3000"')
     end
 
+    it 'contains a clobber option' do
+      get '/audio_recordings/downloader', headers: api_request_headers(reader_token)
+      expect_success
+
+      expect(response.body).to include('  [switch]$clobber,')
+    end
+
     it 'contains a default filter' do
       get '/audio_recordings/downloader', headers: api_request_headers(reader_token)
       expect_success
@@ -220,6 +227,36 @@ describe '/audio_recordings/downloader', :clean_by_truncation do
         files = (BawApp.tmp_dir / 'downloader_test').glob('**/*.mp3')
         expect(files.size).to eq(11)
         expect(files.map(&:to_s)).to all(end_with('.mp3'))
+      end
+
+      it 'skips downloading files that already exist and have matching size' do
+        out_and_err, status = Open3.capture2e(
+          'curl -JO localhost:3000/audio_recordings/downloader?items=2',
+          chdir: BawApp.tmp_dir
+        )
+        logger.info(out_and_err, status:)
+
+        script.chmod(0o764)
+
+        auth_token = User.find_by(roles_mask: 1).authentication_token
+
+        _first_output, status = Open3.capture2e(
+          "pwsh download_audio_files.ps1 -target downloader_test -auth_token #{auth_token}",
+          chdir: BawApp.tmp_dir
+        )
+        logger.info(status:)
+
+        second_output, status = Open3.capture2e(
+          "pwsh download_audio_files.ps1 -target downloader_test -auth_token #{auth_token}",
+          chdir: BawApp.tmp_dir
+        )
+        logger.info(second_output, status:)
+
+        expect(second_output).to include('Skipping recording')
+        expect(second_output).not_to include('Downloaded recording')
+
+        files = (BawApp.tmp_dir / 'downloader_test').glob('**/*.mp3')
+        expect(files.size).to eq(11)
       end
     end
   end
