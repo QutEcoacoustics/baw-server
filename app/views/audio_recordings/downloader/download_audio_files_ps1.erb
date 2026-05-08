@@ -201,10 +201,10 @@ while ($null -ne ($recordings = Get-NextPage )) {
       }
       else {
         $head_response = Invoke-WebRequest -Uri $recording_url `
-          -Method HEAD -Headers $headers -SkipHttpErrorCheck -StatusCodeVariable "head_status_code"
+          -Method HEAD -Headers $headers -SkipHttpErrorCheck
 
-        if ($head_status_code -ne 200) {
-          Write-Error "Failed to get recording size for $audio_recording_id ($head_status_code)."
+        if (-not $head_response.BaseResponse.IsSuccessStatusCode) {
+          Write-Error "Failed to get recording size for $audio_recording_id ($($head_response.StatusCode))."
           exit 1
         }
 
