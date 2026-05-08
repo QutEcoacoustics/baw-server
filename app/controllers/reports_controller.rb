@@ -16,12 +16,43 @@ class ReportsController < ApplicationController
 
     base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
 
-    recording_coverage_template = RecordingCoverage.new
+    partition_columns = [AudioRecording.arel_table[:site_id]]
+    recording_coverage_template = Coverage.new(partition_columns: partition_columns)
 
     results, opts = execute_report(
       base_query:,
       model: AudioRecording,
       template: recording_coverage_template,
+      projections: {}
+    )
+
+    respond_report(results, opts)
+  end
+
+  # POST /reports/analysis_coverage
+  # Returns a structured report of recording analysis coverage
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio events
+  #  the `paging`, `sort` and `projection` options are invalid
+  def analysis_coverage
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    partition_columns = [AudioRecording.arel_table[:site_id], AnalysisJobsItem.arel_table[:result]]
+
+    joins = AudioRecording.arel_table
+      .join(AnalysisJobsItem.arel_table)
+      .on(AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]).and(
+          AnalysisJobsItem.arel_table[:result].is_not_null
+        )).join_sources
+
+    analysis_coverage_template = Coverage.new(partition_columns: partition_columns, joins: joins)
+
+    results, opts = execute_report(
+      base_query:,
+      model: AudioRecording,
+      template: analysis_coverage_template,
       projections: {}
     )
 
