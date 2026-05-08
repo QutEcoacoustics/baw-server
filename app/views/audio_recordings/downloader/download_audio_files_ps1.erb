@@ -208,10 +208,13 @@ while ($null -ne ($recordings = Get-NextPage )) {
           exit 1
         }
 
-        $expected_size_header = $head_response.Headers["Content-Length"]
+        $expected_size_header = [string]($head_response.Headers["Content-Length"] | Select-Object -First 1)
         $expected_size = $null
         if (-not [string]::IsNullOrWhiteSpace($expected_size_header)) {
-          $expected_size = [long]$expected_size_header
+          $parsed_expected_size = 0
+          if ([long]::TryParse($expected_size_header, [ref]$parsed_expected_size)) {
+            $expected_size = $parsed_expected_size
+          }
         }
         $existing_size = (Get-Item $path).Length
 
