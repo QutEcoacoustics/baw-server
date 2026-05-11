@@ -116,6 +116,12 @@ module Baw
         end
       end
 
+      class RangeAgg < ::Arel::Nodes::NamedFunction
+        def initialize(expr)
+          super('range_agg', expr)
+        end
+      end
+
       class RowToJson < ::Arel::Nodes::NamedFunction
         def initialize(expr)
           super('row_to_json', expr)

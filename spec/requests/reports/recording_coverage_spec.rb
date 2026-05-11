@@ -2,43 +2,55 @@
 
 describe 'reports/recording_coverage' do
   create_entire_hierarchy
-  # start 1 day after the existing audio recording
-  let(:recording_first_start) { audio_recording.recorded_date + 1.day }
+  let(:start_date) { audio_recording.recorded_date.utc }
   let(:duration) { 5.minutes }
+  let(:expected_data) {
+    density = (audio_recording.duration_seconds + 1.minute).seconds /
+              ((audio_recording.duration_seconds + 1.minute).seconds + 5.minutes)
+
+    # 5 minutes and 15 seconds
+    gap_threshold = 315
+
+    [{ site_id: 1,
+       coverage: [start_date, start_date + audio_recording.duration_seconds.seconds + 5.minutes + 1.minute],
+       density: be_within(0.0001).of(density),
+       gap_threshold: },
+
+     { site_id: 1, coverage: [start_date + (7.days - 5.minutes), start_date + (7.days - 5.minutes) + 5.minutes],
+       density: 1.0, gap_threshold: },
+
+     { site_id: 2, coverage: [start_date, start_date + 10.minutes], density: 1.0, gap_threshold: },
+
+     { site_id: 2, coverage: [start_date + 20.minutes, start_date + 30.minutes], density: 1.0, gap_threshold: }]
+  }
 
   before do
-    #
-    #       rec1                      rec2
-    # :00          :05          :10          :15
-    #  |------------|            |------------|
-    #
-    #  |**************************************|
+    # Make a recording that ends exactly 1 week after the first audio_recording starts.
+    # The gap threhold will be 5 minutes 15 seconds
+    create(:audio_recording, creator: writer_user, site: site,
+      recorded_date: start_date + (7.days - 5.minutes), duration_seconds: 5.minutes)
 
-    # group 1 - testing that recordings with gaps smaller than the threshold are grouped together, density calculated correctly
-    # gap threshold is 5 minutes 15 seconds, and the gap between recordings is 5 minutes.
-    # so they are grouped together. so its 15 minutes of coverage and a gap of 5 minutes, density is 0.666666666
-    first_recording = create(:audio_recording, creator: writer_user, site: site,
-      recorded_date: recording_first_start, duration_seconds: duration)
+    # Make a recording that starts 5 minutes after the first recording ends (within the gap threshold), so they group together
+    create(:audio_recording, creator: writer_user, site: site,
+      recorded_date: start_date + audio_recording.duration_seconds + 5.minutes, duration_seconds: 1.minute)
 
-    second_recording = create(:audio_recording, creator: writer_user, site: site,
-      recorded_date: recording_first_start + (2 * duration), duration_seconds: duration)
+    # Make a new site with recordings to verify that partitioning works correctly
+    another_site = create(:site, creator: writer_user, region: region, projects: [project])
+    create(:audio_recording, creator: writer_user, site: another_site,
+      recorded_date: start_date, duration_seconds: 10.minutes)
 
-    # group 2 - no gaps, multiple recordings with varied start/end times
-    third_recording = create(:audio_recording, creator: writer_user, site: site,
-      recorded_date: recording_first_start + (4 * duration) + 30.seconds, duration_seconds: duration)
+    # Starts > gap threshold after previous recording ends: separate island
+    create(:audio_recording, creator: writer_user, site: another_site,
+      recorded_date: start_date + 20.minutes, duration_seconds: 10.minutes)
 
-    fourth_recording = create(:audio_recording, creator: writer_user, site: site,
-      recorded_date: recording_first_start + (4 * duration) + 30.seconds, duration_seconds: 10.minutes)
-
-    # group 3 - final recording ends exactly 1 week after the existing audio_recording starts, to give a gap threshold of 5 minutes and 15 seconds
-    final_recording = create(:audio_recording, creator: writer_user, site: site,
-      recorded_date: audio_recording.recorded_date + (7.days - duration), duration_seconds: duration)
+    # Finally, create a recording that writer_user has no access to, to prove it is not included in the coverage
+    create(:audio_recording, recorded_date: start_date, duration_seconds: 600_000)
   end
 
-  it 'works' do
+  it 'returns the correct coverage values' do
     post '/reports/recording_coverage', params: { filter: {} }, **api_headers(writer_token)
-    debugger
-    # TODO: gap threshold serialized weird?
+
     expect_success
+    expect(api_data).to match_array(expected_data)
   end
 end

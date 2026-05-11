@@ -23,7 +23,7 @@ class ReportsController < ApplicationController
       base_query:,
       model: AudioRecording,
       template: recording_coverage_template,
-      projections: {}
+      projections: { density: Coverage.coverage_density }
     )
 
     respond_report(results, opts)
