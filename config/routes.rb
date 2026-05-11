@@ -925,6 +925,8 @@ Rails.application.routes.draw do
 
       false
     }
+
+    resources :cache_statistics, only: [:index, :show], defaults: { format: 'json' }, concerns: [:filterable]
   end
 
   # enable CORS preflight requests
