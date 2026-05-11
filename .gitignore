@@ -57,4 +57,3 @@ data/
 
 # health check flag
 .ready
-config/settings.yml
