@@ -101,5 +101,35 @@ module Filter
     def compose_not_gteq_node(node, value)
       compose_gteq_node(node, value).not
     end
+
+    # Create case-insensitive equals condition.
+    # Uses ILIKE (case-insensitive LIKE) with the value escaped so no wildcards are matched.
+    # For nil values, falls back to an IS NULL check.
+    # @param [Arel::Nodes::Node] node
+    # @param [String, nil] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_ieq_node(node, value)
+      validate_node_or_attribute(node)
+      return node.eq(nil) if value.nil?
+
+      validate_string(value)
+      sanitized_value = sanitize_like_value(value)
+      node.matches(sanitized_value)
+    end
+
+    # Create case-insensitive not equals condition.
+    # Uses NOT ILIKE with the value escaped so no wildcards are matched.
+    # For nil values, falls back to an IS NOT NULL check.
+    # @param [Arel::Nodes::Node] node
+    # @param [String, nil] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_ieq_node(node, value)
+      validate_node_or_attribute(node)
+      return node.not_eq(nil) if value.nil?
+
+      validate_string(value)
+      sanitized_value = sanitize_like_value(value)
+      node.does_not_match(sanitized_value)
+    end
   end
 end

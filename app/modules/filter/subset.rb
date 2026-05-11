@@ -179,6 +179,29 @@ module Filter
       compose_in_node(node, values).not
     end
 
+    # Create case-insensitive IN condition.
+    # Uses ILIKE per value so the comparison is case-insensitive.
+    # Non-string values are converted to strings before comparison.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Array] values
+    # @return [Arel::Nodes::Node] condition
+    def compose_iin_node(node, values)
+      validate_node_or_attribute(node)
+      validate_array(values)
+      validate_array_items(values) if values.is_a?(Array)
+
+      sanitized_values = values.map { |v| sanitize_like_value(v.to_s) }
+      node.matches_any(sanitized_values)
+    end
+
+    # Create case-insensitive NOT IN condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Array] values
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_iin_node(node, values)
+      compose_iin_node(node, values).not
+    end
+
     # Create IN condition using range.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
