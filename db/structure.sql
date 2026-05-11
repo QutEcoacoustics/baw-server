@@ -1,8 +1,3 @@
-\restrict jzUK2mhBd3HZ3j09bN1hc82RQAyK6Aj6F6hwglOJtjRJrVBroYysWpZs9blP6wm
-
--- Dumped from database version 14.22 (Debian 14.22-1.pgdg13+1)
--- Dumped by pg_dump version 14.22 (Debian 14.22-1.pgdg11+1)
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -13,6 +8,13 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
 
 --
 -- Name: btree_gist; Type: EXTENSION; Schema: -; Owner: -
@@ -4537,8 +4539,6 @@ ALTER TABLE ONLY public.tags
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict jzUK2mhBd3HZ3j09bN1hc82RQAyK6Aj6F6hwglOJtjRJrVBroYysWpZs9blP6wm
 
 SET search_path TO "$user", public;
 

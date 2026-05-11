@@ -105,13 +105,29 @@ describe Filter::Query do
         }.to raise_error(CustomErrors::FilterArgumentError, /Value must be a string/)
       end
 
-      it 'excludes exact-case records but still matches different-case records' do
+      it 'excludes exact-case records' do
         name = audio_recording.original_file_name
         expect(name).to be_present
 
         # not_ieq with the exact name: this recording should NOT be in the results
         results = Filter::Query.new(
           { filter: { original_file_name: { not_ieq: name } } },
+          AudioRecording.all,
+          AudioRecording,
+          AudioRecording.filter_settings
+        ).query_full
+
+        expect(results.pluck(:id)).not_to include(audio_recording.id)
+      end
+
+      it 'excludes records that differ only by case' do
+        name = audio_recording.original_file_name
+        expect(name).to be_present
+
+        # not_ieq with different casing: the match is still case-insensitive,
+        # so this recording should also NOT be in the results
+        results = Filter::Query.new(
+          { filter: { original_file_name: { not_ieq: name.upcase } } },
           AudioRecording.all,
           AudioRecording,
           AudioRecording.filter_settings
