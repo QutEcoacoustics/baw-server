@@ -334,8 +334,8 @@ GEM
       faraday
     faraday-http-cache (2.5.1)
       faraday (>= 0.8)
-    faraday-multipart (1.0.4)
-      multipart-post (~> 2)
+    faraday-multipart (1.2.0)
+      multipart-post (~> 2.0)
     faraday-net_http (3.3.0)
       net-http
     faraday-parse_dates (0.1.1)
