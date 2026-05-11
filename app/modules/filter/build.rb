@@ -45,6 +45,9 @@ module Filter
         :gteq, :greater_than_or_equal,
         :not_gteq, :not_greater_than_or_equal,
 
+        # case-insensitive comparison
+        :ieq, :not_ieq,
+
         # subset
         :range, :in_range,
         :not_range, :not_in_range,
@@ -57,7 +60,10 @@ module Filter
         :ends_with, :end_with,
         :not_ends_with, :not_end_with, :does_not_end_with,
         :regex, :regex_match, :matches,
-        :not_regex, :not_regex_match, :does_not_match, :not_match
+        :not_regex, :not_regex_match, :does_not_match, :not_match,
+
+        # case-insensitive subset
+        :iin, :not_iin
       ]
     end
 
@@ -414,6 +420,12 @@ module Filter
       when :not_gteq, :not_greater_than_or_equal
         compose_not_gteq_node(node, filter_value)
 
+        # case-insensitive comparisons
+      when :ieq
+        compose_ieq_node(node, filter_value)
+      when :not_ieq
+        compose_not_ieq_node(node, filter_value)
+
         # subsets
       when :range, :in_range
         compose_range_options_node(node, filter_value)
@@ -439,6 +451,12 @@ module Filter
         compose_regex_node(node, filter_value)
       when :not_regex, :not_regex_match, :does_not_match, :not_match
         compose_not_regex_node(node, filter_value)
+
+        # case-insensitive subsets
+      when :iin
+        compose_iin_node(node, filter_value)
+      when :not_iin
+        compose_not_iin_node(node, filter_value)
 
         # unknown
       else
