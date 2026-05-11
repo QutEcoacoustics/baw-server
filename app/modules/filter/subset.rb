@@ -181,7 +181,9 @@ module Filter
 
     # Create case-insensitive IN condition.
     # Uses ILIKE per value so the comparison is case-insensitive.
-    # Non-string values are converted to strings before comparison.
+    # Values are converted to strings before matching, making this operator most
+    # suitable for string columns. For non-string column types, consider using
+    # the regular `in` operator instead.
     # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
     # @param [Array] values
     # @return [Arel::Nodes::Node] condition
