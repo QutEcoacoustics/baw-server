@@ -118,7 +118,7 @@ describe 'Reports permissions' do
       end
     })
 
-  # Any authenticated user with at least reader access can use the reports/tag_* endpoints
+  # Any authenticated user with at least reader access can use the reports/* endpoints
   ensures :admin, :owner, :writer, :reader,
     can: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     cannot: [:index, :show, :create, :update, :destroy, :new, :filter],
