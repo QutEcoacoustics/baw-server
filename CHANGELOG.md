@@ -1,5 +1,23 @@
 # Changelog
 
+## [14.13.0](https://github.com/QutEcoacoustics/baw-server/tree/14.13.0) (2026-05-12)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.12.0...14.13.0)
+
+**Implemented enhancements:**
+
+- Batch downloader script: don't redownload existing files [\#978](https://github.com/QutEcoacoustics/baw-server/issues/978)
+- add support case insensitive equality to filter conditions [\#791](https://github.com/QutEcoacoustics/baw-server/issues/791)
+- feat: add reports/event\_summaries endpoint [\#975](https://github.com/QutEcoacoustics/baw-server/pull/975) ([andrew-1234](https://github.com/andrew-1234))
+
+**Merged pull requests:**
+
+- Add case-insensitive filter operators: ieq, not\_ieq, iin, not\_iin [\#982](https://github.com/QutEcoacoustics/baw-server/pull/982) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- chore\(deps\): bump ruby-lsp from 0.26.1 to 0.26.9 [\#953](https://github.com/QutEcoacoustics/baw-server/pull/953) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump mcp from 0.8.0 to 0.9.2 [\#952](https://github.com/QutEcoacoustics/baw-server/pull/952) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump rack-mini-profiler from 3.3.1 to 4.0.1 [\#945](https://github.com/QutEcoacoustics/baw-server/pull/945) ([dependabot[bot]](https://github.com/apps/dependabot))
+- chore\(deps\): bump bcrypt from 3.1.20 to 3.1.22 [\#943](https://github.com/QutEcoacoustics/baw-server/pull/943) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [14.12.0](https://github.com/QutEcoacoustics/baw-server/tree/14.12.0) (2026-04-15)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.11.1...14.12.0)
