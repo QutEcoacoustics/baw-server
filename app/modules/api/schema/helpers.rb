@@ -206,8 +206,8 @@ module Api
           },
           gap_threshold: {
             type: 'number',
-            description: 'The maximum number of seconds between neighbouring recordings before a new coverage span begins ' \
-                         'Calculated dynamically as 1/1920th of the total span of all recordings in the query'
+            description: 'The maximum number of seconds between neighbouring recordings before a new coverage span begins' \
+                         ' Calculated dynamically as 1/1920th of the total span of all recordings in the query'
           }
         }
 
