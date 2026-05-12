@@ -2,10 +2,9 @@
 
 module Api
   module Reporting
-    # Contiguous groups within a threshold are collapsed into islands whose
-    # density (actual coverage / total coverage period) is then computed. The gap
-    # threshold is calculated as 1/1920th of the total span of all recordings.
-    # Calculated within customisable partitions (e.g. by site, or by site and analysis result type).
+    # Coverage periods are calculated as the contiguous ranges formed by a sequence
+    # of overlapping or neighbouring recordings (within a gap threshold), per
+    # customisable partitions (e.g. by site).
     #
     # Implements #call(query) for use as a template in execute_report.
     class Coverage
@@ -17,7 +16,7 @@ module Api
       RECORDING_RANGE = 'recording_range'
 
       # @param partition_columns [Array<Arel::Attributes::Attribute>] columns to partition and group by
-      # @param joins [Array<Arel::Nodes::Join>] optional; any joins needed to apply to the base query
+      # @param joins [Array<Arel::Nodes::Join>] optional; any joins needed by `partition_columns`; applied to the base query
       def initialize(partition_columns: [], joins: nil)
         @partition_columns = partition_columns
         @joins = joins
@@ -50,14 +49,16 @@ module Api
           .with(*ctes(query:))
       end
 
-      # Arel expression for a density calculation of coverage, to be used as a projection
+      # Arel expression for coverage density; calculated as the ratio of actual covered seconds within a coverage span to the spans total duration
       def self.coverage_density
+        # ! TODO: When arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         coverage_span = Arel::Nodes::Subtraction.new(
           ISLANDS[:recording_range].upper.maximum,
           ISLANDS[:recording_range].lower.minimum
         ).extract('epoch')
 
-        # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
+        # We calculate the actual covered seconds by using range_agg to union any overlapping tsranges within each island,
+        # and use our custom PostgreSQL function to get the total seconds covered by the resulting multirange.
         Arel::Nodes::Division.new(
           Arel.tsmultirange_total_seconds(ISLANDS[:recording_range].range_agg),
           Arel::Nodes::NamedFunction.new('NULLIF', [coverage_span, Arel.sql('0')])
@@ -87,12 +88,13 @@ module Api
         Arel.tsrange(AudioRecording.arel_table[:recorded_date], AudioRecording.arel_recorded_end_date)
       end
 
+      # Dynamically calculate a gap threshold as 1/1920th of the total span of all recordings in the query
       def threshold_cte
+        # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         span = Arel::Nodes::Subtraction.new(
           RECORDINGS[:recording_range].upper.maximum,
           RECORDINGS[:recording_range].lower.minimum
         )
-        # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         RECORDINGS.project(Arel.seconds(Arel::Nodes::Division.new(span.extract('epoch'), 1920)).as('val'))
       end
 

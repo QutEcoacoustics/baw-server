@@ -5,7 +5,8 @@
 # seconds as a double precision value.
 #
 # Example use case is to input the tsmultirange returned by 'range_agg', to get
-# the total non-overlapping seconds covered by the tsmultirange
+# the total non-overlapping seconds covered by the tsmultirange. This is useful
+# because it saves having to handle unnesting the tsmultirange and simplified the query.
 class AddTsmultirangeTotalSecondsFunction < ActiveRecord::Migration[8.0]
   def up
     execute(
