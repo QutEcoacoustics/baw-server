@@ -14,14 +14,14 @@ module Api
     # @param projections [Hash{Symbol => Arel::Nodes::Node}] alias: expression
     #   pairs to project from template
     # @return [Array(Array<Hash>, Hash)] the query result and filter options
-    def execute_report(base_query:, template:, projections: {})
+    def execute_report(base_query:, model:, template:, projections: {})
       raise ArgumentError, 'template must respond to #call' unless template.respond_to?(:call)
 
       filter = Filter::Query.new(
         api_filter_params_filter_only!,
         base_query,
-        AudioEvent,
-        AudioEvent.filter_settings
+        model,
+        model.filter_settings
       )
 
       # Preserving the supplied filter to later return in the response
@@ -34,7 +34,7 @@ module Api
       query = template.call(query)
       query.project(*projections.map { |name, expression| expression.as(name.to_s) })
 
-      results = AudioEvent.exec_query_casted(query)
+      results = model.exec_query_casted(query)
 
       [results, opts]
     end

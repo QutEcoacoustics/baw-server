@@ -1,11 +1,7 @@
-\restrict jzUK2mhBd3HZ3j09bN1hc82RQAyK6Aj6F6hwglOJtjRJrVBroYysWpZs9blP6wm
-
--- Dumped from database version 14.22 (Debian 14.22-1.pgdg13+1)
--- Dumped by pg_dump version 14.22 (Debian 14.22-1.pgdg11+1)
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -114,6 +110,17 @@ CREATE TYPE public.consent AS ENUM (
 
 
 --
+-- Name: contiguous_range_state; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.contiguous_range_state AS (
+	prev_range_upper timestamp without time zone,
+	sequence_number bigint,
+	threshold interval
+);
+
+
+--
 -- Name: basename(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -137,6 +144,50 @@ BEGIN
 
   RETURN segments[length];
 END;
+$$;
+
+
+--
+-- Name: contiguous_range_final(public.contiguous_range_state); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.contiguous_range_final(state public.contiguous_range_state) RETURNS bigint
+    LANGUAGE sql IMMUTABLE
+    AS $$
+    SELECT
+        state.sequence_number;
+$$;
+
+
+--
+-- Name: contiguous_range_transition(public.contiguous_range_state, tsrange, interval); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.contiguous_range_transition(state public.contiguous_range_state, current_range tsrange, threshold interval) RETURNS public.contiguous_range_state
+    LANGUAGE plpgsql IMMUTABLE
+    AS $$
+BEGIN
+    IF state IS NULL THEN
+        RETURN ROW (upper(current_range),
+            0,
+            threshold)::contiguous_range_state;
+
+    END IF;
+
+    IF lower(current_range) > state.prev_range_upper + state.threshold THEN
+        RETURN ROW (upper(current_range),
+            state.sequence_number + 1,
+            state.threshold)::contiguous_range_state;
+
+    ELSE
+        RETURN ROW (GREATEST (upper(current_range), state.prev_range_upper),
+            state.sequence_number,
+            state.threshold)::contiguous_range_state;
+
+    END IF;
+
+END;
+
 $$;
 
 
@@ -207,6 +258,31 @@ BEGIN
   RETURN array_to_string(segments[1:(query_length + 1)],'/');
 END;
 $$;
+
+
+--
+-- Name: tsmultirange_total_seconds(tsmultirange); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.tsmultirange_total_seconds(multirange tsmultirange) RETURNS double precision
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+    SELECT
+        extract(epoch FROM sum(upper(time_range) - lower(time_range)))
+    FROM
+        unnest(multirange) AS time_range
+$$;
+
+
+--
+-- Name: contiguous_range_number(tsrange, interval); Type: AGGREGATE; Schema: public; Owner: -
+--
+
+CREATE AGGREGATE public.contiguous_range_number(tsrange, interval) (
+    SFUNC = public.contiguous_range_transition,
+    STYPE = public.contiguous_range_state,
+    FINALFUNC = public.contiguous_range_final
+);
 
 
 SET default_tablespace = '';
@@ -4538,11 +4614,11 @@ ALTER TABLE ONLY public.tags
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jzUK2mhBd3HZ3j09bN1hc82RQAyK6Aj6F6hwglOJtjRJrVBroYysWpZs9blP6wm
-
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260507061809'),
+('20260507052638'),
 ('20260306070000'),
 ('20260216000000'),
 ('20260203031109'),

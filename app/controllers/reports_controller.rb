@@ -6,6 +6,59 @@ class ReportsController < ApplicationController
   include Api::Reporting
   include ResultFormatters
 
+  # POST /reports/recording_coverage
+  # Returns a structured report of recording coverage
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio recordings
+  #  the `paging`, `sort` and `projection` options are invalid
+  def recording_coverage
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    partition_columns = [AudioRecording.arel_table[:site_id]]
+
+    recording_coverage_template = Coverage.new(partition_columns: partition_columns)
+
+    results, opts = execute_report(
+      base_query:,
+      model: AudioRecording,
+      template: recording_coverage_template,
+      projections: { density: Coverage.coverage_density }
+    )
+
+    respond_report(results, opts)
+  end
+
+  # POST /reports/analysis_coverage
+  # Returns a structured report of recording analysis coverage
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio recordings
+  #  the `paging`, `sort` and `projection` options are invalid
+  def analysis_coverage
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    partition_columns = [AudioRecording.arel_table[:site_id], AnalysisJobsItem.arel_table[:result]]
+    joins = AudioRecording.arel_table
+      .join(AnalysisJobsItem.arel_table)
+      .on(AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id])
+      .and(AnalysisJobsItem.arel_table[:result].is_not_null))
+      .join_sources
+
+    analysis_coverage_template = Coverage.new(partition_columns: partition_columns, joins: joins)
+
+    results, opts = execute_report(
+      base_query:,
+      model: AudioRecording,
+      template: analysis_coverage_template,
+      projections: { density: Coverage.coverage_density }
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/event_summaries
   # Returns a structured report of event summaries per tag and provenance groupings.
   # Accepts a filter object where:
@@ -24,6 +77,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: event_summaries_template,
       projections:
     )
@@ -58,6 +112,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagDielActivity.new(report_options),
       projections:
     )
@@ -83,6 +138,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagFrequency.new(report_options),
       projections:
     )
@@ -109,6 +165,7 @@ class ReportsController < ApplicationController
 
     results, opts = execute_report(
       base_query:,
+      model: AudioEvent,
       template: TagAccumulation.new(report_options),
       projections:
     )
