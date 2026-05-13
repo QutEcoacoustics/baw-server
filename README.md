@@ -21,7 +21,7 @@ We're working on that.
 
 ## Development requirements
 
-Docker and docker-compose are required to run this application.
+Docker and docker compose are required to run this application.
 
 ### Windows
 
@@ -53,7 +53,7 @@ Install docker as normal.
 
 Clone this repo, then change directory to your cloned directory and on your **host** machine run
 
-	$ docker-compose up
+	$ docker compose up
 
 This will prepare a complete development environment. To see what is involved in
 the setup, look at the  [`Dockerfile`](./Dockerfile) and [`bin/setup`](bin/setup) files.
@@ -79,7 +79,7 @@ the following.
 
 To start from scratch by **removing all containers, images, and volumes**:
 
-    $ docker-compose down --remove-orphans --volumes --rmi local
+    $ docker compose down --remove-orphans --volumes --rmi local
 
 Removing existing volumes in particular may be required when changing the
 Postgres image major version.
@@ -105,7 +105,7 @@ start the web server. See the command below.
 
 Otherwise, Start by running, on your **host** machine:
 
-    $ docker-compose up
+    $ docker compose up
 
 
 ### Web server
@@ -226,7 +226,7 @@ Create staging settings file `config/settings/staging.yml` based on `config/sett
 We deploy using Ansible.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
-A basic redis setup is included with the docker-compose file.
+A basic redis setup is included with the docker compose file.
 
 ## Creating a release
 
