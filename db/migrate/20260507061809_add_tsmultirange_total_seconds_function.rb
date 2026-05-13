@@ -16,6 +16,8 @@ class AddTsmultirangeTotalSecondsFunction < ActiveRecord::Migration[8.0]
         )
             RETURNS double precision
             LANGUAGE sql
+            IMMUTABLE
+            PARALLEL SAFE
             AS $$
             SELECT
                 extract(epoch FROM sum(upper(time_range) - lower(time_range)))

@@ -9,7 +9,7 @@ class ReportsController < ApplicationController
   # POST /reports/recording_coverage
   # Returns a structured report of recording coverage
   # Accepts a filter object where:
-  #  the `filter` is applied to audio events
+  #  the `filter` is applied to audio recordings
   #  the `paging`, `sort` and `projection` options are invalid
   def recording_coverage
     do_authorize_class(:filter, AudioRecording)

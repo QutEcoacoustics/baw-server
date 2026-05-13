@@ -152,7 +152,7 @@ $$;
 --
 
 CREATE FUNCTION public.contiguous_range_final(state public.contiguous_range_state) RETURNS bigint
-    LANGUAGE sql
+    LANGUAGE sql IMMUTABLE
     AS $$
     SELECT
         state.sequence_number;
@@ -164,7 +164,7 @@ $$;
 --
 
 CREATE FUNCTION public.contiguous_range_transition(state public.contiguous_range_state, current_range tsrange, threshold interval) RETURNS public.contiguous_range_state
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql IMMUTABLE
     AS $$
 BEGIN
     IF state IS NULL THEN
@@ -265,7 +265,7 @@ $$;
 --
 
 CREATE FUNCTION public.tsmultirange_total_seconds(multirange tsmultirange) RETURNS double precision
-    LANGUAGE sql
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
     AS $$
     SELECT
         extract(epoch FROM sum(upper(time_range) - lower(time_range)))

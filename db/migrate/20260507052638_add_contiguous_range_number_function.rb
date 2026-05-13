@@ -32,6 +32,7 @@ class AddContiguousRangeNumberFunction < ActiveRecord::Migration[8.0]
         )
             RETURNS contiguous_range_state
             LANGUAGE plpgsql
+            IMMUTABLE
             AS $$
         BEGIN
             IF state IS NULL THEN
@@ -63,13 +64,14 @@ class AddContiguousRangeNumberFunction < ActiveRecord::Migration[8.0]
         )
             RETURNS bigint
             LANGUAGE sql
+            IMMUTABLE
             AS $$
             SELECT
                 state.sequence_number;
         $$;
 
         -- 4. Aggregate: groups tsranges into contiguous blocks by threshold
-        CREATE AGGREGATE contiguous_range_number (tsrange, interval) (
+        CREATE OR REPLACE AGGREGATE contiguous_range_number (tsrange, interval) (
             SFUNC = contiguous_range_transition,
             STYPE = contiguous_range_state,
             FINALFUNC = contiguous_range_final
