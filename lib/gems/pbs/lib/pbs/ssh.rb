@@ -50,7 +50,7 @@ module PBS
           stdout += data if stream == :stdout
           stderr += data if stream == :stderr
         end
-      rescue Net::SSH::Exception, Errno::ECONNREFUSED => e
+      rescue Net::SSH::Exception, Errno::ECONNREFUSED, IOError => e
         raise Errors::TransportError, e.message
       end
 
