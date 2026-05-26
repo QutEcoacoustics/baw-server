@@ -36,6 +36,16 @@ describe PBS::SSH do
     end
   end
 
+  it 'wraps IOError as a transport error' do
+    connection = instance_double(Net::SSH::Connection::Session)
+    allow(ssh).to receive(:connection).and_return(connection)
+    allow(connection).to receive(:exec!).and_raise(IOError, 'closed stream')
+
+    expect {
+      ssh.execute('echo "hello world"')
+    }.to raise_error(PBS::Errors::TransportError, 'closed stream')
+  end
+
   it 'can fail' do
     ssh.execute('echo "hello world" && exit 1') => {status:, stdout:, stderr:}
 
