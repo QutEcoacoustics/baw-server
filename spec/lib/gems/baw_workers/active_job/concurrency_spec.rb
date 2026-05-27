@@ -26,12 +26,6 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
   end
 
   def wait_for_a_working_job(timeout: 10)
-    initial_queue_count = BawWorkers::ResqueApi.queued_count
-    # Fast-failing jobs (e.g. those that raise immediately) may be dequeued and
-    # reach a terminal state before the WORKING status is ever observed during
-    # polling. If the queue is already empty, all jobs have been processed.
-    return if initial_queue_count.zero?
-
     deadline = Time.now + timeout
     loop do
       working = BawWorkers::ResqueApi.statuses(
@@ -39,12 +33,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
       )
       break if working.any?
 
-      # Also break if the queue shrank: a job was dequeued and may have already
-      # completed (failed/discarded) before we could observe the WORKING state.
-      # Check this before the timeout so a queue change right at the deadline
-      # is not mistakenly treated as a hung worker.
-      current_queue_count = BawWorkers::ResqueApi.queued_count
-      break if current_queue_count < initial_queue_count
+      # Fast-failing jobs (e.g. those that raise immediately and are discarded)
+      # complete so quickly that STATUS_WORKING is never observed during polling.
+      # When the queue is empty and no jobs are working, all jobs have been
+      # processed — there is nothing left for the extra workers to pick up.
+      # For long-running jobs this condition is safe because the remaining
+      # enqueued jobs keep the queue non-empty until the extra workers start.
+      break if BawWorkers::ResqueApi.queued_count.zero?
 
       raise "Timed out after #{timeout}s waiting for a job to be picked up by the real worker" if Time.now > deadline
 

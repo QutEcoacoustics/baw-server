@@ -155,9 +155,6 @@ module ResqueHelpers
         unless get_ignore_leftover_jobs
           spec_info = example.location
           other_jobs = BawWorkers::ResqueApi.job_count_by_class
-          # Clear the queue before raising so leftover jobs from a failing test
-          # do not cascade into the next test and cause spurious failures.
-          BawWorkers::ResqueApi.queue_names.each { |q| Resque.remove_queue(q) }
           raise "There are #{remaining} uncompleted jobs for this spec: #{spec_info}\n#{other_jobs}"
         end
 
