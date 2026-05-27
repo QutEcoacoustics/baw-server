@@ -1,5 +1,23 @@
 # Changelog
 
+## [14.14.0](https://github.com/QutEcoacoustics/baw-server/tree/14.14.0) (2026-05-27)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.13.0...14.14.0)
+
+**Implemented enhancements:**
+
+- feat: add reports/recording\_coverage, reports/analysis\_coverage endpoints; upgrade db image to postgres:18.3 [\#990](https://github.com/QutEcoacoustics/baw-server/pull/990) ([andrew-1234](https://github.com/andrew-1234))
+
+**Fixed bugs:**
+
+- Concurrency specs fail regularly on CI [\#997](https://github.com/QutEcoacoustics/baw-server/issues/997)
+- RemoteStatusCheckJob Arguments: \[\] The error was: Error: IOError closed stream [\#994](https://github.com/QutEcoacoustics/baw-server/issues/994)
+
+**Merged pull requests:**
+
+- Fix flaky concurrency specs: handle fast-failing jobs [\#998](https://github.com/QutEcoacoustics/baw-server/pull/998) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Handle SSH `IOError: closed stream` as transport failures to trigger automatic worker retries [\#995](https://github.com/QutEcoacoustics/baw-server/pull/995) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.13.0](https://github.com/QutEcoacoustics/baw-server/tree/14.13.0) (2026-05-12)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.12.0...14.13.0)
