@@ -32,6 +32,15 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
         statuses: [BawWorkers::ActiveJob::Status::STATUS_WORKING]
       )
       break if working.any?
+
+      # Fast-failing jobs (e.g. those that raise immediately and are discarded)
+      # complete so quickly that STATUS_WORKING is never observed between polls.
+      # An empty queue means every job has been dequeued and processed, so
+      # there is nothing left for the extra workers to pick up.
+      # For long-running jobs this is safe because the remaining enqueued jobs
+      # keep the queue non-empty until STATUS_WORKING is observed above.
+      break if BawWorkers::ResqueApi.queued_count.zero?
+
       raise "Timed out after #{timeout}s waiting for a job to be picked up by the real worker" if Time.now > deadline
 
       sleep 0.1
