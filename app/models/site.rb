@@ -81,6 +81,17 @@ class Site < ApplicationRecord
   # Don't allow values that are too close to the original location
   JITTER_EXCLUSION_RANGE = JITTER_RANGE * JITTER_EXCLUSION
 
+  # Conservative estimate: approximate distance in meters for 1 degree of longitude at the equator
+  METERS_PER_DEGREE = 111_319.5
+
+  # When coordinate measurement uncertainty is not provided, assume measurement
+  # taken using a GPS with uncertainty of 30 meters. This aligns with the
+  # camtrapdp R package default.
+  # See also:
+  # - https://dwc.tdwg.org/terms/#dwc:coordinateUncertaintyInMeters
+  # - https://github.com/tdwg/camtrap-dp/issues/467
+  ASSUMED_UNCERTAINTY_METERS = 30
+
   # add deleted_at and deleter_id
   acts_as_discardable
   also_discards :audio_recordings, batch: true
@@ -191,40 +202,34 @@ class Site < ApplicationRecord
   renders_markdown_for :description
 
   # Replaces `custom_latitude`. Returns obfuscated latitude if location is obfuscated.
-  def public_latitude
-    if location_obfuscated
-      obfuscated_latitude
-    else
-      latitude
-    end
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_latitude(user: nil, should_obfuscate: nil)
+    return obfuscated_latitude if location_obfuscated(user:, should_obfuscate:)
+
+    latitude
   end
 
   # Replaces `custom_longitude`. Returns obfuscated longitude if location is obfuscated.
-  def public_longitude
-    if location_obfuscated
-      obfuscated_longitude
-    else
-      longitude
-    end
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_longitude(user: nil, should_obfuscate: nil)
+    return obfuscated_longitude if location_obfuscated(user:, should_obfuscate:)
+
+    longitude
   end
 
-  # This method is a little funny.
-  # If `location_obfuscated` was returned in a query, then that value is used.
-  # Otherwise, the obfuscation is calculated with another query.
-  def location_obfuscated
-    return self['location_obfuscated'] if has_attribute?('location_obfuscated')
+  # Returns true when any project this site belongs to grants broad access (anonymous or logged-in users)
+  # @return [Boolean]
+  def public_site?
+    projects.any? { |project|
+      project.permissions.any?(&:public_access?)
+    }
+  end
 
-    return true if Current.user.nil?
-
-    return false if Current.user.admin?
-
-    # if no associated projects, we can't determine permissions, so obfuscate
-    return true if projects.empty?
-
-    is_owner = Access::Core.can_any?(Current.user, Access::Permission::OWNER, projects)
-
-    # obfuscate if level is less than owner
-    !is_owner
+  # @return [Boolean] true if both latitude and longitude are provided, false otherwise
+  def coordinates_provided?
+    latitude.present? && longitude.present?
   end
 
   def location_jitter_seed
@@ -259,7 +264,7 @@ class Site < ApplicationRecord
     # add in an exclusion buffer
     # the addition pushes the jitter away from the mid point
     # we push out by 10% of the jitter range, so for 0.003° ≈ 333m the push range is +- 33m
-    jitter += ((jitter >= 0 ? 1 : -1) * (Site::JITTER_RANGE * 0.1))
+    jitter += ((jitter >= 0 ? 1 : -1) * Site::JITTER_EXCLUSION_RANGE)
 
     # finally augment the input value
     # rounding just to produce a neat value
@@ -322,21 +327,128 @@ class Site < ApplicationRecord
     )
   end
 
-  private
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:shallow_site_path, id: id)
+  end
 
-  # Determines if the obfuscated location should be auto-updated
-  # Only update if:
-  # - The obfuscated location is system-generated (not user-provided), AND
-  # - Either latitude or longitude has changed (for existing records)
-  def should_update_obfuscated_location?
-    # Never auto-update if custom obfuscation is enabled
-    return false if custom_obfuscated_location
+  # TODO: remove when closed https://github.com/QutEcoacoustics/baw-server/issues/1023.
+  # Future DB column placeholder - We do not currently store this.
+  def measurement_uncertainty_meters
+    nil
+  end
 
-    # For new records, always generate if not using custom obfuscation
-    return true if new_record?
+  # Used to determine whether to use the stored measurement uncertainty or the assumed fallback uncertainty.
+  # @return [Boolean] true if measurement uncertainty has been provided, false otherwise.
+  def measurement_uncertainty_provided?
+    measurement_uncertainty_meters.present?
+  end
 
-    # For existing records, only update if coordinates changed
-    latitude_changed? || longitude_changed?
+  # Returns the effective measurement uncertainty in meters, using the stored
+  # value when available or the assumed fallback otherwise.
+  # @return [Integer, nil] the effective measurement uncertainty in meters, or
+  #   nil if coordinates are not provided.
+  def effective_measurement_uncertainty_meters
+    return nil unless coordinates_provided?
+    return measurement_uncertainty_meters if measurement_uncertainty_provided?
+
+    ASSUMED_UNCERTAINTY_METERS
+  end
+
+  # @return [Integer, nil] the obfuscation uncertainty in meters, or nil if
+  #   coordinates are not provided or if the obfuscation uncertainty cannot be
+  #   determined.
+  def effective_obfuscation_uncertainty_meters
+    return nil unless coordinates_provided?
+    return nil if obfuscated_latitude.nil? || obfuscated_longitude.nil?
+
+    # TODO: remove when closed https://github.com/QutEcoacoustics/baw-server/issues/1025.
+    return nil if custom_obfuscated_location
+
+    # For our default obfuscation, we use the theoretical maximum distance that
+    # the obfuscation could have moved the coordinates.
+    (JITTER_RANGE + JITTER_EXCLUSION_RANGE) * METERS_PER_DEGREE
+  end
+
+  # Total coordinate uncertainty includes both measurement and obfuscation
+  # uncertainty when applicable.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [Float, nil] the total coordinate uncertainty in meters, or nil if
+  #   unknown or cannot be determined.
+  def total_coordinate_uncertainty_meters(user: nil, should_obfuscate: nil)
+    obfuscated = location_obfuscated(user:, should_obfuscate:)
+    measurement_uncertainty = effective_measurement_uncertainty_meters
+
+    return measurement_uncertainty unless obfuscated
+
+    obfuscation_uncertainty = effective_obfuscation_uncertainty_meters
+
+    return nil if measurement_uncertainty.nil? || obfuscation_uncertainty.nil?
+
+    measurement_uncertainty + obfuscation_uncertainty
+  end
+
+  # Returns a human-readable string describing the measurement uncertainty, or nil if it cannot be determined.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [String, nil]
+  def measurement_uncertainty_text(user: nil, should_obfuscate: nil)
+    return nil unless coordinates_provided?
+    return nil if effective_measurement_uncertainty_meters.nil?
+    return 'coordinates are intentionally hidden' if public_location_hidden?(user:, should_obfuscate:)
+
+    uncertainty_type = measurement_uncertainty_provided? ? 'a' : 'an assumed'
+    "coordinates have #{uncertainty_type} measurement uncertainty of #{effective_measurement_uncertainty_meters} meters"
+  end
+
+  # Returns a human-readable string describing the obfuscation uncertainty, or nil if it cannot be determined.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [String, nil]
+  def obfuscation_uncertainty_text(user: nil, should_obfuscate: nil)
+    return nil unless coordinates_provided? && location_obfuscated(user:, should_obfuscate:)
+
+    return 'coordinates are intentionally hidden' if public_location_hidden?(user:, should_obfuscate:)
+    return 'coordinates have an unknown obfuscation uncertainty' if custom_obfuscated_location
+
+    obfuscation_uncertainty = effective_obfuscation_uncertainty_meters
+    return nil if obfuscation_uncertainty.nil?
+
+    "coordinates have an obfuscation uncertainty of #{obfuscation_uncertainty} meters"
+  end
+
+  # True when public location is intentionally hidden: obfuscation is enabled,
+  # custom obfuscation is active, and the obfuscated coordinates are nil.
+  def public_location_hidden?(user: nil, should_obfuscate: nil)
+    obfuscated = location_obfuscated(user:, should_obfuscate:)
+    obfuscated && custom_obfuscated_location && (obfuscated_latitude.nil? || obfuscated_longitude.nil?)
+  end
+
+  # Should the location be obfuscated?
+  # Use the `should_obfuscate` override if provided, else check permissions for the user.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [Boolean] true if the location should be obfuscated, false otherwise.
+  def location_obfuscated(user: nil, should_obfuscate: nil)
+    return self['location_obfuscated'] if has_attribute?('location_obfuscated')
+    return should_obfuscate unless should_obfuscate.nil?
+
+    user ||= Current.user
+    return true if user.nil?
+
+    return false if user.admin?
+
+    # if no associated projects, we can't determine permissions, so obfuscate
+    return true if projects.empty?
+
+    is_owner = Access::Core.can_any?(user, Access::Permission::OWNER, projects)
+
+    # obfuscate if level is less than owner
+    !is_owner
   end
 
   # Define filter api settings
@@ -359,22 +471,22 @@ class Site < ApplicationRecord
                       :obfuscated_latitude, :obfuscated_longitude, :custom_obfuscated_location],
       text_fields: [:description, :name],
       custom_fields: lambda { |item, _user|
-                       # item can be nil or a new record
-                       is_new_record = item.nil? || item.new_record?
-                       fresh_site = is_new_record ? nil : Site.find(item.id)
-                       site_hash = {}
+        # item can be nil or a new record
+        is_new_record = item.nil? || item.new_record?
+        fresh_site = is_new_record ? nil : Site.find(item.id)
+        site_hash = {}
 
-                       unless fresh_site.nil?
-                         site_hash = {
-                           project_ids: fresh_site.projects.pluck(:id).flatten,
-                           timezone_information: fresh_site.timezone,
-                           image_urls: Api::Image.image_urls(fresh_site.image),
-                           **item.render_markdown_for_api_for(:description)
-                         }
-                       end
+        unless fresh_site.nil?
+          site_hash = {
+            project_ids: fresh_site.projects.pluck(:id).flatten,
+            timezone_information: fresh_site.timezone,
+            image_urls: Api::Image.image_urls(fresh_site.image),
+            **item.render_markdown_for_api_for(:description)
+          }
+        end
 
-                       [item, site_hash]
-                     },
+        [item, site_hash]
+      },
       custom_fields2: {
         # latitude and longitude return obfuscated values for non-owners
         # custom_latitude and custom_longitude are kept for backwards compatibility
@@ -440,15 +552,15 @@ class Site < ApplicationRecord
         }
       },
       new_spec_fields: lambda { |user| # rubocop:disable Lint/UnusedBlockArgument
-                         {
-                           longitude: nil,
-                           latitude: nil,
-                           notes: nil,
-                           image: nil,
-                           tzinfo_tz: nil,
-                           rails_tz: nil
-                         }
-                       },
+        {
+          longitude: nil,
+          latitude: nil,
+          notes: nil,
+          image: nil,
+          tzinfo_tz: nil,
+          rails_tz: nil
+        }
+      },
       controller: :sites,
       action: :filter,
       defaults: {
@@ -500,7 +612,8 @@ class Site < ApplicationRecord
         latitude: { type: ['number', 'null'], minimum: -90, maximum: 90 },
         longitude: { type: ['number', 'null'], minimum: -180, maximum: 180 },
         custom_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90, deprecated: true, read_only: true },
-        custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180, deprecated: true, read_only: true },
+        custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180, deprecated: true,
+                            read_only: true },
         obfuscated_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90, readOnly: false },
         obfuscated_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180, readOnly: false },
         custom_obfuscated_location: { type: 'boolean' },
@@ -515,5 +628,22 @@ class Site < ApplicationRecord
         :longitude, :timezone_information, :image_urls, :region_id
       ]
     }.freeze
+  end
+
+  private
+
+  # Determines if the obfuscated location should be auto-updated
+  # Only update if:
+  # - The obfuscated location is system-generated (not user-provided), AND
+  # - Either latitude or longitude has changed (for existing records)
+  def should_update_obfuscated_location?
+    # Never auto-update if custom obfuscation is enabled
+    return false if custom_obfuscated_location
+
+    # For new records, always generate if not using custom obfuscation
+    return true if new_record?
+
+    # For existing records, only update if coordinates changed
+    latitude_changed? || longitude_changed?
   end
 end

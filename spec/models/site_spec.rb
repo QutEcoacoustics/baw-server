@@ -65,6 +65,127 @@ describe Site do
     expect(s.errors[:name].size).to eq 1
   end
 
+  describe '#public_site?' do
+    let(:site) { create(:site) }
+    let(:project) { site.projects.first }
+
+    it 'is false when permissions are user-specific' do
+      expect(site).not_to be_public_site
+    end
+
+    it 'is true when any project allows anonymous access' do
+      create(:read_anon_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+
+    it 'is true when any project allows logged-in access' do
+      create(:read_logged_in_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+  end
+
+  describe '#public_latitude and #public_longitude' do
+    let(:site) { create(:site, :with_lat_long) }
+
+    it 'returns obfuscated coordinates when there is no user' do
+      expect(site.public_latitude).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when user override has permission' do
+      expect(site.public_latitude(user: site.projects.first.creator)).to eq(site.latitude)
+      expect(site.public_longitude(user: site.projects.first.creator)).to eq(site.longitude)
+    end
+
+    it 'returns obfuscated coordinates when user override does not have permission' do
+      user = create(:user)
+      expect(site.public_latitude(user:)).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude(user:)).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when should_obfuscate is false' do
+      expect(site.public_latitude(should_obfuscate: false)).to eq(site.latitude)
+      expect(site.public_longitude(should_obfuscate: false)).to eq(site.longitude)
+    end
+  end
+
+  describe 'coordinate uncertainty' do
+    # rubocop:disable Layout/LineLength
+    # Cases cover the product of the following conditions, not including invalid cases:
+    #  - coordinates provided or not (latitude/longitude.present?)
+    #  - uncertainty provided or not (measurement_uncertainty_provided?)
+    #  - obfuscated or not (location_obfuscated)
+    #  - custom obfuscation or not (custom_obfuscated_location)
+    #  - nil obfuscated coordinates or not (obfuscated_latitude/longitude.nil?)
+    a = 30
+    b = 666
+    c = 1000
+    d = 367.35435
+    assumed = "coordinates have an assumed measurement uncertainty of #{a} meters"
+    provided = "coordinates have a measurement uncertainty of #{b} meters"
+    default = "coordinates have an obfuscation uncertainty of #{d} meters"
+    custom = "coordinates have an obfuscation uncertainty of #{c} meters"
+    hidden = 'coordinates are intentionally hidden'
+
+    cases =
+      # coordinates_provided, uncertainty_provided, obfuscated, custom_obfuscation, nil_obfuscated_coordinates, uncertainty, tag_coordinates_obfuscated, measurement_text, obfuscation_text
+      [
+        [true,  false, false, true,  false, a,     false, assumed,  nil],
+        [true,  true,  false, true,  false, b,     false, provided, nil],
+        [true,  false, true,  true,  false, a + c, true,  assumed,  custom],
+        [true,  true,  true,  true,  false, b + c, true,  provided, custom],
+        [true,  false, false, false, false, a,     false, assumed,  nil],
+        [false, false, false, false, false, nil,   nil,   nil,      nil],
+        [true,  true,  false, false, false, b,     false, provided, nil],
+        [true,  false, true,  false, false, a + d, true,  assumed,  default],
+        [true,  true,  true,  false, false, b + d, true,  provided, default],
+        [true,  false, false, true,  true,  a,     false, assumed,  nil],
+        [true,  true,  false, true,  true,  b,     false, provided, nil],
+        [true,  false, true,  true,  true,  nil,   true,  hidden,   hidden],
+        [true,  true,  true,  true,  true,  nil,   true,  hidden,   hidden]
+      ]
+
+    cases.each_with_index do |single_case, index|
+      it "resolves uncertainty values correctly — Case: #{index}" do
+        coordinates_provided, uncertainty_provided, obfuscated,
+        custom_obfuscation, nil_obfuscated_coordinates, uncertainty,
+        coordinates_obfuscated_tag, measurement_text,
+        obfuscated_text = single_case
+
+        latitude, longitude = coordinates_provided ? [-27, 152] : [nil, nil]
+
+        # When custom_obfuscated_location is false, site has default obfuscation.
+        # When custom_obfuscated_location is true, site has nil obfuscated coordinates by default (which means 'intentionally hidden by user').
+        site_new = create(:site, latitude:, longitude:, custom_obfuscated_location: custom_obfuscation)
+
+        # When custom_obfuscated_location is true and nil_obfuscated_coordinates: false, this site was obfuscated by the user (e.g. a 1000m buffer).
+        if custom_obfuscation && (nil_obfuscated_coordinates == false)
+          site_new.obfuscated_latitude = -27.0001
+          site_new.obfuscated_longitude = 152.0001
+        end
+
+        # Simulate a provided measurement uncertainty since we don't have a DB field for it.
+        allow(site_new).to receive(:measurement_uncertainty_meters).and_return(uncertainty_provided ? 666 : nil)
+        expect(site_new.measurement_uncertainty_provided?).to eq(uncertainty_provided)
+
+        # TODO: remove when closed https://github.com/QutEcoacoustics/baw-server/issues/1025.
+        # Until then, override the relevant cases to expect the interim behaviour.
+        if obfuscated && custom_obfuscation && !nil_obfuscated_coordinates
+          uncertainty = nil
+          obfuscated_text = 'coordinates have an unknown obfuscation uncertainty'
+        end
+
+        expect(site_new.total_coordinate_uncertainty_meters(should_obfuscate: obfuscated)).to uncertainty.nil? ? eq(uncertainty) : be_within(2).of(uncertainty)
+        expect(site_new.coordinates_provided? ? site_new.location_obfuscated(user: nil, should_obfuscate: obfuscated) : nil).to eq(coordinates_obfuscated_tag)
+        expect(site_new.measurement_uncertainty_text(user: nil, should_obfuscate: obfuscated)).to eq(measurement_text)
+        expect(site_new.obfuscation_uncertainty_text(user: nil, should_obfuscate: obfuscated)).to eq(obfuscated_text)
+      end
+    end
+    # rubocop:enable Layout/LineLength
+  end
+
   describe 'location obfuscation' do
     latitudes = [
       { -100 => false },
@@ -97,7 +218,7 @@ describe Site do
         expect(s.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
         expect(s.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
 
-        jitter_exclude_range = Site::JITTER_RANGE * 0.1
+        jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
         expect(s.obfuscated_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
         expect(s.obfuscated_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
       end
@@ -130,7 +251,7 @@ describe Site do
       s = build(:site, :with_lat_long)
 
       jitter_range = Site::JITTER_RANGE
-      jitter_exclude_range = Site::JITTER_RANGE * 0.1
+      jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
 
       lat_min = Site::LATITUDE_MIN
       lat_max = Site::LATITUDE_MAX
@@ -224,7 +345,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lat = site.obfuscated_latitude
 
-        site.update!(latitude: site.latitude + 1.0)
+        site.update!(latitude: site.latitude - site.latitude)
 
         expect(site.obfuscated_latitude).not_to eq(original_obfuscated_lat)
         expect(site.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(site.latitude)
@@ -234,7 +355,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lng = site.obfuscated_longitude
 
-        site.update!(longitude: site.longitude + 1.0)
+        site.update!(longitude: site.longitude - site.longitude)
 
         expect(site.obfuscated_longitude).not_to eq(original_obfuscated_lng)
         expect(site.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(site.longitude)

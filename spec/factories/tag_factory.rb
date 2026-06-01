@@ -34,6 +34,12 @@ FactoryBot.define do
     type_of_tag { 'general' }
     is_taxonomic { false }
 
+    trait :taxonomic_true_species do
+      is_taxonomic { true }
+      type_of_tag { :species_name }
+      sequence(:text, 'a') { |n| "Species #{n}" }
+    end
+
     trait :taxonomic_true_common do
       is_taxonomic { true }
       type_of_tag { :common_name }
@@ -52,6 +58,7 @@ FactoryBot.define do
       notes { { 'comment' => 'value' } }
     end
 
+    factory :tag_taxonomic_true_species, traits: [:taxonomic_true_species]
     factory :tag_taxonomic_true_common, traits: [:taxonomic_true_common]
     factory :tag_taxonomic_true_common_notes, traits: [:tag_taxonomic_true_common, :notes]
     factory :tag_taxonomic_false_sounds_like, traits: [:taxonomic_false_sounds_like]
