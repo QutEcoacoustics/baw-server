@@ -134,18 +134,18 @@ describe AudioEvent do
       AudioEvent
         .joins(:audio_recording)
         .select(
-          AudioEvent.start_date_arel.as('start_date'),
-          AudioEvent.end_date_arel.as('end_date')
+          AudioEvent.start_date_arel.as('event_start_date'),
+          AudioEvent.end_date_arel.as('event_end_date')
         )
         .find(audio_event.id)
     }
 
     it 'has a start_date arel expression' do
-      expect(event.start_date).to eq(Time.zone.parse('2023-10-01 12:02:03.456'))
+      expect(event.event_start_date).to eq(Time.zone.parse('2023-10-01 12:02:03.456'))
     end
 
     it 'has a end_date arel expression' do
-      expect(event.end_date).to eq(Time.zone.parse('2023-10-01 12:07:36.789'))
+      expect(event.event_end_date).to eq(Time.zone.parse('2023-10-01 12:07:36.789'))
     end
   end
 

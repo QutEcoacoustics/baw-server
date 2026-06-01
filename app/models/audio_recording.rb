@@ -552,6 +552,14 @@ class AudioRecording < ApplicationRecord
     result
   end
 
+  def recorded_end_date
+    recorded_date + duration_seconds
+  end
+
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:audio_recording_path, id: id)
+  end
+
   private
 
   def missing_hash_value?

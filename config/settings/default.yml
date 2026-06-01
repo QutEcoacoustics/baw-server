@@ -333,3 +333,7 @@ client:
   host: localhost
   port: 4000
   protocol: http
+# Used by Api::GlobalIdentifiers, this is a custom authority that we can use to 
+# make global identifiers for resources.
+global_identifiers:
+  authority: "ecosounds.org"

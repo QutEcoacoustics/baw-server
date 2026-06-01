@@ -278,6 +278,12 @@ class User < ApplicationRecord
       .delete_suffix('-')
   end
 
+  # Returns the full_name of user if available, else falls back to user_name.
+  # If we add names to user profiles, we can return them here.
+  def full_name
+    user_name
+  end
+
   # Get the last time this user was seen.
   # @return [DateTime] Date this user was last seen
   def get_last_seen

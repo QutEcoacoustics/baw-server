@@ -638,6 +638,14 @@ describe AudioRecording do
     expect(audio_recording.simple_name).to eq("#{audio_recording.id}.#{audio_recording.original_format_calculated}")
   end
 
+  it 'can emit recorded end date' do
+    duration_seconds = 60
+    recorded_date = Time.current
+    audio_recording = create(:audio_recording, duration_seconds:, recorded_date:)
+
+    expect(audio_recording.recorded_end_date).to eq(recorded_date + duration_seconds.seconds)
+  end
+
   it_behaves_like 'cascade deletes for', :audio_recording, {
     audio_events: {
       taggings: nil,
