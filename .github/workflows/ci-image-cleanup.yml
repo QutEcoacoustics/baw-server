@@ -25,4 +25,4 @@ jobs:
           image-names: ${{ matrix.image }}
           cut-off: 1month
           keep-n-most-recent: 10
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: $GITHUB_TOKEN
