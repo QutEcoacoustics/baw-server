@@ -1,0 +1,77 @@
+module BawWorkers
+  module Export
+    module CamtrapDp
+      class Deployment < ::Dry::Struct
+        Types = BawWorkers::Dry::Types
+
+        # Date and time at which the deployment was ended. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
+        attribute :deploymentEnd, ::BawApp::Types::UtcTime
+        # Unique identifier of the deployment.
+        attribute :deploymentID, Types::Coercible::String
+        # Date and time at which the deployment was started. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
+        attribute :deploymentStart, ::BawApp::Types::UtcTime
+        # Latitude of the deployment location in decimal degrees, using the WGS84 datum.
+        attribute :latitude, Types::Nominal::Decimal
+        # Longitude of the deployment location in decimal degrees, using the WGS84 datum.
+        attribute :longitude, Types::Nominal::Decimal
+        # `true` if bait was used for the deployment. More information can be provided in `tags` or `comments`.
+        attribute? :baitUse, Types::Bool
+        # Horizontal distance from the given `latitude` and `longitude` describing the smallest circle containing the deployment location. Expressed in meters. Especially relevant when coordinates are rounded to protect sensitive species.
+        attribute? :coordinateUncertainty, Types::Integer.optional
+        # Comments or notes about the deployment.
+        attribute? :deploymentComments, Types::String.optional
+        # Deployment group(s) associated with the deployment. Deployment groups can have a spatial (arrays, grids, clusters), temporal (sessions, seasons, months, years) or other context. Formatted as a pipe (`|`) separated list for multiple values, with values preferably formatted as `key:value` pairs.
+        attribute? :deploymentGroups, Types::String
+        # Tag(s) associated with the deployment. Formatted as a pipe (`|`) separated list for multiple values, with values optionally formatted as `key:value` pairs.
+        attribute? :deploymentTags, Types::String
+        # Maximum distance at which the device can reliably detect activity. Expressed in meters. Typically measured by having a human move in front of the device.
+        attribute? :detectionDistance, Types::Coercible::Float
+        # Predefined duration after detection when further activity is ignored. Expressed in seconds.
+        attribute? :deviceDelay, Types::Integer
+        # Depth at which the device was deployed. Expressed in meters. Not to be combined with `deviceHeight`.
+        attribute? :deviceDepth, Types::Coercible::Float
+        # Angle at which the device was deployed in the horizontal plane. Expressed in decimal degrees clockwise from north, with values ranging from `0` to `360`: `0` = north, `90` = east, `180` = south, `270` = west.
+        attribute? :deviceHeading, Types::Integer
+        # Height at which the device was deployed. Expressed in meters. Not to be combined with `deviceDepth`.
+        attribute? :deviceHeight, Types::Coercible::Float
+        # Identifier of the device used for the deployment (e.g. the device device serial number).
+        attribute? :deviceID, Types::String
+        # Manufacturer and model of the device. Formatted as `manufacturer-model`.
+        attribute? :deviceModel, Types::String
+        # The substrate to which the device is mounted.
+        attribute? :devicePlatform,
+          Types::String.enum('buoy', 'vegetation', 'building', 'structure', 'pole', 'unattached')
+        # Angle at which the device was deployed in the vertical plane. Expressed in degrees, with `-90` facing down, `0` horizontal and `90` facing up.
+        attribute? :deviceTilt, Types::Integer
+        # Elevation (altitude, usually above sea level) in meters
+        attribute? :elevation, Types::Integer
+        # Short characterization of the habitat at the deployment location.
+        attribute? :habitat, Types::String
+        # Identifier of the deployment location.
+        attribute? :locationID, Types::String
+        # Name given to the deployment location.
+        attribute? :locationName, Types::String
+        # Type of the feature (if any) associated with the deployment.
+        attribute? :locationType,
+          Types::String.enum('roadPaved', 'roadDirt', 'trailHiking', 'trailGame', 'roadUnderpass', 'roadOverpass', 'roadBridge',
+            'culvert', 'burrow', 'nestSite', 'carcass', 'waterSource', 'fruitingTree')
+        # Description of the recording schedule.
+        attribute? :recordingSchedule, Types::String
+        # Name or identifier of the person or organization that deployed the device.
+        attribute? :setupBy, Types::String
+
+        # This is the mapping of our data onto the schema - how to get the values for those fields.
+        # deployment_start and deployment_end are provided by the caller so this method remains a pure mapper.
+        def self.mapping(site, deployment_start:, deployment_end:, should_obfuscate:)
+          Deployment.new(
+            deploymentID: site.id,
+            deploymentStart: deployment_start,
+            deploymentEnd: deployment_end,
+            latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude), # ! what about site.public_latitude,
+            longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude) # ! what about site.public_longitude
+          )
+        end
+      end
+    end
+  end
+end

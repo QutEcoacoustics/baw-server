@@ -5,6 +5,8 @@ module BawWorkers
     # custom dry-types
     # https://dry-rb.org/gems/dry-types/master/getting-started/
     module Types
+      ::Dry::Struct.prepend(BawWorkers::Dry::Struct)
+
       # @!parse
       #   include Dry::Types
       include ::Dry.Types
@@ -54,6 +56,48 @@ module BawWorkers
 
         ::Time.zone.at(value)
       }
+
+      # Camtrap DataPackage related types --
+
+      #  `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
+      URLOrPath = Types::String
+
+      Schema = URLOrPath | Types::Hash
+      # package.contributors[].role
+      Role = Types::String.default('contributor').enum(
+        'contact',
+        'principalInvestigator',
+        'rightsHolder',
+        'publisher',
+        'contributor'
+      )
+
+      # package.project.samplingDesign
+      # ! TODO do we want to default this? Or always require user input
+      SamplingDesign = Types::String.default('simpleRandom').enum(
+        'simpleRandom',
+        'systematicRandom',
+        'clusteredRandom',
+        'experimental',
+        'targeted',
+        'opportunistic'
+      )
+
+      # in package.project.captureMethod; media.captureMethod
+      CaptureMethod = Types::String.enum(
+        'activityDetection',
+        'continuous',
+        'recordingSchedule'
+      )
+
+      # package.taxonnomic[].taxonRank
+      TaxonRank = Types::String.enum(
+        'kingdom', 'phylum', 'class', 'order',
+        'family', 'genus', 'species', 'subspecies'
+      )
+
+      # package.spatial
+      GeoJSON = Types::Hash
     end
   end
 end
