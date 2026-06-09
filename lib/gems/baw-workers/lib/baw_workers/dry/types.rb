@@ -7,6 +7,17 @@ module BawWorkers
     module Types
       ::Dry::Struct.prepend(BawWorkers::Dry::Struct)
 
+      TimeWithPrecision = Class.new do
+        def initialize(time, precision:)
+          @time = time
+          @precision = precision
+        end
+
+        def to_s
+          @time.utc.iso8601(@precision)
+        end
+      end
+
       # @!parse
       #   include Dry::Types
       include ::Dry.Types
@@ -57,6 +68,18 @@ module BawWorkers
         ::Time.zone.at(value)
       }
 
+      UtcTimeMicros = Constructor(TimeWithPrecision) { |input|
+        next nil if input.blank?
+
+        TimeWithPrecision.new(UtcTime[input], precision: 6)
+      }
+
+      UtcTimeSeconds = Constructor(TimeWithPrecision) { |input|
+        next nil if input.blank?
+
+        TimeWithPrecision.new(UtcTime[input], precision: 0)
+      }
+
       # Camtrap DataPackage related types --
 
       #  `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
@@ -73,7 +96,9 @@ module BawWorkers
       )
 
       # package.project.samplingDesign
-      # ! TODO do we want to default this? Or always require user input
+      # ! Do we want to default this? Or always require user input
+      # TODO lets allow input but fall back to simpleRandom for now. Eventually this would be useful Project level metadata to have
+      # TODO could make a proposal to the format to allow an unknown value here
       SamplingDesign = Types::String.default('simpleRandom').enum(
         'simpleRandom',
         'systematicRandom',
@@ -84,6 +109,8 @@ module BawWorkers
       )
 
       # in package.project.captureMethod; media.captureMethod
+      # TODO emu can extract this from recording files (we discard it atm)
+      # TODO until then have to ask
       CaptureMethod = Types::String.enum(
         'activityDetection',
         'continuous',

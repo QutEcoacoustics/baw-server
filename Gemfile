@@ -310,4 +310,6 @@ group :test do
 
   # test for slow n+1 queries
   gem 'bullet'
+
+  gem 'datapackage', '~> 1.1'
 end

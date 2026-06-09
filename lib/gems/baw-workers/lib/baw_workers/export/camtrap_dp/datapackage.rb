@@ -1,18 +1,27 @@
 # frozen_string_literal: true
 
+require 'open-uri'
+require 'uri'
+# TODO: sources field : open ecoacoustics
+#   we have the name and title in settings file
+#   ecosounds.org
 module BawWorkers
   module Export
     module CamtrapDp
-      # attribute? makes keys optional. They get value of nil, which can be a problem if the type doesn't allow nil.
-      # Two options:
-      # add default value to the type => don't nneed to use attribute?, missing key will be coerced to default value. I will use attribute? regardless for clarity
-      # Or, use attribute? with an .optional type, which allows nil values.
-      # For types with default values, the transform_type method will coerce nil to undefined, which will trigger the default value
-      # If an attribute has a default value, it won't be possible to set it as nil, it will be coerced to the default value.
       module Datapackage
         Types = BawWorkers::Dry::Types
 
         class DpStruct < ::Dry::Struct
+          # Add a compact! step to the usual Dry::Struct#to_h method.
+          # We use explicit nil values for optional fields for clarity and maintainability,
+          # but null values in JSON output raise type validation errors unless the type allows it.
+          def to_h
+            self.class.schema.each_with_object({}) do |key, result|
+              result[key.name] = ::Dry::Struct::Hashify[self[key.name]] if attributes.key?(key.name)
+              result.compact!
+            end
+          end
+
           # nil as a value isn’t replaced with a default value for default types. use transform_types to turn
           # all types into constructors which map nil to Dry::Types::Undefined which triggers default values.
           transform_types do |type|
@@ -36,10 +45,59 @@ module BawWorkers
           attribute :schema,    Types::Schema # The raw parsed JSON table schema or url-or-path to the schema
         end
 
-        # The value for the schema property on a resource MUST be an object representing the schema OR a string that identifies
-        # the location of the schema. If a string it must be a url-or-path as defined above, that is a fully qualified http URL or a relative POSIX path.
+        # TODO: rename to schema and rename all refs to this const etc
+        # Then run rake to test
         TABLE_SCHEMA_DIR = File.join(__dir__, 'profile')
         TABLE_SCHEMA_FILE_SUFFIX = '-table-schema-acoustic.json'
+        PROFILE_FILE = 'camtrap-dp-profile-acoustic.json'
+        LOCAL_VALIDATION_PROFILE_FILE = 'camtrap-dp-profile-acoustic.local.json'
+        PROFILE_REFS = [
+          'http://json.schemastore.org/geojson.json',
+          'https://specs.frictionlessdata.io/schemas/data-package.json',
+          'https://geojson.org/schema/GeoJSON.json'
+        ].freeze
+
+        def self.profile_path = File.join(TABLE_SCHEMA_DIR, PROFILE_FILE)
+
+        def self.local_validation_profile_path = File.join(TABLE_SCHEMA_DIR, LOCAL_VALIDATION_PROFILE_FILE)
+
+        def self.download_profile!(source_url, target_path: profile_path)
+          File.write(target_path, URI.open(source_url).read)
+          target_path
+        end
+
+        # Build a copy of the data profile with known external $refs inlined.
+        # This allows running package validation offline.
+        def self.create_local_validation_profile(
+          source_profile_path: profile_path,
+          output_profile_path: local_validation_profile_path
+        )
+          root_profile = JSON.parse(File.read(source_profile_path), symbolize_names: false)
+          resolved_refs = PROFILE_REFS.index_with { |ref| JSON.parse(URI.open(ref).read, symbolize_names: false) }
+          resolved_refs.each_key { |key| resolved_refs[key].delete('$schema') }
+
+          inlined_profile = inline_known_refs(root_profile, resolved_refs)
+          # Also delete the root $schema to prevent validation against remote meta-schema
+          inlined_profile.delete('$schema')
+          File.write(output_profile_path, JSON.pretty_generate(inlined_profile))
+
+          {
+            profile_path: output_profile_path,
+            downloaded_ref_count: resolved_refs.size,
+            downloaded_ref_paths: PROFILE_REFS
+          }
+        end
+
+        def self.inline_known_refs(value, resolved_refs)
+          if value.is_a?(Hash) && value['$ref'].is_a?(String) && resolved_refs.key?(value['$ref'])
+            return inline_known_refs(resolved_refs.fetch(value['$ref']), resolved_refs)
+          end
+
+          return value.transform_values { |child| inline_known_refs(child, resolved_refs) } if value.is_a?(Hash)
+          return value.map { |child| inline_known_refs(child, resolved_refs) } if value.is_a?(Array)
+
+          value
+        end
 
         def self.load_table_schema(name)
           load_schema(File.join(TABLE_SCHEMA_DIR, "#{name}#{TABLE_SCHEMA_FILE_SUFFIX}"))
@@ -53,9 +111,14 @@ module BawWorkers
           ResourceSchema.new(name: 'observations', path: 'observations.csv', schema: load_table_schema('observations')) #noline
         ].freeze
 
+        # Generate automatic + merge extra
+        # TODO: all project owners should be something in the array, and all tagging creators should be as well ('contributor') - even verification creators, plus optional add more in from param
+        # Should be able to have a list of users and we can map a user to a contributor schema
+
         class ContributorSchema < DpStruct
           attribute :title, Types::String
           attribute :role, Types::Role
+
           attribute? :email, Types::String.optional
           attribute? :path, Types::String.optional
           attribute? :organization, Types::String.optional
@@ -65,10 +128,10 @@ module BawWorkers
           attribute :title, Types::String
           attribute :samplingDesign, Types::SamplingDesign
           attribute :captureMethod, Types::Array.of(Types::CaptureMethod)
-          attribute :individualAnimals, Types::Bool
+          attribute :individualAnimals, Types::Bool # TODO: just false for now + comment explaining we don't support atm until add platform feature or request
 
           # Confusingly 'interval' is allowed for the observation table field but not for the package metadata field
-          attribute :observationLevel, Types::Array.of(Types::String.default('media').enum('media', 'event'))
+          attribute :observationLevel, Types::Array.of(Types::String.default('media').enum('media', 'event')) # TODO: just default to media, we don't distinguish. In future might be able to merge things to reduce duplication
           attribute? :id, Types::String.optional
           attribute? :acronym, Types::String.optional
           attribute? :description, Types::String.optional
@@ -102,6 +165,7 @@ module BawWorkers
           attribute? :version, Types::String.optional
         end
 
+        # TODO: provide same license for both
         class LicenseSchema < DpStruct
           attribute :name, Types::String
           attribute? :path, Types::String.optional
@@ -112,8 +176,8 @@ module BawWorkers
         class RelatedIdentifierSchema < DpStruct
           attribute :relationType, Types::String
           attribute :relatedIdentifier, Types::String
-          attribute? :resourceTypeGeneral, Types::String.optional
           attribute :relatedIdentifierType, Types::String
+          attribute? :resourceTypeGeneral, Types::String.optional
         end
 
         class PackageSchema < DpStruct

@@ -5,21 +5,20 @@ module BawWorkers
         Types = BawWorkers::Dry::Types
         attribute :mediaID, Types::ID
         attribute :deploymentID, Types::ID
-        attribute :fileMediatype, Types::String
-        attribute :filePublic, Types::Bool
-        attribute :filePath, Types::String
-        attribute :timestamp, ::BawApp::Types::UtcTime
-        attribute? :bitDepth, Types::Integer.enum(8, 16, 24, 32).optional
-        attribute? :captureMethod,
-          Types::String.enum('activityDetection', 'continuous', 'recordingSchedule').optional
-        attribute? :channels, Types::Channel.optional
+        attribute? :captureMethod, Types::String.enum('activityDetection', 'continuous', 'recordingSchedule').optional
+        attribute :timestamp, Types::UtcTimeMicros
         attribute? :duration, Types::Decimal.optional
-        attribute? :exifData, Types::Hash.optional
-        attribute? :favorite, Types::Bool.optional
+        attribute :filePath, Types::String
+        attribute :filePublic, Types::Bool
         attribute? :fileName, Types::String.optional
-        attribute? :gain, Types::Integer.optional # in dB
-        attribute? :mediaComments, Types::String.optional
+        attribute :fileMediatype, Types::String
+        attribute? :exifData, Types::Hash.optional
+        attribute? :bitDepth, Types::Integer.enum(8, 16, 24, 32).optional
         attribute? :samplingFrequency, Types::SampleRate.optional
+        attribute? :gain, Types::Integer.optional # in dB
+        attribute? :channels, Types::Channel.optional
+        attribute? :favorite, Types::Bool.optional
+        attribute? :mediaComments, Types::String.optional
 
         # This is the mapping of our data onto the schema - how to get the values for those fields
         def self.mapping(audio_recording, file_public)
@@ -38,27 +37,27 @@ module BawWorkers
             recorded_date.in_time_zone(timezone).iso8601
           end => timestamp
 
-          # ? is this correct? what happens if doesn't give valid enum value, just nil instead?
+          # ? is this correct? what happens if doesn't calculate valid enum value, just nil instead?
           bit_depth = (ar.bit_rate_bps.to_f / (ar.channels * ar.sample_rate_hertz))
           bit_depth = nil unless bit_depth.in?([8, 16, 24, 32])
 
           Media.new(
             mediaID: ar.id, # required
             deploymentID: ar.site_id, # required
-            fileMediatype: ar.media_type, # required
-            filePublic: file_public, # required
-            filePath: file_path, # required
-            timestamp: timestamp,
-            bitDepth: bit_depth, # optional
             captureMethod: nil,
-            channels: ar.channels,
+            timestamp: timestamp,
             duration: ar.duration_seconds,
-            exifData: nil,
-            favorite: nil,
+            filePath: file_path, # required
+            filePublic: file_public, # required
             fileName: ar.friendly_name,
+            fileMediatype: ar.media_type, # required
+            exifData: nil,
+            bitDepth: bit_depth, # optional
+            samplingFrequency: ar.sample_rate_hertz,
             gain: nil,
-            mediaComments: ar.notes.to_s,
-            samplingFrequency: ar.sample_rate_hertz
+            channels: ar.channels,
+            favorite: nil,
+            mediaComments: ar.notes.to_s
           )
         end
       end
