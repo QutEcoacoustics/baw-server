@@ -6,8 +6,12 @@ module DataClass
     include ActiveModel::Conversion
     extend ActiveModel::Naming
     extend Enumerize
+    include Serializable
 
-    attr_accessor :name, :email, :group, :group_type, :content, :recaptcha
+    attribute :name, :email, :group, :group_type, :content
+
+    # Not serialized: only used to attach reCAPTCHA validation errors on the form.
+    attr_accessor :recaptcha
 
     # enums
     AVAILABLE_GROUP_TYPES_SYMBOLS = [:general, :academic, :government, :non_profit, :commercial, :personal].freeze
@@ -25,7 +29,8 @@ module DataClass
     enumerize :group_type, in: AVAILABLE_GROUP_TYPES, predicates: true
 
     validates_presence_of :email
-    validates_format_of :email, with: /\A[-a-z0-9_+.]+@([-a-z0-9]+\.)+[a-z0-9]{2,4}\z/i, allow_blank: true, allow_nil: true
+    validates_format_of :email, with: /\A[-a-z0-9_+.]+@([-a-z0-9]+\.)+[a-z0-9]{2,4}\z/i, allow_blank: true,
+      allow_nil: true
     validates_presence_of :group
     validates_presence_of :group_type
     validates_presence_of :content

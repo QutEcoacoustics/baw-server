@@ -19,7 +19,7 @@ module BawWorkers
         job = { job_class: klass, job_args: args, job_queue: queue_name }
 
         mail_ready = BawWorkers::Mail::Mailer.error_notification(to, from, job, error)
-        mail_ready.deliver_now
+        mail_ready.deliver_later
       end
 
       def error_notification(to, from, job, error)

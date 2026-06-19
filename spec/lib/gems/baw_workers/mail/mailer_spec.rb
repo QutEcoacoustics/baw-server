@@ -5,6 +5,18 @@ require 'socket'
 require 'rack/utils'
 
 describe BawWorkers::Mail::Mailer do
+  describe '.send_worker_error_email' do
+    let(:mail_ready) { instance_double(ActionMailer::MessageDelivery) }
+    let(:error) { StandardError.new('simulated worker failure') }
+
+    it 'enqueues worker error emails for asynchronous delivery' do
+      allow(described_class).to receive(:error_notification).and_return(mail_ready)
+      expect(mail_ready).to receive(:deliver_later)
+
+      described_class.send_worker_error_email('SomeJobClass', ['argument'], 'queue_name', error)
+    end
+  end
+
   context 'test email' do
     let(:to) { 'test1@example.com' }
     let(:from) { 'test2@example.com' }

@@ -147,7 +147,7 @@ ORDER BY project_count ASC, s.name ASC")
     respond_to do |format|
       if valid_request
         ProjectMailer.project_access_request(current_user, access_request_params[:projects],
-          access_request_params[:reason]).deliver_now
+          access_request_params[:reason]).deliver_later
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {

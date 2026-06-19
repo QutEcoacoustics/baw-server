@@ -29,7 +29,7 @@ Rails.application.configure do
       location: Rails.root.join('tmp/mail')
     }
   config.action_mailer.perform_deliveries = true
-  config.action_mailer.deliver_later_queue_name = Settings.actions.active_job_default.queue
+  config.action_mailer.deliver_later_queue_name = Settings.actions.mailer.queue
 
   # enable colorized logs
   config.colorized_logging = true

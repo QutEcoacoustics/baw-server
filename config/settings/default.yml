@@ -42,6 +42,7 @@ resque:
     - analysis_stale_check_<%= BawApp.env %>
     - harvest_delete_<%= BawApp.env %>
     - default_<%= BawApp.env %>
+    - mailer_<%= BawApp.env %>
   connection: *redis_config
   namespace: resque
   log_level: "Logger::INFO"
@@ -105,6 +106,8 @@ actions:
     queue: active_storage_<%= BawApp.env %>
   active_job_default:
     queue: default_<%= BawApp.env %>
+  mailer:
+    queue: mailer_<%= BawApp.env %>
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
 # batch analysis needs a ssh connection to a head node on a PBS cluster
 batch_analysis:
