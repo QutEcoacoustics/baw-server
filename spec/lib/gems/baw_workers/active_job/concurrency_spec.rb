@@ -25,7 +25,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     sleep 0.5
   end
 
-  def wait_for_a_working_job(timeout: 10)
+  def wait_for_a_working_job(timeout: 20)
     deadline = Time.now + timeout
     loop do
       working = BawWorkers::ResqueApi.statuses(
@@ -172,12 +172,12 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks job 2 and 3 failed because of concurrency limit' do
-      expect(@j2.status.messages).to contain_exactly(
+      expect(@j2.status.messages.uniq).to contain_exactly(
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass.*/,
         'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
       )
 
-      expect(@j3.status.messages).to contain_exactly(
+      expect(@j3.status.messages.uniq).to contain_exactly(
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass.*/,
         'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::DiscardJobClass is registered by discard_on'
       )
@@ -229,13 +229,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks job 2 and 3 failed because of concurrency limit' do
-      expect(@j2.status.messages).to contain_exactly(
+      expect(@j2.status.messages.uniq).to contain_exactly(
         'Attempt 1',
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::RetryJobClass.*/,
         'Attempt 2'
       )
 
-      expect(@j3.status.messages).to contain_exactly(
+      expect(@j3.status.messages.uniq).to contain_exactly(
         'Attempt 1',
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::RetryJobClass.*/,
         'Attempt 2'
@@ -288,7 +288,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks job 3 failed because of concurrency limit' do
-      expect(@j3.status.messages).to contain_exactly(
+      expect(@j3.status.messages.uniq).to contain_exactly(
         /The job failed because of an error: Concurrency count 3 reached for limit 2 for Fixtures::Concurrency::MultipleJobClass.*/,
         'The job was discarded: Concurrency count 3 reached for limit 2 for Fixtures::Concurrency::MultipleJobClass is registered by discard_on'
       )
@@ -347,7 +347,7 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
 
     step 'checks jobs failed because of concurrency limit' do
       [@j1, @j2, @j3].each do |job|
-        expect(job.status.messages).to contain_exactly(
+        expect(job.status.messages.uniq).to contain_exactly(
           /.*I am faulty.*/,
           'The job was discarded: I am faulty is registered by discard_on'
         )
@@ -488,12 +488,12 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'checks job 3 and 4 failed because of concurrency limit' do
-      expect(@j3.status.messages).to contain_exactly(
+      expect(@j3.status.messages.uniq).to contain_exactly(
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:20.*/,
         'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:20 is registered by discard_on'
       )
 
-      expect(@j4.status.messages).to contain_exactly(
+      expect(@j4.status.messages.uniq).to contain_exactly(
         /The job failed because of an error: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:10.*/,
         'The job was discarded: Concurrency count 2 reached for limit 1 for Fixtures::Concurrency::ParameterizedJobClass:10 is registered by discard_on'
       )

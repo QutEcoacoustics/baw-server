@@ -54,13 +54,12 @@ FactoryBot.define do
 
     roles_mask { 2 } # user role
 
-    # Don't enqueue the "new user" notification email during test setup.
-    skip_creation_email { true }
-
-    # Generate the confirmation token but don't enqueue the confirmation email
-    # during test setup. Specs that need to exercise email delivery should do so
-    # explicitly.
-    after(:build, &:skip_confirmation_notification!)
+    # Don't enqueue the "new user" or confirmation emails during test setup.
+    # Specs that need to exercise email delivery should do so explicitly.
+    after(:build) do |user|
+      user.skip_creation_email = true
+      user.skip_confirmation_notification!
+    end
 
     # after(:create) do |user|
     #   Rails.logger.warn "Created #{user.inspect}"
