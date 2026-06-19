@@ -22,7 +22,6 @@ module BawWorkers
           :project_title
         )
 
-        PROFILE = 'https://raw.githubusercontent.com/camera-traps/bioacoustics/refs/heads/main/camtrap-dp/1.0.2/camtrap-dp-profile-acoustic.json'
         DATAPACKAGE_JSON = 'datapackage.json'
         OBSERVATIONS_CSV = 'observations.csv'
         DEPLOYMENTS_CSV = 'deployments.csv'
@@ -48,9 +47,9 @@ module BawWorkers
           # anonymous or logged-in access (i.e. the media isn't restricted to named users).
           site_file_public = {}
 
-          observations_writer = csv_open(files[:observations], Observation)
-          deployments_writer = csv_open(files[:deployments], Deployment)
-          media_writer = csv_open(files[:media], Media)
+          observations_writer = csv_open(files[:observations], Table::Observation)
+          deployments_writer = csv_open(files[:deployments], Table::Deployment)
+          media_writer = csv_open(files[:media], Table::Media)
 
           # Streaming approach with find_each avoids pulling all records into memory at once.
           # Deployments are written after the loop because deployment_start/end require the
@@ -61,7 +60,7 @@ module BawWorkers
           Bullet.enable = false
 
           included.find_each do |t|
-            observations_writer << Observation.mapping(t).full_values
+            observations_writer << Table::Observation.mapping(t).full_values
 
             site = t.audio_event.audio_recording.site
             ar   = t.audio_event.audio_recording
@@ -83,13 +82,13 @@ module BawWorkers
               }
             end
 
-            media_writer << Media.mapping(ar, site_deployments[site.id][:file_public]).full_values if ar_ids.add?(ar.id)
+            media_writer << Table::Media.mapping(ar, site_deployments[site.id][:file_public]).full_values if ar_ids.add?(ar.id)
             scientific_names.add(t.tag.text)
           end
 
           # Now we have min/max per site write all deployment rows
           site_deployments.each_value do |entry|
-            deployments_writer << Deployment.mapping(entry[:site],
+            deployments_writer << Table::Deployment.mapping(entry[:site],
               deployment_start: entry[:min_start],
               deployment_end: entry[:max_end],
               should_obfuscate: @options.should_obfuscate).full_values
@@ -99,14 +98,14 @@ module BawWorkers
 
           # TODO: datapackage baw and gem is confusing. also, add _ in baw dp
 
-          datapackage = Datapackage::PackageSchema.new(
-            profile: PROFILE,
+          datapackage = Descriptor::Package.new(
+            profile: Profile::PROFILE_PATH,
             name: nil,
             id: nil,
             created: Time.now.utc.iso8601,
             title: nil,
             contributors: @options.contributors,
-            project: Datapackage::ProjectSchema.new(
+            project: Descriptor::Project.new(
               title: @options.project_title,
               description: nil,
               path: nil,
@@ -117,11 +116,11 @@ module BawWorkers
               licenses: nil # TODO: licenses is optional but if present requires 2 licenses; one for the content of the package, one for the media files
             ),
             spatial: spatial_coverage(site_deployments),
-            temporal: Datapackage::TemporalSchema.new(
+            temporal: Descriptor::Temporal.new(
               start: temporal[:start],
               end: temporal[:end]
             ),
-            taxonomic: scientific_names.sort.map { |name| Datapackage::TaxonomicSchema.new(scientificName: name) }
+            taxonomic: scientific_names.sort.map { |name| Descriptor::Taxonomic.new(scientificName: name) }
           )
 
           File.write(files[:datapackage], JSON.pretty_generate(datapackage.to_h))

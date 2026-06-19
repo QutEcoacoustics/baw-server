@@ -105,22 +105,3 @@ TableSchema::Types::Base.prepend(Baw::TableSchema::Types::Base) if defined?(Tabl
 if defined?(TableSchema::Constraints::Pattern)
   TableSchema::Constraints::Pattern.prepend(Baw::TableSchema::Constraints::Pattern)
 end
-
-# Types = Dry.Types
-# class Abc < BawWorkers::Export::CamtrapDp::Datapackage::DpStruct
-#   attribute :name, Types::String
-#   attribute :date, ::BawApp::Types::UtcTime
-# end
-
-# abc = Abc.new(name: 'test', date: '2024-01-01T12:00:00Z')
-# abc.to_h
-
-# watched = ['ActiveSupport::TimeWithZone', 'Time', 'DateTime', 'Date', 'JSON']
-
-# trace = TracePoint.new(:call, :c_call) do |tp|
-#   puts "#{tp.defined_class}##{tp.method_id}" if watched.any? { |c| tp.defined_class.to_s.include?(c) }
-# end
-
-# trace.enable
-# JSON.pretty_generate(abc.to_h)
-# trace.disable

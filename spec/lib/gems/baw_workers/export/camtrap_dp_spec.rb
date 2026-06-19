@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
+require 'support/camtrap_dp_helpers'
+
 describe BawWorkers::Export::CamtrapDp::Exporter do
+  include CamtrapDpHelpers::Example
+
   create_entire_hierarchy
 
   subject(:exporter) do
@@ -91,7 +95,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
     it 'creates a valid data package' do
       subject.call { |manifest|
-        package_json = load_package_json(manifest)
+        package_json = use_local_profile(manifest)
         package = DataPackage::Package.new(package_json, opts: { base: manifest[:datapackage_path].to_s })
 
         result = validate_package(package)
@@ -129,42 +133,4 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
   end
-end
-
-# Container for package validation result with a custom to_s for easier debugging in tests.
-ValidationResult = Struct.new(:valid?, :errors, keyword_init: true) do
-  def to_s
-    valid? ? 'Package is valid' : "Package validation failed:\n#{errors.map { "  - #{_1}" }.join("\n")}"
-  end
-end
-
-# Helper to validate the descriptor and resource schemas and csv data, collecting errors,
-# since DataPackage gem's validation methods only check the schemas.
-def validate_package(package)
-  errors = []
-
-  descriptor_errors = package.iter_errors { _1 }
-  errors.concat(descriptor_errors.map { "Descriptor: #{_1}" })
-
-  if errors.empty?
-    package.resources.each do |resource|
-      resource.iter { |_| }
-    rescue TableSchema::Exception => e
-      errors << "Resource '#{resource.name}': #{e.message}"
-    end
-  end
-
-  ValidationResult.new(valid?: errors.empty?, errors:)
-end
-
-# If the csv field order doesn't match the schema, validation can fail with cast errors, which takes longer to debug.
-def expect_fieldnames_match_headers(resource)
-  expect(resource.schema.field_names).to eq(resource.headers)
-end
-
-# Parse the package json and update the profile reference to the local validation profile, which has external refs inlined.
-def load_package_json(manifest)
-  package_json = JSON.parse(File.read(manifest[:datapackage_path].join('datapackage.json')), symbolize_names: false)
-  package_json['profile'] = BawWorkers::Export::CamtrapDp::Datapackage.local_validation_profile_path
-  package_json
 end
