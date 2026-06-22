@@ -48,6 +48,12 @@ class Permission < ApplicationRecord
     { id: l, name: Access::Core.get_level_name(l) }
   }
 
+  # Returns true when this permission grants access to anonymous or logged-in users.
+  # @return [Boolean]
+  def broad_access?
+    allow_anonymous || allow_logged_in
+  end
+
   # association validations
   # these validations are now redundant i think
   #validates_associated :project

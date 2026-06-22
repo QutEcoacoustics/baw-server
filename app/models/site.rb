@@ -208,6 +208,14 @@ class Site < ApplicationRecord
     end
   end
 
+  # Returns true when any project this site belongs to grants broad access (anonymous or logged-in users)
+  # @return [Boolean]
+  def public_site?
+    projects.any? { |project|
+      project.permissions.any?(&:broad_access?)
+    }
+  end
+
   # This method is a little funny.
   # If `location_obfuscated` was returned in a query, then that value is used.
   # Otherwise, the obfuscation is calculated with another query.

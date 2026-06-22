@@ -65,6 +65,28 @@ describe Site do
     expect(s.errors[:name].size).to eq 1
   end
 
+  describe '#public_site?' do
+    let(:site) { create(:site) }
+    let(:project) { site.projects.first }
+
+    it 'is false when permissions are user-specific' do
+      expect(site).not_to be_public_site
+    end
+
+    it 'is true when any project allows anonymous access' do
+      create(:read_anon_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+
+    it 'is true when any project allows logged-in access' do
+      create(:read_logged_in_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+
+  end
+
   describe 'location obfuscation' do
     latitudes = [
       { -100 => false },
