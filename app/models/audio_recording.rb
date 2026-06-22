@@ -552,6 +552,10 @@ class AudioRecording < ApplicationRecord
     result
   end
 
+  def recorded_end_date
+    recorded_date + duration_seconds
+  end
+
   private
 
   def missing_hash_value?
