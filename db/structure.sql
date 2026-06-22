@@ -1,7 +1,6 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -121,6 +120,20 @@ CREATE TYPE public.contiguous_range_state AS (
 
 
 --
+-- Name: TYPE contiguous_range_state; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.contiguous_range_state IS '
+Accumulator state for contiguous_range_number.
+
+Fields:
+  prev_range_upper - The greatest upper bound seen in the current contiguous block.
+  sequence_number  - Zero-based label for the current contiguous block.
+  threshold        - Maximum allowed gap before starting a new block.
+';
+
+
+--
 -- Name: basename(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -160,6 +173,21 @@ $$;
 
 
 --
+-- Name: FUNCTION contiguous_range_final(state public.contiguous_range_state); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.contiguous_range_final(state public.contiguous_range_state) IS '
+Aggregate final function for contiguous_range_number.
+
+Parameters:
+  state - Final accumulator state after processing all rows.
+
+Returns:
+  sequence_number from the final state.
+';
+
+
+--
 -- Name: contiguous_range_transition(public.contiguous_range_state, tsrange, interval); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -189,6 +217,24 @@ BEGIN
 END;
 
 $$;
+
+
+--
+-- Name: FUNCTION contiguous_range_transition(state public.contiguous_range_state, current_range tsrange, threshold interval); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.contiguous_range_transition(state public.contiguous_range_state, current_range tsrange, threshold interval) IS '
+Aggregate transition function for contiguous_range_number.
+
+Parameters:
+  state         - Current accumulator state, or NULL for the first row.
+  current_range - Current tsrange input value.
+  threshold     - Maximum allowed gap between adjacent ranges.
+
+Returns:
+  Updated contiguous_range_state with incremented sequence_number when the
+  gap from the previous block exceeds threshold.
+';
 
 
 --
@@ -275,6 +321,23 @@ $$;
 
 
 --
+-- Name: FUNCTION tsmultirange_total_seconds(multirange tsmultirange); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.tsmultirange_total_seconds(multirange tsmultirange) IS '
+Given a `tsmultirange`, return the sum of each constituent `tsrange`''s duration in
+seconds as a double precision value.
+
+Example use case is to input the tsmultirange returned by ''range_agg'', to get
+the total non-overlapping seconds covered by the tsmultirange. This is useful
+because it saves having to handle unnesting the tsmultirange and simplifies the query.
+
+Returns:
+  Total duration in seconds for a given tsmultirange.
+';
+
+
+--
 -- Name: contiguous_range_number(tsrange, interval); Type: AGGREGATE; Schema: public; Owner: -
 --
 
@@ -283,6 +346,31 @@ CREATE AGGREGATE public.contiguous_range_number(tsrange, interval) (
     STYPE = public.contiguous_range_state,
     FINALFUNC = public.contiguous_range_final
 );
+
+
+--
+-- Name: AGGREGATE contiguous_range_number(tsrange, interval); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON AGGREGATE public.contiguous_range_number(tsrange, interval) IS '
+This aggregate assigns a monotonically increasing sequence number to each
+contiguous group of tsranges.
+
+Two ranges are considered contiguous (part of the same group) when the gap
+between them does not exceed a caller-supplied interval threshold.
+Whenever a gap exceeds the threshold the sequence number is incremented,
+effectively labelling each distinct contiguous block.
+
+This aggregate should be used in conjunction with an ORDER BY clause to ensure
+meaningful results.
+
+Parameters:
+  tsrange  - Input range values, expected in ascending order
+  interval - Gap threshold that defines contiguity.
+
+Returns:
+  bigint zero-based contiguous block number for each aggregate group.
+';
 
 
 SET default_tablespace = '';
