@@ -95,12 +95,12 @@ module BawWorkers
               eventEnd: ar.recorded_date + ae.end_time_seconds.seconds,
               observationLevel: OBSERVATION_LEVEL,
               observationType: OBSERVATION_TYPE,
-              # eventID: ae.id,
+              eventID: nil, # Since we are emitting 'media' level observations, we leave this blank. Their event concept is different to ours.
               frequencyHigh: ae.high_frequency_hertz,
               frequencyLow: ae.low_frequency_hertz,
               classificationTimestamp: tagging.created_at,
-              classificationMethod: nil, # ae.provenance_id ? 'machine' : 'human'; this isn't a future-proof assumption
-              classifiedBy: ae.provenance&.name || tagging.creator.user_name, # TODO: Is this ok?
+              classificationMethod: ae.provenance_id ? 'machine' : 'human', # TODO: May not be future proof?
+              classifiedBy: ae.provenance&.name || tagging.creator.user_name,
               scientificName: tagging.tag.text
             )
           end

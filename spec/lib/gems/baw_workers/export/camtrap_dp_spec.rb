@@ -46,28 +46,26 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
   end
 
   describe '#call' do
-    let(:expected_files) do
-      {
-        observations: 'observations.csv',
-        deployments: 'deployments.csv',
-        media: 'media.csv',
-        datapackage: 'datapackage.json'
-      }
-    end
+    let(:package_filenames) { BawWorkers::Export::CamtrapDp::PACKAGE_FILENAMES }
 
     it 'requires a block' do
       expect { subject.call }.to raise_error(ArgumentError, 'block is required')
     end
 
-    it 'creates a temporary datapackage directory and yields a manifest with paths and file stats' do
+    it 'creates a temporary package directory and yields a manifest with paths and file stats' do
       subject.call do |manifest|
+        temp_dir = manifest[:package_path].parent
+        expected_files = package_filenames.transform_values { |filename|
+          subject.public_package_path.join(filename)
+        }
+        file_stats = expected_files.transform_values { |file|
+          { size: file.size, mtime: file.mtime }
+        }
+
         expected_manifest = {
-          datapackage_path: manifest[:datapackage_path].parent.join('dp'),
-          zip_path: manifest[:datapackage_path].parent.join('dp.zip'),
-          file_stats: expected_files.transform_values { |filename|
-            file_path = manifest[:datapackage_path].join(filename)
-            { size: file_path.size, mtime: file_path.mtime }
-          }
+          package_path: temp_dir.join(BawWorkers::Export::CamtrapDp::PACKAGE_PATH),
+          zip_path: temp_dir.join(BawWorkers::Export::CamtrapDp::ZIP_PATH),
+          file_stats: file_stats
         }
 
         expect(manifest).to eq(expected_manifest)
@@ -79,14 +77,14 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
         Zip::File.open(manifest[:zip_path]) { |zip| zip.entries.map(&:name) }
       }
 
-      expect(zip_entries).to match_array(expected_files.values)
+      expect(zip_entries).to match_array(package_filenames.values)
     end
 
     it 'cleans up the temporary directory after yielding' do
       temp_dir = nil
 
       subject.call do |manifest|
-        temp_dir = manifest[:datapackage_path].parent
+        temp_dir = manifest[:package_path].parent
         expect(Dir).to exist(temp_dir)
       end
 
@@ -95,8 +93,8 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
     it 'creates a valid data package' do
       subject.call { |manifest|
-        package_json = use_local_profile(manifest)
-        package = DataPackage::Package.new(package_json, opts: { base: manifest[:datapackage_path].to_s })
+        package_json = use_local_profile(manifest[:package_path])
+        package = DataPackage::Package.new(package_json, opts: { base: manifest[:package_path].to_s })
 
         result = validate_package(package)
 
@@ -108,7 +106,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     context 'when obfuscation is enabled' do
       it 'writes obfuscated coordinates' do
         result = subject.call { |manifest|
-          CSV.read(manifest[:datapackage_path].join('deployments.csv'), headers: true).first.to_h
+          CSV.read(manifest[:package_path].join('deployments.csv'), headers: true).first.to_h
         }
 
         expect(result).to include(
@@ -123,7 +121,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
       it 'writes real coordinates' do
         result = subject.call { |manifest|
-          CSV.read(manifest[:datapackage_path].join('deployments.csv'), headers: true).first.to_h
+          CSV.read(manifest[:package_path].join('deployments.csv'), headers: true).first.to_h
         }
 
         expect(result).to include(

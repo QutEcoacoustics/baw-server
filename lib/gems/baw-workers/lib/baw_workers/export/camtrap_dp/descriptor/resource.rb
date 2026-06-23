@@ -20,9 +20,9 @@ module BawWorkers
           def self.load_schema(path) = JSON.parse(File.read(path), symbolize_names: true)
 
           DEFAULT_RESOURCES = [
-            new(name: 'deployments', path: 'deployments.csv', schema: load_table_schema(:deployments)),
-            new(name: 'media', path: 'media.csv', schema: load_table_schema(:media)),
-            new(name: 'observations', path: 'observations.csv', schema: load_table_schema(:observations))
+            new(name: 'deployments', path: DEPLOYMENTS_FILENAME, schema: load_table_schema(:deployments)),
+            new(name: 'media', path: MEDIA_FILENAME, schema: load_table_schema(:media)),
+            new(name: 'observations', path: OBSERVATIONS_FILENAME, schema: load_table_schema(:observations))
           ].freeze
         end
       end

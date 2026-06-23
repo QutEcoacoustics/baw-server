@@ -18,5 +18,4 @@ module BawWorkers
       end
     end
   end
-  # end
 end

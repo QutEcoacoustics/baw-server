@@ -73,15 +73,14 @@ module BawWorkers
           # This is the mapping of our data onto the schema - how to get the values for those fields.
           # deployment_start and deployment_end are provided by the caller so this method remains a pure mapper.
           def self.mapping(site, deployment_start:, deployment_end:, should_obfuscate:)
-            # TODO: what is happening with time stamps
             # Note: We don't store deployment metadata, so we treat site as a single deployment and calculate its
             # start/end from the set of audio recordings returned for that site by the query.
             Deployment.new(
               deploymentID: site.id,
               locationID: site.id,
               locationName: site.name,
-              latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude), # ! what about site.public_latitude,
-              longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude), # ! what about site.public_longitude
+              latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude),
+              longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude),
               coordinateUncertainty: nil,
               elevation: nil,
               deploymentStart: deployment_start,

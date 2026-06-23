@@ -10,7 +10,7 @@ module CamtrapDpHelpers
     end
 
     # Helper to validate the descriptor and resource schemas and csv data, collecting errors,
-    # since DataPackage gem's validation methods only check the schemas.
+    # since DataPackage gem's validation methods only check the schemas
     def validate_package(package)
       errors = []
 
@@ -33,9 +33,13 @@ module CamtrapDpHelpers
       expect(resource.schema.field_names).to eq(resource.headers)
     end
 
-    # Container for package validation result with a custom to_s for easier debugging in tests.
-    def use_local_profile(manifest)
-      package_json = JSON.parse(File.read(manifest[:datapackage_path].join('datapackage.json')), symbolize_names: false)
+    # Read a package's datapackage.json file and replace it's 'profile' field with a path to the local validation profile.
+    # The default 'profile' value is a URI that points to the real Camtrap DP extension profile, which isn't accessible during tests.
+    # Our local validation profile uses inlined $refs to allow schema validation without network access.
+    def use_local_profile(manifest_package_path)
+      package_json = JSON.parse(
+        File.read(manifest_package_path.join(BawWorkers::Export::CamtrapDp::DATAPACKAGE_FILENAME)), symbolize_names: false
+      )
       package_json['profile'] = BawWorkers::Export::CamtrapDp::Profile::LOCAL_VALIDATION_PROFILE_PATH
       package_json
     end

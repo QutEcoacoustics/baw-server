@@ -24,7 +24,6 @@ module BawWorkers
           # This is the mapping of our data onto the schema - how to get the values for those fields
           def self.mapping(audio_recording, file_public)
             ar = audio_recording
-            # ar.original_file_paths ? returns an array
             recorded_date = ar.recorded_date
 
             file_path = Api::UrlHelpers::Base.new.audio_recording_media_original_url(audio_recording_id: ar.id)
