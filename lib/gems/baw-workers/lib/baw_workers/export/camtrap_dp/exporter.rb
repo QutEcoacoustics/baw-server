@@ -47,7 +47,7 @@ module BawWorkers
           included.find_each do |tagging|
             table_writers.observations << Table::Observation.mapping(tagging).full_values
 
-            deployment = deployments.upsert_deployment(tagging)
+            deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add(tagging.audio_event.audio_recording_id)
 
             if first_media

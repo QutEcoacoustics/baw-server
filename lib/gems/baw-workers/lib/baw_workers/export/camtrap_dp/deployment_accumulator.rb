@@ -3,10 +3,10 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      # Accumulates deployment information from taggings.
+      # Accumulate deployment information from taggings.
       #
-      # We don't have a deployment model, so we use Site as a deployment and infer the deployment start and end from the
-      # audio recordings at the site. Deployment start and end is updated while processing taggings for efficiency.
+      # We use Site as a proxy for a deployment, and calculate deployment start and end time based on the audio
+      # recordings at the site in the result set.
       class DeploymentAccumulator
         Deployment = Data.define(:site, :start, :end, :file_public)
 
@@ -14,13 +14,16 @@ module BawWorkers
           @deployments = {}
         end
 
+        # Add a deployment for the tagging's site if it doesn't exist, or update the existing deployment's start and end
+        # times if it does.
+        #
         # @param tagging [Tagging] the tagging for the deployment
         # @return [Deployment] the new or updated deployment for the tagging's site
-        def upsert_deployment(tagging)
+        def add_or_update(tagging)
           audio_recording = tagging.audio_event.audio_recording
           site = audio_recording.site
           deployment = @deployments[audio_recording.site_id] || Deployment.new(
-            site:,
+            site: site,
             start: nil,
             end: nil,
             file_public: site.public_site?
