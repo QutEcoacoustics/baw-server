@@ -87,6 +87,16 @@ module BawWorkers
             ae = tagging.audio_event
             ar = ae.audio_recording
 
+            # TODO: Is this future proof?
+            classification_method = ae.provenance_id ? 'machine' : 'human'
+
+            # TODO:
+            # - When provenance is null, `tagging.creator` queries the user table. Should we eager load users?
+            # - We also need users for the contributors so this could be shared.
+            # - The user_name is not a real name, is that an issue for the package, for ALA?
+            classified_by = ae.provenance&.name || tagging.creator.user_name
+
+            # NOTE: The camtrap datapackage 'event' is not the same as our concept of an audio event. Hence, we don't map to eventID here.
             Observation.new(
               observationID: tagging.id,
               mediaID: ar.id,
@@ -95,12 +105,12 @@ module BawWorkers
               eventEnd: ar.recorded_date + ae.end_time_seconds.seconds,
               observationLevel: OBSERVATION_LEVEL,
               observationType: OBSERVATION_TYPE,
-              eventID: nil, # Since we are emitting 'media' level observations, we leave this blank. Their event concept is different to ours.
+              eventID: nil,
               frequencyHigh: ae.high_frequency_hertz,
               frequencyLow: ae.low_frequency_hertz,
               classificationTimestamp: tagging.created_at,
-              classificationMethod: ae.provenance_id ? 'machine' : 'human', # TODO: May not be future proof?
-              classifiedBy: ae.provenance&.name || tagging.creator.user_name,
+              classificationMethod: classification_method,
+              classifiedBy: classified_by,
               scientificName: tagging.tag.text
             )
           end

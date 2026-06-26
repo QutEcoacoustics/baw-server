@@ -47,7 +47,7 @@ module BawWorkers
           data = URI.open(File.join(SOURCE_URL, name)).read
           path = File.join(DIRECTORY, name)
           File.write(path, data)
-          Pathname.new(path).relative_path_from(BawApp.root)
+          Pathname.new(path).relative_path_from(BawApp.root).to_s
         end
 
         # Create a local version of the profile with known external $ref schemas inlined, for use in tests without network access.
@@ -70,7 +70,7 @@ module BawWorkers
           File.write(LOCAL_VALIDATION_PROFILE_PATH, JSON.pretty_generate(inlined_profile))
 
           {
-            local_validation_profile: LOCAL_VALIDATION_PROFILE_PATH,
+            local_validation_profile: Pathname.new(LOCAL_VALIDATION_PROFILE_PATH).relative_path_from(BawApp.root).to_s,
             external_references_inlined: successfully_inlined,
             completed_at: Time.current
           }

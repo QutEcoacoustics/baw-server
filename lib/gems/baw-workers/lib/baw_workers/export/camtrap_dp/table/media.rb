@@ -22,33 +22,38 @@ module BawWorkers
           attribute? :mediaComments, Types::String.optional
 
           # This is the mapping of our data onto the schema - how to get the values for those fields
-          def self.mapping(audio_recording, file_public)
-            ar = audio_recording
-            recorded_date = ar.recorded_date
+          # @param audio_recording [AudioRecording] the audio recording to map
+          # @param deployment [DeploymentAccumulator::Deployment] the deployment for the audio recording
+          # @return [Media] the mapped media object
+          def self.mapping(audio_recording, deployment)
+            # AudioRecording#friendly_name uses `site` which queries the database for site on every audio recording processed.
+            # But we already have the site in `deployment`, so we can set the association cache to prevent the query.
+            ar = audio_recording.tap { |ar| ar.association(:site).target = deployment.site }
 
             file_path = Api::UrlHelpers::Base.new.audio_recording_media_original_url(audio_recording_id: ar.id)
 
-            # required Date and time at which the media file was recorded. Formatted as an ISO 8601 string with timezone
+            # Required Date and time at which the media file was recorded. Formatted as an ISO 8601 string with timezone
             # designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
-            if ar.site.timezone.blank? || ar.site.timezone[:utc_total_offset].zero?
-              recorded_date&.utc&.iso8601
+            if deployment.site.timezone.blank? || deployment.site.timezone[:utc_total_offset].zero?
+              ar.recorded_date&.utc&.iso8601
             else
-              timezone = TimeZoneHelper.tzinfo_class(ar.site.tzinfo_tz)
-              recorded_date.in_time_zone(timezone).iso8601
+              timezone = TimeZoneHelper.tzinfo_class(deployment.site.tzinfo_tz)
+              ar.recorded_date.in_time_zone(timezone).iso8601
             end => timestamp
 
-            # ? is this correct? what happens if doesn't calculate valid enum value, just nil instead?
+            # Is this calculation correct? There are many cases in the database where the calculation doesn't result in a valid enum value.
+            # And in that case, just return nil? Alternatively, we also emit our own bit_rate_bps field?
             bit_depth = (ar.bit_rate_bps.to_f / (ar.channels * ar.sample_rate_hertz))
             bit_depth = nil unless bit_depth.in?([8, 16, 24, 32])
 
             Media.new(
               mediaID: ar.id, # required
-              deploymentID: ar.site_id, # required
+              deploymentID: deployment.site.id, # required
               captureMethod: nil,
               timestamp: timestamp,
               duration: ar.duration_seconds,
               filePath: file_path, # required
-              filePublic: file_public, # required
+              filePublic: deployment.file_public, # required
               fileName: ar.friendly_name,
               fileMediatype: ar.media_type, # required
               exifData: nil,

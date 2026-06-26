@@ -21,12 +21,11 @@ module BawWorkers
         # @return [Deployment] the new or updated deployment for the tagging's site
         def add_or_update(tagging)
           audio_recording = tagging.audio_event.audio_recording
-          site = audio_recording.site
           deployment = @deployments[audio_recording.site_id] || Deployment.new(
-            site: site,
+            site: audio_recording.site,
             start: nil,
             end: nil,
-            file_public: site.public_site?
+            file_public: audio_recording.site.public_site?
           )
 
           @deployments[audio_recording.site_id] = Deployment.new(
