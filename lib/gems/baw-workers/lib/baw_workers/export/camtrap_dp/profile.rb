@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'fileutils'
-require 'open-uri'
-require 'uri'
-
 module BawWorkers
   module Export
     module CamtrapDp
@@ -17,6 +13,7 @@ module BawWorkers
         }
 
         DIRECTORY = File.join(__dir__, 'profile_assets')
+        README_PATH = File.join(DIRECTORY, 'README.md')
         PROFILE_PATH = File.join(DIRECTORY, ASSET_FILES[:profile])
         LOCAL_VALIDATION_PROFILE_PATH = PROFILE_PATH.gsub('.json', '.local.json')
 
@@ -45,12 +42,12 @@ module BawWorkers
 
         # Download files from Profile::SOURCE_URL into the Profile::DIRECTORY.
         # @param name [String] the filename to download; a value in Profile::ASSET_FILES
-        # @return [String] the local file path of the downloaded file
+        # @return [String] the file path of the downloaded file relative to the application root
         def self.download_fixture(name)
           data = URI.open(File.join(SOURCE_URL, name)).read
           path = File.join(DIRECTORY, name)
           File.write(path, data)
-          path
+          Pathname.new(path).relative_path_from(BawApp.root)
         end
 
         # Create a local version of the profile with known external $ref schemas inlined, for use in tests without network access.
@@ -60,21 +57,21 @@ module BawWorkers
           root_profile = JSON.parse(File.read(PROFILE_PATH), symbolize_names: false)
 
           # Fetch the external schemas in EXTERNAL_SCHEMA_REFS and store them in a hash keyed by their URI, with the
-          # $schema field removed since it can cause validation issues when inlined.
+          # $schema field removed since it can cause JSON validation issues in the DataPackage gem.
           resolved_refs = EXTERNAL_SCHEMA_REFS.index_with { |ref|
             JSON.parse(URI.open(ref).read, symbolize_names: false)
           }
           resolved_refs.each_value { |schema| schema.delete('$schema') }
 
-          successfuly_inlined = {}
-          inlined_profile = inline_known_refs(root_profile, resolved_refs) { |ref| successfuly_inlined[ref] = true }
+          successfully_inlined = {}
+          inlined_profile = inline_known_refs(root_profile, resolved_refs) { |ref| successfully_inlined[ref] = true }
           inlined_profile.delete('$schema')
 
           File.write(LOCAL_VALIDATION_PROFILE_PATH, JSON.pretty_generate(inlined_profile))
 
           {
             local_validation_profile: LOCAL_VALIDATION_PROFILE_PATH,
-            external_references_inlined: successfuly_inlined,
+            external_references_inlined: successfully_inlined,
             completed_at: Time.current
           }
         end
@@ -100,6 +97,14 @@ module BawWorkers
           return value.map { |child| inline_known_refs(child, resolved_refs, &block) } if value.is_a?(Array)
 
           value
+        end
+
+        def self.add_readme_section(heading, result, sections: [])
+          [*sections, "# #{heading}:\n\n#{result.pretty_inspect}"]
+        end
+
+        def self.write_readme(sections)
+          File.write(README_PATH, sections.join("\n\n"))
         end
       end
     end

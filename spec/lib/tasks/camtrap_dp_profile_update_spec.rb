@@ -4,51 +4,27 @@ require(Rails.root / 'spec' / 'support' / 'shared_context' / 'rake_context')
 
 describe 'baw:camtrap_dp:update' do
   include_context 'rake_spec_context'
-  its(:prerequisites) { is_expected.to include('download', 'refresh_profile') }
-end
-
-describe 'baw:camtrap_dp:download' do
-  include_context 'rake_spec_context'
-
-  let(:log_io) { StringIO.new }
 
   before do
-    allow(Logger).to receive(:new).and_return(Logger.new(log_io))
+    allow(File).to receive(:write)
   end
 
-  its(:prerequisites) { is_expected.to include(BawWorkers::Export::CamtrapDp::Profile::DIRECTORY.to_s) }
-
-  it 'logs and prints the result of Profile.download' do
-    allow(BawWorkers::Export::CamtrapDp::Profile).to receive(:download).and_return({ fake: 'result' })
-
-    expect { subject.invoke }.to output(/Downloaded profile assets:\n\{fake: "result"\}/m).to_stdout
-
-    expect(log_io.string).to include('{fake: "result"}')
-  end
-end
-
-describe 'baw:camtrap_dp:refresh_profile' do
-  include_context 'rake_spec_context'
-
-  its(:prerequisites) { is_expected.to include(BawWorkers::Export::CamtrapDp::Profile::LOCAL_VALIDATION_PROFILE_PATH.to_s) }
-end
-
-describe BawWorkers::Export::CamtrapDp::Profile::LOCAL_VALIDATION_PROFILE_PATH.to_s do
-  include_context 'rake_spec_context'
-
-  let(:log_io) { StringIO.new }
-
-  before do
-    allow(Logger).to receive(:new).and_return(Logger.new(log_io))
+  let(:expected_readme_output) do
+    /# Downloaded profile assets:\n\n\{downloaded: "assets"\}.*# Created local validation profile:\n\n\{local: "profile"\}/m
   end
 
-  its(:prerequisites) { is_expected.to include(BawWorkers::Export::CamtrapDp::Profile::PROFILE_PATH.to_s) }
-
-  it 'logs and prints the result of Profile.create_local_validation_profile' do
+  it 'downloads the assets, builds the local validation profile, and writes the README' do
+    allow(BawWorkers::Export::CamtrapDp::Profile).to receive(:download).and_return({ downloaded: 'assets' })
     allow(BawWorkers::Export::CamtrapDp::Profile).to receive(:create_local_validation_profile).and_return({ local: 'profile' })
 
-    expect { subject.execute }.to output(/Created local validation profile:\n\{local: "profile"\}/m).to_stdout
+    expect { subject.invoke }.to output(expected_readme_output).to_stdout
 
-    expect(log_io.string).to include('{local: "profile"}')
+    expect(BawWorkers::Export::CamtrapDp::Profile).to have_received(:download)
+    expect(BawWorkers::Export::CamtrapDp::Profile).to have_received(:create_local_validation_profile)
+
+    expect(File).to have_received(:write).with(
+      BawWorkers::Export::CamtrapDp::Profile::README_PATH,
+      a_string_matching(expected_readme_output)
+    )
   end
 end
