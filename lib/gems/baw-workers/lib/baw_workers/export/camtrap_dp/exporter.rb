@@ -48,12 +48,12 @@ module BawWorkers
             table_writers.observations << Table::Observation.mapping(tagging).full_values
 
             deployment = deployments.add_or_update(tagging)
-            first_media = audio_recordings.add(tagging.audio_event.audio_recording_id)
+            first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
             if first_media
               table_writers.media << Table::Media.mapping(
                 tagging.audio_event.audio_recording,
-                deployment.file_public
+                deployment
               ).full_values
             end
           end
@@ -66,8 +66,9 @@ module BawWorkers
             options: @options
           )
 
-          write_datapackage_file(package)
           close_table_writers
+          validate_package(package)
+          write_datapackage_file(package)
 
           manifest = zip_package
           result = block.call(manifest)
@@ -83,6 +84,8 @@ module BawWorkers
           @package_path
         end
 
+        TableWriters = Data.define(:observations, :deployments, :media)
+
         private
 
         def validate_filter(filter)
@@ -94,8 +97,7 @@ module BawWorkers
         end
 
         def included
-          @included ||= @filter
-            .includes(:tag, audio_event: [:provenance, { audio_recording: { site: { projects: :permissions } } }])
+          @included ||= @filter.includes(:tag, audio_event: [:provenance, :audio_recording])
         end
 
         def write_deployments(writer, deployments)
@@ -111,7 +113,9 @@ module BawWorkers
           File.write(package_files[:datapackage], JSON.pretty_generate(package.to_h))
         end
 
-        TableWriters = Data.define(:observations, :deployments, :media)
+        def validate_package(package)
+          Validator.validate_package(package, package_path:)
+        end
 
         def table_writers
           @table_writers ||= TableWriters.new(
@@ -148,6 +152,8 @@ module BawWorkers
           @zip_path ||= exporter_temp_dir.join(ZIP_PATH)
         end
 
+        # @return [Hash] metadata about the generated package, including the path to the zip file and file stats for the
+        # included files
         def zip_package
           Zip::File.open(zip_path, create: true) do |zip|
             package_files.each_value { |path| zip.add(path.basename.to_s, path) }
