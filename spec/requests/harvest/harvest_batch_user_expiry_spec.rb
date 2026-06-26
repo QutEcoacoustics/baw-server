@@ -109,10 +109,8 @@ describe 'Harvesting a batch of files' do
       # value was unchanged
       expect(harvest.upload_user_expiry_at).to be_nil
 
-      sleep 1
-
-      # error email was sent
-      expect(ActionMailer::Base.deliveries.size).to eq(1)
+      # error email was sent asynchronously via the exception notifier
+      expect_and_deliver_async_email(of_class: BawWorkers::Jobs::Mail::DeliverRawEmailJob)
       email = ActionMailer::Base.deliveries[0]
       expect(email.body.encoded).to include("Failed to refresh upload user expiry for harvest #{harvest.id}")
     end

@@ -77,6 +77,12 @@ resource 'Errors' do
   end
 
   head '/test_exceptions?exception_class=BawAudioTools::Exceptions::AudioToolError' do
+    # A 500 response triggers an async exception-notification email. Pause jobs
+    # so we can deterministically deliver it here instead of racing the live
+    # worker (which would otherwise leak onto the mailer queue).
+    pause_all_jobs
+    after { expect_and_deliver_async_email(of_class: BawWorkers::Jobs::Mail::DeliverRawEmailJob) }
+
     standard_request_options(:head, 'ERROR AudioToolError', :internal_server_error,
       {
         expected_response_has_content: false,

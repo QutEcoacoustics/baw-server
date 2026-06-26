@@ -29,8 +29,7 @@ describe 'asynchronous email delivery', type: :mailer do
         PublicMailer.contact_us_message(nil, model, request_info).deliver_later
       }.not_to(change { ActionMailer::Base.deliveries.count })
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      perform_job_locally(queue)
+      expect_and_deliver_async_email(queue:)
 
       email = ActionMailer::Base.deliveries.last
       expect(email.subject).to include('[Contact Us]').and include('Jane')
@@ -44,8 +43,7 @@ describe 'asynchronous email delivery', type: :mailer do
 
       PublicMailer.data_request_message(nil, model, request_info).deliver_later
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      perform_job_locally(queue)
+      expect_and_deliver_async_email(queue:)
 
       email = ActionMailer::Base.deliveries.last
       expect(email.subject).to include('[Data Request]')
@@ -59,8 +57,7 @@ describe 'asynchronous email delivery', type: :mailer do
 
       PublicMailer.new_user_message(user, info).deliver_later
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      perform_job_locally(queue)
+      expect_and_deliver_async_email(queue:)
 
       email = ActionMailer::Base.deliveries.last
       expect(email.subject).to include('[New User Notification]')
@@ -83,8 +80,7 @@ describe 'asynchronous email delivery', type: :mailer do
         )
       }.not_to(change { ActionMailer::Base.deliveries.count })
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      perform_job_locally(queue)
+      expect_and_deliver_async_email(queue:)
 
       email = ActionMailer::Base.deliveries.last
       expect(email.to).to include('async-confirm@example.com')
@@ -99,8 +95,7 @@ describe 'asynchronous email delivery', type: :mailer do
         user.send_reset_password_instructions
       }.not_to(change { ActionMailer::Base.deliveries.count })
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      perform_job_locally(queue)
+      expect_and_deliver_async_email(queue:)
 
       expect(ActionMailer::Base.deliveries.last.to).to include(user.email)
     end

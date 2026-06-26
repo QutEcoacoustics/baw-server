@@ -72,22 +72,30 @@ describe 'reports/recording_coverage' do
   end
 
   context 'with bucket_count < 1' do
+    pause_all_jobs
     let(:params) { super().merge({ options: { bucket_count: 0 } }) }
 
     it 'returns an ArgumentError' do
       expect {
         post '/reports/recording_coverage', params: params, **api_headers(writer_token)
       }.to raise_error(ArgumentError, 'bucket_count must be a positive integer, got 0')
+
+      # the unhandled error triggers an async exception-notification email
+      expect_and_deliver_async_email(of_class: BawWorkers::Jobs::Mail::DeliverRawEmailJob)
     end
   end
 
   context 'with non-integer bucket_count' do
+    pause_all_jobs
     let(:params) { super().merge({ options: { bucket_count: 1.5 } }) }
 
     it 'returns an ArgumentError' do
       expect {
         post '/reports/recording_coverage', params: params, **api_headers(writer_token)
       }.to raise_error(ArgumentError, 'bucket_count must be a positive integer, got 1.5')
+
+      # the unhandled error triggers an async exception-notification email
+      expect_and_deliver_async_email(of_class: BawWorkers::Jobs::Mail::DeliverRawEmailJob)
     end
   end
 

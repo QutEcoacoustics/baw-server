@@ -29,6 +29,12 @@ describe 'Common behaviour' do
 
   # https://github.com/QutEcoacoustics/baw-server/issues/841
   describe 'routing errors, with exception_notifier grouping' do
+    # The HEAD request below triggers an exception notification, which is now
+    # delivered asynchronously via the mailer queue (issue #1004). Pause jobs so
+    # the enqueued delivery job stays put for us to assert on and clear, instead
+    # of being raced away (or leaked) by the live worker process.
+    pause_all_jobs
+
     around do |example|
       ExceptionNotifier.error_grouping = true
       example.run
@@ -59,6 +65,9 @@ describe 'Common behaviour' do
       expect(response).to have_http_status(:not_found)
       expect(response.headers).to have_key('X-Error-Type')
       expect(response.headers).to have_key('X-Error-Message')
+
+      # the exception notification email is delivered asynchronously
+      expect_and_deliver_async_email(of_class: BawWorkers::Jobs::Mail::DeliverRawEmailJob)
     end
   end
 

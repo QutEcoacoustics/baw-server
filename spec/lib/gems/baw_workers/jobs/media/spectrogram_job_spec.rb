@@ -69,7 +69,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
       job1 = BawWorkers::Jobs::Media::SpectrogramJob.perform_later!(test_payload)
 
       result = BawWorkers::Jobs::Media::SpectrogramJob.try_perform_later(test_payload)
-      expect(result).to be_an_instance_of(::Dry::Monads::Failure)
+      expect(result).to be_an_instance_of(Dry::Monads::Failure)
       job2 = result.failure
       expect(job2.job_id).to eq job1.job_id
       expect(job2.unique?).to be false
@@ -96,7 +96,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
         'Argument (`Hash`) for parameter `payload` does not have any of expected types [BawWorkers::Models::SpectrogramRequest]'
       )
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
+      expect_and_deliver_async_email
     end
 
     it 'when params is payload with the wrong request type' do
@@ -119,7 +119,7 @@ describe BawWorkers::Jobs::Media::SpectrogramJob do
         'Argument (`BawWorkers::Models::AudioRequest`) for parameter `payload` does not have any of expected types [BawWorkers::Models::SpectrogramRequest]'
       )
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
+      expect_and_deliver_async_email
     end
 
     it 'when recorded date is invalid' do

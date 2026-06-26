@@ -328,6 +328,13 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
   end
 
   stepwise 'faulty jobs reset counter' do
+    # The faulty jobs deliberately raise, so they fail through to Resque::Failure,
+    # which asynchronously enqueues exception-notification emails on the mailer
+    # queue from the worker processes. The number and timing of those emails is
+    # not deterministic, and their delivery is covered by the mailer specs, so we
+    # tolerate them being left on the queue here.
+    ignore_pending_jobs
+
     step 'make some jobs' do
       @j1 = Fixtures::Concurrency::FaultyJobClass.perform_later!(20)
       @j2 = Fixtures::Concurrency::FaultyJobClass.perform_later!(20)
@@ -355,7 +362,9 @@ describe BawWorkers::ActiveJob::Concurrency, timeout: 60 do
     end
 
     step 'there are no other jobs in the queue because the others were discarded' do
-      expect_enqueued_jobs(0)
+      # only the deliberately-failed fixture jobs matter here; exception-
+      # notification emails on the mailer queue are an expected side effect.
+      expect_enqueued_jobs(0, of_class: Fixtures::Concurrency::FaultyJobClass)
       expect_delayed_jobs(0)
     end
 

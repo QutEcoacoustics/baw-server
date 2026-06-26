@@ -384,7 +384,7 @@ describe AnalysisJob do
       }
       relation = analysis_job.filter_as_relation
 
-      sql = <<-SQL.squish
+      sql = <<~SQL.squish
         SELECT "audio_recordings"."id"
         FROM "audio_recordings"
         #{permissions_sql}
@@ -541,8 +541,7 @@ describe AnalysisJob do
     it 'defines the complete event' do
       expect(analysis_job).to transition_from(:processing).to(:completed).on_event(:complete)
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      clear_pending_jobs
+      expect_and_deliver_async_email
     end
 
     it 'defines the retry event - which does not work if all items successful' do
@@ -560,8 +559,7 @@ describe AnalysisJob do
       expect(analysis_job).to transition_from(:completed).to(:processing).on_event(:retry)
       expect(analysis_job.retry_count).to eq(1)
 
-      expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
-      clear_pending_jobs
+      expect_and_deliver_async_email
     end
 
     it 'defines an amend event' do
