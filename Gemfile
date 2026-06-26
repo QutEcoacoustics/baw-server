@@ -215,6 +215,10 @@ gem 'mini_magick', '>= 4.9.5'
 # -------------------------------------
 gem 'rubyzip', '>= 3.0.0.alpha'
 
+# Data package support
+# -------------------------------------
+gem 'datapackage', '~> 1.1'
+
 # gems that are only required on development machines or for testings
 group :development do
   # allow debugging
@@ -310,6 +314,4 @@ group :test do
 
   # test for slow n+1 queries
   gem 'bullet'
-
-  gem 'datapackage', '~> 1.1'
 end
