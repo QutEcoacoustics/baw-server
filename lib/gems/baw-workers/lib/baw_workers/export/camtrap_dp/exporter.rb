@@ -11,7 +11,6 @@ module BawWorkers
   module Export
     module CamtrapDp
       class Exporter
-        # Required fields that we can't currently generate or pull from the database
         RequiredExporterOptions = Data.define(
           :should_obfuscate,
           :contributors,
@@ -19,12 +18,13 @@ module BawWorkers
           :project_individual_animals,
           :observation_level,
           :project_sampling_design,
-          :project_title
+          :project_title,
+          :emit_project_license
         )
 
         def initialize(filter, **exporter_options)
           @filter = validate_filter(filter)
-          @options = RequiredExporterOptions.new(**exporter_options)
+          @options = required_exporter_options(exporter_options)
         end
 
         # Generates the export and yields a manifest of metadata about the generated export to the provided block.
@@ -94,6 +94,13 @@ module BawWorkers
           raise ArgumentError, message + 'Tagging relation' unless filter.klass == Tagging
 
           filter
+        end
+
+        def required_exporter_options(exporter_options)
+          missing = RequiredExporterOptions.members - exporter_options.keys
+          raise ArgumentError, "Missing required exporter option: #{missing.first}" if missing.any?
+
+          RequiredExporterOptions.new(**exporter_options)
         end
 
         def included

@@ -6,6 +6,18 @@ module BawWorkers
       class PackageMetadata
         def self.build(deployments:, scientific_names:, options:)
           temporal = temporal_coverage(deployments)
+          licenses = options.emit_project_license ? project_license(deployments) : nil
+
+          project = Descriptor::Project.new(
+            title: options.project_title,
+            description: nil,
+            path: nil,
+            samplingDesign: options.project_sampling_design,
+            captureMethod: options.project_capture_method,
+            individualAnimals: options.project_individual_animals,
+            observationLevel: options.observation_level,
+            licenses: licenses
+          )
 
           Descriptor::Package.new(
             profile: Profile::PROFILE_PATH,
@@ -14,7 +26,7 @@ module BawWorkers
             created: Time.current.utc.iso8601,
             title: nil,
             contributors: options.contributors,
-            project: project_descriptor(options),
+            project: project,
             spatial: spatial_coverage(deployments, options),
             temporal: Descriptor::Temporal.new(
               start: temporal[:start],
@@ -24,17 +36,24 @@ module BawWorkers
           )
         end
 
-        def self.project_descriptor(options)
-          Descriptor::Project.new(
-            title: options.project_title,
-            description: nil,
-            path: nil,
-            samplingDesign: options.project_sampling_design,
-            captureMethod: options.project_capture_method,
-            individualAnimals: options.project_individual_animals,
-            observationLevel: options.observation_level,
-            licenses: nil
-          )
+        # Generate the licenses descriptor from the first project found (under the assumption that packages are scoped
+        # to a single project).
+        #
+        # In the database, existing project licenses are SPDX identifiers. But it's currently a free text field, so we
+        # will use string length as a proxy for being an identifier, and raise an error if we encounter something longer
+        # than 32 characters. We only store one license per project, so we use the same license for both required
+        # scopes: data and media.
+        def self.project_license(deployments)
+          project_license = deployments.first&.site&.projects&.first&.license
+
+          if project_license.nil?
+            nil
+          elsif project_license.length <= 32
+            [Descriptor::License.new(name: project_license, scope: 'data'),
+             Descriptor::License.new(name: project_license, scope: 'media')]
+          else
+            raise Errors::ProjectLicenseError, "Found unsupported custom license (>32 chars): #{project_license}"
+          end
         end
 
         def self.temporal_coverage(deployments)

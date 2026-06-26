@@ -17,7 +17,8 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       project_individual_animals: false,
       observation_level: ['media'],
       project_sampling_design: 'systematicRandom',
-      project_title: 'My Project'
+      project_title: 'My Project',
+      emit_project_license: true
     ).to_h
   end
 
@@ -39,6 +40,12 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     let(:filter) { AudioEvent.all }
 
     it { expect { subject }.to raise_error(ArgumentError, /Expected filter to be Tagging relation/) }
+  end
+
+  context 'with missing required exporter options' do
+    let(:export_options) { super().except(:contributors) }
+
+    it { expect { subject }.to raise_error(ArgumentError, /Missing required exporter option: contributors/) }
   end
 
   describe '#call' do

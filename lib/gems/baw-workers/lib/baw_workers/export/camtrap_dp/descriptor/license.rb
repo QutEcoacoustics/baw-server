@@ -4,7 +4,6 @@ module BawWorkers
   module Export
     module CamtrapDp
       class Descriptor
-        # TODO: provide same license for both
         class License < Descriptor
           attribute :name, Types::String
           attribute? :path, Types::String.optional
