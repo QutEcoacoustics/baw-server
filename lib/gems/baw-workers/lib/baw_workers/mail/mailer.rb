@@ -16,19 +16,50 @@ module BawWorkers
       def self.send_worker_error_email(klass, args, queue_name, error)
         to = Settings.mailer.emails.required_recipients
         from = Settings.mailer.emails.sender_address
-        job = { job_class: klass, job_args: args, job_queue: queue_name }
 
-        mail_ready = BawWorkers::Mail::Mailer.error_notification(to, from, job, error)
-        mail_ready.deliver_now
+        # Capture everything we need as plain, serializable values *now*, while we
+        # still have the original objects. The email is delivered later via
+        # ActiveJob, which cannot serialize arbitrary job/error objects (e.g. a
+        # raw exception or class), so the mailer action below only ever receives a
+        # hash of strings.
+        details = build_details(klass, args, queue_name, error)
+
+        BawWorkers::Mail::Mailer.error_notification(to, from, details).deliver_later
       end
 
-      def error_notification(to, from, job, error)
-        raise ArgumentError, "Error is not a ruby error object #{error.inspect}." unless error.is_a?(StandardError)
+      # Build the serializable view model for an error notification email.
+      # @return [Hash] only contains strings, arrays of strings, and a timestamp.
+      def self.build_details(klass, args, queue_name, error)
+        {
+          host: Socket.gethostname,
+          job_class: klass.nil? ? '(no job class available)' : klass.to_s,
+          job_args: args.nil? ? '(no job args available)' : args.to_s,
+          job_queue: queue_name.nil? ? '(job queue not available)' : queue_name.to_s,
+          error_class: error&.class&.name,
+          error_message: error_message_for(error),
+          error_backtrace: error_backtrace_for(error),
+          generated_timestamp: Time.zone.now
+        }
+      end
+
+      def self.error_message_for(error)
+        return '(no message available)' if error.blank?
+
+        error.message.to_s
+      end
+
+      def self.error_backtrace_for(error)
+        return ['(no backtrace available)'] if error.blank?
+
+        Array(error.backtrace).map(&:to_s).presence || ['(backtrace empty)']
+      end
+
+      def error_notification(to, from, details)
         raise ArgumentError, "From is not a string #{from.inspect}." unless from.is_a?(String)
         raise ArgumentError, "To is not a string or Array #{to.inspect}." unless to.is_a?(String) || to.is_a?(Array)
-        raise ArgumentError, "Job is not a hash #{job.inspect}." unless job.is_a?(Hash)
+        raise ArgumentError, "Details is not a hash #{details.inspect}." unless details.is_a?(Hash)
 
-        set_view_model(job, error)
+        @details = details
 
         subject = "[#{@details[:host]}]#{Settings.mailer.emails.email_prefix} #{@details[:error_message]}"
 
@@ -36,30 +67,6 @@ module BawWorkers
           format.html
           format.text
         end
-      end
-
-      def set_view_model(job, error)
-        job_class = job&.dig(:job_class)
-        job_args = job&.dig(:job_args)
-        job_queue = job&.dig(:job_queue)
-
-        message, backtrace =
-          if error.blank?
-            ['(no message available)', '(no backtrace available)']
-          else
-            [error.message, error.backtrace || ['(backtrace empty)']]
-          end
-
-        @details = {
-          host: Socket.gethostname,
-          job_class: job_class.nil? ? '(no job class available)' : job_class,
-          job_args: job_args.nil? ? '(no job args available)' : job_args,
-          job_queue: job_queue.nil? ? '(job queue not available)' : job_queue,
-          error_class: error&.class&.name,
-          error_message: message,
-          error_backtrace: backtrace,
-          generated_timestamp: Time.zone.now
-        }
       end
     end
   end

@@ -31,6 +31,7 @@ class PublicController < ApplicationController
   # Allows rendering CMS blobs
   # TODO: remove when rails views removed
   include ComfortableMexicanSofa::RenderMethods
+
   helper Comfy::CmsHelper
   helper CmsHelpers
 
@@ -134,7 +135,7 @@ class PublicController < ApplicationController
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.contact_us_message(current_user, @contact_us, request).deliver_now
+        PublicMailer.contact_us_message(current_user, @contact_us, request_info).deliver_later
         format.html {
           redirect_to contact_us_path,
             notice: "Thank you for contacting us. If you've asked us to contact you or " \
@@ -170,7 +171,7 @@ class PublicController < ApplicationController
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.bug_report_message(current_user, @bug_report, request).deliver_now
+        PublicMailer.bug_report_message(current_user, @bug_report, request_info).deliver_later
         format.html {
           redirect_to bug_report_path,
             notice: 'Thank you, your report was successfully submitted.
@@ -209,7 +210,7 @@ class PublicController < ApplicationController
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.data_request_message(current_user, @data_request, request).deliver_now
+        PublicMailer.data_request_message(current_user, @data_request, request_info).deliver_later
         format.html {
           redirect_to data_request_path,
             notice: 'Your request was successfully submitted. We will be in contact shortly.'
@@ -323,5 +324,15 @@ class PublicController < ApplicationController
       :selected_user_id,
       :selected_timezone_name
     )
+  end
+
+  # Serializable subset of the current request used by mailers delivered via
+  # `deliver_later` (the raw request object cannot be serialized by ActiveJob).
+  # @return [Hash]
+  def request_info
+    {
+      remote_ip: request.remote_ip,
+      user_agent: request.user_agent
+    }
   end
 end

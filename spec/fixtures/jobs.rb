@@ -175,6 +175,16 @@ module Fixtures
         puts 'i just work'
       end
 
+      # These fixtures intentionally fail/discard to exercise concurrency limits.
+      # Suppress the admin worker-error email (which would otherwise be enqueued
+      # asynchronously onto the mailer queue by separate worker processes and
+      # pollute the global queue count) while keeping the discard/re-raise flow.
+      # The async error-email path itself is covered by the mailer specs.
+      def notify_error(error)
+        logger.error('Unhandled job error', error)
+        raise error
+      end
+
       def name
         @name ||= job_id
       end

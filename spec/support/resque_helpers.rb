@@ -312,6 +312,23 @@ module ResqueHelpers
       job.perform_now
     end
 
+    # Assert that email was enqueued for asynchronous delivery and then deliver it.
+    # This is the standard pattern for testing email sent via `deliver_later` or
+    # the async exception notifier: a delivery job is enqueued on the mailer queue
+    # (rather than the email being sent inline), and performing that job actually
+    # delivers the email.
+    # @param [Integer] count - the number of emails expected to be enqueued and delivered
+    # @param [Class] of_class - the delivery job class to expect on the mailer queue.
+    #   Defaults to `ActionMailer::MailDeliveryJob` (used by `deliver_later`). Pass
+    #   `BawWorkers::Jobs::Mail::DeliverRawEmailJob` for exception-notifier emails.
+    # @return [void]
+    def expect_and_deliver_async_email(count: 1, of_class: ActionMailer::MailDeliveryJob, queue: Settings.actions.mailer.queue)
+      expect_enqueued_jobs(count, of_class:)
+      expect {
+        count.times { perform_job_locally(queue) }
+      }.to change { ActionMailer::Base.deliveries.count }.by(count)
+    end
+
     # Run all jobs as soon as they're enqueued, reverting settings when the given block has finished.
     # Will NOT block for job completion!
     # Must be supplied with a block.

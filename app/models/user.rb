@@ -259,7 +259,14 @@ class User < ApplicationRecord
   validates_attachment_content_type :image, content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
     message: 'file type %<value>s is not allowed (only jpeg/png/gif images)'
 
-  after_create :special_after_create_actions
+  # Sent asynchronously after the record is committed so that the background
+  # worker can always load a consistent, persisted user record.
+  after_commit :special_after_create_actions, on: :create
+
+  # Flush any Devise notifications (confirmation, reset password, unlock, ...)
+  # that were deferred until the transaction committed. See
+  # #send_devise_notification below.
+  after_commit :send_pending_devise_notifications
 
   # get's a file system safe ([-A-Za-z0-9_]) version of the user name
   # @return [String]
@@ -436,11 +443,42 @@ class User < ApplicationRecord
   def special_after_create_actions
     return if skip_creation_email
 
-    # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
-    # notify us of new user sign ups
+    # notify us of new user sign ups. Delivered asynchronously so the web
+    # request is not blocked on outbound email and so delivery can be performed
+    # by a worker running on an unblocked host.
     user_info_hash = { name: user_name, email: }
     user_info = DataClass::NewUserInfo.new(user_info_hash)
-    PublicMailer.new_user_message(self, user_info).deliver_now
+    PublicMailer.new_user_message(self, user_info).deliver_later
+  end
+
+  # Override Devise so that all of its emails (confirmation, reset password,
+  # unlock instructions, ...) are delivered asynchronously via ActiveJob.
+  # This keeps web requests responsive and lets a worker on an unblocked host
+  # perform the actual SMTP delivery.
+  def send_devise_notification(notification, *args)
+    # When the record is new or has unsaved changes the confirmation/reset
+    # tokens may not be persisted yet. Defer enqueuing the mail job until the
+    # database transaction commits so the worker loads a consistent record.
+    if new_record? || changed?
+      pending_devise_notifications << [notification, args]
+    else
+      render_and_send_devise_message(notification, *args)
+    end
+  end
+
+  def render_and_send_devise_message(notification, *)
+    devise_mailer.send(notification, self, *).deliver_later
+  end
+
+  def pending_devise_notifications
+    @pending_devise_notifications ||= []
+  end
+
+  def send_pending_devise_notifications
+    pending_devise_notifications.each do |notification, args|
+      render_and_send_devise_message(notification, *args)
+    end
+    pending_devise_notifications.clear
   end
 
   def generate_authentication_token

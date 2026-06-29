@@ -18,6 +18,10 @@ class BawConfigContract < Dry::Validation::Contract
         required(:queue).filled(:string)
       end
 
+      required(:mailer).hash do
+        required(:queue).filled(:string)
+      end
+
       required(:maintenance).hash do
         required(:queue).filled(:string)
       end

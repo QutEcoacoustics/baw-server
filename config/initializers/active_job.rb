@@ -35,3 +35,10 @@ Rails.application.config.active_job.queue_name_prefix = ''
   require "#{BawApp.root}/spec/fixtures/jobs" if BawApp.test?
 end
 # rubocop:enable Style/RedundantConstantBase
+
+# Register custom ActiveJob argument serializers so plain form objects
+# (DataClass::*) can be passed to mailers that are delivered asynchronously via
+# `deliver_later`. Registered after initialization so the autoloader is ready.
+Rails.application.config.after_initialize do
+  ActiveJob::Serializers.add_serializers(DataClassSerializer)
+end

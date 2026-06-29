@@ -24,11 +24,16 @@ ExceptionNotification.configure do |config|
   # Notifiers =================================================================
 
   # Email notifier sends notifications by email.
-  config.add_notifier :email, {
+  # We deliver these emails asynchronously via the mailer queue so that only
+  # mail-capable workers perform the actual SMTP send (see issue #1004). The
+  # email must be *built* synchronously because it needs the live exception,
+  # request and env which can't be serialized for ActiveJob, so the custom
+  # notifier renders the message now and enqueues a job to send the raw message.
+  config.add_notifier :email, BawWorkers::Mail::AsyncExceptionNotifier.new(
     email_prefix: "#{Settings.mailer.emails.email_prefix} [Exception] ",
     sender_address: Settings.mailer.emails.sender_address,
     exception_recipients: Settings.mailer.emails.required_recipients
-  }
+  )
 
   # can't reliably test email delivery if repeated mail in test suites is squashed
   config.error_grouping = !BawApp.dev_or_test?

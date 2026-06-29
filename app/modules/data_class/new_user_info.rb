@@ -5,11 +5,12 @@ module DataClass
     include ActiveModel::Validations
     include ActiveModel::Conversion
     extend ActiveModel::Naming
+    include Serializable
 
-    attr_accessor :name, :email
+    attribute :name, :email
 
     validates_format_of :email, with: /\A[-a-z0-9_+.]+@([-a-z0-9]+\.)+[a-z0-9]{2,4}\z/i, allow_blank: true,
-                                allow_nil: true
+      allow_nil: true
     validates_presence_of :name
 
     def initialize(attributes = {})

@@ -80,6 +80,8 @@ describe BawWorkers::Jobs::Media::AudioJob do
       job2.refresh_status!
 
       expect(job1.status.status).to eq job2.status.status
+
+      clear_pending_jobs
     end
   end
 
@@ -92,7 +94,7 @@ describe BawWorkers::Jobs::Media::AudioJob do
         'Argument (`Hash`) for parameter `payload` does not have any of expected types [BawWorkers::Models::AudioRequest]'
       )
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
+      expect_and_deliver_async_email
     end
 
     it 'when params is payload with the wrong request type' do
@@ -118,7 +120,7 @@ describe BawWorkers::Jobs::Media::AudioJob do
         'Argument (`BawWorkers::Models::SpectrogramRequest`) for parameter `payload` does not have any of expected types [BawWorkers::Models::AudioRequest]'
       )
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
+      expect_and_deliver_async_email
     end
 
     it 'when recorded date is invalid' do

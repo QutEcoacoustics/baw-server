@@ -5,10 +5,15 @@ module DataClass
     include ActiveModel::Validations
     include ActiveModel::Conversion
     extend ActiveModel::Naming
+    include Serializable
 
-    attr_accessor :name, :email, :date, :description, :content, :recaptcha
+    attribute :name, :email, :date, :description, :content
 
-    validates_format_of :email, with: /\A[-a-z0-9_+.]+@([-a-z0-9]+\.)+[a-z0-9]{2,4}\z/i, allow_blank: true, allow_nil: true
+    # Not serialized: only used to attach reCAPTCHA validation errors on the form.
+    attr_accessor :recaptcha
+
+    validates_format_of :email, with: /\A[-a-z0-9_+.]+@([-a-z0-9]+\.)+[a-z0-9]{2,4}\z/i, allow_blank: true,
+      allow_nil: true
     validates :date, presence: true, timeliness: { type: :date }
     validates_presence_of :description
     validates_length_of :description, maximum: 2000
@@ -16,7 +21,7 @@ module DataClass
     validates_length_of :content, maximum: 5000
 
     def initialize(attributes = {})
-      self.date = Time.zone.now.to_formatted_s(:long_year)
+      self.date = Time.zone.now.to_fs(:long_year)
       attributes.each do |name, value|
         send("#{name}=", value)
       end

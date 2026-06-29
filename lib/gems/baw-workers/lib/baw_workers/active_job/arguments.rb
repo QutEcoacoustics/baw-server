@@ -5,6 +5,7 @@ module BawWorkers
     # A module that allows for slightly better typing of ActiveJob arguments
     module Arguments
       extend ActiveSupport::Concern
+
       # !@parse
       #   extend ClassMethods
 
