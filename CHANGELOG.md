@@ -1,5 +1,22 @@
 # Changelog
 
+## [14.15.0](https://github.com/QutEcoacoustics/baw-server/tree/14.15.0) (2026-06-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.14.0...14.15.0)
+
+**Implemented enhancements:**
+
+- Make all email async [\#1004](https://github.com/QutEcoacoustics/baw-server/issues/1004)
+- feat: implement async email delivery mailers [\#1005](https://github.com/QutEcoacoustics/baw-server/pull/1005) ([atruskie](https://github.com/atruskie))
+
+**Fixed bugs:**
+
+- Potential bug when downloading upload report [\#1002](https://github.com/QutEcoacoustics/baw-server/issues/1002)
+
+**Merged pull requests:**
+
+- Fix CI image cleanup job by upgrading container-retention-policy action [\#1000](https://github.com/QutEcoacoustics/baw-server/pull/1000) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.14.0](https://github.com/QutEcoacoustics/baw-server/tree/14.14.0) (2026-05-27)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.13.0...14.14.0)
