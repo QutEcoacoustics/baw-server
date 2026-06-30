@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
-require 'zip'
-
-# The exporter orchestrates a Camtrap Data Package export from a given filter of taggings.
-# It generates a zip file containing the CSV tables and the datapackage.json file describing the package.
-#
-# NOTE: ALA exports will be limited to a single project, enforced upstream, not in this module.
-# NOTE: :should_obfuscate option is respected and the ability to set this will be enforced in the controller
+require_relative 'errors/camtrap_dp_error'
 module BawWorkers
   module Export
     module CamtrapDp
+      # NOTE: ALA exports will be limited to a single project, enforced upstream, not in this module.
+      # NOTE: :should_obfuscate option is respected by this module; the ability will be enforced in the controller
+      #
+      # The exporter orchestrates a Camtrap Data Package export from a given filter of taggings.
+      # It generates a zip file containing the CSV tables and the datapackage.json file describing the package.
       class Exporter
         RequiredExporterOptions = Data.define(
           :should_obfuscate,
@@ -29,8 +28,8 @@ module BawWorkers
 
         # Generates the export and yields a manifest of metadata about the generated export to the provided block.
         #
-        # @yield [Hash manifest] manifest contains metadata about the generated export, including the path to the zip file
-        # @return the result of block
+        # @yield [PackageManifest] export metadata, including the path to the package zip file
+        # @return the result of the block
         def call(&block)
           raise ArgumentError, 'block is required' unless block_given?
 
@@ -45,16 +44,13 @@ module BawWorkers
 
           # Using find_each with default batch size to avoid pulling all records into memory at once.
           included.find_each do |tagging|
-            table_writers.observations << Table::Observation.mapping(tagging).full_values
-
             deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
+            table_writers.observations << Table::Observation.mapping(tagging).full_values
+
             if first_media
-              table_writers.media << Table::Media.mapping(
-                tagging.audio_event.audio_recording,
-                deployment
-              ).full_values
+              table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording, deployment).full_values
             end
           end
 
@@ -85,13 +81,15 @@ module BawWorkers
         end
 
         TableWriters = Data.define(:observations, :deployments, :media)
+        PackageManifest = Data.define(:package_path, :zip_path, :file_stats)
 
         private
 
         def validate_filter(filter)
           message = 'Expected filter to be '
-          raise ArgumentError, message + 'ActiveRecord::Relation' unless filter.is_a?(::ActiveRecord::Relation)
-          raise ArgumentError, message + 'Tagging relation' unless filter.klass == Tagging
+          raise ArgumentError, "#{message}ActiveRecord::Relation" unless filter.is_a?(::ActiveRecord::Relation)
+          raise ArgumentError, "#{message}Tagging relation" unless filter.klass == Tagging
+          raise ArgumentError, 'Filter returned no data, cannot export' if filter.empty?
 
           filter
         end
@@ -144,7 +142,7 @@ module BawWorkers
         end
 
         def exporter_temp_dir
-          @temp_dir ||= Pathname.new(Dir.mktmpdir('exporter_', Pathname.new(BawWorkers::Config.temp_dir)))
+          @exporter_temp_dir ||= Pathname.new(Dir.mktmpdir('exporter_', Pathname.new(BawWorkers::Config.temp_dir)))
         end
 
         def package_path
@@ -152,23 +150,24 @@ module BawWorkers
         end
 
         def package_files
-          @files ||= PACKAGE_FILENAMES.transform_values { |filename| package_path.join(filename) }
+          @package_files ||= PACKAGE_FILENAMES.transform_values { |filename| package_path.join(filename) }
         end
 
         def zip_path
           @zip_path ||= exporter_temp_dir.join(ZIP_PATH)
         end
 
-        # @return [Hash] metadata about the generated package, including the path to the zip file and file stats for the
-        # included files
+        # @return [PackageManifest]
         def zip_package
           Zip::File.open(zip_path, create: true) do |zip|
             package_files.each_value { |path| zip.add(path.basename.to_s, path) }
           end
 
-          { package_path: package_path,
+          PackageManifest.new(
+            package_path: package_path,
             zip_path: zip_path,
-            file_stats: package_files.transform_values { |path| { size: path.size, mtime: path.mtime } } }
+            file_stats: package_files.transform_values { |path| { size: path.size, mtime: path.mtime } }
+          )
         end
 
         def cleanup

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'errors/camtrap_dp_error'
+
 module BawWorkers
   module Export
     module CamtrapDp
@@ -31,10 +33,8 @@ module BawWorkers
 
           DataPackage::Package.new(package_descriptor, opts: { base: package_path.to_s })
         rescue DataPackage::Exception => e
-          raise Errors::PackageLoadError, "Could not load data package: #{e.message}"
+          raise Errors::PackageLoadError, "Could not load data package: #{e.detailed_message}"
         end
-
-        private
 
         # Validate the package descriptor and each resource descriptor against their profiles.
         # @param package [DataPackage::Package]
@@ -42,16 +42,19 @@ module BawWorkers
         def self.validate_descriptors(package)
           package.validate
         rescue DataPackage::ValidationError => e
-          raise Errors::DescriptorValidationError, "Package descriptor validation error: #{e.message}"
+          raise Errors::DescriptorValidationError, "Package descriptor validation error: #{e.detailed_message}"
         end
 
-        # TableSchema gem runs validation rules based on the order of fields in the schema. If the CSV headers are not
-        # in the same order, it can lead to confusing validation errors.
+        # Validate the CSV headers are equal to the schema field names for all package resources.
+        #
+        # The TableSchema gem validation assumes CSV columns are ordered according to the schema. If they aren't,
+        # it can lead to confusing validation errors. CSV headers past the length of the expected schema fields are
+        # ignored, which allows for our additional columns.
         # @param package [DataPackage::Package]
         # @raise [Errors::CsvValidationError] if the CSV headers are invalid.
         def self.validate_csv_headers(package)
           package.resources.each do |resource|
-            next if resource.schema.field_names == resource.headers
+            next if resource.schema.field_names == resource.headers.take(resource.schema.field_names.length)
 
             raise Errors::CsvValidationError,
               "CSV header validation error in resource '#{resource.name}': " \
@@ -59,7 +62,8 @@ module BawWorkers
           end
         end
 
-        # Wrapper around the TableSchema gem to validate the CSV data against their schemas.
+        # Wrapper around the TableSchema gem to validate the CSV data against their schemas. Calling `resource.read`
+        # will validate the data row by row and raise an exception if it is invalid.
         # @param package [DataPackage::Package]
         # @raise [Errors::CsvValidationError] if the CSV data is invalid.
         def self.validate_csv_data(package)
@@ -67,7 +71,7 @@ module BawWorkers
             resource.read
           rescue DataPackage::ResourceException, TableSchema::Exception => e
             raise Errors::CsvValidationError,
-              "CSV data validation error in resource '#{resource.name}': #{e.message}"
+              "CSV data validation error in resource '#{resource.name}': #{e.detailed_message}"
           end
         end
       end

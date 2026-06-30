@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require_relative 'errors/camtrap_dp_error'
+
 module BawWorkers
   module Export
     module CamtrapDp
+      # Responsible for generating the package descriptor and associated metadata including spatial, temporal, and
+      # taxonomic coverage.
       class PackageMetadata
         def self.build(deployments:, scientific_names:, options:)
           temporal = temporal_coverage(deployments)
