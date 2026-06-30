@@ -68,24 +68,24 @@ module BawWorkers
         ::Time.zone.at(value)
       }
 
-      UtcTimeMicros = Constructor(TimeWithPrecision) { |input|
-        next nil if input.blank?
-
-        TimeWithPrecision.new(UtcTime[input], precision: 6)
-      }
-
       UtcTimeSeconds = Constructor(TimeWithPrecision) { |input|
         next nil if input.blank?
 
         TimeWithPrecision.new(UtcTime[input], precision: 0)
       }
 
-      # Camtrap DataPackage related types --
+      # Used in the Camtrap Data Package export to represent timestamps with microsecond precision.
+      UtcTimeMicros = Constructor(TimeWithPrecision) { |input|
+        next nil if input.blank?
 
-      #  `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
+        TimeWithPrecision.new(UtcTime[input], precision: 6)
+      }
+
+      # `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
       URLOrPath = Types::String
 
       Schema = URLOrPath | Types::Hash
+
       # package.contributors[].role
       Role = Types::String.default('contributor').enum(
         'contact',

@@ -62,7 +62,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     def with_export_manifest
       subject.call do |manifest|
         @manifest = manifest
-        yield
+        yield manifest
       end
     end
 
@@ -72,10 +72,12 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
     context 'with invalid options that populate schema fields' do
       let(:export_options) { super().merge(project_title: 1) }
-      let(:message) { /1 \(Integer\) has invalid type for :title violates constraints/ }
 
       it {
-        expect { subject.call { nil } }.to raise_error(Dry::Struct::Error, message)
+        expect { subject.call { nil } }.to raise_error(
+          Dry::Struct::Error,
+          /1 \(Integer\) has invalid type for :title violates constraints/
+        )
       }
     end
 
@@ -149,7 +151,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
-    context 'validator' do
+    context 'when validating' do
       let(:validator) { BawWorkers::Export::CamtrapDp::Validator }
       let(:local_validation_profile_path) { BawWorkers::Export::CamtrapDp::Profile::LOCAL_VALIDATION_PROFILE_PATH }
 
@@ -170,9 +172,13 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           expect {
             validator.validate_package(package_descriptor, package_path:)
           }.to raise_error(
-            BawWorkers::Export::CamtrapDp::Errors::DescriptorValidationError,
-            %r{Package descriptor validation error: The property '#/' of type object did not match all of the required schemas}
-          )
+            BawWorkers::Export::CamtrapDp::Errors::DescriptorValidationError
+          ) { |error|
+            expect(error.message).to include(
+              'Package descriptor validation error',
+              "The property '#/' of type object did not match all of the required schemas"
+            )
+          }
         end
       end
 
@@ -184,9 +190,14 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           expect {
             validator.validate_package(package_descriptor, package_path:)
           }.to raise_error(
-            BawWorkers::Export::CamtrapDp::Errors::CsvValidationError,
-            /CSV header validation error in resource 'deployments': expected \["deploymentID", "locationID".*got \["wrong", "headers"\]/
-          )
+            BawWorkers::Export::CamtrapDp::Errors::CsvValidationError
+          ) { |error|
+            expect(error.message).to include(
+              "CSV header validation error in resource 'deployments'",
+              'expected ["deploymentID", "locationID"',
+              'got ["wrong", "headers"]'
+            )
+          }
         end
       end
 
