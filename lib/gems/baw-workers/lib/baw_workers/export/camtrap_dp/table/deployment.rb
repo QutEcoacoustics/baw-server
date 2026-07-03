@@ -89,12 +89,13 @@ module BawWorkers
           # Comments or notes about the deployment.
           attribute? :deploymentComments, Types::String.optional
 
-          # @param site [Site] the site representing the deployment
-          # @param deployment_start [Time] the start time of the deployment (minimum audio_recording start time for the site)
-          # @param deployment_end [Time] the end time of the deployment (maximum audio_recording end time for the site)
+          # @param deployment [DeploymentAccumulator::Deployment] the accumulated deployment metadata
+          #   whose `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @param should_obfuscate [Boolean] whether to obfuscate the latitude and longitude values for the deployment
           # @return [Deployment] the deployment struct with the mapped values
-          def self.mapping(site, deployment_start:, deployment_end:, should_obfuscate:)
+          def self.mapping(deployment, should_obfuscate:)
+            site = deployment.site
+
             # Because we are treating site as a single deployment, site id is used for both the deploymentID and locationID.
             Deployment.new(
               deploymentID: site.id,
@@ -103,8 +104,8 @@ module BawWorkers
               latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude),
               longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude),
               coordinateUncertainty: nil,
-              deploymentStart: deployment_start,
-              deploymentEnd: deployment_end
+              deploymentStart: deployment.export_time(deployment.start),
+              deploymentEnd: deployment.export_time(deployment.end)
             )
           end
         end

@@ -84,7 +84,7 @@ module BawWorkers
           # Higher limit of the frequency range over which the observation applies. Expressed in Hertz. Must be higher than frequencyHigh.
           attribute? :frequencyHigh, Types::Coercible::Float.optional
 
-          # Method (most recently) used to classify the observation. Mapped from provenance_id presence: machine if provenance present, human otherwise.
+          # Method (most recently) used to classify the observation.
           attribute? :classificationMethod, Types::String.enum('human', 'machine').optional
 
           # Name or identifier of the person or AI algorithm that (most recently) classified the observation.
@@ -94,7 +94,6 @@ module BawWorkers
           attribute? :classificationTimestamp, Types::UtcTimeSeconds.optional
 
           # Degree of certainty of the (most recent) classification. Expressed as a probability, with `1` being maximum certainty. Omit or provide an approximate probability for human classifications.
-          # We could use score here but it isn't scaled 0-1. And there is no place for verification consensus currently.
           attribute? :classificationProbability, Types::Coercible::Float.optional
 
           # A confirmation that the classified species was observed via other means. Not related to our idea of confirmations. https://github.com/tdwg/camtrap-dp/issues/453
@@ -114,9 +113,9 @@ module BawWorkers
             'species_name',
             'common_name'
           ]
-
           GENERAL_TEXT_UNKNOWN = anchored_union(
             /unknown/i,
+            /unknown_\d+/i,
             /unsure/i
           )
           GENERAL_TEXT_HUMAN = anchored_union(
@@ -137,8 +136,8 @@ module BawWorkers
             /machine generated/i,
             /vehicle/i
           )
-          # TODO: There are tags where type of tag is general but text is a species common name
-          # TODO: Besides unknown, there is also unknown_1 through to 12 that aren't handled here
+
+          # Temporary solution; remove after https://github.com/QutEcoacoustics/baw-server/issues/1009.
           def self.observation_type(tag)
             case [tag.type_of_tag, tag.text]
             in [type, _] if TYPE_OF_ANIMAL.include?(type)
@@ -154,43 +153,42 @@ module BawWorkers
             end
           end
 
-          # TODO: Our custom fields - Simply adding extra columns to the csv will fail validation.
-          # See https://github.com/tdwg/camtrap-dp/issues/457
-          # and https://camtrap-dp.tdwg.org/faq/#measurements
-          # There are two ways to include additional information (values not covered by the standard fields) in a
-          # Camtrap DP: deploymentTags and observationTags fields fields can store additional information as key:value
-          # pairs, separated by a pipe character (|). Or you can add a custom table, which also requires providing a
-          # schema for the additional table.
+          # Fields not covered by the standard that we would like to include in the export:
           #
-          # classificationProbability is restricted to 0-1, so we can't use it for our score which is unbounded.
-          # attribute? :classificationScore, Types::Coercible::Float.optional
-
+          # audio_event.score - The score is unbounded and not a probability, so it cannot be used for classificationProbability.
+          # verifications - e.g. verification_correct count, ratio of correct to total verifications etc.#
+          #
+          # See Camtrap DP FAQ for ways to include additional fields https://camtrap-dp.tdwg.org/faq/#measurements;
+          # either as key:value pairs in the observationTags field, or as a custom table with a schema.  Also see the
+          # community feedback issue from the bioacoustic extension report https://github.com/tdwg/camtrap-dp/issues/457
+          #
           # @param tagging [Tagging] the tagging to map
+          # @param deployment [DeploymentAccumulator::Deployment] the deployment metadata for the tagging; its
+          #   `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Observation] the observation struct with the mapped values
-          def self.mapping(tagging)
+          def self.mapping(tagging, deployment)
             ae = tagging.audio_event
             ar = ae.audio_recording
 
-            # ? Is this future proof:
-            classification_method = ae.provenance_id ? 'machine' : 'human'
+            # ? Is this future proof?
+            classification_method = ae.provenance_id ? 'machine' : nil
 
-            # ? - When provenance is null, `tagging.creator` queries the user table. Should we eager load users?
-            # ? - We also need users for the contributors so this could be shared.
-            # ? - The user_name is not a real name, is that an issue for the package, for ALA?
+            # ? When audio_event.provenance is null, `tagging.creator` queries the user table:
+            # - Should we eager load the user association to avoid this?
+            # - The user_name is not a real name, is that an issue for the package or for ALA?
             classified_by = ae.provenance&.name || tagging.creator.user_name
 
             scientific_name = tagging.tag.type_of_tag == 'species_name' ? tagging.tag.text : nil
 
             observation_type = observation_type(tagging.tag)
 
-            # NOTE: The camtrap datapackage 'event' is not the same as our concept of an audio event. Hence, we don't map to eventID here.
             Observation.new(
               observationID: tagging.id,
               deploymentID: ar.site_id,
               mediaID: ar.id,
               eventID: nil,
-              eventStart: ar.recorded_date + ae.start_time_seconds.seconds,
-              eventEnd: ar.recorded_date + ae.end_time_seconds.seconds,
+              eventStart: deployment.export_time(ar.recorded_date + ae.start_time_seconds.seconds),
+              eventEnd: deployment.export_time(ar.recorded_date + ae.end_time_seconds.seconds),
               observationLevel: OBSERVATION_LEVEL,
               observationType: observation_type,
               deviceSetupType: nil,
@@ -211,12 +209,11 @@ module BawWorkers
               frequencyHigh: ae.high_frequency_hertz,
               classificationMethod: classification_method,
               classifiedBy: classified_by,
-              classificationTimestamp: tagging.created_at,
+              classificationTimestamp: deployment.export_time(tagging.created_at),
               classificationProbability: nil,
               classificationConfirmation: nil,
               observationTags: nil,
               observationComments: nil
-              # classificationScore: ae.score
             )
           end
         end

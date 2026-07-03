@@ -5,6 +5,7 @@ module BawWorkers
     # custom dry-types
     # https://dry-rb.org/gems/dry-types/master/getting-started/
     module Types
+      # Convenient place to apply our dry struct extension
       ::Dry::Struct.prepend(BawWorkers::Dry::Struct)
 
       TimeWithPrecision = Class.new do
@@ -14,7 +15,7 @@ module BawWorkers
         end
 
         def to_s
-          @time.utc.iso8601(@precision)
+          @time.iso8601(@precision)
         end
       end
 
@@ -68,13 +69,18 @@ module BawWorkers
         ::Time.zone.at(value)
       }
 
+      # Used in the Camtrap Data Package export for timestamps serialized with whole-second precision.
+      #
+      # @return [TimeWithPrecision] wrapper that preserves the offset on Time inputs and formats via `iso8601(0)`.
       UtcTimeSeconds = Constructor(TimeWithPrecision) { |input|
         next nil if input.blank?
 
         TimeWithPrecision.new(UtcTime[input], precision: 0)
       }
 
-      # Used in the Camtrap Data Package export to represent timestamps with microsecond precision.
+      # Used in the Camtrap Data Package export for timestamps serialized with microsecond precision.
+      #
+      # @return [TimeWithPrecision] wrapper that preserves the offset on Time inputs and formats via `iso8601(6)`.
       UtcTimeMicros = Constructor(TimeWithPrecision) { |input|
         next nil if input.blank?
 

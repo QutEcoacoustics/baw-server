@@ -10,6 +10,12 @@ module BawWorkers
       # The exporter orchestrates a Camtrap Data Package export from a given filter of taggings.
       # It generates a zip file containing the CSV tables and the datapackage.json file describing the package.
       class Exporter
+        # Options required to build a complete Camtrap Data Package export.
+        #
+        # @!attribute [r] force_utc_offset
+        #   @return [Integer, nil] optional UTC offset in seconds to apply to every exported recording, event,
+        #     deployment, and temporal coverage timestamp. When omitted, each deployment uses its site's timezone;
+        #     sites with no timezone or a zero UTC offset export in UTC.
         RequiredExporterOptions = Data.define(
           :should_obfuscate,
           :contributors,
@@ -18,7 +24,8 @@ module BawWorkers
           :observation_level,
           :project_sampling_design,
           :project_title,
-          :emit_project_license
+          :emit_project_license,
+          :force_utc_offset
         )
 
         def initialize(filter, **exporter_options)
@@ -40,14 +47,15 @@ module BawWorkers
 
           scientific_names = Set.new
           audio_recordings = Set.new
-          deployments = DeploymentAccumulator.new
+
+          deployments = DeploymentAccumulator.new(force_utc_offset: @options.force_utc_offset)
 
           # Using find_each with default batch size to avoid pulling all records into memory at once.
           included.find_each do |tagging|
             deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
-            table_writers.observations << Table::Observation.mapping(tagging).full_values
+            table_writers.observations << Table::Observation.mapping(tagging, deployment).full_values
 
             if first_media
               table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording, deployment).full_values
@@ -55,7 +63,6 @@ module BawWorkers
           end
 
           write_deployments(table_writers.deployments, deployments.values)
-
           package = PackageMetadata.build(
             deployments: deployments.values,
             scientific_names: scientific_names,
@@ -107,9 +114,7 @@ module BawWorkers
 
         def write_deployments(writer, deployments)
           deployments.each do |deployment|
-            writer << Table::Deployment.mapping(deployment.site,
-              deployment_start: deployment.start,
-              deployment_end: deployment.end,
+            writer << Table::Deployment.mapping(deployment,
               should_obfuscate: @options.should_obfuscate).full_values
           end
         end

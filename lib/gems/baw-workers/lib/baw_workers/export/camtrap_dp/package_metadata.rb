@@ -60,13 +60,20 @@ module BawWorkers
           end
         end
 
+        # Calculate descriptor-level temporal coverage from the deployment bounds.
+        #
+        # Rails TimeWithZone comparisons are based on the UTC instant, but the offset is preserved in the output, so
+        # it's possible to have a start / end in different timezones.
+        #
+        # @param deployments [Array<DeploymentAccumulator::Deployment>]
+        # @return [Hash] with `:start` and `:end` keys containing ISO 8601 timestamps
         def self.temporal_coverage(deployments)
           return { start: '', end: '' } if deployments.empty?
 
-          overall_start = deployments.map(&:start).min
-          overall_end = deployments.map(&:end).max
-
-          { start: overall_start.utc.iso8601, end: overall_end.utc.iso8601 }
+          {
+            start: deployments.map(&:start).min.iso8601,
+            end: deployments.map(&:end).max.iso8601
+          }
         end
 
         def self.spatial_coverage(deployments, options)

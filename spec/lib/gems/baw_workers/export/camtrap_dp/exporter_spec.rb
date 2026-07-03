@@ -18,7 +18,8 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       observation_level: ['media'],
       project_sampling_design: 'systematicRandom',
       project_title: 'My Project',
-      emit_project_license: true
+      emit_project_license: true,
+      force_utc_offset: nil
     ).to_h
   end
 
@@ -26,7 +27,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     Tagging.joins(:tag).where(tags: { type_of_tag: 'species_name', is_taxonomic: true })
   }
 
-  before do
+  let!(:export_tagging) do
     create(:tagging, audio_event:, tag: create(:tag_taxonomic_true_species), creator: writer_user)
   end
 
@@ -63,6 +64,47 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       subject.call do |manifest|
         @manifest = manifest
         yield manifest
+      end
+    end
+
+    def csv_row(filename)
+      CSV.read(package_path.join(filename), headers: true).first.to_h
+    end
+
+    def exported_times
+      {
+        deployments: csv_row('deployments.csv'),
+        media: csv_row('media.csv'),
+        observations: csv_row('observations.csv'),
+        descriptor: JSON.parse(package_path.join('datapackage.json').read)
+      }
+    end
+
+    def expect_exported_times_in(utc_offset_seconds)
+      utc_offset = ActiveSupport::TimeZone.seconds_to_utc_offset(utc_offset_seconds)
+      export_time = ->(time) { utc_offset_seconds.zero? ? time.utc : time.getlocal(utc_offset) }
+
+      with_export_manifest do
+        rows = exported_times
+        expect(rows[:deployments]).to include(
+          'deploymentStart' => export_time.call(audio_recording.recorded_date).iso8601(0),
+          'deploymentEnd' => export_time.call(audio_recording.recorded_end_date).iso8601(0)
+        )
+
+        expect(rows[:media]).to include(
+          'timestamp' => export_time.call(audio_recording.recorded_date).iso8601(6)
+        )
+
+        expect(rows[:observations]).to include(
+          'eventStart' => export_time.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds).iso8601(6),
+          'eventEnd' => export_time.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds).iso8601(6),
+          'classificationTimestamp' => export_time.call(export_tagging.created_at).iso8601(0)
+        )
+
+        expect(rows[:descriptor]['temporal']).to include(
+          'start' => export_time.call(audio_recording.recorded_date).iso8601,
+          'end' => export_time.call(audio_recording.recorded_end_date).iso8601
+        )
       end
     end
 
@@ -148,6 +190,38 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           'latitude' => site.latitude.to_s,
           'longitude' => site.longitude.to_s
         )
+      end
+    end
+
+    context 'when the site has a timezone' do
+      before do
+        site.update!(tzinfo_tz: 'Australia/Brisbane')
+      end
+
+      it 'writes exported time fields in the site timezone' do
+        expect_exported_times_in(36_000)
+      end
+    end
+
+    context 'when the site timezone is UTC' do
+      before do
+        site.update!(tzinfo_tz: 'UTC')
+      end
+
+      it 'leaves exported time fields in UTC' do
+        expect_exported_times_in(0)
+      end
+    end
+
+    context 'when a force UTC offset is supplied' do
+      let(:export_options) { super().merge(force_utc_offset: -14_400) }
+
+      before do
+        site.update!(tzinfo_tz: 'Australia/Brisbane')
+      end
+
+      it 'writes exported time fields with the offset' do
+        expect_exported_times_in(-14_400)
       end
     end
 
