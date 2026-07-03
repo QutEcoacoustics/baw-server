@@ -10,16 +10,17 @@ module BawWorkers
       class PackageMetadata
         def self.build(deployments:, scientific_names:, options:)
           temporal = temporal_coverage(deployments)
-          licenses = options.emit_project_license ? project_license(deployments) : nil
+          project = get_project(deployments)
+          licenses = options.emit_project_license ? project_license(project) : nil
 
           project = Descriptor::Project.new(
-            title: options.project_title,
-            description: nil,
+            title: project.name,
+            description: project.description,
             path: nil,
             samplingDesign: options.project_sampling_design,
             captureMethod: options.project_capture_method,
-            individualAnimals: options.project_individual_animals,
-            observationLevel: options.observation_level,
+            individualAnimals: individual_animals,
+            observationLevel: observation_level,
             licenses: licenses
           )
 
@@ -28,7 +29,7 @@ module BawWorkers
             name: nil,
             id: nil,
             created: Time.current.utc.iso8601,
-            title: nil,
+            title: package_title,
             contributors: options.contributors,
             project: project,
             spatial: spatial_coverage(deployments, options),
@@ -40,15 +41,32 @@ module BawWorkers
           )
         end
 
-        # Generate the licenses descriptor from the first project found (under the assumption that packages are scoped
-        # to a single project).
+        # Optional title for this specific package, different from the project title
+        def self.package_title = nil
+
+        # We don't support identifying individual animals currently, so this will always be false. In future, if we
+        # add a platform feature to support this, we can make this configurable.
+        def self.individual_animals = false
+
+        # We don't distinguish currently, so default to media. In the future, we might be able to merge our 'media'
+        # observations (audio_events) into an 'event' observation level, to reduce duplication.
+        def self.observation_level = ['media']
+
+        # Return the first project in the deployments, under the assumption packages are scoped to a single project.
+        # @param deployments [Array<DeploymentAccumulator::Deployment>]
+        # @return [Project]
+        def self.get_project(deployments)
+          deployments.first&.site&.projects&.first
+        end
+
+        # Generate the licenses descriptor from the first project found
         #
         # In the database, existing project licenses are SPDX identifiers. But it's currently a free text field, so we
         # will use string length as a proxy for being an identifier, and raise an error if we encounter something longer
         # than 32 characters. We only store one license per project, so we use the same license for both required
         # scopes: data and media.
-        def self.project_license(deployments)
-          project_license = deployments.first&.site&.projects&.first&.license
+        def self.project_license(project)
+          project_license = project&.license
 
           if project_license.nil?
             nil

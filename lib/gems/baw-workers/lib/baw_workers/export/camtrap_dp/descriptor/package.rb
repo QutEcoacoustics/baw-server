@@ -13,7 +13,7 @@ module BawWorkers
           attribute :created, Types::String
           attribute :contributors, Types::Array.of(Contributor)
           attribute :project, Project
-          attribute :spatial, Types::Hash # Types::GeoJSON
+          attribute :spatial, Types::GeoJSON
           attribute :temporal, Temporal
           attribute :taxonomic, Types::Array.of(Taxonomic)
 

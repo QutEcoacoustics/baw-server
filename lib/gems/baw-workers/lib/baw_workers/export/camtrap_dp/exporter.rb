@@ -20,10 +20,7 @@ module BawWorkers
           :should_obfuscate,
           :contributors,
           :project_capture_method,
-          :project_individual_animals,
-          :observation_level,
           :project_sampling_design,
-          :project_title,
           :emit_project_license,
           :force_utc_offset
         )

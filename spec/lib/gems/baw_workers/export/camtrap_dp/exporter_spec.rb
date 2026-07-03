@@ -14,10 +14,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       should_obfuscate: true,
       contributors: [{ title: 'Alice' }],
       project_capture_method: ['continuous', 'recordingSchedule'],
-      project_individual_animals: false,
-      observation_level: ['media'],
       project_sampling_design: 'systematicRandom',
-      project_title: 'My Project',
       emit_project_license: true,
       force_utc_offset: nil
     ).to_h
@@ -113,12 +110,12 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     end
 
     context 'with invalid options that populate schema fields' do
-      let(:export_options) { super().merge(project_title: 1) }
+      let(:export_options) { super().merge(project_capture_method: 1) }
 
       it {
         expect { subject.call { nil } }.to raise_error(
           Dry::Struct::Error,
-          /1 \(Integer\) has invalid type for :title violates constraints/
+          /1 \(Integer\) has invalid type for :captureMethod violates constraints/
         )
       }
     end
@@ -163,6 +160,22 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
 
       expect(Dir).not_to exist(temp_dir)
+    end
+
+    it 'calculates deployment start and end times from audio recordings' do
+      recording = create(:audio_recording, recorded_date: Time.current, site:, creator: writer_user) { |ar|
+        create(:audio_event, audio_recording: ar, creator: writer_user) { |ae|
+          create(:tagging, audio_event: ae, tag: create(:tag_taxonomic_true_species), creator: writer_user)
+        }
+      }
+
+      with_export_manifest do
+        rows = exported_times
+        expect(rows[:deployments]).to include(
+          'deploymentStart' => audio_recording.recorded_date.utc.iso8601(0),
+          'deploymentEnd' => recording.recorded_end_date.utc.iso8601(0)
+        )
+      end
     end
 
     context 'when obfuscation is enabled' do

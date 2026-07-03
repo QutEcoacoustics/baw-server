@@ -102,8 +102,7 @@ module BawWorkers
       )
 
       # package.project.samplingDesign
-      # ! Do we want to default this? Or always require user input
-      # TODO lets allow input but fall back to simpleRandom for now. Eventually this would be useful Project level metadata to have
+      # Allow user input but fall back to simpleRandom. Eventually this would be useful Project level metadata to have
       # TODO could make a proposal to the format to allow an unknown value here
       SamplingDesign = Types::String.default('simpleRandom').enum(
         'simpleRandom',
@@ -115,8 +114,7 @@ module BawWorkers
       )
 
       # in package.project.captureMethod; media.captureMethod
-      # TODO emu can extract this from recording files (we discard it atm)
-      # TODO until then have to ask
+      # EMU can extract this from recording files (we discard it atm). Until then have to ask.
       CaptureMethod = Types::String.enum(
         'activityDetection',
         'continuous',
@@ -129,7 +127,7 @@ module BawWorkers
         'family', 'genus', 'species', 'subspecies'
       )
 
-      # package.spatial
+      # Used for documentation value. The profile includes GeoJSON schema validation.
       GeoJSON = Types::Hash
     end
   end
