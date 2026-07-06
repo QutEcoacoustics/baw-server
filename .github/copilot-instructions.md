@@ -22,6 +22,13 @@ rails db:migrate && test-env rails db:migrate
 rails db:rollback && test-env rails db:rollback
 ```
 
-## Use conventional commits
+## Commit hygiene
 
-Use conventional commits for commit message formatting: https://www.conventionalcommits.org/en/v1.0.0/
+### Use conventional commits
+
+Use conventional commits for commit message formatting: <https://www.conventionalcommits.org/en/v1.0.0/>
+
+### Always cross reference issues
+
+Always include a reference to the issue that is being addressed, using the GitHub
+convention described here: <https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests>
