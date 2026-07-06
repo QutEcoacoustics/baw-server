@@ -20,5 +20,19 @@ describe Client::Routes do
         expect(url.to_s).to eq("http://ecosounds.org/admin/analysis_jobs/#{analysis_job.id}")
       end
     end
+
+    describe '#project_url' do
+      it 'returns the project URL' do
+        url = client_routes.project_url(123)
+        expect(url.to_s).to eq('http://ecosounds.org/projects/123')
+      end
+    end
+
+    describe '#project_permissions_url' do
+      it 'returns the project permissions URL' do
+        url = client_routes.project_permissions_url(123)
+        expect(url.to_s).to eq('http://ecosounds.org/projects/123/permissions')
+      end
+    end
   end
 end

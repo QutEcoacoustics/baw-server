@@ -6,6 +6,8 @@ module Client
     # https://www.rfc-editor.org/rfc/rfc6570.txt
     BASE = '{protocol}://{host}{+port}'.freeze
     CLIENT_HOME = Addressable::Template.new("#{BASE}/")
+    PROJECT = Addressable::Template.new("#{BASE}/projects/{id}")
+    PROJECT_PERMISSIONS = Addressable::Template.new("#{BASE}/projects/{id}/permissions")
     ANALYSIS_JOBS = Addressable::Template.new("#{BASE}/projects/{project}/analysis_jobs/{id}")
     SYSTEM_ANALYSIS_JOBS = Addressable::Template.new("#{BASE}/admin/analysis_jobs/{id}")
     # LISTEN = Addressable::Template.new("#{BASE}/listen/{value}{?start,end}")
@@ -21,6 +23,14 @@ module Client
     end
 
     def home_url = expand(CLIENT_HOME)
+
+    def project_url(id)
+      expand(PROJECT, id:)
+    end
+
+    def project_permissions_url(id)
+      expand(PROJECT_PERMISSIONS, id:)
+    end
 
     # @param [AnalysisJob] analysis_job
     def analysis_job_url(analysis_job)
