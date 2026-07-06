@@ -8,8 +8,8 @@
 %ul
   - @projects.each do |project|
     %li
-      = link_to "#{project[:name]}", project_url(project[:id])
-      = link_to ' (permissions page)', project_permissions_url(project[:id])
+      = link_to "#{project[:name]}", Settings.client_routes.project_url(project[:id]).to_s
+      = link_to ' (permissions page)', Settings.client_routes.project_permissions_url(project[:id]).to_s
 
 %p The reason they want access to the project(s) is:
 %p= "#{@access_reason}"
