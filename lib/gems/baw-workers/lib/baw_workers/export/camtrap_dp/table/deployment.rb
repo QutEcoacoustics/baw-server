@@ -5,7 +5,7 @@ module BawWorkers
         # Represents a row in the `deployment` table of the Camtrap Data Package.
         #
         # Attributes are defined in schema order (required for CSV validation).
-        class Deployment < ::Dry::Struct
+        class Deployment < BawWorkers::Dry::OrderedStruct
           Types = BawWorkers::Dry::Types
 
           # Unique identifier of the deployment.

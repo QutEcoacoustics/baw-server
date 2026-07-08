@@ -212,7 +212,7 @@ class Site < ApplicationRecord
   # @return [Boolean]
   def public_site?
     projects.any? { |project|
-      project.permissions.any?(&:broad_access?)
+      project.permissions.any?(&:public_access?)
     }
   end
 

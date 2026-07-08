@@ -5,9 +5,6 @@ module BawWorkers
     # custom dry-types
     # https://dry-rb.org/gems/dry-types/master/getting-started/
     module Types
-      # Convenient place to apply our dry struct extension
-      ::Dry::Struct.prepend(BawWorkers::Dry::Struct)
-
       TimeWithPrecision = Class.new do
         def initialize(time, precision:)
           @time = time

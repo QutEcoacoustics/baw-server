@@ -5,7 +5,7 @@ module BawWorkers
         # Represents a row in the `observations` table of the Camtrap Data Package.
         #
         # Attributes are defined in schema order (required for CSV validation).
-        class Observation < ::Dry::Struct
+        class Observation < BawWorkers::Dry::OrderedStruct
           Types = BawWorkers::Dry::Types
 
           # Fixed: we only emit interval level observations

@@ -52,10 +52,11 @@ module BawWorkers
             deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
-            table_writers.observations << Table::Observation.mapping(tagging, deployment).full_values
+            table_writers.observations << Table::Observation.mapping(tagging, deployment).ordered_values
 
             if first_media
-              table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording, deployment).full_values
+              table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording,
+                deployment).ordered_values
             end
           end
 
@@ -112,7 +113,7 @@ module BawWorkers
         def write_deployments(writer, deployments)
           deployments.each do |deployment|
             writer << Table::Deployment.mapping(deployment,
-              should_obfuscate: @options.should_obfuscate).full_values
+              should_obfuscate: @options.should_obfuscate).ordered_values
           end
         end
 

@@ -5,7 +5,7 @@ module BawWorkers
         # Represents a row in the `media` table of the Camtrap Data Package.
         #
         # Attributes are defined in schema order (required for CSV validation).
-        class Media < ::Dry::Struct
+        class Media < BawWorkers::Dry::OrderedStruct
           Types = BawWorkers::Dry::Types
 
           attribute :mediaID, Types::ID

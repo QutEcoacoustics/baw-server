@@ -50,8 +50,8 @@ class Permission < ApplicationRecord
 
   # Returns true when this permission grants access to anonymous or logged-in users.
   # @return [Boolean]
-  def broad_access?
-    allow_anonymous || allow_logged_in
+  def public_access?
+    (allow_anonymous || allow_logged_in) && Access::Core.levels.include?(level&.to_sym)
   end
 
   # association validations
