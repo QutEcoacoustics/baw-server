@@ -5,17 +5,6 @@ module BawWorkers
     # custom dry-types
     # https://dry-rb.org/gems/dry-types/master/getting-started/
     module Types
-      TimeWithPrecision = Class.new do
-        def initialize(time, precision:)
-          @time = time
-          @precision = precision
-        end
-
-        def to_s
-          @time.iso8601(@precision)
-        end
-      end
-
       # @!parse
       #   include Dry::Types
       include ::Dry.Types
@@ -68,20 +57,20 @@ module BawWorkers
 
       # Used in the Camtrap Data Package export for timestamps serialized with whole-second precision.
       #
-      # @return [TimeWithPrecision] wrapper that preserves the offset on Time inputs and formats via `iso8601(0)`.
-      UtcTimeSeconds = Constructor(TimeWithPrecision) { |input|
+      # @return [BawWorkers::Export::CamtrapDp::Timestamp] wrapper that preserves the offset on Time inputs and formats via `iso8601(0)`.
+      UtcTimeSeconds = Constructor(BawWorkers::Export::CamtrapDp::Timestamp) { |input|
         next nil if input.blank?
 
-        TimeWithPrecision.new(UtcTime[input], precision: 0)
+        BawWorkers::Export::CamtrapDp::Timestamp.new(UtcTime[input], 0)
       }
 
       # Used in the Camtrap Data Package export for timestamps serialized with microsecond precision.
       #
-      # @return [TimeWithPrecision] wrapper that preserves the offset on Time inputs and formats via `iso8601(6)`.
-      UtcTimeMicros = Constructor(TimeWithPrecision) { |input|
+      # @return [BawWorkers::Export::CamtrapDp::Timestamp] wrapper that preserves the offset on Time inputs and formats via `iso8601(6)`.
+      UtcTimeMicros = Constructor(BawWorkers::Export::CamtrapDp::Timestamp) { |input|
         next nil if input.blank?
 
-        TimeWithPrecision.new(UtcTime[input], precision: 6)
+        BawWorkers::Export::CamtrapDp::Timestamp.new(UtcTime[input], 6)
       }
 
       # `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
