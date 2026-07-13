@@ -25,11 +25,11 @@ module BawWorkers
           )
 
           Descriptor::Package.new(
-            profile: Profile::PROFILE_PATH,
-            name: nil,
-            id: nil,
+            profile: Profile::PROFILE_PATH.to_s,
+            #name:,
+            #id:,
             created: Time.current.utc.iso8601,
-            title: package_title,
+            # title:,
             contributors: options.contributors,
             project: project,
             spatial: spatial_coverage(deployments, options),
@@ -42,7 +42,7 @@ module BawWorkers
         end
 
         # Optional title for this specific package, different from the project title
-        def self.package_title = nil
+        # def self.package_title =
 
         # We don't support identifying individual animals currently, so this will always be false. In future, if we
         # add a platform feature to support this, we can make this configurable.
@@ -89,8 +89,8 @@ module BawWorkers
           return { start: '', end: '' } if deployments.empty?
 
           {
-            start: deployments.map(&:start).min.iso8601,
-            end: deployments.map(&:end).max.iso8601
+            start: deployments.map(&:start).min,
+            end: deployments.map(&:end).max
           }
         end
 

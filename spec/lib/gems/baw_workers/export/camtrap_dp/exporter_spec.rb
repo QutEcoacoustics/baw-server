@@ -148,7 +148,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
         Zip::File.open(manifest.zip_path) { |zip| zip.entries.map(&:name) }
       }
 
-      expect(zip_entries).to match_array(package_filenames.values)
+      expect(zip_entries).to match_array(package_filenames.values.map(&:to_s))
     end
 
     it 'cleans up the temporary directory after yielding' do
@@ -206,6 +206,16 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
+    it 'writes taxonomic coverage from observed scientific names' do
+      result = with_export_manifest {
+        JSON.parse(package_path.join('datapackage.json').read).fetch('taxonomic')
+      }
+
+      expect(result).to contain_exactly(
+        include('scientificName' => export_tagging.tag.text)
+      )
+    end
+
     context 'when the site has a timezone' do
       before do
         site.update!(tzinfo_tz: 'Australia/Brisbane')
@@ -244,11 +254,11 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
       let(:package_descriptor) { JSON.parse(package_path.join('datapackage.json').read) }
 
-      it 'replaces the profile path in the package descriptor with the local validation profile path' do
+      it 'replaces the profile path in the package descriptor with the local validation profile path string' do
         with_export_manifest do
           package = validator.load_package(package_descriptor, package_path:)
 
-          expect(package.profile.name).to eq(local_validation_profile_path)
+          expect(package.profile.name).to eq(local_validation_profile_path.to_s)
         end
       end
 
@@ -263,7 +273,8 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           ) { |error|
             expect(error.message).to include(
               'Package descriptor validation error',
-              "The property '#/' of type object did not match all of the required schemas"
+              "The property '#/' of type object did not match all of the required schemas",
+              "The property '#/' did not contain a required property of 'contributors'"
             )
           }
         end

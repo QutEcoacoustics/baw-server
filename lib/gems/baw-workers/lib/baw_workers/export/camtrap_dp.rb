@@ -3,13 +3,13 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      DATAPACKAGE_FILENAME = 'datapackage.json'
-      OBSERVATIONS_FILENAME = 'observations.csv'
-      DEPLOYMENTS_FILENAME = 'deployments.csv'
-      MEDIA_FILENAME = 'media.csv'
+      DATAPACKAGE_FILENAME = Pathname.new('datapackage.json')
+      OBSERVATIONS_FILENAME = Pathname.new('observations.csv')
+      DEPLOYMENTS_FILENAME = Pathname.new('deployments.csv')
+      MEDIA_FILENAME = Pathname.new('media.csv')
 
-      PACKAGE_PATH = 'dp'
-      ZIP_PATH = 'dp.zip'
+      PACKAGE_PATH = Pathname.new('dp')
+      ZIP_PATH = PACKAGE_PATH.sub_ext('.zip')
 
       PACKAGE_FILENAMES = {
         deployments: DEPLOYMENTS_FILENAME,

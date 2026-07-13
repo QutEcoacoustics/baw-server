@@ -6,12 +6,16 @@ module BawWorkers
       class Descriptor
         class Resource < Descriptor
           attribute :name, Types::String
-          attribute :path, Types::URLOrPath # (just the filename in our case, relative to the datapackage root)
-          attribute :profile, Types::String.default('tabular-data-resource') # the resources in camtrap dp are tabular-data-resource - this is fixed
+          attribute :path, Types::UrlOrPath
+
+          # The resources in camtrap-dp are tabular-data-resources, so this is a fixed value.
+          attribute :profile, Types::String.default('tabular-data-resource')
           attribute :format, Types::String.default('csv')
           attribute :mediatype, Types::String.default('text/csv')
           attribute :encoding, Types::String.default('utf-8')
-          attribute :schema, Types::Schema # The raw parsed JSON table schema or url-or-path to the schema
+
+          # The raw parsed JSON table schema or url-or-path to the schema
+          attribute :schema, Types::Schema
 
           def self.load_table_schema(name)
             load_schema(File.join(Profile::DIRECTORY, Profile::ASSET_FILES[name.to_s.to_sym]))
@@ -20,9 +24,9 @@ module BawWorkers
           def self.load_schema(path) = JSON.parse(File.read(path), symbolize_names: true)
 
           DEFAULT_RESOURCES = [
-            new(name: 'deployments', path: DEPLOYMENTS_FILENAME, schema: load_table_schema(:deployments)),
-            new(name: 'media', path: MEDIA_FILENAME, schema: load_table_schema(:media)),
-            new(name: 'observations', path: OBSERVATIONS_FILENAME, schema: load_table_schema(:observations))
+            new(name: 'deployments', path: DEPLOYMENTS_FILENAME.to_s, schema: load_table_schema(:deployments)),
+            new(name: 'media', path: MEDIA_FILENAME.to_s, schema: load_table_schema(:media)),
+            new(name: 'observations', path: OBSERVATIONS_FILENAME.to_s, schema: load_table_schema(:observations))
           ].freeze
         end
       end

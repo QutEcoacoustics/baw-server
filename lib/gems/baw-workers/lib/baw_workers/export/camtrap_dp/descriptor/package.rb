@@ -8,9 +8,9 @@ module BawWorkers
     module CamtrapDp
       class Descriptor
         class Package < Descriptor
-          attribute :profile, Types::String
+          attribute :profile, Types::UrlOrPath
           attribute :resources, Types::Array.of(Resource).default(Resource::DEFAULT_RESOURCES)
-          attribute :created, Types::String
+          attribute :created, Types::UtcTimeSeconds
           attribute :contributors, Types::Array.of(Contributor)
           attribute :project, Project
           attribute :spatial, Types::GeoJSON
@@ -19,6 +19,8 @@ module BawWorkers
 
           attribute? :name, Types::String.optional
           attribute? :id, Types::String.optional
+
+          # Optional title for this specific package (different to a project title)
           attribute? :title, Types::String.optional
           attribute? :description, Types::String.optional
           attribute? :version, Types::String.optional

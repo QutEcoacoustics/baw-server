@@ -52,7 +52,9 @@ module BawWorkers
             deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
-            table_writers.observations << Table::Observation.mapping(tagging, deployment).ordered_values
+            observation = Table::Observation.mapping(tagging, deployment)
+            scientific_names << observation.scientificName if observation.scientificName.present?
+            table_writers.observations << observation.ordered_values
 
             if first_media
               table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording,
@@ -68,6 +70,7 @@ module BawWorkers
           )
 
           close_table_writers
+
           validate_package(package)
           write_datapackage_file(package)
 
@@ -118,7 +121,7 @@ module BawWorkers
         end
 
         def write_datapackage_file(package)
-          File.write(package_files[:datapackage], JSON.pretty_generate(package.to_h))
+          package_files[:datapackage].write(JSON.pretty_generate(package.to_h))
         end
 
         def validate_package(package)
@@ -145,7 +148,7 @@ module BawWorkers
         end
 
         def exporter_temp_dir
-          @exporter_temp_dir ||= Pathname.new(Dir.mktmpdir('exporter_', Pathname.new(BawWorkers::Config.temp_dir)))
+          @exporter_temp_dir ||= Pathname.new(Dir.mktmpdir('exporter_', BawWorkers::Config.temp_dir))
         end
 
         def package_path

@@ -6,7 +6,8 @@ module BawWorkers
       class Descriptor
         class License < Descriptor
           attribute :name, Types::String
-          attribute? :path, Types::String.optional
+          # TODO: required name AND/OR path, how to do that.
+          attribute? :path, Types::UrlOrPath.optional
           attribute? :title, Types::String.optional
           attribute :scope, Types::String.enum('data', 'media')
         end

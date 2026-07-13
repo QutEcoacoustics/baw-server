@@ -74,9 +74,10 @@ module BawWorkers
       }
 
       # `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
-      URLOrPath = Types::String
+      # https://specs.frictionlessdata.io/data-resource/#data-location
+      UrlOrPath = Types::String
 
-      Schema = URLOrPath | Types::Hash
+      Schema = UrlOrPath | Types::Hash
 
       # package.contributors[].role
       Role = Types::String.default('contributor').enum(

@@ -9,12 +9,13 @@ module BawWorkers
       # Should be able to have a list of users and we can map a user to a contributor descriptor
       # TODO: but we only have user_names, not real names, i'll need to check this.
       class Descriptor::Contributor < Descriptor
-        attribute :title, Types::String # name/title of the person or organisation
+        # name/title of the person or organisation
+        attribute :title, Types::String
         attribute :role, Types::Role
 
-        attribute? :email, Types::String.optional
-        attribute? :path, Types::String.optional
-        attribute? :organization, Types::String.optional
+        attribute? :email, Types::String
+        attribute? :path, Types::String
+        attribute? :organization, Types::String
       end
     end
   end

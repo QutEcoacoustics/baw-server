@@ -28,8 +28,11 @@ module BawWorkers
         # @raise [Errors::PackageLoadError] if the package cannot be loaded.
         # @return [DataPackage::Package]
         def self.load_package(package, package_path:)
-          package_descriptor = package.to_h.deep_stringify_keys
-          package_descriptor['profile'] = Profile::LOCAL_VALIDATION_PROFILE_PATH
+          # DataPackage gem expects a parsed JSON object, so we need to serialize our Dry::Struct
+          package_descriptor = package.as_json
+
+          # DataPackage::Profile will raise an error if profile is not a string
+          package_descriptor['profile'] = Profile::LOCAL_VALIDATION_PROFILE_PATH.to_s
 
           DataPackage::Package.new(package_descriptor, opts: { base: package_path.to_s })
         rescue DataPackage::Exception => e
@@ -42,7 +45,15 @@ module BawWorkers
         def self.validate_descriptors(package)
           package.validate
         rescue DataPackage::ValidationError => e
-          raise Errors::DescriptorValidationError, "Package descriptor validation error: #{e.detailed_message}"
+          raise Errors::DescriptorValidationError,
+            "Package descriptor validation error: #{descriptor_validation_message(package, e)}"
+        end
+
+        def self.descriptor_validation_message(package, error)
+          details = package.iter_errors {}
+          return error.detailed_message if details.empty?
+
+          details.map(&:squish)
         end
 
         # Validate the CSV headers are equal to the schema field names for all package resources.

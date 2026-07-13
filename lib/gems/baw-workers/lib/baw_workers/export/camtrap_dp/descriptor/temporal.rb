@@ -5,8 +5,8 @@ module BawWorkers
     module CamtrapDp
       class Descriptor
         class Temporal < Descriptor
-          attribute :start, Types::String
-          attribute :end, Types::String
+          attribute :start, Types::UtcTimeSeconds
+          attribute :end, Types::UtcTimeSeconds
         end
       end
     end

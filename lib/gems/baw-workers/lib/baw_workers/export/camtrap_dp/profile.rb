@@ -12,10 +12,10 @@ module BawWorkers
           observations: 'observations-table-schema-acoustic.json'
         }
 
-        DIRECTORY = File.join(__dir__, 'profile_assets')
-        README_PATH = File.join(DIRECTORY, 'README.md')
-        PROFILE_PATH = File.join(DIRECTORY, ASSET_FILES[:profile])
-        LOCAL_VALIDATION_PROFILE_PATH = PROFILE_PATH.gsub('.json', '.local.json')
+        DIRECTORY = Pathname(__dir__) / 'profile_assets'
+        README_PATH = DIRECTORY / 'README.md'
+        PROFILE_PATH = DIRECTORY / ASSET_FILES[:profile]
+        LOCAL_VALIDATION_PROFILE_PATH = PROFILE_PATH.sub_ext('.local.json')
 
         # References in the camtrap-dp-profile-acoustic.json to be resolved
         EXTERNAL_SCHEMA_REFS = [
@@ -44,17 +44,17 @@ module BawWorkers
         # @param name [String] the filename to download; a value in Profile::ASSET_FILES
         # @return [String] the file path of the downloaded file relative to the application root
         def self.download_fixture(name)
-          data = URI.open(File.join(SOURCE_URL, name)).read
-          path = File.join(DIRECTORY, name)
-          File.write(path, data)
-          Pathname.new(path).relative_path_from(BawApp.root).to_s
+          data = URI.open(URI.join(SOURCE_URL, name)).read
+          path = DIRECTORY / name
+          path.write(data)
+          path.relative_path_from(BawApp.root).to_s
         end
 
         # Create a local version of the profile with known external $ref schemas inlined, for use in tests without network access.
         # The return manifest includes whether each reference was successfully inlined, which can be used to detect
         # profile changes that require an update to EXTERNAL_SCHEMA_REFS.
         def self.create_local_validation_profile
-          root_profile = JSON.parse(File.read(PROFILE_PATH), symbolize_names: false)
+          root_profile = JSON.parse(PROFILE_PATH.read, symbolize_names: false)
 
           # Fetch the external schemas in EXTERNAL_SCHEMA_REFS and store them in a hash keyed by their URI, with the
           # $schema field removed since it can cause JSON validation issues in the DataPackage gem.
@@ -67,10 +67,9 @@ module BawWorkers
           inlined_profile = inline_known_refs(root_profile, resolved_refs) { |ref| successfully_inlined[ref] = true }
           inlined_profile.delete('$schema')
 
-          File.write(LOCAL_VALIDATION_PROFILE_PATH, JSON.pretty_generate(inlined_profile))
-
+          LOCAL_VALIDATION_PROFILE_PATH.write(JSON.pretty_generate(inlined_profile))
           {
-            local_validation_profile: Pathname.new(LOCAL_VALIDATION_PROFILE_PATH).relative_path_from(BawApp.root).to_s,
+            local_validation_profile: LOCAL_VALIDATION_PROFILE_PATH.relative_path_from(BawApp.root).to_s,
             external_references_inlined: successfully_inlined,
             completed_at: Time.current
           }
@@ -104,7 +103,7 @@ module BawWorkers
         end
 
         def self.write_readme(sections)
-          File.write(README_PATH, sections.join("\n\n"))
+          README_PATH.write(sections.join("\n\n"))
         end
       end
     end
