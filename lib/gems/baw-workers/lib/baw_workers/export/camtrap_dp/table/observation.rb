@@ -8,7 +8,7 @@ module BawWorkers
         class Observation < BawWorkers::Dry::OrderedStruct
           Types = BawWorkers::Dry::Types
 
-          # Fixed: we only emit interval level observations
+          # Our concept of an event maps to the interval type of observation. See explanation on #observationLevel
           OBSERVATION_LEVEL = 'interval'
 
           # Unique identifier of the observation.
@@ -24,10 +24,10 @@ module BawWorkers
           attribute? :eventID, Types::String.optional
 
           # Date and time at which the event started. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
-          attribute :eventStart, Types::UtcTimeMicros
+          attribute :eventStart, Types::UtcTimeMicroseconds
 
           # Date and time at which the event ended. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
-          attribute :eventEnd, Types::UtcTimeMicros
+          attribute :eventEnd, Types::UtcTimeMicroseconds
 
           # Level at which the observation was classified. `media` for media-based observations that are directly associated with a media file (`mediaID`). These are especially useful for machine learning and don't need to be mutually exclusive (e.g. multiple classifications are allowed). `event` for event-based observations that consider an event (comprising a collection of media files). These are especially useful for ecological research and should be mutually exclusive, so that their `count` can be summed. Acoustic extension adds 'interval' to accepted enum values but seemingly only to the field on observations table, not the package level observationLevel field
           attribute :observationLevel, Types::String.enum('media', 'event', 'interval')

@@ -14,7 +14,7 @@ module BawWorkers
         attribute :role, Types::Role
 
         attribute? :email, Types::String
-        attribute? :path, Types::String
+        attribute? :path, Types::Url
         attribute? :organization, Types::String
       end
     end

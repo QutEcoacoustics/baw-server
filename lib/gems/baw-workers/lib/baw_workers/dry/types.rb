@@ -67,17 +67,32 @@ module BawWorkers
       # Used in the Camtrap Data Package export for timestamps serialized with microsecond precision.
       #
       # @return [BawWorkers::Export::CamtrapDp::Timestamp] wrapper that preserves the offset on Time inputs and formats via `iso8601(6)`.
-      UtcTimeMicros = Constructor(BawWorkers::Export::CamtrapDp::Timestamp) { |input|
+      UtcTimeMicroseconds = Constructor(BawWorkers::Export::CamtrapDp::Timestamp) { |input|
         next nil if input.blank?
 
         BawWorkers::Export::CamtrapDp::Timestamp.new(UtcTime[input], 6)
       }
 
+      Url = Types::String.constructor { |input|
+        URI.parse(input)
+        input
+      }
+
+      SafePath = Types::String.constructor { |input|
+        path = ::Pathname.new(input)
+        first_path_component = path.to_s.split('/').first
+
+        raise ArgumentError, 'value must be a safe relative path' if path.absolute?
+        raise ArgumentError, 'value must be a safe relative path' unless /\A\.+\z/.match(first_path_component).nil?
+
+        input
+      }
+
       # `url-or-path` is a frictionless type for a string that must either be a fully qualified URL or a relative POSIX path.
       # https://specs.frictionlessdata.io/data-resource/#data-location
-      UrlOrPath = Types::String
+      UrlOrPath = Url | SafePath
 
-      Schema = UrlOrPath | Types::Hash
+      Schema = Types::Hash | UrlOrPath
 
       # package.contributors[].role
       Role = Types::String.default('contributor').enum(

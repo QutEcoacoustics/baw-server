@@ -11,7 +11,7 @@ module BawWorkers
           attribute :mediaID, Types::ID
           attribute :deploymentID, Types::ID
           attribute? :captureMethod, Types::String.enum('activityDetection', 'continuous', 'recordingSchedule').optional
-          attribute :timestamp, Types::UtcTimeMicros
+          attribute :timestamp, Types::UtcTimeMicroseconds
           attribute? :duration, Types::Decimal.optional
           attribute :filePath, Types::String
           attribute :filePublic, Types::Bool
