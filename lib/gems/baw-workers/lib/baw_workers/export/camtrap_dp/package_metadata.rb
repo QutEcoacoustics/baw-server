@@ -99,8 +99,8 @@ module BawWorkers
 
           coords = deployments.map { |deployment|
             site = deployment.site
-            lat = (options.should_obfuscate ? site.obfuscated_latitude : site.latitude).to_f
-            lon = (options.should_obfuscate ? site.obfuscated_longitude : site.longitude).to_f
+            lat = (options.should_obfuscate ? site.obfuscated_latitude : site.public_latitude)
+            lon = (options.should_obfuscate ? site.obfuscated_longitude : site.public_longitude)
             [lon, lat]
           }
 

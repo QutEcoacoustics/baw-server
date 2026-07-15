@@ -164,7 +164,7 @@ module BawWorkers
           #
           # @param tagging [Tagging] the tagging to map
           # @param deployment [DeploymentAccumulator::Deployment] the deployment metadata for the tagging; its
-          #   `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
+          #   `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Observation] the observation struct with the mapped values
           def self.mapping(tagging, deployment)
             ae = tagging.audio_event
@@ -187,8 +187,8 @@ module BawWorkers
               deploymentID: ar.site_id,
               mediaID: ar.id,
               eventID: nil,
-              eventStart: deployment.export_time(ar.recorded_date + ae.start_time_seconds.seconds),
-              eventEnd: deployment.export_time(ar.recorded_date + ae.end_time_seconds.seconds),
+              eventStart: deployment.ensure_timezone(ar.recorded_date + ae.start_time_seconds.seconds),
+              eventEnd: deployment.ensure_timezone(ar.recorded_date + ae.end_time_seconds.seconds),
               observationLevel: OBSERVATION_LEVEL,
               observationType: observation_type,
               deviceSetupType: nil,
@@ -209,7 +209,7 @@ module BawWorkers
               frequencyHigh: ae.high_frequency_hertz,
               classificationMethod: classification_method,
               classifiedBy: classified_by,
-              classificationTimestamp: deployment.export_time(tagging.created_at),
+              classificationTimestamp: deployment.ensure_timezone(tagging.created_at),
               classificationProbability: nil,
               classificationConfirmation: nil,
               observationTags: nil,

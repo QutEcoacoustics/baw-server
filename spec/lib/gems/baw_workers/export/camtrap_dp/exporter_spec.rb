@@ -12,7 +12,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
   let(:export_options) do
     BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
       should_obfuscate: true,
-      contributors: [{ title: 'Alice' }],
+      contributors: [{ title: 'Alice', path: 'http://www.test' }],
       project_capture_method: ['continuous', 'recordingSchedule'],
       project_sampling_design: 'systematicRandom',
       emit_project_license: true,
@@ -77,30 +77,29 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       }
     end
 
-    def expect_exported_times_in(utc_offset_seconds)
-      utc_offset = ActiveSupport::TimeZone.seconds_to_utc_offset(utc_offset_seconds)
-      export_time = ->(time) { utc_offset_seconds.zero? ? time.utc : time.getlocal(utc_offset) }
+    def expect_exported_times_in(time_zone)
+      ensure_timezone = ->(time) { time.in_time_zone(time_zone) }
 
       with_export_manifest do
         rows = exported_times
         expect(rows[:deployments]).to include(
-          'deploymentStart' => export_time.call(audio_recording.recorded_date).iso8601(0),
-          'deploymentEnd' => export_time.call(audio_recording.recorded_end_date).iso8601(0)
+          'deploymentStart' => ensure_timezone.call(audio_recording.recorded_date).iso8601(0),
+          'deploymentEnd' => ensure_timezone.call(audio_recording.recorded_end_date).iso8601(0)
         )
 
         expect(rows[:media]).to include(
-          'timestamp' => export_time.call(audio_recording.recorded_date).iso8601(6)
+          'timestamp' => ensure_timezone.call(audio_recording.recorded_date).iso8601(6)
         )
 
         expect(rows[:observations]).to include(
-          'eventStart' => export_time.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds).iso8601(6),
-          'eventEnd' => export_time.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds).iso8601(6),
-          'classificationTimestamp' => export_time.call(export_tagging.created_at).iso8601(0)
+          'eventStart' => ensure_timezone.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds).iso8601(6),
+          'eventEnd' => ensure_timezone.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds).iso8601(6),
+          'classificationTimestamp' => ensure_timezone.call(export_tagging.created_at).iso8601(0)
         )
 
         expect(rows[:descriptor]['temporal']).to include(
-          'start' => export_time.call(audio_recording.recorded_date).iso8601,
-          'end' => export_time.call(audio_recording.recorded_end_date).iso8601
+          'start' => ensure_timezone.call(audio_recording.recorded_date).iso8601,
+          'end' => ensure_timezone.call(audio_recording.recorded_end_date).iso8601
         )
       end
     end
@@ -118,6 +117,13 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           /1 \(Integer\) has invalid type for :captureMethod violates constraints/
         )
       }
+    end
+
+    context 'with invalid force_utc_offset type' do
+      let(:export_options) { super().merge(force_utc_offset: 'invalid') }
+      let(:error_message) { /force_utc_offset: got String, expected ActiveSupport::TimeZone or TZInfo::Timezone/ }
+
+      it { expect { subject.call { nil } }.to raise_error(ArgumentError, error_message) }
     end
 
     it 'yields a manifest with the package file paths and stats' do
@@ -222,7 +228,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
 
       it 'writes exported time fields in the site timezone' do
-        expect_exported_times_in(36_000)
+        expect_exported_times_in(ActiveSupport::TimeZone['Australia/Brisbane'])
       end
     end
 
@@ -232,19 +238,19 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
 
       it 'leaves exported time fields in UTC' do
-        expect_exported_times_in(0)
+        expect_exported_times_in(ActiveSupport::TimeZone['UTC'])
       end
     end
 
     context 'when a force UTC offset is supplied' do
-      let(:export_options) { super().merge(force_utc_offset: -14_400) }
+      let(:export_options) { super().merge(force_utc_offset: ActiveSupport::TimeZone['America/Sao_Paulo']) }
 
       before do
         site.update!(tzinfo_tz: 'Australia/Brisbane')
       end
 
       it 'writes exported time fields with the offset' do
-        expect_exported_times_in(-14_400)
+        expect_exported_times_in(ActiveSupport::TimeZone['America/Sao_Paulo'])
       end
     end
 

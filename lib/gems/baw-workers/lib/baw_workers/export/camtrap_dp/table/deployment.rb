@@ -90,7 +90,7 @@ module BawWorkers
           attribute? :deploymentComments, Types::String.optional
 
           # @param deployment [DeploymentAccumulator::Deployment] the accumulated deployment metadata
-          #   whose `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
+          #   whose `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @param should_obfuscate [Boolean] whether to obfuscate the latitude and longitude values for the deployment
           # @return [Deployment] the deployment struct with the mapped values
           def self.mapping(deployment, should_obfuscate:)
@@ -104,8 +104,8 @@ module BawWorkers
               latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude),
               longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude),
               coordinateUncertainty: nil,
-              deploymentStart: deployment.export_time(deployment.start),
-              deploymentEnd: deployment.export_time(deployment.end)
+              deploymentStart: deployment.ensure_timezone(deployment.start),
+              deploymentEnd: deployment.ensure_timezone(deployment.end)
             )
           end
         end

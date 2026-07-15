@@ -8,18 +8,19 @@ module BawWorkers
       # We use Site as a proxy for a deployment, and calculate deployment start and end time based on the audio
       # recordings at the site in the result set.
       class DeploymentAccumulator
-        # @param force_utc_offset [Integer, nil] optional UTC offset in seconds to use instead of site timezones for
-        #   all deployments accumulated by this instance.
+        # The caller can provide a timezone override. If provided, all timestamps in the export will use this timezone.
+        # You can even provide a custom timezone, e.g.: `ActiveSupport::TimeZone.create('Fixed', 600, TZInfo::Timezone.get('GMT'))`
+        #
+        # @param force_utc_offset [ActiveSupport::TimeZone, TZInfo::Timezone, nil] optional timezone
         def initialize(force_utc_offset: nil)
           @deployments = {}
 
-          # Store forced offsets as formatted strings so conversion can use the same stable offset for every timestamp,
-          # independent of date-specific daylight saving rules.
-          @force_utc_offset = force_utc_offset ? UTCOffsetString.new(ActiveSupport::TimeZone.seconds_to_utc_offset(force_utc_offset)) : nil
-        end
+          if force_utc_offset && !(force_utc_offset.is_a?(ActiveSupport::TimeZone) || force_utc_offset.is_a?(TZInfo::Timezone))
+            raise ArgumentError, "force_utc_offset: got #{force_utc_offset.class}, expected ActiveSupport::TimeZone or TZInfo::Timezone"
+          end
 
-        # +HH:MM formatted UTC offset string.
-        UTCOffsetString = Data.define(:utc_offset)
+          @force_utc_offset = force_utc_offset
+        end
 
         # Deployment metadata accumulated for a site.
         #
@@ -31,44 +32,41 @@ module BawWorkers
         #   @return [Time] latest recording end time for the deployment.
         # @!attribute [r] file_public
         #   @return [Boolean] whether media files for the deployment are publicly accessible.
-        # @!attribute [r] offset_or_timezone
-        #   @return [UTCOffsetString, TZInfo::Timezone, ActiveSupport::TimeZone] to convert stored UTC timestamps into
-        #   the export representation for the deployment.
-        Deployment = Data.define(:site, :start, :end, :file_public, :offset_or_timezone) {
-          # Convert a stored UTC instant into the timestamp representation used by the export.
+        # @!attribute [r] timezone
+        #   @return [TZInfo::Timezone, ActiveSupport::TimeZone] the timezone to use for timestamps in this deployment
+        Deployment = Data.define(:site, :start, :end, :file_public, :timezone) {
+          # Ensures all times in a deployment are in a uniform Timezone for exporting.
           #
           # @param time [Time, ActiveSupport::TimeWithZone, nil] timestamp to export.
-          # @return [Time, ActiveSupport::TimeWithZone, nil] timestamp converted to UTC, a fixed offset, or a site
-          #   timezone, ready for Camtrap-DP ISO 8601 serialization.
-          def export_time(time)
+          # @return [Time, ActiveSupport::TimeWithZone, nil] timestamp converted to the deployment's timezone, ready for Camtrap-DP ISO 8601 serialization.
+          def ensure_timezone(time)
             return nil if time.blank?
-            return time.utc if offset_or_timezone.nil?
 
-            # `getlocal` preserves the instant and renders it with the requested fixed offset.
-            return time.getlocal(offset_or_timezone.utc_offset) if offset_or_timezone.is_a?(UTCOffsetString)
+            # return time.utc if timezone.nil?
 
-            time.in_time_zone(offset_or_timezone)
+            time.in_time_zone(timezone)
           end
         }
 
         # Add a deployment for the tagging's site if it doesn't exist, or update the existing deployment's start and end
-        # times if it does.
+        # times if it does. Initialize the deployment's timezone based on the site's timezone, unless a force_utc_offset
+        # was provided to the accumulator.
         #
         # @param tagging [Tagging] the tagging for the deployment
         # @return [Deployment] the new or updated deployment for the tagging's site
         def add_or_update(tagging)
           audio_recording = tagging.audio_event.audio_recording
           deployment = @deployments[audio_recording.site_id] || Deployment.new(
-            site: audio_recording.site,
+            site: audio_recording.site, # this will be the object from the first time it was seen in a batch
             start: nil,
             end: nil,
             file_public: audio_recording.site.public_site?,
-            offset_or_timezone: @force_utc_offset || site_timezone(audio_recording.site)
+            timezone: @force_utc_offset || site_timezone(audio_recording.site)
           )
 
           @deployments[audio_recording.site_id] = deployment.with(
-            start: deployment.export_time(earliest(deployment.start, audio_recording.recorded_date)),
-            end: deployment.export_time(latest(deployment.end, audio_recording.recorded_end_date))
+            start: deployment.ensure_timezone(earliest(deployment.start, audio_recording.recorded_date)),
+            end: deployment.ensure_timezone(latest(deployment.end, audio_recording.recorded_end_date))
           )
         end
 
@@ -80,9 +78,9 @@ module BawWorkers
         private
 
         # @param site [Site] site whose timezone should be used for export timestamps.
-        # @return [TZInfo::Timezone, ActiveSupport::TimeZone] timezone of site or UTC fallback for nil or zero-offset timezones.
+        # @return [TZInfo::Timezone, ActiveSupport::TimeZone] timezone of site or UTC fallback if site has no timezone.
         def site_timezone(site)
-          return ActiveSupport::TimeZone['UTC'] if site.timezone.blank? || site.timezone[:utc_total_offset].zero?
+          return ActiveSupport::TimeZone['UTC'] if site.timezone.blank?
 
           TimeZoneHelper.tzinfo_class(site.tzinfo_tz)
         end

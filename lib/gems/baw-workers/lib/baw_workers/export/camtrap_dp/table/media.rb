@@ -27,7 +27,7 @@ module BawWorkers
 
           # @param audio_recording [AudioRecording] the audio recording to map
           # @param deployment [DeploymentAccumulator::Deployment] the deployment metadata for the audio recording;
-          #   its `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
+          #   its `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Media] the media struct with the mapped values
           def self.mapping(audio_recording, deployment)
             file_path = Api::UrlHelpers.audio_recording_media_original_url(audio_recording_id: audio_recording.id)
@@ -42,7 +42,7 @@ module BawWorkers
               mediaID: audio_recording.id,
               deploymentID: deployment.site.id,
               captureMethod: nil,
-              timestamp: deployment.export_time(audio_recording.recorded_date),
+              timestamp: deployment.ensure_timezone(audio_recording.recorded_date),
               duration: audio_recording.duration_seconds,
               filePath: file_path,
               filePublic: deployment.file_public,
