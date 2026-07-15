@@ -30,9 +30,6 @@ module BawWorkers
           #   its `export_time` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Media] the media struct with the mapped values
           def self.mapping(audio_recording, deployment)
-            # Manually set the site association cache on the audio recording to avoid a database query when calling `friendly_name`.
-            audio_recording = audio_recording.tap { |ar| ar.association(:site).target = deployment.site }
-
             file_path = Api::UrlHelpers.audio_recording_media_original_url(audio_recording_id: audio_recording.id)
 
             # ? Is this calculation correct? There are many cases in the database where this calculation doesn't result

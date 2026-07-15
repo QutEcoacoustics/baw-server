@@ -109,8 +109,11 @@ module BawWorkers
           RequiredExporterOptions.new(**exporter_options)
         end
 
+        # Eager load audio_events because each audio_event usually has one tagging, so a join avoids
+        # repeated queries, and audio_event columns are mostly small scalars, so the joined rows stay cheap.
+        # Then preload recording and site to avoid duplicating their larger JSON blobs across tagging rows.
         def included
-          @included ||= @filter.includes(:tag, audio_event: [:provenance, :audio_recording])
+          @filter.eager_load(:audio_event).preload(:tag, audio_event: [:provenance, { audio_recording: :site }])
         end
 
         def write_deployments(writer, deployments)
