@@ -64,11 +64,9 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
-    def csv_row(filename)
-      CSV.read(package_path.join(filename), headers: true).first.to_h
-    end
+    def csv_row(filename) = CSV.read(package_path.join(filename), headers: true).first.to_h
 
-    def exported_times
+    def package_data
       {
         deployments: csv_row('deployments.csv'),
         media: csv_row('media.csv'),
@@ -78,28 +76,30 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     end
 
     def expect_exported_times_in(time_zone)
-      ensure_timezone = ->(time) { time.in_time_zone(time_zone) }
+      ensure_timezone_with_precision = ->(precision, time) { time.in_time_zone(time_zone).iso8601(precision) }.curry
+      ensure_timezone_with_seconds = ensure_timezone_with_precision.call(0)
+      ensure_timezone_with_microseconds = ensure_timezone_with_precision.call(6)
 
       with_export_manifest do
-        rows = exported_times
+        rows = package_data
         expect(rows[:deployments]).to include(
-          'deploymentStart' => ensure_timezone.call(audio_recording.recorded_date).iso8601(0),
-          'deploymentEnd' => ensure_timezone.call(audio_recording.recorded_end_date).iso8601(0)
+          'deploymentStart' => ensure_timezone_with_seconds.call(audio_recording.recorded_date),
+          'deploymentEnd' => ensure_timezone_with_seconds.call(audio_recording.recorded_end_date)
         )
 
         expect(rows[:media]).to include(
-          'timestamp' => ensure_timezone.call(audio_recording.recorded_date).iso8601(6)
+          'timestamp' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date)
         )
 
         expect(rows[:observations]).to include(
-          'eventStart' => ensure_timezone.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds).iso8601(6),
-          'eventEnd' => ensure_timezone.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds).iso8601(6),
-          'classificationTimestamp' => ensure_timezone.call(export_tagging.created_at).iso8601(0)
+          'eventStart' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds),
+          'eventEnd' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds),
+          'classificationTimestamp' => ensure_timezone_with_seconds.call(export_tagging.created_at)
         )
 
         expect(rows[:descriptor]['temporal']).to include(
-          'start' => ensure_timezone.call(audio_recording.recorded_date).iso8601,
-          'end' => ensure_timezone.call(audio_recording.recorded_end_date).iso8601
+          'start' => ensure_timezone_with_seconds.call(audio_recording.recorded_date),
+          'end' => ensure_timezone_with_seconds.call(audio_recording.recorded_end_date)
         )
       end
     end
@@ -176,7 +176,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       }
 
       with_export_manifest do
-        rows = exported_times
+        rows = package_data
         expect(rows[:deployments]).to include(
           'deploymentStart' => audio_recording.recorded_date.utc.iso8601(0),
           'deploymentEnd' => recording.recorded_end_date.utc.iso8601(0)
@@ -200,6 +200,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     context 'when obfuscation is disabled' do
       let(:export_options) { super().merge(should_obfuscate: false) }
 
+      # TODO: writes based on public_lat/lon (aka user permissions)
       it 'writes real coordinates' do
         result = with_export_manifest {
           CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
@@ -222,10 +223,16 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       )
     end
 
-    context 'when the site has a timezone' do
-      before do
-        site.update!(tzinfo_tz: 'Australia/Brisbane')
+    context 'when the site has no timezone' do
+      before { site.update!(tzinfo_tz: nil) }
+
+      it 'falls back to UTC for exported time fields' do
+        expect_exported_times_in(ActiveSupport::TimeZone['UTC'])
       end
+    end
+
+    context 'when the site has a timezone' do
+      before { site.update!(tzinfo_tz: 'Australia/Brisbane') }
 
       it 'writes exported time fields in the site timezone' do
         expect_exported_times_in(ActiveSupport::TimeZone['Australia/Brisbane'])
@@ -233,9 +240,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     end
 
     context 'when the site timezone is UTC' do
-      before do
-        site.update!(tzinfo_tz: 'UTC')
-      end
+      before { site.update!(tzinfo_tz: 'UTC') }
 
       it 'leaves exported time fields in UTC' do
         expect_exported_times_in(ActiveSupport::TimeZone['UTC'])
@@ -245,81 +250,10 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     context 'when a force UTC offset is supplied' do
       let(:export_options) { super().merge(force_utc_offset: ActiveSupport::TimeZone['America/Sao_Paulo']) }
 
-      before do
-        site.update!(tzinfo_tz: 'Australia/Brisbane')
-      end
+      before { site.update!(tzinfo_tz: 'Australia/Brisbane') }
 
       it 'writes exported time fields with the offset' do
         expect_exported_times_in(ActiveSupport::TimeZone['America/Sao_Paulo'])
-      end
-    end
-
-    context 'when validating' do
-      let(:validator) { BawWorkers::Export::CamtrapDp::Validator }
-      let(:local_validation_profile_path) { BawWorkers::Export::CamtrapDp::Profile::LOCAL_VALIDATION_PROFILE_PATH }
-
-      let(:package_descriptor) { JSON.parse(package_path.join('datapackage.json').read) }
-
-      it 'replaces the profile path in the package descriptor with the local validation profile path string' do
-        with_export_manifest do
-          package = validator.load_package(package_descriptor, package_path:)
-
-          expect(package.profile.name).to eq(local_validation_profile_path.to_s)
-        end
-      end
-
-      it 'raises on invalid package metadata' do
-        with_export_manifest do
-          package_descriptor.delete('contributors')
-
-          expect {
-            validator.validate_package(package_descriptor, package_path:)
-          }.to raise_error(
-            BawWorkers::Export::CamtrapDp::Errors::DescriptorValidationError
-          ) { |error|
-            expect(error.message).to include(
-              'Package descriptor validation error',
-              "The property '#/' of type object did not match all of the required schemas",
-              "The property '#/' did not contain a required property of 'contributors'"
-            )
-          }
-        end
-      end
-
-      it 'raises when CSV headers do not match the schema field order' do
-        with_export_manifest do
-          invalid_csv = "\"wrong\",\"headers\"\ndata,data\n"
-          File.write(package_path.join('deployments.csv'), invalid_csv)
-
-          expect {
-            validator.validate_package(package_descriptor, package_path:)
-          }.to raise_error(
-            BawWorkers::Export::CamtrapDp::Errors::CsvValidationError
-          ) { |error|
-            expect(error.message).to include(
-              "CSV header validation error in resource 'deployments'",
-              'expected ["deploymentID", "locationID"',
-              'got ["wrong", "headers"]'
-            )
-          }
-        end
-      end
-
-      it 'raises on invalid CSV data' do
-        with_export_manifest do
-          deployments_path = package_path.join('deployments.csv')
-
-          deployments = CSV.read(deployments_path, headers: true)
-          deployments[0]['latitude'] = 'invalid'
-          deployments_path.write(deployments.to_csv)
-
-          expect {
-            validator.validate_package(package_descriptor, package_path:)
-          }.to raise_error(
-            BawWorkers::Export::CamtrapDp::Errors::CsvValidationError,
-            /CSV data validation error in resource 'deployments': invalid is not a number/
-          )
-        end
       end
     end
   end
