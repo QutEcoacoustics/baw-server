@@ -10,9 +10,11 @@ module BawWorkers
       # The exporter orchestrates a Camtrap Data Package export from a given filter of taggings.
       # It generates a zip file containing the CSV tables and the datapackage.json file describing the package.
       class Exporter
+        BATCH_SIZE = 1000
+
         # Options required to build a complete Camtrap Data Package export.
         #
-        # @!attribute [r] force_utc_offset
+        # @!attribute [r] forced_timezone
         #   @return [Integer, nil] optional UTC offset in seconds to apply to every exported recording, event,
         #     deployment, and temporal coverage timestamp. When omitted, each deployment uses its site's timezone;
         #     sites with no timezone or a zero UTC offset export in UTC.
@@ -24,7 +26,7 @@ module BawWorkers
           :project_capture_method,
           :project_sampling_design,
           :emit_project_license,
-          :force_utc_offset
+          :forced_timezone
         )
 
         def initialize(filter, **exporter_options)
@@ -44,13 +46,16 @@ module BawWorkers
           bullet_active = defined?(Bullet) && Bullet.enabled?
           Bullet.enable = false if bullet_active
 
+          Rails.logger.info('Starting Camtrap DP export')
+          rows_processed = 0
+
           scientific_names = Set.new
           audio_recordings = Set.new
 
-          deployments = DeploymentAccumulator.new(force_utc_offset: @options.force_utc_offset)
+          deployments = DeploymentAccumulator.new(forced_timezone: @options.forced_timezone)
 
           # Using find_each with default batch size to avoid pulling all records into memory at once.
-          included.find_each do |tagging|
+          included.find_each(batch_size: BATCH_SIZE) do |tagging|
             deployment = deployments.add_or_update(tagging)
             first_media = audio_recordings.add?(tagging.audio_event.audio_recording_id)
 
@@ -62,6 +67,9 @@ module BawWorkers
               table_writers.media << Table::Media.mapping(tagging.audio_event.audio_recording,
                 deployment).ordered_values
             end
+
+            rows_processed += 1
+            Rails.logger.info("Processed #{rows_processed} rows") if rows_processed % BATCH_SIZE == 0
           end
 
           write_deployments(table_writers.deployments, deployments.values)
@@ -77,6 +85,9 @@ module BawWorkers
           write_datapackage_file(package)
 
           manifest = zip_package
+
+          Rails.logger.info('Finished Camtrap DP export')
+
           result = block.call(manifest)
           result
         ensure

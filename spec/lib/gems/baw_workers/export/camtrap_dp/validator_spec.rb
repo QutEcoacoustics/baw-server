@@ -7,12 +7,13 @@ describe BawWorkers::Export::CamtrapDp::Validator do
 
   let(:export_options) do
     BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
+      user: nil,
       should_obfuscate: true,
       contributors: [{ title: 'Alice', path: 'http://www.test' }],
       project_capture_method: ['continuous', 'recordingSchedule'],
       project_sampling_design: 'systematicRandom',
       emit_project_license: true,
-      force_utc_offset: nil
+      forced_timezone: nil
     ).to_h
   end
 

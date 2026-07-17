@@ -17,7 +17,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       project_capture_method: ['continuous', 'recordingSchedule'],
       project_sampling_design: 'systematicRandom',
       emit_project_license: true,
-      force_utc_offset: nil
+      forced_timezone: nil
     ).to_h
   end
 
@@ -120,9 +120,9 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       }
     end
 
-    context 'with invalid force_utc_offset type' do
-      let(:export_options) { super().merge(force_utc_offset: 'invalid') }
-      let(:error_message) { /force_utc_offset: got String, expected ActiveSupport::TimeZone or TZInfo::Timezone/ }
+    context 'with invalid forced_timezone type' do
+      let(:export_options) { super().merge(forced_timezone: 'invalid') }
+      let(:error_message) { /forced_timezone: got String, expected ActiveSupport::TimeZone or TZInfo::Timezone/ }
 
       it { expect { subject.call { nil } }.to raise_error(ArgumentError, error_message) }
     end
@@ -278,7 +278,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     end
 
     context 'when a force UTC offset is supplied' do
-      let(:export_options) { super().merge(force_utc_offset: ActiveSupport::TimeZone['America/Sao_Paulo']) }
+      let(:export_options) { super().merge(forced_timezone: ActiveSupport::TimeZone['America/Sao_Paulo']) }
 
       before { site.update!(tzinfo_tz: 'Australia/Brisbane') }
 

@@ -11,15 +11,15 @@ module BawWorkers
         # The caller can provide a timezone override. If provided, all timestamps in the export will use this timezone.
         # You can even provide a custom timezone, e.g.: `ActiveSupport::TimeZone.create('Fixed', 600, TZInfo::Timezone.get('GMT'))`
         #
-        # @param force_utc_offset [ActiveSupport::TimeZone, TZInfo::Timezone, nil] optional timezone
-        def initialize(force_utc_offset: nil)
+        # @param forced_timezone [ActiveSupport::TimeZone, TZInfo::Timezone, nil] optional timezone
+        def initialize(forced_timezone: nil)
           @deployments = {}
 
-          if force_utc_offset && !(force_utc_offset.is_a?(ActiveSupport::TimeZone) || force_utc_offset.is_a?(TZInfo::Timezone))
-            raise ArgumentError, "force_utc_offset: got #{force_utc_offset.class}, expected ActiveSupport::TimeZone or TZInfo::Timezone"
+          if forced_timezone && !(forced_timezone.is_a?(ActiveSupport::TimeZone) || forced_timezone.is_a?(TZInfo::Timezone))
+            raise ArgumentError, "forced_timezone: got #{forced_timezone.class}, expected ActiveSupport::TimeZone or TZInfo::Timezone"
           end
 
-          @force_utc_offset = force_utc_offset
+          @forced_timezone = forced_timezone
         end
 
         # Deployment metadata accumulated for a site.
@@ -49,7 +49,7 @@ module BawWorkers
         }
 
         # Add a deployment for the tagging's site if it doesn't exist, or update the existing deployment's start and end
-        # times if it does. Initialize the deployment's timezone based on the site's timezone, unless a force_utc_offset
+        # times if it does. Initialize the deployment's timezone based on the site's timezone, unless a forced_timezone
         # was provided to the accumulator.
         #
         # This isn't a problem now, but it's worth noting: deployments are keyed by site_id, and site is cached the
@@ -65,7 +65,7 @@ module BawWorkers
             start: nil,
             end: nil,
             file_public: audio_recording.site.public_site?,
-            timezone: @force_utc_offset || site_timezone(audio_recording.site)
+            timezone: @forced_timezone || site_timezone(audio_recording.site)
           )
 
           @deployments[audio_recording.site_id] = deployment.with(
