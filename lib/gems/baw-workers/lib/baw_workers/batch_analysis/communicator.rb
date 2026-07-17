@@ -144,8 +144,11 @@ module BawWorkers
       # @param analysis_job_item [::AnalysisJobsItem] the script execute
       # @return [::Dry::Monads::Result<string>] the created job id
       def submit_job(analysis_job_item)
-        analysis_job = analysis_job_item.analysis_job
-        audio_recording = analysis_job_item.audio_recording
+        # We've had multiple guards for race conditions up to this point, but
+        # if we still hit this case where one of the things has been soft deleted,
+        # # then we just give up and run the job.
+        analysis_job = analysis_job_item.analysis_job_with_discarded
+        audio_recording = analysis_job_item.audio_recording_with_discarded
         script = analysis_job_item.script
 
         raise ArgumentError, 'analysis_job_item must have an AnalysisJob' unless analysis_job.is_a?(AnalysisJob)

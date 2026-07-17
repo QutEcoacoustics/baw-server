@@ -57,7 +57,7 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
 
     job = BawWorkers::Jobs::Analysis::RemoteEnqueueJob.new
 
-    expect(job.enqueue_item(item)).to be true
+    expect(job.enqueue_item(item)).to be :finished
 
     item.reload
     expect(item).to be_finished

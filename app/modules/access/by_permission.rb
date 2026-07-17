@@ -236,7 +236,7 @@ module Access
         query = AnalysisJobsItem
           .joins(audio_recording: :site)
           .order(audio_recording_id: :asc)
-          .joins(:analysis_job) # this join ensures only non-deleted results are returned
+          .joins(:analysis_job)
           .where(analysis_jobs: { id: analysis_job.id })
 
         permission_sites(user, levels, query)

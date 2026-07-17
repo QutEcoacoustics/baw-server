@@ -1173,10 +1173,10 @@ describe Filter::Query do
         FROM "analysis_jobs_items"
           INNER
           JOIN "audio_recordings"
-            ON ("audio_recordings"."deleted_at"
-              IS
-              NULL)
-               AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")
+        ON ("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")
           INNER
           JOIN "sites"
             ON ("sites"."deleted_at"
@@ -1185,7 +1185,10 @@ describe Filter::Query do
                AND ("sites"."id" = "audio_recordings"."site_id")
         INNER
         JOIN "analysis_jobs"
-        ON "analysis_jobs"."id" = "analysis_jobs_items"."analysis_job_id"
+        ON ("analysis_jobs"."deleted_at"
+        IS
+        NULL)
+        AND ("analysis_jobs"."id" = "analysis_jobs_items"."analysis_job_id")
         WHERE ("analysis_jobs"."id" = #{analysis_job.id})
         AND (
           EXISTS (

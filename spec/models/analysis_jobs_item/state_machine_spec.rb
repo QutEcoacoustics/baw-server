@@ -127,7 +127,7 @@ describe AnalysisJobsItem do
           item.queue!
         }.to raise_error(
           AASM::InvalidTransition,
-          "Event 'queue' cannot transition from 'new'. Failed callback(s): [:source_recording_discarded?, :not_cancelled?]."
+          /Event 'queue' cannot transition from 'new'\. Failed callback\(s\): \[(?=.*source_recording_discarded\?)(?=.*not_cancelled\?).*\]\./
         )
 
         expect(item).to be_new

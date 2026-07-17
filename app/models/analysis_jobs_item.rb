@@ -58,10 +58,23 @@ class AnalysisJobsItem < ApplicationRecord
 
   belongs_to :analysis_jobs_script, optional: true, foreign_key: [:analysis_job_id, :script_id]
 
-  # ensure we allow with_discarded here for race conditions where parent
-  # records are soft deleted while job items are still updating
-  belongs_to :analysis_job, -> { with_discarded }, inverse_of: :analysis_jobs_items
-  belongs_to :audio_recording, -> { with_discarded }, inverse_of: :analysis_jobs_items
+  # keep default associations safely scoped to non-discarded parents.
+  # for special lifecycle paths that need to see discarded parents (e.g. for race conditions),
+  # use the explicit `*_with_discarded` associations below.
+  belongs_to :analysis_job, inverse_of: :analysis_jobs_items
+  belongs_to :audio_recording, inverse_of: :analysis_jobs_items
+  belongs_to :analysis_job_with_discarded,
+    -> { with_discarded },
+    class_name: 'AnalysisJob',
+    foreign_key: :analysis_job_id,
+    inverse_of: false,
+    optional: true
+  belongs_to :audio_recording_with_discarded,
+    -> { with_discarded },
+    class_name: 'AudioRecording',
+    foreign_key: :audio_recording_id,
+    inverse_of: false,
+    optional: true
   belongs_to :script, inverse_of: :analysis_jobs_items
 
   # we use all the following associations to help with filtering for virtual directories
@@ -550,7 +563,7 @@ class AnalysisJobsItem < ApplicationRecord
       .analysis_cache_helper
       .possible_paths_dir({
         job_id: analysis_job_id,
-        uuid: audio_recording.uuid,
+        uuid: audio_recording_with_discarded.uuid,
         script_id:,
         sub_folders: []
       })
@@ -568,7 +581,7 @@ class AnalysisJobsItem < ApplicationRecord
       .analysis_cache_helper
       .possible_paths_dir({
         job_id: analysis_job_id,
-        uuid: audio_recording.uuid,
+        uuid: audio_recording_with_discarded.uuid,
         sub_folders: []
       })
       .first => path
