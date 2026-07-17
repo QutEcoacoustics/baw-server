@@ -191,8 +191,13 @@ class Site < ApplicationRecord
   renders_markdown_for :description
 
   # Replaces `custom_latitude`. Returns obfuscated latitude if location is obfuscated.
-  def public_latitude
-    if location_obfuscated
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_latitude(user: nil, should_obfuscate: nil)
+    return latitude if should_obfuscate == false
+    return obfuscated_latitude if should_obfuscate == true
+
+    if location_obfuscated(user: user)
       obfuscated_latitude
     else
       latitude
@@ -200,8 +205,13 @@ class Site < ApplicationRecord
   end
 
   # Replaces `custom_longitude`. Returns obfuscated longitude if location is obfuscated.
-  def public_longitude
-    if location_obfuscated
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_longitude(user: nil, should_obfuscate: nil)
+    return longitude if should_obfuscate == false
+    return obfuscated_longitude if should_obfuscate == true
+
+    if location_obfuscated(user: user)
       obfuscated_longitude
     else
       longitude
@@ -214,25 +224,6 @@ class Site < ApplicationRecord
     projects.any? { |project|
       project.permissions.any?(&:public_access?)
     }
-  end
-
-  # This method is a little funny.
-  # If `location_obfuscated` was returned in a query, then that value is used.
-  # Otherwise, the obfuscation is calculated with another query.
-  def location_obfuscated
-    return self['location_obfuscated'] if has_attribute?('location_obfuscated')
-
-    return true if Current.user.nil?
-
-    return false if Current.user.admin?
-
-    # if no associated projects, we can't determine permissions, so obfuscate
-    return true if projects.empty?
-
-    is_owner = Access::Core.can_any?(Current.user, Access::Permission::OWNER, projects)
-
-    # obfuscate if level is less than owner
-    !is_owner
   end
 
   def location_jitter_seed
@@ -331,6 +322,24 @@ class Site < ApplicationRecord
   end
 
   private
+
+  # Should the location be obfuscated?
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @return [Boolean] true if user is not an owner of any project this site belongs to.
+  def location_obfuscated(user: nil)
+    user ||= Current.user
+    return true if user.nil?
+
+    return false if user.admin?
+
+    # if no associated projects, we can't determine permissions, so obfuscate
+    return true if projects.empty?
+
+    is_owner = Access::Core.can_any?(user, Access::Permission::OWNER, projects)
+
+    # obfuscate if level is less than owner
+    !is_owner
+  end
 
   # Determines if the obfuscated location should be auto-updated
   # Only update if:

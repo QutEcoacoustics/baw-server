@@ -84,7 +84,31 @@ describe Site do
 
       expect(site).to be_public_site
     end
+  end
 
+  describe '#public_latitude and #public_longitude' do
+    let(:site) { create(:site, :with_lat_long) }
+
+    it 'returns obfuscated coordinates when there is no user' do
+      expect(site.public_latitude).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when user override has permission' do
+      expect(site.public_latitude(user: site.projects.first.creator)).to eq(site.latitude)
+      expect(site.public_longitude(user: site.projects.first.creator)).to eq(site.longitude)
+    end
+
+    it 'returns obfuscated coordinates when user override does not have permission' do
+      user = create(:user)
+      expect(site.public_latitude(user:)).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude(user:)).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when should_obfuscate is false' do
+      expect(site.public_latitude(should_obfuscate: false)).to eq(site.latitude)
+      expect(site.public_longitude(should_obfuscate: false)).to eq(site.longitude)
+    end
   end
 
   describe 'location obfuscation' do
@@ -246,7 +270,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lat = site.obfuscated_latitude
 
-        site.update!(latitude: site.latitude + 1.0)
+        site.update!(latitude: site.latitude - site.latitude)
 
         expect(site.obfuscated_latitude).not_to eq(original_obfuscated_lat)
         expect(site.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(site.latitude)
@@ -256,7 +280,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lng = site.obfuscated_longitude
 
-        site.update!(longitude: site.longitude + 1.0)
+        site.update!(longitude: site.longitude - site.longitude)
 
         expect(site.obfuscated_longitude).not_to eq(original_obfuscated_lng)
         expect(site.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(site.longitude)
