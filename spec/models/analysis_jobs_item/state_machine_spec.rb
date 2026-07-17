@@ -105,6 +105,20 @@ describe AnalysisJobsItem do
         assert_stats(analysis_jobs_item)
       end
 
+      example 'new -> finished (cancelled) when source recording is discarded' do
+        item.audio_recording.discard!
+        item.transition_queue!
+
+        expect(item.queue!).to be true
+
+        expect(item).to be_finished
+        expect(item).to be_result_cancelled
+        expect(item).to be_transition_empty
+        expect(item.queue_id).to be_nil
+
+        assert_stats(analysis_jobs_item)
+      end
+
       example 'new -> queued (when cancelling)' do
         item.transition_cancel!
         expect(item).to be_transition_cancel
@@ -113,7 +127,7 @@ describe AnalysisJobsItem do
           item.queue!
         }.to raise_error(
           AASM::InvalidTransition,
-          "Event 'queue' cannot transition from 'new'. Failed callback(s): [:not_cancelled?]."
+          /Event 'queue' cannot transition from 'new'\. Failed callback\(s\): \[(?=.*source_recording_discarded\?)(?=.*not_cancelled\?).*\]\./
         )
 
         expect(item).to be_new

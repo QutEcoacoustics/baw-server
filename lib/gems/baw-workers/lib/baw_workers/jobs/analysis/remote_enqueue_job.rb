@@ -78,34 +78,49 @@ module BawWorkers
           report_progress(0, size)
 
           # then for each job item, attempt to enqueue it
+
+          results = Hash.new(0)
           count = 0
+
           sampled.each do |item|
-            success = logger.measure_debug("Enqueued analysis job item #{item.id}") {
+            status = logger.measure_debug("Enqueued analysis job item #{item.id}") {
               enqueue_item(item)
             }
-            count += 1 if success
+            count += 1
+            results[status] += 1
 
             report_progress(count, size)
           end
 
-          logger.info('Enqueued', count:, of_batch_size: size)
-          completed!("Enqueued #{count} of #{size} jobs, sleeping now")
+          logger.info('Enqueued', count:, of_batch_size: size, results:)
+
+          completed!(
+            results.to_s,
+            "Enqueued #{count} of #{size} jobs, sleeping now"
+          )
         end
 
         # @param item_id [Integer]
-        # @return [Boolean]
+        # @return [Symbol] the status of the item after attempting to enqueue it
+        #   (including a special tokens :not_queueable and :already_queued)
         def enqueue_item(item)
           # submits the job to the remote queue
           # and saves the record
           if item.may_queue?
             # slow warning: contacting remote system!
             item.queue!
+
+            item.status.to_sym
           elsif item.may_retry?
             # slow warning: contacting remote system!
             item.retry!
+
+            item.status.to_sym
           elsif item.queued?
             item.clear_transition_queue_or_retry
             item.save!
+
+            :already_queued
           else
             # we assume that whatever state we're in now that it will be resolved soon
             logger.warn(
@@ -113,7 +128,7 @@ module BawWorkers
               item_id: item.id,
               status: item.status
             )
-            false
+            :not_queueable
           end
         end
 

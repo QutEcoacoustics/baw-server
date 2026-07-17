@@ -102,12 +102,18 @@ describe BawWorkers::BatchAnalysis::Communicator, :clean_by_truncation, { web_se
 
   # https://github.com/QutEcoacoustics/baw-server/issues/781
   it 'can handle when friendly name is nil' do
-    analysis_jobs_item.audio_recording.site = nil
+    # this can happen when the site is soft deleted.
+    analysis_jobs_item.audio_recording_with_discarded.site = nil
+
+    # when the association is loaded, site is nil, even though the FK constraint
+    # # guarantees there is a site in the dB
+
     analysis_jobs_item.script.executable_command = <<~BASH
       echo 'source={{source}} {{output_dir}}'
     BASH
 
-    analysis_jobs_item.queue!
+    expect(analysis_jobs_item.queue!).to eq true
+    expect(analysis_jobs_item).to be_queued
     release_all_held_pbs_jobs
     wait_for_pbs_job analysis_jobs_item.queue_id
 
