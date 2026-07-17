@@ -1,5 +1,23 @@
 # Changelog
 
+## [14.15.1](https://github.com/QutEcoacoustics/baw-server/tree/14.15.1) (2026-07-17)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.0...14.15.1)
+
+**Implemented enhancements:**
+
+- Verification consensus [\#706](https://github.com/QutEcoacoustics/baw-server/issues/706)
+
+**Fixed bugs:**
+
+- Project  request email still routes to the API not the client [\#1012](https://github.com/QutEcoacoustics/baw-server/issues/1012)
+- Error: ArgumentError analysis\_job\_item must have an AudioRecording [\#996](https://github.com/QutEcoacoustics/baw-server/issues/996)
+
+**Merged pull requests:**
+
+- fix: enhance analysis job item state machine to handle discarded audio recordings [\#1017](https://github.com/QutEcoacoustics/baw-server/pull/1017) ([atruskie](https://github.com/atruskie))
+- Route project access request email links to client URLs [\#1013](https://github.com/QutEcoacoustics/baw-server/pull/1013) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.15.0](https://github.com/QutEcoacoustics/baw-server/tree/14.15.0) (2026-06-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.14.0...14.15.0)
