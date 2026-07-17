@@ -129,10 +129,21 @@ class AnalysisJobsItem
         #  @return [Boolean]
         # @!method may_queue?
         #  @return [Boolean] true if the item can be queued
-        event :queue, guards: [:not_cancelled?] do
+        event :queue do
+          # If the associated audio recording was deleted (race condition where
+          # audio recording was deleted between job creation and remote enqueue), this will
+          # skip submission and just cancel the job.
+          transitions(
+            from: STATUS_NEW_SYM,
+            to: STATUS_FINISHED_SYM,
+            guards: [:source_recording_discarded?],
+            after: [:clear_transition_queue, :set_result_cancelled]
+          )
+
           transitions(
             from: STATUS_NEW_SYM,
             to: STATUS_QUEUED_SYM,
+            guards: [:not_cancelled?, :source_recording_kept?],
             after: [:clear_transition_queue]
           )
         end
@@ -177,9 +188,20 @@ class AnalysisJobsItem
         # @!method may_retry?
         #  @return [Boolean] true if the item can be retried
         event :retry do
+          # If the associated audio recording was deleted (race condition where
+          # audio recording was deleted between job creation and remote enqueue), this will
+          # skip submission and just cancel the job.
+          transitions(
+            from: STATUS_FINISHED_SYM,
+            to: STATUS_FINISHED_SYM,
+            guards: [:source_recording_discarded?],
+            after: [:clear_error, :clear_result, :clear_transition_retry, :set_result_cancelled]
+          )
+
           transitions(
             from: STATUS_FINISHED_SYM,
             to: STATUS_QUEUED_SYM,
+            guards: [:source_recording_kept?],
             after: [:clear_error, :clear_result, :clear_transition_retry]
           )
         end
@@ -194,6 +216,14 @@ class AnalysisJobsItem
 
     def not_cancelled?
       !transition_cancel?
+    end
+
+    def source_recording_discarded?
+      audio_recording&.discarded?
+    end
+
+    def source_recording_kept?
+      !source_recording_discarded?
     end
 
     def failed?
@@ -233,6 +263,8 @@ class AnalysisJobsItem
     # It's important to do this as soon as possible to free up resources on the
     # remote queue.
     def clear_from_queue
+      return if queue_id.blank?
+
       result = BawWorkers::Config.batch_analysis.clear_job(self)
       unwrap_failure(result)
     rescue ::PBS::Errors::JobNotFoundError => e

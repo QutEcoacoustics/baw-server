@@ -67,6 +67,18 @@ describe AnalysisJobsItem do
   it { is_expected.to belong_to(:audio_recording) }
   it { is_expected.to belong_to(:script) }
 
+  it 'keeps access to a discarded audio_recording association' do
+    item = create(:analysis_jobs_item)
+    recording_id = item.audio_recording_id
+
+    item.audio_recording.discard!
+    item.reload
+
+    expect(item.audio_recording).to be_a(AudioRecording)
+    expect(item.audio_recording.id).to eq(recording_id)
+    expect(item.audio_recording).to be_discarded
+  end
+
   # it { should validate_presence_of(:status) }
   #
   # it { should validate_length_of(:status).is_at_least(2).is_at_most(255) }

@@ -58,10 +58,10 @@ class AnalysisJobsItem < ApplicationRecord
 
   belongs_to :analysis_jobs_script, optional: true, foreign_key: [:analysis_job_id, :script_id]
 
-  # ensure we allow with_discarded here for race condition where analysis job
-  # has been soft deleted while job items are still updating
+  # ensure we allow with_discarded here for race conditions where parent
+  # records are soft deleted while job items are still updating
   belongs_to :analysis_job, -> { with_discarded }, inverse_of: :analysis_jobs_items
-  belongs_to :audio_recording, inverse_of: :analysis_jobs_items
+  belongs_to :audio_recording, -> { with_discarded }, inverse_of: :analysis_jobs_items
   belongs_to :script, inverse_of: :analysis_jobs_items
 
   # we use all the following associations to help with filtering for virtual directories

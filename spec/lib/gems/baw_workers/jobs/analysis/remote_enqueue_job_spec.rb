@@ -51,6 +51,21 @@ describe BawWorkers::Jobs::Analysis::RemoteEnqueueJob do
     expect(status.messages).to include 'Enqueued 5 of 5 jobs, sleeping now'
   end
 
+  it 'cancels items with discarded source recordings instead of enqueueing them' do
+    item = create(:analysis_jobs_item, queue_id: nil)
+    item.audio_recording.discard!
+
+    job = BawWorkers::Jobs::Analysis::RemoteEnqueueJob.new
+
+    expect(job.enqueue_item(item)).to be true
+
+    item.reload
+    expect(item).to be_finished
+    expect(item).to be_result_cancelled
+    expect(item.transition).to be_nil
+    expect(item.queue_id).to be_nil
+  end
+
   stepwise 'the remote enqueue job' do
     step 'check initial state' do
       expect(AnalysisJobsItem.count).to eq(40)
