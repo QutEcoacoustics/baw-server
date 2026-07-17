@@ -52,6 +52,10 @@ module BawWorkers
         # times if it does. Initialize the deployment's timezone based on the site's timezone, unless a force_utc_offset
         # was provided to the accumulator.
         #
+        # This isn't a problem now, but it's worth noting: deployments are keyed by site_id, and site is cached the
+        # first time seen. So when using find_each in batches, the same site from a later batch will have a different
+        # object_id than the cached site object.
+        #
         # @param tagging [Tagging] the tagging for the deployment
         # @return [Deployment] the new or updated deployment for the tagging's site
         def add_or_update(tagging)

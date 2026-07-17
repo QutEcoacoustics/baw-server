@@ -11,7 +11,8 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
   let(:export_options) do
     BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
-      should_obfuscate: true,
+      user: nil,
+      should_obfuscate: nil,
       contributors: [{ title: 'Alice', path: 'http://www.test' }],
       project_capture_method: ['continuous', 'recordingSchedule'],
       project_sampling_design: 'systematicRandom',
@@ -184,7 +185,37 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
+    context 'with no user or obfuscation override' do
+      it 'writes public coordinates' do
+        result = with_export_manifest {
+          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+        }
+
+        expect(result).to include(
+          'latitude' => site.public_latitude.to_s,
+          'longitude' => site.public_longitude.to_s
+        )
+      end
+    end
+
+    context 'when a user with permission is supplied' do
+      let(:export_options) { super().merge(user: owner_user) }
+
+      it 'writes real coordinates' do
+        result = with_export_manifest {
+          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+        }
+
+        expect(result).to include(
+          'latitude' => site.latitude.to_s,
+          'longitude' => site.longitude.to_s
+        )
+      end
+    end
+
     context 'when obfuscation is enabled' do
+      let(:export_options) { super().merge(should_obfuscate: true) }
+
       it 'writes obfuscated coordinates' do
         result = with_export_manifest {
           CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
@@ -200,7 +231,6 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     context 'when obfuscation is disabled' do
       let(:export_options) { super().merge(should_obfuscate: false) }
 
-      # TODO: writes based on public_lat/lon (aka user permissions)
       it 'writes real coordinates' do
         result = with_export_manifest {
           CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h

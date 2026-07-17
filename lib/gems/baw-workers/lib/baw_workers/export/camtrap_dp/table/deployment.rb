@@ -93,7 +93,7 @@ module BawWorkers
           #   whose `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @param should_obfuscate [Boolean] whether to obfuscate the latitude and longitude values for the deployment
           # @return [Deployment] the deployment struct with the mapped values
-          def self.mapping(deployment, should_obfuscate:)
+          def self.mapping(deployment, user:, should_obfuscate:)
             site = deployment.site
 
             # Because we are treating site as a single deployment, site id is used for both the deploymentID and locationID.
@@ -101,8 +101,8 @@ module BawWorkers
               deploymentID: site.id,
               locationID: site.id,
               locationName: site.name,
-              latitude: (should_obfuscate ? site.obfuscated_latitude : site.latitude),
-              longitude: (should_obfuscate ? site.obfuscated_longitude : site.longitude),
+              latitude: site.public_latitude(user: user, should_obfuscate: should_obfuscate),
+              longitude: site.public_longitude(user: user, should_obfuscate: should_obfuscate),
               coordinateUncertainty: nil,
               deploymentStart: deployment.ensure_timezone(deployment.start),
               deploymentEnd: deployment.ensure_timezone(deployment.end)

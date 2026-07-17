@@ -16,7 +16,9 @@ module BawWorkers
         #   @return [Integer, nil] optional UTC offset in seconds to apply to every exported recording, event,
         #     deployment, and temporal coverage timestamp. When omitted, each deployment uses its site's timezone;
         #     sites with no timezone or a zero UTC offset export in UTC.
+        # @!attribute [r] user optional user requesting the export, to check permissions (e.g. public_latitude, public_logitude)
         RequiredExporterOptions = Data.define(
+          :user,
           :should_obfuscate,
           :contributors,
           :project_capture_method,
@@ -118,7 +120,7 @@ module BawWorkers
 
         def write_deployments(writer, deployments)
           deployments.each do |deployment|
-            writer << Table::Deployment.mapping(deployment,
+            writer << Table::Deployment.mapping(deployment, user: @options.user,
               should_obfuscate: @options.should_obfuscate).ordered_values
           end
         end
