@@ -1,5 +1,17 @@
 # Changelog
 
+## [14.15.2](https://github.com/QutEcoacoustics/baw-server/tree/14.15.2) (2026-07-20)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.1...14.15.2)
+
+**Fixed bugs:**
+
+- Audio event download from region nested route does not appear to filter by region [\#1018](https://github.com/QutEcoacoustics/baw-server/issues/1018)
+
+**Merged pull requests:**
+
+- Scope nested audio\_event downloads by region within project queries [\#1019](https://github.com/QutEcoacoustics/baw-server/pull/1019) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [14.15.1](https://github.com/QutEcoacoustics/baw-server/tree/14.15.1) (2026-07-17)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.0...14.15.1)
