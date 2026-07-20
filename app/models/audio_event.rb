@@ -493,19 +493,20 @@ class AudioEvent < ApplicationRecord
     # Build the site filter subquery to scope CTEs.
     # This avoids aggregating tags/verifications for audio events outside the result set.
     site_filter = nil
-    if project
+    if project || region || site
       site_filter = sites
-        .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
-        .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
-        .where(projects[:deleted_at].eq(nil))
-        .where(projects[:id].eq(project.id))
+      if project
+        site_filter = site_filter
+          .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
+          .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+          .where(projects[:deleted_at].eq(nil))
+          .where(projects[:id].eq(project.id))
+      end
+
       site_filter = site_filter.where(sites[:region_id].eq(region.id)) if region
       site_filter = site_filter.where(sites[:id].eq(site.id)) if site
-      site_filter = site_filter.project(sites[:id]).distinct
-    elsif site
-      site_filter = sites.where(sites[:id].eq(site.id)).project(sites[:id])
-    elsif region
-      site_filter = sites.where(sites[:region_id].eq(region.id)).project(sites[:id])
+      site_filter = site_filter.project(sites[:id])
+      site_filter = site_filter.distinct if project
     end
 
     # Build event filter CTE — materializes filtered audio_event IDs once,
