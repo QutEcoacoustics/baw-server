@@ -14,25 +14,45 @@ module BawWorkers
 
         # Options required to build a complete Camtrap Data Package export.
         #
+        # @!attribute [r] user
+        #   @return [User, nil] optional user requesting the export, to check permissions against
+        #     (e.g. public_latitude, public_longitude).
+        # @!attribute [r] should_obfuscate
+        #   @return [Boolean, nil] optional, override the default obfuscation behaviour and indicate whether
+        #     or not to obfuscate locations.
+        # @!attribute [r] contributors
+        #   @return [Array<Hash>] descriptor-compatible package contributors.
+        # @!attribute [r] project_capture_method
+        #   @return [Array<String>] project-level Camtrap DP captureMethod values (see BawWorkers::Dry::Types::CaptureMethod).
+        # @!attribute [r] project_sampling_design
+        #   @return [String] project-level Camtrap DP samplingDesign value (see BawWorkers::Dry::Types::SamplingDesign).
+        # @!attribute [r] package_title
+        #   @return [String] Optional title for this specific package, different from the project title
+        # @!attribute [r] emit_project_license
+        #   @return [Boolean] whether to include project license metadata in the package descriptor.
         # @!attribute [r] forced_timezone
-        #   @return [Integer, nil] optional UTC offset in seconds to apply to every exported recording, event,
-        #     deployment, and temporal coverage timestamp. When omitted, each deployment uses its site's timezone;
-        #     sites with no timezone or a zero UTC offset export in UTC.
-        # @!attribute [r] user optional user requesting the export, to check permissions (e.g. public_latitude, public_logitude)
+        #   @return [ActiveSupport::TimeZone, TZInfo::Timezone, nil] optional timezone to apply to every
+        #     exported recording, event, deployment, and temporal coverage timestamp. When omitted, each
+        #     deployment uses its site's timezone; sites with no timezone or a zero UTC offset export in UTC.
         RequiredExporterOptions = Data.define(
           :user,
           :should_obfuscate,
           :contributors,
           :project_capture_method,
           :project_sampling_design,
+          :package_title,
           :emit_project_license,
           :forced_timezone
         )
 
-        def initialize(filter, **exporter_options)
+        # @param filter [ActiveRecord::Relation<Tagging>] a filter of taggings to export
+        # @param exporter_options [RequiredExporterOptions] options required to build a complete Camtrap Data Package
+        def initialize(filter, exporter_options)
           validate_filter(filter)
+          validate_exporter_options(exporter_options)
+
           @filter = filter
-          @options = required_exporter_options(exporter_options)
+          @options = exporter_options
         end
 
         # Generates the export and yields a manifest of metadata about the generated export to the provided block.
@@ -113,11 +133,10 @@ module BawWorkers
           raise ArgumentError, "#{message}Tagging relation" unless filter.klass == Tagging
         end
 
-        def required_exporter_options(exporter_options)
-          missing = RequiredExporterOptions.members - exporter_options.keys
-          raise ArgumentError, "Missing required exporter option: #{missing.first}" if missing.any?
+        def validate_exporter_options(exporter_options)
+          return if exporter_options.is_a?(RequiredExporterOptions)
 
-          RequiredExporterOptions.new(**exporter_options)
+          raise ArgumentError, 'exporter_options must be a RequiredExporterOptions object'
         end
 
         # Eager load audio_events because each audio_event usually has one tagging, so a join avoids

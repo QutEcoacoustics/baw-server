@@ -16,7 +16,7 @@ module BawWorkers
           project = Descriptor::Project.new(
             title: project.name,
             description: project.description,
-            path: nil,
+            path: Api::UrlHelpers.project_url(id: project.id),
             samplingDesign: options.project_sampling_design,
             captureMethod: options.project_capture_method,
             individualAnimals: individual_animals,
@@ -29,7 +29,7 @@ module BawWorkers
             #name:,
             #id:,
             created: Time.current.utc.iso8601,
-            # title:,
+            title: options.package_title,
             contributors: options.contributors,
             project: project,
             spatial: spatial_coverage(deployments, options),
