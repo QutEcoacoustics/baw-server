@@ -390,6 +390,27 @@ describe AudioEvent do
     expect(actual_audio_event_ids).to eq(expected_audio_events)
   end
 
+  it 'filters audio events to region sites when both project and region are provided' do
+    user = create(:user)
+    project = create(:project, creator: user)
+    target_region = create(:region, creator: user, project:)
+    other_region = create(:region, creator: user, project:)
+
+    target_site = create(:site, :with_lat_long, creator: user, projects: [project], region: target_region)
+    other_site = create(:site, :with_lat_long, creator: user, projects: [project], region: other_region)
+
+    target_recording = create(:audio_recording, :status_ready, creator: user, uploader: user, site: target_site)
+    other_recording = create(:audio_recording, :status_ready, creator: user, uploader: user, site: other_site)
+
+    target_event = create(:audio_event, creator: user, audio_recording: target_recording)
+    create(:audio_event, creator: user, audio_recording: other_recording)
+
+    query = AudioEvent.csv_query(nil, project, target_region, nil, nil, nil, nil, nil, nil)
+    returned_event_ids = AudioEvent.connection.select_all(query.to_sql).pluck('audio_event_id')
+
+    expect(returned_event_ids).to eq([target_event.id])
+  end
+
   it 'ensures only one instance of each audio event in annotation download' do
     user = create(:user, user_name: 'owner user checking audio event uniqueness in annotation download')
 
