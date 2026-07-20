@@ -30,7 +30,8 @@ module BawWorkers
         )
 
         def initialize(filter, **exporter_options)
-          @filter = validate_filter(filter)
+          validate_filter(filter)
+          @filter = filter
           @options = required_exporter_options(exporter_options)
         end
 
@@ -110,9 +111,6 @@ module BawWorkers
           message = 'Expected filter to be '
           raise ArgumentError, "#{message}ActiveRecord::Relation" unless filter.is_a?(::ActiveRecord::Relation)
           raise ArgumentError, "#{message}Tagging relation" unless filter.klass == Tagging
-          raise ArgumentError, 'Filter returned no data, cannot export' if filter.empty?
-
-          filter
         end
 
         def required_exporter_options(exporter_options)
