@@ -193,6 +193,19 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
+    it 'writes machine classification details from audio event provenance' do
+      audio_event.update!(provenance:)
+
+      result = with_export_manifest {
+        CSV.read(package_path.join('observations.csv'), headers: true).first.to_h
+      }
+
+      expect(result).to include(
+        'classificationMethod' => 'machine',
+        'classifiedBy' => provenance.name
+      )
+    end
+
     context 'with no user or obfuscation override' do
       it 'writes public coordinates' do
         result = with_export_manifest {

@@ -46,6 +46,11 @@ class Provenance < ApplicationRecord
 
   renders_markdown_for :description
 
+  # Provenances are currently assumed to be algorithms, but if that changes, we can add the needed logic here.
+  def machine_generated?
+    true
+  end
+
   # Define filter api settings
   def self.filter_settings
     fields = [

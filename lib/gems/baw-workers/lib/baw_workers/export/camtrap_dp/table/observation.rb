@@ -170,8 +170,7 @@ module BawWorkers
             ae = tagging.audio_event
             ar = ae.audio_recording
 
-            # ? Is this future proof?
-            classification_method = ae.provenance_id ? 'machine' : nil
+            classification_method = ae.provenance&.machine_generated? ? 'machine' : nil
 
             # ? When audio_event.provenance is null, `tagging.creator` queries the user table:
             # - Should we eager load the user association to avoid this?
