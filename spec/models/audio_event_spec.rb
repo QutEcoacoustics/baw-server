@@ -390,7 +390,7 @@ describe AudioEvent do
     expect(actual_audio_event_ids).to eq(expected_audio_events)
   end
 
-  it 'filters to region sites when both project and region are provided' do
+  it 'filters audio events to region sites when both project and region are provided' do
     user = create(:user)
     project = create(:project, creator: user)
     target_region = create(:region, creator: user, project:)
