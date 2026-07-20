@@ -118,6 +118,14 @@ class AudioEvent < ApplicationRecord
     )
   })
 
+  def start_date
+    audio_recording.recorded_date + start_time_seconds.seconds
+  end
+
+  def end_date
+    audio_recording.recorded_date + end_time_seconds.seconds
+  end
+
   def self.start_date_arel
     Arel.grouping(
       AudioRecording.arel_table[:recorded_date] +
