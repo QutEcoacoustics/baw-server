@@ -156,9 +156,9 @@ module BawWorkers
         end
 
         def close_table_writers
-          return if table_writers.nil?
+          return if @table_writers.nil?
 
-          table_writers.deconstruct.each { |writer| writer.close unless writer.nil? || writer.closed? }
+          @table_writers.deconstruct.each { |writer| writer.close unless writer.nil? || writer.closed? }
         end
 
         def exporter_temp_dir
@@ -166,15 +166,15 @@ module BawWorkers
         end
 
         def package_path
-          @package_path ||= exporter_temp_dir.join(PACKAGE_PATH).tap { |path| FileUtils.mkdir_p(path) }
+          @package_path ||= (exporter_temp_dir / PACKAGE_PATH).mkpath
         end
 
         def package_files
-          @package_files ||= PACKAGE_FILENAMES.transform_values { |filename| package_path.join(filename) }
+          @package_files ||= PACKAGE_FILENAMES.transform_values { |filename| package_path / filename }
         end
 
         def zip_path
-          @zip_path ||= exporter_temp_dir.join(ZIP_PATH)
+          @zip_path ||= exporter_temp_dir / ZIP_PATH
         end
 
         # @return [PackageManifest]
@@ -192,7 +192,7 @@ module BawWorkers
 
         def cleanup
           close_table_writers
-          FileUtils.rm_rf(exporter_temp_dir)
+          FileUtils.rm_rf(@exporter_temp_dir) if @exporter_temp_dir&.exist?
         end
       end
     end
