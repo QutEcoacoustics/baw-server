@@ -174,18 +174,21 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       expect(Dir).not_to exist(temp_dir)
     end
 
-    it 'calculates deployment start and end times from audio recordings' do
-      recording = create(:audio_recording, recorded_date: Time.current, site:, creator: writer_user) { |ar|
-        create(:audio_event, audio_recording: ar, creator: writer_user) { |ae|
-          create(:tagging, audio_event: ae, tag: create(:tag_taxonomic_true_species), creator: writer_user)
-        }
-      }
+    it 'calculates deployment start and end times from all site audio recordings' do
+      earliest_recording = create(:audio_recording, recorded_date: audio_recording.recorded_date - 1.day, site:,
+        creator: writer_user)
+      latest_recording = create(:audio_recording, recorded_date: audio_recording.recorded_date + 1.day, site:,
+        creator: writer_user)
 
       with_export_manifest do
         rows = package_data
         expect(rows[:deployments]).to include(
-          'deploymentStart' => audio_recording.recorded_date.utc.iso8601(0),
-          'deploymentEnd' => recording.recorded_end_date.utc.iso8601(0)
+          'deploymentStart' => earliest_recording.recorded_date.utc.iso8601(0),
+          'deploymentEnd' => latest_recording.recorded_end_date.utc.iso8601(0)
+        )
+        expect(rows[:descriptor]['temporal']).to include(
+          'start' => earliest_recording.recorded_date.utc.iso8601(0),
+          'end' => latest_recording.recorded_end_date.utc.iso8601(0)
         )
       end
     end

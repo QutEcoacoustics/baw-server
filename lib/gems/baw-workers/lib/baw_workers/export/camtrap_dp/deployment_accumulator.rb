@@ -5,8 +5,8 @@ module BawWorkers
     module CamtrapDp
       # Accumulate deployment related metadata for taggings.
       #
-      # We use Site as a proxy for a deployment, and calculate deployment start and end time based on the audio
-      # recordings at the site in the result set.
+      # We use Site as a proxy for a deployment, and calculate deployment start and end time based on all audio
+      # recordings at the site.
       class DeploymentAccumulator
         # The caller can provide a timezone override. If provided, all timestamps in the export will use this timezone.
         # You can even provide a custom timezone, e.g.: `ActiveSupport::TimeZone.create('Fixed', 600, TZInfo::Timezone.get('GMT'))`
@@ -38,7 +38,8 @@ module BawWorkers
           # Ensures all times in a deployment are in a uniform Timezone for exporting.
           #
           # @param time [Time, ActiveSupport::TimeWithZone, nil] timestamp to export.
-          # @return [Time, ActiveSupport::TimeWithZone, nil] timestamp converted to the deployment's timezone, ready for Camtrap-DP ISO 8601 serialization.
+          # @return [Time, ActiveSupport::TimeWithZone, nil] timestamp converted to the deployment's timezone,
+          #   ready for Camtrap-DP ISO 8601 serialization.
           def ensure_timezone(time)
             return nil if time.blank?
 
@@ -48,9 +49,8 @@ module BawWorkers
           end
         }
 
-        # Add a deployment for the tagging's site if it doesn't exist, or update the existing deployment's start and end
-        # times if it does. Initialize the deployment's timezone based on the site's timezone, unless a forced_timezone
-        # was provided to the accumulator.
+        # Add a deployment for the tagging's site if it doesn't exist. Initialize the deployment's timezone based on the
+        # site's timezone, unless a forced_timezone was provided to the accumulator.
         #
         # This isn't a problem now, but it's worth noting: deployments are keyed by site_id, and site is cached the
         # first time seen. So when using find_each in batches, the same site from a later batch will have a different
@@ -60,26 +60,28 @@ module BawWorkers
         # @return [Deployment] the new or updated deployment for the tagging's site
         def add_or_update(tagging)
           audio_recording = tagging.audio_event.audio_recording
-          deployment = @deployments[audio_recording.site_id] || Deployment.new(
-            site: audio_recording.site, # this will be the object from the first time it was seen in a batch
-            start: nil,
-            end: nil,
-            file_public: audio_recording.site.public_site?,
-            timezone: @forced_timezone || site_timezone(audio_recording.site)
-          )
-
-          @deployments[audio_recording.site_id] = deployment.with(
-            start: deployment.ensure_timezone(earliest(deployment.start, audio_recording.recorded_date)),
-            end: deployment.ensure_timezone(latest(deployment.end, audio_recording.recorded_end_date))
-          )
+          @deployments[audio_recording.site_id] ||= build_deployment(audio_recording.site)
         end
-
-        def earliest(*times) = times.compact.min
-        def latest(*times) = times.compact.max
 
         def values = @deployments.values
 
         private
+
+        def build_deployment(site)
+          timezone = @forced_timezone || site_timezone(site)
+          recording_bounds = AudioRecording.pick_hash({
+            start: AudioRecording.arel_table[:recorded_date].minimum,
+            end: AudioRecording.arel_recorded_end_date.maximum
+          }, scope: site.audio_recordings)
+
+          Deployment.new(
+            site: site,
+            start: recording_bounds[:start]&.in_time_zone(timezone),
+            end: recording_bounds[:end]&.in_time_zone(timezone),
+            file_public: site.public_site?,
+            timezone: timezone
+          )
+        end
 
         # @param site [Site] site whose timezone should be used for export timestamps.
         # @return [TZInfo::Timezone, ActiveSupport::TimeZone] timezone of site or UTC fallback if site has no timezone.
