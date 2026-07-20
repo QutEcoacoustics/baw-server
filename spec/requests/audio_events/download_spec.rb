@@ -21,6 +21,21 @@ describe '/audio_events/download' do
     expect(lines[1]).to start_with(another_event.id.to_s)
   end
 
+  it 'scopes nested project region downloads to the region from route params' do
+    other_region = create(:region, creator: writer_user, project:)
+    other_site = create(:site, :with_lat_long, creator: writer_user, region: other_region, projects: [project])
+    other_recording = create(:audio_recording, :status_ready, creator: writer_user, uploader: writer_user, site: other_site)
+    create(:audio_event, audio_recording: other_recording, creator: writer_user)
+
+    get "/projects/#{project.id}/regions/#{region.id}/audio_events/download",
+      headers: auth_header(writer_token)
+
+    expect_success
+
+    returned_event_ids = response.body.lines.drop(1).map { |line| line.split(',', 2).first.to_i }
+    expect(returned_event_ids).to eq([audio_event.id])
+  end
+
   # projects update/create actions expect payload from html form as well as json
   describe 'Downloading Csv' do
     def download_url
