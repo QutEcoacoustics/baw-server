@@ -499,7 +499,9 @@ class AudioEvent < ApplicationRecord
         .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
         .where(projects[:deleted_at].eq(nil))
         .where(projects[:id].eq(project.id))
-        .project(sites[:id]).distinct
+      site_filter = site_filter.where(sites[:region_id].eq(region.id)) if region
+      site_filter = site_filter.where(sites[:id].eq(site.id)) if site
+      site_filter = site_filter.project(sites[:id]).distinct
     elsif site
       site_filter = sites.where(sites[:id].eq(site.id)).project(sites[:id])
     elsif region
