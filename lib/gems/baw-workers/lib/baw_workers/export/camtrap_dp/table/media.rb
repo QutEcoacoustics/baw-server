@@ -34,12 +34,7 @@ module BawWorkers
             deployment_identifier = Identifier.site(deployment.site)
             file_path = Api::UrlHelpers.audio_recording_media_original_url(audio_recording_id: audio_recording.id)
 
-            # ? Is this calculation correct? There are many cases in the database where this calculation doesn't result
-            # ? in their valid enum values. And in that case, we just have to return nil?
-            # ? Alternatively, we also emit our own bit_rate_bps field?
-            bit_depth = (audio_recording.bit_rate_bps.to_f / (audio_recording.channels * audio_recording.sample_rate_hertz))
-            bit_depth = nil unless bit_depth.in?([8, 16, 24, 32])
-
+            # TODO: add bitDepth when closed: https://github.com/QutEcoacoustics/baw-server/issues/1020
             Media.new(
               mediaID: media_identifier,
               deploymentID: deployment_identifier,
@@ -51,7 +46,7 @@ module BawWorkers
               fileName: audio_recording.friendly_name,
               fileMediatype: audio_recording.media_type,
               exifData: nil,
-              bitDepth: bit_depth,
+              bitDepth: nil,
               samplingFrequency: audio_recording.sample_rate_hertz,
               gain: nil,
               channels: audio_recording.channels,

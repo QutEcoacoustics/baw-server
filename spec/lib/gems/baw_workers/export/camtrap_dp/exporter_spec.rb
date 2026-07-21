@@ -123,8 +123,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       let(:filter) { Tagging.none }
 
       it 'raises an error' do
-        # raise ArgumentError, 'Filter returned no data, cannot export' if filter.empty?
-        # debugger
+        expect { subject.call { nil } }.to raise_error(ArgumentError, 'Filter returned no data, cannot export')
       end
     end
 
