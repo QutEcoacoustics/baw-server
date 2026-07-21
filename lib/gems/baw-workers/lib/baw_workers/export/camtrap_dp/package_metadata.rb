@@ -52,8 +52,8 @@ module BawWorkers
         end
 
         def self.load_table_schema(name)
-          path = File.join(Profile::DIRECTORY, Profile::ASSET_FILES[name.to_s.to_sym])
-          JSON.parse(File.read(path), symbolize_names: true)
+          path = Profile::DIRECTORY / Profile::ASSET_FILES[name]
+          JSON.parse(path.read, symbolize_names: true)
         end
 
         # Use the host name and client URL as a package source.
