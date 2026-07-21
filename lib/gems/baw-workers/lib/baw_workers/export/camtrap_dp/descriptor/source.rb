@@ -4,8 +4,9 @@ module BawWorkers
   module Export
     module CamtrapDp
       class Descriptor
-        # Represnts a source of the package, e.g. a data source. Can be a data management platform from which the
+        # Represents a source of the package, e.g. a data source. Can be a data management platform from which the
         # package was derived.
+        # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/sources/items
         class Source < Descriptor
           attribute? :title, Types::String.optional
           attribute? :path, Types::UrlOrPath.optional

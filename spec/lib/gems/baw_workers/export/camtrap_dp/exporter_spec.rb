@@ -226,6 +226,21 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       )
     end
 
+    it 'writes a default package source using the client settings' do
+      allow(Settings.client).to receive(:host).and_return('ecoacoustics')
+
+      result = with_export_manifest {
+        JSON.parse(package_path.join('datapackage.json').read).fetch('sources')
+      }
+
+      expect(result).to contain_exactly(
+        include(
+          'title' => 'Ecoacoustics',
+          'path' => Settings.client_routes.home_url
+        )
+      )
+    end
+
     context 'with no user or obfuscation override' do
       it 'writes public coordinates' do
         result = with_export_manifest {

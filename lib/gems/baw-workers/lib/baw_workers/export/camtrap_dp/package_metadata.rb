@@ -37,12 +37,15 @@ module BawWorkers
               start: temporal[:start],
               end: temporal[:end]
             ),
-            taxonomic: taxonomic_coverage(scientific_names)
+            taxonomic: taxonomic_coverage(scientific_names),
+            sources: sources
           )
         end
 
-        # Optional title for this specific package, different from the project title
-        # def self.package_title =
+        # Use the host name and client URL as a package source.
+        def self.sources
+          [Descriptor::Source.new(title: Settings.client.host.titlecase, path: Settings.client_routes.home_url)]
+        end
 
         # We don't support identifying individual animals currently, so this will always be false. In future, if we
         # add a platform feature to support this, we can make this configurable.

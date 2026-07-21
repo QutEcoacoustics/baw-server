@@ -8,6 +8,7 @@ module BawWorkers
       # ('contributor') - even verification creators, plus optional add more in from param
       # Should be able to have a list of users and we can map a user to a contributor descriptor
       # TODO: but we only have user_names, not real names, i'll need to check this.
+      # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/contributors/items
       class Descriptor::Contributor < Descriptor
         # name/title of the person or organisation
         attribute :title, Types::String

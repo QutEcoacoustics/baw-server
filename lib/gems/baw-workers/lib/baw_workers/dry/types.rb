@@ -75,7 +75,7 @@ module BawWorkers
 
       Url = Types::String.constructor { |input|
         URI.parse(input)
-        input
+        input.to_s
       }
 
       SafePath = Types::String.constructor { |input|

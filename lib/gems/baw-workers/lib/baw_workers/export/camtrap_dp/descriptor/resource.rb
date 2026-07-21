@@ -4,6 +4,7 @@ module BawWorkers
   module Export
     module CamtrapDp
       class Descriptor
+        # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/resources/items/oneOf/0
         class Resource < Descriptor
           attribute :name, Types::String
           attribute :path, Types::UrlOrPath

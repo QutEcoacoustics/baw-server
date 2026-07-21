@@ -4,6 +4,7 @@ module BawWorkers
   module Export
     module CamtrapDp
       class Descriptor
+        # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/taxonomic
         class Taxonomic < Descriptor
           attribute :scientificName, Types::String
           attribute? :taxonID, Types::String.optional
