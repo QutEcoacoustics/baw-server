@@ -10,7 +10,7 @@ module BawWorkers
         # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties
         class Package < Descriptor
           attribute :profile, Types::UrlOrPath
-          attribute :resources, Types::Array.of(Resource).default(Resource::DEFAULT_RESOURCES)
+          attribute :resources, Types::Array.of(Resource)
           attribute :created, Types::UtcTimeSeconds
           attribute :contributors, Types::Array.of(Contributor)
           attribute :project, Project

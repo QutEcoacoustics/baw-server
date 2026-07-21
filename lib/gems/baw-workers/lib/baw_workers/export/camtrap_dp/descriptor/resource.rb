@@ -17,18 +17,6 @@ module BawWorkers
 
           # The raw parsed JSON table schema or url-or-path to the schema
           attribute :schema, Types::Schema
-
-          def self.load_table_schema(name)
-            load_schema(File.join(Profile::DIRECTORY, Profile::ASSET_FILES[name.to_s.to_sym]))
-          end
-
-          def self.load_schema(path) = JSON.parse(File.read(path), symbolize_names: true)
-
-          DEFAULT_RESOURCES = [
-            new(name: 'deployments', path: DEPLOYMENTS_FILENAME.to_s, schema: load_table_schema(:deployments)),
-            new(name: 'media', path: MEDIA_FILENAME.to_s, schema: load_table_schema(:media)),
-            new(name: 'observations', path: OBSERVATIONS_FILENAME.to_s, schema: load_table_schema(:observations))
-          ].freeze
         end
       end
     end

@@ -24,6 +24,7 @@ module BawWorkers
             licenses: licenses
           )
 
+          # TODO: fill name and id fields when closed: https://github.com/QutEcoacoustics/baw-server/issues/1021
           Descriptor::Package.new(
             profile: Profile::PROFILE_PATH.to_s,
             #name:,
@@ -38,8 +39,21 @@ module BawWorkers
               end: temporal[:end]
             ),
             taxonomic: taxonomic_coverage(scientific_names),
-            sources: sources
+            sources: sources,
+            resources: [
+              BawWorkers::Export::CamtrapDp::Descriptor::Resource.new(name: 'deployments', path: DEPLOYMENTS_FILENAME.to_s,
+                schema: load_table_schema(:deployments)),
+              BawWorkers::Export::CamtrapDp::Descriptor::Resource.new(name: 'media', path: MEDIA_FILENAME.to_s,
+                schema: load_table_schema(:media)),
+              BawWorkers::Export::CamtrapDp::Descriptor::Resource.new(name: 'observations', path: OBSERVATIONS_FILENAME.to_s,
+                schema: load_table_schema(:observations))
+            ]
           )
+        end
+
+        def self.load_table_schema(name)
+          path = File.join(Profile::DIRECTORY, Profile::ASSET_FILES[name.to_s.to_sym])
+          JSON.parse(File.read(path), symbolize_names: true)
         end
 
         # Use the host name and client URL as a package source.
