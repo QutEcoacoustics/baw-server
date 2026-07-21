@@ -8,8 +8,8 @@ module BawWorkers
         class Media < BawWorkers::Dry::OrderedStruct
           Types = BawWorkers::Dry::Types
 
-          attribute :mediaID, Types::ID
-          attribute :deploymentID, Types::ID
+          attribute :mediaID, Types::Coercible::String
+          attribute :deploymentID, Types::Coercible::String
           attribute? :captureMethod, Types::String.enum('activityDetection', 'continuous', 'recordingSchedule').optional
           attribute :timestamp, Types::UtcTimeMicroseconds
           attribute? :duration, Types::Decimal.optional
@@ -30,6 +30,8 @@ module BawWorkers
           #   its `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Media] the media struct with the mapped values
           def self.mapping(audio_recording, deployment)
+            media_identifier = Identifier.audio_recording(audio_recording)
+            deployment_identifier = Identifier.site(deployment.site)
             file_path = Api::UrlHelpers.audio_recording_media_original_url(audio_recording_id: audio_recording.id)
 
             # ? Is this calculation correct? There are many cases in the database where this calculation doesn't result
@@ -39,8 +41,8 @@ module BawWorkers
             bit_depth = nil unless bit_depth.in?([8, 16, 24, 32])
 
             Media.new(
-              mediaID: audio_recording.id,
-              deploymentID: deployment.site.id,
+              mediaID: media_identifier,
+              deploymentID: deployment_identifier,
               captureMethod: nil,
               timestamp: deployment.ensure_timezone(audio_recording.recorded_date),
               duration: audio_recording.duration_seconds,
@@ -54,7 +56,7 @@ module BawWorkers
               gain: nil,
               channels: audio_recording.channels,
               favorite: nil,
-              mediaComments: audio_recording.notes.to_s
+              mediaComments: nil
             )
           end
         end

@@ -182,9 +182,9 @@ module BawWorkers
             observation_type = observation_type(tagging.tag)
 
             Observation.new(
-              observationID: tagging.id,
-              deploymentID: ar.site_id,
-              mediaID: ar.id,
+              observationID: Identifier.tagging(tagging),
+              deploymentID: Identifier.site(deployment.site),
+              mediaID: Identifier.audio_recording(ar),
               eventID: nil,
               eventStart: deployment.ensure_timezone(ae.start_date),
               eventEnd: deployment.ensure_timezone(ae.end_date),

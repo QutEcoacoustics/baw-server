@@ -12,24 +12,19 @@ describe BawWorkers::Export::CamtrapDp::Validator do
       contributors: [{ title: 'Alice', path: 'http://www.test' }],
       project_capture_method: ['continuous', 'recordingSchedule'],
       project_sampling_design: 'systematicRandom',
+      package_title: 'Test Package',
       emit_project_license: true,
       forced_timezone: nil
-    ).to_h
-  end
-
-  let(:filter) {
-    Tagging.joins(:tag).where(tags: { type_of_tag: 'species_name', is_taxonomic: true })
-  }
-
-  let!(:export_tagging) do
-    create(:tagging, audio_event:, tag: create(:tag_taxonomic_true_species), creator: writer_user)
-  end
-
-  let(:exporter) do
-    BawWorkers::Export::CamtrapDp::Exporter.new(
-      filter, **export_options
     )
   end
+
+  let(:filter) { Tagging.joins(:tag).where(tags: { type_of_tag: 'species_name', is_taxonomic: true }) }
+
+  let!(:export_tagging) {
+    create(:tagging, audio_event:, tag: create(:tag_taxonomic_true_species), creator: writer_user)
+  }
+
+  let(:exporter) { BawWorkers::Export::CamtrapDp::Exporter.new(filter, export_options) }
 
   let(:manifest) { @manifest }
   let(:package_path) { manifest.package_path }

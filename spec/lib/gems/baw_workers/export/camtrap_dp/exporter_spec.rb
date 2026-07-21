@@ -3,11 +3,7 @@
 describe BawWorkers::Export::CamtrapDp::Exporter do
   create_entire_hierarchy
 
-  subject(:exporter) do
-    BawWorkers::Export::CamtrapDp::Exporter.new(
-      filter, export_options
-    )
-  end
+  subject(:exporter) { BawWorkers::Export::CamtrapDp::Exporter.new(filter, export_options) }
 
   let(:export_options) do
     BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
@@ -191,6 +187,30 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           'end' => latest_recording.recorded_end_date.utc.iso8601(0)
         )
       end
+    end
+
+    it 'writes configured client-host identifiers for table ids and foreign keys' do
+      rows = with_export_manifest { package_data }
+
+      site_identifier = BawWorkers::Export::CamtrapDp::Identifier.site(site)
+      audio_recording_identifier = BawWorkers::Export::CamtrapDp::Identifier.audio_recording(audio_recording)
+      tagging_identifier = BawWorkers::Export::CamtrapDp::Identifier.tagging(export_tagging)
+
+      expect([site_identifier, audio_recording_identifier, tagging_identifier]).to all(exclude('://'))
+
+      expect(rows[:deployments]).to include(
+        'deploymentID' => site_identifier,
+        'locationID' => site_identifier
+      )
+      expect(rows[:media]).to include(
+        'mediaID' => audio_recording_identifier,
+        'deploymentID' => site_identifier
+      )
+      expect(rows[:observations]).to include(
+        'observationID' => tagging_identifier,
+        'deploymentID' => site_identifier,
+        'mediaID' => audio_recording_identifier
+      )
     end
 
     it 'writes machine classification details from audio event provenance' do

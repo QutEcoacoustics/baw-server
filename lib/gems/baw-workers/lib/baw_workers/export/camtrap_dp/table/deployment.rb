@@ -95,11 +95,12 @@ module BawWorkers
           # @return [Deployment] the deployment struct with the mapped values
           def self.mapping(deployment, user:, should_obfuscate:)
             site = deployment.site
+            site_identifier = Identifier.site(site)
 
-            # Because we are treating site as a single deployment, site id is used for both the deploymentID and locationID.
+            # Because we are treating site as a single deployment, site path is used for both the deploymentID and locationID.
             Deployment.new(
-              deploymentID: site.id,
-              locationID: site.id,
+              deploymentID: site_identifier,
+              locationID: site_identifier,
               locationName: site.name,
               latitude: site.public_latitude(user: user, should_obfuscate: should_obfuscate),
               longitude: site.public_longitude(user: user, should_obfuscate: should_obfuscate),
