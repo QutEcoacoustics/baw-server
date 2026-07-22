@@ -15,6 +15,7 @@ module Api
       include Rails.application.routes.url_helpers
 
       include Api::CustomUrlHelpers
+      include Api::GlobalIdentifiers
 
       def default_url_options
         Rails.configuration.action_mailer.default_url_options

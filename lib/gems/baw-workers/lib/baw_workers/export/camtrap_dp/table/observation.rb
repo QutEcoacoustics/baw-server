@@ -167,27 +167,36 @@ module BawWorkers
           #   `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Observation] the observation struct with the mapped values
           def self.mapping(tagging, deployment)
-            ae = tagging.audio_event
-            ar = ae.audio_recording
+            audio_event = tagging.audio_event
+            audio_recording = audio_event.audio_recording
 
-            classification_method = ae.provenance&.machine_generated? ? 'machine' : nil
+            deployment_identifier = Api::UrlHelpers.global_identifier(:shallow_site_path, id: deployment.site.id)
+            media_identifier = Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id)
+            observation_identifier = Api::UrlHelpers.global_identifier(
+              :audio_recording_audio_event_tagging_path,
+              audio_recording_id: audio_recording.id,
+              audio_event_id: audio_event.id,
+              id: tagging.id
+            )
+
+            classification_method = audio_event.provenance&.machine_generated? ? 'machine' : nil
 
             # ? When audio_event.provenance is null, `tagging.creator` queries the user table:
             # - Should we eager load the user association to avoid this?
             # - The user_name is not a real name, is that an issue for the package or for ALA?
-            classified_by = ae.provenance&.name || tagging.creator.user_name
+            classified_by = audio_event.provenance&.name || tagging.creator.user_name
 
             scientific_name = tagging.tag.type_of_tag == 'species_name' ? tagging.tag.text : nil
 
             observation_type = observation_type(tagging.tag)
 
             Observation.new(
-              observationID: Identifier.tagging(tagging),
-              deploymentID: Identifier.site(deployment.site),
-              mediaID: Identifier.audio_recording(ar),
+              observationID: observation_identifier,
+              deploymentID: Api::UrlHelpers.global_identifier(:shallow_site_path, id: deployment.site.id),
+              mediaID: Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id),
               eventID: nil,
-              eventStart: deployment.ensure_timezone(ae.start_date),
-              eventEnd: deployment.ensure_timezone(ae.end_date),
+              eventStart: deployment.ensure_timezone(audio_event.start_date),
+              eventEnd: deployment.ensure_timezone(audio_event.end_date),
               observationLevel: OBSERVATION_LEVEL,
               observationType: observation_type,
               deviceSetupType: nil,
@@ -204,8 +213,8 @@ module BawWorkers
               bboxY: nil,
               bboxWidth: nil,
               bboxHeight: nil,
-              frequencyLow: ae.low_frequency_hertz,
-              frequencyHigh: ae.high_frequency_hertz,
+              frequencyLow: audio_event.low_frequency_hertz,
+              frequencyHigh: audio_event.high_frequency_hertz,
               classificationMethod: classification_method,
               classifiedBy: classified_by,
               classificationTimestamp: deployment.ensure_timezone(tagging.created_at),

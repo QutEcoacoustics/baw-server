@@ -95,12 +95,13 @@ module BawWorkers
           # @return [Deployment] the deployment struct with the mapped values
           def self.mapping(deployment, user:, should_obfuscate:)
             site = deployment.site
-            site_identifier = Identifier.site(site)
+            deployment_identifier = Api::UrlHelpers.global_identifier(:shallow_site_path, id: site.id)
 
-            # Because we are treating site as a single deployment, site path is used for both the deploymentID and locationID.
+            # Because we are treating site as a single deployment, the same identifier is used for both deploymentID and locationID.
+            # https://github.com/tdwg/camtrap-dp/issues/467
             Deployment.new(
-              deploymentID: site_identifier,
-              locationID: site_identifier,
+              deploymentID: deployment_identifier,
+              locationID: deployment_identifier,
               locationName: site.name,
               latitude: site.public_latitude(user: user, should_obfuscate: should_obfuscate),
               longitude: site.public_longitude(user: user, should_obfuscate: should_obfuscate),
