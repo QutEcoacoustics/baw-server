@@ -18,10 +18,10 @@ module BawWorkers
           attribute :deploymentID, Types::Coercible::String
 
           # Identifier of the media file that was classified. Only applicable for media-based observations (`observationLevel` = `media`). Foreign key to `media.mediaID`.
-          attribute? :mediaID, Types::Coercible::String.optional
+          attribute? :mediaID, Types::Coercible::String
 
           # Identifier of the event the observation belongs to. Facilitates linking event-based and media-based observations with a permanent identifier.
-          attribute? :eventID, Types::String.optional
+          attribute? :eventID, Types::String
 
           # Date and time at which the event started. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
           attribute :eventStart, Types::UtcTimeMicroseconds
@@ -37,73 +37,73 @@ module BawWorkers
             Types::String.enum('animal', 'human', 'vehicle', 'blank', 'unknown', 'unclassified')
 
           # Type of the device setup action (if any) associated with the observation.
-          attribute? :deviceSetupType, Types::String.enum('setup', 'calibration').optional
+          attribute? :deviceSetupType, Types::String.enum('setup', 'calibration')
 
           # Scientific name of the observed individual(s).
-          attribute? :scientificName, Types::String.optional
+          attribute? :scientificName, Types::String
 
           # Number of observed individuals (optionally of given life stage, sex and behavior).
-          attribute? :count, Types::Integer.optional
+          attribute? :count, Types::Integer
 
           # Age class or life stage of the observed individual(s).
-          attribute? :lifeStage, Types::String.enum('adult', 'subadult', 'juvenile').optional
+          attribute? :lifeStage, Types::String.enum('adult', 'subadult', 'juvenile')
 
           # Sex of the observed individual(s)
-          attribute? :sex, Types::String.enum('female', 'male').optional
+          attribute? :sex, Types::String.enum('female', 'male')
 
           # Dominant behavior of the observed individual(s), preferably expressed as controlled values (e.g. grazing, browsing, rooting, vigilance, running, walking). Formatted as a pipe (`|`) separated list for multiple values, with the dominant behavior listed first.
-          attribute? :behavior, Types::String.optional
+          attribute? :behavior, Types::String
 
           # Identifier of the observed individual.
-          attribute? :individualID, Types::String.optional
+          attribute? :individualID, Types::String
 
           # Distance from the device to the observed individual identified by `individualID`. Expressed in meters. Required for distance analyses (e.g. [Howe et al. 2017](https://doi.org/10.1111/2041-210X.12790)) and random encounter modelling (e.g. [Rowcliffe et al. 2011](https://doi.org/10.1111/j.2041-210X.2011.00094.x)).
-          attribute? :individualPositionRadius, Types::Coercible::Float.optional
+          attribute? :individualPositionRadius, Types::Coercible::Float
 
           # Angular distance from the device view centerline to the observed individual identified by `individualID`. Expressed in degrees, with negative values left, `0` straight ahead and positive values right. Required for distance analyses (e.g. [Howe et al. 2017](https://doi.org/10.1111/2041-210X.12790)) and random encounter modelling (e.g. [Rowcliffe et al. 2011](https://doi.org/10.1111/j.2041-210X.2011.00094.x)).
-          attribute? :individualPositionAngle, Types::Coercible::Float.optional
+          attribute? :individualPositionAngle, Types::Coercible::Float
 
           # Average movement speed of the observed individual identified by `individualID`. Expressed in meters per second. Required for random encounter modelling (e.g. [Rowcliffe et al. 2016](https://doi.org/10.1002/rse2.17)).
-          attribute? :individualSpeed, Types::Coercible::Float.optional
+          attribute? :individualSpeed, Types::Coercible::Float
 
           # Horizontal position of the top-left corner of a bounding box that encompasses the observed individual(s) in the media file identified by `mediaID`. Or the horizontal position of an object in that media file. Measured from the left and relative to media file width.
-          attribute? :bboxX, Types::Coercible::Float.optional
+          attribute? :bboxX, Types::Coercible::Float
 
           # Vertical position of the top-left corner of a bounding box that encompasses the observed individual(s) in the media file identified by `mediaID`. Or the vertical position of an object in that media file. Measured from the top and relative to the media file height.
-          attribute? :bboxY, Types::Coercible::Float.optional
+          attribute? :bboxY, Types::Coercible::Float
 
           # Width of a bounding box that encompasses the observed individual(s) in the media file identified by `mediaID`. Measured from the left of the bounding box and relative to the media file width.
-          attribute? :bboxWidth, Types::Coercible::Float.optional
+          attribute? :bboxWidth, Types::Coercible::Float
 
           # Height of the bounding box that encompasses the observed individual(s) in the media file identified by `mediaID`. Measured from the top of the bounding box and relative to the media file height.
-          attribute? :bboxHeight, Types::Coercible::Float.optional
+          attribute? :bboxHeight, Types::Coercible::Float
 
           # Lower limit of the frequency range over which the observation applies. Expressed in Hertz. Must be lower than frequencyHigh.
-          attribute? :frequencyLow, Types::Coercible::Float.optional
+          attribute? :frequencyLow, Types::Coercible::Float
 
           # Higher limit of the frequency range over which the observation applies. Expressed in Hertz. Must be higher than frequencyHigh.
-          attribute? :frequencyHigh, Types::Coercible::Float.optional
+          attribute? :frequencyHigh, Types::Coercible::Float
 
           # Method (most recently) used to classify the observation.
-          attribute? :classificationMethod, Types::String.enum('human', 'machine').optional
+          attribute? :classificationMethod, Types::String.enum('human', 'machine')
 
           # Name or identifier of the person or AI algorithm that (most recently) classified the observation.
-          attribute? :classifiedBy, Types::String.optional
+          attribute? :classifiedBy, Types::String
 
           # Date and time of the (most recent) classification. Formatted as an ISO 8601 string with timezone designator (`YYYY-MM-DDThh:mm:ssZ` or `YYYY-MM-DDThh:mm:ss¬±hh:mm`).
-          attribute? :classificationTimestamp, Types::UtcTimeSeconds.optional
+          attribute? :classificationTimestamp, Types::UtcTimeSeconds
 
           # Degree of certainty of the (most recent) classification. Expressed as a probability, with `1` being maximum certainty. Omit or provide an approximate probability for human classifications.
-          attribute? :classificationProbability, Types::Coercible::Float.optional
+          attribute? :classificationProbability, Types::Coercible::Float
 
           # A confirmation that the classified species was observed via other means. Not related to our idea of confirmations. https://github.com/tdwg/camtrap-dp/issues/453
-          attribute? :classificationConfirmation, Types::String.enum('captured', 'heardOnSite', 'seenOnSite').optional
+          attribute? :classificationConfirmation, Types::String.enum('captured', 'heardOnSite', 'seenOnSite')
 
           # Tag(s) associated with the observation. Formatted as a pipe (`|`) separated list for multiple values, with values optionally formatted as `key:value` pairs.
-          attribute? :observationTags, Types::String.optional
+          attribute? :observationTags, Types::String
 
           # Comments or notes about the observation.
-          attribute? :observationComments, Types::String.optional
+          attribute? :observationComments, Types::String
 
           def self.anchored_union(*patterns)
             /\A#{Regexp.union(patterns)}\z/
@@ -181,39 +181,42 @@ module BawWorkers
 
             observation_type = observation_type(tagging.tag)
 
-            Observation.new(
+            # Drop nil values before initializing the struct to prevent type errors.
+            attributes = {
               observationID: tagging.global_identifier,
               deploymentID: deployment.site.global_identifier,
               mediaID: audio_recording.global_identifier,
-              eventID: nil,
+              # eventID:,
               eventStart: deployment.ensure_timezone(audio_event.start_date),
               eventEnd: deployment.ensure_timezone(audio_event.end_date),
               observationLevel: OBSERVATION_LEVEL,
               observationType: observation_type,
-              deviceSetupType: nil,
+              # deviceSetupType:,
               scientificName: scientific_name,
-              count: nil,
-              lifeStage: nil,
-              sex: nil,
-              behavior: nil,
-              individualID: nil,
-              individualPositionRadius: nil,
-              individualPositionAngle: nil,
-              individualSpeed: nil,
-              bboxX: nil,
-              bboxY: nil,
-              bboxWidth: nil,
-              bboxHeight: nil,
+              # count:,
+              # lifeStage:,
+              # sex:,
+              # behavior:,
+              # individualID:,
+              # individualPositionRadius:,
+              # individualPositionAngle:,
+              # individualSpeed:,
+              # bboxX:,
+              # bboxY:,
+              # bboxWidth:,
+              # bboxHeight:,
               frequencyLow: audio_event.low_frequency_hertz,
               frequencyHigh: audio_event.high_frequency_hertz,
               classificationMethod: classification_method,
               classifiedBy: classified_by,
-              classificationTimestamp: deployment.ensure_timezone(tagging.created_at),
-              classificationProbability: nil,
-              classificationConfirmation: nil,
-              observationTags: nil,
-              observationComments: nil
-            )
+              classificationTimestamp: deployment.ensure_timezone(tagging.created_at)
+              # classificationProbability:,
+              # classificationConfirmation:,
+              # observationTags:,
+              # observationComments
+            }.compact
+
+            Observation.new(attributes)
           end
         end
       end

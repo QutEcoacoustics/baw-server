@@ -96,18 +96,20 @@ module BawWorkers
           def self.mapping(deployment, user:, should_obfuscate:)
             site = deployment.site
 
+            # TODO: uncertainty issue https://github.com/tdwg/camtrap-dp/issues/467
             # Because we are treating site as a single deployment, the same identifier is used for both deploymentID and locationID.
-            # https://github.com/tdwg/camtrap-dp/issues/467
-            Deployment.new(
+            attributes = {
               deploymentID: site.global_identifier,
               locationID: site.global_identifier,
               locationName: site.name,
               latitude: site.public_latitude(user: user, should_obfuscate: should_obfuscate),
               longitude: site.public_longitude(user: user, should_obfuscate: should_obfuscate),
-              coordinateUncertainty: nil,
+              # coordinateUncertainty:,
               deploymentStart: deployment.ensure_timezone(deployment.start),
               deploymentEnd: deployment.ensure_timezone(deployment.end)
-            )
+            }.compact
+
+            Deployment.new(attributes)
           end
         end
       end
