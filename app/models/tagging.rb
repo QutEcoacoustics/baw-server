@@ -31,8 +31,8 @@ class Tagging < ApplicationRecord
   # relations
   belongs_to :audio_event, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly
   belongs_to :tag, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_taggings
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_taggings, optional: true
+  belongs_to :creator, class_name: 'User', inverse_of: :created_taggings
+  belongs_to :updater, class_name: 'User', inverse_of: :updated_taggings, optional: true
 
   # accepts_nested_attributes_for :audio_event
   # accepts_nested_attributes_for :tag
@@ -44,11 +44,21 @@ class Tagging < ApplicationRecord
   #validates_associated :creator
 
   # attribute validations
-  validates_uniqueness_of :audio_event_id, scope: [:tag_id],
-    message: 'audio_event_id %<value>s must be unique within tag_id and audio_event_id'
+  validates :audio_event_id,
+    uniqueness: { scope: [:tag_id],
+                  message: 'audio_event_id %<value>s must be unique within tag_id and audio_event_id' }
 
   # postgres-specific
   scope :count_unique, -> { Tagging.select(:tag_id).distinct.count }
+
+  def global_identifier
+    Api::UrlHelpers.global_identifier(
+      :audio_recording_audio_event_tagging_path,
+      audio_recording_id: audio_event.audio_recording_id,
+      audio_event_id: audio_event_id,
+      id: id
+    )
+  end
 
   # Define filter api settings
   def self.filter_settings

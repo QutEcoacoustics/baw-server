@@ -170,15 +170,6 @@ module BawWorkers
             audio_event = tagging.audio_event
             audio_recording = audio_event.audio_recording
 
-            deployment_identifier = Api::UrlHelpers.global_identifier(:shallow_site_path, id: deployment.site.id)
-            media_identifier = Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id)
-            observation_identifier = Api::UrlHelpers.global_identifier(
-              :audio_recording_audio_event_tagging_path,
-              audio_recording_id: audio_recording.id,
-              audio_event_id: audio_event.id,
-              id: tagging.id
-            )
-
             classification_method = audio_event.provenance&.machine_generated? ? 'machine' : nil
 
             # ? When audio_event.provenance is null, `tagging.creator` queries the user table:
@@ -191,9 +182,9 @@ module BawWorkers
             observation_type = observation_type(tagging.tag)
 
             Observation.new(
-              observationID: observation_identifier,
-              deploymentID: Api::UrlHelpers.global_identifier(:shallow_site_path, id: deployment.site.id),
-              mediaID: Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id),
+              observationID: tagging.global_identifier,
+              deploymentID: deployment.site.global_identifier,
+              mediaID: audio_recording.global_identifier,
               eventID: nil,
               eventStart: deployment.ensure_timezone(audio_event.start_date),
               eventEnd: deployment.ensure_timezone(audio_event.end_date),

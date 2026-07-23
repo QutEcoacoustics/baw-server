@@ -321,6 +321,10 @@ class Site < ApplicationRecord
     )
   end
 
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:shallow_site_path, id: id)
+  end
+
   private
 
   # Should the location be obfuscated?

@@ -30,15 +30,12 @@ module BawWorkers
           #   its `ensure_timezone` method applies the forced UTC offset, site timezone, or UTC fallback.
           # @return [Media] the media struct with the mapped values
           def self.mapping(audio_recording, deployment)
-            media_identifier = Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id)
-            deployment_identifier = Api::UrlHelpers.global_identifier(:shallow_site_path, id: deployment.site.id)
-
             file_path = Api::UrlHelpers.audio_recording_media_original_url(audio_recording_id: audio_recording.id)
 
             # TODO: add bitDepth when closed: https://github.com/QutEcoacoustics/baw-server/issues/1020
             Media.new(
-              mediaID: media_identifier,
-              deploymentID: deployment_identifier,
+              mediaID: audio_recording.global_identifier,
+              deploymentID: deployment.site.global_identifier,
               captureMethod: nil,
               timestamp: deployment.ensure_timezone(audio_recording.recorded_date),
               duration: audio_recording.duration_seconds,
