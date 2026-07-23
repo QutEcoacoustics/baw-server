@@ -25,6 +25,7 @@ module BawWorkers
           )
 
           # TODO: fill name and id fields when closed: https://github.com/QutEcoacoustics/baw-server/issues/1021
+          # TODO: add generated contributors when closed: https://github.com/QutEcoacoustics/baw-server/issues/1022
           Descriptor::Package.new(
             profile: Profile::PROFILE_PATH.to_s,
             #name:,

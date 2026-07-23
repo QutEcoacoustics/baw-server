@@ -3,20 +3,20 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      class Descriptor
+      module Descriptor
         # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/project
-        class Project < Descriptor
+        class Project < Base
           attribute :title, Types::String
           attribute :samplingDesign, Types::SamplingDesign
           attribute :captureMethod, Types::Array.of(Types::CaptureMethod)
           attribute :individualAnimals, Types::Bool.default(false)
           attribute :observationLevel, Types::Array.of(Types::String.default('media').enum('media', 'event'))
-          attribute? :id, Types::String.optional
-          attribute? :acronym, Types::String.optional
-          attribute? :description, Types::String.optional
-          attribute? :path, Types::String.optional
+          attribute? :id, Types::String
+          attribute? :acronym, Types::String
+          attribute? :description, Types::String
+          attribute? :path, Types::String
           attribute? :protocolType, Types::String.default('acoustic').enum('camera-trapping', 'acoustic')
-          attribute? :classificationEffort, Types::String.optional
+          attribute? :classificationEffort, Types::String
         end
       end
     end

@@ -3,13 +3,13 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      class Descriptor
+      module Descriptor
         # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/relatedIdentifiers/items
-        class RelatedIdentifier < Descriptor
+        class RelatedIdentifier < Base
           attribute :relationType, Types::String
           attribute :relatedIdentifier, Types::String
           attribute :relatedIdentifierType, Types::String
-          attribute? :resourceTypeGeneral, Types::String.optional
+          attribute? :resourceTypeGeneral, Types::String
         end
       end
     end

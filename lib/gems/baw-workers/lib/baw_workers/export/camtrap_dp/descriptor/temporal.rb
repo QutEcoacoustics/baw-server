@@ -3,9 +3,9 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      class Descriptor
+      module Descriptor
         # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/temporal
-        class Temporal < Descriptor
+        class Temporal < Base
           attribute :start, Types::UtcTimeSeconds
           attribute :end, Types::UtcTimeSeconds
         end

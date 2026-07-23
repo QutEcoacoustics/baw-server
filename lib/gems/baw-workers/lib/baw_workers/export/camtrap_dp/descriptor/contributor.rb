@@ -3,20 +3,17 @@
 module BawWorkers
   module Export
     module CamtrapDp
-      # Generate automatic + merge extra
-      # TODO: all project owners should be something in the array, and all tagging creators should be as well
-      # ('contributor') - even verification creators, plus optional add more in from param
-      # Should be able to have a list of users and we can map a user to a contributor descriptor
-      # TODO: but we only have user_names, not real names, i'll need to check this.
-      # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/contributors/items
-      class Descriptor::Contributor < Descriptor
-        # name/title of the person or organisation
-        attribute :title, Types::String
-        attribute :role, Types::Role
+      module Descriptor
+        # implements: camtrap-dp-profile-acoustic.json#/allOf/1/properties/contributors/items
+        class Contributor < Base
+          # name/title of the person or organisation
+          attribute :title, Types::String
+          attribute :role, Types::Role
 
-        attribute? :email, Types::String
-        attribute? :path, Types::Url
-        attribute? :organization, Types::String
+          attribute? :email, Types::String
+          attribute? :path, Types::Url
+          attribute? :organization, Types::String
+        end
       end
     end
   end
