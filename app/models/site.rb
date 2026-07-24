@@ -191,8 +191,13 @@ class Site < ApplicationRecord
   renders_markdown_for :description
 
   # Replaces `custom_latitude`. Returns obfuscated latitude if location is obfuscated.
-  def public_latitude
-    if location_obfuscated
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_latitude(user: nil, should_obfuscate: nil)
+    return latitude if should_obfuscate == false
+    return obfuscated_latitude if should_obfuscate == true
+
+    if location_obfuscated(user: user)
       obfuscated_latitude
     else
       latitude
@@ -200,31 +205,25 @@ class Site < ApplicationRecord
   end
 
   # Replaces `custom_longitude`. Returns obfuscated longitude if location is obfuscated.
-  def public_longitude
-    if location_obfuscated
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  def public_longitude(user: nil, should_obfuscate: nil)
+    return longitude if should_obfuscate == false
+    return obfuscated_longitude if should_obfuscate == true
+
+    if location_obfuscated(user: user)
       obfuscated_longitude
     else
       longitude
     end
   end
 
-  # This method is a little funny.
-  # If `location_obfuscated` was returned in a query, then that value is used.
-  # Otherwise, the obfuscation is calculated with another query.
-  def location_obfuscated
-    return self['location_obfuscated'] if has_attribute?('location_obfuscated')
-
-    return true if Current.user.nil?
-
-    return false if Current.user.admin?
-
-    # if no associated projects, we can't determine permissions, so obfuscate
-    return true if projects.empty?
-
-    is_owner = Access::Core.can_any?(Current.user, Access::Permission::OWNER, projects)
-
-    # obfuscate if level is less than owner
-    !is_owner
+  # Returns true when any project this site belongs to grants broad access (anonymous or logged-in users)
+  # @return [Boolean]
+  def public_site?
+    projects.any? { |project|
+      project.permissions.any?(&:public_access?)
+    }
   end
 
   def location_jitter_seed
@@ -259,7 +258,7 @@ class Site < ApplicationRecord
     # add in an exclusion buffer
     # the addition pushes the jitter away from the mid point
     # we push out by 10% of the jitter range, so for 0.003° ≈ 333m the push range is +- 33m
-    jitter += ((jitter >= 0 ? 1 : -1) * (Site::JITTER_RANGE * 0.1))
+    jitter += ((jitter >= 0 ? 1 : -1) * Site::JITTER_EXCLUSION_RANGE)
 
     # finally augment the input value
     # rounding just to produce a neat value
@@ -320,6 +319,67 @@ class Site < ApplicationRecord
     self.obfuscated_longitude = Site.add_location_jitter(
       longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX, location_jitter_seed
     )
+  end
+
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:shallow_site_path, id: id)
+  end
+
+  # Measurement uncertainty of the site coordinates, in meters.  We do not
+  # currently store this, so assume measurement taken using a GPS with
+  # uncertainty of 30 meters. This aligns with the camtrapdp R package default.
+  # See also:
+  # - https://dwc.tdwg.org/terms/#dwc:coordinateUncertaintyInMeters
+  # - https://github.com/tdwg/camtrap-dp/issues/467
+  #
+  # Must be positive, or nil if unknown.
+  # TODO: update when closed https://github.com/QutEcoacoustics/baw-server/issues/1023.
+  def measurement_uncertainty_meters
+    30
+  end
+
+  # Total coordinate uncertainty, in meters, including measurement uncertainty
+  # and obfuscation uncertainty when applicable. Nil if total uncertainty cannot
+  # be determined / is unknown.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [Float, nil] the total coordinate uncertainty in meters, or nil if unknown
+  def coordinate_uncertainty_meters(user: nil, should_obfuscate: nil)
+    uncertainty = measurement_uncertainty_meters
+    return uncertainty if should_obfuscate == false
+
+    if should_obfuscate == true || location_obfuscated(user: user)
+      # Custom obfuscated locations have unknown uncertainty. Returning the
+      # distance between obfuscated and true coordinates may leak location data.
+      return nil if custom_obfuscated_location
+
+      maximum_jitter_range = JITTER_RANGE + JITTER_EXCLUSION_RANGE
+
+      # Conservative estimate: approximate distance in meters for 1 degree of longitude at the equator
+      obfuscation_uncertainty = maximum_jitter_range * 111_319.5
+      uncertainty += obfuscation_uncertainty
+    end
+
+    uncertainty
+  end
+
+  # Should the location be obfuscated?
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @return [Boolean] true if user is not an owner of any project this site belongs to.
+  def location_obfuscated(user: nil)
+    user ||= Current.user
+    return true if user.nil?
+
+    return false if user.admin?
+
+    # if no associated projects, we can't determine permissions, so obfuscate
+    return true if projects.empty?
+
+    is_owner = Access::Core.can_any?(user, Access::Permission::OWNER, projects)
+
+    # obfuscate if level is less than owner
+    !is_owner
   end
 
   private

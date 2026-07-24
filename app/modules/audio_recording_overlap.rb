@@ -17,7 +17,7 @@ class AudioRecordingOverlap
       result = {
         id: audio_recording.id,
         recorded_date: audio_recording.recorded_date,
-        end_date: get_end_date(audio_recording),
+        end_date: audio_recording.recorded_end_date,
         duration_sec: audio_recording.duration_seconds,
         site_id: audio_recording.site_id,
         overlap: {
@@ -67,7 +67,7 @@ class AudioRecordingOverlap
       result = {
         id: audio_recording.id,
         recorded_date: audio_recording.recorded_date,
-        end_date: get_end_date(audio_recording),
+        end_date: audio_recording.recorded_end_date,
         duration_sec: audio_recording.duration_seconds,
         site_id: audio_recording.site_id,
         max_overlap_sec: max_overlap_seconds,
@@ -132,9 +132,9 @@ class AudioRecordingOverlap
       start_b_lt_end_a = audio_recordings_arel[:recorded_date].lt(get_end_date_simple(recorded_date, duration_seconds))
 
       query = AudioRecording
-              .where(site_id:)
-              .where(end_b_gt_start_a)
-              .where(start_b_lt_end_a)
+        .where(site_id:)
+        .where(end_b_gt_start_a)
+        .where(start_b_lt_end_a)
 
       query = query.where(audio_recordings_arel[:id].not_eq(id)) if id.present?
 
@@ -147,10 +147,10 @@ class AudioRecordingOverlap
     # @return [Hash] overlap info
     def get_overlap_info(new_recording, existing_recording, max_overlap_amount)
       recording_new_start = new_recording.recorded_date
-      recording_new_end = get_end_date(new_recording)
+      recording_new_end = new_recording.recorded_end_date
 
       recording_existing_start = existing_recording.recorded_date
-      recording_existing_end = get_end_date(existing_recording)
+      recording_existing_end = existing_recording.recorded_end_date
 
       can_fix = false
 
@@ -214,7 +214,7 @@ class AudioRecordingOverlap
       end
 
       # calculate information needed later
-      earlier_end = get_end_date(earlier)
+      earlier_end = earlier.recorded_end_date
       later_start = later.recorded_date
       overlap_amount = earlier_end - later_start
 
@@ -265,13 +265,6 @@ class AudioRecordingOverlap
         new_duration:,
         other_uuid:
       }
-    end
-
-    # Get the end date for an audio recording.
-    # @param [AudioRecording] audio_recording
-    # @return [ActiveSupport::TimeWithZone] end date
-    def get_end_date(audio_recording)
-      audio_recording.recorded_date.dup.advance(seconds: audio_recording.duration_seconds)
     end
 
     # Get the end date for an audio recording.

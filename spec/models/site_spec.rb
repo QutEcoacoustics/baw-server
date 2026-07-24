@@ -65,6 +65,52 @@ describe Site do
     expect(s.errors[:name].size).to eq 1
   end
 
+  describe '#public_site?' do
+    let(:site) { create(:site) }
+    let(:project) { site.projects.first }
+
+    it 'is false when permissions are user-specific' do
+      expect(site).not_to be_public_site
+    end
+
+    it 'is true when any project allows anonymous access' do
+      create(:read_anon_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+
+    it 'is true when any project allows logged-in access' do
+      create(:read_logged_in_permission, creator: project.creator, project:)
+
+      expect(site).to be_public_site
+    end
+  end
+
+  describe '#public_latitude and #public_longitude' do
+    let(:site) { create(:site, :with_lat_long) }
+
+    it 'returns obfuscated coordinates when there is no user' do
+      expect(site.public_latitude).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when user override has permission' do
+      expect(site.public_latitude(user: site.projects.first.creator)).to eq(site.latitude)
+      expect(site.public_longitude(user: site.projects.first.creator)).to eq(site.longitude)
+    end
+
+    it 'returns obfuscated coordinates when user override does not have permission' do
+      user = create(:user)
+      expect(site.public_latitude(user:)).to eq(site.obfuscated_latitude)
+      expect(site.public_longitude(user:)).to eq(site.obfuscated_longitude)
+    end
+
+    it 'returns real coordinates when should_obfuscate is false' do
+      expect(site.public_latitude(should_obfuscate: false)).to eq(site.latitude)
+      expect(site.public_longitude(should_obfuscate: false)).to eq(site.longitude)
+    end
+  end
+
   describe 'location obfuscation' do
     latitudes = [
       { -100 => false },
@@ -97,7 +143,7 @@ describe Site do
         expect(s.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
         expect(s.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
 
-        jitter_exclude_range = Site::JITTER_RANGE * 0.1
+        jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
         expect(s.obfuscated_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
         expect(s.obfuscated_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
       end
@@ -130,7 +176,7 @@ describe Site do
       s = build(:site, :with_lat_long)
 
       jitter_range = Site::JITTER_RANGE
-      jitter_exclude_range = Site::JITTER_RANGE * 0.1
+      jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
 
       lat_min = Site::LATITUDE_MIN
       lat_max = Site::LATITUDE_MAX
@@ -224,7 +270,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lat = site.obfuscated_latitude
 
-        site.update!(latitude: site.latitude + 1.0)
+        site.update!(latitude: site.latitude - site.latitude)
 
         expect(site.obfuscated_latitude).not_to eq(original_obfuscated_lat)
         expect(site.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(site.latitude)
@@ -234,7 +280,7 @@ describe Site do
         site = create(:site, :with_lat_long)
         original_obfuscated_lng = site.obfuscated_longitude
 
-        site.update!(longitude: site.longitude + 1.0)
+        site.update!(longitude: site.longitude - site.longitude)
 
         expect(site.obfuscated_longitude).not_to eq(original_obfuscated_lng)
         expect(site.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(site.longitude)

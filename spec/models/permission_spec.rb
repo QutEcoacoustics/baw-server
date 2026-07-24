@@ -65,6 +65,26 @@ describe Permission, type: :model do
   it { is_expected.not_to allow_value(nil).for(:allow_anonymous) }
   it { is_expected.not_to allow_value(nil).for(:allow_logged_in) }
 
+  describe '#broad_access?' do
+    it 'is true when anonymous access is allowed' do
+      permission = build(:read_anon_permission)
+
+      expect(permission).to be_broad_access
+    end
+
+    it 'is true when logged-in access is allowed' do
+      permission = build(:read_logged_in_permission)
+
+      expect(permission).to be_broad_access
+    end
+
+    it 'is false for user-specific permissions' do
+      permission = build(:read_permission)
+
+      expect(permission).not_to be_broad_access
+    end
+  end
+
   context 'special tests' do
     let(:user) { create(:user) }
     let(:project) { create(:project, creator: user) }
