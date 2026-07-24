@@ -258,7 +258,7 @@ class Site < ApplicationRecord
     # add in an exclusion buffer
     # the addition pushes the jitter away from the mid point
     # we push out by 10% of the jitter range, so for 0.003° ≈ 333m the push range is +- 33m
-    jitter += ((jitter >= 0 ? 1 : -1) * (Site::JITTER_RANGE * 0.1))
+    jitter += ((jitter >= 0 ? 1 : -1) * Site::JITTER_EXCLUSION_RANGE)
 
     # finally augment the input value
     # rounding just to produce a neat value

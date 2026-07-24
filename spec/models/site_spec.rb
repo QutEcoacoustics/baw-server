@@ -143,7 +143,7 @@ describe Site do
         expect(s.obfuscated_latitude).to be_within(Site::JITTER_RANGE).of(s.latitude)
         expect(s.obfuscated_longitude).to be_within(Site::JITTER_RANGE).of(s.longitude)
 
-        jitter_exclude_range = Site::JITTER_RANGE * 0.1
+        jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
         expect(s.obfuscated_latitude).not_to be_within(jitter_exclude_range).of(s.latitude)
         expect(s.obfuscated_longitude).not_to be_within(jitter_exclude_range).of(s.longitude)
       end
@@ -176,7 +176,7 @@ describe Site do
       s = build(:site, :with_lat_long)
 
       jitter_range = Site::JITTER_RANGE
-      jitter_exclude_range = Site::JITTER_RANGE * 0.1
+      jitter_exclude_range = Site::JITTER_EXCLUSION_RANGE
 
       lat_min = Site::LATITUDE_MIN
       lat_max = Site::LATITUDE_MAX
