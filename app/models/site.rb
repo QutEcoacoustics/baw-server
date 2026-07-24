@@ -325,7 +325,44 @@ class Site < ApplicationRecord
     Api::UrlHelpers.global_identifier(:shallow_site_path, id: id)
   end
 
-  private
+  # Measurement uncertainty of the site coordinates, in meters.  We do not
+  # currently store this, so assume measurement taken using a GPS with
+  # uncertainty of 30 meters. This aligns with the camtrapdp R package default.
+  # See also:
+  # - https://dwc.tdwg.org/terms/#dwc:coordinateUncertaintyInMeters
+  # - https://github.com/tdwg/camtrap-dp/issues/467
+  #
+  # Must be positive, or nil if unknown.
+  # TODO: update when closed https://github.com/QutEcoacoustics/baw-server/issues/1023.
+  def measurement_uncertainty_meters
+    30
+  end
+
+  # Total coordinate uncertainty, in meters, including measurement uncertainty
+  # and obfuscation uncertainty when applicable. Nil if total uncertainty cannot
+  # be determined / is unknown.
+  #
+  # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
+  # @param should_obfuscate [Boolean, nil] optional override to force obfuscation or not.
+  # @return [Float, nil] the total coordinate uncertainty in meters, or nil if unknown
+  def coordinate_uncertainty_meters(user: nil, should_obfuscate: nil)
+    uncertainty = measurement_uncertainty_meters
+    return uncertainty if should_obfuscate == false
+
+    if should_obfuscate == true || location_obfuscated(user: user)
+      # Custom obfuscated locations have unknown uncertainty. Returning the
+      # distance between obfuscated and true coordinates may leak location data.
+      return nil if custom_obfuscated_location
+
+      maximum_jitter_range = JITTER_RANGE + JITTER_EXCLUSION_RANGE
+
+      # Conservative estimate: approximate distance in meters for 1 degree of longitude at the equator
+      obfuscation_uncertainty = maximum_jitter_range * 111_319.5
+      uncertainty += obfuscation_uncertainty
+    end
+
+    uncertainty
+  end
 
   # Should the location be obfuscated?
   # @param user [User, nil] the user to check permissions for. If nil, uses Current.user.
@@ -344,6 +381,8 @@ class Site < ApplicationRecord
     # obfuscate if level is less than owner
     !is_owner
   end
+
+  private
 
   # Determines if the obfuscated location should be auto-updated
   # Only update if:

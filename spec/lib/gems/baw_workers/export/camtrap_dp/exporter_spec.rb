@@ -240,9 +240,14 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
         }
 
+        coordinate_uncertainty = site.coordinate_uncertainty_meters
+        obfuscation_uncertainty = coordinate_uncertainty - site.measurement_uncertainty_meters
+
         expect(result).to include(
           'latitude' => site.public_latitude.to_s,
-          'longitude' => site.public_longitude.to_s
+          'longitude' => site.public_longitude.to_s,
+          'coordinateUncertainty' => coordinate_uncertainty.to_i.to_s,
+          'deploymentTags' => "coordinatesObfuscated:true | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters and an obfuscation uncertainty of #{obfuscation_uncertainty} meters"
         )
       end
     end
@@ -257,7 +262,9 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
         expect(result).to include(
           'latitude' => site.latitude.to_s,
-          'longitude' => site.longitude.to_s
+          'longitude' => site.longitude.to_s,
+          'coordinateUncertainty' => '30',
+          'deploymentTags' => 'coordinatesObfuscated:false | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters'
         )
       end
     end
@@ -270,9 +277,14 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
         }
 
+        coordinate_uncertainty = site.coordinate_uncertainty_meters(should_obfuscate: true)
+        obfuscation_uncertainty = coordinate_uncertainty - site.measurement_uncertainty_meters
+
         expect(result).to include(
           'latitude' => site.obfuscated_latitude.to_s,
-          'longitude' => site.obfuscated_longitude.to_s
+          'longitude' => site.obfuscated_longitude.to_s,
+          'coordinateUncertainty' => coordinate_uncertainty.to_i.to_s,
+          'deploymentTags' => "coordinatesObfuscated:true | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters and an obfuscation uncertainty of #{obfuscation_uncertainty} meters"
         )
       end
     end
@@ -287,7 +299,26 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
         expect(result).to include(
           'latitude' => site.latitude.to_s,
-          'longitude' => site.longitude.to_s
+          'longitude' => site.longitude.to_s,
+          'coordinateUncertainty' => '30',
+          'deploymentTags' => 'coordinatesObfuscated:false | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters'
+        )
+      end
+    end
+
+    context 'when the site has custom obfuscated coordinates' do
+      before { site.update!(custom_obfuscated_location: true) }
+
+      it 'writes unknown uncertainty due to custom obfuscation' do
+        result = with_export_manifest {
+          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+        }
+
+        expect(result).to include(
+          'latitude' => site.obfuscated_latitude.to_s,
+          'longitude' => site.obfuscated_longitude.to_s,
+          'coordinateUncertainty' => '',
+          'deploymentTags' => 'coordinatesObfuscated:true | dataGeneralizations:coordinate uncertainty is unknown because the obfuscation uncertainty is unknown'
         )
       end
     end
