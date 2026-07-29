@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.0.0](https://github.com/QutEcoacoustics/baw-server/tree/15.0.0) (2026-07-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.2...15.0.0)
+
+**Implemented enhancements:**
+
+- New report generation routes [\#653](https://github.com/QutEcoacoustics/baw-server/issues/653)
+
 ## [14.15.2](https://github.com/QutEcoacoustics/baw-server/tree/14.15.2) (2026-07-20)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.1...14.15.2)
