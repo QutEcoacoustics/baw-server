@@ -16,7 +16,7 @@ describe 'reports', type: :request do
         type: 'object',
         additionalProperties: false,
         properties: {
-          **Api::Schema.bucket,
+          **Api::Schema.range,
           tags: {
             type: 'array',
             items: {
@@ -30,7 +30,7 @@ describe 'reports', type: :request do
           },
           readOnly: true
         },
-        required: [:bucket, :tags]
+        required: [:range, :tags]
       }
     )
   end

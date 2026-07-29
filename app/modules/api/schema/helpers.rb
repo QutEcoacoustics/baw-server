@@ -159,17 +159,17 @@ module Api
         }
       end
 
-      def bucket(diel: false)
+      def range(diel: false)
         description = diel ? 'in seconds from the start of the diel cycle' : 'as an ISO8601 interval string'
 
         {
-          bucket: {
+          range: {
             type: 'array',
             items: diel ? { type: 'integer' } : { type: 'string', format: 'date-time' },
             minItems: 2,
             maxItems: 2,
             additionalItems: false,
-            description: "The start and end of the time bucket #{description}"
+            description: "The start and end of the time range #{description}"
           }
         }
       end
@@ -204,7 +204,7 @@ module Api
       def recording_coverage(include_result: false)
         properties = {
           site_id: id,
-          coverage: {
+          range: {
             type: 'array',
             items: { type: 'string', format: 'date-time' },
             minItems: 2,
@@ -239,10 +239,10 @@ module Api
           properties: properties,
           readOnly: true,
           required: if include_result
-                      [:site_id, :result, :coverage, :density,
+                      [:site_id, :result, :range, :density,
                        :gap_threshold]
                     else
-                      [:site_id, :coverage, :density, :gap_threshold]
+                      [:site_id, :range, :density, :gap_threshold]
                     end
         }
       end

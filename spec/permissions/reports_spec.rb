@@ -34,7 +34,7 @@ describe 'Reports permissions' do
       else
         expect(api_data).to match([
           { site_id: site.id,
-            coverage: [
+            range: [
               audio_recording.recorded_date.utc.as_json,
               (audio_recording.recorded_date.utc + audio_recording.duration_seconds.seconds).as_json
             ],
@@ -53,7 +53,7 @@ describe 'Reports permissions' do
         expect(api_data).to match([
           { site_id: site.id,
             result: AnalysisJobsItem::RESULT_SUCCESS,
-            coverage: [
+            range: [
               audio_recording.recorded_date.utc.as_json,
               (audio_recording.recorded_date.utc + audio_recording.duration_seconds.seconds).as_json
             ],
@@ -69,7 +69,7 @@ describe 'Reports permissions' do
       if user == :no_access
         expect(api_result[:data].length).to eq(0)
       else
-        expect(api_data).to match([{ bucket: [day, day + 1.day], cumulative_unique_tag_count: 1.0 }])
+        expect(api_data).to match([{ range: [day, day + 1.day], cumulative_unique_tag_count: 1.0 }])
       end
     })
 
@@ -79,7 +79,7 @@ describe 'Reports permissions' do
       if user == :no_access
         expect(api_result[:data].length).to eq(0)
       else
-        expect(api_data).to match([{ bucket: [day, day + 1.day], tags: [{ tag_id: tag.id, events: 1 }] }])
+        expect(api_data).to match([{ range: [day, day + 1.day], tags: [{ tag_id: tag.id, events: 1 }] }])
       end
     })
 
@@ -87,13 +87,13 @@ describe 'Reports permissions' do
     body: -> { [{ options: { bucket_size: 'hour' }, filter: {} }, :json] },
     expect: lambda { |user, _action|
       if user == :no_access
-        expect(api_data).to match((0..23).map { |i| { bucket: [i * 3600, (i + 1) * 3600], tags: [] } })
+        expect(api_data).to match((0..23).map { |i| { range: [i * 3600, (i + 1) * 3600], tags: [] } })
       else
         expect(api_data).to match(
             (0..23).map { |i|
               bucket_lower = i * 3600
               tags = bucket_lower == 25_200 ? [{ tag_id: tag.id, events: 1 }] : []
-              { bucket: [bucket_lower, bucket_lower + 3600], tags: tags }
+              { range: [bucket_lower, bucket_lower + 3600], tags: tags }
             }
           )
       end

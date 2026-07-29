@@ -25,7 +25,7 @@ module Api
         query = query.joins(joins)
 
         BUCKETS_JOINED
-          .project(BUCKETS_JOINED[:bucket])
+          .project(BUCKETS_JOINED[:bucket].as('range'))
           .with(*ctes(query:))
           .group(BUCKETS_JOINED[:bucket])
           .order(BUCKETS_JOINED[:bucket])

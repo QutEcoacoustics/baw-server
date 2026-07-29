@@ -49,7 +49,7 @@ describe 'reports/tag_diel_activity' do
     (0..(interval[:buckets] - 1)).map { |i|
       bucket_lower = i * interval[:bucket_size]
       {
-        bucket: [bucket_lower, bucket_lower + interval[:bucket_size]],
+        range: [bucket_lower, bucket_lower + interval[:bucket_size]],
         tags: result_buckets.fetch(bucket_lower, [])
       }
     }

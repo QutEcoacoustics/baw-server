@@ -40,7 +40,7 @@ module Api
             Arel.tsrange(
               ISLANDS[:recording_range].lower.minimum,
               ISLANDS[:recording_range].upper.maximum
-            ).as('coverage'),
+            ).as('range'),
             ISLANDS[:gap_threshold]
           )
           .group(

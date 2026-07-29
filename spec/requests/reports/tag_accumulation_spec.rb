@@ -33,10 +33,10 @@ describe 'reports/tag_accumulation' do
     let(:expected_day_buckets) do
       day1, day2, day3, day4 = recordings.map { |recording| recording.recorded_date.utc.at_beginning_of_day }
       [
-        { bucket: [day1, day1 + 1.day], cumulative_unique_tag_count: 2.0 },
-        { bucket: [day2, day2 + 1.day], cumulative_unique_tag_count: 2.0 },
-        { bucket: [day3, day3 + 1.day], cumulative_unique_tag_count: 2.0 },
-        { bucket: [day4, day4 + 1.day], cumulative_unique_tag_count: final_day_count }
+        { range: [day1, day1 + 1.day], cumulative_unique_tag_count: 2.0 },
+        { range: [day2, day2 + 1.day], cumulative_unique_tag_count: 2.0 },
+        { range: [day3, day3 + 1.day], cumulative_unique_tag_count: 2.0 },
+        { range: [day4, day4 + 1.day], cumulative_unique_tag_count: final_day_count }
       ]
     end
 
@@ -84,7 +84,7 @@ describe 'reports/tag_accumulation' do
       body = { options: { bucket_size: 'week' }, filter: {} }
       expected = [
         {
-          bucket: [
+          range: [
             recording_start.utc.at_beginning_of_week(:monday),
             recording_start.utc.at_beginning_of_week(:monday) + 1.week
           ],
@@ -107,13 +107,13 @@ describe 'reports/tag_accumulation' do
       body = { options: { bucket_size: 'month' }, filter: {} }
       bucket_one = recording_start.utc.at_beginning_of_month
       expected = [
-        { bucket: [bucket_one, bucket_one + 1.month], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 1.month, bucket_one + 2.months], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 2.months, bucket_one + 3.months], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 3.months, bucket_one + 4.months], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 4.months, bucket_one + 5.months], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 5.months, bucket_one + 6.months], cumulative_unique_tag_count: 2.0 },
-        { bucket: [bucket_one + 6.months, bucket_one + 7.months], cumulative_unique_tag_count: 3.0 }
+        { range: [bucket_one, bucket_one + 1.month], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 1.month, bucket_one + 2.months], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 2.months, bucket_one + 3.months], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 3.months, bucket_one + 4.months], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 4.months, bucket_one + 5.months], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 5.months, bucket_one + 6.months], cumulative_unique_tag_count: 2.0 },
+        { range: [bucket_one + 6.months, bucket_one + 7.months], cumulative_unique_tag_count: 3.0 }
       ]
 
       post '/reports/tag_accumulation', params: body, **api_headers(writer_token)
@@ -131,11 +131,11 @@ describe 'reports/tag_accumulation' do
       body = { options: { bucket_size: 'year' }, filter: {} }
       expected = [
         {
-          bucket: [recording_start.utc.at_beginning_of_year,
+          range: [recording_start.utc.at_beginning_of_year,
                    recording_start.utc.at_beginning_of_year + 1.year], cumulative_unique_tag_count: 2.0
         },
         {
-          bucket: [recording_start.utc.at_beginning_of_year + 1.year,
+          range: [recording_start.utc.at_beginning_of_year + 1.year,
                    recording_start.utc.at_beginning_of_year + 2.years], cumulative_unique_tag_count: 3.0
         }
       ]
@@ -158,7 +158,7 @@ describe 'reports/tag_accumulation' do
       expect(response.content_type).to include('text/csv')
 
       expected_csv = <<~CSV
-        "bucket_lower","bucket_upper","cumulative_unique_tag_count"
+        "range_lower","range_upper","cumulative_unique_tag_count"
         "#{day1.utc.iso8601(3)}","#{(day1 + 1.day).utc.iso8601(3)}","2.0"
       CSV
 

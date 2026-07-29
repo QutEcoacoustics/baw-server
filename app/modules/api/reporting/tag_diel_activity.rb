@@ -125,7 +125,7 @@ module Api
         Arel.json([
           COUNT_EVENTS_BUCKETED[BUCKET_LOWER],
           Arel::Nodes::Addition.new(COUNT_EVENTS_BUCKETED[BUCKET_LOWER], @config.bucket_size)
-        ]).as('bucket')
+        ]).as('range')
       end
 
       def invalid_bucket_size!(size) = raise KeyError, "#{size} not in #{INTERVALS.keys}"

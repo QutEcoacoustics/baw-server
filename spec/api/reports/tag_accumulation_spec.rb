@@ -16,11 +16,11 @@ describe 'reports', type: :request do
         type: 'object',
         additionalProperties: false,
         properties: {
-          **Api::Schema.bucket,
+          **Api::Schema.range,
           cumulative_unique_tag_count: { type: 'number' }
         },
         readOnly: true,
-        required: [:bucket, :cumulative_unique_tag_count]
+        required: [:range, :cumulative_unique_tag_count]
       }
     )
   end

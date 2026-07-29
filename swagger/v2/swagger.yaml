@@ -4297,7 +4297,7 @@ paths:
                     tags.id:
                       eq: 67
                 data:
-                - bucket:
+                - range:
                   - '2000-06-12T00:00:00.000Z'
                   - '2000-06-13T00:00:00.000Z'
                   cumulative_unique_tag_count: 1.0
@@ -4312,7 +4312,7 @@ paths:
                         type: object
                         additionalProperties: false
                         properties:
-                          bucket:
+                          range:
                             type: array
                             items:
                               type: string
@@ -4320,13 +4320,13 @@ paths:
                             minItems: 2
                             maxItems: 2
                             additionalItems: false
-                            description: The start and end of the time bucket as an
+                            description: The start and end of the time range as an
                               ISO8601 interval string
                           cumulative_unique_tag_count:
                             type: number
                         readOnly: true
                         required:
-                        - bucket
+                        - range
                         - cumulative_unique_tag_count
       requestBody:
         content:
@@ -4994,7 +4994,7 @@ paths:
                     tags.id:
                       eq: 78
                 data:
-                - bucket:
+                - range:
                   - '2000-06-30T00:00:00.000Z'
                   - '2000-07-01T00:00:00.000Z'
                   tags:
@@ -5011,7 +5011,7 @@ paths:
                         type: object
                         additionalProperties: false
                         properties:
-                          bucket:
+                          range:
                             type: array
                             items:
                               type: string
@@ -5019,7 +5019,7 @@ paths:
                             minItems: 2
                             maxItems: 2
                             additionalItems: false
-                            description: The start and end of the time bucket as an
+                            description: The start and end of the time range as an
                               ISO8601 interval string
                           tags:
                             type: array
@@ -5037,7 +5037,7 @@ paths:
                                     tag in the bucket
                           readOnly: true
                         required:
-                        - bucket
+                        - range
                         - tags
       requestBody:
         content:
@@ -6410,101 +6410,101 @@ paths:
                     tags.id:
                       eq: 109
                 data:
-                - bucket:
+                - range:
                   - 0
                   - 3600
                   tags: []
-                - bucket:
+                - range:
                   - 3600
                   - 7200
                   tags: []
-                - bucket:
+                - range:
                   - 7200
                   - 10800
                   tags: []
-                - bucket:
+                - range:
                   - 10800
                   - 14400
                   tags: []
-                - bucket:
+                - range:
                   - 14400
                   - 18000
                   tags: []
-                - bucket:
+                - range:
                   - 18000
                   - 21600
                   tags: []
-                - bucket:
+                - range:
                   - 21600
                   - 25200
                   tags: []
-                - bucket:
+                - range:
                   - 25200
                   - 28800
                   tags:
                   - events: 1
                     tag_id: 109
-                - bucket:
+                - range:
                   - 28800
                   - 32400
                   tags: []
-                - bucket:
+                - range:
                   - 32400
                   - 36000
                   tags: []
-                - bucket:
+                - range:
                   - 36000
                   - 39600
                   tags: []
-                - bucket:
+                - range:
                   - 39600
                   - 43200
                   tags: []
-                - bucket:
+                - range:
                   - 43200
                   - 46800
                   tags: []
-                - bucket:
+                - range:
                   - 46800
                   - 50400
                   tags: []
-                - bucket:
+                - range:
                   - 50400
                   - 54000
                   tags: []
-                - bucket:
+                - range:
                   - 54000
                   - 57600
                   tags: []
-                - bucket:
+                - range:
                   - 57600
                   - 61200
                   tags: []
-                - bucket:
+                - range:
                   - 61200
                   - 64800
                   tags: []
-                - bucket:
+                - range:
                   - 64800
                   - 68400
                   tags: []
-                - bucket:
+                - range:
                   - 68400
                   - 72000
                   tags: []
-                - bucket:
+                - range:
                   - 72000
                   - 75600
                   tags: []
-                - bucket:
+                - range:
                   - 75600
                   - 79200
                   tags: []
-                - bucket:
+                - range:
                   - 79200
                   - 82800
                   tags: []
-                - bucket:
+                - range:
                   - 82800
                   - 86400
                   tags: []
@@ -6519,14 +6519,14 @@ paths:
                         type: object
                         additionalProperties: false
                         properties:
-                          bucket:
+                          range:
                             type: array
                             items:
                               type: integer
                             minItems: 2
                             maxItems: 2
                             additionalItems: false
-                            description: The start and end of the time bucket in seconds
+                            description: The start and end of the time range in seconds
                               from the start of the diel cycle
                           tags:
                             type: array
@@ -6544,7 +6544,7 @@ paths:
                                     tag in the bucket
                           readOnly: true
                         required:
-                        - bucket
+                        - range
                         - tags
       requestBody:
         content:
@@ -10742,7 +10742,7 @@ paths:
                 data:
                 - site_id: 216
                   result: success
-                  coverage:
+                  range:
                   - '2000-10-25T07:06:59.000Z'
                   - '2000-10-25T23:46:59.000Z'
                   gap_threshold: 31
@@ -10761,7 +10761,7 @@ paths:
                           site_id:
                             "$ref": "#/components/schemas/id"
                             readOnly: true
-                          coverage:
+                          range:
                             type: array
                             items:
                               type: string
@@ -10796,7 +10796,7 @@ paths:
                         required:
                         - site_id
                         - result
-                        - coverage
+                        - range
                         - density
                         - gap_threshold
         '422':
@@ -10865,7 +10865,7 @@ paths:
                       eq: 218
                 data:
                 - site_id: 220
-                  coverage:
+                  range:
                   - '2000-10-29T07:06:59.000Z'
                   - '2000-10-29T23:46:59.000Z'
                   gap_threshold: 31
@@ -10884,7 +10884,7 @@ paths:
                           site_id:
                             "$ref": "#/components/schemas/id"
                             readOnly: true
-                          coverage:
+                          range:
                             type: array
                             items:
                               type: string
@@ -10909,7 +10909,7 @@ paths:
                         readOnly: true
                         required:
                         - site_id
-                        - coverage
+                        - range
                         - density
                         - gap_threshold
         '422':

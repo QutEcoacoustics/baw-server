@@ -148,7 +148,7 @@ class ReportsController < ApplicationController
   end
 
   # POST /reports/tag_accumulation
-  # Returns a structured report of cumulative unique tag counts over time buckets.
+  # Returns a structured report of cumulative unique tag counts over time ranges.
   # Accepts a filter object where:
   #   the `filter` is applied to audio events
   #   the `paging`, `sort` and `projection` options are invalid
@@ -160,7 +160,7 @@ class ReportsController < ApplicationController
     base_query = Access::ByPermissionTable.audio_events(current_user, level: Access::Permission::READER)
 
     projections = {
-      bucket: Bucketer::BUCKETS[:bucket],
+      range: Bucketer::BUCKETS[:bucket],
       cumulative_unique_tag_count: TagAccumulation.cumulative_count
     }
 

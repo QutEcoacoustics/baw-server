@@ -21,7 +21,7 @@ describe 'reports/recording_coverage' do
               ((duration_seconds + duration_seconds).seconds + gap_below_threshold)
 
     [{ site_id: site.id,
-       coverage: [
+       range: [
          start_date,
          start_date + duration_seconds + gap_below_threshold + duration_seconds
        ],
@@ -29,7 +29,7 @@ describe 'reports/recording_coverage' do
        gap_threshold: },
 
      { site_id: site.id,
-       coverage: [end_date - duration_seconds, end_date],
+       range: [end_date - duration_seconds, end_date],
        density: 1.0,
        gap_threshold: }]
   end
@@ -63,7 +63,7 @@ describe 'reports/recording_coverage' do
     density = (duration_seconds * 3) / 1.week.seconds
     expected_data = [{
       site_id: site.id,
-      coverage: [start_date, end_date],
+      range: [start_date, end_date],
       density: be_within(0.0001).of(density),
       gap_threshold: 1.week.seconds.to_i
     }]
@@ -112,9 +112,9 @@ describe 'reports/recording_coverage' do
 
     let!(:additional_site_expected_data) do
       [*expected_data,
-       { site_id: another_site.id, coverage: [start_date, start_date + 5.minutes], density: 1.0, gap_threshold: },
+         { site_id: another_site.id, range: [start_date, start_date + 5.minutes], density: 1.0, gap_threshold: },
        { site_id: another_site.id,
-         coverage: [
+           range: [
            start_date + 5.minutes + gap_above_threshold,
            start_date + 5.minutes + gap_above_threshold + 5.minutes
          ],

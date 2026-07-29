@@ -22,19 +22,19 @@ describe 'reports/analysis_coverage' do
 
     [{ site_id: site.id,
        result: AnalysisJobsItem::RESULT_SUCCESS,
-       coverage: [start_date, start_date + duration_seconds],
+       range: [start_date, start_date + duration_seconds],
        density: 1.0,
        gap_threshold: },
 
      { site_id: site.id,
        result: AnalysisJobsItem::RESULT_SUCCESS,
-       coverage: [end_date - duration_seconds, end_date],
+       range: [end_date - duration_seconds, end_date],
        density: 1.0,
        gap_threshold: },
 
      { site_id: site.id,
        result: AnalysisJobsItem::RESULT_CANCELLED,
-       coverage: [cancelled_block_start, cancelled_block_end],
+       range: [cancelled_block_start, cancelled_block_end],
        gap_threshold:,
        density: cancelled_density }]
   end
@@ -92,7 +92,7 @@ describe 'reports/analysis_coverage' do
       expect(api_data).to match_array(expected_data + [
         { site_id: site.id,
           result: AnalysisJobsItem::RESULT_FAILED,
-          coverage: [start_date, start_date + duration_seconds],
+          range: [start_date, start_date + duration_seconds],
           density: 1.0,
           gap_threshold: }
       ])
@@ -116,7 +116,7 @@ describe 'reports/analysis_coverage' do
       expect(api_data).to match_array(expected_data + [
         { site_id: another_site.id,
           result: AnalysisJobsItem::RESULT_SUCCESS,
-          coverage: [start_date, start_date + duration_seconds],
+          range: [start_date, start_date + duration_seconds],
           density: 1.0,
           gap_threshold: }
       ])

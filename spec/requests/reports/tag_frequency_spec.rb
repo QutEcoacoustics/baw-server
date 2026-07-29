@@ -36,10 +36,10 @@ describe 'reports/tag_frequency' do
     let(:expected_buckets) do
       rec1, rec2, rec3, rec4 = recordings.map { |recording| recording.recorded_date.utc.at_beginning_of_day }
       [
-        { bucket: [rec1, rec1 + period], tags: array_including(a_hash_including(tag_id: tags[0].id, events: 1), a_hash_including(tag_id: tags[1].id, events: 1)) }, #nolint
-        { bucket: [rec2, rec2 + period], tags: [a_hash_including(tag_id: tags[0].id, events: 2)] },
-        { bucket: [rec3, rec3 + period], tags: [] },
-        { bucket: [rec4, rec4 + period], tags: final_bucket_array }
+        { range: [rec1, rec1 + period], tags: array_including(a_hash_including(tag_id: tags[0].id, events: 1), a_hash_including(tag_id: tags[1].id, events: 1)) }, #nolint
+        { range: [rec2, rec2 + period], tags: [a_hash_including(tag_id: tags[0].id, events: 2)] },
+        { range: [rec3, rec3 + period], tags: [] },
+        { range: [rec4, rec4 + period], tags: final_bucket_array }
       ]
     end
 
@@ -89,7 +89,7 @@ describe 'reports/tag_frequency' do
       body = { options: { bucket_size: 'week' }, filter: {} }
       expected = [
         {
-          bucket: [
+          range: [
             recording_start.utc.at_beginning_of_week(:monday),
             recording_start.utc.at_beginning_of_week(:monday) + 1.week
           ],
@@ -114,20 +114,20 @@ describe 'reports/tag_frequency' do
       bucket_one = recording_start.utc.at_beginning_of_month
 
       expected = [
-        { bucket: [bucket_one, bucket_one + 1.month],
+        { range: [bucket_one, bucket_one + 1.month],
           tags: array_including(
             a_hash_including(tag_id: tags[0].id, events: 1),
             a_hash_including(tag_id: tags[1].id, events: 1)
           ) },
-        { bucket: [bucket_one + 1.month, bucket_one + 2.months], tags: [] },
-        { bucket: [bucket_one + 2.months, bucket_one + 3.months],
+        { range: [bucket_one + 1.month, bucket_one + 2.months], tags: [] },
+        { range: [bucket_one + 2.months, bucket_one + 3.months],
           tags: array_including(
             a_hash_including(tag_id: tags[0].id, events: 2)
           ) },
-        { bucket: [bucket_one + 3.months, bucket_one + 4.months], tags: [] },
-        { bucket: [bucket_one + 4.months, bucket_one + 5.months], tags: [] },
-        { bucket: [bucket_one + 5.months, bucket_one + 6.months], tags: [] },
-        { bucket: [bucket_one + 6.months, bucket_one + 7.months],
+        { range: [bucket_one + 3.months, bucket_one + 4.months], tags: [] },
+        { range: [bucket_one + 4.months, bucket_one + 5.months], tags: [] },
+        { range: [bucket_one + 5.months, bucket_one + 6.months], tags: [] },
+        { range: [bucket_one + 6.months, bucket_one + 7.months],
           tags: array_including(
             a_hash_including(tag_id: tags[2].id, events: 2)
           ) }
@@ -149,14 +149,14 @@ describe 'reports/tag_frequency' do
       bucket_one = recording_start.utc.at_beginning_of_year
       expected = [
         {
-          bucket: [bucket_one, bucket_one + 1.year],
+          range: [bucket_one, bucket_one + 1.year],
           tags: array_including(
             a_hash_including(tag_id: tags[0].id, events: 3),
             a_hash_including(tag_id: tags[1].id, events: 1)
           )
         },
         {
-          bucket: [bucket_one + 1.year, bucket_one + 2.years],
+          range: [bucket_one + 1.year, bucket_one + 2.years],
           tags: array_including(
             a_hash_including(tag_id: tags[2].id, events: 2)
           )
