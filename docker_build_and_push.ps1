@@ -41,16 +41,16 @@ if ($null -eq $next_version -or '' -eq $next_version ) {
 }
 
 Write-Output "Generate changelog"
-exec { docker-compose run --rm web rake changelog }
+exec { docker compose run --rm web rake changelog }
 
 Write-Output "Generate API docs"
-exec { docker-compose run --rm web generate_docs.sh }
+exec { docker compose run --rm web generate_docs.sh }
 
 Write-Output "Set VERSION $next_version"
 exec { Write-Output $next_version > VERSION }
 
 exec {
-  git add -A && git commit -m "Generated changelog and API docs for version $next_version" -m "[skip ci]"
+  git add -A && git commit -m "ci: generate changelog and API docs for $next_version" -m "[skip ci]"
 }
 
 Write-Output "Creating tag $next_version"

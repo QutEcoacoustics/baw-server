@@ -231,11 +231,15 @@ A basic redis setup is included with the docker compose file.
 ## Creating a release
 
 1. `git switch master && git pull`
-2. Set the GitHub auth token for docs generation:
-    - `export CHANGELOG_GITHUB_TOKEN=xxx`
-3. Determine the next version name. Check the ./VERSION file for the current version.
-4. Run the `docker_build_and_push.ps1` script with the next version as the first argument:
-    - e.g. ` ./docker_build_and_push.ps1 6.1.0`
+2. Set the GitHub auth token for docs generation: `export CHANGELOG_GITHUB_TOKEN=xxx`
+3. Determine the next version name.
+   - Check `./VERSION` for the current version.
+   - Match CI semantics based on conventional commits:
+     - breaking change (`!` or `BREAKING CHANGE:`) => major
+     - `feat:` => minor
+     - other release-worthy commits => patch
+4. Run the `docker_build_and_push.ps1` script with the next version as the first argument.
+   - e.g. `./docker_build_and_push.ps1 6.1.0`
 
 ## Architecture
 
