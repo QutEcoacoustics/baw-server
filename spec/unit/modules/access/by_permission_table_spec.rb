@@ -98,19 +98,19 @@ describe Access::ByPermissionTable do
     end
 
     example 'for admin' do
-      expect(common(admin_user)).to eq([audio_recording.id, site_anon.id])
+      expect(common(admin_user)).to eq([audio_recording.id, audio_recording_anon.id])
     end
 
     example 'for owner' do
-      expect(common(owner_user)).to eq([audio_recording.id, site_anon.id])
+      expect(common(owner_user)).to eq([audio_recording.id, audio_recording_anon.id])
     end
 
     example 'for writer' do
-      expect(common(writer_user)).to eq([audio_recording.id, site_anon.id])
+      expect(common(writer_user)).to eq([audio_recording.id, audio_recording_anon.id])
     end
 
     example 'for reader' do
-      expect(common(reader_user)).to eq([audio_recording.id, site_anon.id])
+      expect(common(reader_user)).to eq([audio_recording.id, audio_recording_anon.id])
     end
 
     example 'for anonymous' do

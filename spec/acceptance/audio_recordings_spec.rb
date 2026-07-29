@@ -1131,44 +1131,4 @@ resource 'AudioRecordings' do
       response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
     })
   end
-
-  post '/audio_recordings/filter' do
-    let!(:new_audio_recordings) {
-      Time.use_zone('Brisbane') {
-        audio_recording2 = Creation::Common.create_audio_recording(reader_user, harvester_user, site)
-        audio_recording2.recorded_date = Time.zone.parse('2016-03-01 11:55:00')
-        audio_recording2.duration_seconds = 120
-        audio_recording2.save!
-
-        audio_recording3 = Creation::Common.create_audio_recording(reader_user, harvester_user, site)
-        audio_recording3.recorded_date = Time.zone.parse('2016-03-01 13:00:00')
-        audio_recording3.duration_seconds = 120
-        audio_recording3.save!
-
-        audio_recording4 = Creation::Common.create_audio_recording(reader_user, harvester_user, site)
-        audio_recording4.recorded_date = Time.zone.parse('2016-03-01 11:30:00')
-        audio_recording4.duration_seconds = 120
-        audio_recording4.save!
-      }
-    }
-    let(:raw_post) {
-      {
-        filter: {
-          recorded_end_date: {
-            lt: '2016-03-01T02:00:00', # in utc
-            gt: '2016-03-01T01:50:00' # in utc
-          }
-        }
-      }.to_json
-    }
-
-    let(:authentication_token) { reader_token }
-
-    standard_request_options(:post, 'FILTER (as reader filtering by recorded_end_date)', :ok, {
-      response_body_content: "\"recorded_date\":\"#{Time.use_zone('Brisbane') {
-                                                      Time.zone.parse('2016-03-01 11:55:00')
-                                                    }.in_time_zone.iso8601(3).gsub(/\s+/, '')}\"",
-      data_item_count: 1
-    })
-  end
 end

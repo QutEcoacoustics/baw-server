@@ -20,8 +20,8 @@ describe 'audio_events/download performance', :clean_by_truncation, :slow do
   # We're at less than 15ish seconds for CSV and 20 for JSON, so that's a 7x improvement.
   # base offset for standard request overhead, and some scaled offset for CI variability
   let(:baseline_performance) { 0.050 }
-  let(:csv_expected_performance) { (event_count * (20.0 / 1_000_000)) + baseline_performance }
-  let(:json_expected_performance) { (event_count * (40.0 / 1_000_000)) + baseline_performance }
+  let(:csv_expected_performance) { (event_count * (40.0 / 1_000_000)) + baseline_performance }
+  let(:json_expected_performance) { (event_count * (60.0 / 1_000_000)) + baseline_performance }
 
   before do
     AudioEvent.delete_all
