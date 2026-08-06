@@ -1,5 +1,14 @@
 # Changelog
 
+## [15.1.0](https://github.com/QutEcoacoustics/baw-server/tree/15.1.0) (2026-08-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.0.0...15.1.0)
+
+**Implemented enhancements:**
+
+- `BawWorkers::Export::CamtrapDp` exporter module. [\#984](https://github.com/QutEcoacoustics/baw-server/issues/984)
+- feat: add camtrap-dp export module  [\#1011](https://github.com/QutEcoacoustics/baw-server/pull/1011) ([andrew-1234](https://github.com/andrew-1234))
+
 ## [15.0.0](https://github.com/QutEcoacoustics/baw-server/tree/15.0.0) (2026-07-29)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/14.15.2...15.0.0)
@@ -7,6 +16,10 @@
 **Implemented enhancements:**
 
 - New report generation routes [\#653](https://github.com/QutEcoacoustics/baw-server/issues/653)
+
+**Fixed bugs:**
+
+- Inconsistent bucket terminology in reports [\#1026](https://github.com/QutEcoacoustics/baw-server/issues/1026)
 
 ## [14.15.2](https://github.com/QutEcoacoustics/baw-server/tree/14.15.2) (2026-07-20)
 
