@@ -496,6 +496,10 @@ class AnalysisJob < ApplicationRecord
   # other methods
   #
 
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:analysis_job_path, id: id)
+  end
+
   private
 
   # system jobs are part of a chain of system run jobs. The special 'SYSTEM' token

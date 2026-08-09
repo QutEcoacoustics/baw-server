@@ -122,6 +122,13 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
       {{timestamp}}
       {{id}}
       {{uuid}}
+      {{audio_recording_global_id}}
+      {{script_id}}
+      {{script_global_id}}
+      {{analysis_job_id}}
+      {{analysis_job_global_id}}
+      {{provenance_id}}
+      {{provenance_global_id}}
     BASH
 
     command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
@@ -139,7 +146,14 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
         longitude: 456,
         timestamp: Time.new(2018, 1, 1, 12, 0, 0, '+10:00'),
         id: 789,
-        uuid: '0a7f2f46-c715-4c0b-9b54-6ead382c7b17'
+        uuid: '0a7f2f46-c715-4c0b-9b54-6ead382c7b17',
+        audio_recording_global_id: 'example.org/audio_recordings/789',
+        script_id: 456,
+        script_global_id: 'example.org/scripts/456',
+        analysis_job_id: 101,
+        analysis_job_global_id: 'example.org/analysis_jobs/101',
+        provenance_id: 202,
+        provenance_global_id: 'example.org/provenances/202'
       }
     )
 
@@ -157,7 +171,27 @@ describe BawWorkers::BatchAnalysis::CommandTemplater do
       2018-01-01T12:00:00+10:00
       789
       0a7f2f46-c715-4c0b-9b54-6ead382c7b17
+      example.org/audio_recordings/789
+      456
+      example.org/scripts/456
+      101
+      example.org/analysis_jobs/101
+      202
+      example.org/provenances/202
     BASH
+  end
+
+  it 'allows nil values for optional new identifiers like provenance_global_id' do
+    command = BawWorkers::BatchAnalysis::CommandTemplater.format_command(
+      '{{source}} {{output_dir}} {%if provenance_global_id%}--provenance {{provenance_global_id}}{%endif%}',
+      {
+        source: 'audio.wav',
+        output_dir: '/results',
+        provenance_global_id: nil
+      }
+    )
+
+    expect(command).to eq('audio.wav /results ')
   end
 
   it 'can template a literal curly brace' do

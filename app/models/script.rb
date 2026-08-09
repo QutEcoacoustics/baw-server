@@ -325,6 +325,10 @@ class Script < ApplicationRecord
     }.freeze
   end
 
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:script_path, id: id)
+  end
+
   private
 
   def check_version_increase

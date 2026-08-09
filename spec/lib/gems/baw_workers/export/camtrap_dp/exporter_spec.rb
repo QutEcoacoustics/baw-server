@@ -189,19 +189,20 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
     it 'writes configured client-host identifiers for table ids and foreign keys' do
       rows = with_export_manifest { package_data }
+      authority = Settings.global_identifiers.authority
 
       expect(rows[:deployments]).to include(
-        'deploymentID' => "ecosounds.org/sites/#{site.id}",
-        'locationID' => "ecosounds.org/sites/#{site.id}"
+        'deploymentID' => "#{authority}/sites/#{site.id}",
+        'locationID' => "#{authority}/sites/#{site.id}"
       )
       expect(rows[:media]).to include(
-        'mediaID' => "ecosounds.org/audio_recordings/#{audio_recording.id}",
-        'deploymentID' => "ecosounds.org/sites/#{site.id}"
+        'mediaID' => "#{authority}/audio_recordings/#{audio_recording.id}",
+        'deploymentID' => "#{authority}/sites/#{site.id}"
       )
       expect(rows[:observations]).to include(
-        'observationID' => "ecosounds.org/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}/taggings/#{export_tagging.id}",
-        'deploymentID' => "ecosounds.org/sites/#{site.id}",
-        'mediaID' => "ecosounds.org/audio_recordings/#{audio_recording.id}"
+        'observationID' => "#{authority}/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}/taggings/#{export_tagging.id}",
+        'deploymentID' => "#{authority}/sites/#{site.id}",
+        'mediaID' => "#{authority}/audio_recordings/#{audio_recording.id}"
       )
     end
 
