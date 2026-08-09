@@ -1,5 +1,17 @@
 # Changelog
 
+## [15.3.0](https://github.com/QutEcoacoustics/baw-server/tree/15.3.0) (2026-08-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.2.0...15.3.0)
+
+**Implemented enhancements:**
+
+- Allow users to create provenances [\#1030](https://github.com/QutEcoacoustics/baw-server/issues/1030)
+
+**Merged pull requests:**
+
+- Allow users to create and manage their own provenances [\#1031](https://github.com/QutEcoacoustics/baw-server/pull/1031) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [15.2.0](https://github.com/QutEcoacoustics/baw-server/tree/15.2.0) (2026-08-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.1.0...15.2.0)
