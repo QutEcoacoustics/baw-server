@@ -1,17 +1,15 @@
 # frozen_string_literal: true
 
-
-
 describe SessionsController, type: :routing do
   describe :routing do
     it { expect(get('/my_account/sign_in')).to route_to('users/sessions#new') }
     it { expect(post('/my_account/sign_in')).to route_to('users/sessions#create') }
     it { expect(get('/my_account/sign_out')).to route_to('users/sessions#destroy') }
 
-    it { expect(post('/my_account/password')).to route_to('devise/passwords#create') }
-    it { expect(get('/my_account/password/new')).to route_to('devise/passwords#new') }
-    it { expect(get('/my_account/password/edit')).to route_to('devise/passwords#edit') }
-    it { expect(put('/my_account/password')).to route_to('devise/passwords#update') }
+    it { expect(post('/my_account/password')).to route_to('users/passwords#create') }
+    it { expect(get('/my_account/password/new')).to route_to('users/passwords#new') }
+    it { expect(get('/my_account/password/edit')).to route_to('users/passwords#edit') }
+    it { expect(put('/my_account/password')).to route_to('users/passwords#update') }
 
     it { expect(get('/my_account/cancel')).to route_to('users/registrations#cancel') }
     it { expect(post('/my_account')).to route_to('users/registrations#create') }
