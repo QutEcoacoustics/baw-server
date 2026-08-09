@@ -368,7 +368,14 @@ module BawWorkers
           longitude: audio_recording&.site&.longitude,
           timestamp: audio_recording.recorded_date,
           id: audio_recording.id,
-          uuid: audio_recording.uuid
+          uuid: audio_recording.uuid,
+          audio_recording_global_id: audio_recording.global_identifier,
+          script_id: script.id,
+          script_global_id: script.global_identifier,
+          analysis_job_id: analysis_job.id,
+          analysis_job_global_id: analysis_job.global_identifier,
+          provenance_id: script.provenance_id,
+          provenance_global_id: script.provenance&.global_identifier
         })
 
         <<~SHELL

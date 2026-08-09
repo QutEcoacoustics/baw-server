@@ -51,6 +51,10 @@ class Provenance < ApplicationRecord
     true
   end
 
+  def global_identifier
+    Api::UrlHelpers.global_identifier(:provenance_path, id: id)
+  end
+
   # Define filter api settings
   def self.filter_settings
     fields = [
