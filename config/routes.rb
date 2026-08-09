@@ -17,11 +17,11 @@
 #                                      new_user_session GET                                          /my_account/sign_in(.:format)                                                                                                        users/sessions#new
 #                                          user_session POST                                         /my_account/sign_in(.:format)                                                                                                        users/sessions#create
 #                                  destroy_user_session GET                                          /my_account/sign_out(.:format)                                                                                                       users/sessions#destroy
-#                                     new_user_password GET                                          /my_account/password/new(.:format)                                                                                                   devise/passwords#new
-#                                    edit_user_password GET                                          /my_account/password/edit(.:format)                                                                                                  devise/passwords#edit
-#                                         user_password PATCH                                        /my_account/password(.:format)                                                                                                       devise/passwords#update
-#                                                       PUT                                          /my_account/password(.:format)                                                                                                       devise/passwords#update
-#                                                       POST                                         /my_account/password(.:format)                                                                                                       devise/passwords#create
+#                                     new_user_password GET                                          /my_account/password/new(.:format)                                                                                                   users/passwords#new
+#                                    edit_user_password GET                                          /my_account/password/edit(.:format)                                                                                                  users/passwords#edit
+#                                         user_password PATCH                                        /my_account/password(.:format)                                                                                                       users/passwords#update
+#                                                       PUT                                          /my_account/password(.:format)                                                                                                       users/passwords#update
+#                                                       POST                                         /my_account/password(.:format)                                                                                                       users/passwords#create
 #                              cancel_user_registration GET                                          /my_account/cancel(.:format)                                                                                                         users/registrations#cancel
 #                                 new_user_registration GET                                          /my_account/sign_up(.:format)                                                                                                        users/registrations#new
 #                                edit_user_registration GET                                          /my_account/edit(.:format)                                                                                                           users/registrations#edit
@@ -620,7 +620,7 @@ Rails.application.routes.draw do
   devise_for :users,
     path: :my_account,
     controllers: { sessions: 'users/sessions', registrations: 'users/registrations',
-                   confirmations: 'users/confirmations' }
+                   confirmations: 'users/confirmations', passwords: 'users/passwords' }
 
   # devise for RESTful API Authentication, see sessions_controller.rb
   devise_for :users,
