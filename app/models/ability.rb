@@ -668,8 +668,15 @@ class Ability
     can [:index, :filter], SavedSearch
   end
 
-  def to_provenance(_user, _is_guest)
-    # other actions are admin only
+  def to_provenance(user, is_guest)
+    # guests cannot create or modify provenances
+    unless is_guest
+      # any logged-in user can create a provenance
+      can [:create], Provenance
+
+      # creators can update and destroy their own provenances
+      can [:update, :destroy], Provenance, creator_id: user.id
+    end
 
     # available to any user, including guest
     can [:show, :new, :index, :filter], Provenance
