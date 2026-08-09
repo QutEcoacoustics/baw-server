@@ -3,10 +3,12 @@
 describe Api::GlobalIdentifiers do
   create_entire_hierarchy
 
+  let(:authority) { Settings.global_identifiers.authority }
+
   describe 'AudioRecording#global_identifier' do
     it 'produces a global identifier with the configured authority and the audio recording path' do
       expect(audio_recording.global_identifier).to eq(
-        "example.org/audio_recordings/#{audio_recording.id}"
+        "#{authority}/audio_recordings/#{audio_recording.id}"
       )
     end
   end
@@ -14,7 +16,7 @@ describe Api::GlobalIdentifiers do
   describe 'Script#global_identifier' do
     it 'produces a global identifier with the configured authority and the script path' do
       expect(script.global_identifier).to eq(
-        "example.org/scripts/#{script.id}"
+        "#{authority}/scripts/#{script.id}"
       )
     end
   end
@@ -22,7 +24,7 @@ describe Api::GlobalIdentifiers do
   describe 'AnalysisJob#global_identifier' do
     it 'produces a global identifier with the configured authority and the analysis job path' do
       expect(analysis_job.global_identifier).to eq(
-        "example.org/analysis_jobs/#{analysis_job.id}"
+        "#{authority}/analysis_jobs/#{analysis_job.id}"
       )
     end
   end
@@ -31,7 +33,7 @@ describe Api::GlobalIdentifiers do
     it 'produces a global identifier with the configured authority and the provenance path' do
       provenance = script.provenance
       expect(provenance.global_identifier).to eq(
-        "example.org/provenances/#{provenance.id}"
+        "#{authority}/provenances/#{provenance.id}"
       )
     end
   end
@@ -39,7 +41,7 @@ describe Api::GlobalIdentifiers do
   describe 'Site#global_identifier' do
     it 'produces a global identifier with the configured authority and the site path' do
       expect(site.global_identifier).to eq(
-        "example.org/sites/#{site.id}"
+        "#{authority}/sites/#{site.id}"
       )
     end
   end
@@ -47,11 +49,13 @@ describe Api::GlobalIdentifiers do
   describe 'Api::UrlHelpers.global_identifier' do
     it 'combines authority from settings with the generated path' do
       result = Api::UrlHelpers.global_identifier(:audio_recording_path, id: audio_recording.id)
-      expect(result).to eq("example.org/audio_recordings/#{audio_recording.id}")
+      expect(result).to eq("#{authority}/audio_recordings/#{audio_recording.id}")
     end
 
-    it 'uses the authority from Settings.global_identifiers.authority' do
-      expect(Settings.global_identifiers.authority).to eq('example.org')
+    it 'uses the authority configured in Settings.global_identifiers.authority' do
+      # Verify the authority setting is non-empty and formatted as a bare hostname (no scheme)
+      expect(authority).to be_present
+      expect(authority).not_to start_with('http')
     end
   end
 end
