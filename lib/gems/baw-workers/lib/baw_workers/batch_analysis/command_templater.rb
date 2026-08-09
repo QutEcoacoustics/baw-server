@@ -53,7 +53,7 @@ module BawWorkers
       ANALYSIS_JOB_GLOBAL_ID = :analysis_job_global_id
       # the id of the provenance associated with the script (nil if no provenance)
       PROVENANCE_ID = :provenance_id
-      # the global identifier of the provenance (e.g. "example.org/provenances/101"), nil if no provenance
+      # the global identifier of the provenance (e.g. "example.org/provenances/202"), nil if no provenance
       PROVENANCE_GLOBAL_ID = :provenance_global_id
 
       ALL = Set.new([
