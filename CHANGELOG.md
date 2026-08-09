@@ -1,5 +1,17 @@
 # Changelog
 
+## [15.2.0](https://github.com/QutEcoacoustics/baw-server/tree/15.2.0) (2026-08-09)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.1.0...15.2.0)
+
+**Implemented enhancements:**
+
+- Add global id to analysis job template options [\#1028](https://github.com/QutEcoacoustics/baw-server/issues/1028)
+
+**Merged pull requests:**
+
+- Add global identifiers and resource IDs to analysis job command templates [\#1029](https://github.com/QutEcoacoustics/baw-server/pull/1029) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [15.1.0](https://github.com/QutEcoacoustics/baw-server/tree/15.1.0) (2026-08-06)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.0.0...15.1.0)
