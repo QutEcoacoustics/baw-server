@@ -26,11 +26,13 @@ describe 'reports/recording_coverage' do
          start_date + duration_seconds + gap_below_threshold + duration_seconds
        ],
        density: be_within(0.0001).of(density),
+       accumulated_density: be_within(0.0001).of(density),
        gap_threshold: },
 
      { site_id: site.id,
        range: [end_date - duration_seconds, end_date],
        density: 1.0,
+       accumulated_density: 1.0,
        gap_threshold: }]
   end
 
@@ -65,10 +67,37 @@ describe 'reports/recording_coverage' do
       site_id: site.id,
       range: [start_date, end_date],
       density: be_within(0.0001).of(density),
+      accumulated_density: be_within(0.0001).of(density),
       gap_threshold: 1.week.seconds.to_i
     }]
 
     expect(api_data).to match_array(expected_data)
+  end
+
+  context 'with overlapping recordings' do
+    before do
+      # Accumulated density intentionally counts both ranges while density unions them. This exposes temporal
+      # multiplicity without changing the existing coverage semantics or assuming that overlaps are duplicates.
+      create(:audio_recording, creator: writer_user, site:, recorded_date: start_date, duration_seconds:)
+    end
+
+    it 'counts overlapping ranges independently in accumulated density' do
+      post '/reports/recording_coverage',
+        params: params.merge(options: { bucket_count: 1 }),
+        **api_headers(writer_token)
+
+      expect_success
+
+      covered_density = (duration_seconds * 3) / 1.week.seconds
+      accumulated_density = (duration_seconds * 4) / 1.week.seconds
+      expect(api_data).to match([{
+        site_id: site.id,
+        range: [start_date, end_date],
+        density: be_within(0.0001).of(covered_density),
+        accumulated_density: be_within(0.0001).of(accumulated_density),
+        gap_threshold: 1.week.seconds.to_i
+      }])
+    end
   end
 
   context 'with bucket_count < 1' do
@@ -112,13 +141,15 @@ describe 'reports/recording_coverage' do
 
     let!(:additional_site_expected_data) do
       [*expected_data,
-         { site_id: another_site.id, range: [start_date, start_date + 5.minutes], density: 1.0, gap_threshold: },
+         { site_id: another_site.id, range: [start_date, start_date + 5.minutes], density: 1.0,
+           accumulated_density: 1.0, gap_threshold: },
        { site_id: another_site.id,
            range: [
            start_date + 5.minutes + gap_above_threshold,
            start_date + 5.minutes + gap_above_threshold + 5.minutes
          ],
          density: 1.0,
+         accumulated_density: 1.0,
          gap_threshold: }]
     end
 
