@@ -19,6 +19,9 @@ describe 'Scripts' do
         executable_settings_name: 'settings.yaml',
         provenance_id: provenance.id,
         event_import_glob: '*.csv',
+        event_import_minimum_score: 0.5,
+        event_import_include_top: 10,
+        event_import_include_top_per: 3600,
         resources: {
           ncpus: 1
         }
@@ -31,6 +34,9 @@ describe 'Scripts' do
     script = Script.find(api_data[:id])
 
     expect(script.verified).to be_truthy
+    expect(script.event_import_minimum_score.to_f).to eq(0.5)
+    expect(script.event_import_include_top).to eq(10)
+    expect(script.event_import_include_top_per).to eq(3600)
   end
 
   it 'can update a script (but really it is an insert)' do
@@ -48,6 +54,10 @@ describe 'Scripts' do
         executable_settings_media_type: 'application/yaml',
         executable_settings_name: 'settings.yaml',
         provenance_id: script.provenance.id,
+        event_import_glob: '*.csv',
+        event_import_minimum_score: 0.75,
+        event_import_include_top: 8,
+        event_import_include_top_per: 7200,
         resources: {
           ncpus: 1
         }
@@ -63,5 +73,8 @@ describe 'Scripts' do
     expect(new_script.version).to eq(script.version + 1)
     expect(new_script.id).not_to eq(script.id)
     expect(new_script.group_id).to eq(script.group_id)
+    expect(new_script.event_import_minimum_score.to_f).to eq(0.75)
+    expect(new_script.event_import_include_top).to eq(8)
+    expect(new_script.event_import_include_top_per).to eq(7200)
   end
 end
