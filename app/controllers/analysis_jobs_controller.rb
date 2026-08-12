@@ -158,7 +158,15 @@ class AnalysisJobsController < ApplicationController
 
     permitted << :system_job if for_create
     permitted << :project_id if for_create
-    permitted << { scripts: [:script_id, :custom_settings, :event_import_minimum_score] } if for_create
+    permitted << {
+      scripts: [
+        :script_id,
+        :custom_settings,
+        :event_import_minimum_score,
+        :event_import_include_top,
+        :event_import_include_top_per
+      ]
+    } if for_create
     permitted << { filter: {} } if for_create
 
     params.require(:analysis_job).permit(*permitted)
@@ -175,6 +183,8 @@ class AnalysisJobsController < ApplicationController
       ajs = AnalysisJobsScript.new(script_id: script[:script_id])
       ajs.custom_settings = script[:custom_settings] if script.key?(:custom_settings)
       ajs.event_import_minimum_score = script[:event_import_minimum_score] if script.key?(:event_import_minimum_score)
+      ajs.event_import_include_top = script[:event_import_include_top] if script.key?(:event_import_include_top)
+      ajs.event_import_include_top_per = script[:event_import_include_top_per] if script.key?(:event_import_include_top_per)
       @analysis_job.analysis_jobs_scripts << ajs
     end
   end

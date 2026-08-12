@@ -101,6 +101,7 @@ module Admin
         :executable_command,
         :executable_settings, :executable_settings_media_type,
         :executable_settings_name, :provenance_id, :event_import_glob,
+        :event_import_minimum_score, :event_import_include_top, :event_import_include_top_per,
         resources: {}
       )
     end
