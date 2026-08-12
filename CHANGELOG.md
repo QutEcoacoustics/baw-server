@@ -1,5 +1,17 @@
 # Changelog
 
+## [15.3.1](https://github.com/QutEcoacoustics/baw-server/tree/15.3.1) (2026-08-12)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.0...15.3.1)
+
+**Fixed bugs:**
+
+- Script API does not seem to support import settings [\#1034](https://github.com/QutEcoacoustics/baw-server/issues/1034)
+
+**Merged pull requests:**
+
+- Permit and persist script event import filtering params via API [\#1035](https://github.com/QutEcoacoustics/baw-server/pull/1035) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [15.3.0](https://github.com/QutEcoacoustics/baw-server/tree/15.3.0) (2026-08-09)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.2.0...15.3.0)
