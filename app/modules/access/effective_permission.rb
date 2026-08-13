@@ -8,6 +8,9 @@ module Access
     TABLE_NAME = TABLE.name.freeze
     LEVEL_NAME = 'level'
 
+    PROJECT_TABLE = Arel::Table.new(:effective_project_permissions).freeze
+    PROJECT_TABLE_NAME = PROJECT_TABLE.name.freeze
+
     module_function
 
     # Joins the effective permissions CTE to the given query.
@@ -27,6 +30,33 @@ module Access
           project_table
             .join(TABLE, Arel::Nodes::OuterJoin)
             .on(project_table[:id].eq(TABLE[:project_id]))
+            .join_sources
+        )
+    end
+
+    # Joins effective permissions to a query containing the sites table without changing the query's cardinality.
+    # A site can belong to multiple projects, so joining project permissions directly emits one row per project.
+    # Instead, retain the performant CTE-and-join design but resolve those project permissions to one row per site.
+    # The strongest project permission is exposed as effective_permissions.level for downstream projections.
+    # TODO: remove when fixing https://github.com/QutEcoacoustics/baw-server/issues/743
+    # @param query [ActiveRecord::Relation] query containing the sites table
+    # @param user [User]
+    # @param project_ids [Array<Integer>] optional projects through which sites may be accessed
+    # @return [ActiveRecord::Relation]
+    def add_effective_site_permissions_cte(query, user, project_ids: nil)
+      project_permissions = effective_permissions_for_projects_query(user, project_ids:)
+      site_permissions = effective_permissions_for_sites_query(project_ids:)
+      site_table = Site.arel_table
+
+      query
+        .with(
+          PROJECT_TABLE_NAME.to_s => project_permissions,
+          TABLE_NAME.to_s => site_permissions
+        )
+        .joins(
+          site_table
+            .join(TABLE)
+            .on(site_table[:id].eq(TABLE[:site_id]))
             .join_sources
         )
     end
@@ -90,6 +120,27 @@ module Access
           pm[:project_id],
           case_statement.maximum.as(LEVEL_NAME)
         )
+    end
+
+    # Resolves project permissions to one effective permission row per site.
+    # MAX is intentional: access through any associated project grants the strongest available level, while the
+    # left join and COALESCE retain sites whose associated projects grant no permission. Returning exactly one row
+    # per site prevents projects_sites fan-out from duplicating sites and every record derived from them.
+    # @param project_ids [Array<Integer>] optional projects through which sites may be accessed
+    # @return [Arel::SelectManager] query returning site_id and level
+    def effective_permissions_for_sites_query(project_ids: nil)
+      projects_sites = ProjectsSite.arel_table
+      level = Arel.coalesce(PROJECT_TABLE[LEVEL_NAME], Permission.none_value).maximum.as(LEVEL_NAME)
+
+      query = projects_sites
+        .join(PROJECT_TABLE, Arel::Nodes::OuterJoin)
+        .on(projects_sites[:project_id].eq(PROJECT_TABLE[:project_id]))
+        .group(projects_sites[:site_id])
+        .project(projects_sites[:site_id], level)
+
+      query = query.where(projects_sites[:project_id].in(project_ids)) if project_ids.present?
+
+      query
     end
 
     # Builds an Arel predicate for filtering by effective permission level.

@@ -216,6 +216,58 @@ describe Access::ByPermissionTable do
     end
   end
 
+  context 'when a site belongs to multiple accessible projects' do
+    before do
+      site.projects << another_project
+      create(:write_permission,
+        project: another_project,
+        creator: another_project.creator,
+        user: reader_user)
+    end
+
+    example 'resolves the strongest permission level for the site' do
+      result = Access::ByPermissionTable
+        .sites(reader_user, level: Access::Permission::READER)
+        .where(id: site.id)
+        .pluck(:id, 'effective_permissions.level')
+
+      expect(result).to eq([
+        [site.id, Access::Permission::LEVEL_TO_INTEGER_MAP[Access::Permission::WRITER]]
+      ])
+    end
+
+    example 'returns the site once' do
+      result = Access::ByPermissionTable
+        .sites(reader_user, level: Access::Permission::READER)
+        .where(id: site.id)
+        .pluck(:id)
+
+      expect(result).to eq([site.id])
+    end
+
+    example 'returns the audio recording once with the strongest site permission' do
+      result = Access::ByPermissionTable
+        .audio_recordings(reader_user, level: Access::Permission::READER)
+        .where(id: audio_recording.id)
+        .pluck(:id, 'effective_permissions.level')
+
+      expect(result).to eq([
+        [audio_recording.id, Access::Permission::LEVEL_TO_INTEGER_MAP[Access::Permission::WRITER]]
+      ])
+    end
+
+    example 'returns the audio event once with the strongest site permission' do
+      result = Access::ByPermissionTable
+        .audio_events(reader_user, level: Access::Permission::READER)
+        .where(id: audio_event.id)
+        .pluck(:id, 'effective_permissions.level')
+
+      expect(result).to eq([
+        [audio_event.id, Access::Permission::LEVEL_TO_INTEGER_MAP[Access::Permission::WRITER]]
+      ])
+    end
+  end
+
   context 'with Access::ByPermission the behaviour is identical' do
     # audio_event_anon needed for audio_events equivalence test
     let!(:audio_event_anon) {

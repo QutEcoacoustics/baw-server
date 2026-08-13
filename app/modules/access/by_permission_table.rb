@@ -21,7 +21,7 @@ module Access
     # @param levels [Array<Symbol>] alternative to level, an array of specific permission levels (see Permission levels)
     # @return [ActiveRecord::Relation<Project>] the approved projects
     def projects(user, level: nil, levels: nil)
-      query = Project.all
+      query = add_effective_permissions_cte(Project.all, user)
 
       apply(user, query, level:, levels:)
     end
@@ -33,9 +33,9 @@ module Access
     # @param project_ids [Array<Integer>] optional list of project IDs to further restrict results
     # @return [ActiveRecord::Relation<Site>] the approved sites
     def sites(user, level: nil, levels: nil, project_ids: nil)
-      query = Site.joins(:projects)
+      query = add_effective_site_permissions_cte(Site.all, user, project_ids:)
 
-      apply(user, query, level:, levels:, project_ids:)
+      apply(user, query, level:, levels:)
     end
 
     # Returns a query for audio events the user has at least the given level of permission for.
@@ -47,9 +47,9 @@ module Access
     # @param project_ids [Array<Integer>] optional list of project IDs to reduce the scale of permissions joined
     # @return [ActiveRecord::Relation<AudioEvent>] the approved audio events
     def audio_events(user, level: nil, levels: nil, project_ids: nil)
-      query = AudioEvent.joins(audio_recording: { site: :projects })
+      query = add_effective_site_permissions_cte(AudioEvent.joins(audio_recording: :site), user, project_ids:)
 
-      apply(user, query, level:, levels:, project_ids:) { |predicate|
+      apply(user, query, level:, levels:) { |predicate|
         # Reference audio events are always accessible regardless of permission
         ae = AudioEvent.arel_table
         reference_predicate = ae[:is_reference].eq(true)
@@ -67,12 +67,12 @@ module Access
     # @param project_ids [Array<Integer>] optional list of project IDs to reduce the scale of permissions joined
     # @return [ActiveRecord::Relation<AudioRecording>] the approved audio recordings
     def audio_recordings(user, level: nil, levels: nil, project_ids: nil)
-      query = AudioRecording.joins(site: :projects)
+      query = add_effective_site_permissions_cte(AudioRecording.joins(:site), user, project_ids:)
 
-      apply(user, query, level:, levels:, project_ids:)
+      apply(user, query, level:, levels:)
     end
 
-    def apply(user, query, level:, levels: nil, project_ids: nil)
+    def apply(user, query, level:, levels: nil)
       user = Access::Validate.user(user)
       validate_levels(level, levels)
 
@@ -88,9 +88,7 @@ module Access
 
       predicate = yield predicate if block_given?
 
-      predicate = predicate.and(Project.arel_table[:id].in(project_ids)) if project_ids.present?
-
-      add_effective_permissions_cte(query, user, project_ids:).where(predicate)
+      query.where(predicate)
     end
 
     def validate_levels(level, levels)
