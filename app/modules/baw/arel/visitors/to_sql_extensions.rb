@@ -86,6 +86,18 @@ module Baw
           visit o.expression, collector
         end
 
+        def visit_Baw_Arel_Nodes_JsonbAgg(o, collector)
+          collector << 'jsonb_agg('
+          visit o.expression, collector
+
+          if o.order_expressions
+            collector << ' ORDER BY '
+            inject_join o.order_expressions, collector, ', '
+          end
+
+          collector << ')'
+        end
+
         def visit_Baw_Arel_Nodes_ArrayConstructor(o, collector)
           # wrapping in brackets
           collector << '(ARRAY['

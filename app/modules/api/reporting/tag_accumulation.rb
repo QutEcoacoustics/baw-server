@@ -57,7 +57,7 @@ module Api
         # it becomes a nested cte in the final query (no performance impact).
         [
           cte(EVENTS, events_cte(query)),
-          *@bucketer.bucket_ctes(events_table: EVENTS),
+          *@bucketer.bucket_ctes(source_table: EVENTS),
           cte(FIRST_SEEN, first_seen_cte(bucket_size)),
           cte(NEW_TAGS, new_tags_cte)
         ]
