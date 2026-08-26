@@ -46,8 +46,11 @@ class ApplicationRecord < ActiveRecord::Base
       # object is consumed by ActiveRecord::Base.instantiate which turns takes
       # in rows of untyped results and column types turns them into model objects.
       columns = result.columns.map(&:to_sym)
+      # cast_values returns a flat array of scalars for single-column results,
+      # not an array of one-element arrays. Key off column count to re-wrap.
       result.cast_values.map do |row|
-        columns.zip(Array(row)).to_h
+        values = columns.length == 1 ? [row] : row
+        columns.zip(values).to_h
       end
     end
   end
