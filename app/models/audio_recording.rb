@@ -560,12 +560,6 @@ class AudioRecording < ApplicationRecord
     Api::UrlHelpers.global_identifier(:audio_recording_path, id: id)
   end
 
-  private
-
-  def missing_hash_value?
-    file_hash == "SHA256#{HASH_TOKEN}"
-  end
-
   # Results in:
   # ("audio_recordings"."recorded_date" + make_interval(secs => "audio_recordings"."duration_seconds"))
   def self.arel_recorded_end_date
@@ -574,10 +568,23 @@ class AudioRecording < ApplicationRecord
   end
 
   # Results in:
+  # tsrange("audio_recordings"."recorded_date",
+  # ("audio_recordings"."recorded_date" + make_interval(secs => "audio_recordings"."duration_seconds")), '[)')
+  def self.recording_range_arel
+    Arel.tsrange(AudioRecording.arel_table[:recorded_date], AudioRecording.arel_recorded_end_date)
+  end
+
+  # Results in:
   # ((SELECT tzinfo_tz FROM "sites" WHERE "audio_recordings"."site_id" = "sites"."id"))
   def self.arel_timezone
     site = Site.arel_table
     analysis_job = AudioRecording.arel_table
     Arel.grouping(site.where(analysis_job[:site_id].eq(site[:id])).project(:tzinfo_tz))
+  end
+
+  private
+
+  def missing_hash_value?
+    file_hash == "SHA256#{HASH_TOKEN}"
   end
 end
