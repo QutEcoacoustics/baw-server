@@ -59,7 +59,7 @@ describe Api::Reporting::Bucketer do
 
     query = buckets
       .project(buckets[:bucket], buckets[:bucket].lower.as('bucket_lower'))
-      .with(events_cte, *bucketer.bucket_ctes(events_table: events))
+      .with(events_cte, *bucketer.bucket_ctes(source_table: events))
       .order(buckets[:bucket].lower)
 
     AudioEvent.exec_query_casted(query).pluck(:bucket)
