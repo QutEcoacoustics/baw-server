@@ -38,8 +38,8 @@ module Api
           .project(
             *partition_columns(ISLANDS),
             Arel.tsrange(
-              ISLANDS[:recording_range].lower.minimum,
-              ISLANDS[:recording_range].upper.maximum
+              ISLANDS[RECORDING_RANGE].lower.minimum,
+              ISLANDS[RECORDING_RANGE].upper.maximum
             ).as('range'),
             ISLANDS[:gap_threshold]
           )
@@ -48,7 +48,7 @@ module Api
             ISLANDS[:gap_threshold],
             *partition_columns(ISLANDS)
           )
-          .order(*partition_columns(ISLANDS), ISLANDS[:recording_range].lower.minimum)
+          .order(*partition_columns(ISLANDS), ISLANDS[RECORDING_RANGE].lower.minimum)
           .with(*ctes(query:))
       end
 
@@ -56,14 +56,14 @@ module Api
       def self.coverage_density
         # ! TODO: When arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         coverage_span = Arel::Nodes::Subtraction.new(
-          ISLANDS[:recording_range].upper.maximum,
-          ISLANDS[:recording_range].lower.minimum
+          ISLANDS[RECORDING_RANGE].upper.maximum,
+          ISLANDS[RECORDING_RANGE].lower.minimum
         ).extract('epoch')
 
         # We calculate the actual covered seconds by using range_agg to union any overlapping tsranges within each island,
         # and use our custom PostgreSQL function to get the total seconds covered by the resulting multirange.
         Arel::Nodes::Division.new(
-          Arel.tsmultirange_total_seconds(ISLANDS[:recording_range].range_agg),
+          Arel.tsmultirange_total_seconds(ISLANDS[RECORDING_RANGE].range_agg),
           Arel::Nodes::NamedFunction.new('NULLIF', [coverage_span, Arel.sql('0')])
         )
       end
@@ -82,7 +82,7 @@ module Api
         query
           .except(:select, :order, :limit, :offset)
           .reselect(
-            recording_range_arel.as('recording_range'),
+            recording_range_arel.as(RECORDING_RANGE),
             *@partition_columns
           ).arel
       end
@@ -97,8 +97,8 @@ module Api
       def threshold_cte
         # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         span = Arel::Nodes::Subtraction.new(
-          RECORDINGS[:recording_range].upper.maximum,
-          RECORDINGS[:recording_range].lower.minimum
+          RECORDINGS[RECORDING_RANGE].upper.maximum,
+          RECORDINGS[RECORDING_RANGE].lower.minimum
         )
         RECORDINGS.project(Arel.seconds(Arel::Nodes::Division.new(span.extract('epoch'), @bucket_count)).as('val'))
       end
@@ -108,17 +108,17 @@ module Api
       def islands_cte
         window = Arel::Nodes::Window.new
           .partition(*partition_columns(RECORDINGS))
-          .order(RECORDINGS[:recording_range].lower)
+          .order(RECORDINGS[RECORDING_RANGE].lower)
 
         # Using a custom PostgreSQL aggregate function to assign numbers to distinct islands (groups separated by > gap_threshold)
         # (see AddContiguousRangeNumberFunction migration)
         island_id = Arel::Nodes::NamedFunction
-          .new('contiguous_range_number', [RECORDINGS[:recording_range], gap_threshold_table_alias[:val]])
+          .new('contiguous_range_number', [RECORDINGS[RECORDING_RANGE], gap_threshold_table_alias[:val]])
           .over(window)
 
         RECORDINGS
           .project(
-            RECORDINGS[:recording_range],
+            RECORDINGS[RECORDING_RANGE],
             island_id.as('island_id'),
             *partition_columns(RECORDINGS),
             gap_threshold_table_alias[:val].as('gap_threshold')

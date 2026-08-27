@@ -6,6 +6,25 @@ class ReportsController < ApplicationController
   include Api::Reporting
   include ResultFormatters
 
+  # POST /reports/tag_rate
+  # Returns a structured report of normalised tag rates
+  # Accepts a filter objectd where:
+  #  the `filter` is applied to audio recordings
+  #  the `paging`, `sort`, and `projection` options are invalid
+  def tag_rate
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    results, opts = execute_report(
+      base_query:,
+      model: AudioRecording,
+      template: TagRate.new(report_options)
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/recording_coverage
   # Returns a structured report of recording coverage
   # Accepts a filter object where:
