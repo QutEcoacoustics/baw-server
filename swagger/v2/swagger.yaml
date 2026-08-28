@@ -1046,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2026-08-12T12:48:33.310Z'
+                  created_at: '2026-08-28T02:29:18.780Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -2031,7 +2031,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.3.0 from http://web:3000.
+                  Version 15.3.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2073,7 +2073,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.3.0"
+                Write-Information "Acoustic Workbench downloader script version 15.3.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2288,7 +2288,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.3.0 from http://web:3000.
+                  Version 15.3.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2330,7 +2330,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.3.0"
+                Write-Information "Acoustic Workbench downloader script version 15.3.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -5590,7 +5590,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: "-c_X16Tok6ER8xQtnKJCIqPGsa1QMr0yuuUDdUFJums"
+                  auth_token: Y4wB2_iukVQ0RHS_CF12a75tGwZaMb-8oG9zAztPRsE
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5646,7 +5646,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: PS7arDIprIBDPPhAchWM3JJarTbiznY3GZExyCn7JGs
+                  auth_token: "-6pV6Yfd6yGwRon0kP0KVVw4nTJ9c2britVhjT1LnEs"
                   user_name: Admin
                   user_id: 1
               schema:
@@ -7771,8 +7771,8 @@ paths:
                   longitude: -153.116578
                   latitude: 38.397469
                   location_obfuscated: false
-                  obfuscated_latitude: 38.39817
-                  obfuscated_longitude: -153.11582
+                  obfuscated_latitude: 38.39604
+                  obfuscated_longitude: -153.11533
                   custom_obfuscated_location: false
                   project_ids:
                   - 166
@@ -8075,8 +8075,8 @@ paths:
                   longitude: 169.940947
                   latitude: 46.736985
                   location_obfuscated: false
-                  obfuscated_latitude: 46.73617
-                  obfuscated_longitude: 169.94179
+                  obfuscated_latitude: 46.7377
+                  obfuscated_longitude: 169.94162
                   custom_obfuscated_location: false
                   project_ids:
                   - 171
@@ -8185,8 +8185,8 @@ paths:
                   longitude: 60.472003
                   latitude: 16.328081
                   location_obfuscated: false
-                  obfuscated_latitude: 16.3289
-                  obfuscated_longitude: 60.47164
+                  obfuscated_latitude: 16.32926
+                  obfuscated_longitude: 60.47159
                   custom_obfuscated_location: false
                   project_ids:
                   - 172
@@ -12702,8 +12702,8 @@ paths:
                   longitude: 65.877532
                   latitude: -5.787869
                   location_obfuscated: false
-                  obfuscated_latitude: -5.78884
-                  obfuscated_longitude: 65.87859
+                  obfuscated_latitude: -5.78937
+                  obfuscated_longitude: 65.87804
                   custom_obfuscated_location: false
                   project_ids:
                   - 271
@@ -12920,8 +12920,8 @@ paths:
                   longitude: 58.489886
                   latitude: -8.494291
                   location_obfuscated: false
-                  obfuscated_latitude: -8.49271
-                  obfuscated_longitude: 58.48822
+                  obfuscated_latitude: -8.4936
+                  obfuscated_longitude: 58.49143
                   custom_obfuscated_location: false
                   project_ids:
                   - 275
@@ -13240,8 +13240,8 @@ paths:
                   longitude: 117.07448
                   latitude: 45.712571
                   location_obfuscated: false
-                  obfuscated_latitude: 45.71099
-                  obfuscated_longitude: 117.07481
+                  obfuscated_latitude: 45.71327
+                  obfuscated_longitude: 117.07334
                   custom_obfuscated_location: false
                   project_ids:
                   - 281

@@ -1,5 +1,18 @@
 # Changelog
 
+## [15.3.2](https://github.com/QutEcoacoustics/baw-server/tree/15.3.2) (2026-08-28)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.1...15.3.2)
+
+**Fixed bugs:**
+
+- bug: single-column array/range values in exec\_query\_casted [\#1042](https://github.com/QutEcoacoustics/baw-server/issues/1042)
+- fix: handle single-column array/range values in exec\_query\_casted [\#1041](https://github.com/QutEcoacoustics/baw-server/pull/1041) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
+**Merged pull requests:**
+
+- fix: redirect to client home\_url after confirming password reset [\#1032](https://github.com/QutEcoacoustics/baw-server/pull/1032) ([andrew-1234](https://github.com/andrew-1234))
+
 ## [15.3.1](https://github.com/QutEcoacoustics/baw-server/tree/15.3.1) (2026-08-12)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.0...15.3.1)
