@@ -1,5 +1,14 @@
 # Changelog
 
+## [15.3.3](https://github.com/QutEcoacoustics/baw-server/tree/15.3.3) (2026-08-31)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.2...15.3.3)
+
+**Fixed bugs:**
+
+- Bug the effective permissions cte can return multiple results for filtered queries [\#1038](https://github.com/QutEcoacoustics/baw-server/issues/1038)
+- fix\(permissions\): resolve effective access once per site [\#1039](https://github.com/QutEcoacoustics/baw-server/pull/1039) ([atruskie](https://github.com/atruskie))
+
 ## [15.3.2](https://github.com/QutEcoacoustics/baw-server/tree/15.3.2) (2026-08-28)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.1...15.3.2)
