@@ -44,28 +44,41 @@ module Api
         Arel::SelectManager.new
           .with(*ctes(query:))
           .from(Bucketer::BUCKETS)
-          .join(BUCKET_RECORDING_MINUTES)
-          .on(BUCKET_RECORDING_MINUTES[:bucket].eq(bucket_start))
-          .join(BUCKET_ANALYSIS_IDS, Arel::Nodes::OuterJoin)
-          .on(join_on_bucket_and_site(BUCKET_ANALYSIS_IDS))
-          .join(MANUAL_MINUTES, Arel::Nodes::OuterJoin)
-          .on(join_on_bucket_and_site(MANUAL_MINUTES))
-          .join(TAGS_BY_BUCKET)
-          .on(join_on_bucket_and_site(TAGS_BY_BUCKET))
-          .project(site_result)
-          .group(BUCKET_RECORDING_MINUTES[:site_id])
-          .order(BUCKET_RECORDING_MINUTES[:site_id])
+          .join(BUCKET_RECORDING_MINUTES).on(BUCKET_RECORDING_MINUTES[:bucket].eq(bucket_lower))
+          .join(BUCKET_ANALYSIS_IDS, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(BUCKET_ANALYSIS_IDS))
+          .join(MANUAL_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(MANUAL_MINUTES))
+          .join(TAGS_BY_BUCKET).on(join_on_bucket_and_site(TAGS_BY_BUCKET))
+          .group(BUCKET_RECORDING_MINUTES[:site_id]).order(BUCKET_RECORDING_MINUTES[:site_id])
+      end
+
+      # Site id for each grouped row.
+      def site
+        BUCKET_RECORDING_MINUTES[:site_id]
+      end
+
+      # Ordered json array of per-bucket results for a site: one bucket object
+      # for each site/bucket that has at least one tag result, ordered by bucket.
+      def buckets
+        obj = Arel.json(
+          bucket: [bucket_lower, Bucketer::BUCKETS[:bucket].upper],
+          cumulative_minutes: Arel.coalesce(BUCKET_RECORDING_MINUTES[:cumulative_minutes], 0),
+          cumulative_analysed_minutes: Arel.coalesce(BUCKET_RECORDING_MINUTES[:cumulative_analysed_minutes], 0),
+          manual_events_minutes: Arel.coalesce(MANUAL_MINUTES[:manual_events_minutes], 0),
+          analysis_ids: Arel.coalesce(BUCKET_ANALYSIS_IDS[:analysis_ids], Arel.sql('array[]::integer[]')),
+          tags: Arel.coalesce(TAGS_BY_BUCKET[:tags], Arel.sql("'[]'::jsonb"))
+        )
+
+        # jsonb_agg with ORDER BY has no Arel helper.
+        Arel.sql("jsonb_agg(#{obj.to_sql} ORDER BY #{bucket_lower.to_sql})")
       end
 
       private
 
       def ctes(query:)
+        rr = RECORDINGS[RECORDING_RANGE]
         [
           cte(RECORDINGS, recordings_cte(query)),
-          *@bucketer.bucket_ctes(source_table: RECORDINGS, source_columns: [
-            RECORDINGS[RECORDING_RANGE].lower.minimum,
-            RECORDINGS[RECORDING_RANGE].upper.maximum
-          ]),
+          *@bucketer.bucket_ctes(source_table: RECORDINGS, source_columns: [rr.lower.minimum, rr.upper.maximum]),
           cte(ANALYSED_RECORDINGS, analysed_recordings_cte),
           cte(RECORDINGS_BY_BUCKET, recordings_by_bucket_cte),
           cte(BUCKET_RECORDING_MINUTES, bucket_recording_minutes_cte),
@@ -79,16 +92,14 @@ module Api
       end
 
       # Ready, non-deleted recordings the user may read, as half-open [start, end)
-      # time ranges. Distinct because project-site joins can duplicate recordings.
+      # time ranges.
       def recordings_cte(query)
+        ar = AudioRecording.arel_table
         query
           .except(:select, :order, :limit, :offset)
-          .distinct
-          .reselect(
-            recording_range_arel.as(RECORDING_RANGE),
-            AudioRecording.arel_table[:id].as('audio_recording_id'),
-            AudioRecording.arel_table[:site_id].as('site_id')
-          ).arel
+          .reselect(recording_range_arel.as(RECORDING_RANGE), ar[:id].as('audio_recording_id'),
+            ar[:site_id].as('site_id'))
+          .arel
       end
 
       # TODO: move to audio recording model?
@@ -99,15 +110,10 @@ module Api
       # Distinct successful analysis job ids per recording.
       def analysed_recordings_cte
         aji = AnalysisJobsItem.arel_table
+        job_ids = aji[:analysis_job_id].array_agg
+        job_ids.distinct = true
 
-        distinct_job_ids = Arel::Nodes::NamedFunction.new('array_agg', [aji[:analysis_job_id]])
-        distinct_job_ids.distinct = true
-
-        aji
-          .project(
-            RECORDINGS[:audio_recording_id],
-            distinct_job_ids.as('successful_analysis_job_ids')
-          )
+        aji.project(RECORDINGS[:audio_recording_id], job_ids.as('successful_analysis_job_ids'))
           .join(RECORDINGS).on(aji[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
           .where(aji[:result].eq(AnalysisJobsItem::RESULT_SUCCESS))
           .group(RECORDINGS[:audio_recording_id])
@@ -121,51 +127,38 @@ module Api
       # bucket when the inclusive generate_series stop lands on a boundary.
       def recordings_by_bucket_cte
         interval = @bucketer.options.interval_arel
+        rr = RECORDINGS[RECORDING_RANGE]
+        series = Arel.generate_series(Arel.date_trunc(@bucketer.options.bucket_size, rr.lower), rr.upper, interval)
+          .as('bucket_start')
+        lower = series.right
 
-        series = Arel.generate_series(
-          Arel.date_trunc(@bucketer.options.bucket_size, RECORDINGS[RECORDING_RANGE].lower),
-          RECORDINGS[RECORDING_RANGE].upper,
-          interval
-        ).as('bucket_start')
-        bucket_start = series.right
-        bucket = Arel.tsrange(bucket_start, Arel::Nodes::InfixOperation.new('+', bucket_start, interval))
-        range_intersection = Arel::Nodes::InfixOperation.new('*', RECORDINGS[RECORDING_RANGE], bucket)
+        # lower is a SqlLiteral (the series alias) so `+` would concatenate the string; use an infix node.
+        bucket = Arel.tsrange(lower, Arel::Nodes::InfixOperation.new('+', lower, interval))
 
         RECORDINGS
-          .project(
-            bucket_start.as('bucket'),
-            RECORDINGS[:audio_recording_id],
-            RECORDINGS[:site_id],
-            range_intersection.as(RECORDING_RANGE),
+          .project(lower.as('bucket'), RECORDINGS[:audio_recording_id], RECORDINGS[:site_id],
+            (rr * bucket).as(RECORDING_RANGE),
             ANALYSED_RECORDINGS[:audio_recording_id].is_not_null.as('has_successful_analysis'),
-            ANALYSED_RECORDINGS[:successful_analysis_job_ids]
-          )
+            ANALYSED_RECORDINGS[:successful_analysis_job_ids])
           .join(ANALYSED_RECORDINGS, Arel::Nodes::OuterJoin)
           .on(ANALYSED_RECORDINGS[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
-          .join(Arel::Nodes::Lateral.new(series))
-          .on(Arel.sql('true'))
-          .where(Arel::Nodes::InfixOperation.new('&&', RECORDINGS[RECORDING_RANGE], bucket))
+          .join(Arel::Nodes::Lateral.new(series)).on(Arel.sql('true'))
+          .where(rr.overlaps(bucket))
       end
 
       # Recorded and analysed minutes per site/bucket. Analysed minutes filter the
       # sum to recordings backed by a successful analysis job.
       def bucket_recording_minutes_cte
-        RECORDINGS_BY_BUCKET
-          .project(
-            RECORDINGS_BY_BUCKET[:bucket],
-            RECORDINGS_BY_BUCKET[:site_id],
-            cumulative_minutes.as('cumulative_minutes'),
-            cumulative_analysed_minutes.as('cumulative_analysed_minutes')
-          )
-          .group(RECORDINGS_BY_BUCKET[:bucket], RECORDINGS_BY_BUCKET[:site_id])
+        r = RECORDINGS_BY_BUCKET
+        r.project(r[:bucket], r[:site_id], cumulative_minutes.as('cumulative_minutes'),
+          cumulative_analysed_minutes.as('cumulative_analysed_minutes'))
+          .group(r[:bucket], r[:site_id])
       end
 
       def bucket_duration_seconds
+        r = RECORDINGS_BY_BUCKET[RECORDING_RANGE]
         # ! TODO: remove Subtraction.new when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
-        Arel::Nodes::Subtraction.new(
-          RECORDINGS_BY_BUCKET[RECORDING_RANGE].upper,
-          RECORDINGS_BY_BUCKET[RECORDING_RANGE].lower
-        ).extract('epoch')
+        Arel::Nodes::Subtraction.new(r.upper, r.lower).extract('epoch')
       end
 
       def cumulative_minutes
@@ -174,36 +167,25 @@ module Api
       end
 
       def cumulative_analysed_minutes
-        analysed_seconds = Arel::Nodes::Filter.new(
-          bucket_duration_seconds.sum,
-          RECORDINGS_BY_BUCKET[:has_successful_analysis]
-        )
+        secs = bucket_duration_seconds.sum.filter(RECORDINGS_BY_BUCKET[:has_successful_analysis])
         # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
-        Arel::Nodes::Division.new(Arel.coalesce(analysed_seconds, 0), SECONDS_PER_MINUTE).ceil
+        Arel::Nodes::Division.new(Arel.coalesce(secs, 0), SECONDS_PER_MINUTE).ceil
       end
 
       # Distinct successful analysis ids per bucket. successful_analysis_job_ids is
       # null for recordings with no successful analysis; unnest drops those, and
       # the final output coalesces empty buckets to an empty array.
       def bucket_analysis_ids_cte
-        unnested = Baw::Arel::Nodes::Unnest.new([RECORDINGS_BY_BUCKET[:successful_analysis_job_ids]]).as('analysis_id')
-        analysis_id = unnested.right
+        r = RECORDINGS_BY_BUCKET
+        # unnest is aliased `analysis_id`; a single-column SRF alias doubles as the column, so reference it as a table.
+        id = Arel::Table.new(:analysis_id)[:analysis_id]
+        unnested = Baw::Arel::Nodes::Unnest.new([r[:successful_analysis_job_ids]]).as('analysis_id')
+        ids = id.array_agg
+        ids.distinct = true
 
-        # array_agg(DISTINCT ... ORDER BY ...) FILTER (...) has no Arel helper.
-        analysis_ids = Arel.sql(<<~SQL.squish)
-          array_agg(DISTINCT #{analysis_id} ORDER BY #{analysis_id})
-            FILTER (WHERE #{analysis_id} IS NOT NULL) AS "analysis_ids"
-        SQL
-
-        RECORDINGS_BY_BUCKET
-          .project(
-            RECORDINGS_BY_BUCKET[:bucket],
-            RECORDINGS_BY_BUCKET[:site_id],
-            analysis_ids
-          )
-          .join(Arel::Nodes::Lateral.new(unnested), Arel::Nodes::OuterJoin)
-          .on(Arel.sql('true'))
-          .group(RECORDINGS_BY_BUCKET[:bucket], RECORDINGS_BY_BUCKET[:site_id])
+        r.project(r[:bucket], r[:site_id], ids.filter(id.is_not_null).as('analysis_ids'))
+          .join(Arel::Nodes::Lateral.new(unnested), Arel::Nodes::OuterJoin).on(Arel.sql('true'))
+          .group(r[:bucket], r[:site_id])
       end
 
       # Distinct tagged minutes per recording, classified as sourced from an
@@ -212,150 +194,89 @@ module Api
       def tagged_minutes_cte
         events = AudioEvent.arel_table
         taggings = Tagging.arel_table
-        import_files = AudioEventImportFile.arel_table
+        imports = AudioEventImportFile.arel_table
 
-        # `offset 0` is an optimisation fence, not a logical necessity: it stops
-        # the planner from flattening the subquery into the outer join, pinning a
-        # per-recording nested-loop lookup on the audio_recording_id index.
-        events_subquery = events
+        # `offset 0` is an optimisation fence: it stops the planner flattening the subquery into the outer
+        # join, pinning a per-recording nested-loop lookup on the audio_recording_id index.
+        events_sub = events
           .project(events[:id], events[:start_time_seconds], events[:audio_event_import_file_id])
-          .where(events[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
-          .skip(0)
-        events_alias = Arel::Nodes::TableAlias.new(events_subquery, 'audio_events')
+          .where(events[:audio_recording_id].eq(RECORDINGS[:audio_recording_id])).skip(0)
 
-        tagged_minute = Arel.date_trunc(
-          'minute',
-          Arel.grouping(RECORDINGS[RECORDING_RANGE].lower + events_alias[:start_time_seconds].seconds)
-        )
+        ev = Arel::Nodes::TableAlias.new(events_sub, 'audio_events')
 
-        tagging_source = Arel::Nodes::Case.new
-          .when(import_files[:analysis_jobs_item_id].eq(nil)).then(TAGGING_SOURCE_MANUAL)
+        start_at = RECORDINGS[RECORDING_RANGE].lower + ev[:start_time_seconds].seconds
+        minute = Arel.date_trunc('minute', Arel.grouping(start_at))
+        source = Arel::Nodes::Case.new
+          .when(imports[:analysis_jobs_item_id].eq(nil))
+          .then(TAGGING_SOURCE_MANUAL)
           .else(TAGGING_SOURCE_ANALYSIS)
 
         RECORDINGS
-          .project(
-            RECORDINGS[:site_id],
-            taggings[:tag_id],
-            tagged_minute.as('tagged_minute'),
-            tagging_source.as('tagging_source')
-          )
-          .join(Arel::Nodes::Lateral.new(events_alias))
-          .on(Arel.sql('true'))
-          .join(taggings)
-          .on(taggings[:audio_event_id].eq(events_alias[:id]))
-          .join(import_files, Arel::Nodes::OuterJoin)
-          .on(import_files[:id].eq(events_alias[:audio_event_import_file_id]))
+          .project(RECORDINGS[:site_id], taggings[:tag_id], minute.as('tagged_minute'), source.as('tagging_source'))
+          .join(Arel::Nodes::Lateral.new(ev)).on(Arel.sql('true'))
+          .join(taggings).on(taggings[:audio_event_id].eq(ev[:id]))
+          .join(imports, Arel::Nodes::OuterJoin).on(imports[:id].eq(ev[:audio_event_import_file_id]))
           .distinct
       end
 
       # Assign each tagged minute to its calendar-aligned bucket. This mirrors the
-      # bucketer's date_trunc alignment so it needs no bucket series lookup.
+      # bucketer's date_trunc alignment.
       def tagged_minute_buckets_cte
-        TAGGED_MINUTES
-          .project(
-            Arel.date_trunc(@bucketer.options.bucket_size, TAGGED_MINUTES[:tagged_minute]).as('bucket'),
-            TAGGED_MINUTES[:site_id],
-            TAGGED_MINUTES[:tag_id],
-            TAGGED_MINUTES[:tagged_minute],
-            TAGGED_MINUTES[:tagging_source]
-          )
+        t = TAGGED_MINUTES
+        t.project(
+          Arel.date_trunc(@bucketer.options.bucket_size, t[:tagged_minute]).as('bucket'),
+          t[:site_id], t[:tag_id], t[:tagged_minute], t[:tagging_source]
+        )
       end
 
       # Unique minutes with any manual event per bucket: limited proxy for effort spent reviewing audio manually
       def manual_minutes_cte
-        TAGGED_MINUTE_BUCKETS
-          .project(
-            TAGGED_MINUTE_BUCKETS[:bucket],
-            TAGGED_MINUTE_BUCKETS[:site_id],
-            distinct_minute_count.as('manual_events_minutes')
-          )
-          .where(TAGGED_MINUTE_BUCKETS[:tagging_source].eq(TAGGING_SOURCE_MANUAL))
-          .group(TAGGED_MINUTE_BUCKETS[:bucket], TAGGED_MINUTE_BUCKETS[:site_id])
+        t = TAGGED_MINUTE_BUCKETS
+        t.project(t[:bucket], t[:site_id], distinct_minute_count.as('manual_events_minutes'))
+          .where(t[:tagging_source].eq(TAGGING_SOURCE_MANUAL))
+          .group(t[:bucket], t[:site_id])
       end
 
       # Per-tag, per-bucket detection counts split by tagging source, plus the
       # distinct combined minutes across both sources.
       def detected_minutes_cte
-        TAGGED_MINUTE_BUCKETS
-          .project(
-            TAGGED_MINUTE_BUCKETS[:bucket],
-            TAGGED_MINUTE_BUCKETS[:site_id],
-            TAGGED_MINUTE_BUCKETS[:tag_id],
-            minute_count_for_source(TAGGING_SOURCE_ANALYSIS).as('detected_analysis_minutes'),
-            minute_count_for_source(TAGGING_SOURCE_MANUAL).as('detected_manual_minutes'),
-            distinct_minute_count.as('detected_combined_minutes')
-          )
-          .group(
-            TAGGED_MINUTE_BUCKETS[:bucket],
-            TAGGED_MINUTE_BUCKETS[:site_id],
-            TAGGED_MINUTE_BUCKETS[:tag_id]
-          )
+        t = TAGGED_MINUTE_BUCKETS
+        t.project(t[:bucket], t[:site_id], t[:tag_id],
+          minute_count_for_source(TAGGING_SOURCE_ANALYSIS).as('detected_analysis_minutes'),
+          minute_count_for_source(TAGGING_SOURCE_MANUAL).as('detected_manual_minutes'),
+          distinct_minute_count.as('detected_combined_minutes'))
+          .group(t[:bucket], t[:site_id], t[:tag_id])
       end
 
       # count(*) FILTER (WHERE tagging_source = ...)
       def minute_count_for_source(source)
-        Arel::Nodes::Filter.new(
-          Arel.star.count,
-          TAGGED_MINUTE_BUCKETS[:tagging_source].eq(source)
-        )
+        Arel.star.count.filter(TAGGED_MINUTE_BUCKETS[:tagging_source].eq(source))
       end
 
       # count(DISTINCT (site_id, tagged_minute))
       def distinct_minute_count
-        Arel::Nodes::Count.new(
-          [Arel.grouping([TAGGED_MINUTE_BUCKETS[:site_id], TAGGED_MINUTE_BUCKETS[:tagged_minute]])],
-          true
-        )
+        Arel.grouping([TAGGED_MINUTE_BUCKETS[:site_id], TAGGED_MINUTE_BUCKETS[:tagged_minute]]).count(true)
       end
 
       # One tags array per site/bucket, ordered by tag_id.
       def tags_by_bucket_cte
-        tag_object = Arel.json(
-          tag_id: DETECTED_MINUTES[:tag_id],
-          detected_analysis_minutes: DETECTED_MINUTES[:detected_analysis_minutes],
-          detected_manual_minutes: DETECTED_MINUTES[:detected_manual_minutes],
-          detected_combined_minutes: DETECTED_MINUTES[:detected_combined_minutes]
+        d = DETECTED_MINUTES
+        obj = Arel.json(
+          tag_id: d[:tag_id], detected_analysis_minutes: d[:detected_analysis_minutes],
+          detected_manual_minutes: d[:detected_manual_minutes], detected_combined_minutes: d[:detected_combined_minutes]
         )
+        tags = Arel.sql("jsonb_agg(#{obj.to_sql} ORDER BY #{d[:tag_id].to_sql}) AS \"tags\"")
 
-        # jsonb_agg with ORDER BY has no Arel helper.
-        tags = Arel.sql(<<~SQL.squish)
-          jsonb_agg(#{tag_object.to_sql} ORDER BY #{DETECTED_MINUTES[:tag_id].to_sql}) AS "tags"
-        SQL
-
-        DETECTED_MINUTES
-          .project(DETECTED_MINUTES[:bucket], DETECTED_MINUTES[:site_id], tags)
-          .group(DETECTED_MINUTES[:bucket], DETECTED_MINUTES[:site_id])
+        d.project(d[:bucket], d[:site_id], tags).group(d[:bucket], d[:site_id])
       end
 
       # The lower bound of the canonical bucket, used to join and order buckets.
-      def bucket_start
+      def bucket_lower
         Bucketer::BUCKETS[:bucket].lower
       end
 
       def join_on_bucket_and_site(table)
-        table[:bucket].eq(bucket_start)
-          .and(table[:site_id].eq(BUCKET_RECORDING_MINUTES[:site_id]))
-      end
-
-      # Final object per site, with one bucket object for each site/bucket
-      # containing at least one tag result, ordered by bucket.
-      def site_result
-        bucket_object = Arel.json(
-          bucket: [bucket_start, Bucketer::BUCKETS[:bucket].upper],
-          cumulative_minutes: Arel.coalesce(BUCKET_RECORDING_MINUTES[:cumulative_minutes], 0),
-          cumulative_analysed_minutes: Arel.coalesce(BUCKET_RECORDING_MINUTES[:cumulative_analysed_minutes], 0),
-          manual_events_minutes: Arel.coalesce(MANUAL_MINUTES[:manual_events_minutes], 0),
-          analysis_ids: Arel.coalesce(BUCKET_ANALYSIS_IDS[:analysis_ids], Arel.sql('array[]::integer[]')),
-          tags: Arel.coalesce(TAGS_BY_BUCKET[:tags], Arel.sql("'[]'::jsonb"))
-        )
-
-        # jsonb_agg with ORDER BY has no Arel helper.
-        Arel.sql(<<~SQL.squish)
-          jsonb_build_object(
-            'site', #{BUCKET_RECORDING_MINUTES[:site_id].to_sql},
-            'buckets', jsonb_agg(#{bucket_object.to_sql} ORDER BY #{bucket_start.to_sql})
-          ) AS "site_result"
-        SQL
+        table[:bucket].eq(bucket_lower).and(table[:site_id].eq(BUCKET_RECORDING_MINUTES[:site_id]))
       end
     end
   end
