@@ -16,10 +16,16 @@ class ReportsController < ApplicationController
 
     base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
 
+    tag_rate_template = TagRate.new(report_options)
+
     results, opts = execute_report(
       base_query:,
       model: AudioRecording,
-      template: TagRate.new(report_options)
+      template: tag_rate_template,
+      projections: {
+        site: tag_rate_template.site,
+        buckets: tag_rate_template.buckets
+      }
     )
 
     respond_report(results, opts)

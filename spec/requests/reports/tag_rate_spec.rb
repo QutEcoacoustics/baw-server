@@ -52,43 +52,41 @@ describe 'reports/tag_rate' do
     let(:expected_data) {
       [
         {
-          site_result: {
-            site: site.id,
-            buckets: [
-              {
-                tags: [
-                  {
-                    tag_id: tag.id,
-                    detected_manual_minutes: 2,
-                    detected_analysis_minutes: 3,
-                    detected_combined_minutes: 4
-                  }
-                ],
-                bucket: [audio_recording.recorded_date.utc.at_beginning_of_day,
-                         audio_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-                analysis_ids: [analysis_job.id],
-                cumulative_minutes: 120,
-                manual_events_minutes: 2,
-                cumulative_analysed_minutes: 60
-              },
-              {
-                tags: [
-                  {
-                    tag_id: tag.id,
-                    detected_manual_minutes: 0,
-                    detected_analysis_minutes: 3,
-                    detected_combined_minutes: 3
-                  }
-                ],
-                bucket: [another_recording.recorded_date.utc.at_beginning_of_day,
-                         another_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-                analysis_ids: [analysis_job.id],
-                cumulative_minutes: 60,
-                manual_events_minutes: 0,
-                cumulative_analysed_minutes: 60
-              }
-            ]
-          }
+          site: site.id,
+          buckets: [
+            {
+              tags: [
+                {
+                  tag_id: tag.id,
+                  detected_manual_minutes: 2,
+                  detected_analysis_minutes: 3,
+                  detected_combined_minutes: 4
+                }
+              ],
+              bucket: [audio_recording.recorded_date.utc.at_beginning_of_day,
+                       audio_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
+              analysis_ids: [analysis_job.id],
+              cumulative_minutes: 120,
+              manual_events_minutes: 2,
+              cumulative_analysed_minutes: 60
+            },
+            {
+              tags: [
+                {
+                  tag_id: tag.id,
+                  detected_manual_minutes: 0,
+                  detected_analysis_minutes: 3,
+                  detected_combined_minutes: 3
+                }
+              ],
+              bucket: [another_recording.recorded_date.utc.at_beginning_of_day,
+                       another_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
+              analysis_ids: [analysis_job.id],
+              cumulative_minutes: 60,
+              manual_events_minutes: 0,
+              cumulative_analysed_minutes: 60
+            }
+          ]
         }
       ]
     }
