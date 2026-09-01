@@ -214,9 +214,17 @@ module Api
           },
           density: {
             type: 'number',
-            description: 'The ratio of covered seconds to the total duration of the coverage span',
+            description: 'The ratio of covered seconds to the total duration of the coverage span. Overlaps and ' \
+                         'repeated analysis items are counted only once, so this value is always between 0 and 1',
             minimum: 0.0,
             maximum: 1.0
+          },
+          accumulated_density: {
+            type: 'number',
+            description: 'The sum of every recording duration divided by the coverage span duration. Unlike density, ' \
+                         'overlaps and repeated analysis items are counted independently, so this value ' \
+                         'can exceed 1',
+            minimum: 0.0
           },
           gap_threshold: {
             type: 'number',
@@ -239,10 +247,10 @@ module Api
           properties: properties,
           readOnly: true,
           required: if include_result
-                      [:site_id, :result, :range, :density,
+                      [:site_id, :result, :range, :density, :accumulated_density,
                        :gap_threshold]
                     else
-                      [:site_id, :range, :density, :gap_threshold]
+                      [:site_id, :range, :density, :accumulated_density, :gap_threshold]
                     end
         }
       end
