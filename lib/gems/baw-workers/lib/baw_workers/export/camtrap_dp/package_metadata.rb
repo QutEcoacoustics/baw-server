@@ -24,8 +24,7 @@ module BawWorkers
             samplingDesign: options.project_sampling_design,
             captureMethod: options.project_capture_method,
             individualAnimals: individual_animals,
-            observationLevel: observation_level,
-            licenses: licenses
+            observationLevel: observation_level
           )
 
           # TODO: fill name and id fields when closed: https://github.com/QutEcoacoustics/baw-server/issues/1021
@@ -45,6 +44,7 @@ module BawWorkers
             ),
             taxonomic: taxonomic_coverage(scientific_names),
             sources: sources,
+            licenses: licenses,
             resources: [
               BawWorkers::Export::CamtrapDp::Descriptor::Resource.new(name: 'deployments', path: DEPLOYMENTS_FILENAME.to_s,
                 schema: load_table_schema(:deployments)),
