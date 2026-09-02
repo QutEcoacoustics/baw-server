@@ -52,7 +52,7 @@ describe 'reports/tag_rate' do
     let(:expected_data) {
       [
         {
-          site: site.id,
+          site_id: site.id,
           buckets: [
             {
               tags: [
