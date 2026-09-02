@@ -5,6 +5,8 @@ module BawWorkers
     module CamtrapDp
       module Descriptor
         class Base < ::Dry::Struct
+          schema schema.strict
+
           Types = BawWorkers::Export::CamtrapDp::Types
         end
       end
