@@ -82,13 +82,9 @@ module Api
         query
           .except(:select, :order, :limit, :offset)
           .reselect(
-            recording_range_arel.as(RECORDING_RANGE),
+            AudioRecording.recording_range_arel.as(RECORDING_RANGE),
             *@partition_columns
           ).arel
-      end
-
-      def recording_range_arel
-        Arel.tsrange(AudioRecording.arel_table[:recorded_date], AudioRecording.arel_recorded_end_date)
       end
 
       # Dynamically calculate a gap threshold as 1/bucket_count-th of the total span of all recordings in the query

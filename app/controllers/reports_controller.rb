@@ -23,7 +23,6 @@ class ReportsController < ApplicationController
       model: AudioRecording,
       template: tag_rate_template,
       projections: {
-        site: tag_rate_template.site,
         buckets: tag_rate_template.buckets
       }
     )
