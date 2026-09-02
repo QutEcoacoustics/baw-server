@@ -50,6 +50,12 @@ module Baw
       ::Arel::Nodes::NamedFunction.new('tsrange', [lower, upper, ::Arel::Nodes.build_quoted(bounds)])
     end
 
+    # PostgreSQL jsonb_agg with optional inline ordering.
+    # @return [Baw::Arel::Nodes::JsonbAgg]
+    def jsonb_agg(expression)
+      Baw::Arel::Nodes::JsonbAgg.new(expression)
+    end
+
     # Custom PostgreSQL function to get the total sum of the seconds for each tsrange in the multirange
     # (see AddTsmultirangeTotalSecondsFunction migration)
     # @return [::Arel::Nodes::NamedFunction]
