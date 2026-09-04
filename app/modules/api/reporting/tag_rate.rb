@@ -19,7 +19,7 @@ module Api
       TAGGED_EVENT_MINUTES      = Arel::Table.new(:tagged_event_minutes)
       MANUAL_MINUTES            = Arel::Table.new(:manual_minutes)
       DETECTED_MINUTES          = Arel::Table.new(:detected_minutes)
-      TAGS_BY_BUCKET            = Arel::Table.new(:tags_by_bucket)
+      BUCKETS_SITES             = Arel::Table.new(:buckets_sites)
 
       RECORDING_RANGE = 'recording_range'
 
@@ -39,14 +39,54 @@ module Api
       def call(query)
         # Recording minutes and tag results are inner joined so only
         # buckets containing a recording and at least one detection appear.
-        Bucketer::BUCKETS
-          .project(CUMULATIVE_MINUTES[:site_id])
+        d = DETECTED_MINUTES
+
+        tag_obj = Arel.json(
+          tag_id: d[:tag_id],
+          detected_analysis_minutes: d[:detected_analysis_minutes],
+          detected_manual_minutes: d[:detected_manual_minutes],
+          detected_combined_minutes: d[:detected_combined_minutes]
+        )
+
+        ordered_aggregate = Arel.jsonb_agg(tag_obj).order(d[:tag_id])
+
+        filtered_aggregate = Arel::Nodes::Filter.new(
+          ordered_aggregate,
+          d[:tag_id].is_not_null
+        )
+
+        tags = Arel.coalesce(
+          filtered_aggregate,
+          Arel.sql("'[]'::jsonb")
+        )
+
+        BUCKETS_SITES
+          .project(
+            BUCKETS_SITES[:site_id],
+            BUCKETS_SITES[:bucket].as('range'),
+            tags.as('tags'),
+            Arel.coalesce(DISTINCT_ANALYSIS_JOB_IDS[:analysis_ids], Arel.sql('array[]::integer[]')).as('analysis_ids'),
+            CUMULATIVE_MINUTES[:cumulative_minutes],
+            CUMULATIVE_MINUTES[:cumulative_analysed_minutes],
+            Arel.coalesce(MANUAL_MINUTES[:manual_events_minutes], 0).as('manual_events_minutes')
+          )
           .with(*ctes(query:))
-          .join(CUMULATIVE_MINUTES).on(CUMULATIVE_MINUTES[:bucket].eq(Bucketer::BUCKETS[:bucket]))
+          .join(DETECTED_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(DETECTED_MINUTES))
           .join(DISTINCT_ANALYSIS_JOB_IDS, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(DISTINCT_ANALYSIS_JOB_IDS))
+          .join(CUMULATIVE_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(CUMULATIVE_MINUTES))
           .join(MANUAL_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(MANUAL_MINUTES))
-          .join(TAGS_BY_BUCKET).on(join_on_bucket_and_site(TAGS_BY_BUCKET))
-          .group(CUMULATIVE_MINUTES[:site_id]).order(CUMULATIVE_MINUTES[:site_id])
+          .group(
+            BUCKETS_SITES[:site_id],
+            BUCKETS_SITES[:bucket],
+            DISTINCT_ANALYSIS_JOB_IDS[:analysis_ids],
+            CUMULATIVE_MINUTES[:cumulative_minutes],
+            CUMULATIVE_MINUTES[:cumulative_analysed_minutes],
+            MANUAL_MINUTES[:manual_events_minutes]
+          )
+        # .join(CUMULATIVE_MINUTES).on(CUMULATIVE_MINUTES[:bucket].eq(Bucketer::BUCKETS[:bucket]))
+        # .join(DISTINCT_ANALYSIS_JOB_IDS, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(DISTINCT_ANALYSIS_JOB_IDS))
+        # .join(MANUAL_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(MANUAL_MINUTES))
+        # .group(CUMULATIVE_MINUTES[:site_id]).order(CUMULATIVE_MINUTES[:site_id])
       end
 
       # JSON array of bucket result objects for final projection.
@@ -69,8 +109,6 @@ module Api
       def ctes(query:)
         [
           cte(RECORDINGS, recordings_cte(query)),
-          *@bucketer.bucket_ctes(source_table: RECORDINGS,
-            source_columns: [RECORDINGS[RECORDING_RANGE].lower.minimum, RECORDINGS[RECORDING_RANGE].upper.maximum]),
           cte(ANALYSED_RECORDINGS, analysed_recordings_cte),
           cte(RECORDING_BUCKET_SLICES, recording_bucket_slices_cte),
           cte(CUMULATIVE_MINUTES, cumulative_minutes_cte),
@@ -78,7 +116,7 @@ module Api
           cte(TAGGED_EVENT_MINUTES, tagged_event_minutes_cte),
           cte(MANUAL_MINUTES, manual_minutes_cte),
           cte(DETECTED_MINUTES, detected_minutes_cte),
-          cte(TAGS_BY_BUCKET, tags_by_bucket_cte)
+          cte(BUCKETS_SITES, buckets_sites_cte)
         ]
       end
 
@@ -254,6 +292,16 @@ module Api
           )
       end
 
+      # want rows for all site/bucket combinations that have recordings, even if they have no tags.
+      # because we want the information about the non-zero denominators - sites/buckets that have recordings, but no tags.
+      # as a result, any omitted site/bucket combinations had no recordings.
+      def buckets_sites_cte
+        RECORDING_BUCKET_SLICES.project(
+          RECORDING_BUCKET_SLICES[:bucket],
+          RECORDING_BUCKET_SLICES[:site_id]
+        ).distinct
+      end
+
       # count(*) FILTER (WHERE tagging_source = ...)
       def minute_count_for_source(source)
         Arel.star.count.filter(TAGGED_EVENT_MINUTES[:tagging_source].eq(source))
@@ -264,24 +312,8 @@ module Api
         Arel.grouping([TAGGED_EVENT_MINUTES[:site_id], TAGGED_EVENT_MINUTES[:tagged_minute]]).count(true)
       end
 
-      # One tags array per site/bucket, ordered by tag_id.
-      def tags_by_bucket_cte
-        d = DETECTED_MINUTES
-
-        tag_obj = Arel.json(
-          tag_id: d[:tag_id],
-          detected_analysis_minutes: d[:detected_analysis_minutes],
-          detected_manual_minutes: d[:detected_manual_minutes],
-          detected_combined_minutes: d[:detected_combined_minutes]
-        )
-
-        tags = Arel.sql("jsonb_agg(#{tag_obj.to_sql} ORDER BY #{d[:tag_id].to_sql}) AS \"tags\"")
-
-        d.project(d[:bucket], d[:site_id], tags).group(d[:bucket], d[:site_id])
-      end
-
       def join_on_bucket_and_site(table)
-        table[:bucket].eq(Bucketer::BUCKETS[:bucket]).and(table[:site_id].eq(CUMULATIVE_MINUTES[:site_id]))
+        table[:bucket].eq(BUCKETS_SITES[:bucket]).and(table[:site_id].eq(BUCKETS_SITES[:site_id]))
       end
     end
   end

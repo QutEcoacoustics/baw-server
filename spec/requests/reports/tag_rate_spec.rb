@@ -56,40 +56,37 @@ describe 'reports/tag_rate' do
       [
         {
           site_id: site.id,
-          buckets: [
+          tags: [
             {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 2,
-                  detected_analysis_minutes: 2,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [audio_recording.recorded_date.utc.at_beginning_of_day,
-                       audio_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 120,
-              manual_events_minutes: 2,
-              cumulative_analysed_minutes: 60
-            },
-            {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 0,
-                  detected_analysis_minutes: 3,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [another_recording.recorded_date.utc.at_beginning_of_day,
-                       another_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 60,
-              manual_events_minutes: 0,
-              cumulative_analysed_minutes: 60
+              tag_id: tag.id,
+              detected_manual_minutes: 2,
+              detected_analysis_minutes: 2,
+              detected_combined_minutes: 3
             }
-          ]
+          ],
+          range: [audio_recording.recorded_date.utc.at_beginning_of_day,
+                  audio_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
+          analysis_ids: [analysis_job.id],
+          cumulative_minutes: 120,
+          manual_events_minutes: 2,
+          cumulative_analysed_minutes: 60
+        },
+        {
+          site_id: site.id,
+          tags: [
+            {
+              tag_id: tag.id,
+              detected_manual_minutes: 0,
+              detected_analysis_minutes: 3,
+              detected_combined_minutes: 3
+            }
+          ],
+          range: [another_recording.recorded_date.utc.at_beginning_of_day,
+                  another_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
+          analysis_ids: [analysis_job.id],
+          cumulative_minutes: 60,
+          manual_events_minutes: 0,
+          cumulative_analysed_minutes: 60
         }
       ]
     }
@@ -99,6 +96,23 @@ describe 'reports/tag_rate' do
       expect_success
 
       expect(api_data).to match expected_data
+    end
+
+    it 'returns buckets with audio and no tags' do
+      more_audio = create(:audio_recording, creator:, site:, recorded_date: start_date + 3.days, duration_seconds:)
+      extra_result = { site_id: site.id,
+                       range: [more_audio.recorded_date.utc.at_beginning_of_day,
+                               more_audio.recorded_date.utc.at_beginning_of_day + bucket_size],
+                       tags: [],
+                       analysis_ids: [],
+                       cumulative_minutes: 60,
+                       manual_events_minutes: 0,
+                       cumulative_analysed_minutes: 0 }
+
+      post '/reports/tag_rate', params: body, **api_headers(writer_token)
+
+      expect_success
+      expect(api_data).to match_array(expected_data + [extra_result])
     end
 
     context 'with filter by tag' do
