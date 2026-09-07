@@ -22,7 +22,7 @@ class ReportsController < ApplicationController
       base_query:,
       model: AudioRecording,
       template: tag_rate_template,
-      projections: { buckets: tag_rate_template.buckets }
+      projections: { tags: tag_rate_template.tags_summary }
     )
 
     respond_report(results, opts)
