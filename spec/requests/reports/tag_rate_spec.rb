@@ -14,6 +14,46 @@ describe 'reports/tag_rate' do
     create(:audio_recording, creator:, site:, recorded_date: start_date + 1.day, duration_seconds:)
   }
 
+  let(:bucket_size) { 1.day }
+  let(:bucket_one_range_start) { audio_recording.recorded_date.utc.at_beginning_of_day }
+  let(:bucket_two_range_start) { another_recording.recorded_date.utc.at_beginning_of_day }
+  let(:expected_data) {
+    [
+      {
+        site_id: site.id,
+        tags: [
+          {
+            tag_id: tag.id,
+            detected_manual_minutes: 2,
+            detected_analysis_minutes: 2,
+            detected_combined_minutes: 3
+          }
+        ],
+        range: [bucket_one_range_start, bucket_one_range_start + bucket_size],
+        analysis_ids: [analysis_job.id],
+        total_minutes: 120,
+        manual_events_minutes: 2,
+        total_analysed_minutes: 60
+      },
+      {
+        site_id: site.id,
+        tags: [
+          {
+            tag_id: tag.id,
+            detected_manual_minutes: 0,
+            detected_analysis_minutes: 3,
+            detected_combined_minutes: 3
+          }
+        ],
+        range: [bucket_two_range_start, bucket_two_range_start + bucket_size],
+        analysis_ids: [analysis_job.id],
+        total_minutes: 60,
+        manual_events_minutes: 0,
+        total_analysed_minutes: 60
+      }
+    ]
+  }
+
   before do
     audio_recording.update(recorded_date: start_date, duration_seconds:)
     analysis_jobs_item.update(result: AnalysisJobsItem::RESULT_SUCCESS)
@@ -21,11 +61,13 @@ describe 'reports/tag_rate' do
     # Create a recording that will have no events and no analysis, directly after the first recording.
     create(:audio_recording, creator:, site:, recorded_date: start_date + duration_seconds, duration_seconds:)
 
-    # Create two 'analysis' based events and two 'manual' events.
+    # The hierarchy audio_event is an 'analysis' based event; update its
+    # start/end times, and create a second 'analysis' based event.
     audio_event.update(start_time_seconds: 600, end_time_seconds: 605)
     create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 1200,
       end_time_seconds: 1205, audio_event_import_file: audio_event_import_file)
 
+    # Create two 'manual' based events; the first overlaps with the first 'analysis' based event.
     create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 600,
       end_time_seconds: 605)
     create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 1800,
@@ -50,69 +92,28 @@ describe 'reports/tag_rate' do
   end
 
   describe 'with bucket size of day' do
-    let(:bucket_size) { 1.day }
-
-    let(:expected_data) {
-      [
-        {
-          site_id: site.id,
-          tags: [
-            {
-              tag_id: tag.id,
-              detected_manual_minutes: 2,
-              detected_analysis_minutes: 2,
-              detected_combined_minutes: 3
-            }
-          ],
-          range: [audio_recording.recorded_date.utc.at_beginning_of_day,
-                  audio_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-          analysis_ids: [analysis_job.id],
-          cumulative_minutes: 120,
-          manual_events_minutes: 2,
-          cumulative_analysed_minutes: 60
-        },
-        {
-          site_id: site.id,
-          tags: [
-            {
-              tag_id: tag.id,
-              detected_manual_minutes: 0,
-              detected_analysis_minutes: 3,
-              detected_combined_minutes: 3
-            }
-          ],
-          range: [another_recording.recorded_date.utc.at_beginning_of_day,
-                  another_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-          analysis_ids: [analysis_job.id],
-          cumulative_minutes: 60,
-          manual_events_minutes: 0,
-          cumulative_analysed_minutes: 60
-        }
-      ]
-    }
-
-    it 'returns the correct rates and recording summaries' do
+    it 'returns the correct detection counts and bucket summaries' do
       post '/reports/tag_rate', params: body, **api_headers(writer_token)
       expect_success
 
       expect(api_data).to match expected_data
     end
 
-    it 'returns buckets with audio and no tags' do
+    it 'returns any bucket that contains audio, even if there are no tags' do
       more_audio = create(:audio_recording, creator:, site:, recorded_date: start_date + 3.days, duration_seconds:)
-      extra_result = { site_id: site.id,
-                       range: [more_audio.recorded_date.utc.at_beginning_of_day,
-                               more_audio.recorded_date.utc.at_beginning_of_day + bucket_size],
-                       tags: [],
-                       analysis_ids: [],
-                       cumulative_minutes: 60,
-                       manual_events_minutes: 0,
-                       cumulative_analysed_minutes: 0 }
+      bucket_with_no_tags = { site_id: site.id,
+                              range: [more_audio.recorded_date.utc.at_beginning_of_day,
+                                      more_audio.recorded_date.utc.at_beginning_of_day + bucket_size],
+                              tags: [],
+                              analysis_ids: [],
+                              total_minutes: 60,
+                              manual_events_minutes: 0,
+                              total_analysed_minutes: 0 }
 
       post '/reports/tag_rate', params: body, **api_headers(writer_token)
 
       expect_success
-      expect(api_data).to match_array(expected_data + [extra_result])
+      expect(api_data).to match_array(expected_data + [bucket_with_no_tags])
     end
 
     context 'with filter by tag' do
@@ -127,11 +128,12 @@ describe 'reports/tag_rate' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
         expect_success
 
-        expected_data.first[:buckets].first[:cumulative_minutes] = 60
+        expected_data.first[:total_minutes] = 60
+
         expect(api_data).to match expected_data
       end
 
-      context 'when a recording also contains a tag that wasn\'t in the filter' do
+      context 'when a recording also contains a tag that was not in the filter' do
         let!(:other_tag) { create(:tag, creator:) }
 
         before do
@@ -139,20 +141,18 @@ describe 'reports/tag_rate' do
             start_time_seconds: 1900, end_time_seconds: 1905)
         end
 
-        it 'returns rates for all tags, not just the filtered tag' do
+        it 'returns a tag result for all tags on the recording, not just the filtered tag' do
           post '/reports/tag_rate', params: { options: { bucket_size: :day }, filter: {} }, **api_headers(writer_token)
           expect_success
 
-          bucket = expected_data.first[:buckets].shift
+          bucket = expected_data.first
           bucket[:manual_events_minutes] += 1
-          bucket[:tags].push({
+          bucket[:tags] << {
             tag_id: other_tag.id,
             detected_manual_minutes: 1,
             detected_analysis_minutes: 0,
             detected_combined_minutes: 1
-          })
-
-          expected_data.first[:buckets].unshift(bucket)
+          }
 
           expect(api_data).to match(expected_data)
         end
@@ -168,7 +168,7 @@ describe 'reports/tag_rate' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
         expect_success
 
-        expected_data.first[:buckets].first[:tags] << {
+        expected_data.first[:tags] << {
           tag_id: new_tagging.tag.id,
           detected_manual_minutes: 0,
           detected_analysis_minutes: 1,
@@ -178,7 +178,7 @@ describe 'reports/tag_rate' do
       end
     end
 
-    context 'with additional analysis and events' do
+    context 'with repeated analysis and duplicate events' do
       let(:additional_analysis_job) {
         script = create(:script, creator:, provenance: create(:provenance, creator:))
         create(:analysis_job, project:, creator:, scripts: [script])
@@ -193,6 +193,7 @@ describe 'reports/tag_rate' do
         additional_event_import_file = create(:audio_event_import_file, :with_path,
           audio_event_import: additional_event_import, analysis_jobs_item: additional_analysis_job_item)
 
+        # Create two analysis based events that overlap completely with the two pre-existing analysis events.
         create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 600,
           end_time_seconds: 605, audio_event_import_file: additional_event_import_file)
         create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 1200,
@@ -203,9 +204,10 @@ describe 'reports/tag_rate' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
         expect_success
 
-        expected_data.first[:buckets].first[:analysis_ids] = contain_exactly(
+        expected_data.first[:analysis_ids] = contain_exactly(
           analysis_job.id, additional_analysis_job.id
         )
+
         expect(api_data).to match expected_data
       end
     end
@@ -222,31 +224,27 @@ describe 'reports/tag_rate' do
           start_time_seconds: 600, end_time_seconds: 605)
       end
 
-      it 'partitions rates by site' do
+      it 'emits results by bucket and site' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
         expect_success
 
         expect(api_data).to match_array(expected_data + [
           {
             site_id: another_site.id,
-            buckets: [
+            tags: [
               {
-                tags: [
-                  {
-                    tag_id: tag.id,
-                    detected_manual_minutes: 1,
-                    detected_analysis_minutes: 0,
-                    detected_combined_minutes: 1
-                  }
-                ],
-                bucket: [another_site_recording.recorded_date.utc.at_beginning_of_day,
-                         another_site_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
-                analysis_ids: [],
-                cumulative_minutes: 60,
-                manual_events_minutes: 1,
-                cumulative_analysed_minutes: 0
+                tag_id: tag.id,
+                detected_manual_minutes: 1,
+                detected_analysis_minutes: 0,
+                detected_combined_minutes: 1
               }
-            ]
+            ],
+            range: [another_site_recording.recorded_date.utc.at_beginning_of_day,
+                    another_site_recording.recorded_date.utc.at_beginning_of_day + bucket_size],
+            analysis_ids: [],
+            total_minutes: 60,
+            manual_events_minutes: 1,
+            total_analysed_minutes: 0
           }
         ])
       end
@@ -269,24 +267,20 @@ describe 'reports/tag_rate' do
       [
         {
           site_id: site.id,
-          buckets: [
+          tags: [
             {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 2,
-                  detected_analysis_minutes: 5,
-                  detected_combined_minutes: 6
-                }
-              ],
-              bucket: [start_date.at_beginning_of_week(:monday),
-                       start_date.at_beginning_of_week(:monday) + 1.week],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 180,
-              manual_events_minutes: 2,
-              cumulative_analysed_minutes: 120
+              tag_id: tag.id,
+              detected_manual_minutes: 2,
+              detected_analysis_minutes: 5,
+              detected_combined_minutes: 6
             }
-          ]
+          ],
+          range: [start_date.at_beginning_of_week(:monday),
+                  start_date.at_beginning_of_week(:monday) + 1.week],
+          analysis_ids: [analysis_job.id],
+          total_minutes: 180,
+          manual_events_minutes: 2,
+          total_analysed_minutes: 120
         }
       ]
     end
@@ -299,51 +293,15 @@ describe 'reports/tag_rate' do
   end
 
   context 'with bucket size of month' do
-    let(:body) { { options: { bucket_size: 'month' }, filter: {} } }
     let(:another_recording) {
       create(:audio_recording, creator:, site:, recorded_date: start_date + 2.months, duration_seconds:)
     }
-    let(:expected_data) do
-      [
-        {
-          site_id: site.id,
-          buckets: [
-            {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 2,
-                  detected_analysis_minutes: 2,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [start_date.at_beginning_of_month,
-                       start_date.at_beginning_of_month + 1.month],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 120,
-              manual_events_minutes: 2,
-              cumulative_analysed_minutes: 60
-            },
-            {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 0,
-                  detected_analysis_minutes: 3,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [(start_date + 2.months).at_beginning_of_month,
-                       (start_date + 2.months).at_beginning_of_month + 1.month],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 60,
-              manual_events_minutes: 0,
-              cumulative_analysed_minutes: 60
-            }
-          ]
-        }
-      ]
-    end
+
+    let(:bucket_size) { 1.month }
+    let(:body) { { options: { bucket_size: 'month' }, filter: {} } }
+
+    let(:bucket_one_range_start) { audio_recording.recorded_date.utc.at_beginning_of_month }
+    let(:bucket_two_range_start) { (audio_recording.recorded_date.utc + 2.months).at_beginning_of_month }
 
     it 'returns the correct rates and recording summaries' do
       post '/reports/tag_rate', params: body, **api_headers(writer_token)
@@ -354,51 +312,14 @@ describe 'reports/tag_rate' do
   end
 
   context 'with bucket size of year' do
-    let(:body) { { options: { bucket_size: 'year' }, filter: {} } }
     let(:another_recording) {
       create(:audio_recording, creator:, site:, recorded_date: start_date + 1.year, duration_seconds:)
     }
-    let(:expected_data) do
-      [
-        {
-          site_id: site.id,
-          buckets: [
-            {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 2,
-                  detected_analysis_minutes: 2,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [start_date.at_beginning_of_year,
-                       start_date.at_beginning_of_year + 1.year],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 120,
-              manual_events_minutes: 2,
-              cumulative_analysed_minutes: 60
-            },
-            {
-              tags: [
-                {
-                  tag_id: tag.id,
-                  detected_manual_minutes: 0,
-                  detected_analysis_minutes: 3,
-                  detected_combined_minutes: 3
-                }
-              ],
-              bucket: [(start_date + 1.year).at_beginning_of_year,
-                       (start_date + 1.year).at_beginning_of_year + 1.year],
-              analysis_ids: [analysis_job.id],
-              cumulative_minutes: 60,
-              manual_events_minutes: 0,
-              cumulative_analysed_minutes: 60
-            }
-          ]
-        }
-      ]
-    end
+    let(:bucket_size) { 1.year }
+    let(:body) { { options: { bucket_size: 'year' }, filter: {} } }
+
+    let(:bucket_one_range_start) { audio_recording.recorded_date.utc.at_beginning_of_year }
+    let(:bucket_two_range_start) { (audio_recording.recorded_date.utc + 1.year).at_beginning_of_year }
 
     it 'returns the correct rates and recording summaries' do
       post '/reports/tag_rate', params: body, **api_headers(writer_token)
@@ -415,7 +336,10 @@ describe 'reports/tag_rate' do
     expect(response.content_type).to include('text/csv')
 
     csv = CSV.parse(response.body, headers: true)
-    expect(csv.headers).to eq(['site_id', 'buckets'])
+    headers = [:site_id, :range_lower, :range_upper, :tags, :analysis_ids, :total_minutes,
+               :manual_events_minutes, :total_analysed_minutes]
+
+    expect(csv.headers).to match_array(headers.map(&:to_s))
     expect(csv.first['site_id']).to eq(site.id.to_s)
   end
 end

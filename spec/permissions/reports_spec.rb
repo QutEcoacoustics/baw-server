@@ -2,12 +2,14 @@
 
 describe 'Reports permissions' do
   create_entire_hierarchy
+  let(:second_analysis_job) { create(:analysis_job, project: project, creator: writer_user, scripts: [script]) }
+
   before do
     script = create(:script, creator: writer_user, provenance: create(:provenance, creator: writer_user))
-    analysis_job = create(:analysis_job, project: project, creator: writer_user, scripts: [script])
 
     # Add an analysis job items to the original recording
-    create(:analysis_jobs_item, analysis_job:, script:, result: AnalysisJobsItem::RESULT_SUCCESS, audio_recording:)
+    create(:analysis_jobs_item, analysis_job: second_analysis_job, script: script,
+      result: AnalysisJobsItem::RESULT_SUCCESS, audio_recording: audio_recording)
   end
 
   given_the_route '/reports' do
@@ -25,6 +27,28 @@ describe 'Reports permissions' do
   end
 
   let(:day) { audio_recording.recorded_date.utc.at_beginning_of_day }
+
+  with_custom_action(:tag_rate, path: 'tag_rate', verb: :post,
+    body: -> { [{ options: { bucket_size: 'day' }, filter: {} }, :json] },
+    expect: lambda { |user, _action|
+      if user == :no_access
+        expect(api_result[:data].length).to eq(0)
+      else
+        expect(api_data).to match([
+          { site_id: site.id,
+            range: [
+              audio_recording.recorded_date.utc.at_beginning_of_day.as_json,
+              (audio_recording.recorded_date.utc.at_beginning_of_day + 1.day).as_json
+            ],
+            tags: [{ tag_id: tag.id, detected_manual_minutes: 0, detected_analysis_minutes: 1,
+                     detected_combined_minutes: 1 }],
+            analysis_ids: [second_analysis_job.id],
+            total_minutes: audio_recording.duration_seconds / 60.0,
+            manual_events_minutes: 0,
+            total_analysed_minutes: audio_recording.duration_seconds / 60.0 }
+        ])
+      end
+    })
 
   with_custom_action(:recording_coverage, path: 'recording_coverage', verb: :post,
     body: -> { [{ filter: {}, options: { bucket_count: 1920 } }, :json] },
@@ -120,20 +144,20 @@ describe 'Reports permissions' do
 
   # Any authenticated user with at least reader access can use the reports/* endpoints
   ensures :admin, :owner, :writer, :reader,
-    can: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
+    can: [:tag_rate, :recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries],
     cannot: [:index, :show, :create, :update, :destroy, :new, :filter],
     fails_with: :not_found
 
   # Users without project access can call these endpoints, but receive no visible tag results
   ensures :no_access,
-    can: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
+    can: [:tag_rate, :recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
           :event_summaries],
     cannot: [:index, :show, :create, :update, :destroy, :new, :filter],
     fails_with: :not_found
 
   # Harvester cannot access the endpoint
   ensures :harvester,
-    cannot: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
+    cannot: [:tag_rate, :recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
              :event_summaries],
     fails_with: :forbidden
 
@@ -143,7 +167,7 @@ describe 'Reports permissions' do
 
   # Anonymous users cannot access the endpoint
   ensures :anonymous,
-    cannot: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
+    cannot: [:tag_rate, :recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity,
              :event_summaries],
     fails_with: :unauthorized
 
@@ -153,7 +177,7 @@ describe 'Reports permissions' do
 
   # Invalid tokens cannot access the endpoint
   ensures :invalid,
-    cannot: [:recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries,
+    cannot: [:tag_rate, :recording_coverage, :analysis_coverage, :tag_accumulation, :tag_frequency, :tag_diel_activity, :event_summaries,
              :index, :show, :create, :update, :destroy, :new, :filter],
     fails_with: [:unauthorized, :not_found]
 end
