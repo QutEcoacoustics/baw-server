@@ -124,11 +124,15 @@ describe 'reports/tag_rate' do
         }
       end
 
+      let(:expected_data) {
+        super().tap do |data|
+          data.first[:total_minutes] = 60
+        end
+      }
+
       it 'returns rates only for recordings with the specified tag' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
         expect_success
-
-        expected_data.first[:total_minutes] = 60
 
         expect(api_data).to match expected_data
       end
@@ -142,7 +146,7 @@ describe 'reports/tag_rate' do
         end
 
         it 'returns a tag result for all tags on the recording, not just the filtered tag' do
-          post '/reports/tag_rate', params: { options: { bucket_size: :day }, filter: {} }, **api_headers(writer_token)
+          post '/reports/tag_rate', params: body, **api_headers(writer_token)
           expect_success
 
           bucket = expected_data.first
