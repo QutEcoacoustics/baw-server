@@ -95,14 +95,16 @@ module Api
           .arel
       end
 
-      # Distinct successful analysis job item ids per recording.
+      # Distinct analysis job ids per recording. For each recording, we want to
+      # know which analysis jobs contributed to the successful analysis of that
+      # recording.
       def analysed_recordings_cte
         aji = AnalysisJobsItem.arel_table
         job_ids = aji[:analysis_job_id].array_agg
         job_ids.distinct = true
 
         aji
-          .project(RECORDINGS[:audio_recording_id], job_ids.as('successful_analysis_job_ids'))
+          .project(RECORDINGS[:audio_recording_id], job_ids.as('analysis_job_ids'))
           .join(RECORDINGS).on(aji[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
           .where(aji[:result].eq(AnalysisJobsItem::RESULT_SUCCESS))
           .group(RECORDINGS[:audio_recording_id])
@@ -134,7 +136,7 @@ module Api
             bucket.dup.as('bucket'), RECORDINGS[:audio_recording_id], RECORDINGS[:site_id],
             (RECORDINGS[RECORDING_RANGE] * bucket).as(RECORDING_RANGE),
             ANALYSED_RECORDINGS[:audio_recording_id].is_not_null.as('has_successful_analysis'),
-            ANALYSED_RECORDINGS[:successful_analysis_job_ids]
+            ANALYSED_RECORDINGS[:analysis_job_ids]
           )
           .join(ANALYSED_RECORDINGS, Arel::Nodes::OuterJoin)
           .on(ANALYSED_RECORDINGS[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
@@ -160,7 +162,7 @@ module Api
         Arel::Nodes::Division.new(recording_range_seconds.sum, SECONDS_PER_MINUTE).ceil
       end
 
-      # @return [Arel::Nodes::Division] total minutes of analysed audio (ceiled)
+      # @return [Arel::Nodes::Division] total minutes of analysed audio (rounded up)
       def total_analysed_minutes
         secs = recording_range_seconds.sum.filter(RECORDING_RANGE_SLICES[:has_successful_analysis])
         # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
@@ -176,17 +178,17 @@ module Api
         Arel::Nodes::Subtraction.new(range.upper, range.lower).extract('epoch')
       end
 
-      # Distinct successful analysis job IDs per bucket. successful_analysis_job_ids is
+      # Distinct analysis job IDs per bucket. analysis_job_ids is
       # null for recordings with no successful analysis and unnest filters those out.
       def distinct_analysis_job_ids_cte
         r = RECORDING_RANGE_SLICES
         unnested_ids_column = Arel::Table.new(:unnested_ids)[:unnested_ids]
-        unnested_ids_node = Baw::Arel::Nodes::Unnest.new([r[:successful_analysis_job_ids]]).as(unnested_ids_column.name)
+        unnested_ids_node = Baw::Arel::Nodes::Unnest.new([r[:analysis_job_ids]]).as(unnested_ids_column.name)
 
-        successful_job_ids = unnested_ids_column.array_agg
-        successful_job_ids.distinct = true
+        job_ids = unnested_ids_column.array_agg
+        job_ids.distinct = true
 
-        r.project(r[:bucket], r[:site_id], successful_job_ids.filter(unnested_ids_column.is_not_null).as('analysis_ids'))
+        r.project(r[:bucket], r[:site_id], job_ids.filter(unnested_ids_column.is_not_null).as('analysis_ids'))
           .join(Arel::Nodes::Lateral.new(unnested_ids_node), Arel::Nodes::OuterJoin).on(Arel.sql('true'))
           .group(r[:bucket], r[:site_id])
       end
