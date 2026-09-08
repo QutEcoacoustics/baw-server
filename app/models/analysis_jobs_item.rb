@@ -394,45 +394,50 @@ class AnalysisJobsItem < ApplicationRecord
     Arel.grouping(sub_query).to_array
   end
 
-  # Returns a query that will select a random sample of analysis job items
+  # Returns a query that will select analysis job items
   # across multiple jobs that are ready to be enqueued
   # (includes :queue or :retry transitions).
-  # It should sample with parity from each job, though the order of the items
-  # returned for each job is random.
+  # It should sample with parity from each job, prioritizing newer recordings
+  # for each job.
   # @param limit [Integer] the maximum number of items to return
   # @return [ActiveRecord::Relation]
   def self.sample_for_queueable_across_jobs(limit)
-    table = AnalysisJobsItem.arel_table
-    random = Arel::Nodes::NamedFunction.new('random', [])
-    random_name = 'random_group'
+    items = AnalysisJobsItem.arel_table
+    recordings = AudioRecording.arel_table
+    row_group_name = 'row_group'
     groupings_cte = Arel::Table.new('groupings')
 
-    # row_number() OVER (PARTITION BY analysis_jobs_items.analysis_job_id order by random()) as random_group
+    # row_number() OVER (
+    #   PARTITION BY analysis_jobs_items.analysis_job_id
+    #   ORDER BY audio_recordings.recorded_date DESC, analysis_jobs_items.id DESC
+    # ) as row_group
     Arel::Nodes::NamedFunction
       .new('row_number', [])
       .over(
         Arel::Nodes::Window
         .new
-        .partition(table[:analysis_job_id])
-        .order(random)
+        .partition(items[:analysis_job_id])
+        .order(recordings[:recorded_date].desc, items[:id].desc)
       )
-      .as(random_name) => window_expression
+      .as(row_group_name) => window_expression
 
-    table
-      .project(table[:id], window_expression)
+    items
+      .project(items[:id], window_expression)
+      .join(recordings)
+      .on(recordings[:id].eq(items[:audio_recording_id]))
       .where(to_queue_arel.or(to_retry_arel))
-      .order(random_name)
+      .order(row_group_name)
       .take(limit) => groupings_query
 
     AnalysisJobsItem
       .with(groupings_cte.name => groupings_query)
       .joins(
-        table
+        items
         .join(groupings_cte)
-        .on(table[:id].eq(groupings_cte[:id]))
+        .on(items[:id].eq(groupings_cte[:id]))
         .join_sources
       )
-      .order(groupings_cte[random_name])
+      .order(groupings_cte[row_group_name])
   end
 
   # Returns analysis job items that are working or queued and that

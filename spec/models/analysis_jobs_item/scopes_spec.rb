@@ -30,16 +30,18 @@ describe AnalysisJobsItem do
       query = <<~SQL.squish
         WITH "groupings" AS (
         SELECT "analysis_jobs_items"."id", (row_number()
-        OVER (PARTITION BY "analysis_jobs_items"."analysis_job_id" ORDER BY random()))
-        AS "random_group"
-        FROM "analysis_jobs_items"
+        OVER (PARTITION BY "analysis_jobs_items"."analysis_job_id"
+        ORDER BY "audio_recordings"."recorded_date" DESC, "analysis_jobs_items"."id" DESC))
+        AS "row_group"
+        FROM "analysis_jobs_items" INNER JOIN "audio_recordings"
+        ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
         WHERE ("analysis_jobs_items"."transition" = 'queue')
         OR ("analysis_jobs_items"."transition" = 'retry')
-        ORDER BY random_group LIMIT 10)
+        ORDER BY row_group LIMIT 10)
         SELECT "analysis_jobs_items".*
         FROM "analysis_jobs_items" INNER JOIN "groupings"
         ON "analysis_jobs_items"."id" = "groupings"."id"
-        ORDER BY "groupings"."random_group"
+        ORDER BY "groupings"."row_group"
       SQL
 
       comparison_sql(
@@ -98,6 +100,17 @@ describe AnalysisJobsItem do
       # nothing left
       items = AnalysisJobsItem.sample_for_queueable_across_jobs(100).to_a
       expect(items).to be_empty
+    end
+
+    it 'prioritizes newer recordings within each job' do
+      items = AnalysisJobsItem.sample_for_queueable_across_jobs(1000).includes(:audio_recording).to_a
+
+      grouped = items.group_by(&:analysis_job_id)
+
+      grouped.each_value do |job_items|
+        recorded_dates = job_items.map { |item| item.audio_recording.recorded_date }
+        expect(recorded_dates).to eq(recorded_dates.sort.reverse)
+      end
     end
   end
 
