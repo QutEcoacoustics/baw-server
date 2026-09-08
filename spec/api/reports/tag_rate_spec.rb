@@ -75,10 +75,15 @@ describe 'reports', type: :request do
       produces 'application/json'
 
       description <<~DESCRIPTION
-        # Returns tag detection counts per site and time bucket.
-        # The `options` parameter specifies the bucket size (day, week, month, or year).
-        # The optional `filter` parameter is applied to audio recordings.
-        # Results only include audio recordings the user has reader access to.
+        Returns tag detection counts per site and time bucket. Each group
+        includes the total count of recorded and analysed audio minutes,
+        analysis job IDs that contributed to the analysed audio, total manual
+        minutes (minutes with a manually annotated or manually imported tag),
+        and per-tag detected minute counts split by manual and analysis tagging
+        sources. The `options` parameter specifies the bucket size (day, week,
+        month, or year). The optional `filter` parameter is applied to audio
+        recordings. Results only include audio recordings the user has reader
+        access to.
       DESCRIPTION
 
       parameter name: :request_body, in: :body, required: true,
