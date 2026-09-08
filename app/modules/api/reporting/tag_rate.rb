@@ -230,6 +230,12 @@ module Api
           .join(Arel::Nodes::Lateral.new(events_sub_table)).on(Arel.sql('true'))
           .join(taggings).on(taggings[:audio_event_id].eq(events_sub_table[:id]))
           .join(imports, Arel::Nodes::OuterJoin).on(imports[:id].eq(events_sub_table[:audio_event_import_file_id]))
+          .join(AnalysisJobsItem.arel_table, Arel::Nodes::OuterJoin)
+          .on(AnalysisJobsItem.arel_table[:id].eq(imports[:analysis_jobs_item_id]))
+          .where(
+             imports[:analysis_jobs_item_id].eq(nil)
+               .or(AnalysisJobsItem.arel_table[:result].eq(AnalysisJobsItem::RESULT_SUCCESS))
+           )
           .distinct
       end
 
