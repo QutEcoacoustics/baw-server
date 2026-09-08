@@ -18,11 +18,21 @@ class ReportsController < ApplicationController
 
     tag_rate_template = TagRate.new(report_options)
 
+    projections = {
+      site_id: TagRate::BUCKETS_SITES[:site_id],
+      range: TagRate::BUCKETS_SITES[:bucket],
+      tags: tag_rate_template.tags_summary,
+      total_minutes: TagRate::TOTAL_MINUTES[:total_minutes],
+      total_analysed_minutes: TagRate::TOTAL_MINUTES[:total_analysed_minutes],
+      manual_events_minutes: Arel.coalesce(TagRate::MANUAL_MINUTES[:manual_events_minutes], 0),
+      analysis_ids: Arel.coalesce(TagRate::DISTINCT_ANALYSIS_JOB_IDS[:analysis_ids], Arel.sql('array[]::integer[]'))
+    }
+
     results, opts = execute_report(
       base_query:,
       model: AudioRecording,
       template: tag_rate_template,
-      projections: { tags: tag_rate_template.tags_summary }
+      projections:
     )
 
     respond_report(results, opts)
