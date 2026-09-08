@@ -95,7 +95,7 @@ module Api
           .arel
       end
 
-      # Distinct successful analysis job ids per recording.
+      # Distinct successful analysis job item ids per recording.
       def analysed_recordings_cte
         aji = AnalysisJobsItem.arel_table
         job_ids = aji[:analysis_job_id].array_agg
@@ -154,7 +154,7 @@ module Api
           .group(RECORDING_RANGE_SLICES[:bucket], RECORDING_RANGE_SLICES[:site_id])
       end
 
-      # @return [Arel::Nodes::Division] total minutes of recorded audio (ceiled)
+      # @return [Arel::Nodes::Division] total minutes of recorded audio (rounded up)
       def total_minutes
         # ! TODO: Division when arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
         Arel::Nodes::Division.new(recording_range_seconds.sum, SECONDS_PER_MINUTE).ceil
@@ -240,7 +240,7 @@ module Api
       end
 
       # Unique minutes with any manual event per bucket. We use this to provide
-      # a crude estimate of the manual tagging effort, since we don't have any
+      # a crude estimate of the manual analysis effort (e.g. manual tagging), since we don't have any
       # other way to measure this.
       def manual_minutes_cte
         TAGGED_EVENT_MINUTES.project(
