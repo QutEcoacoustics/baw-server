@@ -7,7 +7,13 @@ class ReportsController < ApplicationController
   include ResultFormatters
 
   # POST /reports/tag_rate
-  # Returns a structured report of normalised tag rates
+  # Returns a structured report of tag counts and
+  # audio or analysis coverage for the same bucket.
+  # The pattern is to report various numerators and demoninators
+  # so callers can estimate different rates of detections based
+  # on the amount of "work" also present in the bucket.
+  # This endpoint is also unique because all counts are reported
+  # per minute and de-duplicate tag detections in each minute.
   # Accepts a filter object where:
   #  the `filter` is applied to audio recordings
   #  the `paging`, `sort`, and `projection` options are invalid
