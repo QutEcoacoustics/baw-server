@@ -43,7 +43,7 @@ module Api
       # @return [Arel::SelectManager]
       def call(query)
         BUCKETS_SITES
-          .project(*site_bucket_summary)
+          .project
           .with(*ctes(query:))
           .join(DETECTED_MINUTES, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(DETECTED_MINUTES))
           .join(DISTINCT_ANALYSIS_JOB_IDS, Arel::Nodes::OuterJoin).on(join_on_bucket_and_site(DISTINCT_ANALYSIS_JOB_IDS))
@@ -293,17 +293,6 @@ module Api
 
       def join_on_bucket_and_site(table)
         table[:bucket].eq(BUCKETS_SITES[:bucket]).and(table[:site_id].eq(BUCKETS_SITES[:site_id]))
-      end
-
-      def site_bucket_summary
-        [
-          BUCKETS_SITES[:site_id],
-          BUCKETS_SITES[:bucket].as('range'),
-          TOTAL_MINUTES[:total_minutes],
-          TOTAL_MINUTES[:total_analysed_minutes],
-          Arel.coalesce(MANUAL_MINUTES[:manual_events_minutes], 0).as('manual_events_minutes'),
-          Arel.coalesce(DISTINCT_ANALYSIS_JOB_IDS[:analysis_ids], Arel.sql('array[]::integer[]')).as('analysis_ids')
-        ]
       end
 
       def site_bucket_summary_groups
