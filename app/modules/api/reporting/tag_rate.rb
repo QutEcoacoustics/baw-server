@@ -3,14 +3,14 @@
 module Api
   module Reporting
     # Report template producing tag detection rates per site/bucket combinations.
-    # or each site/bucket it reports how much audio was recorded and
+    # For each site/bucket it reports how much audio was recorded and
     # analysed, which analysis jobs contributed, how many minutes were manually
     # reviewed, and per-tag detected minute counts split by tagging source.
     #
     # Site/bucket combinations with audio but no tags are included in the
     # results. These rows show recording effort relative to zero detections,
     # which is a meaningful result. Site/bucket combinations with no audio or
-    # tags are ommited.
+    # tags are omitted.
     #
     # Implements #call(query) for use as a template in execute_report.
     class TagRate
