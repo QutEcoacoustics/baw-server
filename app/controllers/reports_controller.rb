@@ -8,7 +8,7 @@ class ReportsController < ApplicationController
 
   # POST /reports/tag_rate
   # Returns a structured report of normalised tag rates
-  # Accepts a filter objectd where:
+  # Accepts a filter object where:
   #  the `filter` is applied to audio recordings
   #  the `paging`, `sort`, and `projection` options are invalid
   def tag_rate

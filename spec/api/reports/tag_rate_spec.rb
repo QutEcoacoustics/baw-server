@@ -54,7 +54,7 @@ describe 'reports', type: :request do
             description: 'The number of minutes in the range for the site that have at least one successful analysis'
           }
         },
-        required: [:range, :tags, :site_id, :analysis_ids, :total_minutes, :site_id, :manual_events_minutes,
+        required: [:range, :tags, :site_id, :analysis_ids, :total_minutes, :manual_events_minutes,
                    :total_analysed_minutes]
       }
     )
