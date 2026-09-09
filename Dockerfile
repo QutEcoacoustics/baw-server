@@ -20,7 +20,7 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   # - gnupg is for validating apt public keys
   ca-certificates git curl gnupg iproute2 \
   # sqlite
-  sqlite3 libsqlite3-dev libgmp-dev \
+  pkg-config sqlite3 libsqlite3-dev libgmp-dev \
   # the following are for nokogiri and the like
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
   # needed to build the psych gem's native extensions
