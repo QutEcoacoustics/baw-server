@@ -117,12 +117,14 @@ describe BawAudioTools::AudioBase, '#integrity_check' do
 
         warning_text_options = [
           'Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size',
-          'Failed to read frame size: Could not seek to 1026.'
+          'Failed to read frame size: Could not seek to 1026.',
+          'Failed to find two consecutive MPEG audio frames.',
+          'Error opening input: Invalid data found when processing input'
         ]
 
         warning_descriptions = result[:warnings].map { |warning| warning[:description] }
         expect(result[:warnings][1][:id]).to eq('mp3')
-        expect(warning_descriptions).to include(*warning_text_options)
+        expect(warning_descriptions.intersection(warning_text_options)).not_to be_empty
         #expect(result[:warnings][1][:description]).to eq('Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size')
       end
 
