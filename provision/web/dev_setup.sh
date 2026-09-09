@@ -35,7 +35,11 @@ git config --global core.editor "code --wait"
 # we're generating some powershell scripts from the server, thus we need powershell to test them
 # currently this is dev time only dependency
 # https://docs.microsoft.com/en-us/powershell/scripting/install/install-debian?view=powershell-7.2
-DEBIAN_FRONTEND=noninteractive apt-get install liblttng-ust0 -y
+if apt-cache show liblttng-ust1t64 >/dev/null 2>&1; then
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends liblttng-ust1t64
+else
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends liblttng-ust0
+fi
 PWSH_VERSION=7.2.0
 cd ~
 #          https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell_7.2.0-1.deb_amd64.deb
