@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 # Debian releases:
 #
-FROM ruby:3.4.4-slim-bullseye
+FROM ruby:3.4.10-slim-trixie
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
