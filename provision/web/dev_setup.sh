@@ -4,7 +4,7 @@ set -e
 
 # git-lfs needed for working with dev container (not for prod)
 curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-ENV DEBIAN_FRONTEND=noninteractive 
+export DEBIAN_FRONTEND=noninteractive 
 apt-get update && apt-get install -y --no-install-recommends \
     git \
     git-lfs \
