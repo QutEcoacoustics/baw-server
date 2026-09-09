@@ -93,9 +93,10 @@ module UploadServiceSteps
     connection => {url:, username:, password:}
 
     raise 'to must start with a slash' unless to.nil? || to.start_with?('/')
+    escaped_to = to&.gsub(' ', '%20')
 
     run_curl(
-      %(curl --insecure --user "#{username}:#{password}" -T #{source} -k "#{url}#{to}" --ftp-create-dirs),
+      %(curl --insecure --user "#{username}:#{password}" -T #{source} -k "#{url}#{escaped_to}" --ftp-create-dirs),
       should_work:
     )
   end
@@ -103,26 +104,26 @@ module UploadServiceSteps
   def rename_remote_file(connection, from:, to:, should_work: true)
     connection => {url:, username:, password:}
 
-    command = %(curl --user "#{username}:#{password}" -Q '-RENAME "#{from}" "#{to}"' "#{url}" --insecure)
+    command = %(curl --user "#{username}:#{password}" -Q '-rename "#{from}" "#{to}"' "#{url}" --insecure)
     run_curl(command, should_work:)
   end
 
   def create_remote_directory(connection, remote_path, should_work: true)
     connection => {url:, username:, password:}
 
-    command = %(curl --user "#{username}:#{password}" -Q '-MKDIR "#{remote_path}"' "#{url}" --insecure)
+    command = %(curl --user "#{username}:#{password}" -Q '-mkdir "#{remote_path}"' "#{url}" --insecure)
     run_curl(command, should_work:)
   end
 
   def delete_remote_file(connection, remote_path)
     connection => {url:, username:, password:}
-    command = %(curl --user "#{username}:#{password}" -Q '-RM "#{remote_path}"' "#{url}" --insecure)
+    command = %(curl --user "#{username}:#{password}" -Q '-rm "#{remote_path}"' "#{url}" --insecure)
     run_curl(command, should_work: true)
   end
 
   def delete_remote_directory(connection, remote_path)
     connection => {url:, username:, password:}
-    command = %(curl --user "#{username}:#{password}" -Q '-RMDIR "#{remote_path}"' "#{url}" --insecure)
+    command = %(curl --user "#{username}:#{password}" -Q '-rmdir "#{remote_path}"' "#{url}" --insecure)
     run_curl(command, should_work: true)
   end
 

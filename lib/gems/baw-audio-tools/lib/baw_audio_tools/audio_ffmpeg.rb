@@ -42,7 +42,7 @@ module BawAudioTools
                           arg_sample_rate(sample_rate)
                         end
 
-      cmd_channel = arg_channel(channel)
+      cmd_channel = arg_channel(channel, source_info)
       codec_info = codec_calc(target)
 
       # AT 2020: added -nostdin and -y to force ffmpeg to complete in race conditions, and to never look for console input.
@@ -219,7 +219,7 @@ module BawAudioTools
       result
     end
 
-    def arg_channel(channel)
+    def arg_channel(channel, source_info = {})
       cmd_arg = ''
       if channel.present?
         channel_number = channel.to_i
@@ -228,10 +228,33 @@ module BawAudioTools
                     ' -ac 1 '
                   else
                     # select the channel (0 index based)
-                    " -map_channel 0.0.#{channel_number - 1} "
+                    channel_index = channel_number - 1
+                    channel_count = source_info[:channels].to_i
+                    if channel_count.positive? && channel_index < channel_count
+                      layout = source_info[:channel_layout]
+                      layout = channel_layout_for_count(channel_count) if layout.blank?
+                      outputs = (0...channel_count).map { |i| "[ch#{i}]" }.join
+                      " -filter_complex \"channelsplit=channel_layout=#{layout}#{outputs}\" -map '[ch#{channel_index}]' -ac 1 "
+                    else
+                      " -af 'pan=mono|c0=c#{channel_index}' "
+                    end
                   end
       end
       cmd_arg
+    end
+
+    def channel_layout_for_count(channel_count)
+      case channel_count
+      when 1 then 'mono'
+      when 2 then 'stereo'
+      when 3 then '2.1'
+      when 4 then 'quad'
+      when 5 then '5.0'
+      when 6 then '5.1'
+      when 7 then '6.1'
+      when 8 then '7.1'
+      else "#{channel_count}c"
+      end
     end
 
     def arg_sample_rate(sample_rate)

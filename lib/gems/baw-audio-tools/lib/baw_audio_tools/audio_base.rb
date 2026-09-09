@@ -132,7 +132,8 @@ module BawAudioTools
         duration_seconds: @audio_ffmpeg.parse_duration(info['FORMAT duration']).to_f,
         bit_rate_bps: bit_rate_bps.to_i,
         data_length_bytes: info['FORMAT size'].to_i,
-        channels: info['STREAM channels'].to_i
+        channels: info['STREAM channels'].to_i,
+        channel_layout: info['STREAM channel_layout']
       }
     end
 
