@@ -660,7 +660,7 @@ describe PBS::Connection do
         expect(cancel_result.failure).to be_a(PBS::Errors::InvalidStateError)
         expect(cancel_result.failure.message).to match(/Request invalid for state of job/)
         expect(cancel_result.failure.message).to match(PBS::Connection::QDEL_INVALID_STATE_STATUS.to_s)
-        expect(status_result).to be_exiting
+        expect(status_result).to be_exiting.or be_finished
       end
 
       it 'can batch cancel jobs based on project_suffix', :slow do

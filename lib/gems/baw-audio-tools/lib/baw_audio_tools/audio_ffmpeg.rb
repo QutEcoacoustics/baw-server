@@ -228,7 +228,7 @@ module BawAudioTools
                     ' -ac 1 '
                   else
                     # select the channel (0 index based)
-                    " -map_channel 0.0.#{channel_number - 1} "
+                    " -af 'pan=mono|c0=c#{channel_number - 1}' "
                   end
       end
       cmd_arg
