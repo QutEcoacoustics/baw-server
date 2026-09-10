@@ -34,11 +34,11 @@ module Api
       end
 
       # Returns the two bucket-related CTEs [bounds, buckets]
-      # @param events_table [Arel::Table] the CTE table containing start_at/end_at columns
+      # @param source_table [Arel::Table] the CTE table containing start_at/end_at columns
       # @return [Array<Arel::Nodes::As>]
-      def bucket_ctes(events_table:)
+      def bucket_ctes(source_table:, source_columns: nil)
         [
-          cte(BOUNDS, bounds_cte(events_table, @options.bucket_size)),
+          cte(BOUNDS, bounds_cte(source_table, source_columns, @options.bucket_size)),
           cte(BUCKETS, buckets_cte(@options.interval_arel))
         ]
       end
@@ -59,11 +59,18 @@ module Api
 
       private
 
-      # Use the events to determine bounds for generating the bucket series
-      def bounds_cte(events_table, interval)
-        events_table.project(
-          Arel.date_trunc(interval, events_table[:start_at].minimum).as('series_start'),
-          Arel.date_trunc(interval, events_table[:end_at].maximum).as('series_end')
+      # @param source_table [Arel::Table] the CTE table containing start_at/end_at columns
+      # @param interval [String] the bucket size (e.g. 'day', 'week', 'month', 'year')
+      # @param source_columns [Array<Arel::Nodes::Node>] optional; an array of two Arel Nodes representing the start_at/end_at columns to use
+      def bounds_cte(source_table, source_columns, interval)
+        source_columns ||= [
+          source_table[:start_at].minimum,
+          source_table[:end_at].maximum
+        ]
+
+        source_table.project(
+          Arel.date_trunc(interval, source_columns[0]).as('series_start'),
+          Arel.date_trunc(interval, source_columns[1]).as('series_end')
         )
       end
 

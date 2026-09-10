@@ -37,5 +37,11 @@ RSpec.describe ReportsController, type: :routing do
         route_to('reports#analysis_coverage', format: 'json')
       )
     }
+
+    it {
+      expect(post('/reports/tag_rate')).to(
+        route_to('reports#tag_rate', format: 'json')
+      )
+    }
   end
 end
