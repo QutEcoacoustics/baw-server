@@ -408,7 +408,8 @@ module Api
             audio_event: AudioEvent.schema,
             provenance: Provenance.schema,
             verification: Verification.schema,
-            admin_site_setting: Admin::SiteSetting.schema
+            admin_site_setting: Admin::SiteSetting.schema,
+            admin_cache_statistics: Statistics::CacheStatistics.schema
           },
           parameters: {
             'archived-parameter': archived_parameter
