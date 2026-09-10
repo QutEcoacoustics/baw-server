@@ -201,7 +201,7 @@ module Api
         }
       end
 
-      def recording_coverage(include_result: false)
+      def recording_coverage(include_result: false, include_accumulated_density: false)
         properties = {
           site_id: id,
           range: {
@@ -214,7 +214,8 @@ module Api
           },
           density: {
             type: 'number',
-            description: 'The ratio of covered seconds to the total duration of the coverage span',
+            description: 'The ratio of covered seconds to the total duration of the coverage span. Overlaps and ' \
+                         'repeated analysis items are counted only once, so this value is always between 0 and 1',
             minimum: 0.0,
             maximum: 1.0
           },
@@ -224,6 +225,16 @@ module Api
                          'Calculated dynamically as 1/bucket_count of the total span of all recordings in the query'
           }
         }
+
+        if include_accumulated_density
+          properties[:accumulated_density] = {
+            type: 'number',
+            description: 'The sum of every recording duration divided by the coverage span duration. Unlike density, ' \
+                         'overlaps and repeated analysis items are counted independently, so this value ' \
+                         'can exceed 1',
+            minimum: 0.0
+          }
+        end
 
         if include_result
           properties[:result] = {
@@ -238,17 +249,24 @@ module Api
           additionalProperties: false,
           properties: properties,
           readOnly: true,
-          required: if include_result
-                      [:site_id, :result, :range, :density,
-                       :gap_threshold]
-                    else
-                      [:site_id, :range, :density, :gap_threshold]
-                    end
+          required: [
+            :site_id,
+            *(include_result ? [:result] : []),
+            :range,
+            :density,
+            *(include_accumulated_density ? [:accumulated_density] : []),
+            :gap_threshold
+          ]
         }
       end
 
-      def coverage_report(include_result: false)
-        standard_array_response(recording_coverage(include_result: include_result))
+      def coverage_report(include_result: false, include_accumulated_density: false)
+        standard_array_response(
+          recording_coverage(
+            include_result: include_result,
+            include_accumulated_density: include_accumulated_density
+          )
+        )
       end
     end
   end
