@@ -1,5 +1,17 @@
 # Changelog
 
+## [15.3.5](https://github.com/QutEcoacoustics/baw-server/tree/15.3.5) (2026-09-10)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.4...15.3.5)
+
+**Implemented enhancements:**
+
+- Prioritize new recordings for analysis jobs [\#797](https://github.com/QutEcoacoustics/baw-server/issues/797)
+
+**Merged pull requests:**
+
+- Prioritize newest recordings in analysis job queue sampling [\#1047](https://github.com/QutEcoacoustics/baw-server/pull/1047) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [15.3.4](https://github.com/QutEcoacoustics/baw-server/tree/15.3.4) (2026-09-10)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.3...15.3.4)
@@ -7,6 +19,10 @@
 **Implemented enhancements:**
 
 - Update Ruby/docker [\#1048](https://github.com/QutEcoacoustics/baw-server/issues/1048)
+
+**Merged pull requests:**
+
+- Update app container base to Ruby 3.4.10 on Debian trixie [\#1049](https://github.com/QutEcoacoustics/baw-server/pull/1049) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 ## [15.3.3](https://github.com/QutEcoacoustics/baw-server/tree/15.3.3) (2026-08-31)
 
