@@ -14,7 +14,7 @@ module Api
 
       EVENTS = Arel::Table.new(:filtered_events)
       STATS = Arel::Table.new(:stats)
-      BIN_EVENTS = Arel::Table.new(:bin_events)
+      BUCKET_STATS = Arel::Table.new(:bucket_stats)
       BIN_COUNTS = Arel::Table.new(:bin_counts)
       BIN_SERIES = Arel::Table.new(:bin_series)
       COUNTS_SERIES = Arel::Table.new(:counts_series)
@@ -64,7 +64,7 @@ module Api
         [
           cte(EVENTS, events_cte(query)),
           cte(STATS, stats_cte),
-          cte(BIN_EVENTS, bin_events_cte),
+          cte(BUCKET_STATS, bucket_stats_cte),
           cte(BIN_COUNTS, bin_counts_cte),
           cte(BIN_SERIES, bin_series_cte),
           cte(COUNTS_SERIES, counts_series_cte)
@@ -102,11 +102,18 @@ module Api
       end
 
       # Assign event scores a bucket index
-      def bin_events_cte
+      def bucket_stats_cte
         EVENTS
           .project(
             EVENTS[:tag_id],
             EVENTS[:provenance_id],
+            STATS[:events],
+            STATS[:score_minimum],
+            STATS[:score_maximum],
+            STATS[:score_mean],
+            STATS[:score_stddev],
+            STATS[HISTOGRAM_MINIMUM],
+            STATS[HISTOGRAM_MAXIMUM],
             score_bucket_index.as(BUCKET_INDEX.to_s)
           )
           .join(STATS, Arel::Nodes::OuterJoin)
@@ -115,12 +122,14 @@ module Api
 
       # Count the number of events in each bucket per group
       def bin_counts_cte
-        BIN_EVENTS
+        BUCKET_STATS
           .project(
-            Arel.star,
-            BIN_EVENTS[BUCKET_INDEX].count
+            BUCKET_STATS[:tag_id],
+            BUCKET_STATS[:provenance_id],
+            BUCKET_STATS[BUCKET_INDEX],
+            BUCKET_STATS[BUCKET_INDEX].count
           )
-          .group(*group_columns(BIN_EVENTS), BIN_EVENTS[BUCKET_INDEX])
+          .group(*group_columns(BUCKET_STATS), BUCKET_STATS[BUCKET_INDEX])
       end
 
       # Generate NUMBER_OF_BINS + 2 indices for groups that can have a summary:
