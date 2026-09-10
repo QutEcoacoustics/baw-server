@@ -19,7 +19,7 @@ paths:
         required: true
         schema:
           type: string
-      security: 
+      security:
       responses:
         '200':
           description: blob retrieved
@@ -30,7 +30,7 @@ paths:
                 site_id: 1
                 layout_id: 1
                 parent_id: 1
-                target_page_id: 
+                target_page_id:
                 label: Credits
                 slug: credits
                 full_path: "/credits"
@@ -84,7 +84,7 @@ paths:
       summary: Retrieves the index blob (rendered HTML)
       tags:
       - cms
-      security: 
+      security:
       parameters: []
       responses:
         '200':
@@ -95,8 +95,8 @@ paths:
                 id: 11
                 site_id: 3
                 layout_id: 3
-                parent_id: 
-                target_page_id: 
+                parent_id:
+                target_page_id:
                 label: Home
                 slug: index
                 full_path: "/"
@@ -175,8 +175,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_events/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 1
                   audio_recording_id: 1
@@ -189,16 +189,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 1
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 1
                     audio_event_id: 1
                     tag_id: 1
                     creator_id: 4
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -242,7 +242,7 @@ paths:
                   capabilities:
                     update_allow_audio_upload:
                       can: true
-                      details: 
+                      details:
                     create_harvest:
                       can: false
                       details: This project does not allow uploading audio. Contact
@@ -255,10 +255,10 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 3
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: false
                   license: CC-BY-4.0
                   site_ids:
@@ -334,22 +334,22 @@ paths:
                   capabilities:
                     update_allow_audio_upload:
                       can: true
-                      details: 
+                      details:
                     create_harvest:
                       can: true
-                      details: 
+                      details:
                 data:
                   id: 3
                   name: gen_project4
                   description: project description 4
                   creator_id: 12
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 4
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: true
                   license: CC-BY-4.0
                   site_ids:
@@ -442,7 +442,7 @@ paths:
                   capabilities:
                     update_allow_audio_upload:
                       can: true
-                      details: 
+                      details:
                     create_harvest:
                       can: false
                       details: This project does not allow uploading audio. Contact
@@ -455,10 +455,10 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 7
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: false
                   license: CC-BY-4.0
                   site_ids:
@@ -550,14 +550,14 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                   capabilities:
                     update_allow_audio_upload:
-                      can: 
-                      details: 
+                      can:
+                      details:
                     create_harvest:
-                      can: 
+                      can:
                       details: This project does not allow uploading audio. Contact
                         the site administrator to request permission to upload audio.
                 data:
@@ -566,12 +566,12 @@ paths:
                   description: project description 8
                   creator_id: 25
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 8
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: true
                   license: CC-BY-4.0
                   site_ids:
@@ -660,14 +660,14 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                   capabilities:
                     update_allow_audio_upload:
-                      can: 
-                      details: 
+                      can:
+                      details:
                     create_harvest:
-                      can: 
+                      can:
                       details: This project does not allow uploading audio. Contact
                         the site administrator to request permission to upload audio.
                 data:
@@ -676,12 +676,12 @@ paths:
                   description: project description 9
                   creator_id: 29
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 9
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: true
                   license: CC-BY-4.0
                   site_ids:
@@ -748,7 +748,7 @@ paths:
                   capabilities:
                     update_allow_audio_upload:
                       can: true
-                      details: 
+                      details:
                     create_harvest:
                       can: false
                       details: This project does not allow uploading audio. Contact
@@ -759,12 +759,12 @@ paths:
                   description: project description 11
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   notes: note number 11
-                  allow_original_download: 
+                  allow_original_download:
                   allow_audio_upload: false
                   license: CC-BY-4.0
                   site_ids: []
@@ -831,10 +831,10 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  allow_original_download: 
-                  notes: 
+                  name:
+                  description:
+                  allow_original_download:
+                  notes:
   "/admin/site_settings":
     post:
       summary: create admin/site_setting
@@ -902,14 +902,14 @@ paths:
                   status: 200
                   message: OK
                 data:
-                - id: 
+                - id:
                   name: batch_analysis_remote_enqueue_limit
-                  value: 
+                  value:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: 
-                  updated_at: 
+                  created_at:
+                  updated_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1002,14 +1002,14 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 
+                  id:
                   name: batch_analysis_remote_enqueue_limit
-                  value: 
+                  value:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: 
-                  updated_at: 
+                  created_at:
+                  updated_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1046,7 +1046,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2026-08-31T01:20:04.921Z'
+                  created_at: '2026-09-10T01:16:20.888Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -1110,8 +1110,8 @@ paths:
                     total: 3
                     max_page: 1
                     current: http://web:3000/projects/11/permissions?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 29
                   project_id: 11
@@ -1120,7 +1120,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                 - id: 30
@@ -1130,7 +1130,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 66
                 - id: 31
@@ -1140,7 +1140,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 66
               schema:
@@ -1188,7 +1188,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
               schema:
@@ -1233,9 +1233,9 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  project_id: 
-                  user_id: 
-                  level: 
+                  project_id:
+                  user_id:
+                  level:
                   allow_anonymous: false
                   allow_logged_in: false
   "/projects/{project_id}/permissions/{id}":
@@ -1281,7 +1281,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 81
               schema:
@@ -1483,8 +1483,8 @@ paths:
                     total: 3
                     max_page: 1
                     current: http://web:3000/projects/21/permissions/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 54
                   project_id: 21
@@ -1493,7 +1493,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                 - id: 55
@@ -1503,7 +1503,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 103
                 - id: 56
@@ -1513,7 +1513,7 @@ paths:
                   allow_anonymous: false
                   allow_logged_in: false
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 103
               schema:
@@ -1579,8 +1579,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/scripts?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 18
                   group_id: 18
@@ -1601,12 +1601,12 @@ paths:
                   provenance_id: 18
                   resources:
                     ncpus: 1.0
-                    walltime: 
+                    walltime:
                     mem: 1000000.0
-                    ngpus: 
-                  event_import_minimum_score: 
-                  event_import_include_top: 
-                  event_import_include_top_per: 
+                    ngpus:
+                  event_import_minimum_score:
+                  event_import_include_top:
+                  event_import_include_top_per:
                   description_html: "<p>script description 18</p>\n"
                   description_html_tagline: script description 18
               schema:
@@ -1667,12 +1667,12 @@ paths:
                   provenance_id: 19
                   resources:
                     ncpus: 1.0
-                    walltime: 
+                    walltime:
                     mem: 1000000.0
-                    ngpus: 
-                  event_import_minimum_score: 
-                  event_import_include_top: 
-                  event_import_include_top_per: 
+                    ngpus:
+                  event_import_minimum_score:
+                  event_import_include_top:
+                  event_import_include_top_per:
                   description_html: "<p>script description 19</p>\n"
                   description_html_tagline: script description 19
               schema:
@@ -1736,8 +1736,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/scripts/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 20
                   group_id: 20
@@ -1758,12 +1758,12 @@ paths:
                   provenance_id: 20
                   resources:
                     ncpus: 1.0
-                    walltime: 
+                    walltime:
                     mem: 1000000.0
-                    ngpus: 
-                  event_import_minimum_score: 
-                  event_import_include_top: 
-                  event_import_include_top_per: 
+                    ngpus:
+                  event_import_minimum_score:
+                  event_import_include_top:
+                  event_import_include_top_per:
                   description_html: "<p>script description 20</p>\n"
                   description_html_tagline: script description 20
               schema:
@@ -1951,7 +1951,7 @@ paths:
                     links:
                       Log in: "/my_account/sign_in"
                       Register: "/my_account/sign_up"
-                data: 
+                data:
         '200':
           description: original audio file
     head:
@@ -1995,7 +1995,7 @@ paths:
           description: unauthorized
           content:
             application/json:
-              example: 
+              example:
   "/audio_recordings/downloader":
     post:
       summary: Gets a templated script which can download original audio files. Accepts
@@ -2003,7 +2003,7 @@ paths:
       tags:
       - downloader
       - audio_recordings
-      consumes: 
+      consumes:
       security:
       - auth_token_header: []
       parameters: []
@@ -2031,7 +2031,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.3.2 from http://web:3000.
+                  Version 15.3.3 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2073,7 +2073,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.3.2"
+                Write-Information "Acoustic Workbench downloader script version 15.3.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2288,7 +2288,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.3.2 from http://web:3000.
+                  Version 15.3.3 from http://web:3000.
 
                 .EXAMPLE
 
@@ -2330,7 +2330,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.3.2"
+                Write-Information "Acoustic Workbench downloader script version 15.3.3"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -2573,7 +2573,7 @@ paths:
                   message: Not Found
                   error:
                     details: Could not find the requested item.
-                data: 
+                data:
   "/analysis_jobs/{analysis_job_id}/items":
     get:
       summary: list analysis_jobs
@@ -2630,24 +2630,24 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/analysis_jobs/28/items?direction=asc&items=25&order_by=audio_recording_id&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 28
                   analysis_job_id: 28
                   audio_recording_id: 36
                   script_id: 28
                   created_at: '2020-01-02T03:04:05.677Z'
-                  queued_at: 
-                  work_started_at: 
-                  finished_at: 
-                  queue_id: 19a8dcdf-7dab-4232-9c12-c28f7c0e0057
-                  error: 
+                  queued_at:
+                  work_started_at:
+                  finished_at:
+                  queue_id: 0e005775-0c0c-423b-b5b0-f16a8b389fa9
+                  error:
                   attempts: 0
                   status: new
-                  result: 
+                  result:
                   transition: queue
-                  import_success: 
+                  import_success:
                   audio_event_import_file_ids:
                   - 28
               schema:
@@ -2692,7 +2692,7 @@ paths:
                     info:
                       original_route: analysis_jobs/29/items
                       original_http_method: POST
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -2754,24 +2754,24 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/analysis_jobs/31/items/filter?direction=asc&items=25&order_by=audio_recording_id&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 30
                   analysis_job_id: 31
                   audio_recording_id: 39
                   script_id: 33
                   created_at: '2020-01-02T03:04:05.677Z'
-                  queued_at: 
-                  work_started_at: 
-                  finished_at: 
-                  queue_id: 3d9cb29d-cfd2-445a-baa2-9bc69b0ef87f
-                  error: 
+                  queued_at:
+                  work_started_at:
+                  finished_at:
+                  queue_id: 0ef87f3b-95a5-4425-bdf8-925881e4081b
+                  error:
                   attempts: 0
                   status: new
-                  result: 
+                  result:
                   transition: queue
-                  import_success: 
+                  import_success:
                   audio_event_import_file_ids:
                   - 30
               schema:
@@ -2824,16 +2824,16 @@ paths:
                   audio_recording_id: 40
                   script_id: 34
                   created_at: '2020-01-02T03:04:05.677Z'
-                  queued_at: 
-                  work_started_at: 
-                  finished_at: 
-                  queue_id: bcf37850-4b87-4aa4-b311-14a051bfc359
-                  error: 
+                  queued_at:
+                  work_started_at:
+                  finished_at:
+                  queue_id: bfc35979-5acf-474d-9b7e-a16cb82c8398
+                  error:
                   attempts: 0
                   status: queued
-                  result: 
+                  result:
                   transition: queue
-                  import_success: 
+                  import_success:
                   audio_event_import_file_ids:
                   - 31
               schema:
@@ -2882,7 +2882,7 @@ paths:
                     info:
                       original_route: analysis_jobs/33/items/32
                       original_http_method: DELETE
-                data: 
+                data:
     put:
       summary: update analysis_jobs_item
       security:
@@ -2922,7 +2922,7 @@ paths:
                     info:
                       original_route: analysis_jobs/34/items/33
                       original_http_method: PUT
-                data: 
+                data:
     patch:
       summary: update analysis_jobs_item
       security:
@@ -2962,7 +2962,7 @@ paths:
                     info:
                       original_route: analysis_jobs/35/items/34
                       original_http_method: PATCH
-                data: 
+                data:
   "/analysis_jobs/{analysis_job_id}/items/{id}/working":
     post:
       summary: working analysis_jobs_item
@@ -3050,17 +3050,17 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings?direction=desc&items=25&order_by=recorded_date&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                   capabilities:
                     original_download:
-                      can: 
+                      can:
                       details: You do not have permission to download the original
                         audio recording. Check your access level or the original download
                         settings for this project
                 data:
                 - id: 45
-                  uuid: 620c8fa0-bcbc-4ea2-a576-89930b5f51f3
+                  uuid: 5f51f30c-dbc7-4b59-8b0b-a4304fde563f
                   recorded_date: '2000-05-10T07:06:59.000Z'
                   site_id: 45
                   duration_seconds: 60000.0
@@ -3072,18 +3072,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 224
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   notes:
                     test: note number 45
-                  file_hash: SHA256::45cb7b9bb40fe6f46b2361fbc98b951f7ce1c3f8d4f026774a5f3b6a7e517fbf
+                  file_hash: SHA256::4546b2361fbc98b951f7ce1c3f8d4f026774a5f3b6a7e517fbf7ac8923073b49
                   uploader_id: 224
                   original_file_name: original name 45.mp3
                   canonical_file_name: 20000510T070659Z_site-name-45_45.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3125,10 +3125,10 @@ paths:
                   capabilities:
                     original_download:
                       can: true
-                      details: 
+                      details:
                 data:
                   id: 46
-                  uuid: 47e1f761-adc9-494a-9142-09b3ad8beadf
+                  uuid: 8beadf53-8e62-4462-b675-fb95eec0259a
                   recorded_date: '2000-05-11T07:06:59.000Z'
                   site_id: 46
                   duration_seconds: 66.0
@@ -3140,18 +3140,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 228
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   notes:
                     test: note number 46
-                  file_hash: SHA256::463e24265b5e05a8a52a545a02c5120e897f2e33d7326d2bb5fd6185d271023b
+                  file_hash: SHA256::468a52a545a02c5120e897f2e33d7326d2bb5fd6185d271023b02c0a352c1c91
                   uploader_id: 228
                   original_file_name: original name 46.mp3
                   canonical_file_name: 20000511T070659Z_site-name-46_46.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3195,10 +3195,10 @@ paths:
                   capabilities:
                     original_download:
                       can: true
-                      details: 
+                      details:
                 data:
                   id: 47
-                  uuid: 7763c59c-0d8b-4708-a99d-6fe8fca2ebed
+                  uuid: a2ebed31-1ac0-4672-bccd-082fdde4ead9
                   recorded_date: '2000-05-12T07:06:59.000Z'
                   site_id: 47
                   duration_seconds: 60000.0
@@ -3210,18 +3210,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 232
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   notes:
                     test: note number 47
-                  file_hash: SHA256::471a062cd8fd4a99ff2e74bede4e09f9d0a72a0863e98e031cae62c3ea499c4b
+                  file_hash: SHA256::479ff2e74bede4e09f9d0a72a0863e98e031cae62c3ea499c4b0b0a0e4c69f10
                   uploader_id: 232
                   original_file_name: original name 47.mp3
                   canonical_file_name: 20000512T070659Z_site-name-47_47.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3260,10 +3260,10 @@ paths:
                   capabilities:
                     original_download:
                       can: true
-                      details: 
+                      details:
                 data:
                   id: 48
-                  uuid: fa3c560d-5c7a-48da-8d88-03e16cd265e4
+                  uuid: d265e404-3db0-4272-aec1-c5c69c31c6e4
                   recorded_date: '2000-05-13T07:06:59.000Z'
                   site_id: 48
                   duration_seconds: 66.0
@@ -3275,18 +3275,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 236
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   notes:
                     test: note number 48
-                  file_hash: SHA256::484d022e156c164ee1a7cf07eaa0705c6b151a1f1a39ea82e2425011d626235a
+                  file_hash: SHA256::48ee1a7cf07eaa0705c6b151a1f1a39ea82e2425011d626235a1a78b5afe550f
                   uploader_id: 236
                   original_file_name: original name 48.mp3
                   canonical_file_name: 20000513T070659Z_site-name-48_48.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3323,17 +3323,17 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  site_id: 
-                  uploader_id: 
-                  sample_rate_hertz: 
-                  media_type: 
-                  recorded_date: 
-                  bit_rate_bps: 
-                  data_length_bytes: 
-                  channels: 
-                  duration_seconds: 
-                  file_hash: 
-                  original_file_name: 
+                  site_id:
+                  uploader_id:
+                  sample_rate_hertz:
+                  media_type:
+                  recorded_date:
+                  bit_rate_bps:
+                  data_length_bytes:
+                  channels:
+                  duration_seconds:
+                  file_hash:
+                  original_file_name:
   "/audio_recordings/filter":
     post:
       summary: filter audio recording
@@ -3392,17 +3392,17 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings/filter?direction=desc&items=25&order_by=recorded_date&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                   capabilities:
                     original_download:
-                      can: 
+                      can:
                       details: You do not have permission to download the original
                         audio recording. Check your access level or the original download
                         settings for this project
                 data:
                 - id: 50
-                  uuid: ec661a40-34cb-45d9-8b91-37bb72330b6e
+                  uuid: 0b6e57c4-02d7-46c6-955e-4940ad8b64b7
                   recorded_date: '2000-05-15T07:06:59.000Z'
                   site_id: 50
                   duration_seconds: 60000.0
@@ -3414,18 +3414,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 244
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   notes:
                     test: note number 50
-                  file_hash: SHA256::507427665e90db476ab9e406a221755fae7baed835328384352bf1a33e9c17b1
+                  file_hash: SHA256::506ab9e406a221755fae7baed835328384352bf1a33e9c17b13ef3be3bf10a23
                   uploader_id: 244
                   original_file_name: original name 50.mp3
                   canonical_file_name: 20000515T070659Z_site-name-50_50.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -3475,8 +3475,8 @@ paths:
                     total: 2
                     max_page: 1
                     current: http://web:3000/analysis_jobs/44/results?items=25&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                   path: "/analysis_jobs/44/results/52/script_name_46_latest"
                   name: script name 46 (latest)
@@ -3629,8 +3629,8 @@ paths:
                     total: 5
                     max_page: 1
                     current: http://web:3000/analysis_jobs/46/results?items=25&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                   path: "/analysis_jobs/46/results/54/48/archive.zip"
                   name: archive.zip
@@ -3771,18 +3771,18 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_event_imports/filter?direction=asc&items=25&order_by=created_at&page=1&with_archived=true
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 56
                   name: import name 58
                   description: import **description** 58
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 325
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 326
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
+                  deleter_id:
                   deleted_at: '2020-01-02T03:04:05.677Z'
                   description_html_tagline: import <strong>description</strong> 58
                   description_html: "<p>import <strong>description</strong> 58</p>\n"
@@ -3830,13 +3830,13 @@ paths:
                   id: 49
                   name: import name 49
                   description: import **description** 49
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   description_html_tagline: import <strong>description</strong> 49
                   description_html: "<p>import <strong>description</strong> 49</p>\n"
               schema:
@@ -3896,18 +3896,18 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_event_imports?direction=asc&items=25&order_by=created_at&page=1&with_archived=true
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 58
                   name: import name 60
                   description: import **description** 60
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 337
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 338
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
+                  deleter_id:
                   deleted_at: '2020-01-02T03:04:05.677Z'
                   description_html_tagline: import <strong>description</strong> 60
                   description_html: "<p>import <strong>description</strong> 60</p>\n"
@@ -3961,13 +3961,13 @@ paths:
                   id: 51
                   name: import name 52
                   description: import **description** 52
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 291
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   description_html_tagline: import <strong>description</strong> 52
                   description_html: "<p>import <strong>description</strong> 52</p>\n"
               schema:
@@ -4014,13 +4014,13 @@ paths:
                   id: 52
                   name: import name 54
                   description: import **description** 54
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 299
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   description_html_tagline: import <strong>description</strong> 54
                   description_html: "<p>import <strong>description</strong> 54</p>\n"
               schema:
@@ -4089,12 +4089,12 @@ paths:
                   id: 57
                   name: import name 59
                   description: import **description** 59
-                  analysis_job_id: 
+                  analysis_job_id:
                   creator_id: 331
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 332
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
+                  deleter_id:
                   deleted_at: '2020-01-02T03:04:05.677Z'
                   description_html_tagline: import <strong>description</strong> 59
                   description_html: "<p>import <strong>description</strong> 59</p>\n"
@@ -4137,9 +4137,9 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  analysis_jobs_id: 
+                  name:
+                  description:
+                  analysis_jobs_id:
   "/audio_event_imports/{id}/destroy":
     delete:
       summary: destroy permanently
@@ -4236,8 +4236,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/harvests/60/items/filter?direction=asc&items=25&order_by=path&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 60
                   deleted: false
@@ -4284,7 +4284,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
         '200':
           description: filters audio events by tag
           content:
@@ -4336,9 +4336,9 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
+                sort:
+                page:
+                projection:
                 options:
                   allOf:
                   - "$ref": "#/components/schemas/filter_payload_options"
@@ -4413,8 +4413,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/84/harvests/69/items/a/b?direction=asc&items=25&order_by=path&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 69
                   deleted: false
@@ -4427,8 +4427,8 @@ paths:
                   uploader_id: 400
                   report:
                     items_total: 1
-                    items_size_bytes: 
-                    items_duration_seconds: 
+                    items_size_bytes:
+                    items_duration_seconds:
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
                     items_new: 1
@@ -4493,16 +4493,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 68
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 68
                     audio_event_id: 68
                     tag_id: 68
                     creator_id: 402
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -4558,16 +4558,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 69
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 69
                     audio_event_id: 69
                     tag_id: 69
                     creator_id: 406
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -4628,16 +4628,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 70
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 70
                     audio_event_id: 70
                     tag_id: 70
                     creator_id: 415
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -4710,12 +4710,12 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  audio_recording_id: 
-                  start_time_seconds: 
-                  end_time_seconds: 
-                  low_frequency_hertz: 
-                  high_frequency_hertz: 
-                  is_reference: 
+                  audio_recording_id:
+                  start_time_seconds:
+                  end_time_seconds:
+                  low_frequency_hertz:
+                  high_frequency_hertz:
+                  is_reference:
                   tags: []
   "/audio_recordings/{audio_recording_id}/audio_events/filter":
     post:
@@ -4773,8 +4773,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings/88/audio_events/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 73
                   audio_recording_id: 88
@@ -4787,16 +4787,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 73
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 73
                     audio_event_id: 73
                     tag_id: 73
                     creator_id: 432
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -4864,8 +4864,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings/89/audio_events?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 74
                   audio_recording_id: 89
@@ -4878,16 +4878,16 @@ paths:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
                   audio_event_import_file_id: 74
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings:
                   - id: 74
                     audio_event_id: 74
                     tag_id: 74
                     creator_id: 436
-                    updater_id: 
+                    updater_id:
                     created_at: '2020-01-02T03:04:05.677Z'
                     updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -4938,11 +4938,11 @@ paths:
                   creator_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
                   created_at: '2020-01-02T03:04:05.677Z'
-                  audio_event_import_file_id: 
-                  import_file_index: 
-                  provenance_id: 
-                  channel: 
-                  score: 
+                  audio_event_import_file_id:
+                  import_file_index:
+                  provenance_id:
+                  channel:
+                  score:
                   taggings: []
               schema:
                 allOf:
@@ -4981,7 +4981,7 @@ paths:
                   error:
                     details: 'The request could not be understood: param is missing
                       or the value is empty or invalid: options'
-                data: 
+                data:
         '200':
           description: tag frequency report retrieved
           content:
@@ -5047,9 +5047,9 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
+                sort:
+                page:
+                projection:
                 options:
                   allOf:
                   - "$ref": "#/components/schemas/filter_payload_options"
@@ -5097,10 +5097,10 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  notes: 
-                  project_id: 
+                  name:
+                  description:
+                  notes:
+                  project_id:
   "/projects/{project_id}/regions":
     post:
       summary: create region
@@ -5138,10 +5138,10 @@ paths:
                     region_note_102: 102
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 106
                   site_ids: []
                   description_html: "<p>site <strong>description</strong> 102</p>\n"
@@ -5209,8 +5209,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/108/regions?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 103
                   name: region name 103
@@ -5219,10 +5219,10 @@ paths:
                     region_note_103: 103
                   creator_id: 490
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 108
                   site_ids:
                   - 102
@@ -5309,10 +5309,10 @@ paths:
                     region_note_105: 105
                   creator_id: 498
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 110
                   site_ids:
                   - 104
@@ -5370,8 +5370,8 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 112
                   site_ids:
                   - 105
@@ -5434,8 +5434,8 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 114
                   site_ids:
                   - 106
@@ -5505,8 +5505,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/115/regions/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 108
                   name: region name 110
@@ -5515,10 +5515,10 @@ paths:
                     region_note_110: 110
                   creator_id: 514
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 115
                   site_ids:
                   - 107
@@ -5539,7 +5539,7 @@ paths:
       summary: logout
       tags:
       - security
-      consumes: 
+      consumes:
       security:
       - auth_token_header: []
       parameters: []
@@ -5579,7 +5579,7 @@ paths:
       tags:
       - security
       parameters: []
-      security: 
+      security:
       responses:
         '200':
           description: session created
@@ -5590,7 +5590,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: yJPL_KIJ3dsFcRFqdJNvd9WY1igJUXAtARyyko2qhhg
+                  auth_token: 3Z0CkqkrTwhNXLQLA8lVDicpoMVv_zRUFZWZZwAMd_Q
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -5646,7 +5646,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: FXgBafz-cMC1flboWA1Uu9OiogO3U-apPnJFWyC72xs
+                  auth_token: y4LN7lPlgsoWkneBZ27BAu1ml7hU3pqzGAMVyD-9ikI
                   user_name: Admin
                   user_id: 1
               schema:
@@ -5712,8 +5712,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/121/harvests/94/items/filter?direction=asc&items=25&order_by=path&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 94
                   deleted: false
@@ -5758,9 +5758,9 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  confirmed: 
-                  audio_event_id: 
-                  tag_id: 
+                  confirmed:
+                  audio_event_id:
+                  tag_id:
   "/verifications/{id}":
     patch:
       summary: update verification
@@ -5845,7 +5845,7 @@ paths:
                   audio_event_id: 95
                   tag_id: 94
                   creator_id: 556
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -5968,15 +5968,15 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/verifications?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 97
                   confirmed: correct
                   audio_event_id: 98
                   tag_id: 97
                   creator_id: 568
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6022,7 +6022,7 @@ paths:
                   audio_event_id: 100
                   tag_id: 99
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6089,7 +6089,7 @@ paths:
                   audio_event_id: 103
                   tag_id: 102
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6146,15 +6146,15 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/verifications/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 104
                   confirmed: correct
                   audio_event_id: 104
                   tag_id: 103
                   creator_id: 598
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6220,15 +6220,15 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings/127/audio_events/105/verifications?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 105
                   confirmed: correct
                   audio_event_id: 105
                   tag_id: 104
                   creator_id: 602
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6287,7 +6287,7 @@ paths:
                   audio_event_id: 106
                   tag_id: 105
                   creator_id: 606
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6351,15 +6351,15 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_recordings/129/audio_events/107/verifications/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 107
                   confirmed: correct
                   audio_event_id: 107
                   tag_id: 106
                   creator_id: 610
-                  updater_id: 
+                  updater_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
@@ -6397,7 +6397,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
         '200':
           description: filters audio events by tag
           content:
@@ -6554,9 +6554,9 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
+                sort:
+                page:
+                projection:
                 options:
                   allOf:
                   - "$ref": "#/components/schemas/filter_payload_options"
@@ -6604,20 +6604,20 @@ paths:
                   message: OK
                 data:
                   id: 116
-                  name: Birdnet
+                  name: Perch
                   version: 116.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6655,20 +6655,20 @@ paths:
                   message: OK
                 data:
                   id: 117
-                  name: Birdnet
+                  name: Acoustic Indices
                   version: 118.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6736,17 +6736,17 @@ paths:
                   name: Acoustic Indices
                   version: 121.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6783,12 +6783,12 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
-                  version: 
-                  url: 
+                  name:
+                  description:
+                  score_minimum:
+                  score_maximum:
+                  version:
+                  url:
   "/provenances":
     post:
       summary: create provenance
@@ -6814,20 +6814,20 @@ paths:
                   message: Created
                 data:
                   id: 122
-                  name: Acoustic Indices
+                  name: Perch
                   version: 124.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6888,24 +6888,24 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/provenances?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 123
                   name: Acoustic Indices
                   version: 125.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6964,24 +6964,24 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/provenances/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 124
-                  name: Birdnet
+                  name: Perch
                   version: 126.0.0
                   url: https://example.com
-                  description: 
-                  score_minimum: 
-                  score_maximum: 
+                  description:
+                  score_minimum:
+                  score_maximum:
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  description_html_tagline: 
-                  description_html: 
+                  deleter_id:
+                  deleted_at:
+                  description_html_tagline:
+                  description_html:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -6996,7 +6996,7 @@ paths:
       summary: Gets stats
       tags:
       - stats
-      security: 
+      security:
       parameters: []
       responses:
         '200':
@@ -7088,22 +7088,22 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_event_imports/122/files?direction=asc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 121
-                  additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiIzaWpneW14MGp6aXUyYnBmamthaTlxZjFxN3A2IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--c1f982cb0b75efb5a27fa5e6a535c8be2d68d011/audio_check.csv
+                  additional_tag_ids:
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJhaTlxZjFxN3A2bTFjZ3J3cjE4Y3BueXE4MDlmIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--1707987e80ed0d16e2e8ced133c9e56034a68dbe/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 122
-                  analysis_jobs_item_id: 
+                  analysis_jobs_item_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
-                  minimum_score: 
+                  minimum_score:
                   imported_count: 0
                   parsed_count: 0
-                  include_top: 
-                  include_top_per: 
+                  include_top:
+                  include_top_per:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -7157,17 +7157,17 @@ paths:
                   id: 123
                   additional_tag_ids:
                   - 124
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJ4bHg3djBvcmNiMzBzamVsMHIzbHdwZWFqYXhsIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImdlbmVyaWNfZXhhbXBsZS5jc3ZcIjsgZmlsZW5hbWUqPVVURi04JydnZW5lcmljX2V4YW1wbGUuY3N2IiwiY29udGVudF90eXBlIjoidGV4dC9jc3YiLCJzZXJ2aWNlX25hbWUiOiJsb2NhbCJ9LCJleHAiOiIyMDIwLTAxLTAyVDAzOjA5OjA1LjY3N1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--54f612d9b926b40c0917b2f68ae7371ebbb4b1c4/generic_example.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiIzdjh4bWd2aGtqcHg1cGk3NjhjcmpzM2dkc3NvIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImdlbmVyaWNfZXhhbXBsZS5jc3ZcIjsgZmlsZW5hbWUqPVVURi04JydnZW5lcmljX2V4YW1wbGUuY3N2IiwiY29udGVudF90eXBlIjoidGV4dC9jc3YiLCJzZXJ2aWNlX25hbWUiOiJsb2NhbCJ9LCJleHAiOiIyMDIwLTAxLTAyVDAzOjA5OjA1LjY3N1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--4ebedaa22702dfea960449727eb47734be123564/generic_example.csv
                   name: generic_example.csv
                   audio_event_import_id: 123
-                  analysis_jobs_item_id: 
+                  analysis_jobs_item_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: 60559920d11e9ec20b50a70a3ddf8ed74ca12fe8419476b53bcf175a572aec5983ffa7056bfaf57b9c68ce2d680446a346108bccafbae6d2ea27485da672e455
-                  minimum_score: 
+                  minimum_score:
                   imported_count: 1
                   parsed_count: 1
-                  include_top: 
-                  include_top_per: 
+                  include_top:
+                  include_top_per:
                   imported_events:
                   - audio_recording_id: 147
                     start_time_seconds: 123.0
@@ -7176,7 +7176,7 @@ paths:
                     high_frequency_hertz: 500.0
                     audio_event_import_file_id: 123
                     import_file_index: 0
-                    provenance_id: 
+                    provenance_id:
                     creator_id: 1
                     tags:
                     - id: 124
@@ -7249,20 +7249,20 @@ paths:
                       file:
                       - Validation failed
                 data:
-                  id: 
+                  id:
                   additional_tag_ids:
                   - 126
-                  path: 
+                  path:
                   name: generic_example.csv
                   audio_event_import_id: 124
-                  analysis_jobs_item_id: 
+                  analysis_jobs_item_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: 8123ba26cab77c0c4e8b46c5e9f66e55d9cc8b71e997f06d2f746bcf37fcf8ffbdf952266eaa42e4d87b6c207e9f8216c865f7384650dc51330cfa6ab0caf023
-                  minimum_score: 
+                  minimum_score:
                   imported_count: 0
                   parsed_count: 1
-                  include_top: 
-                  include_top_per: 
+                  include_top:
+                  include_top_per:
                   imported_events:
                   - audio_recording_id: 999999999
                     start_time_seconds: 123.0
@@ -7271,18 +7271,18 @@ paths:
                     high_frequency_hertz: 500.0
                     audio_event_import_file_id: 125
                     import_file_index: 0
-                    provenance_id: 
+                    provenance_id:
                     creator_id: 1
                     tags:
                     - id: 126
                       text: tag text 125
-                    - id: 
+                    - id:
                       text: Birb
                     errors:
                     - audio_recording_id:
                       - does not exist
                     rejections: []
-                    id: 
+                    id:
                   committed: true
               schema:
                 type: object
@@ -7392,22 +7392,22 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/audio_event_imports/125/files/filter?direction=asc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 126
-                  additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJrbXl4aXVlYWZsaGxzY3BsejZ5Z2l5bDl2YXUxIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--148178d1201fdd3183fae1d98ab37cffbfc5ee8f/audio_check.csv
+                  additional_tag_ids:
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJkcTZuaDZxdjZ2cmJzNWlidWphZTd5czRjeW55IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--de773cac8ac6e0930352e7dc24171ec6e601d864/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 125
-                  analysis_jobs_item_id: 
+                  analysis_jobs_item_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
-                  minimum_score: 
+                  minimum_score:
                   imported_count: 0
                   parsed_count: 0
-                  include_top: 
-                  include_top_per: 
+                  include_top:
+                  include_top_per:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -7485,7 +7485,7 @@ paths:
                     info:
                       original_route: audio_event_imports/127/files/128
                       original_http_method: PATCH
-                data: 
+                data:
     put:
       summary: update audio_event_import_file
       security:
@@ -7525,7 +7525,7 @@ paths:
                     info:
                       original_route: audio_event_imports/128/files/129
                       original_http_method: PUT
-                data: 
+                data:
     get:
       summary: show audio_event_import_file
       security:
@@ -7562,18 +7562,18 @@ paths:
                   message: OK
                 data:
                   id: 130
-                  additional_tag_ids: 
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiI4ZWpva21yN3lmcndhOGZuN3Jib3BzMnd6ZXNzIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--c0ddb263f42bbf1bda851b87f161dc0421721617/audio_check.csv
+                  additional_tag_ids:
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJpN2R6eXM4dnAxdXUxd3V4b3VhNG41YnF2cjNrIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--5d8f1e7e2406207954f36581986fc3f1abd54e48/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 129
-                  analysis_jobs_item_id: 
+                  analysis_jobs_item_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   file_hash: fce803f986d1644b0387bce170506a855ccf940216ebc36c41f385fa4bd21bf05227e4f9f8189585ca7f1e124419a431576f5e55682cce720ed2b72ad4a5cfe8
-                  minimum_score: 
+                  minimum_score:
                   imported_count: 0
                   parsed_count: 0
-                  include_top: 
-                  include_top_per: 
+                  include_top:
+                  include_top_per:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -7612,11 +7612,11 @@ paths:
                   message: OK
                 data:
                   additional_tags: []
-                  file: 
-                  audio_event_import_id: 
-                  minimum_score: 
-                  include_top: 
-                  include_top_per: 
+                  file:
+                  audio_event_import_id:
+                  minimum_score:
+                  include_top:
+                  include_top_per:
   "/sites/{id}":
     put:
       summary: update site
@@ -7655,20 +7655,20 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 156
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 163
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -7761,22 +7761,22 @@ paths:
                   notes: note number 158
                   creator_id: 736
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 159
-                  custom_latitude: 4.550379
-                  custom_longitude: -169.977097
-                  longitude: -169.977097
-                  latitude: 4.550379
+                  custom_latitude: 38.397469
+                  custom_longitude: -153.116578
+                  longitude: -153.116578
+                  latitude: 38.397469
                   location_obfuscated: false
-                  obfuscated_latitude: 4.55095
-                  obfuscated_longitude: -169.97794
+                  obfuscated_latitude: 38.39715
+                  obfuscated_longitude: -153.11733
                   custom_obfuscated_location: false
                   project_ids:
                   - 166
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -7844,20 +7844,20 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 160
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 167
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -7917,12 +7917,12 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  longitude: 
-                  latitude: 
-                  notes: 
-                  image: 
-                  tzinfo_tz: 
-                  rails_tz: 
+                  longitude:
+                  latitude:
+                  notes:
+                  image:
+                  tzinfo_tz:
+                  rails_tz:
   "/sites":
     post:
       summary: create site
@@ -7953,22 +7953,22 @@ paths:
                   notes: note number 2
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 163
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 170
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -8056,8 +8056,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/sites?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 162
                   name: site name 163
@@ -8065,22 +8065,22 @@ paths:
                   notes: note number 163
                   creator_id: 755
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 164
-                  custom_latitude: 10.668064
-                  custom_longitude: 84.273119
-                  longitude: 84.273119
-                  latitude: 10.668064
+                  custom_latitude: 46.736985
+                  custom_longitude: 169.940947
+                  longitude: 169.940947
+                  latitude: 46.736985
                   location_obfuscated: false
-                  obfuscated_latitude: 10.6675
-                  obfuscated_longitude: 84.27174
+                  obfuscated_latitude: 46.73633
+                  obfuscated_longitude: 169.94269
                   custom_obfuscated_location: false
                   project_ids:
                   - 171
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -8166,8 +8166,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/sites/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 163
                   name: site name 164
@@ -8175,22 +8175,22 @@ paths:
                   notes: note number 164
                   creator_id: 759
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 165
-                  custom_latitude: 87.914107
-                  custom_longitude: -90.53496
-                  longitude: -90.53496
-                  latitude: 87.914107
+                  custom_latitude: 16.328081
+                  custom_longitude: 60.472003
+                  longitude: 60.472003
+                  latitude: 16.328081
                   location_obfuscated: false
-                  obfuscated_latitude: 87.91459
-                  obfuscated_longitude: -90.53397
+                  obfuscated_latitude: 16.32957
+                  obfuscated_longitude: 60.47122
                   custom_obfuscated_location: false
                   project_ids:
                   - 172
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -8280,20 +8280,20 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/173/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 141
                   creator_id: 763
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 173
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -8307,11 +8307,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8361,12 +8361,12 @@ paths:
                   project_id: 174
                   name: January 2nd Upload
                   upload_user: Admin_143
-                  upload_password: jChsN63NNeiwPhA8CJa17aXm
+                  upload_password: 5U4DiNEeTZSEVdXMCLrmFjbr
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '165'
                     site_id: 165
-                    utc_offset: 
+                    utc_offset:
                     recursive: true
                   report:
                     items_total: 0
@@ -8379,10 +8379,10 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
+                    latest_activity_at:
+                    run_time_seconds:
                   last_upload_at: '2020-01-02T03:04:05.677Z'
-                  last_metadata_review_at: 
+                  last_metadata_review_at:
                   last_mappings_change_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -8452,20 +8452,20 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/175/harvests?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 144
                   creator_id: 771
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 175
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -8479,11 +8479,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8564,14 +8564,14 @@ paths:
                   id: 146
                   creator_id: 779
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 177
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -8585,11 +8585,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8669,8 +8669,8 @@ paths:
                   status: new_harvest
                   project_id: 179
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -8684,11 +8684,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8745,8 +8745,8 @@ paths:
                   status: new_harvest
                   project_id: 180
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -8760,11 +8760,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8813,17 +8813,17 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  site_id: 
-                  uploader_id: 
-                  sample_rate_hertz: 
-                  media_type: 
-                  recorded_date: 
-                  bit_rate_bps: 
-                  data_length_bytes: 
-                  channels: 
-                  duration_seconds: 
-                  file_hash: 
-                  original_file_name: 
+                  site_id:
+                  uploader_id:
+                  sample_rate_hertz:
+                  media_type:
+                  recorded_date:
+                  bit_rate_bps:
+                  data_length_bytes:
+                  channels:
+                  duration_seconds:
+                  file_hash:
+                  original_file_name:
   "/projects/{project_id}/sites/{site_id}/audio_recordings":
     post:
       summary: create audio recordings
@@ -8862,10 +8862,10 @@ paths:
                   capabilities:
                     original_download:
                       can: true
-                      details: 
+                      details:
                 data:
                   id: 173
-                  uuid: 43550151-e6c9-45b0-a012-f8452906ab3d
+                  uuid: c0d1f981-97b0-4ffa-ac5d-3dfa18a3b826
                   recorded_date: '2000-09-15T07:06:59.000Z'
                   site_id: 173
                   duration_seconds: 60000.0
@@ -8877,18 +8877,18 @@ paths:
                   status: ready
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  deleted_at: 
-                  deleter_id: 
+                  deleted_at:
+                  deleter_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   notes:
                     test: note number 173
-                  file_hash: SHA256::1732521424f2e5778ce106c0cb0cda053179b0c0d161824171cac808335e6de9
+                  file_hash: SHA256::1733bef478e4271e8b13c19ee508a842c52b311ff9051eb8bb260f238a278a96
                   uploader_id: 1
                   original_file_name: original name 173.mp3
                   canonical_file_name: 20000915T070659Z_site-name-174_173.mp3
-                  recorded_date_timezone: 
-                  recorded_utc_offset: 
+                  recorded_date_timezone:
+                  recorded_utc_offset:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -8906,7 +8906,7 @@ paths:
       summary: Gets status
       tags:
       - stats
-      security: 
+      security:
       parameters: []
       responses:
         '200':
@@ -8994,8 +8994,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/harvests/152/items/a/b?direction=asc&items=25&order_by=path&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 143
                   deleted: false
@@ -9008,8 +9008,8 @@ paths:
                   uploader_id: 815
                   report:
                     items_total: 1
-                    items_size_bytes: 
-                    items_duration_seconds: 
+                    items_size_bytes:
+                    items_duration_seconds:
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
                     items_new: 1
@@ -9059,7 +9059,7 @@ paths:
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   description_html: "<p>description 141</p>\n"
                   description_html_tagline: description 141
@@ -9118,8 +9118,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/bookmarks?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 142
                   audio_recording_id: 178
@@ -9129,7 +9129,7 @@ paths:
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   description_html: "<p>description 142</p>\n"
                   description_html_tagline: description 142
@@ -9166,10 +9166,10 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  category: 
-                  description: 
-                  offset_seconds: 
+                  name:
+                  category:
+                  description:
+                  offset_seconds:
   "/bookmarks/filter":
     post:
       summary: filter bookmark
@@ -9214,8 +9214,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/bookmarks/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 144
                   audio_recording_id: 180
@@ -9225,7 +9225,7 @@ paths:
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   description_html: "<p>description 144</p>\n"
                   description_html_tagline: description 144
@@ -9404,7 +9404,7 @@ paths:
                   offset_seconds: 4.0
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   description_html: "<p>description 150</p>\n"
                   description_html_tagline: description 150
@@ -9468,8 +9468,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/sites/orphans?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 189
                   name: site name 190
@@ -9477,21 +9477,21 @@ paths:
                   notes: note number 190
                   creator_id: 867
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 191
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids: []
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -9577,8 +9577,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/sites/orphans?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 191
                   name: site name 192
@@ -9586,21 +9586,21 @@ paths:
                   notes: note number 192
                   creator_id: 874
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 193
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids: []
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -9699,8 +9699,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/saved_searches/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 151
                   name: saved search name 151
@@ -9710,8 +9710,8 @@ paths:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 882
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_ids:
                   - 202
                   analysis_job_ids: []
@@ -9760,7 +9760,7 @@ paths:
                     info:
                       original_route: saved_searches/152
                       original_http_method: PUT
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -9821,7 +9821,7 @@ paths:
                     info:
                       original_route: saved_searches/154
                       original_http_method: PATCH
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -9864,8 +9864,8 @@ paths:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 900
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_ids:
                   - 206
                   analysis_job_ids: []
@@ -9920,8 +9920,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/saved_searches?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 156
                   name: saved search name 158
@@ -9931,8 +9931,8 @@ paths:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 904
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_ids:
                   - 207
                   analysis_job_ids: []
@@ -9978,8 +9978,8 @@ paths:
                       eq: blah blah
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_ids: []
                   analysis_job_ids: []
                   description_html: "<p>saved search description 160</p>\n"
@@ -10025,7 +10025,7 @@ paths:
                   provenance_id: 171
                   events: 1
                   score_mean: 1.0
-                  score_stddev: 
+                  score_stddev:
                   score_minimum: 1.0
                   score_maximum: 1.0
                   score_histogram:
@@ -10085,13 +10085,13 @@ paths:
                     underflow: 0
                     overflow: 0
                 - tag_id: 165
-                  provenance_id: 
+                  provenance_id:
                   events: 1
-                  score_mean: 
-                  score_stddev: 
-                  score_minimum: 
-                  score_maximum: 
-                  score_histogram: 
+                  score_mean:
+                  score_stddev:
+                  score_minimum:
+                  score_maximum:
+                  score_histogram:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10194,7 +10194,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -10203,10 +10203,10 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
-                options: 
+                sort:
+                page:
+                projection:
+                options:
               required: []
         required: true
   "/harvests/new":
@@ -10268,14 +10268,14 @@ paths:
                   id: 177
                   creator_id: 936
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 215
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -10289,11 +10289,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10361,8 +10361,8 @@ paths:
                   status: new_harvest
                   project_id: 217
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -10376,11 +10376,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10431,8 +10431,8 @@ paths:
                   status: new_harvest
                   project_id: 218
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -10446,11 +10446,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10514,20 +10514,20 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/harvests/filter?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 181
                   creator_id: 952
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 219
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -10541,11 +10541,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10606,20 +10606,20 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/harvests?direction=desc&items=25&order_by=created_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 182
                   creator_id: 956
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
                   streaming: false
                   status: new_harvest
                   project_id: 220
                   name: January 2nd Upload
-                  upload_user: 
-                  upload_password: 
+                  upload_user:
+                  upload_password:
                   upload_url: sftp://upload.test:2022
                   mappings: []
                   report:
@@ -10633,11 +10633,11 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
-                  last_upload_at: 
-                  last_metadata_review_at: 
-                  last_mappings_change_at: 
+                    latest_activity_at:
+                    run_time_seconds:
+                  last_upload_at:
+                  last_metadata_review_at:
+                  last_mappings_change_at:
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -10680,12 +10680,12 @@ paths:
                   project_id: 221
                   name: January 2nd Upload
                   upload_user: Admin_184
-                  upload_password: UWAmiKK5tzaf2XWNji7zMqin
+                  upload_password: xEexBubwdNyger7uWzj8fDpC
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '212'
                     site_id: 212
-                    utc_offset: 
+                    utc_offset:
                     recursive: true
                   report:
                     items_total: 0
@@ -10698,10 +10698,10 @@ paths:
                     items_errored: 0
                     items_invalid_fixable: 0
                     items_invalid_not_fixable: 0
-                    latest_activity_at: 
-                    run_time_seconds: 
+                    latest_activity_at:
+                    run_time_seconds:
                   last_upload_at: '2020-01-02T03:04:05.677Z'
-                  last_metadata_review_at: 
+                  last_metadata_review_at:
                   last_mappings_change_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -10811,7 +10811,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -10820,9 +10820,9 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
+                sort:
+                page:
+                projection:
                 options:
                   allOf:
                   - "$ref": "#/components/schemas/filter_payload_options"
@@ -10924,7 +10924,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -10933,9 +10933,9 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
+                sort:
+                page:
+                projection:
                 options:
                   allOf:
                   - "$ref": "#/components/schemas/filter_payload_options"
@@ -10983,10 +10983,10 @@ paths:
                     region_note_228: 228
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 233
                   site_ids: []
                   description_html: "<p>site <strong>description</strong> 228</p>\n"
@@ -11048,8 +11048,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/regions?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 227
                   name: region name 229
@@ -11058,10 +11058,10 @@ paths:
                     region_note_229: 229
                   creator_id: 1010
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 234
                   site_ids:
                   - 224
@@ -11122,8 +11122,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/regions/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 228
                   name: region name 230
@@ -11132,10 +11132,10 @@ paths:
                     region_note_230: 230
                   creator_id: 1014
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 235
                   site_ids:
                   - 225
@@ -11190,8 +11190,8 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 237
                   site_ids:
                   - 226
@@ -11246,10 +11246,10 @@ paths:
                     region_note_233: 233
                   creator_id: 1024
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 238
                   site_ids:
                   - 227
@@ -11301,8 +11301,8 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   project_id: 240
                   site_ids:
                   - 228
@@ -11367,10 +11367,10 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  notes: 
-                  project_id: 
+                  name:
+                  description:
+                  notes:
+                  project_id:
   "/analysis_jobs":
     get:
       summary: list analysis_jobs
@@ -11432,18 +11432,18 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/analysis_jobs?direction=desc&items=25&order_by=updated_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 192
                   name: job name 192
                   description: job description 192
                   creator_id: 1043
-                  updater_id: 
-                  deleter_id: 
+                  updater_id:
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: false
                   ongoing: false
@@ -11451,7 +11451,7 @@ paths:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
-                  started_at: 
+                  started_at:
                   overall_status: preparing
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
                   overall_progress:
@@ -11514,14 +11514,14 @@ paths:
                   description: test job **description**
                   creator_id: 1
                   updater_id: 1
-                  deleter_id: 
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: true
                   ongoing: true
-                  project_id: 
+                  project_id:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
@@ -11642,11 +11642,11 @@ paths:
                   name: job name 196
                   description: job description 196
                   creator_id: 1059
-                  updater_id: 
-                  deleter_id: 
+                  updater_id:
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: false
                   ongoing: false
@@ -11654,7 +11654,7 @@ paths:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
-                  started_at: 
+                  started_at:
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
                   overall_progress:
@@ -11721,10 +11721,10 @@ paths:
                   description: job description 198
                   creator_id: 1063
                   updater_id: 1
-                  deleter_id: 
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: false
                   ongoing: false
@@ -11732,7 +11732,7 @@ paths:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
-                  started_at: 
+                  started_at:
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
                   overall_progress:
@@ -11804,10 +11804,10 @@ paths:
                   description: job description 200
                   creator_id: 1073
                   updater_id: 1
-                  deleter_id: 
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: false
                   ongoing: false
@@ -11815,7 +11815,7 @@ paths:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
-                  started_at: 
+                  started_at:
                   overall_status: completed
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
                   overall_progress:
@@ -11900,9 +11900,9 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
-                  project_id: 
+                  name:
+                  description:
+                  project_id:
                   system_job: false
                   ongoing: false
                   scripts: []
@@ -11968,18 +11968,18 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/analysis_jobs/filter?direction=desc&items=25&order_by=updated_at&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 202
                   name: job name 203
                   description: job description 203
                   creator_id: 1091
-                  updater_id: 
-                  deleter_id: 
+                  updater_id:
+                  deleter_id:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleted_at: 
+                  deleted_at:
                   filter: {}
                   system_job: false
                   ongoing: false
@@ -11987,7 +11987,7 @@ paths:
                   retry_count: 0
                   amend_count: 0
                   suspend_count: 0
-                  started_at: 
+                  started_at:
                   overall_status: preparing
                   overall_status_modified_at: '2020-01-02T03:04:05.677Z'
                   overall_progress:
@@ -12099,8 +12099,8 @@ paths:
                   project_ids:
                   - 261
                   location_obfuscated: false
-                  latitude: 64.394424
-                  longitude: -65.068636
+                  latitude: 12.309671
+                  longitude: -69.482838
                   audio_event_count: 1
               schema:
                 allOf:
@@ -12160,7 +12160,7 @@ paths:
                     details: 'The request could not be understood: Paging, sorting,
                       and projection parameters are not allowed in group by or reporting
                       requests.'
-                data: 
+                data:
       requestBody:
         content:
           application/json:
@@ -12169,10 +12169,10 @@ paths:
               properties:
                 filter:
                   "$ref": "#/components/schemas/filter_payload_filter"
-                sort: 
-                page: 
-                projection: 
-                options: 
+                sort:
+                page:
+                projection:
+                options:
               required: []
     get:
       summary: Gets audio events grouped by site
@@ -12201,8 +12201,8 @@ paths:
                   project_ids:
                   - 262
                   location_obfuscated: false
-                  latitude: 34.435365
-                  longitude: -109.553131
+                  latitude: 63.495128
+                  longitude: -25.989793
                   audio_event_count: 1
               schema:
                 allOf:
@@ -12291,8 +12291,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/datasets?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 200
                   name: gen_dataset_name199
@@ -12300,7 +12300,7 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1126
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   description_html: "<p>dataset description 199</p>\n"
                   description_html_tagline: dataset description 199
               schema:
@@ -12341,7 +12341,7 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   description_html: "<p>dataset description 201</p>\n"
                   description_html_tagline: dataset description 201
               schema:
@@ -12392,7 +12392,7 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1135
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   description_html: "<p>dataset description 202</p>\n"
                   description_html_tagline: dataset description 202
               schema:
@@ -12535,7 +12535,7 @@ paths:
                     info:
                       original_route: datasets/206
                       original_http_method: DELETE
-                data: 
+                data:
   "/datasets/new":
     get:
       summary: new dataset
@@ -12560,8 +12560,8 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  name: 
-                  description: 
+                  name:
+                  description:
   "/datasets/filter":
     post:
       summary: filter dataset
@@ -12603,8 +12603,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/datasets/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 208
                   name: gen_dataset_name209
@@ -12612,7 +12612,7 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   creator_id: 1157
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   description_html: "<p>dataset description 209</p>\n"
                   description_html_tagline: dataset description 209
               schema:
@@ -12683,8 +12683,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/271/sites/filter?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 257
                   name: site name 258
@@ -12692,22 +12692,22 @@ paths:
                   notes: note number 258
                   creator_id: 1161
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 260
-                  custom_latitude: -43.930045
-                  custom_longitude: 161.62178
-                  longitude: 161.62178
-                  latitude: -43.930045
+                  custom_latitude: -5.787869
+                  custom_longitude: 65.877532
+                  longitude: 65.877532
+                  latitude: -5.787869
                   location_obfuscated: false
-                  obfuscated_latitude: -43.9293
-                  obfuscated_longitude: 161.62334
+                  obfuscated_latitude: -5.78818
+                  obfuscated_longitude: 65.87894
                   custom_obfuscated_location: false
                   project_ids:
                   - 271
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -12770,12 +12770,12 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  longitude: 
-                  latitude: 
-                  notes: 
-                  image: 
-                  tzinfo_tz: 
-                  rails_tz: 
+                  longitude:
+                  latitude:
+                  notes:
+                  image:
+                  tzinfo_tz:
+                  rails_tz:
   "/projects/{project_id}/sites/{id}":
     put:
       summary: update site
@@ -12820,20 +12820,20 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 262
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 273
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -12910,22 +12910,22 @@ paths:
                   notes: note number 262
                   creator_id: 1176
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 264
-                  custom_latitude: 11.244714
-                  custom_longitude: 161.447583
-                  longitude: 161.447583
-                  latitude: 11.244714
+                  custom_latitude: -8.494291
+                  custom_longitude: 58.489886
+                  longitude: 58.489886
+                  latitude: -8.494291
                   location_obfuscated: false
-                  obfuscated_latitude: 11.24389
-                  obfuscated_longitude: 161.44848
+                  obfuscated_latitude: -8.49292
+                  obfuscated_longitude: 58.48894
                   custom_obfuscated_location: false
                   project_ids:
                   - 275
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -12999,20 +12999,20 @@ paths:
                   created_at: '2020-01-02T03:04:05.677Z'
                   updater_id: 1
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 265
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 276
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -13112,22 +13112,22 @@ paths:
                   notes: note number 267
                   creator_id: 1
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
-                  region_id: 
-                  custom_latitude: 
-                  custom_longitude: 
-                  longitude: 
-                  latitude: 
+                  deleter_id:
+                  deleted_at:
+                  region_id:
+                  custom_latitude:
+                  custom_longitude:
+                  longitude:
+                  latitude:
                   location_obfuscated: false
-                  obfuscated_latitude: 
-                  obfuscated_longitude: 
+                  obfuscated_latitude:
+                  obfuscated_longitude:
                   custom_obfuscated_location: false
                   project_ids:
                   - 279
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -13221,8 +13221,8 @@ paths:
                     total: 1
                     max_page: 1
                     current: http://web:3000/projects/281/sites?direction=asc&items=25&order_by=name&page=1
-                    previous: 
-                    next: 
+                    previous:
+                    next:
                 data:
                 - id: 265
                   name: site name 268
@@ -13230,22 +13230,22 @@ paths:
                   notes: note number 268
                   creator_id: 1198
                   created_at: '2020-01-02T03:04:05.677Z'
-                  updater_id: 
+                  updater_id:
                   updated_at: '2020-01-02T03:04:05.677Z'
-                  deleter_id: 
-                  deleted_at: 
+                  deleter_id:
+                  deleted_at:
                   region_id: 270
-                  custom_latitude: -62.801709
-                  custom_longitude: -123.991073
-                  longitude: -123.991073
-                  latitude: -62.801709
+                  custom_latitude: 45.712571
+                  custom_longitude: 117.07448
+                  longitude: 117.07448
+                  latitude: 45.712571
                   location_obfuscated: false
-                  obfuscated_latitude: -62.80306
-                  obfuscated_longitude: -123.98967
+                  obfuscated_latitude: 45.71435
+                  obfuscated_longitude: 117.07538
                   custom_obfuscated_location: false
                   project_ids:
                   - 281
-                  timezone_information: 
+                  timezone_information:
                   image_urls:
                   - size: extralarge
                     url: "/images/site/site_span4.png"
@@ -13368,7 +13368,7 @@ components:
       - owner
       - writer
       - reader
-      - 
+      -
     meta:
       properties:
         capabilities:
@@ -14023,7 +14023,7 @@ components:
           - failed
           - killed
           - cancelled
-          - 
+          -
           readOnly: true
         used_walltime_seconds:
           type: integer

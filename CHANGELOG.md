@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.3.4](https://github.com/QutEcoacoustics/baw-server/tree/15.3.4) (2026-09-10)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.3...15.3.4)
+
+**Implemented enhancements:**
+
+- Update Ruby/docker [\#1048](https://github.com/QutEcoacoustics/baw-server/issues/1048)
+
 ## [15.3.3](https://github.com/QutEcoacoustics/baw-server/tree/15.3.3) (2026-08-31)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.2...15.3.3)
