@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 # Debian releases:
 #
-FROM ruby:3.4.4-slim-bullseye
+FROM ruby:3.4.10-slim-trixie
 ARG app_name=baw-server
 ARG app_user=baw_web
 ARG version=
@@ -20,7 +20,7 @@ RUN --mount=type=bind,source=./provision,target=/provision \
   # - gnupg is for validating apt public keys
   ca-certificates git curl gnupg iproute2 \
   # sqlite
-  sqlite3 libsqlite3-dev libgmp-dev \
+  pkg-config sqlite3 libsqlite3-dev libgmp-dev \
   # the following are for nokogiri and the like
   build-essential patch ruby-dev zlib1g-dev liblzma-dev \
   # needed to build the psych gem's native extensions

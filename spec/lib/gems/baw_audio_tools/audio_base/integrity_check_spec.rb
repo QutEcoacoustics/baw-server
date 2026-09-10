@@ -23,7 +23,7 @@ describe BawAudioTools::AudioBase, '#integrity_check' do
         _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
-        expect(result[:warnings][0][:description]).to eq('Skipping 0 bytes of junk at 253.')
+        expect(result[:warnings][0][:description]).to match(/Skipping 0 bytes of junk at \d+\./)
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
@@ -98,10 +98,9 @@ describe BawAudioTools::AudioBase, '#integrity_check' do
         expect(result[:warnings][0][:id]).to eq('ogg')
         expect(result[:warnings][0][:description]).to eq('Format ogg detected only with low score of 1, misdetection possible!')
 
-        if result[:warnings].size > 1
-          expect(result[:warnings][2][:id]).to eq('end of file')
-          expect(result[:warnings][2][:description]).to include('End of file')
-        end
+        end_of_file_warning = result[:warnings].find { |warning| warning[:id] == 'end of file' }
+        expect(end_of_file_warning).not_to be_nil
+        expect(end_of_file_warning[:description]).to include('End of file')
       end
 
       it 'processing empty .mp3 file' do
@@ -111,18 +110,21 @@ describe BawAudioTools::AudioBase, '#integrity_check' do
         result = audio_base.integrity_check(temp_media_file_a)
 
         expect(result[:errors]).to be_blank
-        expect(result[:warnings].size).to eq(3)
+        expect(result[:warnings].size).to be >= 3
 
         expect(result[:warnings][0][:id]).to eq('mp3')
         expect(result[:warnings][0][:description]).to eq('Format mp3 detected only with low score of 1, misdetection possible!')
 
         warning_text_options = [
           'Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size',
-          'Failed to read frame size: Could not seek to 1026.'
+          'Failed to read frame size: Could not seek to 1026.',
+          'Failed to find two consecutive MPEG audio frames.',
+          'Error opening input: Invalid data found when processing input'
         ]
 
+        warning_descriptions = result[:warnings].map { |warning| warning[:description] }
         expect(result[:warnings][1][:id]).to eq('mp3')
-        warning_text_options.any? { |i| i == result[:warnings][1][:description] }
+        expect(warning_descriptions.intersection(warning_text_options)).not_to be_empty
         #expect(result[:warnings][1][:description]).to eq('Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size')
       end
 
