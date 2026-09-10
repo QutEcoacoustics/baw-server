@@ -103,7 +103,7 @@ describe AnalysisJobsItem do
     end
 
     it 'prioritizes newer recordings within each job' do
-      items = AnalysisJobsItem.sample_for_queueable_across_jobs(1000).includes(:audio_recording).to_a
+      items = AnalysisJobsItem.sample_for_queueable_across_jobs(1000).to_a
 
       grouped = items.group_by(&:analysis_job_id)
 
