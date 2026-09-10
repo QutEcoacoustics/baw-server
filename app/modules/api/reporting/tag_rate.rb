@@ -22,6 +22,7 @@ module Api
       TOTAL_MINUTES             = Arel::Table.new(:total_minutes)
       DISTINCT_ANALYSIS_JOB_IDS = Arel::Table.new(:distinct_analysis_job_ids)
       TAGGED_EVENT_MINUTES      = Arel::Table.new(:tagged_event_minutes)
+      TAGGED_EVENT_BUCKETS      = Arel::Table.new(:tagged_event_buckets)
       MANUAL_MINUTES            = Arel::Table.new(:manual_minutes)
       DETECTED_MINUTES          = Arel::Table.new(:detected_minutes)
       BUCKETS_SITES             = Arel::Table.new(:buckets_sites)
@@ -78,6 +79,7 @@ module Api
           cte(TOTAL_MINUTES, total_minutes_cte),
           cte(DISTINCT_ANALYSIS_JOB_IDS, distinct_analysis_job_ids_cte),
           cte(TAGGED_EVENT_MINUTES, tagged_event_minutes_cte),
+          cte(TAGGED_EVENT_BUCKETS, tagged_event_buckets_cte),
           cte(MANUAL_MINUTES, manual_minutes_cte),
           cte(DETECTED_MINUTES, detected_minutes_cte),
           cte(BUCKETS_SITES, buckets_sites_cte)
@@ -241,19 +243,31 @@ module Api
           .distinct
       end
 
+      # Pre-bucket tagged event minutes once so downstream aggregations can
+      # reuse the same wider source table instead of recalculating buckets.
+      def tagged_event_buckets_cte
+        TAGGED_EVENT_MINUTES.project(
+          @bucketer.bucket(column: TAGGED_EVENT_MINUTES[:tagged_minute]).as('bucket'),
+          TAGGED_EVENT_MINUTES[:site_id],
+          TAGGED_EVENT_MINUTES[:tag_id],
+          TAGGED_EVENT_MINUTES[:tagged_minute],
+          TAGGED_EVENT_MINUTES[:tagging_source]
+        )
+      end
+
       # Unique minutes with any manual event per bucket. We use this to provide
       # a crude estimate of the manual analysis effort (e.g. manual tagging), since we don't have any
       # other way to measure this.
       def manual_minutes_cte
-        TAGGED_EVENT_MINUTES.project(
-          @bucketer.bucket(column: TAGGED_EVENT_MINUTES[:tagged_minute]).as('bucket'),
-          distinct_minute_count.as('manual_events_minutes'),
-          TAGGED_EVENT_MINUTES[:site_id]
+        TAGGED_EVENT_BUCKETS.project(
+          TAGGED_EVENT_BUCKETS[:bucket],
+          distinct_minute_count(TAGGED_EVENT_BUCKETS).as('manual_events_minutes'),
+          TAGGED_EVENT_BUCKETS[:site_id]
         )
-          .where(TAGGED_EVENT_MINUTES[:tagging_source].eq(TAGGING_SOURCE_MANUAL))
+          .where(TAGGED_EVENT_BUCKETS[:tagging_source].eq(TAGGING_SOURCE_MANUAL))
           .group(
-            @bucketer.bucket(column: TAGGED_EVENT_MINUTES[:tagged_minute]),
-            TAGGED_EVENT_MINUTES[:site_id]
+            TAGGED_EVENT_BUCKETS[:bucket],
+            TAGGED_EVENT_BUCKETS[:site_id]
           )
       end
 
@@ -261,17 +275,18 @@ module Api
       # Counts indicate the number of distinct minutes with at least one
       # event for that tag (per site/bucket).
       def detected_minutes_cte
-        TAGGED_EVENT_MINUTES.project(
-          @bucketer.bucket(column: TAGGED_EVENT_MINUTES[:tagged_minute]).as('bucket'),
-          TAGGED_EVENT_MINUTES[:site_id], TAGGED_EVENT_MINUTES[:tag_id],
-          minute_count_for_source(TAGGING_SOURCE_ANALYSIS).as('detected_analysis_minutes'),
-          minute_count_for_source(TAGGING_SOURCE_MANUAL).as('detected_manual_minutes'),
-          distinct_minute_count.as('detected_combined_minutes')
+        TAGGED_EVENT_BUCKETS.project(
+          TAGGED_EVENT_BUCKETS[:bucket],
+          TAGGED_EVENT_BUCKETS[:site_id],
+          TAGGED_EVENT_BUCKETS[:tag_id],
+          minute_count_for_source(TAGGED_EVENT_BUCKETS, TAGGING_SOURCE_ANALYSIS).as('detected_analysis_minutes'),
+          minute_count_for_source(TAGGED_EVENT_BUCKETS, TAGGING_SOURCE_MANUAL).as('detected_manual_minutes'),
+          distinct_minute_count(TAGGED_EVENT_BUCKETS).as('detected_combined_minutes')
         )
           .group(
-            @bucketer.bucket(column: TAGGED_EVENT_MINUTES[:tagged_minute]),
-            TAGGED_EVENT_MINUTES[:site_id],
-            TAGGED_EVENT_MINUTES[:tag_id]
+            TAGGED_EVENT_BUCKETS[:bucket],
+            TAGGED_EVENT_BUCKETS[:site_id],
+            TAGGED_EVENT_BUCKETS[:tag_id]
           )
       end
 
@@ -284,13 +299,13 @@ module Api
       end
 
       # count(*) FILTER (WHERE tagging_source = ...)
-      def minute_count_for_source(source)
-        Arel.star.count.filter(TAGGED_EVENT_MINUTES[:tagging_source].eq(source))
+      def minute_count_for_source(table, source)
+        Arel.star.count.filter(table[:tagging_source].eq(source))
       end
 
       # count(DISTINCT (tagged_minute))
-      def distinct_minute_count
-        Arel.grouping([TAGGED_EVENT_MINUTES[:tagged_minute]]).count(true)
+      def distinct_minute_count(table)
+        Arel.grouping([table[:tagged_minute]]).count(true)
       end
 
       def join_on_bucket_and_site(table)
