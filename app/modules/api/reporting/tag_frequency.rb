@@ -51,7 +51,7 @@ module Api
       def ctes(query:)
         [
           cte(EVENTS, events_cte(query)),
-          *@bucketer.bucket_ctes(events_table: EVENTS),
+          *@bucketer.bucket_ctes(source_table: EVENTS),
           cte(TAGS_PER_BUCKET, tags_per_bucket_cte),
           cte(BUCKETS_JOINED, buckets_joined)
         ]
