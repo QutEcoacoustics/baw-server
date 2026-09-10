@@ -25,8 +25,7 @@ class ReportsController < ApplicationController
       model: AudioRecording,
       template: recording_coverage_template,
       projections: {
-        density: Coverage.coverage_density,
-        accumulated_density: Coverage.accumulated_density
+        density: Coverage.coverage_density
       }
     )
 
