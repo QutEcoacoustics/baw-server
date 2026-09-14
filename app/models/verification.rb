@@ -100,7 +100,21 @@ class Verification < ApplicationRecord
             {
               join: AudioRecording,
               on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-              available: true
+              available: true,
+              associations: [
+                {
+                  join: Site,
+                  on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                  available: true,
+                  associations: [
+                    {
+                      join: Region,
+                      on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
+                      available: true
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -138,5 +152,17 @@ class Verification < ApplicationRecord
         :updated_at
       ]
     }.freeze
+  end
+
+  # Do somethign like method to lambda so it's callable and the stats module can take it as a parameter
+  def self.stats_template
+    lambda do |query|
+      query
+        .project(
+          arel_table[:confirmed].count.as('confirmed_count'),
+          arel_table[:confirmed].as('confirmed')
+        )
+        .group(:confirmed)
+    end
   end
 end
