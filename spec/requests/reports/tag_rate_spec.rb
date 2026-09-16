@@ -8,10 +8,10 @@ describe 'reports/tag_rate' do
   let(:body) { { options: { bucket_size: :day }, filter: {} } }
 
   let(:start_date) { Time.parse('2000-03-06 07:06:59Z').utc }
-  let(:duration_seconds) { 3600 }
+  let(:duration_seconds) { 3600.seconds }
 
   let(:another_recording) {
-    create(:audio_recording, creator:, site:, recorded_date: start_date + 1.day, duration_seconds:)
+    create(:audio_recording, creator:, site:, recorded_date: start_date + 2.days, duration_seconds:)
   }
 
   let(:bucket_size) { 1.day }
@@ -21,6 +21,7 @@ describe 'reports/tag_rate' do
     [
       {
         site_id: site.id,
+        range: [bucket_one_range_start, bucket_one_range_start + bucket_size],
         tags: [
           {
             tag_id: tag.id,
@@ -29,14 +30,14 @@ describe 'reports/tag_rate' do
             detected_combined_minutes: 3
           }
         ],
-        range: [bucket_one_range_start, bucket_one_range_start + bucket_size],
         analysis_ids: [analysis_job.id],
-        total_minutes: 120,
+        total_minutes: 60,
         manual_events_minutes: 2,
         total_analysed_minutes: 60
       },
       {
         site_id: site.id,
+        range: [bucket_two_range_start, bucket_two_range_start + bucket_size],
         tags: [
           {
             tag_id: tag.id,
@@ -45,7 +46,6 @@ describe 'reports/tag_rate' do
             detected_combined_minutes: 3
           }
         ],
-        range: [bucket_two_range_start, bucket_two_range_start + bucket_size],
         analysis_ids: [analysis_job.id],
         total_minutes: 60,
         manual_events_minutes: 0,
@@ -54,15 +54,29 @@ describe 'reports/tag_rate' do
     ]
   }
 
+  # The scenario is two analysed recordings, separated by two days (in the default context):
+  #
+  #   | day 1, bucket 1        | bucket 2               | bucket 3               |
+  #   |.......r1...............|........................|.......r2...............|
+  #
+  # Where each recording has the following events:
+  #   r1 = audio_recording; events:
+  #            +10min   +20       +30       +40       +50       +60
+  #   |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++| (recording duration)
+  #   |.........A.........A.......................................| (analysis events)
+  #   |.........M........................M........................| (manual events)
+  #   r2 = another_recording; events:
+  #            +10min   +20       +30       +40       +50       +60
+  #   |+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++| (recording duration)
+  #   |....A........................A.........A...................| (analysis events)
+  #
   before do
     audio_recording.update(recorded_date: start_date, duration_seconds:)
     analysis_jobs_item.update(result: AnalysisJobsItem::RESULT_SUCCESS)
 
-    # Create a recording that will have no events and no analysis, directly after the first recording.
-    create(:audio_recording, creator:, site:, recorded_date: start_date + duration_seconds, duration_seconds:)
-
-    # The hierarchy audio_event is an 'analysis' based event; update its
-    # start/end times, and create a second 'analysis' based event.
+    # The default hierarchy's audio_event is an 'analysis' based event;
+    # update its start/end times to fit the scenario, then create a second
+    # 'analysis' based event.
     audio_event.update(start_time_seconds: 600, end_time_seconds: 605)
     create(:audio_event_using_tag, audio_recording:, creator:, tag:, start_time_seconds: 1200,
       end_time_seconds: 1205, audio_event_import_file: audio_event_import_file)
@@ -99,6 +113,16 @@ describe 'reports/tag_rate' do
       expect(api_data).to match expected_data
     end
 
+    it 'does not count deleted audio events' do
+      audio_event.discard!
+
+      post '/reports/tag_rate', params: body, **api_headers(writer_token)
+      expect_success
+
+      expected_data.first[:tags].first[:detected_analysis_minutes] -= 1
+      expect(api_data).to match expected_data
+    end
+
     it 'returns any bucket that contains audio, even if there are no tags' do
       more_audio = create(:audio_recording, creator:, site:, recorded_date: start_date + 3.days, duration_seconds:)
       bucket_with_no_tags = { site_id: site.id,
@@ -116,6 +140,17 @@ describe 'reports/tag_rate' do
       expect(api_data).to match_array(expected_data + [bucket_with_no_tags])
     end
 
+    it 'includes audio with no events in the bucket' do
+      # Create a recording with no events, directly after the first recording.
+      create(:audio_recording, creator:, site:, recorded_date: start_date + duration_seconds, duration_seconds:)
+
+      post '/reports/tag_rate', params: body, **api_headers(writer_token)
+      expect_success
+
+      expected_data.first[:total_minutes] += duration_seconds.in_minutes
+      expect(api_data).to match expected_data
+    end
+
     context 'with filter by tag' do
       let(:body) do
         {
@@ -124,11 +159,7 @@ describe 'reports/tag_rate' do
         }
       end
 
-      let(:expected_data) {
-        super().tap do |data|
-          data.first[:total_minutes] = 60
-        end
-      }
+      let(:expected_data) { super().tap { |data| data.first[:total_minutes] = 60 } }
 
       it 'returns rates only for recordings with the specified tag' do
         post '/reports/tag_rate', params: body, **api_headers(writer_token)
@@ -255,7 +286,7 @@ describe 'reports/tag_rate' do
 
       context 'with filters' do
         it 'excludes recordings from filtered sites' do
-          params = body.merge(filter: { site_id: { not_eq: another_site.id } })
+          params = body.merge(filter: { 'sites.id': { not_eq: another_site.id } })
           post '/reports/tag_rate', params:, **api_headers(writer_token)
           expect_success
 
@@ -282,7 +313,7 @@ describe 'reports/tag_rate' do
           range: [start_date.at_beginning_of_week(:monday),
                   start_date.at_beginning_of_week(:monday) + 1.week],
           analysis_ids: [analysis_job.id],
-          total_minutes: 180,
+          total_minutes: 120,
           manual_events_minutes: 2,
           total_analysed_minutes: 120
         }

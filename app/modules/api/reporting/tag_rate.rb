@@ -210,7 +210,9 @@ module Api
         # seconds in the report benchmark.
         events_sub = events
           .project(events[:id], events[:start_time_seconds], events[:audio_event_import_file_id])
-          .where(events[:audio_recording_id].eq(RECORDINGS[:audio_recording_id])).skip(0)
+          .where(events[:audio_recording_id].eq(RECORDINGS[:audio_recording_id]))
+          .where(events[:deleted_at].eq(nil))
+          .skip(0)
 
         events_sub_table = Arel::Nodes::TableAlias.new(events_sub, 'audio_events')
 
