@@ -31,6 +31,8 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 class Verification < ApplicationRecord
+  include Api::Stats
+
   belongs_to :audio_event, inverse_of: :verifications
   belongs_to :tag, inverse_of: :verifications
   belongs_to :creator, class_name: 'User', inverse_of: :created_verifications
@@ -154,8 +156,7 @@ class Verification < ApplicationRecord
     }.freeze
   end
 
-  # Do somethign like method to lambda so it's callable and the stats module can take it as a parameter
-  def self.stats_template
+  def self.stats_template(user = nil)
     lambda do |query|
       query
         .project(

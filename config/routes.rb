@@ -761,7 +761,8 @@ Rails.application.routes.draw do
       end
       resources :tags, only: [:index], defaults: { format: 'json' }
       resources :taggings, except: [:edit], defaults: { format: 'json' }
-      resources :verifications, only: [:index, :show], defaults: { format: 'json' }, concerns: [:filterable]
+      resources :verifications, only: [:index, :show], defaults: { format: 'json' },
+        concerns: [:filterable, :statistical]
     end
   end
 
@@ -779,7 +780,7 @@ Rails.application.routes.draw do
   resources :verifications, except: [:edit],
     as: 'shallow_verifications',
     defaults: { format: 'json' },
-    concerns: [:filterable, :upsertable]
+    concerns: [:filterable, :upsertable, :statistical]
 
   # API audio_event create
   resources :audio_events, only: [], defaults: { format: 'json' }, concerns: [:filterable] do

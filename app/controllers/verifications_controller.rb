@@ -3,6 +3,7 @@
 # VerificationsController
 class VerificationsController < ApplicationController
   include Api::ControllerHelper
+  include Api::Stats
 
   # GET /verifications
   # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/verifications
@@ -94,6 +95,31 @@ class VerificationsController < ApplicationController
       Verification.filter_settings
     )
     respond_filter(filter_response, opts)
+  end
+
+  # GET|POST /verifications/stats
+  # GET|POST /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/verifications/stats
+  # Returns a structured report of verification statistics
+  # Accepts a filter object where:
+  #  the `filter` is applied to verifications
+  def stats
+    do_authorize_class(:filter, Verification)
+    get_audio_event
+
+    base_query = Access::ByPermissionTable.audio_event_verifications(
+      current_user,
+      level: Access::Permission::READER,
+      audio_event: @audio_event
+    )
+
+    results, opts = execute_stats(
+      base_query:,
+      model: Verification,
+      template: Verification.stats_template(current_user),
+      projections: {}
+    )
+
+    respond_stats(results, opts)
   end
 
   private
