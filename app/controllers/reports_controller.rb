@@ -6,6 +6,44 @@ class ReportsController < ApplicationController
   include Api::Reporting
   include ResultFormatters
 
+  # POST /reports/tag_rate
+  # Returns a structured report of tag counts and
+  # audio or analysis coverage for the same bucket.
+  # The pattern is to report various numerators and demoninators
+  # so callers can estimate different rates of detections based
+  # on the amount of "work" also present in the bucket.
+  # This endpoint is also unique because all counts are reported
+  # per minute and de-duplicate tag detections in each minute.
+  # Accepts a filter object where:
+  #  the `filter` is applied to audio recordings
+  #  the `paging`, `sort`, and `projection` options are invalid
+  def tag_rate
+    do_authorize_class(:filter, AudioRecording)
+
+    base_query = Access::ByPermissionTable.audio_recordings(current_user, level: Access::Permission::READER)
+
+    tag_rate_template = TagRate.new(report_options)
+
+    projections = {
+      site_id: TagRate::BUCKETS_SITES[:site_id],
+      range: TagRate::BUCKETS_SITES[:bucket],
+      tags: tag_rate_template.tags_summary,
+      total_minutes: TagRate::TOTAL_MINUTES[:total_minutes],
+      total_analysed_minutes: TagRate::TOTAL_MINUTES[:total_analysed_minutes],
+      manual_events_minutes: Arel.coalesce(TagRate::MANUAL_MINUTES[:manual_events_minutes], 0),
+      analysis_ids: Arel.coalesce(TagRate::DISTINCT_ANALYSIS_JOB_IDS[:analysis_ids], Arel.sql('array[]::integer[]'))
+    }
+
+    results, opts = execute_report(
+      base_query:,
+      model: AudioRecording,
+      template: tag_rate_template,
+      projections:
+    )
+
+    respond_report(results, opts)
+  end
+
   # POST /reports/recording_coverage
   # Returns a structured report of recording coverage
   # Accepts a filter object where:

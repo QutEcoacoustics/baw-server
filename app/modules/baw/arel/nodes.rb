@@ -116,6 +116,22 @@ module Baw
         end
       end
 
+      class JsonbAgg < ::Arel::Nodes::Node
+        include ::Arel::AliasPredication
+
+        attr_reader :expression, :order_expressions
+
+        def initialize(expression)
+          super()
+          @expression = expression
+        end
+
+        def order(*expressions)
+          @order_expressions = expressions.flatten
+          self
+        end
+      end
+
       class RangeAgg < ::Arel::Nodes::NamedFunction
         def initialize(expr)
           super('range_agg', expr)
