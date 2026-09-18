@@ -115,8 +115,7 @@ class VerificationsController < ApplicationController
     results, opts = execute_stats(
       base_query:,
       model: Verification,
-      template: Verification.stats_template(current_user),
-      projections: {}
+      hook: Verification.stats_hook(current_user)
     )
 
     respond_stats(results, opts)

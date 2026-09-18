@@ -156,14 +156,133 @@ class Verification < ApplicationRecord
     }.freeze
   end
 
-  def self.stats_template(user = nil)
+  # TODO: first draft of query into arel - reduce size. Executes in ~4.5 seconds on the
+  # usual reports benchmark scenario.
+  #
+  # Stats hook consumed by Api::Stats#execute_stats via the controller.
+  #
+  # @param user [User, nil] the requesting user
+  # @return [Proc] a callable that reshapes the filtered query for stats
+  def self.stats_hook(user = nil)
+    user_id = user&.id
+
     lambda do |query|
-      query
+      base_table = Arel::Table.new('base')
+      base_cte = Arel::Nodes::As.new(base_table, query.arel)
+
+      # Per-user verification counts, ranked highest first.
+      ranked_leaderboard_subquery = Arel::SelectManager.new
         .project(
-          arel_table[:confirmed].count.as('confirmed_count'),
-          arel_table[:confirmed].as('confirmed')
+          base_table[:creator_id].as('user_id'),
+          base_table[:id].count.as('verification_count')
         )
-        .group(:confirmed)
+        .from(base_table)
+        .group(base_table[:creator_id])
+
+      ranked_leaderboard_source = ranked_leaderboard_subquery.as('leaderboard_counts')
+      ranked_leaderboard = Arel::SelectManager.new
+        .project(
+          ranked_leaderboard_source[:user_id],
+          ranked_leaderboard_source[:verification_count],
+          Arel.sql('RANK() OVER (ORDER BY verification_count DESC) AS rank')
+        )
+        .from(ranked_leaderboard_source)
+
+      ranked_leaderboard_table = Arel::Table.new('ranked_leaderboard')
+      ranked_leaderboard_cte = Arel::Nodes::As.new(ranked_leaderboard_table, ranked_leaderboard)
+
+      # Top 5 of the leaderboard
+      leaderboard_top = Arel::SelectManager.new
+        .project(
+          ranked_leaderboard_table[:user_id],
+          ranked_leaderboard_table[:verification_count],
+          ranked_leaderboard_table[:rank]
+        )
+        .from(ranked_leaderboard_table)
+        .where(ranked_leaderboard_table[:rank].lteq(5))
+
+      # The requesting user, if they have verifications but fall outside the top 5
+      leaderboard_request_user = Arel::SelectManager.new
+        .project(
+          ranked_leaderboard_table[:user_id],
+          ranked_leaderboard_table[:verification_count],
+          ranked_leaderboard_table[:rank]
+        )
+        .from(ranked_leaderboard_table)
+        .where(ranked_leaderboard_table[:user_id].eq(user_id).and(ranked_leaderboard_table[:rank].gt(5)))
+
+      # The requesting user with a zero count and null rank, if they have no verifications
+      request_user_exists = Arel::SelectManager.new
+        .project(Arel.sql('1'))
+        .from(ranked_leaderboard_table)
+        .where(ranked_leaderboard_table[:user_id].eq(user_id))
+
+      leaderboard_request_user_absent = Arel::SelectManager.new
+        .project(user_id, 0, Arel.sql('NULL::bigint'))
+        .where(request_user_exists.exists.not)
+
+      leaderboard_rows = Arel::Nodes::UnionAll.new(
+        leaderboard_top.union(:all, leaderboard_request_user),
+        leaderboard_request_user_absent.ast
+      )
+      leaderboard_rows_table = Arel::Table.new('leaderboard_rows')
+      leaderboard_rows_cte = Arel::Nodes::As.new(leaderboard_rows_table, leaderboard_rows)
+
+      # Distribution of how many users verified each tagging (audio_event + tag).
+      verification_counts_by_tagging_subquery = base_table
+        .project(
+          base_table[:audio_event_id],
+          base_table[:tag_id],
+          base_table[:id].count.as('verification_count')
+        )
+        .group(base_table[:audio_event_id], base_table[:tag_id])
+
+      verification_counts_by_tagging_source = verification_counts_by_tagging_subquery.as('verification_counts_by_tagging')
+      count = verification_counts_by_tagging_source[:verification_count]
+
+      overrun_distribution = Arel::SelectManager.new
+        .project(
+          Arel::Nodes::NamedFunction.new('json_build_array', [
+            Arel.json({ run: 1, count: Arel.star.count.filter(count.eq(1)) }),
+            Arel.json({ run: 2, count: Arel.star.count.filter(count.eq(2)) }),
+            Arel.json({ run: 3, count: Arel.star.count.filter(count.eq(3)) }),
+            Arel.json({ run: 4, count: Arel.star.count.filter(count.eq(4)) }),
+            Arel.json({ run: 5, count: Arel.star.count.filter(count.gteq(5)), overflow: 'true' })
+          ])
+        )
+        .from(verification_counts_by_tagging_source)
+
+      leaderboard_object = Arel.json({
+        user_id: leaderboard_rows_table[:user_id],
+        verification_count: leaderboard_rows_table[:verification_count],
+        rank: leaderboard_rows_table[:rank]
+      })
+
+      ordered_leaderboard_object = Arel::Nodes::InfixOperation.new(
+        'ORDER BY', leaderboard_object, Arel.sql('"rank" NULLS LAST, "user_id"')
+      )
+      verification_leaderboard = Arel::SelectManager.new
+        .project(
+          Arel.coalesce(
+            Baw::Arel::Nodes::JsonAgg.new([ordered_leaderboard_object]),
+            Arel.sql("'[]'::json")
+          )
+        )
+        .from(leaderboard_rows_table)
+
+      # TODO: move projections to projections
+      Arel::SelectManager.new
+        .project(
+          Arel.star.count.as('verifications_count'),
+          base_table[:audio_event_id].count(true).as('verified_events'),
+          Arel.star.count.filter(base_table[:creator_id].eq(user_id)).as('user_verified_count'),
+          base_table[:audio_event_id].count(true).filter(base_table[:creator_id].eq(user_id))
+            .as('user_verified_events_count'),
+          Arel.grouping(overrun_distribution).as('overrun_distribution'),
+          Arel.grouping(verification_leaderboard).as('verification_leaderboard')
+        )
+        .with(base_cte, ranked_leaderboard_cte, leaderboard_rows_cte)
+        .from(base_table)
     end
   end
 end
