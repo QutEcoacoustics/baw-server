@@ -72,6 +72,14 @@ module Access
       apply(user, query, level:, levels:)
     end
 
+    def audio_event_verifications(user, level: nil, levels: nil, project_ids: nil, audio_event: nil)
+      query = Verification.joins(audio_event: [{ audio_recording: [:site] }])
+      query = query.where(audio_event_id: audio_event.id) if audio_event
+
+      query = add_effective_site_permissions_cte(query, user, project_ids:)
+      apply(user, query, level:, levels:)
+    end
+
     def apply(user, query, level:, levels: nil)
       user = Access::Validate.user(user)
       validate_levels(level, levels)
