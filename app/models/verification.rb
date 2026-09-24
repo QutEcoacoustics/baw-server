@@ -113,8 +113,42 @@ class Verification < ApplicationRecord
                       join: Region,
                       on: Site.arel_table[:region_id].eq(Region.arel_table[:id]),
                       available: true
+                      # TODO: re-enable when we finally remove projects_sites
+                      # https://github.com/QutEcoacoustics/baw-server/issues/743
+                      # associations: [
+                      #   {
+                      #     join: Project,
+                      #     on: Region.arel_table[:project_id].eq(Project.arel_table[:id]),
+                      #     available: true
+                      #   }
+                      # ]
+                    },
+                    {
+                      join: ProjectsSite,
+                      on: Site.arel_table[:id].eq(ProjectsSite.arel_table[:site_id]),
+                      available: false,
+                      associations: [
+                        {
+                          join: Project,
+                          on: ProjectsSite.arel_table[:project_id].eq(Project.arel_table[:id]),
+                          available: true
+                        }
+                      ]
                     }
+
                   ]
+                }
+              ]
+            },
+            {
+              join: AudioEventImportFile,
+              on: AudioEvent.arel_table[:audio_event_import_file_id].eq(AudioEventImportFile.arel_table[:id]),
+              available: true,
+              associations: [
+                {
+                  join: AudioEventImport,
+                  on: AudioEventImportFile.arel_table[:audio_event_import_id].eq(AudioEventImport.arel_table[:id]),
+                  available: true
                 }
               ]
             }

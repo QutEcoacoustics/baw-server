@@ -164,10 +164,39 @@ describe 'Verifications' do
         'regions.id': { eq: other_verification_site.region.id }
       }
     }
+
     get '/verifications/filter', params: filter, **api_headers(writer_token)
 
     expect(response).to have_http_status(:ok)
     expect_number_of_items(1)
+  end
+
+  it 'can filter verification by project' do
+    other_verification_site.update!(projects: [create(:project, creator: writer_user)])
+
+    filter = {
+      filter: {
+        'projects.id': { eq: other_verification_site.projects.first.id }
+      }
+    }
+
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(1)
+  end
+
+  it 'can filter verification by audio_event_import' do
+    filter = {
+      filter: {
+        'audio_event_imports.id': { eq: audio_event_import.id }
+      }
+    }
+
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(3)
   end
 
   describe 'invalid requests' do
