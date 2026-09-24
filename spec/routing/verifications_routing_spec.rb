@@ -40,6 +40,13 @@ describe VerificationsController, type: :routing do
       route_to('errors#route_error', filter: 'skip', requested_route: 'audio_recordings/1/verifications')
     end
 
+    # stats
+    it do
+      expect(get('audio_recordings/1/audio_events/1/verifications/stats?filter=unsure')).to \
+      route_to('verifications#stats', audio_recording_id: '1',
+        audio_event_id: '1', format: 'json', filter: 'unsure')
+    end
+
     # shallow routes
     # index
     it { expect(get('/verifications')).to route_to('verifications#index', format: 'json') }
@@ -63,10 +70,17 @@ describe VerificationsController, type: :routing do
       route_to('verifications#index', format: 'json', filter: 'unsure')
     end
 
+    # stats
+    it do
+      expect(get('/verifications/stats?filter=unsure')).to \
+      route_to('verifications#stats', format: 'json', filter: 'unsure')
+    end
+
     # negative cases
     it { expect(post('/verifications/1')).to route_to('errors#route_error', requested_route: 'verifications/1') }
     it { expect(delete('/verifications')).to route_to('errors#route_error', requested_route: 'verifications') }
 
-    it_behaves_like 'our api routing patterns', '/verifications', 'verifications', [:filterable, :upsertable]
+    it_behaves_like 'our api routing patterns', '/verifications', 'verifications',
+      [:filterable, :upsertable, :statistical]
   end
 end
