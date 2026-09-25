@@ -40,15 +40,23 @@ describe 'Verification permissions' do
     end
   end
 
-  the_users :admin, :reader, :writer, :another_writer, :owner,
-    can_do: Set[:index, :show, :filter],
-    fails_with: :not_found
+  with_custom_action(
+    :stats,
+    path: 'stats',
+    verb: :get,
+    expect: lambda { |_user, _action|
+      expect(api_data).to match([a_hash_including({ verifications_count: a_kind_of(Integer) })])
+    }
+  )
 
-  the_user :anonymous, can_do: Set[:index, :filter], fails_with: [:not_found, :unauthorized]
+  the_users :admin, :reader, :writer, :another_writer, :owner,
+    can_do: Set[:index, :show, :filter, :stats],
+    fails_with: :not_found
+  the_user :anonymous, can_do: Set[:index, :filter, :stats], fails_with: [:not_found, :unauthorized]
 
   the_user :invalid, can_do: nothing, fails_with: [:not_found, :unauthorized]
 
-  the_user :no_access, can_do: Set[:index, :filter], fails_with: [:not_found, :forbidden]
+  the_user :no_access, can_do: Set[:index, :filter, :stats], fails_with: [:not_found, :forbidden]
 
   the_user :harvester, can_do: nothing, fails_with: [:not_found, :forbidden]
 end
@@ -126,22 +134,31 @@ describe 'Verification permissions (shallow)' do
     }
   )
 
+  with_custom_action(
+    :stats,
+    path: 'stats',
+    verb: :get,
+    expect: lambda { |_user, _action|
+      expect(api_data).to match([a_hash_including({ verifications_count: a_kind_of(Integer) })])
+    }
+  )
+
   # `writer` user SHOULD be able to DELETE (because they are the verification creator)
   # `writer` user SHOULD be able to PUT (update) (because they are the verification creator)
   the_users :admin, :writer, can_do: everything
 
   # `another_writer` user should NOT be able to DELETE (because they are not the verification creator)
   # `another_writer` user should NOT be able to PUT (update) (because they are not the verification creator)
-  the_user :another_writer, can_do: (reading + creation + [:create_or_update])
+  the_user :another_writer, can_do: (reading + creation + [:create_or_update, :stats])
 
-  the_user :reader, can_do: reading, and_cannot_do: (writing + [:create_or_update])
+  the_user :reader, can_do: (reading + [:stats]), and_cannot_do: (writing + [:create_or_update])
 
   # `owner` user SHOULD be able to DELETE (writer user's verification), (because they are a project owner)
   # `owner` user NOT be able to PUT (update) (writer user's verification), (because they are NOT the creator)
   the_user :owner, can_do: everything_but_update
 
-  the_user :anonymous, can_do: listing, and_cannot_do: not_listing, fails_with: :unauthorized
+  the_user :anonymous, can_do: (listing + [:stats]), and_cannot_do: (not_listing - [:stats]), fails_with: :unauthorized
   the_user :invalid, can_do: nothing, and_cannot_do: everything, fails_with: :unauthorized
-  the_user :no_access, can_do: listing, and_cannot_do: not_listing
+  the_user :no_access, can_do: (listing + [:stats]), and_cannot_do: (not_listing - [:stats])
   the_user :harvester, can_do: nothing, and_cannot_do: everything
 end

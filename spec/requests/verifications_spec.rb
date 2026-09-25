@@ -9,6 +9,16 @@ describe 'Verifications' do
     create(:verification, audio_event:, creator: writer_user, confirmed: Verification::CONFIRMATION_FALSE)
   end
 
+  let(:other_verification_site) {
+    other_site = create(:site, shared_project: project, creator: writer_user)
+    create(:audio_recording, site: other_site, creator: writer_user) do |recording|
+      create(:audio_event, audio_recording: recording, creator: writer_user) do |event|
+        create(:verification, audio_event: event, creator: writer_user, tag:)
+      end
+    end
+    other_site
+  }
+
   it 'can update a verification' do
     payload = {
       verification: {
@@ -130,6 +140,59 @@ describe 'Verifications' do
         'audio_recordings.id': { eq: audio_recording.id }
       }
     }
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(3)
+  end
+
+  it 'can filter verification by site' do
+    filter = {
+      filter: {
+        'sites.id': { eq: other_verification_site.id }
+      }
+    }
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(1)
+  end
+
+  it 'can filter verification by region' do
+    filter = {
+      filter: {
+        'regions.id': { eq: other_verification_site.region.id }
+      }
+    }
+
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(1)
+  end
+
+  it 'can filter verification by project' do
+    other_verification_site.update!(projects: [create(:project, creator: writer_user)])
+
+    filter = {
+      filter: {
+        'projects.id': { eq: other_verification_site.projects.first.id }
+      }
+    }
+
+    get '/verifications/filter', params: filter, **api_headers(writer_token)
+
+    expect(response).to have_http_status(:ok)
+    expect_number_of_items(1)
+  end
+
+  it 'can filter verification by audio_event_import' do
+    filter = {
+      filter: {
+        'audio_event_imports.id': { eq: audio_event_import.id }
+      }
+    }
+
     get '/verifications/filter', params: filter, **api_headers(writer_token)
 
     expect(response).to have_http_status(:ok)

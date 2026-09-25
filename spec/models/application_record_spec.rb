@@ -30,5 +30,16 @@ describe ApplicationRecord do
       result = exec("1 AS id, 'hello' AS name")
       expect(result).to eq([{ id: 1, name: 'hello' }])
     end
+
+    it 'binds values from relations embedded in an Arel query' do
+      base = Arel::Table.new(:base)
+      relation = User.where(id: -1)
+      manager = Arel::SelectManager.new
+        .with(Arel::Nodes::As.new(base, relation.arel))
+        .from(base)
+        .project(Arel.star.count.as('count'))
+
+      expect(ApplicationRecord.exec_query_casted(manager)).to eq([{ count: 0 }])
+    end
   end
 end
