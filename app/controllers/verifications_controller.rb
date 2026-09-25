@@ -112,10 +112,21 @@ class VerificationsController < ApplicationController
       audio_event: @audio_event
     )
 
+    base_table = Api::Stats.base_table
+    user_id = current_user&.id
+
     results, opts = execute_stats(
       base_query:,
       model: Verification,
-      hook: Verification.stats_hook(current_user)
+      hook: Verification.stats_hook(user_id, base_table: base_table),
+      projections: {
+        verifications_count:	Arel.star.count,
+        verified_events:	base_table[:audio_event_id].count(true),
+        user_verified_count:	Arel.star.count.filter(base_table[:creator_id].eq(user_id)),
+        user_verified_events_count:	base_table[:audio_event_id].count(true).filter(base_table[:creator_id].eq(user_id)),
+        overrun_distribution:	Verification.overrun_distribution_arel(base_table:),
+        verification_leaderboard:	Verification.leaderboard_aggregation_arel
+      }
     )
 
     respond_stats(results, opts)

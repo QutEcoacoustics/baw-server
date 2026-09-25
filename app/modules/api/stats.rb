@@ -42,5 +42,11 @@ module Api
 
       [results, opts]
     end
+
+    # A base table alias, to be used when a stats base_query is used as a subquery or CTE.
+    # @return [Arel::Table] a table representing the base table of the query.
+    def self.base_table
+      Arel::Table.new('base')
+    end
   end
 end

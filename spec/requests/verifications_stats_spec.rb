@@ -211,4 +211,20 @@ describe 'Verifications' do
       ])
     end
   end
+
+  context 'when the requesting user is anonymous' do
+    it 'returns the correct stats' do
+      post '/verifications/stats', params: body, **api_headers(anonymous_token)
+
+      expect(api_data).to match(
+        [{ verifications_count: 0,
+           verified_events: 0,
+           user_verified_count: 0,
+           user_verified_events_count: 0,
+           overrun_distribution: [{ run: 1, count: 0 }, { run: 2, count: 0 }, { run: 3, count: 0 }, { run: 4, count: 0 },
+                                  { run: 5, count: 0, overflow: 'true' }],
+           verification_leaderboard: [{ rank: nil, user_id: nil, verification_count: 0 }] }]
+      )
+    end
+  end
 end
