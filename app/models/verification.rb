@@ -252,7 +252,7 @@ class Verification < ApplicationRecord
         .where(ranked_leaderboard_table[:user_id].eq(user_id))
 
       leaderboard_request_user_absent = Arel::SelectManager.new
-        .project(user_id, 0, Arel.sql('NULL::bigint'))
+        .project(Arel::Nodes.build_quoted(user_id), 0, Arel::Nodes.build_quoted(nil))
         .where(request_user_exists.exists.not)
 
       leaderboard_rows = Arel::Nodes::UnionAll.new(
