@@ -222,7 +222,7 @@ module BawWorkers
       end
 
       def configure_resque(settings)
-        Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
+        Resque.redis = settings.resque.connection.to_h.symbolize_keys
         Resque.redis.namespace = Settings.resque.namespace
         BawWorkers::ActiveJob::Status::Persistence.configure(Resque.redis.redis)
         BawWorkers::ActiveJob::Concurrency::Persistence.configure(Resque.redis.redis)

@@ -621,7 +621,10 @@ GEM
       psych (>= 4.0.0)
       tsort
     recaptcha (5.17.0)
-    redis (4.8.1)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
+    redis-client (0.30.1)
+      connection_pool
     redis-namespace (1.11.0)
       redis (>= 4)
     regexp_parser (2.11.3)
@@ -959,7 +962,7 @@ DEPENDENCIES
   rails (~> 8.0.2)
   rails_semantic_logger (>= 4.11.0)
   recaptcha
-  redis (~> 4.1)
+  redis (~> 5.4)
   rerun
   resque (~> 2.7)
   resque-job-stats
