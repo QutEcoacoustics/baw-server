@@ -70,6 +70,7 @@ class ApplicationController < ActionController::Base
     return false if action_sym == :index
     return false if action_sym == :filter
     return false if action_sym == :show
+    return false if action_sym == :stats
     return false if devise_controller?
 
     true
