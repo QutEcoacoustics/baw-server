@@ -41,7 +41,10 @@ class ApplicationRecord < ActiveRecord::Base
     # We're intentionally not doing a filter query or an active record query here.
     # The goal is speed and efficiency
     connection_pool.with_connection do |connection|
-      connection.exec_query(query.to_sql) => result
+      # Pass the relation/Arel tree to Active Record so it can compile and bind
+      # values contained in nested Arel nodes, such as a relation embedded in a
+      # CTE. Calling `to_sql` first leaves placeholders without their binds.
+      connection.select_all(query) => result
       # This is icky. What happens in real rails code is the ActiveRecord::Result
       # object is consumed by ActiveRecord::Base.instantiate which turns takes
       # in rows of untyped results and column types turns them into model objects.

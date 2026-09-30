@@ -9,12 +9,12 @@ describe ApplicationRecord do
     end
 
     it 'returns a scalar value for a single-column scalar query' do
-      result = exec("42 AS value")
+      result = exec('42 AS value')
       expect(result).to eq([{ value: 42 }])
     end
 
     it 'returns the full array for a single-column postgres array query' do
-      result = exec("ARRAY[10, 20, 30] AS values")
+      result = exec('ARRAY[10, 20, 30] AS values')
       expect(result).to eq([{ values: [10, 20, 30] }])
     end
 
@@ -29,6 +29,20 @@ describe ApplicationRecord do
     it 'returns correctly keyed hashes for a multi-column query' do
       result = exec("1 AS id, 'hello' AS name")
       expect(result).to eq([{ id: 1, name: 'hello' }])
+    end
+
+    it 'binds values from relations embedded in an Arel query' do
+      base = Arel::Table.new(:base)
+
+      # `where` creates a bind parameter for the query.
+      relation = User.where(id: -1)
+
+      manager = Arel::SelectManager.new
+        .with(Arel::Nodes::As.new(base, relation.arel))
+        .from(base)
+        .project(Arel.star.count.as('count'))
+
+      expect(ApplicationRecord.exec_query_casted(manager)).to eq([{ count: 0 }])
     end
   end
 end
