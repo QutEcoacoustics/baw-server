@@ -2,6 +2,7 @@
 
 class AudioEventsController < ApplicationController
   include Api::ControllerHelper
+  include Api::Stats
 
   skip_authorization_check only: [:show]
 
@@ -97,6 +98,33 @@ class AudioEventsController < ApplicationController
     )
 
     respond_filter(filter_response, opts)
+  end
+
+  # GET|POST /audio_events/stats
+  # GET|POST /audio_recordings/:audio_recording_id/audio_events/stats
+  # Returns aggregate statistics for filtered audio events.
+  def stats
+    do_authorize_class(:filter, AudioEvent)
+    get_audio_recording if params&.key?(:audio_recording_id)
+
+    base_query = Access::ByPermissionTable.audio_events(
+      current_user,
+      level: Access::Permission::READER,
+      audio_recording: @audio_recording
+    )
+
+    results, opts = execute_stats(
+      base_query:,
+      model: AudioEvent,
+      projections: {
+        count: AudioEvent.arel_table[:id].count(true),
+        taggings_count: Tagging.arel_table[:id].count
+      }
+    ) { |query|
+      query.left_joins(:taggings)
+    }
+
+    respond_stats(results, opts)
   end
 
   private

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe 'Region permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
 
   given_the_route '/regions' do
     {

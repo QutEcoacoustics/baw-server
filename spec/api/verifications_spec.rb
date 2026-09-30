@@ -22,6 +22,25 @@ describe 'verifications' do
       end
     end
 
+    path '/verifications/stats' do
+      post('stats') do
+        tags 'verifications'
+        consumes 'application/json'
+        produces 'application/json'
+        parameter name: :request_body, in: :body, required: false,
+          schema: Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false)
+
+        let(:request_body) { { filter: {} } }
+
+        response(200, 'successful') do
+          schema(**Api::Schema.standard_single_response(Verification.stats_schema))
+          run_test! do
+            expect_data_is_hash
+          end
+        end
+      end
+    end
+
     path '/verifications' do
       get('list verifications') do
         response(200, 'successful') do
@@ -173,6 +192,28 @@ describe 'verifications' do
           schema_for_many
           run_test! do
             expect_at_least_one_item
+          end
+        end
+      end
+    end
+
+    path '/audio_recordings/{audio_recording_id}/audio_events/{audio_event_id}/verifications/stats' do
+      with_route_parameter(:audio_recording_id) { audio_recording_id }
+      with_route_parameter(:audio_event_id) { audio_event_id }
+
+      post('stats') do
+        tags 'verifications'
+        consumes 'application/json'
+        produces 'application/json'
+        parameter name: :request_body, in: :body, required: false,
+          schema: Api::Schema.filter_payload(filter: true, sorting: false, paging: false, projection: false)
+
+        let(:request_body) { { filter: {} } }
+
+        response(200, 'successful') do
+          schema(**Api::Schema.standard_single_response(Verification.stats_schema))
+          run_test! do
+            expect_data_is_hash
           end
         end
       end

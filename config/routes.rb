@@ -755,13 +755,15 @@ Rails.application.routes.draw do
     scope defaults: { format: false } do
       match 'original' => 'media#original', as: :media_original, via: [:get, :head]
     end
-    resources :audio_events, except: [:edit], defaults: { format: 'json' }, concerns: [:filterable] do
+    resources :audio_events, except: [:edit], defaults: { format: 'json' },
+      concerns: [:filterable, :statistical] do
       collection do
         get 'download' => 'audio_events/download#download', defaults: { format: 'csv' }
       end
       resources :tags, only: [:index], defaults: { format: 'json' }
       resources :taggings, except: [:edit], defaults: { format: 'json' }
-      resources :verifications, only: [:index, :show], defaults: { format: 'json' }, concerns: [:filterable]
+      resources :verifications, only: [:index, :show], defaults: { format: 'json' },
+        concerns: [:filterable, :statistical]
     end
   end
 
@@ -779,10 +781,11 @@ Rails.application.routes.draw do
   resources :verifications, except: [:edit],
     as: 'shallow_verifications',
     defaults: { format: 'json' },
-    concerns: [:filterable, :upsertable]
+    concerns: [:filterable, :upsertable, :statistical]
 
   # API audio_event create
-  resources :audio_events, only: [], defaults: { format: 'json' }, concerns: [:filterable] do
+  resources :audio_events, only: [], defaults: { format: 'json' },
+    concerns: [:filterable, :statistical] do
     concerns :groupable, by: [:sites]
 
     resources :audio_event_comments, except: [:edit], defaults: { format: 'json' }, path: :comments, as: :comments,

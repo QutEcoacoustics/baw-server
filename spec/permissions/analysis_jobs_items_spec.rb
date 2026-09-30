@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 describe 'AnalysisJobsItem permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
+
+  prepare_provenance
+  prepare_script
+
+  prepare_analysis_job
+  prepare_analysis_jobs_item
 
   before do
     analysis_jobs_item.update_column(:status, :queued)
@@ -67,7 +73,13 @@ describe 'AnalysisJobsItem permissions' do
 end
 
 describe 'AnalysisJobsItem anonymous permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
+
+  prepare_analysis_job
+  prepare_analysis_jobs_item
+
+  prepare_provenance
+  prepare_script
 
   before do
     analysis_jobs_item.update_column(:status, :queued)

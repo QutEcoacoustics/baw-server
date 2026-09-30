@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe 'AudioRecordings::DownloaderController permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
 
   given_the_route '/audio_recordings/downloader' do
     {

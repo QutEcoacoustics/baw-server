@@ -1,7 +1,13 @@
 # frozen_string_literal: true
 
 describe 'Analysis Job permissions (for project jobs)' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
+
+  prepare_provenance
+  prepare_script
+
+  prepare_analysis_job
+  prepare_analysis_jobs_item
 
   # we have some complex permissions around system jobs
   # so we want to make a job that is completely outside the hierarchy
@@ -57,7 +63,7 @@ describe 'Analysis Job permissions (for project jobs)' do
     { action: :retry, path: '{id}/retry', verb: :put, expect: :nothing },
     { action: :suspend, path: '{id}/suspend', verb: :put, expect: :nothing },
     { action: :resume, path: '{id}/resume', verb: :put, expect: :nothing },
-    { action: :amend, path: '{id}/amend', verb: :put, expect: :nothing },
+    { action: :amend, path: '{id}/amend', verb: :put, expect: :nothing }
   ]
 
   before_request do |_user, action|
@@ -102,7 +108,13 @@ describe 'Analysis Job permissions (for project jobs)' do
 end
 
 describe 'Analysis Job permissions (for system jobs)' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
+
+  prepare_provenance
+  prepare_script
+
+  prepare_analysis_job
+  prepare_analysis_jobs_item
 
   before do
     analysis_job.project = nil
@@ -154,7 +166,7 @@ describe 'Analysis Job permissions (for system jobs)' do
     { action: :retry, path: '{id}/retry', verb: :put, expect: :nothing },
     { action: :suspend, path: '{id}/suspend', verb: :put, expect: :nothing },
     { action: :resume, path: '{id}/resume', verb: :put, expect: :nothing },
-    { action: :amend, path: '{id}/amend', verb: :put, expect: :nothing },
+    { action: :amend, path: '{id}/amend', verb: :put, expect: :nothing }
   ]
 
   before_request do |_user, action|

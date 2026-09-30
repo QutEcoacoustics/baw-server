@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 describe 'Provenance permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
+  prepare_provenance
 
   given_the_route '/provenances' do
     {

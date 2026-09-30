@@ -214,6 +214,15 @@ describe Access::ByPermissionTable do
           .pluck(:id)
       ).to contain_exactly(reference_audio_event.id)
     end
+
+    example 'with an audio recording filter' do
+      expect(
+        Access::ByPermissionTable
+          .audio_events(reader_user, level: Access::Permission::READER, audio_recording:)
+          .order(:id)
+          .pluck(:id)
+      ).to contain_exactly(audio_event.id)
+    end
   end
 
   context 'when a site belongs to multiple accessible projects' do

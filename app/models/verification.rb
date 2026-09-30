@@ -31,6 +31,8 @@
 #  fk_rails_...  (updater_id => users.id)
 #
 class Verification < ApplicationRecord
+  include Api::Stats
+
   belongs_to :audio_event, inverse_of: :verifications
   belongs_to :tag, inverse_of: :verifications
   belongs_to :creator, class_name: 'User', inverse_of: :created_verifications
@@ -186,5 +188,198 @@ class Verification < ApplicationRecord
         :updated_at
       ]
     }.freeze
+  end
+
+  def self.stats_schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        count: { type: 'integer', readOnly: true },
+        verified_event_count: { type: 'integer', readOnly: true },
+        user_verified_count: { type: 'integer', readOnly: true },
+        user_verified_events_count: { type: 'integer', readOnly: true },
+        unique_verifiers_count: { type: 'integer', readOnly: true },
+        overrun_distribution: {
+          type: 'array',
+          readOnly: true,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              run: { type: 'integer' },
+              count: { type: 'integer' },
+              overflow: { type: 'string', enum: ['true'] }
+            },
+            required: [:run, :count]
+          }
+        },
+        verification_leaderboard: {
+          type: 'array',
+          readOnly: true,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              user_id: Api::Schema.id(nullable: true),
+              verification_count: { type: 'integer' },
+              rank: { type: ['integer', 'null'] }
+            },
+            required: [:user_id, :verification_count, :rank]
+          }
+        }
+      },
+      required: [
+        :count,
+        :verified_event_count,
+        :user_verified_count,
+        :user_verified_events_count,
+        :unique_verifiers_count,
+        :overrun_distribution,
+        :verification_leaderboard
+      ],
+      readOnly: true
+    }.freeze
+  end
+
+  # Stats hook consumed by Api::Stats#execute_stats via the controller.
+  #
+  # @param user [User, nil] the requesting user
+  # @return [Proc] a callable that reshapes the filtered query for stats
+  def self.stats_hook(user_id, base_table, query)
+    base_cte = Arel::Nodes::As.new(base_table, query.arel)
+
+    user_counts_subquery = user_counts_arel(table: base_table).as('user_counts')
+
+    user_rank_cte = Arel::Nodes::As.new(
+      users_ranked_table,
+      users_ranked_arel(table: user_counts_subquery)
+    )
+
+    leaderboard_cte = Arel::Nodes::As.new(leaderboard_table, leaderboard_arel(user_id))
+
+    Arel::SelectManager.new
+      .with(base_cte, user_rank_cte, leaderboard_cte)
+      .from(base_table)
+  end
+
+  # Per-user verification counts.
+  # @param table [Arel::Table] the table containing verifications
+  def self.user_counts_arel(table:)
+    count = table[:id].count.as('verification_count')
+
+    Arel::SelectManager.new
+      .project(table[:creator_id].as('user_id'), count)
+      .from(table)
+      .group(table[:creator_id])
+  end
+
+  def self.users_ranked_table
+    Arel::Table.new('user_rank')
+  end
+
+  # Returns the per-user verification counts and their rank, where 1 is the user
+  # with the most verifications.
+  # @param table [Arel::Table] the table containing user verification counts
+  def self.users_ranked_arel(table:)
+    Arel::SelectManager.new
+      .project(
+        table[:user_id],
+        table[:verification_count],
+        Arel.sql('RANK() OVER (ORDER BY verification_count DESC) AS rank')
+      )
+      .from(table)
+  end
+
+  # Returns the top 5 users by verification count.
+  def self.top_users_arel
+    users_ranked_table.project(Arel.star).where(users_ranked_table[:rank].lteq(5))
+  end
+
+  # Returns the requesting user's rank if they are not in the top 5.
+  def self.user_rank_arel(user_id)
+    users_ranked_table
+      .project(Arel.star)
+      .where(users_ranked_table[:user_id].eq(user_id).and(users_ranked_table[:rank].gt(5)))
+  end
+
+  # Return a null rank row if the requesting user has no verifications (or is anonymous).
+  def self.absent_user_arel(user_id)
+    request_user = Arel::SelectManager.new
+      .project(Arel.sql('1'))
+      .from(users_ranked_table)
+      .where(users_ranked_table[:user_id].eq(user_id))
+
+    Arel::SelectManager.new
+      .project(Arel::Nodes.build_quoted(user_id), 0, Arel::Nodes.build_quoted(nil))
+      .where(request_user.exists.not)
+  end
+
+  def self.leaderboard_table
+    Arel::Table.new('leaderboard_table')
+  end
+
+  # Union the three subqueries to get the final leaderboard.
+  def self.leaderboard_arel(user_id)
+    Arel::Nodes::UnionAll.new(
+      top_users_arel.union(:all, user_rank_arel(user_id)),
+      absent_user_arel(user_id).ast
+    )
+  end
+
+  # Return the leaderboard as a single JSON array, ordered by rank and user_id,
+  # with null ranks last.
+  def self.leaderboard_aggregation_arel
+    leaderboard = Arel.json({
+      user_id: leaderboard_table[:user_id],
+      verification_count: leaderboard_table[:verification_count],
+      rank: leaderboard_table[:rank]
+    })
+
+    ordered_leaderboard = Arel::Nodes::InfixOperation.new(
+      'ORDER BY', leaderboard, Arel.sql('"rank" NULLS LAST, "user_id"')
+    )
+
+    Arel.grouping(
+      Arel::SelectManager.new
+        .project(
+          Arel.coalesce(
+            Baw::Arel::Nodes::JsonAgg.new([ordered_leaderboard]),
+            Arel.sql("'[]'::json")
+          )
+        )
+        .from(leaderboard_table)
+    )
+  end
+
+  # Returns the distribution of taggings by verification run count. A run is a
+  # verification by a distinct user; the final bucket contains five or more
+  # runs.
+  #
+  # @param verifications_table [Arel::Table] the base table to use for the query
+  def self.overrun_distribution_arel(verifications_table:)
+    counts_by_tagging = verifications_table
+      .project(
+        verifications_table[:audio_event_id],
+        verifications_table[:tag_id],
+        verifications_table[:id].count
+      )
+      .group(verifications_table[:audio_event_id], verifications_table[:tag_id])
+
+    subquery = counts_by_tagging.as('counts_by_tagging')
+
+    Arel.grouping(
+      Arel::SelectManager.new
+        .project(
+          Arel::Nodes::NamedFunction.new('json_build_array', [
+            Arel.json({ run: 1, count: Arel.star.count.filter(subquery[:count].eq(1)) }),
+            Arel.json({ run: 2, count: Arel.star.count.filter(subquery[:count].eq(2)) }),
+            Arel.json({ run: 3, count: Arel.star.count.filter(subquery[:count].eq(3)) }),
+            Arel.json({ run: 4, count: Arel.star.count.filter(subquery[:count].eq(4)) }),
+            Arel.json({ run: 5, count: Arel.star.count.filter(subquery[:count].gteq(5)), overflow: 'true' })
+          ])
+        )
+        .from(subquery)
+    )
   end
 end

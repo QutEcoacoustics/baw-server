@@ -2,7 +2,7 @@
 
 describe AudioEvents::GroupByController do
   describe 'permissions' do
-    create_entire_hierarchy
+    create_audio_recordings_hierarchy
 
     given_the_route '/audio_events/group_by' do
       {
