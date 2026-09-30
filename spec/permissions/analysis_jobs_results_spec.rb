@@ -9,7 +9,13 @@
   ]
 ].each do |route, action|
   describe 'Analysis Job Results' do
-    create_entire_hierarchy
+    create_audio_recordings_hierarchy
+
+    prepare_provenance
+    prepare_script
+
+    prepare_analysis_job
+    prepare_analysis_jobs_item
 
     before do
       create_analysis_result_file(analysis_jobs_item, Pathname('Test1/Test2/test-CASE.csv'), content: 'hello')

@@ -30,12 +30,23 @@ describe AudioEventsController, type: :routing do
     # used by client
     it { expect(get('/audio_recordings/3/audio_events')).to route_to('audio_events#index', audio_recording_id: '3', format: 'json') }
     it { expect(get('/audio_recordings/3/audio_events/4')).to route_to('audio_events#show', audio_recording_id: '3', id: '4', format: 'json') }
+    it do
+      expect(get('/audio_recordings/3/audio_events/stats?filter[is_reference][eq]=true')).to \
+        route_to('audio_events#stats', audio_recording_id: '3', format: 'json',
+          filter: { 'is_reference' => { 'eq' => 'true' } })
+    end
     it { expect(get('/audio_recordings/3/audio_events/download')).to route_to('audio_events/download#download', audio_recording_id: '3', format: 'csv') }
     it { expect(get('/audio_recordings/3/audio_events/download.csv')).to route_to('audio_events/download#download', audio_recording_id: '3', format: 'csv') }
 
     it { expect(get('/audio_events/library')).to route_to('errors#route_error', requested_route: 'audio_events/library') }
     it { expect(get('/audio_events/library/paged')).to route_to('errors#route_error', requested_route: 'audio_events/library/paged') }
+    it do
+      expect(get('/audio_events/stats?filter[is_reference][eq]=true')).to \
+        route_to('audio_events#stats', format: 'json',
+          filter: { 'is_reference' => { 'eq' => 'true' } })
+    end
 
-    it_behaves_like 'our api routing patterns', '/audio_events', 'audio_events', [:filterable]
+    it_behaves_like 'our api routing patterns', '/audio_events', 'audio_events',
+      [:filterable, :statistical]
   end
 end

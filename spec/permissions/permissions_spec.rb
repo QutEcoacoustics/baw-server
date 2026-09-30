@@ -6,7 +6,7 @@
 # Only an owner (or admin) can change permissions for their project.
 
 describe 'Permission permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
 
   given_the_route '/projects/{project_id}/permissions' do
     {

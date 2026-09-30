@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe 'AudioEventImportFile permissions' do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
   ignore_pending_jobs
   let!(:audio_event_import) { create(:audio_event_import) }
   let(:request_accept) {

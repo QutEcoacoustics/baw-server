@@ -448,6 +448,19 @@ class AudioEvent < ApplicationRecord
     }
   end
 
+  def self.stats_schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        count: { type: 'integer', readOnly: true },
+        taggings_count: { type: 'integer', readOnly: true }
+      },
+      required: [:count, :taggings_count],
+      readOnly: true
+    }.freeze
+  end
+
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
   # @param [User] user

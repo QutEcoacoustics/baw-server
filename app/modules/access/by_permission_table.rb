@@ -45,9 +45,12 @@ module Access
     # @param level [Symbol] the minimum permission level (see Permission levels)
     # @param levels [Array<Symbol>] alternative to level, an array of specific permission levels (see Permission levels)
     # @param project_ids [Array<Integer>] optional list of project IDs to reduce the scale of permissions joined
+    # @param audio_recording [AudioRecording, nil] optional recording scope
     # @return [ActiveRecord::Relation<AudioEvent>] the approved audio events
-    def audio_events(user, level: nil, levels: nil, project_ids: nil)
-      query = add_effective_site_permissions_cte(AudioEvent.joins(audio_recording: :site), user, project_ids:)
+    def audio_events(user, level: nil, levels: nil, project_ids: nil, audio_recording: nil)
+      query = AudioEvent.joins(audio_recording: :site)
+      query = query.where(audio_recording_id: audio_recording.id) if audio_recording
+      query = add_effective_site_permissions_cte(query, user, project_ids:)
 
       apply(user, query, level:, levels:) { |predicate|
         # Reference audio events are always accessible regardless of permission
@@ -69,6 +72,14 @@ module Access
     def audio_recordings(user, level: nil, levels: nil, project_ids: nil)
       query = add_effective_site_permissions_cte(AudioRecording.joins(:site), user, project_ids:)
 
+      apply(user, query, level:, levels:)
+    end
+
+    def verifications(user, level: nil, levels: nil, project_ids: nil, audio_event: nil)
+      query = Verification.joins(audio_event: [{ audio_recording: :site }])
+      query = query.where(audio_event_id: audio_event.id) if audio_event
+
+      query = add_effective_site_permissions_cte(query, user, project_ids:)
       apply(user, query, level:, levels:)
     end
 

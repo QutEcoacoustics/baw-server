@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe AudioEventImport do
-  create_entire_hierarchy
+  create_audio_recordings_hierarchy
 
   let!(:audio_event_import) { create(:audio_event_import) }
 
