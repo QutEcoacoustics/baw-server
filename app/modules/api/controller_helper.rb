@@ -233,6 +233,10 @@ module Api
       render_format(items, opts)
     end
 
+    def respond_stats(result, opts = {})
+      render_format(result, opts)
+    end
+
     def filename(opts, format)
       # a rudimentary way of encoding filtering parameters into a filename
       # e.g. {id: {in: [1,2,3]}, name: {eq: '\n'}}  ==> id_in_1_2_3_name_eq_n
