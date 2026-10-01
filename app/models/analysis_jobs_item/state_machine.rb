@@ -120,7 +120,6 @@ class AnalysisJobsItem
           :clear_from_queue,
           :clear_queue_id
         ], after_enter: [
-          :increment_statistics,
           :check_overall_progress,
           :enqueue_import_results
         ]
@@ -159,11 +158,14 @@ class AnalysisJobsItem
         end
 
         # @!method finish!(status = nil)
+        #  Previously, increment_statistics ran inside the finish transition transaction (`after_enter`).
+        #  Concurrent finishes contend for shared statistics rows, keeping that transaction and its locks open.
+        #  So using `after_commit` keeps the statistics row locks from being held during other finish work.
         #  @param status [::BawWorkers::BatchAnalysis::Models::JobStatus] a job status payload
         #   from the remote queue. Sometimes we need to query the remote queue more
         #   than once to get the final status and we want to reuse the same status.
         #  @return [Boolean]
-        event :finish do
+        event :finish, after_commit: :increment_statistics do
           # there is a conceivable case where we never get the working status update
           transitions(
             from: [STATUS_QUEUED_SYM, STATUS_WORKING_SYM, STATUS_FINISHED_SYM],
