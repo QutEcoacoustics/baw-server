@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.4.0](https://github.com/QutEcoacoustics/baw-server/tree/15.4.0) (2026-10-01)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.7...15.4.0)
+
+**Closed issues:**
+
+- Feature: audio event verification stats endpoint [\#1051](https://github.com/QutEcoacoustics/baw-server/issues/1051)
+
 ## [15.3.7](https://github.com/QutEcoacoustics/baw-server/tree/15.3.7) (2026-10-01)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.6...15.3.7)
@@ -7,6 +15,8 @@
 **Implemented enhancements:**
 
 - Updating statistics is slow for analysis jobs item finish! [\#1060](https://github.com/QutEcoacoustics/baw-server/issues/1060)
+- Verification associations should be fleshed out [\#831](https://github.com/QutEcoacoustics/baw-server/issues/831)
+- feat\(analysis jobs\): move increment\_statistics into after\_commit [\#1062](https://github.com/QutEcoacoustics/baw-server/pull/1062) ([andrew-1234](https://github.com/andrew-1234))
 
 ## [15.3.6](https://github.com/QutEcoacoustics/baw-server/tree/15.3.6) (2026-09-29)
 
@@ -57,6 +67,10 @@
 
 - bug: single-column array/range values in exec\_query\_casted [\#1042](https://github.com/QutEcoacoustics/baw-server/issues/1042)
 - fix: handle single-column array/range values in exec\_query\_casted [\#1041](https://github.com/QutEcoacoustics/baw-server/pull/1041) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
+**Closed issues:**
+
+- Tag rate report [\#973](https://github.com/QutEcoacoustics/baw-server/issues/973)
 
 **Merged pull requests:**
 
