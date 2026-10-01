@@ -1,5 +1,21 @@
 # Changelog
 
+## [15.3.7](https://github.com/QutEcoacoustics/baw-server/tree/15.3.7) (2026-10-01)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.6...15.3.7)
+
+**Implemented enhancements:**
+
+- Updating statistics is slow for analysis jobs item finish! [\#1060](https://github.com/QutEcoacoustics/baw-server/issues/1060)
+
+## [15.3.6](https://github.com/QutEcoacoustics/baw-server/tree/15.3.6) (2026-09-29)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.5...15.3.6)
+
+**Merged pull requests:**
+
+- fix: upgrade redis gem to version 5.4  [\#1057](https://github.com/QutEcoacoustics/baw-server/pull/1057) ([andrew-1234](https://github.com/andrew-1234))
+
 ## [15.3.5](https://github.com/QutEcoacoustics/baw-server/tree/15.3.5) (2026-09-10)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.4...15.3.5)
