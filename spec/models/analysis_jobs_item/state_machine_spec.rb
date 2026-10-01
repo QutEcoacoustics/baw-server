@@ -62,8 +62,34 @@ describe AnalysisJobsItem do
       expect(analysis_jobs_item).to transition_from(:working).to(:finished).on_event(:finish)
       expect(analysis_jobs_item).to transition_from(:queued).to(:finished).on_event(:finish)
       expect(analysis_jobs_item).to transition_from(:finished).to(:finished).on_event(:finish)
+    end
 
-      assert_stats(analysis_jobs_item, 3, analysis_jobs_item.audio_recording.duration_seconds * 3, 3)
+    it 'increments statistics after the finish transaction commits' do
+      set_job_status_mock(AnalysisJobsItem::RESULT_SUCCESS)
+      item = analysis_jobs_item
+      item.queue!
+      item.work!
+      item.transition_finish!
+
+      # The test environment has 1 open transaction for DatabaseCleaner as a baseline.
+      # AASM finish! adds a nested transaction scope, increasing the depth to 2.
+      # If the statistics callback runs inside that scope, it sees depth 2.
+      # If it runs after that scope ends, it sees the original depth of 1.
+      connection = ActiveRecord::Base.connection
+      transaction_depth_before_finish = connection.open_transactions
+      transaction_depth_during_increment = nil
+
+      allow(Statistics::UserStatistics).to receive(
+        :increment_analysis_count
+      ).and_wrap_original do |original, *args, **kwargs|
+        transaction_depth_during_increment = connection.open_transactions
+        original.call(*args, **kwargs)
+      end
+
+      expect(item.finish!).to be true
+
+      expect(transaction_depth_during_increment).to eq(transaction_depth_before_finish)
+      assert_stats(item, 1, item.audio_recording.duration_seconds, 1)
     end
 
     it 'defines the cancel event' do
