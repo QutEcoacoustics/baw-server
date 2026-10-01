@@ -24,7 +24,9 @@ class ReportsController < ApplicationController
       base_query:,
       model: AudioRecording,
       template: recording_coverage_template,
-      projections: { density: Coverage.coverage_density }
+      projections: {
+        density: Coverage.coverage_density
+      }
     )
 
     respond_report(results, opts)
@@ -54,7 +56,10 @@ class ReportsController < ApplicationController
       base_query:,
       model: AudioRecording,
       template: analysis_coverage_template,
-      projections: { density: Coverage.coverage_density }
+      projections: {
+        density: Coverage.coverage_density,
+        accumulated_density: Coverage.accumulated_density
+      }
     )
 
     respond_report(results, opts)

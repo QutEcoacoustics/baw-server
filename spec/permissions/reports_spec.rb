@@ -58,6 +58,7 @@ describe 'Reports permissions' do
               (audio_recording.recorded_date.utc + audio_recording.duration_seconds.seconds).as_json
             ],
             density: 1.0,
+            accumulated_density: 1.0,
             gap_threshold: 31 }
         ])
       end
