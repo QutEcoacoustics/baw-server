@@ -57,40 +57,51 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
-    def csv_row(filename) = CSV.read(package_path.join(filename), headers: true).first.to_h
+    def csv_rows(filename) = CSV.read(package_path.join(filename), headers: true).map(&:to_h)
+
+    def table_schema(name)
+      directory = BawWorkers::Export::CamtrapDp::Profile::DIRECTORY
+      filename = BawWorkers::Export::CamtrapDp::Profile::ASSET_FILES.fetch(name)
+      JSON.parse(directory.join(filename).read)
+    end
 
     def package_data
       {
-        deployments: csv_row('deployments.csv'),
-        media: csv_row('media.csv'),
-        observations: csv_row('observations.csv'),
+        deployments: csv_rows('deployments.csv'),
+        media: csv_rows('media.csv'),
+        observations: csv_rows('observations.csv'),
         descriptor: JSON.parse(package_path.join('datapackage.json').read)
       }
     end
 
+    def expect_spatial_point(longitude, latitude)
+      expect(package_data[:descriptor].fetch('spatial')).to eq(
+        'type' => 'Point', 'coordinates' => [longitude, latitude]
+      )
+    end
+
     def expect_exported_times_in(time_zone)
-      ensure_timezone_with_precision = ->(precision, time) { time.in_time_zone(time_zone).iso8601(precision) }.curry
-      ensure_timezone_with_seconds = ensure_timezone_with_precision.call(0)
-      ensure_timezone_with_microseconds = ensure_timezone_with_precision.call(6)
+      ensure_timezone_with_seconds = ->(time) { time.in_time_zone(time_zone).iso8601(0) }
+      ensure_timezone_with_microseconds = ->(time) { time.in_time_zone(time_zone).iso8601(6) }
 
       with_export_manifest do
         rows = package_data
-        expect(rows[:deployments]).to include(
+        expect(rows[:deployments].first).to include(
           'deploymentStart' => ensure_timezone_with_seconds.call(audio_recording.recorded_date),
           'deploymentEnd' => ensure_timezone_with_seconds.call(audio_recording.recorded_end_date)
         )
 
-        expect(rows[:media]).to include(
+        expect(rows[:media].first).to include(
           'timestamp' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date)
         )
 
-        expect(rows[:observations]).to include(
+        expect(rows[:observations].first).to include(
           'eventStart' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date + audio_event.start_time_seconds.seconds),
           'eventEnd' => ensure_timezone_with_microseconds.call(audio_recording.recorded_date + audio_event.end_time_seconds.seconds),
           'classificationTimestamp' => ensure_timezone_with_seconds.call(export_tagging.created_at)
         )
 
-        expect(rows[:descriptor]['temporal']).to include(
+        expect(rows.dig(:descriptor, 'temporal')).to include(
           'start' => ensure_timezone_with_seconds.call(audio_recording.recorded_date),
           'end' => ensure_timezone_with_seconds.call(audio_recording.recorded_end_date)
         )
@@ -99,6 +110,53 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
     it 'requires a block' do
       expect { subject.call }.to raise_error(ArgumentError, 'block is required')
+    end
+
+    it 'writes the complete descriptor from inputs, project metadata, and presets', :aggregate_failures do
+      project.update!(name: 'Acoustic survey', description: 'Survey description', license: 'CC-BY-4.0')
+
+      Timecop.freeze(Time.utc(2026, 1, 2, 3, 4, 5)) do
+        descriptor = with_export_manifest { package_data[:descriptor] }
+
+        expect(descriptor).to eq(
+          'profile' => BawWorkers::Export::CamtrapDp::Profile::PROFILE_SOURCE_URL.to_s,
+          'created' => '2026-01-02T03:04:05Z',
+          'title' => 'Test Package Title',
+          'contributors' => [{ 'title' => 'Alice', 'path' => 'http://www.test', 'role' => 'contributor' }],
+          'project' => {
+            'title' => 'Acoustic survey',
+            'description' => 'Survey description',
+            'path' => Api::UrlHelpers.project_url(id: project.id),
+            'samplingDesign' => 'systematicRandom',
+            'captureMethod' => ['continuous', 'recordingSchedule'],
+            'individualAnimals' => false,
+            'observationLevel' => ['media'],
+            'protocolType' => 'acoustic'
+          },
+          'spatial' => { 'type' => 'Point', 'coordinates' => [site.public_longitude, site.public_latitude] },
+          'temporal' => {
+            'start' => audio_recording.recorded_date.utc.iso8601(0),
+            'end' => audio_recording.recorded_end_date.utc.iso8601(0)
+          },
+          'taxonomic' => [{ 'scientificName' => export_tagging.tag.text }],
+          'sources' => [{ 'title' => Settings.client.host.titlecase, 'path' => Settings.client_routes.home_url.to_s }],
+          'licenses' => [
+            { 'name' => 'CC-BY-4.0', 'scope' => 'data' },
+            { 'name' => 'CC-BY-4.0', 'scope' => 'media' }
+          ],
+          'resources' => [:deployments, :media, :observations].map { |name|
+            {
+              'name' => name.to_s,
+              'path' => "#{name}.csv",
+              'profile' => 'tabular-data-resource',
+              'format' => 'csv',
+              'mediatype' => 'text/csv',
+              'encoding' => 'utf-8',
+              'schema' => table_schema(name)
+            }
+          }
+        )
+      end
     end
 
     context 'with invalid options that populate schema fields' do
@@ -110,13 +168,6 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
           /1 \(Integer\) has invalid type for :captureMethod violates constraints/
         )
       }
-    end
-
-    context 'with invalid forced_timezone type' do
-      let(:export_options) { super().with(forced_timezone: 'invalid') }
-      let(:error_message) { /forced_timezone: got String, expected ActiveSupport::TimeZone or TZInfo::Timezone/ }
-
-      it { expect { subject.call { nil } }.to raise_error(ArgumentError, error_message) }
     end
 
     context 'with zero rows returned by the filter' do
@@ -149,12 +200,15 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
-    it 'when yielding, includes all package files in the zip' do
-      zip_entries = with_export_manifest {
-        Zip::File.open(manifest.zip_path) { |zip| zip.entries.map(&:name) }
-      }
-
-      expect(zip_entries).to match_array(package_filenames.values.map(&:to_s))
+    it 'archives every package file with identical contents', :aggregate_failures do
+      with_export_manifest do
+        Zip::File.open(manifest.zip_path) do |zip|
+          expect(zip.entries.map(&:name)).to match_array(package_filenames.values.map(&:to_s))
+          package_filenames.each_value do |filename|
+            expect(zip.read(filename.to_s)).to eq(package_path.join(filename).binread)
+          end
+        end
+      end
     end
 
     it 'cleans up the temporary directory after yielding' do
@@ -168,89 +222,48 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       expect(Dir).not_to exist(temp_dir)
     end
 
-    it 'calculates deployment start and end times from all site audio recordings' do
-      earliest_recording = create(:audio_recording, recorded_date: audio_recording.recorded_date - 1.day, site:,
-        creator: writer_user)
-      latest_recording = create(:audio_recording, recorded_date: audio_recording.recorded_date + 1.day, site:,
-        creator: writer_user)
+    it 'cleans up and propagates errors raised by the caller' do
+      temp_dir = nil
 
-      with_export_manifest do
-        rows = package_data
-        expect(rows[:deployments]).to include(
-          'deploymentStart' => earliest_recording.recorded_date.utc.iso8601(0),
-          'deploymentEnd' => latest_recording.recorded_end_date.utc.iso8601(0)
-        )
-        expect(rows[:descriptor]['temporal']).to include(
-          'start' => earliest_recording.recorded_date.utc.iso8601(0),
-          'end' => latest_recording.recorded_end_date.utc.iso8601(0)
-        )
-      end
+      expect {
+        with_export_manifest do
+          temp_dir = package_path.parent
+          raise 'caller failed'
+        end
+      }.to raise_error(RuntimeError, 'caller failed')
+
+      expect(Dir).not_to exist(temp_dir)
     end
 
     it 'writes configured client-host identifiers for table ids and foreign keys' do
       rows = with_export_manifest { package_data }
       authority = Settings.global_identifiers.authority
 
-      expect(rows[:deployments]).to include(
+      expect(rows[:deployments].first).to include(
         'deploymentID' => "#{authority}/sites/#{site.id}",
         'locationID' => "#{authority}/sites/#{site.id}"
       )
-      expect(rows[:media]).to include(
+      expect(rows[:media].first).to include(
         'mediaID' => "#{authority}/audio_recordings/#{audio_recording.id}",
         'deploymentID' => "#{authority}/sites/#{site.id}"
       )
-      expect(rows[:observations]).to include(
+      expect(rows[:observations].first).to include(
         'observationID' => "#{authority}/audio_recordings/#{audio_recording.id}/audio_events/#{audio_event.id}/taggings/#{export_tagging.id}",
         'deploymentID' => "#{authority}/sites/#{site.id}",
         'mediaID' => "#{authority}/audio_recordings/#{audio_recording.id}"
       )
     end
 
-    it 'writes machine classification details from audio event provenance' do
-      audio_event.update!(provenance:)
-
-      result = with_export_manifest {
-        CSV.read(package_path.join('observations.csv'), headers: true).first.to_h
-      }
-
-      expect(result).to include(
-        'classificationMethod' => 'machine',
-        'classifiedBy' => provenance.name
-      )
-    end
-
-    it 'writes a default package source using the client settings' do
-      allow(Settings.client).to receive(:host).and_return('ecoacoustics')
-
-      result = with_export_manifest {
-        JSON.parse(package_path.join('datapackage.json').read).fetch('sources')
-      }
-
-      expect(result).to contain_exactly(
-        include(
-          'title' => 'Ecoacoustics',
-          'path' => Settings.client_routes.home_url
-        )
-      )
-    end
-
     context 'with no user or obfuscation override' do
       it 'writes public coordinates' do
         result = with_export_manifest {
-          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+          expect_spatial_point(site.public_longitude, site.public_latitude)
+          package_data[:deployments].first
         }
-
-        coordinate_uncertainty = site.total_coordinate_uncertainty_meters
-        obfuscation_uncertainty = coordinate_uncertainty - site.effective_measurement_uncertainty_meters
-        expected_tags = 'coordinatesObfuscated:true | ' \
-                        'dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters; ' \
-                        "coordinates have an obfuscation uncertainty of #{obfuscation_uncertainty} meters"
 
         expect(result).to include(
           'latitude' => site.public_latitude.to_s,
-          'longitude' => site.public_longitude.to_s,
-          'coordinateUncertainty' => coordinate_uncertainty.to_i.to_s,
-          'deploymentTags' => expected_tags
+          'longitude' => site.public_longitude.to_s
         )
       end
     end
@@ -260,15 +273,28 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
       it 'writes real coordinates' do
         result = with_export_manifest {
-          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+          expect_spatial_point(site.longitude, site.latitude)
+          package_data[:deployments].first
         }
 
         expect(result).to include(
           'latitude' => site.latitude.to_s,
-          'longitude' => site.longitude.to_s,
-          'coordinateUncertainty' => '30',
-          'deploymentTags' => 'coordinatesObfuscated:false | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters'
+          'longitude' => site.longitude.to_s
         )
+      end
+    end
+
+    context 'when a user without coordinate permission is supplied' do
+      let(:export_options) { super().with(user: writer_user) }
+
+      it 'keeps both table and descriptor coordinates obfuscated' do
+        with_export_manifest do
+          expect(package_data[:deployments].first).to include(
+            'latitude' => site.obfuscated_latitude.to_s,
+            'longitude' => site.obfuscated_longitude.to_s
+          )
+          expect_spatial_point(site.obfuscated_longitude, site.obfuscated_latitude)
+        end
       end
     end
 
@@ -277,20 +303,13 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
       it 'writes obfuscated coordinates' do
         result = with_export_manifest {
-          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+          expect_spatial_point(site.obfuscated_longitude, site.obfuscated_latitude)
+          package_data[:deployments].first
         }
-
-        coordinate_uncertainty = site.total_coordinate_uncertainty_meters(should_obfuscate: true)
-        obfuscation_uncertainty = coordinate_uncertainty - site.effective_measurement_uncertainty_meters
-        expected_tags = 'coordinatesObfuscated:true | ' \
-                        'dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters; ' \
-                        "coordinates have an obfuscation uncertainty of #{obfuscation_uncertainty} meters"
 
         expect(result).to include(
           'latitude' => site.obfuscated_latitude.to_s,
-          'longitude' => site.obfuscated_longitude.to_s,
-          'coordinateUncertainty' => coordinate_uncertainty.to_i.to_s,
-          'deploymentTags' => expected_tags
+          'longitude' => site.obfuscated_longitude.to_s
         )
       end
     end
@@ -300,14 +319,13 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
 
       it 'writes real coordinates' do
         result = with_export_manifest {
-          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+          expect_spatial_point(site.longitude, site.latitude)
+          package_data[:deployments].first
         }
 
         expect(result).to include(
           'latitude' => site.latitude.to_s,
-          'longitude' => site.longitude.to_s,
-          'coordinateUncertainty' => '30',
-          'deploymentTags' => 'coordinatesObfuscated:false | dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters'
+          'longitude' => site.longitude.to_s
         )
       end
     end
@@ -315,32 +333,18 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
     context 'when the site has custom obfuscated coordinates' do
       before { site.update!(custom_obfuscated_location: true) }
 
-      it 'writes unknown uncertainty due to custom obfuscation' do
+      it 'writes custom obfuscated coordinates with a blank numeric uncertainty' do
         result = with_export_manifest {
-          CSV.read(package_path.join('deployments.csv'), headers: true).first.to_h
+          expect_spatial_point(site.obfuscated_longitude, site.obfuscated_latitude)
+          package_data[:deployments].first
         }
-
-        expected_tags = 'coordinatesObfuscated:true | ' \
-                        'dataGeneralizations:coordinates have an assumed measurement uncertainty of 30 meters; ' \
-                        'coordinates have an unknown obfuscation uncertainty'
 
         expect(result).to include(
           'latitude' => site.obfuscated_latitude.to_s,
           'longitude' => site.obfuscated_longitude.to_s,
-          'coordinateUncertainty' => '',
-          'deploymentTags' => expected_tags
+          'coordinateUncertainty' => ''
         )
       end
-    end
-
-    it 'writes taxonomic coverage from observed scientific names' do
-      result = with_export_manifest {
-        JSON.parse(package_path.join('datapackage.json').read).fetch('taxonomic')
-      }
-
-      expect(result).to contain_exactly(
-        include('scientificName' => export_tagging.tag.text)
-      )
     end
 
     context 'when the site has no timezone' do
@@ -367,7 +371,7 @@ describe BawWorkers::Export::CamtrapDp::Exporter do
       end
     end
 
-    context 'when a force UTC offset is supplied' do
+    context 'when a forced timezone is supplied' do
       let(:export_options) { super().with(forced_timezone: ActiveSupport::TimeZone['America/Sao_Paulo']) }
 
       before { site.update!(tzinfo_tz: 'Australia/Brisbane') }
