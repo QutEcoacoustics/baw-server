@@ -34,6 +34,8 @@ class Export < ApplicationRecord
   belongs_to :creator, class_name: 'User', inverse_of: :created_exports
   belongs_to :project, inverse_of: :exports
 
+  has_one_attached :archive
+
   STATUS_PENDING = 'pending'
   STATUS_QUEUED  = 'queued'
   STATUS_WORKING = 'working'
@@ -49,4 +51,14 @@ class Export < ApplicationRecord
   }
 
   enum :status, STATUS_ENUM, prefix: :status, validate: true
+
+  validate :attachment_acceptable, if: -> { archive.attached? }
+
+  private
+
+  def attachment_acceptable
+    return if archive.content_type == 'application/zip'
+
+    errors.add(:archive, 'must be a zip file')
+  end
 end
