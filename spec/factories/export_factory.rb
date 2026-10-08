@@ -58,5 +58,12 @@ FactoryBot.define do
 
     creator
     project
+
+    trait :with_archive do
+      after(:build) do |export|
+        archive = Rack::Test::UploadedFile.new(Fixtures.zip_fixture, 'application/zip')
+        export.archive.attach(archive)
+      end
+    end
   end
 end
