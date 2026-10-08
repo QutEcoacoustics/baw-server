@@ -39,6 +39,10 @@ describe Export do
     expect(subject).to be_valid
   end
 
+  it 'has a valid factory (with archive)' do
+    expect(create(:export, :with_archive)).to be_valid
+  end
+
   it { is_expected.to belong_to(:creator) }
   it { is_expected.to belong_to(:project).optional(true) }
 
@@ -48,5 +52,13 @@ describe Export do
 
   it 'has a status of pending by default' do
     expect(subject.status).to eq('pending')
+  end
+
+  it 'validates that the archive is a zip file' do
+    export = build(:export, :with_archive)
+    export.archive.blob.update(content_type: 'application/pdf')
+
+    expect(export).not_to be_valid
+    expect(export.errors[:archive]).to include('must be a zip file')
   end
 end
