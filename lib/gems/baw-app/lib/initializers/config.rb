@@ -74,6 +74,10 @@ class BawConfigContract < Dry::Validation::Contract
       required(:analysis_amend_after_harvest).hash do
         required(:queue).filled(:string)
       end
+
+      required(:export).hash do
+        required(:queue).filled(:string)
+      end
     end
   }
 

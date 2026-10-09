@@ -36,9 +36,21 @@ class Export < ApplicationRecord
 
   has_one_attached :archive
 
+  # TODO: methods that manage the transitions. Shouldn't update the status manually anywhere.
+  # E.g. methods like queued, working, finished with result, purged.
+  # So can't manipulate the status and get an invalid state.
+  # There is state machine here. Do it, or else lock down to 5 or 6 methods that manage the transitions.
+  # Therefore easy to test.
+  # E.g. enqueue, start etc. transitions from new to queued.
+  # generate method does the working step and handle ready and failed.
+  # purge method sets purged.
+  # predicates inside each that guards against the transitions. e.g. can't do this if status is that. limit the method options.
+
   STATUS_PENDING = 'pending'
   STATUS_QUEUED  = 'queued'
   STATUS_WORKING = 'working'
+
+  # Can only get to ready after working. Consistency could be called success.
   STATUS_READY   = 'ready'
   STATUS_FAILED  = 'failed'
 
