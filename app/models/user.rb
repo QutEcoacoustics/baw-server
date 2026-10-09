@@ -215,6 +215,9 @@ class User < ApplicationRecord
   has_many :created_verifications, class_name: 'Verification', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_verifications, class_name: 'Verification', foreign_key: :updator_id, inverse_of: :updater
 
+  has_many :created_exports, class_name: 'Export', foreign_key: :creator_id,
+    inverse_of: :creator
+
   # scopes
   scope :users, -> { where(roles_mask: 2) }
   scope(:recently_seen,
