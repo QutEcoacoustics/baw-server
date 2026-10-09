@@ -65,6 +65,7 @@ class Project < ApplicationRecord
   has_many :projects_saved_searches, inverse_of: :project
   has_many :saved_searches, through: :projects_saved_searches
   has_many :analysis_jobs, inverse_of: :project
+  has_many :exports, inverse_of: :project
 
   accepts_nested_attributes_for :permissions
 
