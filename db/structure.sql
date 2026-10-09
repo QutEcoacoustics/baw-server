@@ -1,6 +1,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -131,6 +132,19 @@ Fields:
   sequence_number  - Zero-based label for the current contiguous block.
   threshold        - Maximum allowed gap before starting a new block.
 ';
+
+
+--
+-- Name: export_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.export_status AS ENUM (
+    'pending',
+    'queued',
+    'working',
+    'ready',
+    'failed'
+);
 
 
 --
@@ -1568,6 +1582,64 @@ ALTER SEQUENCE public.datasets_id_seq OWNED BY public.datasets.id;
 
 
 --
+-- Name: exports; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.exports (
+    id bigint NOT NULL,
+    name character varying,
+    filter jsonb NOT NULL,
+    obfuscate_locations boolean,
+    export_type character varying(16) NOT NULL,
+    options jsonb,
+    status public.export_status DEFAULT 'pending'::public.export_status NOT NULL,
+    error text,
+    started_at timestamp(6) without time zone,
+    finished_at timestamp(6) without time zone,
+    expires_at timestamp(6) without time zone,
+    purged boolean,
+    download_count integer DEFAULT 0,
+    creator_id bigint NOT NULL,
+    project_id bigint NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: COLUMN exports.options; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.exports.options IS 'Additional options for the export';
+
+
+--
+-- Name: COLUMN exports.error; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.exports.error IS 'User visible error message if the export failed';
+
+
+--
+-- Name: exports_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.exports_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: exports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.exports_id_seq OWNED BY public.exports.id;
+
+
+--
 -- Name: harvest_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2589,6 +2661,13 @@ ALTER TABLE ONLY public.datasets ALTER COLUMN id SET DEFAULT nextval('public.dat
 
 
 --
+-- Name: exports id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports ALTER COLUMN id SET DEFAULT nextval('public.exports_id_seq'::regclass);
+
+
+--
 -- Name: harvest_items id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -2952,6 +3031,14 @@ ALTER TABLE ONLY public.dataset_items
 
 ALTER TABLE ONLY public.datasets
     ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: exports exports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT exports_pkey PRIMARY KEY (id);
 
 
 --
@@ -3574,6 +3661,20 @@ CREATE INDEX index_comfy_cms_translations_on_locale ON public.comfy_cms_translat
 --
 
 CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_translations USING btree (page_id);
+
+
+--
+-- Name: index_exports_on_creator_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_creator_id ON public.exports USING btree (creator_id);
+
+
+--
+-- Name: index_exports_on_project_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_exports_on_project_id ON public.exports USING btree (project_id);
 
 
 --
@@ -4315,6 +4416,14 @@ ALTER TABLE ONLY public.harvests
 
 
 --
+-- Name: exports fk_rails_7f1d67b284; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_7f1d67b284 FOREIGN KEY (project_id) REFERENCES public.projects(id);
+
+
+--
 -- Name: analysis_jobs fk_rails_81c0fed756; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4480,6 +4589,14 @@ ALTER TABLE ONLY public.provenances
 
 ALTER TABLE ONLY public.harvest_items
     ADD CONSTRAINT fk_rails_dc2d52ddad FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id) ON DELETE CASCADE;
+
+
+--
+-- Name: exports fk_rails_dc8a42fd74; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.exports
+    ADD CONSTRAINT fk_rails_dc8a42fd74 FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
@@ -4705,6 +4822,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261006062009'),
 ('20260507061809'),
 ('20260507052638'),
 ('20260306070000'),
