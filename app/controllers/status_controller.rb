@@ -108,12 +108,13 @@ class StatusController < ApplicationController
       )
         value = BawWorkers::Config.batch_analysis.remote_connected?
         # A check that outlives its lease must not overwrite a newer check.
-        communicator.redis.eval(<<~LUA, keys: [communicator.add_namespace(key)],
-          argv: [pending, communicator.encode(value)])
+        script = <<~LUA
           if redis.call('GET', KEYS[1]) == ARGV[1] then
             return redis.call('SET', KEYS[1], ARGV[2], 'EX', 60)
           end
         LUA
+        communicator.redis.eval(script, keys: [communicator.add_namespace(key)],
+          argv: [pending, communicator.encode(value)])
         return value
       end
 
