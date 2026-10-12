@@ -3,7 +3,8 @@
 # Controller for the status endpoint
 class StatusController < ApplicationController
   BATCH_ANALYSIS_TIMEOUT_SECONDS = 2
-  BATCH_ANALYSIS_CACHE_TTL_SECONDS = 60
+  # Keep stalled checks from slowing down the test suite for a full minute.
+  BATCH_ANALYSIS_CACHE_TTL_SECONDS = Rails.env.test? ? 10 : 60
   BATCH_ANALYSIS_POLL_INTERVAL_SECONDS = 0.1
 
   skip_authorization_check only: [:index]
@@ -138,7 +139,7 @@ class StatusController < ApplicationController
 
   def cache_batch_analysis_result(communicator, key, pending, value)
     # Compare ownership and write atomically: separate GET/SET calls could overwrite
-    # a newer pending marker or result if this check outlived its 60-second lease.
+    # a newer pending marker or result if this check outlived its cache lease.
     script = <<~LUA
       if redis.call('GET', KEYS[1]) == ARGV[1] then
         return redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])

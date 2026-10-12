@@ -11,32 +11,32 @@ describe StatusController, type: :controller do
 
     [true, false].each do |value|
       it "returns a cached #{value} without checking the remote connection" do
-        communicator.set(key, value, expire_seconds: 60)
+        communicator.set(key, value, expire_seconds: 10)
         expect(batch_analysis).not_to receive(:remote_connected?)
         expect(controller).not_to receive(:sleep)
 
         expect(connected).to eq(value)
       end
 
-      it "caches a #{value} result for 60 seconds" do
+      it "caches a #{value} result for 10 seconds in tests" do
         expect(batch_analysis).to receive(:remote_connected?).once do
           expect(communicator.get(key)).to start_with('pending:')
-          expect(communicator.ttl(key)).to be_between(1, 60)
+          expect(communicator.ttl(key)).to be_between(1, 10)
           value
         end
 
         expect(connected).to eq(value)
         expect(controller.send(:batch_analysis_connected?)).to eq(value)
         expect(communicator.get(key)).to eq(value)
-        expect(communicator.ttl(key)).to be_between(1, 60)
+        expect(communicator.ttl(key)).to be_between(1, 10)
       end
     end
 
     it 'waits for an in-progress check without making another remote connection' do
-      communicator.set(key, pending, expire_seconds: 60)
+      communicator.set(key, pending, expire_seconds: 10)
       expect(batch_analysis).not_to receive(:remote_connected?)
       expect(controller).to receive(:sleep).with(0.1) do
-        communicator.set(key, true, expire_seconds: 60)
+        communicator.set(key, true, expire_seconds: 10)
       end
 
       expect(connected).to be true
@@ -45,7 +45,7 @@ describe StatusController, type: :controller do
     it 'uses the result of another request that wins the atomic cache claim' do
       expect(communicator).to receive(:get).with(key).and_return(nil, false)
       expect(communicator.redis).to receive(:set)
-        .with(communicator.add_namespace(key), a_kind_of(String), ex: 60, nx: true)
+        .with(communicator.add_namespace(key), a_kind_of(String), ex: 10, nx: true)
         .and_return(nil)
       allow(controller).to receive(:sleep)
       expect(batch_analysis).not_to receive(:remote_connected?)
@@ -56,7 +56,7 @@ describe StatusController, type: :controller do
     it 'polls when another request wins the atomic cache claim with a pending value' do
       expect(communicator).to receive(:get).with(key).and_return(nil, pending, true)
       expect(communicator.redis).to receive(:set)
-        .with(communicator.add_namespace(key), a_kind_of(String), ex: 60, nx: true)
+        .with(communicator.add_namespace(key), a_kind_of(String), ex: 10, nx: true)
         .and_return(nil)
       expect(controller).to receive(:sleep).with(0.1)
       expect(batch_analysis).not_to receive(:remote_connected?)
@@ -65,7 +65,7 @@ describe StatusController, type: :controller do
     end
 
     it 'claims the cache when an in-progress check expires during polling' do
-      communicator.set(key, pending, expire_seconds: 60)
+      communicator.set(key, pending, expire_seconds: 10)
       expect(controller).to receive(:sleep).with(0.1) do
         communicator.redis.expire(communicator.add_namespace(key), 0)
       end
@@ -76,23 +76,25 @@ describe StatusController, type: :controller do
     end
 
     it 'times out rather than waiting indefinitely for a pending check' do
-      communicator.set(key, pending, expire_seconds: 60)
+      communicator.set(key, pending, expire_seconds: 10)
       expect(batch_analysis).not_to receive(:remote_connected?)
-      allow(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(0, 2)
+      # Redis and logging also read the monotonic clock, so do not stub it globally.
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       expect { connected }.to raise_error(RuntimeError, 'timeout')
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at).to be_between(2, 5)
       expect(communicator.get(key)).to eq(pending)
     end
 
     [true, :pending].each do |value|
       it "checks again after a cached #{value} expires" do
-        communicator.set(key, value == :pending ? pending : value, expire_seconds: 60)
+        communicator.set(key, value == :pending ? pending : value, expire_seconds: 10)
         communicator.redis.expire(communicator.add_namespace(key), 0)
         expect(batch_analysis).to receive(:remote_connected?).once.and_return(false)
 
         expect(connected).to be false
         expect(communicator.get(key)).to be false
-        expect(communicator.ttl(key)).to be_between(1, 60)
+        expect(communicator.ttl(key)).to be_between(1, 10)
       end
     end
 
@@ -102,12 +104,12 @@ describe StatusController, type: :controller do
 
       expect { connected }.to raise_error(PBS::Errors::TransportError, 'failed to test_connection')
       expect(communicator.get(key)).to start_with('pending:')
-      expect(communicator.ttl(key)).to be_between(1, 60)
+      expect(communicator.ttl(key)).to be_between(1, 10)
     end
 
     it 'does not overwrite a newer pending check after its lease expires' do
       expect(batch_analysis).to receive(:remote_connected?) do
-        communicator.set(key, pending, expire_seconds: 60)
+        communicator.set(key, pending, expire_seconds: 10)
         true
       end
 
@@ -127,7 +129,7 @@ describe StatusController, type: :controller do
 
     it 'does not overwrite a newer result after its lease expires' do
       expect(batch_analysis).to receive(:remote_connected?) do
-        communicator.set(key, false, expire_seconds: 60)
+        communicator.set(key, false, expire_seconds: 10)
         true
       end
 
