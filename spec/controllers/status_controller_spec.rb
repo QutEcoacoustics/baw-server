@@ -92,6 +92,16 @@ describe StatusController, type: :controller do
       expect(communicator.get(key)).to eq(pending)
     end
 
+    it 'does not recreate the cache when its pending lease has expired' do
+      expect(batch_analysis).to receive(:remote_connected?) do
+        communicator.redis.expire(communicator.add_namespace(key), 0)
+        true
+      end
+
+      expect(connected).to be true
+      expect(communicator.get(key)).to be_nil
+    end
+
     it 'does not overwrite a newer result after its lease expires' do
       expect(batch_analysis).to receive(:remote_connected?) do
         communicator.set(key, false, expire_seconds: 60)

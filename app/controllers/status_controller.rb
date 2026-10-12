@@ -2,6 +2,10 @@
 
 # Controller for the status endpoint
 class StatusController < ApplicationController
+  BATCH_ANALYSIS_TIMEOUT_SECONDS = 2
+  BATCH_ANALYSIS_CACHE_TTL_SECONDS = 60
+  BATCH_ANALYSIS_POLL_INTERVAL_SECONDS = 0.1
+
   skip_authorization_check only: [:index]
 
   # GET /status
@@ -85,7 +89,7 @@ class StatusController < ApplicationController
         end
       },
       Concurrent::Promises.any(
-        Concurrent::Promises.schedule(2).then { raise 'timeout' },
+        Concurrent::Promises.schedule(BATCH_ANALYSIS_TIMEOUT_SECONDS).then { raise 'timeout' },
         Concurrent::Promises::FactoryMethods.future {
           batch_analysis_connected?
         }
@@ -96,32 +100,43 @@ class StatusController < ApplicationController
   def batch_analysis_connected?
     communicator = BawWorkers::Config.redis_communicator
     key = 'status:batch_analysis:connected'
-    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2
+    # Use the same time budget as the promise timeout, unaffected by wall-clock changes.
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BATCH_ANALYSIS_TIMEOUT_SECONDS
+    # Identify this check so a late result cannot overwrite a newer check after the key expires.
+    pending = communicator.encode({ status: :pending, token: SecureRandom.uuid })
 
+    # Poll while another request owns the check; do not open another remote connection.
+    # The deadline bounds this worker's wait because the promise timeout does not stop it.
     loop do
       value = communicator.get(key)
+      # A cached false is a valid result, not a cache miss.
       return value unless value.nil? || value.is_a?(Hash) && value['status'] == 'pending'
 
-      pending = communicator.encode({ status: :pending, token: SecureRandom.uuid })
+      # NX elects one checker atomically; the TTL allows recovery if that checker hangs.
       if value.nil? && communicator.redis.set(
-        communicator.add_namespace(key), pending, ex: 60, nx: true
+        communicator.add_namespace(key), pending, ex: BATCH_ANALYSIS_CACHE_TTL_SECONDS, nx: true
       )
         value = BawWorkers::Config.batch_analysis.remote_connected?
-        # A check that outlives its lease must not overwrite a newer check.
-        script = <<~LUA
-          if redis.call('GET', KEYS[1]) == ARGV[1] then
-            return redis.call('SET', KEYS[1], ARGV[2], 'EX', 60)
-          end
-        LUA
-        communicator.redis.eval(script, keys: [communicator.add_namespace(key)],
-          argv: [pending, communicator.encode(value)])
+        cache_batch_analysis_result(communicator, key, pending, value)
         return value
       end
 
       raise 'timeout' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
 
-      sleep 0.1
+      sleep BATCH_ANALYSIS_POLL_INTERVAL_SECONDS
     end
+  end
+
+  def cache_batch_analysis_result(communicator, key, pending, value)
+    # Compare ownership and write atomically: separate GET/SET calls could overwrite
+    # a newer pending marker or result if this check outlived its 60-second lease.
+    script = <<~LUA
+      if redis.call('GET', KEYS[1]) == ARGV[1] then
+        return redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+      end
+    LUA
+    communicator.redis.eval(script, keys: [communicator.add_namespace(key)],
+      argv: [pending, communicator.encode(value), BATCH_ANALYSIS_CACHE_TTL_SECONDS])
   end
 
   # Transform a promise into a safe string
