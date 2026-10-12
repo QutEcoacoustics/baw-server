@@ -112,7 +112,7 @@ describe 'reports', type: :request do
         schema: request_body_schema
 
       response '200', 'analysis coverage report retrieved' do
-        schema(**Api::Schema.coverage_report(include_result: true))
+        schema(**Api::Schema.coverage_report(include_result: true, include_accumulated_density: true))
 
         run_test! do
           expect_at_least_one_item
