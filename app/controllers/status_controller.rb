@@ -2,6 +2,11 @@
 
 # Controller for the status endpoint
 class StatusController < ApplicationController
+  BATCH_ANALYSIS_TIMEOUT_SECONDS = 2
+  # Keep stalled checks from slowing down the test suite for a full minute.
+  BATCH_ANALYSIS_CACHE_TTL_SECONDS = Rails.env.test? ? 10 : 60
+  BATCH_ANALYSIS_POLL_INTERVAL_SECONDS = 0.1
+
   skip_authorization_check only: [:index]
 
   # GET /status
@@ -85,12 +90,63 @@ class StatusController < ApplicationController
         end
       },
       Concurrent::Promises.any(
-        Concurrent::Promises.schedule(2).then { raise 'timeout' },
+        Concurrent::Promises.schedule(BATCH_ANALYSIS_TIMEOUT_SECONDS).then { raise 'timeout' },
         Concurrent::Promises::FactoryMethods.future {
-          BawWorkers::Config.batch_analysis.remote_connected?
+          batch_analysis_connected?
         }
       )
     )
+  end
+
+  def batch_analysis_connected?
+    communicator = BawWorkers::Config.redis_communicator
+    key = 'status:batch_analysis:connected'
+    value = communicator.get(key)
+    if value.is_a?(String) && value.start_with?('pending')
+      value = wait_for_batch_analysis_result(communicator, key, value)
+    end
+    # A cached false is a valid result, not a cache miss.
+    return value unless value.nil?
+
+    # Identify this check so a late result cannot overwrite a newer check after the key expires.
+    pending = communicator.encode("pending:#{SecureRandom.uuid}")
+    # NX elects one checker atomically; the TTL allows recovery if that checker hangs.
+    claimed = communicator.redis.set(
+      communicator.add_namespace(key), pending, ex: BATCH_ANALYSIS_CACHE_TTL_SECONDS, nx: true
+    )
+    # Another request claimed the cache between our read and SET; read its value instead.
+    return batch_analysis_connected? unless claimed
+
+    value = BawWorkers::Config.batch_analysis.remote_connected?
+    cache_batch_analysis_result(communicator, key, pending, value)
+    value
+  end
+
+  def wait_for_batch_analysis_result(communicator, key, value)
+    # Use the same time budget as the promise timeout, unaffected by wall-clock changes.
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + BATCH_ANALYSIS_TIMEOUT_SECONDS
+    # Poll while another request owns the check; do not open another remote connection.
+    # The deadline bounds this worker's wait because the promise timeout does not stop it.
+    while value.is_a?(String) && value.start_with?('pending')
+      raise 'timeout' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+      sleep BATCH_ANALYSIS_POLL_INTERVAL_SECONDS
+      value = communicator.get(key)
+    end
+
+    value
+  end
+
+  def cache_batch_analysis_result(communicator, key, pending, value)
+    # Compare ownership and write atomically: separate GET/SET calls could overwrite
+    # a newer pending marker or result if this check outlived its cache lease.
+    script = <<~LUA
+      if redis.call('GET', KEYS[1]) == ARGV[1] then
+        return redis.call('SET', KEYS[1], ARGV[2], 'EX', ARGV[3])
+      end
+    LUA
+    communicator.redis.eval(script, keys: [communicator.add_namespace(key)],
+      argv: [pending, communicator.encode(value), BATCH_ANALYSIS_CACHE_TTL_SECONDS])
   end
 
   # Transform a promise into a safe string
