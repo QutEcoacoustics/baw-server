@@ -87,10 +87,33 @@ class StatusController < ApplicationController
       Concurrent::Promises.any(
         Concurrent::Promises.schedule(2).then { raise 'timeout' },
         Concurrent::Promises::FactoryMethods.future {
-          BawWorkers::Config.batch_analysis.remote_connected?
+          batch_analysis_connected?
         }
       )
     )
+  end
+
+  def batch_analysis_connected?
+    communicator = BawWorkers::Config.redis_communicator
+    key = 'status:batch_analysis:connected'
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2
+
+    loop do
+      value = communicator.get(key)
+      return value unless value.nil? || value == 'pending'
+
+      if value.nil? && communicator.redis.set(
+        communicator.add_namespace(key), communicator.encode(:pending), ex: 60, nx: true
+      )
+        value = BawWorkers::Config.batch_analysis.remote_connected?
+        communicator.set(key, value, expire_seconds: 60)
+        return value
+      end
+
+      raise 'timeout' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+      sleep 0.1
+    end
   end
 
   # Transform a promise into a safe string
