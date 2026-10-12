@@ -100,13 +100,20 @@ class StatusController < ApplicationController
 
     loop do
       value = communicator.get(key)
-      return value unless value.nil? || value == 'pending'
+      return value unless value.nil? || value.is_a?(Hash) && value['status'] == 'pending'
 
+      pending = communicator.encode({ status: :pending, token: SecureRandom.uuid })
       if value.nil? && communicator.redis.set(
-        communicator.add_namespace(key), communicator.encode(:pending), ex: 60, nx: true
+        communicator.add_namespace(key), pending, ex: 60, nx: true
       )
         value = BawWorkers::Config.batch_analysis.remote_connected?
-        communicator.set(key, value, expire_seconds: 60)
+        # A check that outlives its lease must not overwrite a newer check.
+        communicator.redis.eval(<<~LUA, keys: [communicator.add_namespace(key)],
+          argv: [pending, communicator.encode(value)])
+          if redis.call('GET', KEYS[1]) == ARGV[1] then
+            return redis.call('SET', KEYS[1], ARGV[2], 'EX', 60)
+          end
+        LUA
         return value
       end
 
