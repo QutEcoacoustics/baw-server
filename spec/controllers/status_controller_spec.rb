@@ -7,19 +7,20 @@ describe StatusController, type: :controller do
     let(:communicator) { BawWorkers::Config.redis_communicator }
     let(:batch_analysis) { BawWorkers::Config.batch_analysis }
     let(:key) { 'status:batch_analysis:connected' }
-    let(:pending) { { 'status' => 'pending', 'token' => SecureRandom.uuid } }
+    let(:pending) { "pending:#{SecureRandom.uuid}" }
 
     [true, false].each do |value|
       it "returns a cached #{value} without checking the remote connection" do
         communicator.set(key, value, expire_seconds: 60)
         expect(batch_analysis).not_to receive(:remote_connected?)
+        expect(controller).not_to receive(:sleep)
 
         expect(connected).to eq(value)
       end
 
       it "caches a #{value} result for 60 seconds" do
         expect(batch_analysis).to receive(:remote_connected?).once do
-          expect(communicator.get(key)).to include('status' => 'pending', 'token' => a_kind_of(String))
+          expect(communicator.get(key)).to start_with('pending:')
           expect(communicator.ttl(key)).to be_between(1, 60)
           value
         end
@@ -52,6 +53,28 @@ describe StatusController, type: :controller do
       expect(connected).to be false
     end
 
+    it 'polls when another request wins the atomic cache claim with a pending value' do
+      expect(communicator).to receive(:get).with(key).and_return(nil, pending, true)
+      expect(communicator.redis).to receive(:set)
+        .with(communicator.add_namespace(key), a_kind_of(String), ex: 60, nx: true)
+        .and_return(nil)
+      expect(controller).to receive(:sleep).with(0.1)
+      expect(batch_analysis).not_to receive(:remote_connected?)
+
+      expect(connected).to be true
+    end
+
+    it 'claims the cache when an in-progress check expires during polling' do
+      communicator.set(key, pending, expire_seconds: 60)
+      expect(controller).to receive(:sleep).with(0.1) do
+        communicator.redis.expire(communicator.add_namespace(key), 0)
+      end
+      expect(batch_analysis).to receive(:remote_connected?).once.and_return(false)
+
+      expect(connected).to be false
+      expect(communicator.get(key)).to be false
+    end
+
     it 'times out rather than waiting indefinitely for a pending check' do
       communicator.set(key, pending, expire_seconds: 60)
       expect(batch_analysis).not_to receive(:remote_connected?)
@@ -78,7 +101,7 @@ describe StatusController, type: :controller do
         .and_raise(PBS::Errors::TransportError, 'failed to test_connection')
 
       expect { connected }.to raise_error(PBS::Errors::TransportError, 'failed to test_connection')
-      expect(communicator.get(key)).to include('status' => 'pending')
+      expect(communicator.get(key)).to start_with('pending:')
       expect(communicator.ttl(key)).to be_between(1, 60)
     end
 
