@@ -1,8 +1,21 @@
 # Changelog
 
+## [15.5.0](https://github.com/QutEcoacoustics/baw-server/tree/15.5.0) (2026-10-12)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.4.0...15.5.0)
+
+**Implemented enhancements:**
+
+- Cache batch analysis availability [\#1074](https://github.com/QutEcoacoustics/baw-server/issues/1074)
+
 ## [15.4.0](https://github.com/QutEcoacoustics/baw-server/tree/15.4.0) (2026-10-01)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.3.7...15.4.0)
+
+**Implemented enhancements:**
+
+- fix add stats module and verification stats endpoints [\#1053](https://github.com/QutEcoacoustics/baw-server/pull/1053) ([andrew-1234](https://github.com/andrew-1234))
+- feat\(reports\): add reports/tag\_rate endpoint [\#1046](https://github.com/QutEcoacoustics/baw-server/pull/1046) ([andrew-1234](https://github.com/andrew-1234))
 
 **Closed issues:**
 
