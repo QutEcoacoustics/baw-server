@@ -33,14 +33,16 @@
 require 'rails_helper'
 
 describe Export do
-  subject { build(:export) }
+  subject { build(:export, :camtrap_dp) }
 
-  it 'has a valid factory' do
+  it 'has a valid camtrap_dp factory without a file' do
     expect(subject).to be_valid
+    expect(subject).to be_export_type_camtrap_dp
+    expect(subject.file).not_to be_attached
   end
 
-  it 'has a valid factory (with archive)' do
-    expect(create(:export, :with_archive)).to be_valid
+  it 'has a valid camtrap_dp factory with a zip file' do
+    expect(create(:export, :camtrap_dp, :with_zip_file)).to be_valid
   end
 
   it { is_expected.to belong_to(:creator) }
@@ -54,11 +56,51 @@ describe Export do
     expect(subject.status).to eq('pending')
   end
 
-  it 'validates that the archive is a zip file' do
-    export = build(:export, :with_archive)
-    export.archive.blob.update(content_type: 'application/pdf')
+  it 'accepts an attached zip file' do
+    export = build(:export, :camtrap_dp, :with_zip_file)
+
+    expect(export.file).to be_attached
+    expect(export).to be_valid
+  end
+
+  it 'validates that the file is a zip file' do
+    export = build(:export, :camtrap_dp, :with_zip_file)
+    export.file.blob.update(content_type: 'application/pdf')
 
     expect(export).not_to be_valid
-    expect(export.errors[:archive]).to include('must be a zip file')
+    expect(export.errors[:file]).to include('must be a zip file')
+  end
+
+  it 'validates camtrap_dp options using the contract' do
+    export = build(:export, :camtrap_dp, creator: create(:user), options: { project_capture_method: ['continuous'] })
+
+    expect(export).to be_valid
+  end
+
+  it 'is invalid when camtrap_dp options fail the contract' do
+    export = build(:export, :camtrap_dp, creator: create(:user), options: { project_capture_method: ['invalid'] })
+
+    expect(export).not_to be_valid
+    expect(export.errors[:options]).to include(
+      'project_capture_method.0 must be one of: activityDetection, continuous, recordingSchedule'
+    )
+  end
+
+  context 'when generating a camtrap_dp export' do
+    create_entire_hierarchy
+
+    let(:test_export_with_options_and_filter) {
+      options = {
+        contributors: [{ title: 'Alice', path: 'http://www.test' }],
+        project_capture_method: ['continuous', 'recordingSchedule'],
+        project_sampling_design: 'systematicRandom',
+        emit_project_license: true,
+        forced_timezone: nil
+      }
+
+      filter = { and: [{ 'sites.id': { in: [site.id] } }] }
+
+      create(:export, :camtrap_dp, options: options, filter: filter)
+    }
   end
 end
