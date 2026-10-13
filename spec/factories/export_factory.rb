@@ -36,10 +36,10 @@ FactoryBot.define do
   factory :export do
     sequence(:name) { |n| "export_#{n}" }
 
-    obfuscate_locations { false }
+    obfuscate_locations { true }
     export_type { 'camtrap_dp' }
 
-    filter { {} }
+    filter { { id: 1 } }
     options { {} }
 
     status { 'pending' }
@@ -59,10 +59,14 @@ FactoryBot.define do
     creator
     project
 
-    trait :with_archive do
+    trait :camtrap_dp do
+      export_type { 'camtrap_dp' }
+    end
+
+    trait :with_zip_file do
       after(:build) do |export|
-        archive = Rack::Test::UploadedFile.new(Fixtures.zip_fixture, 'application/zip')
-        export.archive.attach(archive)
+        file = Rack::Test::UploadedFile.new(Fixtures.zip_fixture, 'application/zip')
+        export.file.attach(file)
       end
     end
   end

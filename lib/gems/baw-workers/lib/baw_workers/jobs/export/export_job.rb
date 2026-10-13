@@ -13,40 +13,8 @@ module BawWorkers
         perform_expects ::Export
 
         def perform(export)
-          # TODO: Claim this row as working here; set started_at and clear error/finished_at.
-          # TODO: Reject duplicate or terminal attempts before starting the export.
-          user = export.creator
+          export.generate
 
-          # TODO: Table becomes more generic, add options column for hash of options (json).
-          # TODO: Add a type column for export type: e.g. 'camtrap' and in the future 'csv_*'
-          # Then just get export.options.merge(user: user)
-          # Validation on the export that the creator is the owner if true. Applied to every export.
-          # And this can stay as a stand-alone column.
-          #
-          # TODO: Replace test options with persisted request options; use name for package_title.
-          options = BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
-            user: user,
-            # TODO: Pass export.obfuscate_locations here; authorize false when accepting the request.
-            should_obfuscate: nil,
-            contributors: [{ title: 'Alice', path: 'http://www.test' }],
-            project_capture_method: ['continuous', 'recordingSchedule'],
-            project_sampling_design: 'systematicRandom',
-            package_title: export.name,
-            emit_project_license: true,
-            forced_timezone: nil
-          )
-
-          # TODO: See analysis_job model. Replicate on the model. Reusable across models
-          # Exports has project FK. Use the predicate in filter as relation, same as analysis_job. Exports will all be scoped to a single project.
-          # TODO: Might have to support passing in a base model to filter_as_relation. Doesn't have to be completely generic now.
-          # Filter as relation could case on the type column.
-          # Just add a type column, validate type is always camtrap_dp for now. Varchar 16
-          export.filter_as_relation
-
-          # TODO: Restrict this scope to project_id when present; define single-project Camtrap enforcement.
-          scope = Access::ByPermission.audio_events_tags(user)
-
-          # Get the filter stored on the data package export record.
           # TODO: Wrap stored conditions in { filter: ... }; use an export-owned projection.
           filter = export.filter.with_indifferent_access
           relation = Filter::Query.new(
@@ -65,7 +33,7 @@ module BawWorkers
           exporter.call do |manifest|
             # attach the zip to the data package export
             # TODO: Use File.open(manifest.zip_path, 'rb') with a block around attach to close the IO.
-            export.archive.attach(
+            export.file.attach(
               io: File.open(manifest.zip_path),
               filename: File.basename(manifest.zip_path),
               content_type: 'application/zip'

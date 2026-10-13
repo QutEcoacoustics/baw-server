@@ -43,7 +43,7 @@ describe BawWorkers::Jobs::Export::ExportJob do
 
     export.reload
     expect(export).to be_status_ready
-    expect(export.archive).to be_attached
-    expect(export.archive.content_type).to eq('application/zip')
+    expect(export.file).to be_attached
+    expect(export.file.content_type).to eq('application/zip')
   end
 end
