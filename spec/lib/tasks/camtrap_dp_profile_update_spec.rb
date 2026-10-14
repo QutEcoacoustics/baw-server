@@ -6,8 +6,70 @@ describe 'baw:camtrap_dp:update' do
   include_context 'rake_spec_context'
 
   let(:profile) { BawWorkers::Export::CamtrapDp::Profile }
+  let(:data_package_schema) do
+    # This is not the main camtrap profile file. It is the fake JSON document returned when the
+    # code follows the data-package ref inside camtrap-dp-profile-acoustic.json.
+    {
+      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+      'title' => 'Data Package Schema',
+      'type' => 'object',
+      'properties' => {
+        # The main camtrap profile already has refs to the data-package URL and the schemastore
+        # URL. This nested ref is what makes the real code discover the third geojson.org URL.
+        # If this ref changes, the test should fail because that third URL will stop appearing in
+        # the README and its JSON document will stop appearing in the generated local profile.
+        'spatial' => {
+          '$ref' => 'https://geojson.org/schema/GeoJSON.json'
+        }
+      }
+    }
+  end
+  let(:geojson_schema) do
+    # Fake JSON document returned for the nested geojson.org ref introduced above.
+    {
+      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+      'title' => 'GeoJSON Org Schema',
+      'type' => 'object'
+    }
+  end
+  let(:generated_at) { Time.utc(2026, 7, 29, 3, 50, 44) }
   let(:written_readme) { {} }
   let(:written_local_validation_profile) { {} }
+  let(:schema_store_geojson_schema) do
+    # Fake JSON document returned for the schemastore ref that already exists in the main profile.
+    {
+      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+      'title' => 'Schema Store GeoJSON',
+      'type' => 'object'
+    }
+  end
+  let(:expected_readme_output) do
+    <<~MARKDOWN
+      # CamTrap DP Bioacoustics Downloaded profile assets
+
+      The files in this directory (including this readme) are generated with the `baw:camtrap_dp:update` rake task. Do not edit these files manually.
+
+      Generation date: 2026-07-29 03:50:44 UTC
+      Source: https://raw.githubusercontent.com/camera-traps/bioacoustics/e4b4722fb453f5ca39c39ea3c4f348e9953f0084/camtrap-dp/1.0.2/
+
+      ---
+
+      ## Downloaded profile assets
+
+      - Profile: ./camtrap-dp-profile-acoustic.json
+      - Deployments: ./deployments-table-schema-acoustic.json
+      - Media: ./media-table-schema-acoustic.json
+      - Observations: ./observations-table-schema-acoustic.json
+
+      ## Local validation profile
+
+      - Profile: ./camtrap-dp-profile-acoustic.local.json
+      - External references inlined:
+        - https://specs.frictionlessdata.io/schemas/data-package.json
+        - https://geojson.org/schema/GeoJSON.json
+        - http://json.schemastore.org/geojson.json
+    MARKDOWN
+  end
 
   before do
     # Capture the README content without rewriting the checked-in fixture file.
@@ -42,69 +104,6 @@ describe 'baw:camtrap_dp:update' do
     example.run
   ensure
     Timecop.return
-  end
-
-  let(:generated_at) { Time.utc(2026, 7, 29, 3, 50, 44) }
-  let(:data_package_schema) do
-    # This is not the main camtrap profile file. It is the fake JSON document returned when the
-    # code follows the data-package ref inside camtrap-dp-profile-acoustic.json.
-    {
-      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-      'title' => 'Data Package Schema',
-      'type' => 'object',
-      'properties' => {
-        # The main camtrap profile already has refs to the data-package URL and the schemastore
-        # URL. This nested ref is what makes the real code discover the third geojson.org URL.
-        # If this ref changes, the test should fail because that third URL will stop appearing in
-        # the README and its JSON document will stop appearing in the generated local profile.
-        'spatial' => {
-          '$ref' => 'https://geojson.org/schema/GeoJSON.json'
-        }
-      }
-    }
-  end
-  let(:schema_store_geojson_schema) do
-    # Fake JSON document returned for the schemastore ref that already exists in the main profile.
-    {
-      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-      'title' => 'Schema Store GeoJSON',
-      'type' => 'object'
-    }
-  end
-  let(:geojson_schema) do
-    # Fake JSON document returned for the nested geojson.org ref introduced above.
-    {
-      '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-      'title' => 'GeoJSON Org Schema',
-      'type' => 'object'
-    }
-  end
-  let(:expected_readme_output) do
-    <<~MARKDOWN
-      # CamTrap DP Bioacoustics Downloaded profile assets
-
-      The files in this directory (including this readme) are generated with the `baw:camtrap_dp:update` rake task. Do not edit these files manually.
-
-      Generation date: 2026-07-29 03:50:44 UTC
-      Source: https://raw.githubusercontent.com/camera-traps/bioacoustics/e4b4722fb453f5ca39c39ea3c4f348e9953f0084/camtrap-dp/1.0.2/
-
-      ---
-
-      ## Downloaded profile assets
-
-      - Profile: ./camtrap-dp-profile-acoustic.json
-      - Deployments: ./deployments-table-schema-acoustic.json
-      - Media: ./media-table-schema-acoustic.json
-      - Observations: ./observations-table-schema-acoustic.json
-
-      ## Local validation profile
-
-      - Profile: ./camtrap-dp-profile-acoustic.local.json
-      - External references inlined:
-        - https://specs.frictionlessdata.io/schemas/data-package.json
-        - https://geojson.org/schema/GeoJSON.json
-        - http://json.schemastore.org/geojson.json
-    MARKDOWN
   end
 
   it 'downloads the assets, builds the local validation profile, and writes the README' do
