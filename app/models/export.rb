@@ -54,88 +54,120 @@ class Export < ApplicationRecord
 
   enum :status, STATUS_ENUM, prefix: :status, validate: true
 
-  # We only have one export type currently.
+  include StateMachine
+
   EXPORT_TYPE_CAMTRAP_DP = 'camtrap_dp'
-  EXPORT_TYPE_ENUM = { EXPORT_TYPE_CAMTRAP_DP => EXPORT_TYPE_CAMTRAP_DP }.freeze
+
+  EXPORT_TYPE_ENUM = {
+    EXPORT_TYPE_CAMTRAP_DP => EXPORT_TYPE_CAMTRAP_DP
+  }.freeze
 
   enum :export_type, EXPORT_TYPE_ENUM, prefix: :export_type, validate: true
 
-  #
-  # Main generate method
-  #
-  def generate
-    return if status_working?
+  OPTIONS_CAMTRAP_DP = [
+    :contributors,
+    :project_capture_method,
+    :project_sampling_design,
+    :emit_project_license,
+    :forced_timezone
+  ].freeze
 
-    working!
+  # Add additional accessors for other export types, prefixed, as needed.
+  # Usage: export.camtrap_dp_contributors, etc.
+  store_accessor :options, *OPTIONS_CAMTRAP_DP, prefix: :camtrap_dp
 
-    stored_options = options || {}
-
-    BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
-      user: creator,
-      should_obfuscate: obfuscate_locations,
-      package_title: name,
-      contributors: stored_options['contributors'],
-      project_capture_method: stored_options['project_capture_method'],
-      project_sampling_design: stored_options['project_sampling_design'],
-      emit_project_license: stored_options['emit_project_license'],
-      forced_timezone: stored_options['forced_timezone']
-    )
-  rescue BawWorkers::Export::CamtrapDp::Errors::CamtrapDpError => e
-    # Expected, permanent, user-facing failure. Record it and stop.
-    record_failure!(e.message)
-  rescue StandardError
-    # Unexpected: record a generic message, then re-raise so the job framework
-    # (retry_on / discard_on -> notify_error) handles retries and admin alerts.
-    record_failure!('An unexpected error occurred while generating the export.')
-    raise
-  end
-
-  def filter_as_relation
-    raise 'project must be present' if project.blank?
-
-    export_type_filter
-  end
-
-  def export_type_filter
-    case export_type
-    when EXPORT_TYPE_CAMTRAP_DP then camtrap_dp_filter_query
-    else raise "Unsupported export type: #{export_type}"
-    end
-  end
-
-  def camtrap_dp_filter_query
-    Filter::Query.new(
-      filter,
-      Access::ByPermission.audio_events_tags(creator, project_ids: [project.id]),
-      Tagging,
-      Tagging.filter_settings
-    ).query_without_paging_sorting
-  end
-
-  class InvalidTransition < StandardError; end
-
+  validate :validate_options_camtrap_dp, if: :export_type_camtrap_dp?
   validate :attachment_acceptable, if: -> { file.attached? }
   validate :validate_obfuscate_locations, if: -> { obfuscate_locations == false }
-  validate :validate_camtrap_dp_options, if: :export_type_camtrap_dp?
+
+  validates :name, length: { minimum: 2, maximum: 255 }
+  validates :export_type, presence: true
   validates :filter, presence: true
   validates :started_at, :finished_at,
     allow_blank: true,
     timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
 
-  def purge!
-    return if purged?
+  # Raised by a generator for permanent, safe-to-show errors.
+  class UserFacingError < StandardError; end
 
-    file&.purge
-    update!(purged: true)
+  # Run the generator for the export, handling file attachment and state transitions.
+  #
+  # @param (see #claim_for_generation resume)
+  # @raise [UserFacingError] if a permanent, safe-to-show error occurs during generation.
+  # @return [void]
+  def generate(resume: false)
+    return unless claim_for_generation!(resume:)
+
+    build_generator.call do |io, filename, content_type|
+      file.attach(io:, filename:, content_type:)
+    end
+
+    ready!
+  rescue UserFacingError => e
+    record_failure!(e.message)
+  rescue StandardError
+    # For any unexpected errors, record a generic message, then re-raise.
+    record_failure!('An unexpected error occurred while generating the export.')
+    raise
+  end
+
+  # Enqueue the export for background processing.
+  #
+  # @raise [InvalidTransition] if the export is not pending, failed, or purged.
+  # @raise [BawWorkers::ActiveJob::EnqueueError] if the job is not accepted; the export is left unchanged.
+  def enqueue!
+    # Validates against the locked, reloaded row and rolls back `queued` if the job is rejected.
+    with_lock do
+      queued!
+      BawWorkers::Jobs::Export::ExportJob.enqueue(self)
+    end
+  end
+
+  # Removes the attached file and marks the export purged.
+  #
+  # @raise [InvalidTransition] if the export is queued or being generated.
+  # @return [void]
+  def purge!
+    with_lock do
+      next if purged?
+
+      raise InvalidTransition, "Cannot purge an export that is #{status}" if status_queued? || status_working?
+
+      file&.purge
+      update!(purged: true)
+    end
   end
 
   private
 
+  # Claims the export for generation, transitioning it to `working` if successful.
   #
-  # Validations
-  #
+  # @param resume [Boolean] when true, an export with status `working` can be
+  #   claimed for generation (used on job retries). When false (default), an
+  #   export that is already `working` is skipped.
+  # @raise [UserFacingError] if the project is missing.
+  # @return [Boolean] true if the export is claimed for generation, false if it is not.
+  def claim_for_generation!(resume:)
+    with_lock do
+      next false if status_ready? || (status_working? && !resume)
 
-  def validate_camtrap_dp_options
+      # An export row may exist without a project, but it cannot be generated without one.
+      raise UserFacingError, 'project must be present' if project.blank?
+
+      working!(resume:)
+      true
+    end
+  end
+
+  # Each export type has a generator implementing the interface documented on CamtrapDpGenerator.
+  def build_generator
+    case export_type
+    when EXPORT_TYPE_CAMTRAP_DP then CamtrapDpGenerator.new(self)
+    else raise "Unsupported export type: #{export_type}"
+    end
+  end
+
+  def validate_options_camtrap_dp
     result = CamtrapDpOptionsContract.new.call(options || {})
     return if result.success?
 
@@ -144,77 +176,16 @@ class Export < ApplicationRecord
     end
   end
 
-  # Validates the attached file. Currently only allows zip files.
   def attachment_acceptable
     return if file.content_type == 'application/zip'
 
     errors.add(:file, 'must be a zip file')
   end
 
-  # Only the project owner can set obfuscate_locations to false.
-  #
-  # @return [void] Adds an error if the creator is not the project owner and
-  # tries to set obfuscate_locations to false.
   def validate_obfuscate_locations
     return if project.present? && creator_is_owner?
 
     errors.add(:obfuscate_locations, 'can only be set to false by the project owner')
-  end
-
-  #
-  # State transition methods
-  #
-
-  def queued!
-    validate_transition(from: [STATUS_PENDING], to: STATUS_QUEUED)
-
-    update!(status: STATUS_QUEUED)
-  end
-
-  def working!
-    # Allow re-entry so job retries (after a transient failure) can run again.
-    validate_transition(from: [STATUS_PENDING, STATUS_QUEUED, STATUS_WORKING, STATUS_FAILED], to: STATUS_WORKING)
-
-    update!(
-      status: STATUS_WORKING,
-      started_at: Time.current,
-      error: nil,
-      finished_at: nil
-    )
-  end
-
-  def ready!
-    validate_transition(from: [STATUS_WORKING], to: STATUS_READY)
-    raise InvalidTransition, 'Cannot finish an export without a file' unless file.attached?
-
-    update!(
-      status: STATUS_READY,
-      finished_at: Time.current,
-      error: nil
-    )
-  end
-
-  # Records a failed export. Uses update_columns to skip validations and
-  # callbacks, and rescues any persistence error so the caller's original
-  # exception is not replaced.
-  def record_failure!(message)
-    # rubocop:disable Rails/SkipsModelValidations -- skipping validations is the point
-    update_columns(
-      status: STATUS_FAILED,
-      error: message,
-      finished_at: Time.current,
-      updated_at: Time.current
-    )
-    # rubocop:enable Rails/SkipsModelValidations
-  rescue StandardError => e
-    logger.error('Failed to record export failure', e)
-  end
-
-  #
-  # Helper methods
-  #
-  def validate_transition(from:, to:)
-    raise InvalidTransition, "Cannot transition from #{status} to #{to}" unless from.include?(status)
   end
 
   def creator_is_owner?

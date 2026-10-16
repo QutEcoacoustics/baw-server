@@ -3,23 +3,22 @@
 class Export
   # Lightweight structural validation of Camtrap DP export options so invalid
   # options cannot be persisted. The exporter performs the full, authoritative
-  # validation when the export runs, so this intentionally only checks shape and
-  # enumerations rather than re-implementing that logic.
+  # validation when the export runs.
   class CamtrapDpOptionsContract < Dry::Validation::Contract
     Types = BawWorkers::Export::CamtrapDp::Types
 
     params do
       optional(:contributors).array(:hash) do
-        required(:title).filled(:string)
-        optional(:role).filled(:string)
-        optional(:email).filled(:string)
-        optional(:path).filled(:string)
         optional(:organization).filled(:string)
+        required(:title).filled(:string)
+        optional(:email).filled(:string)
+        optional(:path).filled(Types::Url)
+        optional(:role).filled(Types::Role)
       end
       optional(:project_capture_method).array(Types::CaptureMethod)
       optional(:project_sampling_design).value(Types::SamplingDesign)
-      optional(:emit_project_license).value(:bool)
       optional(:forced_timezone).maybe(:string)
+      optional(:emit_project_license).value(:bool)
     end
 
     rule(:forced_timezone) do

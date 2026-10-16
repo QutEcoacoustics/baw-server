@@ -160,6 +160,21 @@ module Fixtures
     end
   end
 
+  # Leaves the export `working` and fails the first attempt with a retryable error,
+  # like a worker that lost its connection mid-generation. ActiveJob then retries it for real.
+  class FlakyExportJob < BawWorkers::Jobs::Export::ExportJob
+    retry_on BawWorkers::Jobs::IntentionalRetry, wait: 1, attempts: 2
+
+    def perform(export)
+      if executions == 1
+        export.update!(status: ::Export::STATUS_WORKING)
+        raise BawWorkers::Jobs::IntentionalRetry
+      end
+
+      super
+    end
+  end
+
   module Concurrency
     class NormalJobClass < BawWorkers::Jobs::ApplicationJob
       queue_as Fixtures::FIXTURE_QUEUE
