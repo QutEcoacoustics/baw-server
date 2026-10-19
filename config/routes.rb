@@ -871,6 +871,9 @@ Rails.application.routes.draw do
   post 'reports/analysis_coverage(.:format)', to: 'reports#analysis_coverage', defaults: { format: 'json' }
   post 'reports/tag_rate(.:format)', to: 'reports#tag_rate', defaults: { format: 'json' }
 
+  post 'exports', to: 'exports#create', defaults: { format: 'json' }
+  get 'exports/:id/download', to: 'exports#download', defaults: { format: 'json' }
+
   # route to the home page of site
   root to: 'public#index'
 
