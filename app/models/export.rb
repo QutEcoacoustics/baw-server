@@ -76,13 +76,14 @@ class Export < ApplicationRecord
   # Usage: export.camtrap_dp_contributors, etc.
   store_accessor :options, *OPTIONS_CAMTRAP_DP, prefix: :camtrap_dp
 
-  validate :validate_options_camtrap_dp, if: :export_type_camtrap_dp?
   validate :attachment_acceptable, if: -> { file.attached? }
+  validate :validate_options_camtrap_dp, if: :export_type_camtrap_dp?
   validate :validate_obfuscate_locations, if: -> { obfuscate_locations == false }
 
   validates :name, length: { minimum: 2, maximum: 255 }
   validates :export_type, presence: true
-  validates :filter, presence: true
+
+  validate :filter_hash_is_valid
   validates :started_at, :finished_at,
     allow_blank: true,
     timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
@@ -138,6 +139,26 @@ class Export < ApplicationRecord
     end
   end
 
+  def self.filter_settings
+    fields = [
+      :id, :download_count, :error, :expires_at, :export_type, :filter,
+      :finished_at, :name, :obfuscate_locations, :options, :purged, :started_at,
+      :status, :created_at, :updated_at, :creator_id, :project_id
+    ]
+
+    {
+      valid_fields: fields,
+      render_fields: fields,
+      text_fields: [],
+      controller: :exports,
+      action: :filter,
+      defaults: {
+        order_by: :created_at,
+        direction: :desc
+      }
+    }
+  end
+
   private
 
   # Claims the export for generation, transitioning it to `working` if successful.
@@ -159,12 +180,12 @@ class Export < ApplicationRecord
     end
   end
 
-  # Each export type has a generator implementing the interface documented on CamtrapDpGenerator.
+  # Each export type has a generator named after it, e.g. camtrap_dp -> Export::CamtrapDpGenerator,
+  # implementing the interface documented on CamtrapDpGenerator.
   def build_generator
-    case export_type
-    when EXPORT_TYPE_CAMTRAP_DP then CamtrapDpGenerator.new(self)
-    else raise "Unsupported export type: #{export_type}"
-    end
+    raise "Unsupported export type: #{export_type}" unless self.class.export_types.key?(export_type)
+
+    self.class.const_get("#{export_type.camelize}Generator", false).new(self)
   end
 
   def validate_options_camtrap_dp
@@ -190,5 +211,24 @@ class Export < ApplicationRecord
 
   def creator_is_owner?
     Access::Core.can_any?(creator, Access::Permission::OWNER, project)
+  end
+
+  def filter_hash_is_valid
+    return errors.add(:filter, 'cannot be nil') if filter.nil?
+    return errors.add(:filter, 'must be a hash') unless filter.is_a?(Hash)
+
+    outer_keys = [:filter, :projection, :paging, :sorting]
+
+    if filter.keys.map(&:to_sym).intersect?(outer_keys)
+      keys = outer_keys.join(', ')
+      return errors.add(:filter, "must be an inner filter, cannot contain any of #{keys}")
+    end
+
+    # Check the filter is valid without executing the actual query
+    begin
+      build_generator.filter_as_relation.to_sql
+    rescue StandardError => e
+      errors.add(:filter, e.message.to_s)
+    end
   end
 end
