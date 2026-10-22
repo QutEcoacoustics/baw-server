@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 class Export
-  # Generates a Camtrap DP package for an Export.
+  # Generates a Camtrap DP package for the given export.
+  #
+  # Exports are scoped to the associated project and the creator's permissions on that project.
   #
   # Generator interface (implement for each export type):
   #   .new(export)
   #   #call { |io, filename, content_type| }
+  #   #filter_as_relation
   #   Raise Export::UserFacingError for errors that are safe to show users.
   class CamtrapDpGenerator
     def initialize(export)
@@ -24,18 +27,19 @@ class Export
       raise Export::UserFacingError, e.message
     end
 
-    private
-
     # @return [BawWorkers::Export::CamtrapDp::Exporter] the Camtrap DP exporter instance.
     def camtrap_dp_exporter
-      BawWorkers::Export::CamtrapDp::Exporter.new(filter_query, exporter_options)
+      BawWorkers::Export::CamtrapDp::Exporter.new(filter_as_relation, exporter_options)
     end
 
     # Taggings, filtered and scoped to the creator's permissions on the project.
-    def filter_query
+    def filter_as_relation
+      base_scope = Access::ByPermission.audio_events_tags(@export.creator, project_ids: [@export.project.id])
+      whole_filter = { filter: @export.filter }
+
       Filter::Query.new(
-        @export.filter,
-        Access::ByPermission.audio_events_tags(@export.creator, project_ids: [@export.project.id]),
+        whole_filter,
+        base_scope,
         Tagging,
         Tagging.filter_settings
       ).query_without_paging_sorting

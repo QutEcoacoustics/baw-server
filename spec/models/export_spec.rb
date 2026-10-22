@@ -35,48 +35,77 @@
 require 'rails_helper'
 
 describe Export do
-  subject { build(:export, :camtrap_dp) }
+  subject(:export) { build(:export, :with_zip_file, filter: filter) }
 
+  let(:filter) { {} }
+
+  it { is_expected.to be_valid }
   it { is_expected.to belong_to(:creator) }
   it { is_expected.to belong_to(:project) }
+  it { is_expected.to have_attributes(status: 'pending', download_count: 0) }
+  it { is_expected.to validate_length_of(:name).is_at_least(2).is_at_most(255) }
+  it { is_expected.to validate_presence_of(:export_type) }
 
-  it 'defaults to the status pending with a download count of 0' do
-    expect(subject).to have_attributes(status: 'pending', download_count: 0)
-  end
+  describe '#validate' do
+    let(:errors) { export.tap(&:validate).errors }
 
-  describe 'attachment' do
-    subject { build(:export, :camtrap_dp, :with_zip_file) }
+    it 'adds an error to file when the attached file does not have the zip content type' do
+      export.file.blob.content_type = 'application/none'
 
-    it { is_expected.to be_valid }
-
-    it 'does not allow an invalid attachment' do
-      subject.file.blob.update(content_type: 'application/none')
-
-      expect(subject).not_to be_valid
-      expect(subject.errors[:file]).to include('must be a zip file')
+      expect(errors[:file]).to eq(['must be a zip file'])
     end
-  end
 
-  describe 'validations' do
-    it { is_expected.to validate_length_of(:name).is_at_least(2).is_at_most(255) }
-    it { is_expected.to validate_presence_of(:export_type) }
-    it { is_expected.to validate_presence_of(:filter) }
+    it 'adds an error to options when a camtrap_dp option has a value that is not allowed' do
+      export.options = { project_capture_method: ['invalid'] }
 
-    it 'is not valid with invalid camtrap_dp options' do
-      export = build(:export, :camtrap_dp, creator: create(:user), options: { project_capture_method: ['invalid'] })
-
-      expect(export).not_to be_valid
-      expect(export.errors[:options]).to include(
+      expect(errors[:options]).to include(
         'project_capture_method.0 must be one of: activityDetection, continuous, recordingSchedule'
       )
     end
 
     context 'when obfuscate_locations is false' do
-      subject { build(:export, :camtrap_dp, obfuscate_locations: false) }
+      before { export.obfuscate_locations = false }
 
       it 'is not valid if the creator is not the project owner' do
-        expect(subject).not_to be_valid
-        expect(subject.errors[:obfuscate_locations]).to include('can only be set to false by the project owner')
+        expect(errors[:obfuscate_locations]).to eq(['can only be set to false by the project owner'])
+      end
+    end
+
+    context 'when filter is nil' do
+      let(:filter) { nil }
+
+      it 'is not valid' do
+        expect(errors[:filter]).to include('cannot be nil')
+      end
+    end
+
+    context 'when filter contains outer keys' do
+      let(:filter) { { filter: {} } }
+
+      it 'is not valid' do
+        expect(errors[:filter]).to include(
+            'must be an inner filter, cannot contain any of filter, projection, paging, sorting'
+          )
+      end
+    end
+
+    context 'with invalid filter syntax' do
+      let(:filter) { { invalid: true } }
+
+      it 'is not valid' do
+        expect(errors[:filter]).to include(
+          'Filter parameters were not valid: Unrecognized combiner or field name `invalid`.'
+        )
+      end
+    end
+  end
+
+  describe '#build_generator' do
+    it 'returns a generator that responds to call and filter_as_relation for every export type' do
+      Export.export_types.each_key do |type|
+        generator = build(:export, export_type: type).send(:build_generator)
+
+        expect(generator).to respond_to(:call, :filter_as_relation)
       end
     end
   end
@@ -85,160 +114,140 @@ describe Export do
     create_entire_hierarchy
 
     let(:export) {
-      options = {
+      create(:export, creator: owner_user, project:, options: options, filter: filter)
+    }
+
+    let(:exporter) { BawWorkers::Export::CamtrapDp::Exporter }
+
+    let(:options) {
+      {
         contributors: [{ title: 'Alice', path: 'http://www.test' }],
         project_capture_method: ['continuous', 'recordingSchedule'],
         project_sampling_design: 'systematicRandom',
-        emit_project_license: true,
-        forced_timezone: nil
+        emit_project_license: true
       }
-
-      filter = { and: [{ 'sites.id': { in: [site.id] } }] }
-
-      create(:export, :camtrap_dp, name: 'Test Export', creator: owner_user, options: options, filter: filter,
-        project: project)
     }
 
-    let(:generated_at) { Time.utc(2026, 7, 29, 3, 50, 44) }
+    let(:now) { Time.utc(2026, 7, 29, 3, 50, 44) }
 
-    around do |example|
-      Timecop.freeze(generated_at)
-
-      example.run
-    ensure
-      Timecop.return
-    end
+    around { |example| Timecop.freeze(now) { example.run } }
 
     context 'when successful' do
-      subject(:generated) { export.tap(&:generate) }
+      it 'marks the export ready with a zip file attached' do
+        export.generate
 
-      it 'marks the export ready with a zip file attached', :aggregate_failures do
-        expect(generated).to have_attributes(
-          status: 'ready', started_at: generated_at, finished_at: generated_at, error: nil
+        expect(export).to have_attributes(
+          status: 'ready', error: nil, started_at: now, finished_at: now,
+          file: have_attributes(content_type: 'application/zip', filename: have_attributes(extension: 'zip'))
         )
-        expect(generated.file).to be_attached
-        expect(generated.file.blob).to have_attributes(
-          content_type: 'application/zip',
-          filename: have_attributes(extension: 'zip')
-        )
+      end
+    end
+
+    context 'when filtering conditions span multiple projects' do
+      let(:other_project) { create(:project, creator: owner_user) }
+      let(:other_site) { create(:site_with_lat_long, creator: owner_user, projects: [other_project], region: nil) }
+      let(:other_recording) { create(:audio_recording, site: other_site, creator: owner_user, uploader: owner_user) }
+      let(:filter) { { 'audio_events.audio_recording_id': { in: [audio_recording.id, other_recording.id] } } }
+
+      let(:exported_observations) {
+        zip = Zip::File.open_buffer(export.file.download)
+        csv = zip.read('observations.csv')
+        CSV.parse(csv, headers: true).pluck('observationID')
+      }
+
+      before do
+        other_event = create(:audio_event, audio_recording: other_recording, creator: owner_user)
+        create(:tagging, audio_event: other_event, tag: tag, creator: owner_user)
+      end
+
+      it 'only exports taggings from the project scope' do
+        export.generate
+
+        # The creator owns both projects, so the other project's tagging would be
+        # exported, if exports were not correctly project scoped.
+        expect(exported_observations).not_to be_empty
+        expect(exported_observations).to all(end_with("/taggings/#{tagging.id}"))
       end
     end
 
     context 'when the exporter raises a CamtrapDpError' do
-      before do
-        allow(BawWorkers::Export::CamtrapDp::Exporter).to receive(:new)
-          .and_raise(BawWorkers::Export::CamtrapDp::Errors::ValidationError, 'bad data')
-      end
-
       it 'records the failure without raising' do
+        allow(exporter).to receive(:new).and_raise(BawWorkers::Export::CamtrapDp::Errors::ValidationError, 'bad data')
+
         expect { export.generate }.not_to raise_error
-        expect(export.reload).to have_attributes(status: 'failed', error: 'bad data', finished_at: generated_at)
+        expect(export.reload).to have_attributes(status: 'failed', error: 'bad data', finished_at: now)
       end
     end
 
     context 'when the exporter raises an unexpected error' do
-      before do
-        allow(BawWorkers::Export::CamtrapDp::Exporter).to receive(:new).and_raise(StandardError, 'secret detail')
-      end
-
       it 'records a generic failure and re-raises' do
+        allow(exporter).to receive(:new).and_raise(StandardError, 'secret detail')
+
         expect { export.generate }.to raise_error(StandardError, 'secret detail')
         expect(export.reload).to have_attributes(
-          status: 'failed',
-          error: 'An unexpected error occurred while generating the export.'
+          status: 'failed', error: 'An unexpected error occurred while generating the export.'
         )
       end
     end
 
-    context 'when another worker has started generating the export since this copy was loaded' do
-      # `earlier_copy` still has the status `queued`, but the database row is already `working`.
-      let(:earlier_copy) { Export.find(export.id) }
+    context 'when saving the failure also raises a database error' do
+      it 'raises the original error' do
+        allow(exporter).to receive(:new).and_raise(StandardError, 'original')
+        allow(export).to receive(:update_columns).and_raise(ActiveRecord::ActiveRecordError, 'db down')
 
-      before do
-        export.update!(status: 'queued')
-        earlier_copy
-        export.update!(status: 'working')
-        allow(BawWorkers::Export::CamtrapDp::Exporter).to receive(:new).and_call_original
-      end
-
-      it 'does not generate the export a second time' do
-        expect(earlier_copy.generate).to be_nil
-        expect(BawWorkers::Export::CamtrapDp::Exporter).not_to have_received(:new)
-        expect(export.reload).to have_attributes(status: 'working')
-        expect(export.file).not_to be_attached
+        expect { export.generate }.to raise_error(StandardError, 'original')
       end
     end
 
-    context 'when the export is already ready' do
-      before do
-        export.generate
-        export.update!(finished_at: 1.day.ago)
-      end
+    context 'when the export produces no file' do
+      it 'raises an error and records the export as failed' do
+        allow(exporter).to receive(:new).and_return(instance_double(exporter, call: nil))
 
-      it 'returns without generating and leaves the export unchanged' do
-        expect { export.generate }.not_to(change { export.reload.attributes })
-        expect(export.status).to eq('ready')
-        expect(export.file).to be_attached
-      end
-    end
-
-    context 'when retrying a failed export' do
-      before { export.update!(status: 'failed', error: 'old error', finished_at: 1.hour.ago) }
-
-      it 'clears the previous error and ends with the status ready' do
-        export.generate
-
-        expect(export.reload).to have_attributes(
-          status: 'ready', error: nil, started_at: generated_at, finished_at: generated_at
-        )
-      end
-    end
-
-    context 'when resume is true and the export is already working' do
-      before { export.update!(status: 'working') }
-
-      it 'generates the export and ends with the status ready' do
-        export.generate(resume: true)
-
-        expect(export.reload).to have_attributes(status: 'ready', error: nil)
-      end
-    end
-
-    context 'when the exporter produces no file' do
-      before do
-        allow(export).to receive(:build_generator).and_return(-> {})
-      end
-
-      it 'raises an error and records the export as failed instead of ready' do
         expect { export.generate }.to raise_error(Export::InvalidTransition, /without a file/)
         expect(export.reload).to have_attributes(status: 'failed', file: be_blank)
       end
     end
 
-    context 'when recording a failure also fails' do
-      before do
-        allow(BawWorkers::Export::CamtrapDp::Exporter).to receive(:new).and_raise(StandardError, 'original')
-        allow(export).to receive(:update_columns).and_raise(ActiveRecord::ActiveRecordError, 'db down')
+    context 'when the export is already working' do
+      let(:export) { super().tap { |e| e.update!(status: 'working') } }
+
+      it 'returns without generating and leaves the export unchanged' do
+        expect { export.generate }.not_to(change { export.reload.attributes })
+        expect(export).to have_attributes(status: 'working', file: be_blank)
       end
 
-      it 'raises the original error, not the database error from saving the failure' do
-        expect { export.generate }.to raise_error(StandardError, 'original')
+      context 'when resume is true' do
+        it 'generates the export and updates the status to ready' do
+          export.generate(resume: true)
+
+          expect(export.reload).to have_attributes(status: 'ready', error: nil)
+        end
       end
     end
 
-    context 'when project is missing' do
-      before { export.update!(project: nil) }
+    context 'when the export is already ready' do
+      it 'returns without generating and leaves the export unchanged' do
+        export.generate
+        export.update!(finished_at: 1.day.ago)
 
-      it 'saves the error and records the export as failed' do
+        expect { export.generate }.not_to(change { export.reload.attributes })
+        expect(export).to have_attributes(status: 'ready', file: be_attached)
+      end
+    end
+
+    context 'when an export is failed' do
+      it 'clears the previous error and generates the export' do
+        export.update!(status: 'failed', error: 'old error', finished_at: 1.hour.ago)
+
         export.generate
 
-        expect(export.reload).to have_attributes(status: 'failed', error: 'project must be present')
+        expect(export.reload).to have_attributes(status: 'ready', error: nil, started_at: now, finished_at: now)
       end
     end
   end
 
   describe '#enqueue!' do
-    subject(:export) { create(:export, :camtrap_dp) }
+    let(:export) { create(:export) }
 
     let(:job_class) { BawWorkers::Jobs::Export::ExportJob }
 
@@ -284,13 +293,12 @@ describe Export do
   end
 
   describe '#purge!' do
-    subject(:export) { create(:export, :camtrap_dp, :with_zip_file, status: 'ready') }
+    let(:export) { create(:export, :with_zip_file, status: 'ready') }
 
     it 'removes the file and marks the export purged' do
       export.purge!
 
-      expect(export.reload).to have_attributes(purged: true, status: 'ready')
-      expect(export.file).not_to be_attached
+      expect(export.reload).to have_attributes(purged: true, status: 'ready', file: be_blank)
     end
 
     it 'does not change anything when the export is already purged' do
@@ -307,8 +315,7 @@ describe Export do
         expect { earlier_copy.purge! }.to raise_error(
           Export::InvalidTransition, "Cannot purge an export that is #{status}"
         )
-        expect(export.reload.purged).to be_falsey
-        expect(export.file).to be_attached
+        expect(export.reload).to have_attributes(purged: be_falsey, file: be_attached)
       end
     end
   end

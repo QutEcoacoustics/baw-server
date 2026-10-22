@@ -39,7 +39,7 @@ FactoryBot.define do
     obfuscate_locations { true }
     export_type { 'camtrap_dp' }
 
-    filter { { id: 1 } }
+    filter { {} }
     options { {} }
 
     status { 'pending' }
