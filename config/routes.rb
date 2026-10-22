@@ -327,7 +327,12 @@
 #                                                       POST                                         /reports/recording_coverage(.:format)                                                                                                reports#recording_coverage {format: "json"}
 #                                                       POST                                         /reports/analysis_coverage(.:format)                                                                                                 reports#analysis_coverage {format: "json"}
 #                                                       POST                                         /reports/tag_rate(.:format)                                                                                                          reports#tag_rate {format: "json"}
-#                                               exports POST                                         /exports(.:format)                                                                                                                   exports#create {format: "json"}
+#                                        filter_exports GET|POST                                     /exports/filter(.:format)                                                                                                            exports#filter {format: "json"}
+#                                               exports GET                                          /exports(.:format)                                                                                                                   exports#index {format: "json"}
+#                                                       POST                                         /exports(.:format)                                                                                                                   exports#create {format: "json"}
+#                                            new_export GET                                          /exports/new(.:format)                                                                                                               exports#new {format: "json"}
+#                                                export GET                                          /exports/:id(.:format)                                                                                                               exports#show {format: "json"}
+#                                                       DELETE                                       /exports/:id(.:format)                                                                                                               exports#destroy {format: "json"}
 #                                                       GET                                          /exports/:id/download(.:format)                                                                                                      exports#download {format: "json"}
 #                                                  root GET                                          /                                                                                                                                    public#index
 #                                                status GET                                          /status(.:format)                                                                                                                    status#index {format: "json"}
@@ -892,7 +897,7 @@ Rails.application.routes.draw do
   post 'reports/analysis_coverage(.:format)', to: 'reports#analysis_coverage', defaults: { format: 'json' }
   post 'reports/tag_rate(.:format)', to: 'reports#tag_rate', defaults: { format: 'json' }
 
-  post 'exports', to: 'exports#create', defaults: { format: 'json' }
+  resources :exports, except: [:edit, :update], defaults: { format: 'json' }, concerns: [:filterable]
   get 'exports/:id/download', to: 'exports#download', defaults: { format: 'json' }
 
   # route to the home page of site
