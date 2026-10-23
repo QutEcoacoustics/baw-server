@@ -333,7 +333,7 @@
 #                                            new_export GET                                          /exports/new(.:format)                                                                                                               exports#new {format: "json"}
 #                                                export GET                                          /exports/:id(.:format)                                                                                                               exports#show {format: "json"}
 #                                                       DELETE                                       /exports/:id(.:format)                                                                                                               exports#destroy {format: "json"}
-#                                                       GET                                          /exports/:id/download(.:format)                                                                                                      exports#download {format: "json"}
+#                                       download_export GET                                          /exports/:id/download(.:format)                                                                                                      exports#download {format: "json"}
 #                                                  root GET                                          /                                                                                                                                    public#index
 #                                                status GET                                          /status(.:format)                                                                                                                    status#index {format: "json"}
 #                                        website_status GET                                          /website_status(.:format)                                                                                                            public#website_status
@@ -898,7 +898,7 @@ Rails.application.routes.draw do
   post 'reports/tag_rate(.:format)', to: 'reports#tag_rate', defaults: { format: 'json' }
 
   resources :exports, except: [:edit, :update], defaults: { format: 'json' }, concerns: [:filterable]
-  get 'exports/:id/download', to: 'exports#download', defaults: { format: 'json' }
+  get 'exports/:id/download', to: 'exports#download', as: :download_export, defaults: { format: 'json' }
 
   # route to the home page of site
   root to: 'public#index'

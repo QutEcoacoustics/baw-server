@@ -76,6 +76,19 @@ module Access
           .order('bookmarks.updated_at DESC')
       end
 
+      # Get exports created by user. Admins can access all exports.
+      # @param [User] user
+      # @return [::ActiveRecord::Relation]
+      def exports(user)
+        user = Access::Validate.user(user, true)
+
+        return Export.none if user.nil?
+
+        return Export.all if Access::Core.is_admin?(user)
+
+        Export.where(creator_id: user.id)
+      end
+
       # Get saved searches created or updated by user.
       # @param [User] user
       # @return [ActiveRecord::Relation]
