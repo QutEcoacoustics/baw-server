@@ -37,12 +37,8 @@ class Export
       base_scope = Access::ByPermission.audio_events_tags(@export.creator, project_ids: [@export.project.id])
       whole_filter = { filter: @export.filter }
 
-      Filter::Query.new(
-        whole_filter,
-        base_scope,
-        Tagging,
-        Tagging.filter_settings
-      ).query_without_paging_sorting
+      query = Filter::Query.new(whole_filter, base_scope, Tagging, Tagging.filter_settings)
+      query.query_filter(query.query_base)
     end
 
     # @return [BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions]
