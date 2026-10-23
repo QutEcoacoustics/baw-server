@@ -111,6 +111,8 @@ actions:
     queue: mailer_<%= BawApp.env %>
   export:
     queue: export_<%= BawApp.env %>
+    # 1 week in seconds
+    expires_after: 604800
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
 # batch analysis needs a ssh connection to a head node on a PBS cluster
 batch_analysis:

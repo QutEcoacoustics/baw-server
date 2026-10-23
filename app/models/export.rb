@@ -150,6 +150,16 @@ class Export < ApplicationRecord
       valid_fields: fields,
       render_fields: fields,
       text_fields: [],
+      new_spec_fields: lambda { |_user|
+        {
+          export_type: nil,
+          name: nil,
+          obfuscate_locations: nil,
+          project_id: nil,
+          filter: nil,
+          options: nil
+        }
+      },
       controller: :exports,
       action: :filter,
       defaults: {

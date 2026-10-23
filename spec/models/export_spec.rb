@@ -137,7 +137,7 @@ describe Export do
         export.generate
 
         expect(export).to have_attributes(
-          status: 'ready', error: nil, started_at: now, finished_at: now,
+          status: 'ready', error: nil, started_at: now, finished_at: now, expires_at: now + 7.days,
           file: have_attributes(content_type: 'application/zip', filename: have_attributes(extension: 'zip'))
         )
       end
