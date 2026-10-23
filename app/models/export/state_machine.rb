@@ -36,7 +36,8 @@ class Export
       validate_transition(from: [STATUS_WORKING], to: STATUS_READY)
       raise InvalidTransition, 'Cannot finish an export without a file' unless file.attached?
 
-      update!(status: STATUS_READY, finished_at: Time.current, error: nil)
+      update!(status: STATUS_READY, finished_at: Time.current, error: nil,
+        expires_at: Time.current + Settings.actions.export.expires_after.seconds)
     end
 
     # Records a failed export.
