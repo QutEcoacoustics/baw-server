@@ -64,7 +64,7 @@ class Tagging < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id],
-      render_fields: [:id, :audio_event_id, :tag_id, :created_at, :creator_id],
+      render_fields: [:id, :audio_event_id, :tag_id, :created_at],
       controller: :taggings,
       action: :filter,
       defaults: {
