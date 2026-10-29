@@ -3,7 +3,7 @@
 describe Access::ByPermission do
   create_audio_recordings_hierarchy
 
-  context 'with audio_events_tags' do
+  describe '#audio_events_tags' do
     let(:tag) { create(:tag, creator: owner_user) }
     let(:audio_event) { create(:audio_event, audio_recording:, creator: owner_user) }
     let!(:tagging) { create(:tagging, audio_event:, tag:, creator: owner_user) }
