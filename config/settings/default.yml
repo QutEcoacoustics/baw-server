@@ -120,6 +120,8 @@ batch_analysis:
     key_file: ./provision/analysis/client_key
   pbs:
     default_queue:
+    # Optional PBS project/account id; generated project tags are used when unset.
+    project_id: ~
     # the primary group:
     #   qsub -W group_list=pbs_user job.sh
     primary_group: pbsuser

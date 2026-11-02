@@ -486,8 +486,9 @@ module PBS
 
     def qsub_common_command(job_name:, resources:, additional_attributes:, env:, project_suffix:)
       queue = settings.pbs.default_queue
-      # loosely group jobs together without any formal dependencies - they just share a project which is just a tag
-      project = project_name(project_suffix)
+      # Use generated project tags when no PBS project id is configured.
+      project_id = settings.pbs.project_id.presence
+      project = project_id ? Shellwords.escape(project_id) : project_name(project_suffix)
 
       # -q <queue_name>
       queue_string = queue.blank? ? '' : "-q #{queue}"
