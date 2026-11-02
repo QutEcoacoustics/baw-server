@@ -224,6 +224,7 @@ module Api
     def respond_filter(content, opts = {}, filter_settings: nil)
       filter_settings ||= self.filter_settings
 
+      # The call to #map is what causes the records to be loaded from the database
       items = content.map { |item|
         Settings.api_response.prepare(item, current_user, nil, opts, filter_settings:)
       }
