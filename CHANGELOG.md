@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.6.0](https://github.com/QutEcoacoustics/baw-server/tree/15.6.0) (2026-11-03)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.5.0...15.6.0)
+
+**Implemented enhancements:**
+
+- We need to be able to set up a project on PBS jobs [\#1078](https://github.com/QutEcoacoustics/baw-server/issues/1078)
+
 ## [15.5.0](https://github.com/QutEcoacoustics/baw-server/tree/15.5.0) (2026-10-12)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.4.0...15.5.0)
@@ -7,6 +15,10 @@
 **Implemented enhancements:**
 
 - Cache batch analysis availability [\#1074](https://github.com/QutEcoacoustics/baw-server/issues/1074)
+
+**Merged pull requests:**
+
+- Cache batch analysis availability for 60 seconds [\#1075](https://github.com/QutEcoacoustics/baw-server/pull/1075) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 ## [15.4.0](https://github.com/QutEcoacoustics/baw-server/tree/15.4.0) (2026-10-01)
 
