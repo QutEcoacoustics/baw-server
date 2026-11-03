@@ -106,6 +106,7 @@ class AnalysisJob
         #   suspend the job
         #   @return [Boolean]
         event :suspend do
+          before :ensure_suspend_supported!
           transitions(
             from: :processing,
             to: :suspended,
@@ -222,6 +223,14 @@ class AnalysisJob
       # do the cancelling on the background
       BawWorkers::Jobs::Analysis::RemoteCancelJob.enqueue(self)
       self.suspend_count += 1
+    end
+
+    def ensure_suspend_supported!
+      return if Settings.batch_analysis.pbs.project_id.blank?
+
+      # Batch cancellation cannot target one analysis job when all jobs use a configured PBS project id.
+      # See https://github.com/QutEcoacoustics/baw-server/issues/1077 and https://github.com/QutEcoacoustics/baw-server/issues/787.
+      raise 'Analysis job suspension is disabled while batch_analysis.pbs.project_id is configured.'
     end
 
     # Resumes an analysis job by converting cancelling or cancelled items to queued items

@@ -73,6 +73,41 @@ describe PBS::Connection do
     end
   end
 
+  describe 'project_id' do
+    it 'uses the configured PBS project id for job submissions' do
+      settings = Settings.batch_analysis.new(
+        pbs: Settings.batch_analysis.pbs.new(project_id: 'account123')
+      )
+      connection = PBS::Connection.new(settings, 'tag')
+
+      command = connection.send(
+        :qsub_common_command,
+        job_name: 'job',
+        resources: {},
+        additional_attributes: {},
+        env: {},
+        project_suffix: 'analysis_job'
+      )
+
+      expect(command).to include('-P account123')
+    end
+
+    it 'uses the project suffix when no PBS project id is configured' do
+      connection = PBS::Connection.new(Settings.batch_analysis, 'tag')
+
+      command = connection.send(
+        :qsub_common_command,
+        job_name: 'job',
+        resources: {},
+        additional_attributes: {},
+        env: {},
+        project_suffix: 'analysis_job'
+      )
+
+      expect(command).to include("-P #{connection.send(:project_name, 'analysis_job')}")
+    end
+  end
+
   describe 'commands' do
     include Dry::Monads[:result]
 

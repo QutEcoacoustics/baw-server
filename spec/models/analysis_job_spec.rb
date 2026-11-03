@@ -532,6 +532,20 @@ describe AnalysisJob do
       clear_pending_jobs
     end
 
+    it 'raises when suspending with a configured PBS project id' do
+      analysis_job.update_column(:overall_status, 'processing')
+      allow(Settings.batch_analysis.pbs).to receive(:project_id).and_return('account123')
+
+      expect { analysis_job.suspend! }.to raise_error(
+        RuntimeError,
+        /suspension is disabled while batch_analysis\.pbs\.project_id is configured/
+      )
+
+      expect(analysis_job.reload).to be_processing
+      expect(analysis_job.suspend_count).to eq(0)
+      expect_enqueued_jobs(0, of_class: BawWorkers::Jobs::Analysis::RemoteCancelJob)
+    end
+
     it 'defines the resume event' do
       expect(analysis_job.resume_count).to eq(0)
       expect(analysis_job).to transition_from(:suspended).to(:processing).on_event(:resume)
