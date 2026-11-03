@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.7.0](https://github.com/QutEcoacoustics/baw-server/tree/15.7.0) (2026-11-03)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.6.0...15.7.0)
+
+**Implemented enhancements:**
+
+- Filter performance: avoid double query [\#734](https://github.com/QutEcoacoustics/baw-server/issues/734)
+
 ## [15.6.0](https://github.com/QutEcoacoustics/baw-server/tree/15.6.0) (2026-11-03)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.5.0...15.6.0)
@@ -7,6 +15,11 @@
 **Implemented enhancements:**
 
 - We need to be able to set up a project on PBS jobs [\#1078](https://github.com/QutEcoacoustics/baw-server/issues/1078)
+
+**Merged pull requests:**
+
+- Update `rspec_api_documentation` Gem Source [\#1082](https://github.com/QutEcoacoustics/baw-server/pull/1082) ([andrew-1234](https://github.com/andrew-1234))
+- Support configured PBS project IDs [\#1079](https://github.com/QutEcoacoustics/baw-server/pull/1079) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 ## [15.5.0](https://github.com/QutEcoacoustics/baw-server/tree/15.5.0) (2026-10-12)
 
