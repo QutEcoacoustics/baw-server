@@ -15,6 +15,8 @@ module Baw
       ::Arel::Attributes::Attribute.include(Baw::Arel::AttributeExtensions)
       ::Arel::Visitors::ToSql.prepend(Baw::Arel::Visitors::ToSqlExtensions)
 
+      ::ActiveRecord::Relation.include(Api::Paging::RelationMethods)
+
       AASM.prepend Baw::Aasm
     end
   end
