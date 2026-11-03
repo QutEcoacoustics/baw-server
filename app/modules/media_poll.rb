@@ -117,6 +117,7 @@ class MediaPoll
       should_check_redis_cache = Settings.actions.media.cache_to_redis
       in_memory_file = nil
       redis_cache_key = nil
+      redis_hit = false
 
       if should_check_redis_cache
         redis_cache_key = Pathname(expected_files.first).basename.to_s
@@ -130,8 +131,18 @@ class MediaPoll
         # check redis cache
         if should_check_redis_cache
           result = BawWorkers::Config.redis_communicator.get_file(redis_cache_key, in_memory_file)
-          # stop the poll loop and send back the file
-          next true if result&.positive?
+
+          # nil means a cache miss; any byte count means the key existed.
+          # Stop the poll loop and send back the file.
+          unless result.nil?
+            redis_hit = true
+            next true
+          end
+
+          # Prefer the atomically written redis entry: don't trust disk files (which may be
+          # stale or partial due to NFS client caching) until the worker has finished.
+          # If the job is done and redis still misses, the controller falls back to polling disk.
+          next resque_status.present? && resque_status.completed?
         end
 
         existing_files = get_existing_files(poll_locations)
@@ -163,7 +174,7 @@ class MediaPoll
       end
 
       {
-        in_memory_file: in_memory_file&.string,
+        in_memory_file: redis_hit ? in_memory_file.string : nil,
         existing_files: existing_files,
         resque_status: resque_status
       }
