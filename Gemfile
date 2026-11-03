@@ -308,10 +308,6 @@ group :test do
   # api docs
   gem 'rswag-specs'
 
-  # old docs (deprecated)
-  # https://github.com/zipmark/rspec_api_documentation/issues/548
-  gem 'rspec_api_documentation', github: 'SchoolKeep/rspec_api_documentation'
-
   # test for slow n+1 queries
   gem 'bullet'
 end

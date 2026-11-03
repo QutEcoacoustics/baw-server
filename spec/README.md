@@ -39,10 +39,10 @@ Note that all api specs are run as  the `admin_user`.
 
 #### Unpermitted parameter error in API specs
 
-If you encounter an unpermitted parameter error in your API specs, try checking that the 
+If you encounter an unpermitted parameter error in your API specs, try checking that the
 correct `Content-Type` is being sent to the API.
 The default content type for requests in the API is `application/json` but for requests
-that don't expect a body you can set `consumes` in the API spec definition to `nil`. 
+that don't expect a body you can set `consumes` in the API spec definition to `nil`.
 
 ```ruby
 get('download project audio events') do
@@ -58,17 +58,36 @@ API tests that aren't covered by either the permissions or
 documentation/validation categories (such as complex behaviours) can be a request
 spec (`/spec/requests`).
 
+## Comparing model attributes
+
+Use `match_attributes` to compare complete attribute snapshots across database reloads:
+
+```ruby
+expect(record.reload.attributes).to match_attributes(original_attributes)
+```
+
+Keys and non-time values must match exactly. Timestamp values allow a one-microsecond
+difference for database precision; override this in seconds with `time_tolerance:`.
+
 ## Git LFS
 
 There are test fixtures that are tracked by Git LFS (Large File Storage). If Git
 LFS files weren't downloaded successfully, they will appear as pointer files.
 This can cause certain tests to fail. To fix this you can run the command `git
-lfs pull`. 
+lfs pull`.
 
 ### Deprecated tests
 
-All tests in `spec/acceptance` are deprecated and should be replaced
-when opportunities arrive.
+Legacy examples in `spec/acceptance` were ported using an AI assistant.
+New coverage is isolated in files named `*_ported_spec.rb` in the appropriate
+modern spec directories; existing coverage is reused rather than copied.
+
+```bash
+rspec --pattern 'spec/**/*_ported_spec.rb'
+```
+
+Eventually the ported specs will be merged into the ordinary locations.
+We're going to leave them isolated until we're confident that the ported specs are stable and complete.
 
 ## Factories
 
@@ -154,4 +173,3 @@ Run the `rake factory_bot:lint` task to lint factories.
 
 [^1]: Refer to `app/modules/api/schema.rb` for the OpenAPI schema definitions;
     model-specific schemas are defined within their respective model classes.
-

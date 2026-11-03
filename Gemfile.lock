@@ -16,15 +16,6 @@ GIT
       sassc-rails (>= 2.0.0)
 
 GIT
-  remote: https://github.com/SchoolKeep/rspec_api_documentation.git
-  revision: ff5836c2e95a27179d8d82ca60c18771db0f6412
-  specs:
-    rspec_api_documentation (6.1.0)
-      activesupport (>= 3.0.0)
-      mustache (~> 1.0, >= 0.99.4)
-      rspec (~> 3.0)
-
-GIT
   remote: https://github.com/perfectline/validates_url.git
   revision: 81ec1516423af0b4fdc7cabbcda0089e434f2703
   ref: 81ec1516423af0b4fdc7cabbcda0089e434f2703
@@ -487,7 +478,6 @@ GEM
     msgpack (1.7.3)
     multi_json (1.19.1)
     multipart-post (2.4.1)
-    mustache (1.1.1)
     mustermann (3.0.4)
       ruby2_keywords (~> 0.0.1)
     nenv (0.3.0)
@@ -974,7 +964,6 @@ DEPENDENCIES
   rspec-its
   rspec-mocks
   rspec-rails
-  rspec_api_documentation!
   rswag-api
   rswag-specs
   rswag-ui
