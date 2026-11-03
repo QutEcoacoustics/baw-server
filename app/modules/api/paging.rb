@@ -8,26 +8,29 @@ module Api
     module RelationMethods
       # Add a total count column to the relation for paging purposes.
       #
-      # @param opts [Hash] the options hash for a filter query
-      # @return [ActiveRecord::Relation] a new relation, extended with the TotalCount module.
+      # @param opts [Hash] the options hash for a filter query.
+      #   This hash will be modified by reference,
+      #   after the query is executed to include the `:total` count of items that would
+      #   be included if the query was not subject to paging (limit and offset)
+      # @return [ActiveRecord::Relation] a new relation, extended with the {::Api::Paging::TotalCount} module.
       def with_paging_total(opts)
         relation = select(Arel.star.count.over(Arel::Nodes::Window.new).as(TOTAL_COUNT_COLUMN)).extending(TotalCount)
-        relation.instance_variable_set(:@paging_opts, opts)
+        relation.instance_variable_set(:@__baw_api_paging_opts, opts)
         relation
       end
     end
 
     # Extended onto a relation by with_paging_total to read the total count when records load.
     module TotalCount
-      attr_reader :paging_opts
+      attr_reader :__baw_api_paging_opts
 
       private
 
       # Filter::Query#query_paging applies no limit when paging is disabled. In that case,
       # the number of items in paging_opts[:items] should equal the total.
       def instantiate_records(rows, &)
-        paging_opts[:total] = rows.empty? ? count_without_paging : count_from_rows(rows)
-        paging_opts[:items] = paging_opts[:total] if limit_value.nil?
+        __baw_api_paging_opts[:total] = rows.empty? ? count_without_paging : count_from_rows(rows)
+        __baw_api_paging_opts[:items] = __baw_api_paging_opts[:total] if limit_value.nil?
         super(without_total_column(rows), &)
       end
 
