@@ -53,6 +53,27 @@ describe 'Media metadata', :aggregate_failures, type: :request do
     ),
     text: object.call(formats: { type: :array, items: string })
   )
+  media_metadata = {
+    type: :object,
+    required: %i[recording common_parameters available],
+    additionalProperties: false,
+    properties: {
+      recording:,
+      common_parameters: common,
+      available: object.call(
+        audio: {
+          type: :object,
+          required: %i[webm ogg flac wav],
+          additionalProperties: false,
+          properties: { mp3: link, webm: link, ogg: link, flac: link, wav: link }
+        },
+        image: object.call(png: image),
+        text: object.call(json: link)
+      ),
+      options:
+    }
+  }
+  which_has_schema media_metadata
 
   [
     ['default', 44_100, {}, ['mp3', 'webm', 'ogg', 'flac', 'wav']],
@@ -66,18 +87,6 @@ describe 'Media metadata', :aggregate_failures, type: :request do
       before do
         audio_recording.update!(sample_rate_hertz: native_rate)
       end
-
-      properties = {
-        recording:,
-        common_parameters: common,
-        available: object.call(
-          audio: object.call(audio_formats.to_h { |format| [format.to_sym, link] }),
-          image: object.call(png: image),
-          text: object.call(json: link)
-        )
-      }
-      properties[:options] = options if query.empty?
-      which_has_schema object.call(properties)
 
       path '/audio_recordings/{audio_recording_id}/media.json' do
         get "Media metadata: #{description}" do
