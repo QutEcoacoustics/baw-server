@@ -280,7 +280,6 @@ group :test do
   gem 'database_cleaner-redis'
 
   gem 'faker'
-  gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
   gem 'rspec-benchmark'
   gem 'rspec-collection_matchers'
