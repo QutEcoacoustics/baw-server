@@ -120,6 +120,7 @@ class BawConfigContract < Dry::Validation::Contract
       end
       required(:pbs).hash do
         required(:default_queue).maybe(:string)
+        required(:project_id).maybe(:string)
         required(:primary_group).filled(:string)
         required(:bin_path).maybe(:string)
         required(:prelude_script).maybe(:string)

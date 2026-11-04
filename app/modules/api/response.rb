@@ -386,24 +386,11 @@ module Api
 
       # paging
       if filter_query.has_paging_params?
+        new_query = query_paging_with_total(new_query, filter_query, opts)
 
-        # execute a count against entire set without paging
-        total = new_query.size
-
-        # if new_query involves aggregation, size returns the size of each group as a hash,
-        # and what we need is the number of groups, so check if it is a hash and if so
-        # use its length for the value of total.
-        total = total.length if total.is_a? Hash
-
-        # add paging
-        new_query = filter_query.query_paging(new_query)
-        items = filter_query.is_paging_disabled? ? total : filter_query.paging[:items]
-
-        # update options
         opts.merge!(
           page: filter_query.paging[:page],
-          items:,
-          total:
+          items: filter_query.is_paging_disabled? ? nil : filter_query.paging[:items]
         )
       end
 
@@ -422,6 +409,13 @@ module Api
 
       # return the constructed query and options
       [new_query, opts]
+    end
+
+    def query_paging_with_total(query, filter_query, opts)
+      # PostgreSQL evaluates window functions before DISTINCT, so total_count would include duplicate rows.
+      raise ArgumentError, 'Filter base queries must not use DISTINCT' if query.distinct_value
+
+      filter_query.query_paging(query).with_paging_total(opts)
     end
 
     # if lower is higher than upper, lower will have priority

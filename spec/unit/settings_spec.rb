@@ -146,6 +146,27 @@ describe 'Settings' do
       connection = ba.connection
       expect(connection).to be_an_instance_of(BawApp::BatchAnalysisSettings::ConnectionSettings)
       expect(connection.host).to eq 'analysis_test'
+
+      expect(ba.pbs.project_id).to be_nil
+    end
+
+    example 'validation is done for a PBS project id' do
+      config = Config::Options.new
+      copy = Settings.to_hash
+      copy[:batch_analysis][:pbs][:project_id] = 123
+      config.add_source!(copy)
+
+      expect {
+        config.reload!
+      }.to raise_error(Config::Validation::Error, /project_id: must be a string/)
+    end
+
+    it 'allows a string PBS project id' do
+      pbs = BawApp::BatchAnalysisSettings::PbsSettings.new(
+        Settings.batch_analysis.pbs.to_h.merge(project_id: 'account123')
+      )
+
+      expect(pbs.project_id).to eq 'account123'
     end
   end
 
