@@ -280,7 +280,6 @@ group :test do
   gem 'database_cleaner-redis'
 
   gem 'faker'
-  gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
   gem 'rspec-benchmark'
   gem 'rspec-collection_matchers'
@@ -307,9 +306,6 @@ group :test do
 
   # api docs
   gem 'rswag-specs'
-
-  gem 'rspec_api_documentation', github: 'zipmark/rspec_api_documentation',
-    ref: '0c9692ade21bdb780a7b4f242c94c6692c0aae9b'
 
   # test for slow n+1 queries
   gem 'bullet'

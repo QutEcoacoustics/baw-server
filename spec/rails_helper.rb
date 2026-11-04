@@ -267,6 +267,7 @@ RSpec.configure do |config|
   require "#{RSPEC_ROOT}/support/shared_context/logger_spy"
 
   require_relative 'support/matchers/be_same_file_as'
+  require_relative 'support/matchers/match_attributes'
   require_relative 'support/matchers/string_to_have_encoding'
 
   # change the default creation strategy
