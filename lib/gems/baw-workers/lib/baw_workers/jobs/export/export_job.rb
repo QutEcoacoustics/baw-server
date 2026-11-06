@@ -9,6 +9,9 @@ module BawWorkers
 
         perform_expects ::Export
 
+        retry_on ::ActiveRecord::DatabaseConnectionError, PG::ConnectionBad, Redis::CannotConnectError, wait: 1.minute,
+          attempts: 3
+
         # @param export [::Export]
         def self.enqueue(export)
           perform_later!(export)
