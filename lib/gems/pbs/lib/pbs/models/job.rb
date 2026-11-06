@@ -192,7 +192,7 @@ module PBS
 
       # @!attribute [r] variable_list
       #   @return [Hash<string,string>]
-      attribute :variable_list, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::String)
+      attribute :variable_list, ::BawApp::Types::Hash.map(::BawApp::Types::String, ::BawApp::Types::String).default({}.freeze)
 
       # @!attribute [r] comment
       #   @return [String]
