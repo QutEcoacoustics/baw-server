@@ -66,16 +66,6 @@ GIT
       protocol-rack (~> 0.7)
       samovar (~> 2.3)
 
-GIT
-  remote: https://github.com/zipmark/rspec_api_documentation.git
-  revision: 0c9692ade21bdb780a7b4f242c94c6692c0aae9b
-  ref: 0c9692ade21bdb780a7b4f242c94c6692c0aae9b
-  specs:
-    rspec_api_documentation (6.1.0)
-      activesupport (>= 3.0.0)
-      mustache (~> 1.0, >= 0.99.4)
-      rspec (~> 3.0)
-
 GEM
   remote: https://rubygems.org/
   specs:

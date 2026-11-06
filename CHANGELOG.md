@@ -1,5 +1,13 @@
 # Changelog
 
+## [15.7.1](https://github.com/QutEcoacoustics/baw-server/tree/15.7.1) (2026-11-06)
+
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.7.0...15.7.1)
+
+**Fixed bugs:**
+
+- PBS status check can fail if variable list is misisng [\#1084](https://github.com/QutEcoacoustics/baw-server/issues/1084)
+
 ## [15.7.0](https://github.com/QutEcoacoustics/baw-server/tree/15.7.0) (2026-11-03)
 
 [Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/15.6.0...15.7.0)
@@ -7,6 +15,7 @@
 **Implemented enhancements:**
 
 - Filter performance: avoid double query [\#734](https://github.com/QutEcoacoustics/baw-server/issues/734)
+- Return Paging Totals Without a Separate Count Query [\#1080](https://github.com/QutEcoacoustics/baw-server/pull/1080) ([andrew-1234](https://github.com/andrew-1234))
 
 ## [15.6.0](https://github.com/QutEcoacoustics/baw-server/tree/15.6.0) (2026-11-03)
 
