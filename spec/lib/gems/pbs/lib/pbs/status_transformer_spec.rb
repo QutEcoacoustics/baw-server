@@ -187,6 +187,29 @@ describe PBS::Transformers::StatusTransformer do
     expect(result.to_h).to match(expected)
   end
 
+  it 'handles a missing variable list for a job with an invalid project reference' do
+    modified_raw = JSON.parse(raw, PBS::Connection::JSON_PARSER_OPTIONS)
+    job = modified_raw['Jobs']['0.725ccdf1a5fb']
+    job.delete('Variable_List')
+    job['project'] = 'ERR-IVRPID'
+
+    result = PBS::Transformers::StatusTransformer.new.call(modified_raw)
+
+    expected[:jobs]['0.725ccdf1a5fb'][:variable_list] = {}
+    expected[:jobs]['0.725ccdf1a5fb'][:project] = 'ERR-IVRPID'
+    expect(result.to_h).to match(expected)
+  end
+
+  it 'handles an empty variable list' do
+    modified_raw = JSON.parse(raw, PBS::Connection::JSON_PARSER_OPTIONS)
+    modified_raw['Jobs']['0.725ccdf1a5fb']['Variable_List'] = {}
+
+    result = PBS::Transformers::StatusTransformer.new.call(modified_raw)
+
+    expected[:jobs]['0.725ccdf1a5fb'][:variable_list] = {}
+    expect(result.to_h).to match(expected)
+  end
+
   # PBS sometimes returns exit status as a string
   # https://github.com/QutEcoacoustics/baw-server/issues/875
   # https://github.com/QutEcoacoustics/baw-server/issues/878
