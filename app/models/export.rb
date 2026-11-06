@@ -52,7 +52,12 @@ class Export < ApplicationRecord
     STATUS_FAILED => STATUS_FAILED
   }.freeze
 
-  enum :status, STATUS_ENUM, prefix: :status, validate: true
+  enum :status, STATUS_ENUM, prefix: :status, validate: true, instance_methods: false
+
+  def status_ready? = status == STATUS_READY
+  def status_failed? = status == STATUS_FAILED
+  def status_queued? = status == STATUS_QUEUED
+  def status_working? = status == STATUS_WORKING
 
   include StateMachine
 
