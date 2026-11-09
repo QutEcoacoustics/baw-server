@@ -43,15 +43,17 @@ class Export
 
     # @return [BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions]
     def exporter_options
+      options = @export.options || {}
+
       BawWorkers::Export::CamtrapDp::Exporter::RequiredExporterOptions.new(
         user: @export.creator,
         should_obfuscate: @export.obfuscate_locations,
         package_title: @export.name,
-        contributors: @export.camtrap_dp_contributors&.map(&:symbolize_keys),
-        project_capture_method: @export.camtrap_dp_project_capture_method,
-        project_sampling_design: @export.camtrap_dp_project_sampling_design,
-        emit_project_license: @export.camtrap_dp_emit_project_license,
-        forced_timezone: @export.camtrap_dp_forced_timezone
+        contributors: options['contributors']&.map(&:symbolize_keys),
+        project_capture_method: options['project_capture_method'],
+        project_sampling_design: options['project_sampling_design'],
+        emit_project_license: options['emit_project_license'],
+        forced_timezone: options['forced_timezone']
       )
     end
   end
