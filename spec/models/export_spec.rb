@@ -46,6 +46,26 @@ describe Export do
   it { is_expected.to validate_length_of(:name).is_at_least(2).is_at_most(255) }
   it { is_expected.to validate_presence_of(:export_type) }
 
+  describe 'file size scopes' do
+    let(:creator) { create(:user) }
+    let(:project) { create(:project, creator:) }
+
+    let!(:small_export) {
+      create(:export, :with_zip_file, creator:, project:).tap { |e| e.file.blob.update!(byte_size: 10) }
+    }
+    let!(:large_export) {
+      create(:export, :with_zip_file, creator:, project:).tap { |e| e.file.blob.update!(byte_size: 30) }
+    }
+
+    it 'largest_first orders exports from the largest file to the smallest' do
+      expect(Export.largest_first).to eq([large_export, small_export])
+    end
+
+    it 'larger_than returns only exports with a file larger than the given number of bytes' do
+      expect(Export.larger_than(20)).to eq([large_export])
+    end
+  end
+
   describe '#validate' do
     let(:errors) { export.tap(&:validate).errors }
 
