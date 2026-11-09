@@ -36,4 +36,16 @@ describe Export::CamtrapDpOptionsContract do
   it 'rejects an invalid forced timezone' do
     expect(contract.call(forced_timezone: 'invalid')).to be_failure
   end
+
+  it 'rejects emit_project_license when it is the string "false"' do
+    expect(contract.call(emit_project_license: 'false')).to be_failure
+  end
+
+  it 'rejects emit_project_license when it is the integer 1' do
+    expect(contract.call(emit_project_license: 1)).to be_failure
+  end
+
+  it 'accepts emit_project_license when it is false' do
+    expect(contract.call(emit_project_license: false)).to be_success
+  end
 end

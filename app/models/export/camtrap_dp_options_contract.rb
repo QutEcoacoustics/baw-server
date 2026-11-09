@@ -7,7 +7,7 @@ class Export
   class CamtrapDpOptionsContract < Dry::Validation::Contract
     Types = BawWorkers::Export::CamtrapDp::Types
 
-    params do
+    json do
       optional(:contributors).array(:hash) do
         optional(:organization).filled(:string)
         required(:title).filled(:string)
