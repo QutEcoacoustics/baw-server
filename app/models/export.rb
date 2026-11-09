@@ -69,18 +69,6 @@ class Export < ApplicationRecord
 
   enum :export_type, EXPORT_TYPE_ENUM, prefix: :export_type, validate: true
 
-  OPTIONS_CAMTRAP_DP = [
-    :contributors,
-    :project_capture_method,
-    :project_sampling_design,
-    :emit_project_license,
-    :forced_timezone
-  ].freeze
-
-  # Add additional accessors for other export types, prefixed, as needed.
-  # Usage: export.camtrap_dp_contributors, etc.
-  store_accessor :options, *OPTIONS_CAMTRAP_DP, prefix: :camtrap_dp
-
   validate :attachment_acceptable, if: -> { file.attached? }
   validate :validate_options_camtrap_dp, if: :export_type_camtrap_dp?
   validate :validate_obfuscate_locations, if: -> { obfuscate_locations == false }
