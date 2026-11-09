@@ -158,7 +158,15 @@ describe Export do
 
     around { |example| Timecop.freeze(now) { example.run } }
 
+    after { clear_pending_jobs }
+
     context 'when successful' do
+      it 'enqueues one completed export email when the export becomes ready' do
+        export.generate
+
+        expect_enqueued_jobs(1, of_class: ActionMailer::MailDeliveryJob)
+      end
+
       it 'marks the export ready with a zip file attached' do
         export.generate
 
@@ -166,6 +174,16 @@ describe Export do
           status: 'ready', error: nil, started_at: now, finished_at: now, expires_at: now + 7.days,
           file: have_attributes(content_type: 'application/zip', filename: have_attributes(extension: 'zip'))
         )
+      end
+    end
+
+    context 'when the completed email cannot be enqueued' do
+      it 'leaves the export ready' do
+        allow(ExportMailer).to receive(:completed_export_message).and_raise(Redis::CannotConnectError, 'redis down')
+
+        export.generate
+
+        expect(export.reload).to have_attributes(status: 'ready', error: nil, file: be_attached)
       end
     end
 
@@ -202,6 +220,14 @@ describe Export do
 
         expect { export.generate }.not_to raise_error
         expect(export.reload).to have_attributes(status: 'failed', error: 'bad data', finished_at: now)
+      end
+
+      it 'does not enqueue the completed export email' do
+        allow(exporter).to receive(:new).and_raise(BawWorkers::Export::CamtrapDp::Errors::ValidationError, 'bad data')
+
+        export.generate
+
+        expect_enqueued_jobs(0, of_class: ActionMailer::MailDeliveryJob)
       end
     end
 

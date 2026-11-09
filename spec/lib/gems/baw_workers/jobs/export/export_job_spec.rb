@@ -13,6 +13,8 @@ describe BawWorkers::Jobs::Export::ExportJob, :clean_by_truncation do
     create(:tagging, audio_event:, tag: create(:tag_taxonomic_true_species), creator: writer_user)
   end
 
+  after { clear_pending_jobs }
+
   let(:queue_name) { Settings.actions.export.queue }
 
   let(:export) {

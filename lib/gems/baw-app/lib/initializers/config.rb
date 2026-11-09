@@ -78,6 +78,7 @@ class BawConfigContract < Dry::Validation::Contract
       required(:export).hash do
         required(:queue).filled(:string)
         required(:expires_after).filled(:integer, gt?: 0)
+        required(:required_recipients).array(:string)
       end
     end
   }
