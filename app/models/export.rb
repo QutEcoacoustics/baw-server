@@ -103,6 +103,9 @@ class Export < ApplicationRecord
     joins(:file_blob).where(ActiveStorage::Blob.arel_table[:byte_size].gt(bytes))
   }
 
+  # Scope to exports whose expires_at is in the past.
+  scope :expired, -> { where(arel_table[:expires_at].lt(Time.zone.now)) }
+
   # Raised by a generator for permanent, safe-to-show errors.
   class UserFacingError < StandardError; end
 
