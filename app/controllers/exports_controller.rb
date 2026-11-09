@@ -12,31 +12,6 @@ class ExportsController < ApplicationController
     super
   end
 
-  def download
-    do_load_resource
-    do_authorize_instance unless download_token?
-    raise CustomErrors::GoneError, 'The export has expired or was purged' if export_file_gone?
-
-    if @export.status_failed?
-      raise CustomErrors::UnprocessableEntityError.new(@export.error,
-        { export_id: @export.id, status: @export.status })
-    end
-
-    unless @export.status_ready?
-      return respond_error(:service_unavailable,
-        'The export is not ready yet. Try again later.')
-    end
-
-    Export.increment_counter(:download_count, @export.id) # rubocop:disable Rails/SkipsModelValidations -- atomic counter update
-    blob = @export.file.blob
-    send_file(
-      blob.service.path_for(blob.key),
-      filename: blob.filename.to_s,
-      type: 'application/zip',
-      disposition: 'attachment'
-    )
-  end
-
   # GET /exports
   def index
     do_authorize_class
@@ -68,6 +43,9 @@ class ExportsController < ApplicationController
   end
 
   # POST /exports
+  # Create an export and enqueue it for background processing.
+  # Returns a token and exchange_url (download url + token) for downloading the export.
+  # The token is used to authenticate the download request without requiring the user to be logged in.
   def create
     do_new_resource
     do_set_attributes(export_params)
@@ -79,7 +57,7 @@ class ExportsController < ApplicationController
 
       token = @export.signed_id(purpose: :export_download)
       respond_create_success(
-        export_url(@export),
+        export_path(@export),
         { token:, exchange_url: download_export_url(@export, token:) }
       )
     else
@@ -120,14 +98,59 @@ class ExportsController < ApplicationController
     )
   end
 
+  # GET /exports/:id/download
+  #
+  # Who can download an export:
+  #
+  # Step 1: find the export.
+  # - With a `token` param: the token identifies the export. Anyone with a valid token
+  #   can continue, with no login needed.
+  # - Without a token: the user must be logged in and must be the export's creator.
+  #
+  # Step 2: check the creator is still allowed to have this export (token or not).
+  # Any reader or above can create an export, but permissions can change afterwards,
+  # so we check the creator's *current* access to the project:
+  # - They must still be a reader or above.
+  # - If the export has `obfuscate_locations: false`, they must still be an owner.
+  # If not, the download is denied. See {Export#creator_can_download?}.
+  def download
+    do_load_resource
+    do_authorize_instance unless download_token?
+    raise CanCan::AccessDenied, 'The export creator no longer has permission to download this export' unless
+      @export.creator_can_download?
+
+    raise CustomErrors::GoneError, 'The export has expired or was purged' if export_file_gone?
+
+    if @export.status_failed?
+      raise CustomErrors::UnprocessableEntityError.new(@export.error,
+        { export_id: @export.id, status: @export.status })
+    end
+
+    unless @export.status_ready?
+      return respond_error(:service_unavailable,
+        'The export is not ready yet. Try again later.')
+    end
+
+    Export.increment_counter(:download_count, @export.id) # rubocop:disable Rails/SkipsModelValidations -- atomic counter update
+
+    blob = @export.file.blob
+
+    send_file(
+      blob.service.path_for(blob.key),
+      filename: blob.filename.to_s,
+      type: 'application/zip',
+      disposition: 'attachment'
+    )
+  end
+
   private
 
   def download_token?
     params[:token].present?
   end
 
-  # Load the current resource.
-  # Patched to find the export from a download token when one is sent.
+  # Load the current resource. Patched to find the export from a download token when one is sent.
+  # The export retrieved from the token must match the ID in the request parameters.
   def do_load_resource
     return super unless action_sym == :download && download_token?
 

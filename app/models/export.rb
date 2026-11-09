@@ -144,6 +144,20 @@ class Export < ApplicationRecord
     end
   end
 
+  # Whether the creator's *current* permissions still allow the export to be downloaded.
+  # Permissions can be revoked after an export is created, so this is re-checked at download.
+  # - the creator must still be a reader (or higher) of the project
+  # - an export with unobfuscated locations also requires the creator to still be an owner
+  # @return [Boolean]
+  def creator_can_download?
+    return false if project.blank?
+
+    return true if creator_is_owner?
+    return false if obfuscate_locations == false
+
+    Access::Core.can_any?(creator, Access::Permission::READER, project)
+  end
+
   def self.filter_settings
     fields = [
       :id, :download_count, :error, :expires_at, :export_type, :filter,
