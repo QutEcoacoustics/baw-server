@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Creates, lists, shows, deletes and downloads exports.
 class ExportsController < ApplicationController
   include Api::ControllerHelper
 
