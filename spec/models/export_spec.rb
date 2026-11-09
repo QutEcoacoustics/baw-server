@@ -46,23 +46,29 @@ describe Export do
   it { is_expected.to validate_length_of(:name).is_at_least(2).is_at_most(255) }
   it { is_expected.to validate_presence_of(:export_type) }
 
-  describe 'file size scopes' do
+  describe 'scopes' do
     let(:creator) { create(:user) }
     let(:project) { create(:project, creator:) }
 
-    let!(:small_export) {
-      create(:export, :with_zip_file, creator:, project:).tap { |e| e.file.blob.update!(byte_size: 10) }
+    let!(:small_expired_export) {
+      create(:export, :with_zip_file, creator:, project:, expires_at: 1.day.ago)
+        .tap { |e| e.file.blob.update!(byte_size: 10) }
     }
-    let!(:large_export) {
-      create(:export, :with_zip_file, creator:, project:).tap { |e| e.file.blob.update!(byte_size: 30) }
+    let!(:large_unexpired_export) {
+      create(:export, :with_zip_file, creator:, project:, expires_at: 1.day.from_now)
+        .tap { |e| e.file.blob.update!(byte_size: 30) }
     }
 
     it 'largest_first orders exports from the largest file to the smallest' do
-      expect(Export.largest_first).to eq([large_export, small_export])
+      expect(Export.largest_first).to eq([large_unexpired_export, small_expired_export])
     end
 
     it 'larger_than returns only exports with a file larger than the given number of bytes' do
-      expect(Export.larger_than(20)).to eq([large_export])
+      expect(Export.larger_than(20)).to eq([large_unexpired_export])
+    end
+
+    it 'expired returns only exports whose expires_at is in the past' do
+      expect(Export.expired).to eq([small_expired_export])
     end
   end
 
