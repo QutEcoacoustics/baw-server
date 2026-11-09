@@ -122,6 +122,7 @@ class Export < ApplicationRecord
     end
 
     ready!
+    send_completed_email
   rescue UserFacingError => e
     record_failure!(e.message)
   rescue StandardError
@@ -202,6 +203,13 @@ class Export < ApplicationRecord
   end
 
   private
+
+  # A failure to enqueue the email must not mark an export that is already ready as failed.
+  def send_completed_email
+    ExportMailer.completed_export_message(self).deliver_later
+  rescue StandardError => e
+    logger.error('Failed to enqueue the completed export email', e)
+  end
 
   # Claims the export for generation, transitioning it to `working` if successful.
   #
