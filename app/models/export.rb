@@ -93,6 +93,16 @@ class Export < ApplicationRecord
     allow_blank: true,
     timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
 
+  # Scope to order exports by file size in descending order (largest first).
+  scope :largest_first, lambda {
+    joins(:file_blob).order(ActiveStorage::Blob.arel_table[:byte_size].desc)
+  }
+
+  # Scope to filter exports by file size greater than the given number of bytes.
+  scope :larger_than, lambda { |bytes|
+    joins(:file_blob).where(ActiveStorage::Blob.arel_table[:byte_size].gt(bytes))
+  }
+
   # Raised by a generator for permanent, safe-to-show errors.
   class UserFacingError < StandardError; end
 
