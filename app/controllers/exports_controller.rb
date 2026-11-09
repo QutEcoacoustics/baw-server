@@ -56,6 +56,8 @@ class ExportsController < ApplicationController
     if @export.save
       @export.enqueue!
 
+      # Use a signed ID rather than a JWT because the token is shared in the download URL query string,
+      # whereas JWTs require an Authorization header.
       token = @export.signed_id(purpose: :export_download)
       respond_create_success(
         export_path(@export),
