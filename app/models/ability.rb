@@ -837,16 +837,17 @@ class Ability
   end
 
   def to_export(user, _is_guest)
-    # available to any user, including guest
+    # Available to any user, including guest.
     can [:index, :filter, :new], Export
 
-    # only owners can create/request packages for their own projects.
+    # Readers and above can create/request packages for their projects.
+    # Downloads re-check the creator's permissions, see ExportsController#download.
     can [:create], Export do |export|
       check_model(export)
-      Access::Core.can_any?(user, :owner, export.project)
+      Access::Core.can_any?(user, :reader, export.project)
     end
 
-    # only the creator of an export can:
+    # Only the creator of an export can:
     can [:show, :download, :destroy], Export do |export|
       check_model(export)
       export.creator_id == user&.id
