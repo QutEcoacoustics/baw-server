@@ -110,7 +110,7 @@ module BawWorkers
             Rails.logger.info("Processed #{rows_processed} rows") if rows_processed % BATCH_SIZE == 0
           end
 
-          raise ArgumentError, 'Filter returned no data, cannot export' if rows_processed.zero?
+          raise Errors::NoDataError, 'Filter returned no data, cannot export' if rows_processed.zero?
 
           write_deployments(table_writers.deployments, deployments.values)
           package = PackageMetadata.build(

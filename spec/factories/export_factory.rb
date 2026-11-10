@@ -40,7 +40,13 @@ FactoryBot.define do
     export_type { 'camtrap_dp' }
 
     filter { {} }
-    options { {} }
+    options do
+      {
+        contributors: [{ title: 'Alice' }],
+        project_capture_method: ['continuous'],
+        project_sampling_design: 'systematicRandom'
+      }
+    end
 
     status { 'pending' }
 

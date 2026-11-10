@@ -8,15 +8,15 @@ class Export
     Types = BawWorkers::Export::CamtrapDp::Types
 
     json do
-      optional(:contributors).array(:hash) do
+      required(:contributors).array(:hash) do
         optional(:organization).filled(:string)
         required(:title).filled(:string)
         optional(:email).filled(:string)
         optional(:path).filled(Types::Url)
         optional(:role).filled(Types::Role)
       end
-      optional(:project_capture_method).array(Types::CaptureMethod)
-      optional(:project_sampling_design).value(Types::SamplingDesign)
+      required(:project_capture_method).array(Types::CaptureMethod)
+      required(:project_sampling_design).value(Types::SamplingDesign)
       optional(:forced_timezone).maybe(:string)
       optional(:emit_project_license).value(:bool)
     end

@@ -99,8 +99,7 @@ class Export < ApplicationRecord
 
   # Run the generator for the export, handling file attachment and state transitions.
   #
-  # @param (see #claim_for_generation resume)
-  # @raise [UserFacingError] if a permanent, safe-to-show error occurs during generation.
+  # @param (see #claim_for_generation! resume)
   # @return [void]
   def generate(resume: false)
     return unless claim_for_generation!(resume:)
