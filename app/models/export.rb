@@ -114,7 +114,9 @@ class Export < ApplicationRecord
   rescue UserFacingError => e
     record_failure!(e.message)
   rescue StandardError
-    # For any unexpected errors, record a generic message, then re-raise.
+    # For any unexpected errors, record a user-facing generic message, then re-raise.
+    # For a background job, re-raise is handled by ApplicationJob's `discard_on(StandardError)`,
+    # which logs the real error and mails an error notification.
     record_failure!('An unexpected error occurred while generating the export.')
     raise
   end

@@ -45,8 +45,11 @@ class ExportsController < ApplicationController
 
   # POST /exports
   # Create an export and enqueue it for background processing.
-  # Returns a token and exchange_url (download url + token) for downloading the export.
-  # The token is used to authenticate the download request without requiring the user to be logged in.
+  #
+  # Returns a token and exchange_url (download url + token) for downloading the
+  # export. The token is used to authenticate the download request without
+  # requiring the user to be logged in. Successful exports trigger an email
+  # notification which also contains a download link.
   def create
     do_new_resource
     do_set_attributes(export_params)
