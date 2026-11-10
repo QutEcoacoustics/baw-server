@@ -70,13 +70,13 @@ class Export < ApplicationRecord
   enum :export_type, EXPORT_TYPE_ENUM, prefix: :export_type, validate: true
 
   validate :attachment_acceptable, if: -> { file.attached? }
-  validate :validate_options_camtrap_dp, if: :export_type_camtrap_dp?
-  validate :validate_obfuscate_locations, if: -> { obfuscate_locations == false }
+  validate :validate_options_camtrap_dp, on: :create, if: :export_type_camtrap_dp?
+  validate :validate_obfuscate_locations, on: :create, if: -> { obfuscate_locations == false }
 
   validates :name, length: { minimum: 2, maximum: 255 }
   validates :export_type, presence: true
 
-  validate :filter_hash_is_valid
+  validate :filter_hash_is_valid, on: :create
   validates :started_at, :finished_at,
     allow_blank: true,
     timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
@@ -143,8 +143,8 @@ class Export < ApplicationRecord
 
       raise InvalidTransition, "Cannot purge an export that is #{status}" if status_queued? || status_working?
 
-      file&.purge
       update!(purged: true)
+      file&.purge
     end
   end
 
@@ -206,7 +206,8 @@ class Export < ApplicationRecord
   # @param resume [Boolean] when true, an export with status `working` can be
   #   claimed for generation (used on job retries). When false (default), an
   #   export that is already `working` is skipped.
-  # @raise [UserFacingError] if the project is missing.
+  # @raise [UserFacingError] if the project is missing, or if locations are unobfuscated
+  #   and the creator no longer owns the project.
   # @return [Boolean] true if the export is claimed for generation, false if it is not.
   def claim_for_generation!(resume:)
     with_lock do
@@ -214,6 +215,10 @@ class Export < ApplicationRecord
 
       # An export row may exist without a project, but it cannot be generated without one.
       raise UserFacingError, 'project must be present' if project.blank?
+
+      if obfuscate_locations == false && !creator_is_owner?
+        raise UserFacingError, 'obfuscate_locations can only be false while the creator owns the project'
+      end
 
       working!(resume:)
       true

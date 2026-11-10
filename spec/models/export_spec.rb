@@ -260,6 +260,26 @@ describe Export do
       end
     end
 
+    context 'when obfuscate_locations is false and the creator is no longer a project owner' do
+      let(:export) {
+        create(:export, creator: owner_user, project:, options:, filter:, obfuscate_locations: false)
+      }
+
+      before do
+        export
+        owner_permission.update!(level: 'writer')
+      end
+
+      it 'records the failure with a specific message without raising' do
+        expect { export.generate }.not_to raise_error
+        expect(export.reload).to have_attributes(
+          status: 'failed',
+          error: 'obfuscate_locations can only be false while the creator owns the project',
+          file: be_blank
+        )
+      end
+    end
+
     context 'when the export is already working' do
       let(:export) { super().tap { |e| e.update!(status: 'working') } }
 
@@ -357,6 +377,14 @@ describe Export do
       export.purge!
 
       expect { export.purge! }.not_to(change { export.reload.attributes })
+    end
+
+    it 'removes the file and marks the export purged when the creator is not a project owner' do
+      export.update!(obfuscate_locations: false)
+
+      export.purge!
+
+      expect(export.reload).to have_attributes(purged: true, file: be_blank)
     end
 
     ['queued', 'working'].each do |status|
