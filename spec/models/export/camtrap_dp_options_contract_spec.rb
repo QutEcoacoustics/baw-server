@@ -17,8 +17,8 @@ describe Export::CamtrapDpOptionsContract do
     expect(contract.call(valid_options)).to be_success
   end
 
-  it 'accepts empty options' do
-    expect(contract.call({})).to be_success
+  it 'rejects empty options' do
+    expect(contract.call({})).to be_failure
   end
 
   it 'rejects an unknown capture method' do
@@ -30,22 +30,22 @@ describe Export::CamtrapDpOptionsContract do
   end
 
   it 'rejects a contributor without a title' do
-    expect(contract.call(contributors: [{ role: 'contact' }])).to be_failure
+    expect(contract.call(valid_options.merge(contributors: [{ role: 'contact' }]))).to be_failure
   end
 
   it 'rejects an invalid forced timezone' do
-    expect(contract.call(forced_timezone: 'invalid')).to be_failure
+    expect(contract.call(valid_options.merge(forced_timezone: 'invalid'))).to be_failure
   end
 
   it 'rejects emit_project_license when it is the string "false"' do
-    expect(contract.call(emit_project_license: 'false')).to be_failure
+    expect(contract.call(valid_options.merge(emit_project_license: 'false'))).to be_failure
   end
 
   it 'rejects emit_project_license when it is the integer 1' do
-    expect(contract.call(emit_project_license: 1)).to be_failure
+    expect(contract.call(valid_options.merge(emit_project_license: 1))).to be_failure
   end
 
   it 'accepts emit_project_license when it is false' do
-    expect(contract.call(emit_project_license: false)).to be_success
+    expect(contract.call(valid_options.merge(emit_project_license: false))).to be_success
   end
 end

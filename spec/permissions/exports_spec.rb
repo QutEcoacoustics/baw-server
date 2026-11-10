@@ -16,7 +16,22 @@ describe 'Export permissions' do
   end
 
   send_create_body do
-    [{ export: { export_type: 'camtrap_dp', name: 'permissions', project_id: project.id, filter: {} } }, :json]
+    [
+      {
+        export: {
+          export_type: 'camtrap_dp',
+          name: 'permissions',
+          project_id: project.id,
+          filter: {},
+          options: {
+            contributors: [{ title: 'Alice' }],
+            project_capture_method: ['continuous'],
+            project_sampling_design: 'systematicRandom'
+          }
+        }
+      },
+      :json
+    ]
   end
 
   send_update_body { nil }

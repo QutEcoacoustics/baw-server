@@ -107,7 +107,17 @@ describe 'Exports' do
     pause_all_jobs
 
     let(:params) do
-      { export_type: 'camtrap_dp', name: 'Test Export', filter: {}, project_id: project.id }
+      {
+        export_type: 'camtrap_dp',
+        name: 'Test Export',
+        filter: {},
+        project_id: project.id,
+        options: {
+          contributors: [{ title: 'Alice' }],
+          project_capture_method: ['continuous'],
+          project_sampling_design: 'systematicRandom'
+        }
+      }
     end
 
     it 'can request a new camtrap_dp export' do
@@ -124,7 +134,7 @@ describe 'Exports' do
           creator_id: owner_user.id,
           name: 'Test Export',
           filter: {},
-          options: nil,
+          options: params[:options],
           token: be_a(String),
           exchange_url: "http://web:3000/exports/#{export.id}/download?token=#{api_data[:token]}",
           expires_at: export.expires_at

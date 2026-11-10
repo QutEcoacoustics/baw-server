@@ -8,6 +8,7 @@ module BawWorkers
         class CamtrapDpError < StandardError; end
 
         class ProjectLicenseError < CamtrapDpError; end
+        class NoDataError < CamtrapDpError; end
         class ValidationError < CamtrapDpError; end
 
         class PackageLoadError < ValidationError; end
