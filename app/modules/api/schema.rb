@@ -408,6 +408,7 @@ module Api
             audio_event: AudioEvent.schema,
             provenance: Provenance.schema,
             verification: Verification.schema,
+            export: Export.schema,
             admin_site_setting: Admin::SiteSetting.schema
           },
           parameters: {

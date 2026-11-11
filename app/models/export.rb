@@ -60,6 +60,7 @@ class Export < ApplicationRecord
   def status_working? = status == STATUS_WORKING
 
   include StateMachine
+  extend Schema
 
   EXPORT_TYPE_CAMTRAP_DP = 'camtrap_dp'
 
