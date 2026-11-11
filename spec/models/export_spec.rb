@@ -4,23 +4,23 @@
 #
 # Table name: exports
 #
-#  id                                                     :bigint           not null, primary key
-#  download_count                                         :integer          default(0)
-#  error(User visible error message if the export failed) :text
-#  expires_at                                             :datetime
-#  export_type                                            :string(16)       not null
-#  filter                                                 :jsonb            not null
-#  finished_at                                            :datetime
-#  name                                                   :string
-#  obfuscate_locations                                    :boolean
-#  options(Additional options for the export)             :jsonb
-#  purged                                                 :boolean
-#  started_at                                             :datetime
-#  status                                                 :enum             default("pending"), not null
-#  created_at                                             :datetime         not null
-#  updated_at                                             :datetime         not null
-#  creator_id                                             :bigint           not null
-#  project_id                                             :bigint           not null
+#  id                                                                                                    :bigint           not null, primary key
+#  download_count                                                                                        :integer          default(0), not null
+#  error(User visible error message if the export failed)                                                :text
+#  expires_at                                                                                            :datetime
+#  export_type                                                                                           :string(16)       not null
+#  filter                                                                                                :jsonb            not null
+#  finished_at                                                                                           :datetime
+#  name                                                                                                  :string           not null
+#  obfuscate_locations(null decides from creator permissions at generation time; true always obfuscates) :boolean
+#  options(Additional options for the export)                                                            :jsonb
+#  purged                                                                                                :boolean          default(FALSE), not null
+#  started_at                                                                                            :datetime
+#  status                                                                                                :enum             default("pending"), not null
+#  created_at                                                                                            :datetime         not null
+#  updated_at                                                                                            :datetime         not null
+#  creator_id                                                                                            :bigint           not null
+#  project_id                                                                                            :bigint           not null
 #
 # Indexes
 #

@@ -1587,7 +1587,7 @@ ALTER SEQUENCE public.datasets_id_seq OWNED BY public.datasets.id;
 
 CREATE TABLE public.exports (
     id bigint NOT NULL,
-    name character varying,
+    name character varying NOT NULL,
     filter jsonb NOT NULL,
     obfuscate_locations boolean,
     export_type character varying(16) NOT NULL,
@@ -1597,13 +1597,20 @@ CREATE TABLE public.exports (
     started_at timestamp(6) without time zone,
     finished_at timestamp(6) without time zone,
     expires_at timestamp(6) without time zone,
-    purged boolean,
-    download_count integer DEFAULT 0,
+    purged boolean DEFAULT false NOT NULL,
+    download_count integer DEFAULT 0 NOT NULL,
     creator_id bigint NOT NULL,
     project_id bigint NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
+
+
+--
+-- Name: COLUMN exports.obfuscate_locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.exports.obfuscate_locations IS 'null decides from creator permissions at generation time; true always obfuscates';
 
 
 --
