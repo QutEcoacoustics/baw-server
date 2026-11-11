@@ -5,38 +5,38 @@
 # Table name: users
 #
 #  id                                                            :integer          not null, primary key
-#  authentication_token                                          :string
+#  authentication_token                                          :string(255)
 #  confirmation_sent_at                                          :datetime
-#  confirmation_token                                            :string
+#  confirmation_token                                            :string(255)
 #  confirmed_at                                                  :datetime
 #  contactable(Is the user contactable for email communications) :enum             default("unasked"), not null
 #  current_sign_in_at                                            :datetime
-#  current_sign_in_ip                                            :string
-#  email                                                         :string           not null
-#  encrypted_password                                            :string           not null
+#  current_sign_in_ip                                            :string(255)
+#  email                                                         :string(255)      not null
+#  encrypted_password                                            :string(255)      not null
 #  failed_attempts                                               :integer          default(0)
-#  image_content_type                                            :string
-#  image_file_name                                               :string
-#  image_file_size                                               :bigint
+#  image_content_type                                            :string(255)
+#  image_file_name                                               :string(255)
+#  image_file_size                                               :integer
 #  image_updated_at                                              :datetime
-#  invitation_token                                              :string
+#  invitation_token                                              :string(255)
 #  last_seen_at                                                  :datetime
 #  last_sign_in_at                                               :datetime
-#  last_sign_in_ip                                               :string
+#  last_sign_in_ip                                               :string(255)
 #  locked_at                                                     :datetime
 #  preferences                                                   :text
 #  rails_tz                                                      :string(255)
 #  remember_created_at                                           :datetime
 #  reset_password_sent_at                                        :datetime
-#  reset_password_token                                          :string
+#  reset_password_token                                          :string(255)
 #  roles_mask                                                    :integer
 #  sign_in_count                                                 :integer          default(0)
 #  tzinfo_tz                                                     :string(255)
-#  unconfirmed_email                                             :string
-#  unlock_token                                                  :string
-#  user_name                                                     :string           not null
-#  created_at                                                    :datetime
-#  updated_at                                                    :datetime
+#  unconfirmed_email                                             :string(255)
+#  unlock_token                                                  :string(255)
+#  user_name                                                     :string(255)      not null
+#  created_at                                                    :datetime         not null
+#  updated_at                                                    :datetime         not null
 #
 # Indexes
 #

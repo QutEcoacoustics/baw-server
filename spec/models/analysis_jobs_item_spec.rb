@@ -29,7 +29,10 @@
 #  index_analysis_jobs_items_on_analysis_job_id     (analysis_job_id)
 #  index_analysis_jobs_items_on_audio_recording_id  (audio_recording_id)
 #  index_analysis_jobs_items_on_script_id           (script_id)
+#  index_analysis_jobs_items_success_by_recording   (audio_recording_id) WHERE (result = 'success'::analysis_jobs_item_result)
 #  queue_id_uidx                                    (queue_id) UNIQUE
+#  status_1790901840963_index                       (status)
+#  transition_1790901731177_index                   (transition)
 #
 # Foreign Keys
 #

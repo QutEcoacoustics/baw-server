@@ -5,8 +5,8 @@
 # Table name: audio_events_tags
 #
 #  id             :integer          not null, primary key
-#  created_at     :datetime
-#  updated_at     :datetime
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
 #  audio_event_id :integer          not null
 #  creator_id     :integer          not null
 #  tag_id         :integer          not null

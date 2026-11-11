@@ -8,20 +8,20 @@
 #  custom_obfuscated_location(True if the obfuscated location was set by the user or false if generated) :boolean          default(FALSE), not null
 #  deleted_at                                                                                            :datetime
 #  description                                                                                           :text
-#  image_content_type                                                                                    :string
-#  image_file_name                                                                                       :string
-#  image_file_size                                                                                       :bigint
+#  image_content_type                                                                                    :string(255)
+#  image_file_name                                                                                       :string(255)
+#  image_file_size                                                                                       :integer
 #  image_updated_at                                                                                      :datetime
 #  latitude                                                                                              :decimal(9, 6)
 #  longitude                                                                                             :decimal(9, 6)
-#  name                                                                                                  :string           not null
+#  name                                                                                                  :string(255)      not null
 #  notes                                                                                                 :text
 #  obfuscated_latitude                                                                                   :decimal(9, 6)
 #  obfuscated_longitude                                                                                  :decimal(9, 6)
 #  rails_tz                                                                                              :string(255)
 #  tzinfo_tz                                                                                             :string(255)
-#  created_at                                                                                            :datetime
-#  updated_at                                                                                            :datetime
+#  created_at                                                                                            :datetime         not null
+#  updated_at                                                                                            :datetime         not null
 #  creator_id                                                                                            :integer          not null
 #  deleter_id                                                                                            :integer
 #  region_id                                                                                             :integer

@@ -7,12 +7,6 @@
 #  project_id      :integer          not null, primary key
 #  saved_search_id :integer          not null, primary key
 #
-# Indexes
-#
-#  index_projects_saved_searches_on_project_id                      (project_id)
-#  index_projects_saved_searches_on_project_id_and_saved_search_id  (project_id,saved_search_id)
-#  index_projects_saved_searches_on_saved_search_id                 (saved_search_id)
-#
 # Foreign Keys
 #
 #  projects_saved_searches_project_id_fk       (project_id => projects.id) ON DELETE => cascade
