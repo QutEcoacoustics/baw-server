@@ -5,8 +5,8 @@
 # Table name: scripts
 #
 #  id                                                                                                                   :integer          not null, primary key
-#  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string           not null
-#  description                                                                                                          :string
+#  analysis_identifier(a unique identifier for this script in the analysis system, used in directory names. [-a-z0-0_]) :string(255)      not null
+#  description                                                                                                          :string(255)
 #  event_import_glob(Glob pattern to match result files that should be imported as audio events)                        :string
 #  event_import_include_top(Limit import to the top N results per tag per file)                                         :integer
 #  event_import_include_top_per(Apply top filtering per this interval, in seconds)                                      :integer
@@ -15,7 +15,7 @@
 #  executable_settings                                                                                                  :text
 #  executable_settings_media_type                                                                                       :string(255)      default("text/plain")
 #  executable_settings_name                                                                                             :string
-#  name                                                                                                                 :string           not null
+#  name                                                                                                                 :string(255)      not null
 #  resources(Resources required by this script in the PBS format.)                                                      :jsonb
 #  verified                                                                                                             :boolean          default(FALSE)
 #  version(Version of this script - not the version of program the script runs!)                                        :integer          default(1), not null
