@@ -160,10 +160,9 @@ module Access
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids:)
-        else
-          permission_sites(user, levels, query, project_ids:)
         end
+
+        permission_sites(user, levels, query, project_ids:)
       end
 
       # Get all audio events comments for which this user has these access levels.
