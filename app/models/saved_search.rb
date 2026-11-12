@@ -13,6 +13,12 @@
 #  creator_id   :integer          not null
 #  deleter_id   :integer
 #
+# Indexes
+#
+#  index_saved_searches_on_creator_id   (creator_id)
+#  index_saved_searches_on_deleter_id   (deleter_id)
+#  saved_searches_name_creator_id_uidx  (name,creator_id) UNIQUE
+#
 # Foreign Keys
 #
 #  saved_searches_creator_id_fk  (creator_id => users.id)

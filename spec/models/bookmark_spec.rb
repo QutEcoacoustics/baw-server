@@ -5,12 +5,12 @@
 # Table name: bookmarks
 #
 #  id                 :integer          not null, primary key
-#  category           :string(255)
+#  category           :string
 #  description        :text
-#  name               :string(255)
+#  name               :string
 #  offset_seconds     :decimal(10, 4)
-#  created_at         :datetime         not null
-#  updated_at         :datetime         not null
+#  created_at         :datetime
+#  updated_at         :datetime
 #  audio_recording_id :integer
 #  creator_id         :integer          not null
 #  updater_id         :integer

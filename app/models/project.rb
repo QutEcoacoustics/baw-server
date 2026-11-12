@@ -9,16 +9,16 @@
 #  allow_original_download :string
 #  deleted_at              :datetime
 #  description             :text
-#  image_content_type      :string(255)
-#  image_file_name         :string(255)
-#  image_file_size         :integer
+#  image_content_type      :string
+#  image_file_name         :string
+#  image_file_size         :bigint
 #  image_updated_at        :datetime
 #  license                 :text
-#  name                    :string(255)      not null
+#  name                    :string           not null
 #  notes                   :text
-#  urn                     :string(255)
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
+#  urn                     :string
+#  created_at              :datetime
+#  updated_at              :datetime
 #  creator_id              :integer          not null
 #  deleter_id              :integer
 #  updater_id              :integer

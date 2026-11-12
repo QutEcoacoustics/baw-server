@@ -11,16 +11,16 @@
 #  deleted_at          :datetime
 #  duration_seconds    :decimal(10, 4)   not null
 #  file_hash           :string(524)      not null
-#  media_type          :string(255)      not null
+#  media_type          :string           not null
 #  notes               :text
-#  original_file_name  :string(255)
+#  original_file_name  :string
 #  recorded_date       :datetime         not null
 #  recorded_utc_offset :string(20)
 #  sample_rate_hertz   :integer
-#  status              :string(255)      default("new")
+#  status              :string           default("new")
 #  uuid                :string(36)       not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
+#  created_at          :datetime
+#  updated_at          :datetime
 #  creator_id          :integer          not null
 #  deleter_id          :integer
 #  site_id             :integer          not null

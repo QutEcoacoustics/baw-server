@@ -7,7 +7,7 @@
 #  id             :integer          not null, primary key
 #  comment        :text             not null
 #  deleted_at     :datetime
-#  flag           :string(255)
+#  flag           :string
 #  flag_explain   :text
 #  flagged_at     :datetime
 #  created_at     :datetime
