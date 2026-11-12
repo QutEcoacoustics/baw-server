@@ -143,6 +143,12 @@ describe 'Exports' do
       clear_pending_jobs
     end
 
+    it 'responds with unprocessable entity when project_id is missing' do
+      params.delete(:project_id)
+      post '/exports', params: params, **api_with_body_headers(owner_token)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     describe 'download' do
       let(:export) { create(:export, :with_zip_file, creator: owner_user, project:, status: 'ready') }
       let(:token) { export.signed_id(purpose: :export_download) }
