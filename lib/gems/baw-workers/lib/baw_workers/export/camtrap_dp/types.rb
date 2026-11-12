@@ -18,9 +18,13 @@ module BawWorkers
           Timestamp.new(UtcTime[input], 6)
         }
 
-        Url = Types::String.constructor { |input|
-          URI.parse(input)
-          input.to_s
+        Url = Types::String.constructor { |input, &failure|
+          begin
+            URI.parse(input)
+            input.to_s
+          rescue URI::InvalidURIError => e
+            ::Dry::Types::CoercionError.handle(e, &failure)
+          end
         }
 
         SafePath = Types::String.constructor { |input|

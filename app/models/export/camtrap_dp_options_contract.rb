@@ -21,6 +21,12 @@ class Export
       optional(:emit_project_license).value(:bool)
     end
 
+    rule(:contributors).each do |index:|
+      next unless value.key?(:path)
+
+      key([:contributors, index, :path]).failure('is not a valid URL') unless Types::Url.valid?(value[:path])
+    end
+
     rule(:forced_timezone) do
       next if value.blank?
 

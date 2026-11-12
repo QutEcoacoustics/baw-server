@@ -53,7 +53,7 @@ class Export
         project_capture_method: options['project_capture_method'],
         project_sampling_design: options['project_sampling_design'],
         emit_project_license: options['emit_project_license'],
-        forced_timezone: options['forced_timezone']
+        forced_timezone: TimeZoneHelper.ruby_tz_class(options['forced_timezone'])
       )
     end
   end
