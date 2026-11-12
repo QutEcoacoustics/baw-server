@@ -844,6 +844,10 @@ class Ability
     # Downloads re-check the creator's permissions, see ExportsController#download.
     can [:create], Export do |export|
       check_model(export)
+
+      # Ensure a project is present here or else the Access check will fail
+      raise CustomErrors::UnprocessableEntityError, 'Missing project_id' unless export.project.present?
+
       Access::Core.can_any?(user, :reader, export.project)
     end
 
