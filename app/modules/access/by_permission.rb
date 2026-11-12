@@ -153,17 +153,16 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @param [AudioEvent] audio_event
       # @return [ActiveRecord::Relation] audio event tags
-      def audio_events_tags(user, levels: Access::Core.levels, audio_event: nil)
+      def audio_events_tags(user, levels: Access::Core.levels, audio_event: nil, project_ids: nil)
         # audio event can be nil
         query = Tagging.joins(audio_event: [{ audio_recording: [:site] }])
 
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids:)
-        else
-          permission_sites(user, levels, query)
         end
+
+        permission_sites(user, levels, query, project_ids:)
       end
 
       # Get all audio events comments for which this user has these access levels.
