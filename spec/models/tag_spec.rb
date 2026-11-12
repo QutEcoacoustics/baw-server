@@ -8,10 +8,10 @@
 #  is_taxonomic :boolean          default(FALSE), not null
 #  notes        :jsonb
 #  retired      :boolean          default(FALSE), not null
-#  text         :string(255)      not null
-#  type_of_tag  :string(255)      default("general"), not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
+#  text         :string           not null
+#  type_of_tag  :string           default("general"), not null
+#  created_at   :datetime
+#  updated_at   :datetime
 #  creator_id   :integer          not null
 #  updater_id   :integer
 #

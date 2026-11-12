@@ -9,7 +9,7 @@
 #  deleted_at                                                                                                                                                                              :datetime
 #  description                                                                                                                                                                             :text
 #  filter(API filter to include recordings in this job. If blank then all recordings are included.)                                                                                        :jsonb
-#  name                                                                                                                                                                                    :string(255)      not null
+#  name                                                                                                                                                                                    :string           not null
 #  ongoing(If true the filter for this job will be evaluated after a harvest. If more items are found the job will move to the processing stage if needed and process the new recordings.) :boolean          default(FALSE), not null
 #  overall_count                                                                                                                                                                           :integer          not null
 #  overall_data_length_bytes                                                                                                                                                               :bigint           default(0), not null
@@ -21,8 +21,8 @@
 #  started_at                                                                                                                                                                              :datetime
 #  suspend_count(Count of suspensions)                                                                                                                                                     :integer          default(0), not null
 #  system_job(If true this job is automatically run and not associated with a single project. We can have multiple system jobs.)                                                           :boolean          default(FALSE), not null
-#  created_at                                                                                                                                                                              :datetime         not null
-#  updated_at                                                                                                                                                                              :datetime         not null
+#  created_at                                                                                                                                                                              :datetime
+#  updated_at                                                                                                                                                                              :datetime
 #  creator_id                                                                                                                                                                              :integer          not null
 #  deleter_id                                                                                                                                                                              :integer
 #  project_id(Project this job is associated with. This field simply influences which jobs are shown on a project page.)                                                                   :integer
@@ -30,11 +30,11 @@
 #
 # Indexes
 #
+#  analysis_jobs_name_uidx            (name,creator_id) UNIQUE
 #  index_analysis_jobs_on_creator_id  (creator_id)
 #  index_analysis_jobs_on_deleter_id  (deleter_id)
 #  index_analysis_jobs_on_project_id  (project_id)
 #  index_analysis_jobs_on_updater_id  (updater_id)
-#  jobs_name_uidx                     (name) UNIQUE
 #
 # Foreign Keys
 #

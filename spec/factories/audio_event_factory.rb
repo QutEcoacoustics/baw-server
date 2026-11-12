@@ -14,8 +14,8 @@
 #  low_frequency_hertz                                                             :decimal(10, 4)
 #  score(Score or confidence for this event.)                                      :decimal(, )
 #  start_time_seconds                                                              :decimal(10, 4)   not null
-#  created_at                                                                      :datetime         not null
-#  updated_at                                                                      :datetime         not null
+#  created_at                                                                      :datetime
+#  updated_at                                                                      :datetime
 #  audio_event_import_file_id                                                      :bigint
 #  audio_recording_id                                                              :integer          not null
 #  creator_id                                                                      :integer          not null

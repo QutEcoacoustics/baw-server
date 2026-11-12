@@ -7,9 +7,9 @@
 #  id              :integer          not null, primary key
 #  allow_anonymous :boolean          default(FALSE), not null
 #  allow_logged_in :boolean          default(FALSE), not null
-#  level           :string(255)      not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
+#  level           :string           not null
+#  created_at      :datetime
+#  updated_at      :datetime
 #  creator_id      :integer          not null
 #  project_id      :integer          not null
 #  updater_id      :integer
