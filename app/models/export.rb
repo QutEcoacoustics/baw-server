@@ -30,7 +30,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #
 class Export < ApplicationRecord
   belongs_to :creator, class_name: 'User', inverse_of: :created_exports

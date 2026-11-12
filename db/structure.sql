@@ -4427,7 +4427,7 @@ ALTER TABLE ONLY public.harvests
 --
 
 ALTER TABLE ONLY public.exports
-    ADD CONSTRAINT fk_rails_7f1d67b284 FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT fk_rails_7f1d67b284 FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
