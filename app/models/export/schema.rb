@@ -37,9 +37,10 @@ class Export
           obfuscate_locations: {
             type: ['null', 'boolean'],
             description: 'Whether the locations of sites in the export are obfuscated. ' \
-                         '`null` (the default) decides from the creator\'s permissions when the export is ' \
-                         'generated: locations are not obfuscated for an owner of the project, and are ' \
-                         'obfuscated for everyone else. ' \
+                         '`null` (the default) is resolved from the creator\'s permissions when generation ' \
+                         'starts: locations are not obfuscated for an owner of the project, and are ' \
+                         'obfuscated for everyone else. The resolved value (`false` or `true`) is then ' \
+                         'saved on the export. ' \
                          '`true` always obfuscates locations. ' \
                          '`false` never obfuscates locations, and is only accepted when the creator is an ' \
                          'owner of the project. ' \

@@ -45,6 +45,8 @@ describe Export do
   it { is_expected.to have_attributes(status: 'pending', download_count: 0) }
   it { is_expected.to validate_length_of(:name).is_at_least(2).is_at_most(255) }
   it { is_expected.to validate_presence_of(:export_type) }
+  it { is_expected.to validate_inclusion_of(:purged).in_array([true, false]) }
+  it { is_expected.to validate_numericality_of(:download_count).only_integer.is_greater_than_or_equal_to(0) }
 
   describe 'scopes' do
     let(:creator) { create(:user) }
@@ -277,6 +279,33 @@ describe Export do
           error: 'obfuscate_locations can only be false while the creator owns the project',
           file: be_blank
         )
+      end
+    end
+
+    context 'when obfuscate_locations is nil' do
+      let(:export) {
+        create(:export, creator: owner_user, project:, options:, filter:, obfuscate_locations: nil)
+      }
+
+      it 'saves false when the creator is a project owner' do
+        export.generate
+
+        expect(export.reload).to have_attributes(status: 'ready', obfuscate_locations: false)
+      end
+
+      it 'saves true when the creator is not a project owner' do
+        owner_permission.update!(level: 'writer')
+
+        export.generate
+
+        expect(export.reload).to have_attributes(status: 'ready', obfuscate_locations: true)
+      end
+
+      it 'stops allowing the download when the creator is no longer an owner' do
+        export.generate
+        owner_permission.update!(level: 'reader')
+
+        expect(export.reload.creator_can_download?).to be false
       end
     end
 
