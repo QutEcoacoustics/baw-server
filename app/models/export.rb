@@ -76,6 +76,8 @@ class Export < ApplicationRecord
 
   validates :name, length: { minimum: 2, maximum: 255 }
   validates :export_type, presence: true
+  validates :purged, inclusion: { in: [true, false] }
+  validates :download_count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   validate :filter_hash_is_valid, on: :create
   validates :started_at, :finished_at,
@@ -206,19 +208,22 @@ class Export < ApplicationRecord
   # @param resume [Boolean] when true, an export with status `working` can be
   #   claimed for generation (used on job retries). When false (default), an
   #   export that is already `working` is skipped.
-  # @raise [UserFacingError] if the project is missing, or if locations are unobfuscated
-  #   and the creator no longer owns the project.
+  # A `nil` obfuscate_locations is resolved to a boolean from the creator's permissions
+  # and saved.
+  #
+  # @raise [UserFacingError] if locations are unobfuscated and the creator no longer owns the project.
   # @return [Boolean] true if the export is claimed for generation, false if it is not.
   def claim_for_generation!(resume:)
     with_lock do
       next false if status_ready? || (status_working? && !resume)
 
-      # An export row may exist without a project, but it cannot be generated without one.
-      raise UserFacingError, 'project must be present' if project.blank?
-
       if obfuscate_locations == false && !creator_is_owner?
         raise UserFacingError, 'obfuscate_locations can only be false while the creator owns the project'
       end
+
+      # Persist the resolved value (saved by `working!`) so later download checks
+      # see what the generated file actually contains.
+      self.obfuscate_locations = !creator_is_owner? if obfuscate_locations.nil?
 
       working!(resume:)
       true
