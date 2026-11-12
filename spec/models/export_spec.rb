@@ -30,7 +30,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (project_id => projects.id)
+#  fk_rails_...  (project_id => projects.id) ON DELETE => cascade
 #
 require 'rails_helper'
 
