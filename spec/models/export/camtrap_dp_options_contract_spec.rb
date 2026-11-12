@@ -33,6 +33,19 @@ describe Export::CamtrapDpOptionsContract do
     expect(contract.call(valid_options.merge(contributors: [{ role: 'contact' }]))).to be_failure
   end
 
+  ['not a url', 'https://example.com/%ZZ'].each do |path|
+    it "rejects a malformed contributor path #{path.inspect}" do
+      valid_options[:contributors] << { title: 'Bob', path: }
+
+      result = contract.call(valid_options)
+
+      expect(result).to be_failure
+      expect(result.errors).to contain_exactly(
+        have_attributes(path: [:contributors, 1, :path], text: 'is not a valid URL')
+      )
+    end
+  end
+
   it 'rejects an invalid forced timezone' do
     expect(contract.call(valid_options.merge(forced_timezone: 'invalid'))).to be_failure
   end

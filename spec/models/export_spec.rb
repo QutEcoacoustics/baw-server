@@ -179,6 +179,35 @@ describe Export do
       end
     end
 
+    [
+      ['Australia/Darwin', '+09:30'],
+      [nil, '+10:00'],
+      ['', '+10:00']
+    ].each do |forced_timezone, offset|
+      context "when forced_timezone is #{forced_timezone.inspect}" do
+        let(:options) { super().merge(forced_timezone:) }
+
+        before { site.update!(tzinfo_tz: 'Australia/Brisbane') }
+
+        it "writes ZIP CSV timestamps with the #{offset} offset" do
+          export.generate
+
+          expected_start = audio_recording.recorded_date.getlocal(offset)
+
+          Zip::File.open_buffer(export.file.download) do |zip|
+            deployment = CSV.parse(zip.read('deployments.csv'), headers: true).first
+            media = CSV.parse(zip.read('media.csv'), headers: true).first
+            observation = CSV.parse(zip.read('observations.csv'), headers: true).first
+
+            expect(deployment['deploymentStart']).to eq(expected_start.iso8601(0))
+            expect(media['timestamp']).to eq(expected_start.iso8601(6))
+            expect(observation['eventStart'])
+              .to eq((expected_start + audio_event.start_time_seconds.seconds).iso8601(6))
+          end
+        end
+      end
+    end
+
     context 'when the completed email cannot be enqueued' do
       it 'leaves the export ready' do
         allow(ExportMailer).to receive(:completed_export_message).and_raise(Redis::CannotConnectError, 'redis down')
