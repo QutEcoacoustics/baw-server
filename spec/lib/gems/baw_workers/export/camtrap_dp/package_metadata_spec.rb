@@ -32,6 +32,21 @@ describe BawWorkers::Export::CamtrapDp::PackageMetadata do
   let(:deployments) { [deployment] }
 
   describe '.build' do
+    it 'uses the configured client name and home URL as the package source' do
+      allow(Settings.client).to receive(:host).and_return('ecoacoustics')
+
+      expect(descriptor.fetch('sources')).to eq([
+        { 'title' => 'Ecoacoustics', 'path' => Settings.client_routes.home_url.to_s }
+      ])
+    end
+
+    it 'sorts taxonomic coverage by scientific name' do
+      expect(descriptor.fetch('taxonomic')).to eq([
+        { 'scientificName' => 'Amytornis striatus' },
+        { 'scientificName' => 'Xema sabini' }
+      ])
+    end
+
     it 'emits licenses when the project has a valid license' do
       project.update!(license: 'CC-BY-4.0')
 
@@ -62,6 +77,70 @@ describe BawWorkers::Export::CamtrapDp::PackageMetadata do
         expect { descriptor }.to raise_error(
           BawWorkers::Export::CamtrapDp::Errors::ProjectLicenseError,
           /Found unsupported custom license/
+        )
+      end
+    end
+
+    context 'with deployments in different timezones' do
+      let(:deployments) do
+        [
+          deployment.with(start: Time.iso8601('2026-01-02T10:00:00+10:00'),
+            end: Time.iso8601('2026-01-03T10:00:00+10:00')),
+          deployment.with(start: Time.iso8601('2026-01-01T23:00:00-03:00'),
+            end: Time.iso8601('2026-01-02T23:00:00-03:00'))
+        ]
+      end
+
+      it 'uses the earliest start and latest end by instant, preserving their offsets' do
+        expect(descriptor.fetch('temporal')).to eq(
+          'start' => '2026-01-02T10:00:00+10:00',
+          'end' => '2026-01-02T23:00:00-03:00'
+        )
+      end
+    end
+  end
+
+  describe 'spatial coverage' do
+    before { site.update!(latitude: 10, longitude: 20) }
+
+    it 'represents a single deployment as a point' do
+      expect(descriptor.fetch('spatial')).to eq('type' => 'Point', 'coordinates' => [20, 10])
+    end
+
+    context 'with multiple deployments' do
+      let(:second_site) do
+        create(:site, projects: [project], region:, creator: owner_user, latitude: 11, longitude: 21)
+      end
+      let(:deployments) { [deployment, deployment.with(site: second_site)] }
+
+      it 'encloses the sites in a closed bounding polygon' do
+        expect(descriptor.fetch('spatial')).to eq(
+          'type' => 'Polygon',
+          'coordinates' => [[[20, 10], [21, 10], [21, 11], [20, 11], [20, 10]]]
+        )
+      end
+
+      it 'uses multipoint coverage when the latitude bounds have zero area' do
+        second_site.update!(latitude: 10)
+
+        expect(descriptor.fetch('spatial')).to eq(
+          'type' => 'MultiPoint', 'coordinates' => [[20, 10], [21, 10]]
+        )
+      end
+
+      it 'uses multipoint coverage when the longitude bounds have zero area' do
+        second_site.update!(longitude: 20)
+
+        expect(descriptor.fetch('spatial')).to eq(
+          'type' => 'MultiPoint', 'coordinates' => [[20, 10], [20, 11]]
+        )
+      end
+
+      it 'includes shared coordinates only once' do
+        second_site.update!(latitude: 10, longitude: 20)
+
+        expect(descriptor.fetch('spatial')).to eq(
+          'type' => 'MultiPoint', 'coordinates' => [[20, 10]]
         )
       end
     end
