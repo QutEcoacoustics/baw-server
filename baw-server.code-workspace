@@ -133,6 +133,7 @@
       "prepended",
       "prepending",
       "procs",
+      "projectable",
       "qdel",
       "qmgr",
       "qrls",
@@ -232,7 +233,7 @@
     "peacock.color": "#72cb80",
     "workbench.colorCustomizations": {
       "activityBar.background": "#97d9a2",
-      "activityBar.activeBorder": "#8273cc",
+      "activityBar.activeBorder": "#15202b",
       "activityBar.foreground": "#15202b",
       "activityBar.inactiveForeground": "#15202b99",
       "activityBarBadge.background": "#8273cc",
@@ -256,7 +257,9 @@
       "activityBarTop.inactiveForeground": "#15202b99",
       "commandCenter.foreground": "#15202b",
       "statusBar.debuggingBackground": "#72cb80",
-      "statusBar.debuggingForeground": "#15202b"
+      "statusBar.debuggingForeground": "#15202b",
+      "activityBarTop.activeBorder": "#15202b",
+      "statusBar.inactiveBackground": "#72cb80"
     },
     "peacock.remoteColor": "#72cb80",
     // "testExplorer.addToEditorContextMenu": true,

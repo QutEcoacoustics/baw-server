@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-RAILS_ENV=test $@
+RAILS_ENV=test exec "$@"
