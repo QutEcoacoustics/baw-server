@@ -150,6 +150,7 @@ class AudioEvent < ApplicationRecord
     inner = taggings
       .project(taggings[:id], taggings[:audio_event_id], taggings[:tag_id], taggings[:created_at], taggings[:updated_at], taggings[:creator_id], taggings[:updater_id])
       .where(taggings[:audio_event_id].eq(arel_table[:id]))
+      .order(taggings[:id])
       .ast
 
     Arel::SelectManager
@@ -168,6 +169,7 @@ class AudioEvent < ApplicationRecord
     inner = verifications
       .project(verifications[:id])
       .where(verifications[:audio_event_id].eq(arel_table[:id]))
+      .order(verifications[:id])
       .ast
 
     Arel::SelectManager
@@ -205,6 +207,7 @@ class AudioEvent < ApplicationRecord
       )
       .where(verifications[:audio_event_id].eq(arel_table[:id]))
       .group(verifications[:tag_id])
+      .order(verifications[:tag_id])
       .ast
 
     Arel::SelectManager
