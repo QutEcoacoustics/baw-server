@@ -1,6 +1,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -3325,6 +3326,13 @@ CREATE INDEX index_audio_events_on_audio_recording_id ON public.audio_events USI
 
 
 --
+-- Name: index_audio_events_on_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audio_events_on_created_at ON public.audio_events USING btree (created_at);
+
+
+--
 -- Name: index_audio_events_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4705,6 +4713,7 @@ ALTER TABLE ONLY public.tags
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20261116060701'),
 ('20260507061809'),
 ('20260507052638'),
 ('20260306070000'),
