@@ -123,6 +123,10 @@ module Api
             },
             meta: {
               properties: {
+                warning: {
+                  description: 'Describes any deprecated features used by the request',
+                  type: 'string'
+                },
                 capabilities: {
                   type: 'object',
                   items: {

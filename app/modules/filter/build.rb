@@ -34,10 +34,14 @@ module Filter
     # @param [Hash] filter_settings
     # @param scope_depth [Integer] the number of scopes this filter is nested inside.
     #   Scopes in this filter are rejected if they would be nested deeper than MAX_SCOPE_DEPTH.
+    # @param deprecations [Deprecations] collects deprecated usage, shared with the builds of nested scopes
     # @return [void]
-    def initialize(table, filter_settings, scope_depth: 0)
+    def initialize(table, filter_settings, deprecations:, scope_depth: 0)
+      raise ArgumentError, 'deprecations must be provided' unless deprecations.is_a?(Deprecations)
+
       @table = table
       @scope_depth = scope_depth
+      @deprecations = deprecations
 
       @filter_settings = filter_settings
 
@@ -187,13 +191,15 @@ module Filter
     # Build table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
+    # @param usage [Symbol, nil] where the field is used, one of Deprecations::USAGES.
+    #   If given, fields that reach through a one-to-many association are recorded as deprecated.
     # @return [Hash] table_name, field_name, arel_table, model, filter_settings
-    def parse_table_field(table, field)
+    def parse_table_field(table, field, usage: nil)
       validate_table(table)
       raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
 
       if association_field?(field)
-        parse_other_table_field(field)
+        parse_other_table_field(field, usage:)
       else
 
         # table name may not be the same as model / controller name :(
@@ -288,7 +294,7 @@ module Filter
         when *@valid_fields, /\./
           field = primary
           field_conditions = secondary
-          info = parse_table_field(@table, field)
+          info = parse_table_field(@table, field, usage: :filter)
           #! recursive
           result = parse_filter(field_conditions, info)
 
@@ -559,6 +565,7 @@ module Filter
       child_build = self.class.new(
         association.joined_table,
         child_model.filter_settings,
+        deprecations: @deprecations,
         scope_depth: @scope_depth + 1
       )
 
@@ -701,8 +708,9 @@ module Filter
 
     # Build other table field from field symbol.
     # @param [Symbol] field
+    # @param usage [Symbol, nil] see #parse_table_field
     # @return [Hash] table_name, field_name, arel_table, model, filter_settings
-    def parse_other_table_field(field)
+    def parse_other_table_field(field, usage: nil)
       field_s = field.to_s
       dot_index = field_s.index('.')
 
@@ -722,6 +730,10 @@ module Filter
       arel_table = relation_table(model)
 
       validate_table_column(arel_table, parsed_field, model_valid_fields)
+
+      # the same joins the filter, projection, and sorting use for this field
+      path, = build_joins(model, @valid_associations)
+      @deprecations.add_warning_for_one_to_many_association(usage, field) if usage && path.any?(&:to_many?)
 
       {
         table_name: parsed_table,

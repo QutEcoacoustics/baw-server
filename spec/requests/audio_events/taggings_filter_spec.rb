@@ -54,4 +54,18 @@ describe 'Filtering AudioEvents by taggings' do
   it 'still filters the taggings field when the value is not a scope' do
     expect_filtered_events({ taggings: { eq: nil } }, untagged_event)
   end
+
+  it 'warns in the response meta that filtering on a child association field is deprecated' do
+    expect_filtered_events({ 'taggings.tag_id': { eq: koala.id } }, koala_event, both_event)
+
+    expect(api_result[:meta][:warning]).to eq(
+      'Filtering on one-to-many relationships is unpredictable and deprecated: `taggings.tag_id`.'
+    )
+  end
+
+  it 'does not warn in the response meta when a scope is used' do
+    expect_filtered_events({ taggings: { any: { tag_id: { eq: koala.id } } } }, koala_event, both_event)
+
+    expect(api_result[:meta]).not_to have_key(:warning)
+  end
 end

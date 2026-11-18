@@ -404,6 +404,9 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
+    # TODO: rewrite once projecting across to-many associations is removed (#837).
+    # `projects.name` crosses sites -> projects (many-to-many), producing one row per project.
+    # This test should break when that change lands; do not update it pre-emptively.
     it 'can include fields from associations' do
       body = {
         projection: { include: [:'sites.name', :'projects.name'] },
@@ -463,6 +466,9 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
+    # TODO: rewrite once projecting child associations is removed (#837).
+    # `audio_events.duration_seconds` projects a child of audio_recordings, producing one row per event.
+    # This test should break when that change lands; do not update it pre-emptively.
     it 'can filter on and include custom fields from associations' do
       body = {
         projection: { include: [:'audio_events.duration_seconds'] },

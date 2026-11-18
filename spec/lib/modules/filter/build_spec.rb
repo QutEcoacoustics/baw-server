@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe Filter::Build do
-  subject(:build) { Filter::Build.new(model.arel_table, settings) }
+  subject(:build) { Filter::Build.new(model.arel_table, settings, deprecations: Filter::Deprecations.new) }
 
   let(:model) { AudioRecording }
   let(:settings) { model.filter_settings.deep_dup }
@@ -125,7 +125,7 @@ describe Filter::Build do
     pool = ActiveRecord::Base.connection_pool
     allow(pool).to receive(:with_connection).and_call_original
 
-    Filter::Build.new(model.arel_table, settings)
+    Filter::Build.new(model.arel_table, settings, deprecations: Filter::Deprecations.new)
 
     expect(pool).not_to have_received(:with_connection)
   end

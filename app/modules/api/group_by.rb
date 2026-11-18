@@ -63,6 +63,7 @@ module Api
           parent_table[:id].as('parent_id'),
           *child.projections.map { |name, expression| expression.as(name.to_s) }
         )
+      opts[:warning] = child_filter.deprecations.compile_warning
 
       grouped_query = parent
         .base_query

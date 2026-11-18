@@ -67,7 +67,9 @@ module Filter
     end
 
     def project_association(base_table, column_name)
-      parse_table_field(base_table, column_name) => { table_name:, field_name:, arel_table:, model:, filter_settings: }
+      parse_table_field(base_table, column_name, usage: :projection) => {
+        table_name:, field_name:, arel_table:, model:, filter_settings:
+      }
       custom_fields2 = filter_settings[:custom_fields2] || {}
       allowed = projectable_fields(filter_settings[:render_fields], custom_fields2)
 
