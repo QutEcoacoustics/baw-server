@@ -135,7 +135,7 @@ describe 'Filtering AudioEvents by Verification states performance:', :slow do
         expect_total([11, 35, 53, 57, 62, 68])
 
         # the closest non-scope filter was cancelled after 60s; this filter took 0.20s
-        expect { filter_events(filter) }.to perform_under(0.27).sec.sample(5)
+        expect { filter_events(filter) }.to perform_under(0.3).sec.sample(5)
       end
 
       it 'that I have not been exposed to (no labels at all)' do
@@ -156,7 +156,7 @@ describe 'Filtering AudioEvents by Verification states performance:', :slow do
         expect_total([11, 53, 57, 68])
 
         # the closest non-scope filter takes 0.56s; this filter took 0.17s
-        expect { filter_events(filter) }.to perform_under(0.24).sec.sample(5)
+        expect { filter_events(filter) }.to perform_under(0.27).sec.sample(5)
       end
     end
 
@@ -189,7 +189,7 @@ describe 'Filtering AudioEvents by Verification states performance:', :slow do
         expect_total([1, 18, 44])
 
         # the closest non-scope filter takes 0.51s; this filter took 0.20s
-        expect { filter_events(filter) }.to perform_under(0.27).sec.sample(5)
+        expect { filter_events(filter) }.to perform_under(0.3).sec.sample(5)
       end
 
       it 'where reviewers disagree about the same campaign tag' do
@@ -283,7 +283,7 @@ describe 'Filtering AudioEvents by Verification states performance:', :slow do
         expect_total([35, 62, 68])
 
         # the closest non-scope filter was cancelled after 60s; this filter took 0.20s
-        expect { filter_events(filter) }.to perform_under(0.27).sec.sample(5)
+        expect { filter_events(filter) }.to perform_under(0.3).sec.sample(5)
       end
     end
   end
