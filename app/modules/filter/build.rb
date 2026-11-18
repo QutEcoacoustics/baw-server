@@ -17,12 +17,27 @@ module Filter
     # to pick any missing components from. 0000-01-01 00:00:00 UTC
     DEFAULT_DATE = Time.utc(0)
 
+    TRUE_CONDITION = Models::Condition.simple(Arel::Nodes::True.new)
+
+    SCOPE_OPERATORS = [:any, :none, :all].freeze
+
+    # The maximum number of scopes that can be nested inside each other.
+    # A top level scope has depth 1, a scope inside it has depth 2, and so on.
+    # Each level adds a correlated subquery that runs for every row of the level above it.
+    # Set it to 1 to disallow nested scopes.
+    # Why 2? Because we need that depth to make verification filtering through taggings for for audio_events,
+    # But I also have no idea of the performance implications of nested exists statements.
+    MAX_SCOPE_DEPTH = 2
+
     # Create an instance of Build.
     # @param [Arel::Table] table
     # @param [Hash] filter_settings
+    # @param scope_depth [Integer] the number of scopes this filter is nested inside.
+    #   Scopes in this filter are rejected if they would be nested deeper than MAX_SCOPE_DEPTH.
     # @return [void]
-    def initialize(table, filter_settings)
+    def initialize(table, filter_settings, scope_depth: 0)
       @table = table
+      @scope_depth = scope_depth
 
       @filter_settings = filter_settings
 
@@ -260,6 +275,16 @@ module Filter
           result = parse_filter(filter_hash)
 
           combiner_not(result)
+
+        # Association scopes.
+        # We select this branch, even for invalid scopes because build_scope will
+        # check the names and raise validation errors if necessary.
+        when ->(name) { scope_key?(name, secondary) }
+          scope_name = primary
+          scope_value = secondary
+
+          build_scope(scope_name, scope_value)
+
         when *@valid_fields, /\./
           field = primary
           field_conditions = secondary
@@ -330,7 +355,7 @@ module Filter
             joins: joins
           )
         else
-          raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name `#{primary}`."
+          raise CustomErrors::FilterArgumentError, "Unrecognized combiner, scope, or field name `#{primary}`."
         end
       else
         raise CustomErrors::FilterArgumentError, "Unrecognized filter component `#{primary}`."
@@ -495,6 +520,179 @@ module Filter
           predicate: compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
         )
       end
+    end
+
+    # Get all associations names, including invalid ones.
+    def all_association_names
+      @all_association_names ||= composed_associations.flat_map(&:names)
+    end
+
+    # A key that names both an association and a field (e.g. `taggings` on audio events) is only a scope when its
+    # value uses a scope operator. Scope operators are reserved names, so a field condition can never use them.
+    def scope_key?(name, value)
+      return false unless all_association_names.include?(name)
+      return true unless @valid_fields.include?(name)
+
+      value.is_a?(Hash) && value.keys.intersect?(SCOPE_OPERATORS)
+    end
+
+    # Build a single sub-query to contain multiple compound predicates for a
+    # 1:many child table.
+    def build_scope(association_name, value)
+      association = validate_scope(association_name, value)
+      operator = value.keys.first
+      inner_filter = value[operator]
+
+      # Note we specifically allow no conditions in the inner filter (it's just like a normal filter with no conditions),
+      #  but it must still be a hash
+      unless inner_filter.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope inner filter for `#{operator}` must be an object"
+      end
+
+      # This build object (self) is the parent context and thing we're joining to
+      # is the child.
+      child_model = association.joined_model
+
+      # we need a new Build here that operates in the context of the child model,
+      # one level deeper.
+      child_build = self.class.new(
+        association.joined_table,
+        child_model.filter_settings,
+        scope_depth: @scope_depth + 1
+      )
+
+      # The where association.on is correlation between the parent and child tables
+      subquery = association.joined_table.project(1).where(association.on)
+
+      # inner filter is allowed to be empty, in which case this just turns into
+      # a correlated exists query with no additional conditions.
+      # For consistency though we emit the  true value to build off of, even when there are no additional conditions.
+      inner_conditions = inner_filter.empty? ? [TRUE_CONDITION] : child_build.parse(inner_filter)
+      grouped = combiner_one(:and, inner_conditions)
+
+      # add conditions to subquery
+      # essentially we're resetting the Condition build-up here
+      case operator
+      when :all
+        # The spec defines `all` as:
+        #   NOT EXISTS (SELECT 1 FROM association WHERE correlation AND (P) IS NOT TRUE)
+        # We emit an equivalent form, with IS NOT TRUE distributed down to each comparison in P, so that scopes nested
+        # in P stay visible to the planner. See distribute_is_not.
+        grouped = grouped.map_predicate { |predicate| distribute_is_not(predicate) }
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists.not
+      when :any
+        # EXISTS (SELECT 1 FROM association WHERE correlation AND P)
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists
+      when :none
+        # NOT EXISTS (SELECT 1 FROM association WHERE correlation AND P)
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists.not
+      else
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope operator `#{operator}` is invalid, it must be one of `any`, `none`, or `all`."
+      end => exists_predicate
+
+      Models::Condition.new(predicate: exists_predicate)
+    end
+
+    # Builds a predicate equivalent to `(predicate) IS NOT TRUE` (or `IS NOT FALSE` when `value` is false), by
+    # distributing the truth test through the predicate's boolean operators down to each comparison.
+    #
+    # The `all` scope needs `(P) IS NOT TRUE` so that a comparison that is NULL (SQL's UNKNOWN) counts as a failure.
+    # But Postgres can't optimize through IS NOT TRUE: a scope nested in P is hidden inside it, so the scope runs as a
+    # subplan for every row instead of as a semi or anti join. Distributing the truth test leaves nested scopes as
+    # plain EXISTS / NOT EXISTS.
+    #
+    # The rules, from the filter scopes spec, where A and B are any predicates:
+    #
+    #   (A AND B) IS NOT TRUE   =>  A IS NOT TRUE OR B IS NOT TRUE     (De Morgan's laws)
+    #   (A OR B)  IS NOT TRUE   =>  A IS NOT TRUE AND B IS NOT TRUE    (De Morgan's laws)
+    #   (NOT A)   IS NOT TRUE   =>  A IS NOT FALSE
+    #   (A AND B) IS NOT FALSE  =>  A IS NOT FALSE AND B IS NOT FALSE
+    #   (A OR B)  IS NOT FALSE  =>  A IS NOT FALSE OR B IS NOT FALSE
+    #   (NOT A)   IS NOT FALSE  =>  A IS NOT TRUE
+    #   EXISTS(q) IS NOT TRUE   =>  NOT EXISTS(q)                      (EXISTS is never NULL)
+    #   EXISTS(q) IS NOT FALSE  =>  EXISTS(q)
+    #   A         IS NOT TRUE   =>  (A) IS NOT TRUE                    (any other node, e.g. a comparison)
+    #
+    # The last rule keeps the truth test on each comparison, so NULLs still fail. It also catches any node this
+    # method doesn't recognize, which then gets the spec's form: still correct, just not optimized.
+    #
+    # For example, in
+    #   { taggings: { all: { or: [{ tag_id: { not_in: [5, 6] } }, { verifications: { any: { ... } } }] } } }
+    # the inner filter
+    #   (NOT ("tag_id" IN (5, 6)) OR EXISTS (SELECT 1 FROM "verifications" ...)) IS NOT TRUE
+    # becomes
+    #   ("tag_id" IN (5, 6)) IS NOT FALSE AND NOT EXISTS (SELECT 1 FROM "verifications" ...)
+    # and Postgres runs the NOT EXISTS as an anti join.
+    #
+    # This rewrites the finished predicate, rather than having the parser build the distributed form, so the rules
+    # live in one place and conditions added to the parser later can't break `all`.
+    # @param [Arel::Nodes::Node] predicate
+    # @param [Boolean] value the boolean the predicate must not be
+    # @return [Arel::Nodes::Node]
+    def distribute_is_not(predicate, value: true)
+      case predicate
+      when Arel::Nodes::Grouping
+        #! recursive
+        distribute_is_not(predicate.expr, value:)
+      when Arel::Nodes::Not
+        #! recursive
+        distribute_is_not(predicate.expr, value: !value)
+      when Arel::Nodes::And, Arel::Nodes::Or
+        if predicate.is_a?(Arel::Nodes::And) == value
+          Arel::Nodes::Or
+        else
+          Arel::Nodes::And
+        end => node_type
+
+        #! recursive
+        children = predicate.children.map { |child| distribute_is_not(child, value:) }
+        Arel::Nodes::Grouping.new(node_type.new(children))
+      when Arel::Nodes::Exists
+        value ? predicate.not : predicate
+      else
+        Arel::Nodes::Grouping.new(predicate).is_not(value ? Arel::Nodes::True.new : Arel::Nodes::False.new)
+      end
+    end
+
+    def validate_scope(association_name, value)
+      if @scope_depth >= MAX_SCOPE_DEPTH
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is nested too deeply, the maximum scope depth is #{MAX_SCOPE_DEPTH}."
+      end
+
+      association = composed_associations.find { _1.names.include?(association_name) }
+
+      unless association.from_table == @table
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is invalid because it is not an immediate association."
+      end
+
+      unless association.available
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` association is not available."
+      end
+
+      unless association.to_many?
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is invalid for this resource, it is not a child association."
+      end
+
+      unless value.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope value must be an object"
+      end
+
+      unless value.keys.size == 1
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope must have an operator, one of `any`, `none`, or `all`"
+      end
+
+      association
     end
 
     def association_field?(name)

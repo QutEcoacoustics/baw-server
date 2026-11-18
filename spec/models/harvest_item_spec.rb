@@ -17,10 +17,11 @@
 #
 # Indexes
 #
-#  index_harvest_items_on_harvest_id  (harvest_id)
-#  index_harvest_items_on_info        (info) USING gin
-#  index_harvest_items_on_path        (path) UNIQUE
-#  index_harvest_items_on_status      (status)
+#  index_harvest_items_on_audio_recording_id  (audio_recording_id) UNIQUE
+#  index_harvest_items_on_harvest_id          (harvest_id)
+#  index_harvest_items_on_info                (info) USING gin
+#  index_harvest_items_on_path                (path) UNIQUE
+#  index_harvest_items_on_status              (status)
 #
 # Foreign Keys
 #

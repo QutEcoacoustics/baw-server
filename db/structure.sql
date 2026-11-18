@@ -3585,6 +3585,13 @@ CREATE INDEX index_comfy_cms_translations_on_page_id ON public.comfy_cms_transla
 
 
 --
+-- Name: index_harvest_items_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_harvest_items_on_audio_recording_id ON public.harvest_items USING btree (audio_recording_id);
+
+
+--
 -- Name: index_harvest_items_on_harvest_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4714,6 +4721,7 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20261116060701'),
+('20261030013811'),
 ('20260507061809'),
 ('20260507052638'),
 ('20260306070000'),

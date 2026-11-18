@@ -247,6 +247,26 @@ describe Filter::Models::Association do
     end
   end
 
+  context 'with a one-to-one association' do
+    let(:from_table) { AudioRecording.arel_table }
+    let(:to_table) { HarvestItem }
+    let(:on) { from_table[:id].eq(to_table.arel_table[:audio_recording_id]) }
+
+    it 'recognizes the unique foreign key as to-one' do
+      expect(association.arity).to eq(:one)
+    end
+
+    context 'without a unique index' do
+      before do
+        allow(ActiveRecord::Base.connection_pool.schema_cache).to receive(:indexes).with('harvest_items').and_return([])
+      end
+
+      it 'does not trust has_one without database uniqueness' do
+        expect(association.arity).to eq(:many)
+      end
+    end
+  end
+
   context 'with a bare join table' do
     let(:from_table) { Site.arel_table }
     let(:to_table) { Arel::Table.new(:projects_sites) }

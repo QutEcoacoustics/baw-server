@@ -70,6 +70,17 @@ module Baw
       def as_array
         Baw::Arel::Nodes::ArrayLike.new(self)
       end
+
+      # Construct an IS NOT operation node.
+      # @param value [Object] the value to compare against
+      # @return [Arel::Nodes::InfixOperation]
+      def is_not(value) # rubocop:disable Naming/PredicatePrefix
+        ::Arel::Nodes::InfixOperation.new(
+          'IS NOT',
+          self,
+          value
+        )
+      end
     end
 
     module AttributeExtensions

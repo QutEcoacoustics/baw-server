@@ -224,7 +224,7 @@ describe AnalysisJob do
       expect(analysis_job).not_to be_valid
       expect(analysis_job.errors[:filter].size).to eq(1)
       expect(analysis_job.errors[:filter]).to eq([
-        'Filter parameters were not valid: Unrecognized combiner or field name `duration_seconds_time`.'
+        'Filter parameters were not valid: Unrecognized combiner, scope, or field name `duration_seconds_time`.'
       ])
     end
 

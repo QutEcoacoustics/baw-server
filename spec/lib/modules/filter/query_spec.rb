@@ -39,7 +39,7 @@ describe Filter::Query do
           }
         ).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-        'Filter parameters were not valid: Unrecognized combiner or field name `not_a_real_filter`.')
+        'Filter parameters were not valid: Unrecognized combiner, scope, or field name `not_a_real_filter`.')
     end
 
     # we used to not allow this, but it's easier to just normalize one entry combiners
@@ -137,7 +137,8 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `not_a_valid_combiner`/)
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        /Unrecognized combiner, scope, or field name `not_a_valid_combiner`/)
     end
 
     it "occurs when a range is missing 'from'" do
@@ -1803,7 +1804,8 @@ describe Filter::Query do
       )
       expect {
         filter.build.parse(filter.filter)
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `this_is_not_a_field`./)
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        /Unrecognized combiner, scope, or field name `this_is_not_a_field`./)
     end
 
     it 'allows mapped fields as a generic equality field' do

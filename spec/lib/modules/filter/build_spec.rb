@@ -77,6 +77,12 @@ describe Filter::Build do
       )
     end
 
+    # scopes are recognized by their operator, so an association and a field can share a name
+    it 'allows a name that is also a field' do
+      expect(settings[:valid_fields]).to include(:taggings)
+      expect { build }.not_to raise_error
+    end
+
     context 'when the association is nested' do
       let(:model) { AudioRecording }
 
@@ -94,6 +100,23 @@ describe Filter::Build do
           expect(info).to include(model: Tagging, arel_table: Tagging.arel_table, field_name: :tag_id)
         end
       end
+    end
+  end
+
+  context 'with a composite association' do
+    let(:model) { Tagging }
+
+    it 'joins verifications on the event and the tag' do
+      verifications = build.composed_associations.find { |association| association.to_table == Verification }
+
+      expect(verifications.joined_columns).to eq(['audio_event_id', 'tag_id'])
+      expect(verifications).to be_to_many
+    end
+
+    it 'resolves associated fields through the composite join' do
+      info = build.parse_table_field(model.arel_table, :'verifications.creator_id')
+
+      expect(info).to include(model: Verification, arel_table: Verification.arel_table, field_name: :creator_id)
     end
   end
 
@@ -185,6 +208,44 @@ describe Filter::Build do
       expect { build }.to raise_error(
         CustomErrors::FilterSettingsError, /Association `on` must join `from_table` to `to_table`/
       )
+    end
+  end
+
+  context 'when distributing the all scope truth test' do
+    # See `Filter::Build#distribute_is_not` for documentation on how and
+    # why this distribution is necessary for the `all` scope truth test.
+    {
+      'and' => ->(a, b) { a.and(b) },
+      'or' => ->(a, b) { a.or(b) },
+      'not and' => ->(a, b) { a.and(b).not },
+      'not or' => ->(a, b) { a.or(b).not },
+      'mixed combiners and double negation' => ->(a, b) { a.and(b.or(a.not)).not.not },
+      'or with exists' => ->(a, b) { a.or(Arel::SelectManager.new.project(1).where(b).exists) },
+      'not and with exists' => ->(a, b) { a.and(Arel::SelectManager.new.project(1).where(b).exists).not },
+      'or with not exists' => ->(a, b) { a.or(Arel::SelectManager.new.project(1).where(b).exists.not) }
+    }.each do |name, combine|
+      it "preserves TRUE, FALSE and NULL combinations for #{name}" do
+        a = Arel::Table.new(:a)[:value].eq(true)
+        b = Arel::Table.new(:b)[:value].eq(true)
+        predicate = combine.call(a, b)
+        rewritten = build.send(:distribute_is_not, predicate)
+
+        # This is the predicate before applying `distribute_is_not`,
+        # which is the last part of
+        #  `NOT EXISTS (SELECT 1 FROM association WHERE correlation AND (P) IS NOT TRUE)`
+        original = Arel::Nodes::Grouping.new(predicate).is_not(Arel::Nodes::True.new)
+
+        results = ActiveRecord::Base.connection.select_rows(<<~SQL.squish)
+          SELECT #{rewritten.to_sql}, #{original.to_sql}
+          FROM (VALUES (TRUE), (FALSE), (NULL::boolean)) AS a(value)
+          CROSS JOIN (VALUES (TRUE), (FALSE), (NULL::boolean)) AS b(value)
+        SQL
+
+        # The test ensures that the rewritten predicate produced by `distribute_is_not`
+        # behaves identically to the original predicate for all combinations of TRUE, FALSE, and NULL.
+        expect(results.size).to eq(9)
+        results.each { |actual, expected| expect(actual).to eq(expected) }
+      end
     end
   end
 end

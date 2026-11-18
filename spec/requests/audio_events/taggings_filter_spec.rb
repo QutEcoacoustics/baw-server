@@ -28,8 +28,30 @@ describe 'Filtering AudioEvents by taggings' do
   end
 
   [:audio_events_tags, :taggings].each do |name|
+    it "can use the `#{name}` name for a scope" do
+      expect_filtered_events({ name => { any: { tag_id: { eq: koala.id } } } }, koala_event, both_event)
+    end
+
     it "can use the `#{name}` name for an associated field" do
       expect_filtered_events({ "#{name}.tag_id": { eq: kookaburra.id } }, both_event, kookaburra_event)
     end
+  end
+
+  it 'can use the taggings name with the none operator' do
+    expect_filtered_events(
+      { taggings: { none: { tag_id: { eq: koala.id } } } },
+      kookaburra_event, untagged_event
+    )
+  end
+
+  it 'can use the taggings name with the all operator' do
+    expect_filtered_events(
+      { taggings: { all: { tag_id: { eq: koala.id } } } },
+      koala_event, untagged_event
+    )
+  end
+
+  it 'still filters the taggings field when the value is not a scope' do
+    expect_filtered_events({ taggings: { eq: nil } }, untagged_event)
   end
 end
