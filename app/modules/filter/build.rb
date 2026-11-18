@@ -2,6 +2,7 @@
 
 module Filter
   # Provides support for parsing a filter from a hash to build a query.
+  # Generates Arel queries based on the provided filter hash and settings.
   class Build
     include Comparison
     include Core
@@ -23,13 +24,12 @@ module Filter
     def initialize(table, filter_settings)
       @table = table
 
-      validate_filter_settings(filter_settings)
       @filter_settings = filter_settings
 
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
-      @valid_associations = filter_settings[:valid_associations]
+      @valid_associations = build_associations(filter_settings[:valid_associations], table)
       @custom_fields2 = filter_settings[:custom_fields2] || {}
 
       @valid_conditions = [
@@ -71,16 +71,19 @@ module Filter
     # @param fields [Array<Symbol>] fields to project
     # @return [Array<Arel::Attributes::Attribute, Hash>] projections
     def projections(fields)
-      allowed = allowed_fields
+      allowed = projectable_fields
       projection_expressions = fields.map { |projection_name| project_column(@table, projection_name, allowed) }
 
       raise 'projection list should not have nils' if projection_expressions.any?(&:nil?)
-      raise 'projection list should not have arrays' if projection_expressions.any? { |item| item.is_a?(Array) }
+      raise 'projection list should not have arrays' if projection_expressions.any?(Array)
 
       projection_expressions
     end
 
-    def allowed_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
+    # Fields that can be projected.
+    # Note: it's a historical quirk that we can't turn off standard fields from being projected (e.g. large text fields)
+    # A field not in render_fields is intended to be hidden from projection (because it assumed to be sensitive).
+    def projectable_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
       (render_fields + custom_fields2.keys).uniq
     end
 
@@ -169,13 +172,13 @@ module Filter
     # Build table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
+    # @return [Hash] table_name, field_name, arel_table, model, filter_settings
     def parse_table_field(table, field)
       validate_table(table)
       raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
 
       if association_field?(field)
-        parse_other_table_field(table, field)
+        parse_other_table_field(field)
       else
 
         # table name may not be the same as model / controller name :(
@@ -192,18 +195,20 @@ module Filter
       end
     end
 
-    # Runs build_associations on the valid associations and caches the result.
-    def composed_associations(table)
-      @composed_associations ||= {}
-
-      unless @composed_associations.key?(table)
-        @composed_associations[table] ||= build_associations(@valid_associations, table)
-      end
-
-      @composed_associations[table]
+    # Available associations at every depth, preserving intermediate joins in the tree.
+    # @return [Array<Models::Association>]
+    def composed_associations
+      @composed_associations ||= flatten_available_associations(@valid_associations).freeze
     end
 
     private
+
+    def flatten_available_associations(associations)
+      associations.flat_map do |association|
+        children = flatten_available_associations(association.associations)
+        association.available ? children + [association] : children
+      end
+    end
 
     # Recursively parse a filter hash.
     # @param [Hash, Symbol] primary
@@ -478,11 +483,8 @@ module Filter
         # add relevant joins
         joins, = build_joins(model, @valid_associations)
 
-        joins.each do |j|
-          table = j[:join]
-          # assume this is an arel_table if it doesn't respond to .arel_table
-          arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
-          subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
+        joins.each do |association|
+          subquery = subquery.join(association.joined_table, Arel::Nodes::OuterJoin).on(association.on)
         end
 
         # add conditions to subquery
@@ -500,25 +502,22 @@ module Filter
     end
 
     # Build other table field from field symbol.
-    # @param [Arel::Table] table
     # @param [Symbol] field
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_other_table_field(table, field)
+    # @return [Hash] table_name, field_name, arel_table, model, filter_settings
+    def parse_other_table_field(field)
       field_s = field.to_s
       dot_index = field_s.index('.')
 
       parsed_table = field[0, dot_index].to_sym
       parsed_field = field[(dot_index + 1)..field.length].to_sym
 
-      associations = composed_associations(table)
-      models = associations.pluck(:join)
-      table_names = associations.map { |association| association[:join].table_name.to_sym }
+      associations = composed_associations
+      table_names = associations.flat_map(&:names)
 
       validate_name(parsed_table, table_names)
 
-      model = to_model(parsed_table)
-
-      validate_association(model, models)
+      model = associations.find { |association| association.names.include?(parsed_table) }.joined_model
+      validate_model(model)
 
       model_filter_settings = model.filter_settings
       model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
@@ -574,61 +573,46 @@ module Filter
       [:json, :jsonb].include?(column_type)
     end
 
-    # Parse association_allowed hashes and arrays to get names.
-    # @param [Hash, Array] valid_associations
-    # @param [Arel::Table] table
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def build_associations(valid_associations, table)
-      associations = []
-      case valid_associations
-      when Array
-        #! recursive
-        more_associations = valid_associations.map { |i| build_associations(i, table) }
-        associations.push(*more_associations.flatten.compact) unless more_associations.empty?
-      when Hash
+    # Convert configured joins into a validated association tree.
+    # @param [Array<Hash>, nil] settings
+    # @param [Arel::Table] from_table
+    # @return [Array<Models::Association>]
+    def build_associations(settings, from_table)
+      return [].freeze if settings.nil?
 
-        join = valid_associations[:join]
-        on = valid_associations[:on]
-        available = valid_associations[:available]
-
-        #! recursive
-        more_associations = build_associations(valid_associations[:associations], join)
-        associations.push(*more_associations.flatten.compact) unless more_associations.empty?
-
-        if available
-          associations.push(
-            {
-              join:,
-              on:
-            }
-          )
-        end
-
+      unless settings.is_a?(Array) && settings.all?(Hash)
+        raise CustomErrors::FilterSettingsError, 'Association settings must be an array of hashes'
       end
 
-      associations
+      settings.map { |association|
+        to_table = association[:join]
+        joined_table = to_table.respond_to?(:arel_table) ? to_table.arel_table : to_table
+
+        #! recursive
+        children = build_associations(association[:associations], joined_table)
+
+        Models::Association.new(
+          from_table:,
+          to_table:,
+          on: association[:on],
+          available: association[:available],
+          associations: children,
+          names: association[:names]
+        )
+      }.freeze
     end
 
     # Get only the relevant joins
     # @param [ActiveRecord::Base] model
-    # @param [Hash] associations
-    # @param [Array<Hash>] joins
-    # @return [Array<Hash>, Boolean] joins, match
-    def build_joins(model, associations, joins = [])
+    # @param [Array<Models::Association>] associations
+    # @return [Array<Models::Association>, Boolean] joins, match
+    def build_joins(model, associations)
       associations.each do |association|
-        model_join = association[:join]
-        model_on = association[:on]
+        return [[association], true] if model == association.to_table
 
-        join = { join: model_join, on: model_on }
+        assoc_joins, match = build_joins(model, association.associations)
 
-        return [[join], true] if model == model_join
-
-        next unless association.include?(:associations)
-
-        assoc = association[:associations]
-        assoc_joins, match = build_joins(model, assoc, joins + [join])
-
-        return [[join] + assoc_joins, true] if match
+        return [[association] + assoc_joins, true] if match
       end
 
       [[], false]

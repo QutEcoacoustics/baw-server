@@ -69,7 +69,7 @@ module Filter
     def project_association(base_table, column_name)
       parse_table_field(base_table, column_name) => { table_name:, field_name:, arel_table:, model:, filter_settings: }
       custom_fields2 = filter_settings[:custom_fields2] || {}
-      allowed = allowed_fields(filter_settings[:render_fields], custom_fields2)
+      allowed = projectable_fields(filter_settings[:render_fields], custom_fields2)
 
       joins, match = build_joins(model, @valid_associations)
       raise CustomErrors::FilterArgumentError, "Association is not matched for #{column_name}" unless match
@@ -96,11 +96,8 @@ module Filter
         projection = arel_table[field_name].as(column_name.to_s)
       end
 
-      joins = joins.flat_map { |j|
-        table = j[:join]
-        # assume this is an arel_table if it doesn't respond to .arel_table
-        arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
-        base_table.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on]).join_sources
+      joins = joins.flat_map { |association|
+        base_table.join(association.joined_table, Arel::Nodes::OuterJoin).on(association.on).join_sources
       }
 
       { projection:, joins: joins + custom_joins }

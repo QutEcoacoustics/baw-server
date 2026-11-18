@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Filter
-  # Construct a query using Arel.
+  # Construct a query.
+  # Generates an ActiveRecord query based on the provided parameters and filter settings.
   class Query
     include Comparison
     include Core
