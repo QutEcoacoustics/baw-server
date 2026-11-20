@@ -24,19 +24,22 @@ describe 'reports/analysis_coverage' do
        result: AnalysisJobsItem::RESULT_SUCCESS,
        range: [start_date, start_date + duration_seconds],
        density: 1.0,
+       accumulated_density: 1.0,
        gap_threshold: },
 
      { site_id: site.id,
        result: AnalysisJobsItem::RESULT_SUCCESS,
        range: [end_date - duration_seconds, end_date],
        density: 1.0,
+       accumulated_density: 1.0,
        gap_threshold: },
 
      { site_id: site.id,
        result: AnalysisJobsItem::RESULT_CANCELLED,
        range: [cancelled_block_start, cancelled_block_end],
        gap_threshold:,
-       density: cancelled_density }]
+       density: cancelled_density,
+       accumulated_density: cancelled_density }]
   end
 
   before do
@@ -94,8 +97,26 @@ describe 'reports/analysis_coverage' do
           result: AnalysisJobsItem::RESULT_FAILED,
           range: [start_date, start_date + duration_seconds],
           density: 1.0,
+          accumulated_density: 1.0,
           gap_threshold: }
       ])
+    end
+  end
+
+  context 'with repeated analysis of the same recording and result' do
+    before do
+      another_analysis_job = create(:analysis_job, project:, creator: writer_user, scripts: [script])
+      create(:analysis_jobs_item, analysis_job: another_analysis_job, script:,
+        result: AnalysisJobsItem::RESULT_SUCCESS, audio_recording:)
+    end
+
+    it 'counts each analysis item in accumulated density without inflating coverage density' do
+      post '/reports/analysis_coverage', params: params, **api_headers(writer_token)
+
+      expect_success
+
+      repeated_range = expected_data.first.merge(accumulated_density: 2.0)
+      expect(api_data).to contain_exactly(repeated_range, *expected_data.drop(1))
     end
   end
 
@@ -118,6 +139,7 @@ describe 'reports/analysis_coverage' do
           result: AnalysisJobsItem::RESULT_SUCCESS,
           range: [start_date, start_date + duration_seconds],
           density: 1.0,
+          accumulated_density: 1.0,
           gap_threshold: }
       ])
     end
