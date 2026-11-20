@@ -360,6 +360,7 @@ module Api
       # projected_fields is not nil if query_projection was called, which always was with query_without_paging_sorting
       opts[:projected_fields] = filter_query.projected_fields
       opts[:capabilities] = filter_settings[:capabilities] if filter_settings[:capabilities].present?
+      opts[:warning] = filter_query.deprecations.compile_warning
       opts[:additional_params] = filter_query.parameters.except(
         model.to_s.underscore.to_sym,
         :filter, :projection,

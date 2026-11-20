@@ -291,7 +291,7 @@ module Api
 
       # choose a subset of response to format as a request filter
       # data is discarded here
-      filter = filter_response[:meta].except(:status, :message, :paging, :capabilities)
+      filter = filter_response[:meta].except(:status, :message, :paging, :capabilities, :warning)
       if opts[:page].present? && opts[:items].present?
         filter[:paging] = {
           items: opts[:items]

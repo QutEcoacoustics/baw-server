@@ -10,6 +10,8 @@ module Filter
     # http://robots.thoughtbot.com/using-arel-to-compose-sql-queries
     # http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
+    RESERVED_NAMES = [:and, :or, :not, :eq, :all, :none, :any].freeze
+
     module_function
 
     # Validate sorting values.
@@ -94,17 +96,6 @@ module Filter
     def validate_table_column(table, column_name, allowed)
       validate_table(table)
       validate_name(column_name, allowed)
-    end
-
-    def validate_association(model, models_allowed)
-      validate_model(model)
-
-      unless models_allowed.is_a?(Array)
-        raise CustomErrors::FilterArgumentError, "Models allowed must be an Array, got #{models_allowed}"
-      end
-      return if models_allowed.include?(model)
-
-      raise CustomErrors::FilterArgumentError, "Model must be in #{models_allowed}, got #{model}"
     end
 
     # Validate query and hash values.
@@ -479,18 +470,6 @@ module Filter
       end
 
       validate_closure(value[:new_spec_fields], [:user]) if value.include?(:new_spec_fields)
-
-      validate_filter_associations(value[:valid_associations]) if value.include?(:valid_associations)
-    end
-
-    def validate_filter_associations(value)
-      value.each do |association|
-        validate_hash_key(association, :join, [ActiveRecord::Base, Arel::Table])
-        validate_hash_key(association, :on, Arel::Nodes::Node)
-        validate_hash_key(association, :available, [TrueClass, FalseClass])
-
-        validate_filter_associations(association[:associations]) if association[:associations].present?
-      end
     end
   end
 end

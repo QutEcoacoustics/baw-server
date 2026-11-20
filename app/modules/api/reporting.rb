@@ -31,6 +31,7 @@ module Api
       }
 
       query = filter.query_without_paging_sorting
+      opts[:warning] = filter.deprecations.compile_warning
       query = template.call(query)
       query.project(*projections.map { |name, expression| expression.as(name.to_s) })
 

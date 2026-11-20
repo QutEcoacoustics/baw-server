@@ -81,6 +81,14 @@ class Tagging < ApplicationRecord
           join: Tag,
           on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
           available: true
+        },
+        {
+          # A tagging's verifications are those for the same event and tag.
+          # Note: this is an informal association, not enforced by foreign keys
+          join: Verification,
+          on: Tagging.arel_table[:audio_event_id].eq(Verification.arel_table[:audio_event_id])
+            .and(Tagging.arel_table[:tag_id].eq(Verification.arel_table[:tag_id])),
+          available: true
         }
       ]
     }

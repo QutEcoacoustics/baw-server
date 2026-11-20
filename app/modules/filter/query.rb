@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Filter
-  # Construct a query using Arel.
+  # Construct a query.
+  # Generates an ActiveRecord query based on the provided parameters and filter settings.
   class Query
     include Comparison
     include Core
@@ -34,6 +35,13 @@ module Filter
     # Nil if `query_projection` was not called.
     # @return [Set<Symbol>]
     attr_reader :projected_fields
+
+    # The deprecated features used by the filter, projection, and sorting.
+    # Filter and projection usage is only recorded once the query has been built.
+    # @return [Deprecations]
+    def deprecations
+      @deprecations ||= Deprecations.new
+    end
 
     # Returns the filter provided by a request, before being merged onto the default filter
     # @return [Hash] filter
@@ -78,7 +86,7 @@ module Filter
       @custom_fields2 = filter_settings[:custom_fields2] || {}
       set_archived_param(parameters)
 
-      @build = Build.new(@table, filter_settings)
+      @build = Build.new(@table, filter_settings, deprecations:)
 
       @parameters = CleanParams.perform(parameters)
       validate_hash(@parameters)
@@ -494,7 +502,7 @@ module Filter
     def normalize_sorting_params(table, sort_names, default_direction)
       sort_names.map do |sort_name|
         # allow sorting by association
-        @build.parse_table_field(table, sort_name) => {
+        @build.parse_table_field(table, sort_name, usage: :sorting) => {
           arel_table: sort_table,
           field_name: sort_field,
           filter_settings: sort_filter_settings,

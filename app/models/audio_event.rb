@@ -27,6 +27,7 @@
 #
 #  index_audio_events_on_audio_event_import_file_id  (audio_event_import_file_id)
 #  index_audio_events_on_audio_recording_id          (audio_recording_id)
+#  index_audio_events_on_created_at                  (created_at)
 #  index_audio_events_on_creator_id                  (creator_id)
 #  index_audio_events_on_deleter_id                  (deleter_id)
 #  index_audio_events_on_provenance_id               (provenance_id)
@@ -149,6 +150,7 @@ class AudioEvent < ApplicationRecord
     inner = taggings
       .project(taggings[:id], taggings[:audio_event_id], taggings[:tag_id], taggings[:created_at], taggings[:updated_at], taggings[:creator_id], taggings[:updater_id])
       .where(taggings[:audio_event_id].eq(arel_table[:id]))
+      .order(taggings[:id])
       .ast
 
     Arel::SelectManager
@@ -167,6 +169,7 @@ class AudioEvent < ApplicationRecord
     inner = verifications
       .project(verifications[:id])
       .where(verifications[:audio_event_id].eq(arel_table[:id]))
+      .order(verifications[:id])
       .ast
 
     Arel::SelectManager
@@ -204,6 +207,7 @@ class AudioEvent < ApplicationRecord
       )
       .where(verifications[:audio_event_id].eq(arel_table[:id]))
       .group(verifications[:tag_id])
+      .order(verifications[:tag_id])
       .ast
 
     Arel::SelectManager
@@ -372,6 +376,8 @@ class AudioEvent < ApplicationRecord
           join: Tagging,
           on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
           available: true,
+          # `taggings` matches the field and route names; the table name is kept for backwards compatibility
+          names: [:audio_events_tags, :taggings],
           associations: [
             {
               join: Tag,
