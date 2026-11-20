@@ -8,7 +8,7 @@ module BawWorkers
         class Contributor < Base
           # name/title of the person or organisation
           attribute :title, Types::String
-          attribute :role, Types::Role
+          attribute? :role, Types::Role
 
           attribute? :email, Types::String
           attribute? :path, Types::Url

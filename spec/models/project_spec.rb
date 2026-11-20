@@ -161,8 +161,11 @@ describe Project do
     analysis_jobs: {
       analysis_jobs_scripts: nil,
       analysis_jobs_items: nil
-    }
+    },
+    exports: nil
   } do
     create_entire_hierarchy
+
+    before { create(:export, project:, creator: owner_user) }
   end
 end
