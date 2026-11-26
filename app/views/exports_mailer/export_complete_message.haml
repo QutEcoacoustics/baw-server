@@ -1,0 +1,36 @@
+%p
+  Hello,
+
+%p
+  You are receiving this email because your export has been <strong>completed</strong>.
+
+%p
+  Your export (
+  =@info[:export].name
+  ) for the project
+  =link_to @info[:export].project.name, Settings.client_routes.project_url(@info[:export].project_id).to_s
+  was processed by
+  =Settings.organisation_names.organisation_name
+  \.
+
+%p
+  Your export is ready to download. The download link is valid until
+  =@info[:export].expires_at.utc.iso8601
+  \.
+
+%p
+  =link_to "Download your export", download_export_url(@info[:export], token: @info[:export].signed_id(purpose: :export_download))
+
+%p
+  <strong>Warning:</strong>
+  Anyone with the download link can download your export. Do not share this link or forward this email to people who should not have access to the data.
+
+Additional information:
+%p
+  Date stamp:
+  = @info[:datestamp]
+%p
+  Export ID: #{ @info[:export].id }
+
+Regards,
+%br= Settings.organisation_names.organisation_name

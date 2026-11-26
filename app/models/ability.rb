@@ -121,6 +121,7 @@ class Ability
       to_question(user, is_guest)
       to_response(user, is_guest)
 
+      to_export(user, is_guest)
     else
       raise ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
@@ -833,6 +834,28 @@ class Ability
     can [:index, :filter, :show], Response, creator_id: user.id unless is_guest
 
     # only admin can update or delete responses
+  end
+
+  def to_export(user, _is_guest)
+    # Available to any user, including guest.
+    can [:index, :filter, :new], Export
+
+    # Readers and above can create/request packages for their projects.
+    # Downloads re-check the creator's permissions, see ExportsController#download.
+    can [:create], Export do |export|
+      check_model(export)
+
+      # Ensure a project is present here or else the Access check will fail
+      raise CustomErrors::UnprocessableEntityError, 'Missing project_id' unless export.project.present?
+
+      Access::Core.can_any?(user, :reader, export.project)
+    end
+
+    # Only the creator of an export can:
+    can [:show, :download, :destroy], Export do |export|
+      check_model(export)
+      export.creator_id == user&.id
+    end
   end
 
   def to_verification(user, _is_guest)
