@@ -6,7 +6,12 @@
 
 **Fixed bugs:**
 
-- PBS status check can fail if variable list is misisng [\#1084](https://github.com/QutEcoacoustics/baw-server/issues/1084)
+- PBS status check can fail if variable list is missing [\#1084](https://github.com/QutEcoacoustics/baw-server/issues/1084)
+
+**Merged pull requests:**
+
+- Handle missing variable lists in PBS job status [\#1085](https://github.com/QutEcoacoustics/baw-server/pull/1085) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Remove rspec api [\#1083](https://github.com/QutEcoacoustics/baw-server/pull/1083) ([atruskie](https://github.com/atruskie))
 
 ## [15.7.0](https://github.com/QutEcoacoustics/baw-server/tree/15.7.0) (2026-11-03)
 
@@ -92,6 +97,10 @@
 **Implemented enhancements:**
 
 - Update Ruby/docker [\#1048](https://github.com/QutEcoacoustics/baw-server/issues/1048)
+
+**Closed issues:**
+
+- camtrap export licenses bug [\#1044](https://github.com/QutEcoacoustics/baw-server/issues/1044)
 
 **Merged pull requests:**
 

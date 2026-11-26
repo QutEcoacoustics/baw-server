@@ -1105,7 +1105,7 @@ paths:
                   description: The maximum number of items allowed to be enqueued
                     at once for batch analysis.
                   type_specification: NilClass | Integer
-                  created_at: '2026-11-06T02:41:23.209Z'
+                  created_at: '2026-11-26T04:09:55.801Z'
                   updated_at: '2020-01-02T03:04:05.677Z'
               schema:
                 allOf:
@@ -3028,7 +3028,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.7.0 from http://web:3000.
+                  Version 15.7.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -3070,7 +3070,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.7.0"
+                Write-Information "Acoustic Workbench downloader script version 15.7.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3285,7 +3285,7 @@ paths:
                   See https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.1
                   for installation instructions.
 
-                  Version 15.7.0 from http://web:3000.
+                  Version 15.7.1 from http://web:3000.
 
                 .EXAMPLE
 
@@ -3327,7 +3327,7 @@ paths:
                 # https://github.com/PowerShell/PowerShell/issues/14348
                 $ProgressPreference = 'SilentlyContinue'
 
-                Write-Information "Acoustic Workbench downloader script version 15.7.0"
+                Write-Information "Acoustic Workbench downloader script version 15.7.1"
 
                 if ($null -eq $target) {
                   $target = $pwd
@@ -3638,7 +3638,7 @@ paths:
                   queued_at:
                   work_started_at:
                   finished_at:
-                  queue_id: e3d0548f-40d8-482d-9980-1a145823fbde
+                  queue_id: 5823fbde-7187-4ae3-ade5-df74b6af5148
                   error:
                   attempts: 0
                   status: new
@@ -3762,7 +3762,7 @@ paths:
                   queued_at:
                   work_started_at:
                   finished_at:
-                  queue_id: 7ef5e915-9bf1-4666-87bb-25767d20dc9a
+                  queue_id: 20dc9a40-a7ac-4299-ab74-466697c2bc84
                   error:
                   attempts: 0
                   status: new
@@ -3824,7 +3824,7 @@ paths:
                   queued_at:
                   work_started_at:
                   finished_at:
-                  queue_id: 6f3a79f3-2fd4-4fcc-8c9c-45bc3f0cad1d
+                  queue_id: ad1de02b-0b09-45e9-b994-d5e2fe795928
                   error:
                   attempts: 0
                   status: queued
@@ -4057,7 +4057,7 @@ paths:
                         settings for this project
                 data:
                 - id: 62
-                  uuid: cca30ab1-0bfb-4858-ba3b-f2aeacbef5a0
+                  uuid: a04cb4f3-5a11-46f4-bf0e-e3ed6abdb25f
                   recorded_date: '2000-05-27T07:06:59.000Z'
                   site_id: 62
                   duration_seconds: 60000.0
@@ -4075,7 +4075,7 @@ paths:
                   updater_id:
                   notes:
                     test: note number 62
-                  file_hash: SHA256::62c43a164fe3dad2fc6024c9eaaf4c4c9f840de735fd116844660e7495843b49
+                  file_hash: SHA256::62c6024c9eaaf4c4c9f840de735fd116844660e7495843b493fbb5b9d84be20a
                   uploader_id: 292
                   original_file_name: original name 62.mp3
                   canonical_file_name: 20000527T070659Z_site-name-62_62.mp3
@@ -4125,7 +4125,7 @@ paths:
                       details:
                 data:
                   id: 63
-                  uuid: 1b71a9a5-68ea-453c-886a-d0a7e2674c4f
+                  uuid: 4f46981e-1117-4f72-8c87-b6f4d8fb54ae
                   recorded_date: '2000-05-28T07:06:59.000Z'
                   site_id: 63
                   duration_seconds: 66.0
@@ -4143,7 +4143,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 63
-                  file_hash: SHA256::6368e17f2c7648b4e08713779c74e2677b91d5ef849cce4a25ab28eb686d18f7
+                  file_hash: SHA256::6308713779c74e2677b91d5ef849cce4a25ab28eb686d18f7450b963257553b1
                   uploader_id: 296
                   original_file_name: original name 63.mp3
                   canonical_file_name: 20000528T070659Z_site-name-63_63.mp3
@@ -4195,7 +4195,7 @@ paths:
                       details:
                 data:
                   id: 64
-                  uuid: f252145f-e26b-46f3-81e8-287844302bb0
+                  uuid: b0d0253c-e2a2-4719-aeaf-ff8489e8b000
                   recorded_date: '2000-05-29T07:06:59.000Z'
                   site_id: 64
                   duration_seconds: 60000.0
@@ -4213,7 +4213,7 @@ paths:
                   updater_id:
                   notes:
                     test: note number 64
-                  file_hash: SHA256::6405c2279eff49800484b2135b694e5d0015ca595d5d0e0592e933494fe81079
+                  file_hash: SHA256::64484b2135b694e5d0015ca595d5d0e0592e933494fe81079ea77a95daf8141a
                   uploader_id: 300
                   original_file_name: original name 64.mp3
                   canonical_file_name: 20000529T070659Z_site-name-64_64.mp3
@@ -4260,7 +4260,7 @@ paths:
                       details:
                 data:
                   id: 65
-                  uuid: 491214da-0596-4df1-8e8d-ea90cc81cad2
+                  uuid: d2ab76c9-c5bc-4da4-aa6c-cc59e3740dae
                   recorded_date: '2000-05-30T07:06:59.000Z'
                   site_id: 65
                   duration_seconds: 66.0
@@ -4278,7 +4278,7 @@ paths:
                   updater_id: 1
                   notes:
                     test: note number 65
-                  file_hash: SHA256::65b695cd4acc934de31fa92ac0f82728f872e540aa7b71dc341f7abb70c3deed
+                  file_hash: SHA256::6531fa92ac0f82728f872e540aa7b71dc341f7abb70c3deed5e105b0c724699d
                   uploader_id: 304
                   original_file_name: original name 65.mp3
                   canonical_file_name: 20000530T070659Z_site-name-65_65.mp3
@@ -4399,7 +4399,7 @@ paths:
                         settings for this project
                 data:
                 - id: 67
-                  uuid: f92e4796-bc7e-4904-85df-db27bb43889e
+                  uuid: 9bc4aeed-0687-4833-80de-a0bd002d1c44
                   recorded_date: '2000-06-01T07:06:59.000Z'
                   site_id: 67
                   duration_seconds: 60000.0
@@ -4417,7 +4417,7 @@ paths:
                   updater_id:
                   notes:
                     test: note number 67
-                  file_hash: SHA256::676f5b4ed67830e0d0dc406272e8c872c6386c6c913d27fab5f77b28d18380d4
+                  file_hash: SHA256::6706272e8c872c6386c6c913d27fab5f77b28d18380d4023dc044d5b83caf6fb
                   uploader_id: 312
                   original_file_name: original name 67.mp3
                   canonical_file_name: 20000601T070659Z_site-name-67_67.mp3
@@ -6652,7 +6652,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: j_57W1_9MgbVNZcyYhkt_El4vxR_aU7vaGXCxRnWWh0
+                  auth_token: S-2g8kZID4Lhkb_6MPTR7sVxWCP3uxvbOqS7W7RCjtY
                   user_name: Admin
                   user_id: 1
                   message: Logged in successfully.
@@ -6708,7 +6708,7 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  auth_token: 4YofKQVv7yA-_X8EB5VkLxqcP6QmWLBTOJ-PM6NJYdU
+                  auth_token: yFNTjLXDSHiKaeOx8qf1P8ITkFIq2AOZBj7SJgUDfRg
                   user_name: Admin
                   user_id: 1
               schema:
@@ -8556,7 +8556,7 @@ paths:
                   message: OK
                 data:
                   id: 128
-                  name: Acoustic Indices
+                  name: Perch
                   version: 128.0.0
                   url: https://example.com
                   description:
@@ -8607,7 +8607,7 @@ paths:
                   message: OK
                 data:
                   id: 129
-                  name: Birdnet
+                  name: Perch
                   version: 130.0.0
                   url: https://example.com
                   description:
@@ -8685,7 +8685,7 @@ paths:
                   message: OK
                 data:
                   id: 131
-                  name: Perch
+                  name: Acoustic Indices
                   version: 133.0.0
                   url: https://example.com
                   description:
@@ -9045,7 +9045,7 @@ paths:
                 data:
                 - id: 133
                   additional_tag_ids:
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiI1OHZwOGtzdWVmM2h6a3IzbTByeWlyZzQ2N2hnIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--6d97d153a67e8f53a19015808960dadac3cd7d6a/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJ6a3IzbTByeWlyZzQ2N2hnMGx3bHJoOWFieHdzIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--57696d2d328b68d08d4cb959414156473498c6e6/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 134
                   analysis_jobs_item_id:
@@ -9109,7 +9109,7 @@ paths:
                   id: 135
                   additional_tag_ids:
                   - 136
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJxdDFxaHlydWU4d25ocG5rdnl3cm1mZ2JxcnZtIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImdlbmVyaWNfZXhhbXBsZS5jc3ZcIjsgZmlsZW5hbWUqPVVURi04JydnZW5lcmljX2V4YW1wbGUuY3N2IiwiY29udGVudF90eXBlIjoidGV4dC9jc3YiLCJzZXJ2aWNlX25hbWUiOiJsb2NhbCJ9LCJleHAiOiIyMDIwLTAxLTAyVDAzOjA5OjA1LjY3N1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--85ee5b3e711d0b4b71140e31a84d354c331ed5a7/generic_example.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJydWU4d25ocG5rdnl3cm1mZ2JxcnZtaWVjNDIxIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImdlbmVyaWNfZXhhbXBsZS5jc3ZcIjsgZmlsZW5hbWUqPVVURi04JydnZW5lcmljX2V4YW1wbGUuY3N2IiwiY29udGVudF90eXBlIjoidGV4dC9jc3YiLCJzZXJ2aWNlX25hbWUiOiJsb2NhbCJ9LCJleHAiOiIyMDIwLTAxLTAyVDAzOjA5OjA1LjY3N1oiLCJwdXIiOiJibG9iX2tleSJ9fQ==--ff8354cb8eee08f55c10293f55736db63e0497f4/generic_example.csv
                   name: generic_example.csv
                   audio_event_import_id: 135
                   analysis_jobs_item_id:
@@ -9349,7 +9349,7 @@ paths:
                 data:
                 - id: 138
                   additional_tag_ids:
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJlcXlya2d3ZTliaDJpYWdwOXNjOWxjemcwb2dzIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--9790fee20f42e65be4368af4a511dbc847196e3e/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJmcWN4d3BkYmViZnFiNGl2dXFzYzd0ZmozN3B4IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--abc2dc8326545c1b395e912aadfeef44aef160f5/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 137
                   analysis_jobs_item_id:
@@ -9515,7 +9515,7 @@ paths:
                 data:
                   id: 142
                   additional_tag_ids:
-                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJpMng2bW5naTA1c3Rmczh4dzRoZmhjZDZvMjUxIiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--46deed010a5723347e4a0d6935b4310c9256d695/audio_check.csv
+                  path: http://web:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJsb3liN3d4ZXJnNnBkZWY0d2t1Ymh1bGl6ZDA3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImF1ZGlvX2NoZWNrLmNzdlwiOyBmaWxlbmFtZSo9VVRGLTgnJ2F1ZGlvX2NoZWNrLmNzdiIsImNvbnRlbnRfdHlwZSI6InRleHQvY3N2Iiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyMC0wMS0wMlQwMzowOTowNS42NzdaIiwicHVyIjoiYmxvYl9rZXkifX0=--e7913d1c19558c24a19ff74eb1e90b127ba193e5/audio_check.csv
                   name: audio_check.csv
                   audio_event_import_id: 141
                   analysis_jobs_item_id:
@@ -9718,13 +9718,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 179
-                  custom_latitude: 13.951623
-                  custom_longitude: -42.910303
-                  longitude: -42.910303
-                  latitude: 13.951623
+                  custom_latitude: 15.691723
+                  custom_longitude: 174.395053
+                  longitude: 174.395053
+                  latitude: 15.691723
                   location_obfuscated: false
-                  obfuscated_latitude: 13.95094
-                  obfuscated_longitude: -42.90924
+                  obfuscated_latitude: 15.69278
+                  obfuscated_longitude: 174.39348
                   custom_obfuscated_location: false
                   project_ids:
                   - 186
@@ -10022,13 +10022,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 184
-                  custom_latitude: -40.372795
-                  custom_longitude: 74.97936
-                  longitude: 74.97936
-                  latitude: -40.372795
+                  custom_latitude: 19.527117
+                  custom_longitude: 152.664528
+                  longitude: 152.664528
+                  latitude: 19.527117
                   location_obfuscated: false
-                  obfuscated_latitude: -40.37153
-                  obfuscated_longitude: 74.98064
+                  obfuscated_latitude: 19.52564
+                  obfuscated_longitude: 152.66368
                   custom_obfuscated_location: false
                   project_ids:
                   - 191
@@ -10132,13 +10132,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 185
-                  custom_latitude: -24.206532
-                  custom_longitude: 28.033969
-                  longitude: 28.033969
-                  latitude: -24.206532
+                  custom_latitude: -21.961809
+                  custom_longitude: 98.916154
+                  longitude: 98.916154
+                  latitude: -21.961809
                   location_obfuscated: false
-                  obfuscated_latitude: -24.20773
-                  obfuscated_longitude: 28.03488
+                  obfuscated_latitude: -21.96103
+                  obfuscated_longitude: 98.91667
                   custom_obfuscated_location: false
                   project_ids:
                   - 192
@@ -10313,7 +10313,7 @@ paths:
                   project_id: 194
                   name: January 2nd Upload
                   upload_user: Admin_155
-                  upload_password: qsd3g8vBbeikLXzFDtYwGGGj
+                  upload_password: goXwHd7633oeQRr3KgzomBJm
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '185'
@@ -10817,7 +10817,7 @@ paths:
                       details:
                 data:
                   id: 193
-                  uuid: 99c33dc2-1de4-4b08-870f-92ddeda132c3
+                  uuid: 315c974e-1442-4fe0-ba12-7e3edd6d4951
                   recorded_date: '2000-10-05T07:06:59.000Z'
                   site_id: 193
                   duration_seconds: 60000.0
@@ -10835,7 +10835,7 @@ paths:
                   updater_id:
                   notes:
                     test: note number 193
-                  file_hash: SHA256::193ea08e649f270bd00efeeca4451cb9ff29617ded61b38f855a7ff9e661b60a
+                  file_hash: SHA256::193eca4451cb9ff29617ded61b38f855a7ff9e661b60a684c65678dd31ef3c6a
                   uploader_id: 1
                   original_file_name: original name 193.mp3
                   canonical_file_name: 20001005T070659Z_site-name-194_193.mp3
@@ -11420,7 +11420,7 @@ paths:
                 data:
                   recording:
                     id: 205
-                    uuid: 8436a3e8-6dca-4938-8542-7b6516c95726
+                    uuid: 0c05f5ce-2dce-4abe-bdac-41bbf0864734
                     recorded_date: '2000-10-17T07:06:59.000Z'
                     duration_seconds: 60000.0
                     sample_rate_hertz: 7777
@@ -13958,7 +13958,7 @@ paths:
                   project_id: 257
                   name: January 2nd Upload
                   upload_user: Admin_203
-                  upload_password: UxuSxVVrWdaU92TgwqCqCdfv
+                  upload_password: EfNh3gqC4iGcBjV3MUanURPn
                   upload_url: sftp://upload.test:2022
                   mappings:
                   - path: '248'
@@ -16508,8 +16508,8 @@ paths:
                   project_ids:
                   - 307
                   location_obfuscated: false
-                  latitude: 83.451286
-                  longitude: 17.221971
+                  latitude: -50.703403
+                  longitude: 168.76526
                   audio_event_count: 1
               schema:
                 allOf:
@@ -16610,8 +16610,8 @@ paths:
                   project_ids:
                   - 308
                   location_obfuscated: false
-                  latitude: -31.040588
-                  longitude: 35.336615
+                  latitude: 28.207415
+                  longitude: 130.770035
                   audio_event_count: 1
               schema:
                 allOf:
@@ -17515,13 +17515,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 312
-                  custom_latitude: 7.786278
-                  custom_longitude: -55.435562
-                  longitude: -55.435562
-                  latitude: 7.786278
+                  custom_latitude: 20.555212
+                  custom_longitude: 105.001651
+                  longitude: 105.001651
+                  latitude: 20.555212
                   location_obfuscated: false
-                  obfuscated_latitude: 7.78523
-                  obfuscated_longitude: -55.4351
+                  obfuscated_latitude: 20.55551
+                  obfuscated_longitude: 105.00061
                   custom_obfuscated_location: false
                   project_ids:
                   - 323
@@ -17733,13 +17733,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 316
-                  custom_latitude: -42.101899
-                  custom_longitude: 126.206938
-                  longitude: 126.206938
-                  latitude: -42.101899
+                  custom_latitude: -37.64168
+                  custom_longitude: -41.785706
+                  longitude: -41.785706
+                  latitude: -37.64168
                   location_obfuscated: false
-                  obfuscated_latitude: -42.10227
-                  obfuscated_longitude: 126.20654
+                  obfuscated_latitude: -37.64233
+                  obfuscated_longitude: -41.78724
                   custom_obfuscated_location: false
                   project_ids:
                   - 327
@@ -18053,13 +18053,13 @@ paths:
                   deleter_id:
                   deleted_at:
                   region_id: 322
-                  custom_latitude: -88.119506
-                  custom_longitude: 179.959535
-                  longitude: 179.959535
-                  latitude: -88.119506
+                  custom_latitude: 37.444021
+                  custom_longitude: 177.543048
+                  longitude: 177.543048
+                  latitude: 37.444021
                   location_obfuscated: false
-                  obfuscated_latitude: -88.11785
-                  obfuscated_longitude: 179.95872
+                  obfuscated_latitude: 37.44437
+                  obfuscated_longitude: 177.54139
                   custom_obfuscated_location: false
                   project_ids:
                   - 333
