@@ -67,7 +67,7 @@ class AudioEventImport < ApplicationRecord
         {
           name: nil,
           description: nil,
-          analysis_jobs_id: nil
+          analysis_job_id: nil
         }
       },
       controller: :audio_event_imports,
@@ -79,7 +79,7 @@ class AudioEventImport < ApplicationRecord
       valid_associations: [
         {
           join: AnalysisJob,
-          on: AudioEventImport.arel_table[:analysis_jobs_id].eq(AnalysisJob.arel_table[:id]),
+          on: AudioEventImport.arel_table[:analysis_job_id].eq(AnalysisJob.arel_table[:id]),
           available: true
         },
         {

@@ -428,6 +428,8 @@ class AudioRecording < ApplicationRecord
               join: Tagging,
               on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
               available: true,
+              # `taggings` matches the field and route names; the table name is kept for backwards compatibility
+              names: [:audio_events_tags, :taggings],
               associations: [
                 {
                   join: Tag,

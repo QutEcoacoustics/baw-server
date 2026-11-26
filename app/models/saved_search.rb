@@ -70,11 +70,6 @@ class SavedSearch < ApplicationRecord
       },
       valid_associations: [
         {
-          join: AnalysisJob,
-          on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
-          available: true
-        },
-        {
           join: Arel::Table.new(:projects_saved_searches),
           on: SavedSearch.arel_table[:id].eq(Arel::Table.new(:projects_saved_searches)[:saved_search_id]),
           available: false,

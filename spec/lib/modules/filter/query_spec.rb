@@ -39,7 +39,7 @@ describe Filter::Query do
           }
         ).query_full
       }.to raise_error(CustomErrors::FilterArgumentError,
-        'Filter parameters were not valid: Unrecognized combiner or field name `not_a_real_filter`.')
+        'Filter parameters were not valid: Unrecognized combiner, scope, or field name `not_a_real_filter`.')
     end
 
     # we used to not allow this, but it's easier to just normalize one entry combiners
@@ -137,7 +137,8 @@ describe Filter::Query do
             }
           }
         ).query_full
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `not_a_valid_combiner`/)
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        /Unrecognized combiner, scope, or field name `not_a_valid_combiner`/)
     end
 
     it "occurs when a range is missing 'from'" do
@@ -403,6 +404,9 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
+    # TODO: rewrite once projecting across to-many associations is removed (#837).
+    # `projects.name` crosses sites -> projects (many-to-many), producing one row per project.
+    # This test should break when that change lands; do not update it pre-emptively.
     it 'can include fields from associations' do
       body = {
         projection: { include: [:'sites.name', :'projects.name'] },
@@ -462,6 +466,9 @@ describe Filter::Query do
       compare_filter_sql(body, complex_result)
     end
 
+    # TODO: rewrite once projecting child associations is removed (#837).
+    # `audio_events.duration_seconds` projects a child of audio_recordings, producing one row per event.
+    # This test should break when that change lands; do not update it pre-emptively.
     it 'can filter on and include custom fields from associations' do
       body = {
         projection: { include: [:'audio_events.duration_seconds'] },
@@ -1803,7 +1810,8 @@ describe Filter::Query do
       )
       expect {
         filter.build.parse(filter.filter)
-      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognized combiner or field name `this_is_not_a_field`./)
+      }.to raise_error(CustomErrors::FilterArgumentError,
+        /Unrecognized combiner, scope, or field name `this_is_not_a_field`./)
     end
 
     it 'allows mapped fields as a generic equality field' do

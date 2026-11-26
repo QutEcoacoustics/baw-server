@@ -2,6 +2,7 @@
 
 module Filter
   # Provides support for parsing a filter from a hash to build a query.
+  # Generates Arel queries based on the provided filter hash and settings.
   class Build
     include Comparison
     include Core
@@ -16,20 +17,38 @@ module Filter
     # to pick any missing components from. 0000-01-01 00:00:00 UTC
     DEFAULT_DATE = Time.utc(0)
 
+    TRUE_CONDITION = Models::Condition.simple(Arel::Nodes::True.new)
+
+    SCOPE_OPERATORS = [:any, :none, :all].freeze
+
+    # The maximum number of scopes that can be nested inside each other.
+    # A top level scope has depth 1, a scope inside it has depth 2, and so on.
+    # Each level adds a correlated subquery that runs for every row of the level above it.
+    # Set it to 1 to disallow nested scopes.
+    # Why 2? Because we need that depth to make verification filtering through taggings for for audio_events,
+    # But I also have no idea of the performance implications of nested exists statements.
+    MAX_SCOPE_DEPTH = 2
+
     # Create an instance of Build.
     # @param [Arel::Table] table
     # @param [Hash] filter_settings
+    # @param scope_depth [Integer] the number of scopes this filter is nested inside.
+    #   Scopes in this filter are rejected if they would be nested deeper than MAX_SCOPE_DEPTH.
+    # @param deprecations [Deprecations] collects deprecated usage, shared with the builds of nested scopes
     # @return [void]
-    def initialize(table, filter_settings)
-      @table = table
+    def initialize(table, filter_settings, deprecations:, scope_depth: 0)
+      raise ArgumentError, 'deprecations must be provided' unless deprecations.is_a?(Deprecations)
 
-      validate_filter_settings(filter_settings)
+      @table = table
+      @scope_depth = scope_depth
+      @deprecations = deprecations
+
       @filter_settings = filter_settings
 
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
-      @valid_associations = filter_settings[:valid_associations]
+      @valid_associations = build_associations(filter_settings[:valid_associations], table)
       @custom_fields2 = filter_settings[:custom_fields2] || {}
 
       @valid_conditions = [
@@ -71,16 +90,19 @@ module Filter
     # @param fields [Array<Symbol>] fields to project
     # @return [Array<Arel::Attributes::Attribute, Hash>] projections
     def projections(fields)
-      allowed = allowed_fields
+      allowed = projectable_fields
       projection_expressions = fields.map { |projection_name| project_column(@table, projection_name, allowed) }
 
       raise 'projection list should not have nils' if projection_expressions.any?(&:nil?)
-      raise 'projection list should not have arrays' if projection_expressions.any? { |item| item.is_a?(Array) }
+      raise 'projection list should not have arrays' if projection_expressions.any?(Array)
 
       projection_expressions
     end
 
-    def allowed_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
+    # Fields that can be projected.
+    # Note: it's a historical quirk that we can't turn off standard fields from being projected (e.g. large text fields)
+    # A field not in render_fields is intended to be hidden from projection (because it assumed to be sensitive).
+    def projectable_fields(render_fields = @render_fields, custom_fields2 = @custom_fields2)
       (render_fields + custom_fields2.keys).uniq
     end
 
@@ -169,13 +191,15 @@ module Filter
     # Build table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_table_field(table, field)
+    # @param usage [Symbol, nil] where the field is used, one of Deprecations::USAGES.
+    #   If given, fields that reach through a one-to-many association are recorded as deprecated.
+    # @return [Hash] table_name, field_name, arel_table, model, filter_settings
+    def parse_table_field(table, field, usage: nil)
       validate_table(table)
       raise CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
 
       if association_field?(field)
-        parse_other_table_field(table, field)
+        parse_other_table_field(field, usage:)
       else
 
         # table name may not be the same as model / controller name :(
@@ -192,18 +216,20 @@ module Filter
       end
     end
 
-    # Runs build_associations on the valid associations and caches the result.
-    def composed_associations(table)
-      @composed_associations ||= {}
-
-      unless @composed_associations.key?(table)
-        @composed_associations[table] ||= build_associations(@valid_associations, table)
-      end
-
-      @composed_associations[table]
+    # Available associations at every depth, preserving intermediate joins in the tree.
+    # @return [Array<Models::Association>]
+    def composed_associations
+      @composed_associations ||= flatten_available_associations(@valid_associations).freeze
     end
 
     private
+
+    def flatten_available_associations(associations)
+      associations.flat_map do |association|
+        children = flatten_available_associations(association.associations)
+        association.available ? children + [association] : children
+      end
+    end
 
     # Recursively parse a filter hash.
     # @param [Hash, Symbol] primary
@@ -255,10 +281,20 @@ module Filter
           result = parse_filter(filter_hash)
 
           combiner_not(result)
+
+        # Association scopes.
+        # We select this branch, even for invalid scopes because build_scope will
+        # check the names and raise validation errors if necessary.
+        when ->(name) { scope_key?(name, secondary) }
+          scope_name = primary
+          scope_value = secondary
+
+          build_scope(scope_name, scope_value)
+
         when *@valid_fields, /\./
           field = primary
           field_conditions = secondary
-          info = parse_table_field(@table, field)
+          info = parse_table_field(@table, field, usage: :filter)
           #! recursive
           result = parse_filter(field_conditions, info)
 
@@ -325,7 +361,7 @@ module Filter
             joins: joins
           )
         else
-          raise CustomErrors::FilterArgumentError, "Unrecognized combiner or field name `#{primary}`."
+          raise CustomErrors::FilterArgumentError, "Unrecognized combiner, scope, or field name `#{primary}`."
         end
       else
         raise CustomErrors::FilterArgumentError, "Unrecognized filter component `#{primary}`."
@@ -478,11 +514,8 @@ module Filter
         # add relevant joins
         joins, = build_joins(model, @valid_associations)
 
-        joins.each do |j|
-          table = j[:join]
-          # assume this is an arel_table if it doesn't respond to .arel_table
-          arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
-          subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
+        joins.each do |association|
+          subquery = subquery.join(association.joined_table, Arel::Nodes::OuterJoin).on(association.on)
         end
 
         # add conditions to subquery
@@ -495,36 +528,212 @@ module Filter
       end
     end
 
+    # Get all associations names, including invalid ones.
+    def all_association_names
+      @all_association_names ||= composed_associations.flat_map(&:names)
+    end
+
+    # A key that names both an association and a field (e.g. `taggings` on audio events) is only a scope when its
+    # value uses a scope operator. Scope operators are reserved names, so a field condition can never use them.
+    def scope_key?(name, value)
+      return false unless all_association_names.include?(name)
+      return true unless @valid_fields.include?(name)
+
+      value.is_a?(Hash) && value.keys.intersect?(SCOPE_OPERATORS)
+    end
+
+    # Build a single sub-query to contain multiple compound predicates for a
+    # 1:many child table.
+    def build_scope(association_name, value)
+      association = validate_scope(association_name, value)
+      operator = value.keys.first
+      inner_filter = value[operator]
+
+      # Note we specifically allow no conditions in the inner filter (it's just like a normal filter with no conditions),
+      #  but it must still be a hash
+      unless inner_filter.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope inner filter for `#{operator}` must be an object"
+      end
+
+      # This build object (self) is the parent context and thing we're joining to
+      # is the child.
+      child_model = association.joined_model
+
+      # we need a new Build here that operates in the context of the child model,
+      # one level deeper.
+      child_build = self.class.new(
+        association.joined_table,
+        child_model.filter_settings,
+        deprecations: @deprecations,
+        scope_depth: @scope_depth + 1
+      )
+
+      # The where association.on is correlation between the parent and child tables
+      subquery = association.joined_table.project(1).where(association.on)
+
+      # inner filter is allowed to be empty, in which case this just turns into
+      # a correlated exists query with no additional conditions.
+      # For consistency though we emit the  true value to build off of, even when there are no additional conditions.
+      inner_conditions = inner_filter.empty? ? [TRUE_CONDITION] : child_build.parse(inner_filter)
+      grouped = combiner_one(:and, inner_conditions)
+
+      # add conditions to subquery
+      # essentially we're resetting the Condition build-up here
+      case operator
+      when :all
+        # The spec defines `all` as:
+        #   NOT EXISTS (SELECT 1 FROM association WHERE correlation AND (P) IS NOT TRUE)
+        # We emit an equivalent form, with IS NOT TRUE distributed down to each comparison in P, so that scopes nested
+        # in P stay visible to the planner. See distribute_is_not.
+        grouped = grouped.map_predicate { |predicate| distribute_is_not(predicate) }
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists.not
+      when :any
+        # EXISTS (SELECT 1 FROM association WHERE correlation AND P)
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists
+      when :none
+        # NOT EXISTS (SELECT 1 FROM association WHERE correlation AND P)
+        subquery = Models::Condition.apply_to_select_manager(subquery, [grouped])
+        subquery.exists.not
+      else
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope operator `#{operator}` is invalid, it must be one of `any`, `none`, or `all`."
+      end => exists_predicate
+
+      Models::Condition.new(predicate: exists_predicate)
+    end
+
+    # Builds a predicate equivalent to `(predicate) IS NOT TRUE` (or `IS NOT FALSE` when `value` is false), by
+    # distributing the truth test through the predicate's boolean operators down to each comparison.
+    #
+    # The `all` scope needs `(P) IS NOT TRUE` so that a comparison that is NULL (SQL's UNKNOWN) counts as a failure.
+    # But Postgres can't optimize through IS NOT TRUE: a scope nested in P is hidden inside it, so the scope runs as a
+    # subplan for every row instead of as a semi or anti join. Distributing the truth test leaves nested scopes as
+    # plain EXISTS / NOT EXISTS.
+    #
+    # The rules, from the filter scopes spec, where A and B are any predicates:
+    #
+    #   (A AND B) IS NOT TRUE   =>  A IS NOT TRUE OR B IS NOT TRUE     (De Morgan's laws)
+    #   (A OR B)  IS NOT TRUE   =>  A IS NOT TRUE AND B IS NOT TRUE    (De Morgan's laws)
+    #   (NOT A)   IS NOT TRUE   =>  A IS NOT FALSE
+    #   (A AND B) IS NOT FALSE  =>  A IS NOT FALSE AND B IS NOT FALSE
+    #   (A OR B)  IS NOT FALSE  =>  A IS NOT FALSE OR B IS NOT FALSE
+    #   (NOT A)   IS NOT FALSE  =>  A IS NOT TRUE
+    #   EXISTS(q) IS NOT TRUE   =>  NOT EXISTS(q)                      (EXISTS is never NULL)
+    #   EXISTS(q) IS NOT FALSE  =>  EXISTS(q)
+    #   A         IS NOT TRUE   =>  (A) IS NOT TRUE                    (any other node, e.g. a comparison)
+    #
+    # The last rule keeps the truth test on each comparison, so NULLs still fail. It also catches any node this
+    # method doesn't recognize, which then gets the spec's form: still correct, just not optimized.
+    #
+    # For example, in
+    #   { taggings: { all: { or: [{ tag_id: { not_in: [5, 6] } }, { verifications: { any: { ... } } }] } } }
+    # the inner filter
+    #   (NOT ("tag_id" IN (5, 6)) OR EXISTS (SELECT 1 FROM "verifications" ...)) IS NOT TRUE
+    # becomes
+    #   ("tag_id" IN (5, 6)) IS NOT FALSE AND NOT EXISTS (SELECT 1 FROM "verifications" ...)
+    # and Postgres runs the NOT EXISTS as an anti join.
+    #
+    # This rewrites the finished predicate, rather than having the parser build the distributed form, so the rules
+    # live in one place and conditions added to the parser later can't break `all`.
+    # @param [Arel::Nodes::Node] predicate
+    # @param [Boolean] value the boolean the predicate must not be
+    # @return [Arel::Nodes::Node]
+    def distribute_is_not(predicate, value: true)
+      case predicate
+      when Arel::Nodes::Grouping
+        #! recursive
+        distribute_is_not(predicate.expr, value:)
+      when Arel::Nodes::Not
+        #! recursive
+        distribute_is_not(predicate.expr, value: !value)
+      when Arel::Nodes::And, Arel::Nodes::Or
+        if predicate.is_a?(Arel::Nodes::And) == value
+          Arel::Nodes::Or
+        else
+          Arel::Nodes::And
+        end => node_type
+
+        #! recursive
+        children = predicate.children.map { |child| distribute_is_not(child, value:) }
+        Arel::Nodes::Grouping.new(node_type.new(children))
+      when Arel::Nodes::Exists
+        value ? predicate.not : predicate
+      else
+        Arel::Nodes::Grouping.new(predicate).is_not(value ? Arel::Nodes::True.new : Arel::Nodes::False.new)
+      end
+    end
+
+    def validate_scope(association_name, value)
+      if @scope_depth >= MAX_SCOPE_DEPTH
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is nested too deeply, the maximum scope depth is #{MAX_SCOPE_DEPTH}."
+      end
+
+      association = composed_associations.find { _1.names.include?(association_name) }
+
+      unless association.from_table == @table
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is invalid because it is not an immediate association."
+      end
+
+      unless association.available
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` association is not available."
+      end
+
+      unless association.to_many?
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope is invalid for this resource, it is not a child association."
+      end
+
+      unless value.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope value must be an object"
+      end
+
+      unless value.keys.size == 1
+        raise CustomErrors::FilterArgumentError,
+          "The `#{association_name}` scope must have an operator, one of `any`, `none`, or `all`"
+      end
+
+      association
+    end
+
     def association_field?(name)
       name.to_s.include?('.')
     end
 
     # Build other table field from field symbol.
-    # @param [Arel::Table] table
     # @param [Symbol] field
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_other_table_field(table, field)
+    # @param usage [Symbol, nil] see #parse_table_field
+    # @return [Hash] table_name, field_name, arel_table, model, filter_settings
+    def parse_other_table_field(field, usage: nil)
       field_s = field.to_s
       dot_index = field_s.index('.')
 
       parsed_table = field[0, dot_index].to_sym
       parsed_field = field[(dot_index + 1)..field.length].to_sym
 
-      associations = composed_associations(table)
-      models = associations.pluck(:join)
-      table_names = associations.map { |association| association[:join].table_name.to_sym }
+      associations = composed_associations
+      table_names = associations.flat_map(&:names)
 
       validate_name(parsed_table, table_names)
 
-      model = to_model(parsed_table)
-
-      validate_association(model, models)
+      model = associations.find { |association| association.names.include?(parsed_table) }.joined_model
+      validate_model(model)
 
       model_filter_settings = model.filter_settings
       model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
       arel_table = relation_table(model)
 
       validate_table_column(arel_table, parsed_field, model_valid_fields)
+
+      # the same joins the filter, projection, and sorting use for this field
+      path, = build_joins(model, @valid_associations)
+      @deprecations.add_warning_for_one_to_many_association(usage, field) if usage && path.any?(&:to_many?)
 
       {
         table_name: parsed_table,
@@ -574,61 +783,46 @@ module Filter
       [:json, :jsonb].include?(column_type)
     end
 
-    # Parse association_allowed hashes and arrays to get names.
-    # @param [Hash, Array] valid_associations
-    # @param [Arel::Table] table
-    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def build_associations(valid_associations, table)
-      associations = []
-      case valid_associations
-      when Array
-        #! recursive
-        more_associations = valid_associations.map { |i| build_associations(i, table) }
-        associations.push(*more_associations.flatten.compact) unless more_associations.empty?
-      when Hash
+    # Convert configured joins into a validated association tree.
+    # @param [Array<Hash>, nil] settings
+    # @param [Arel::Table] from_table
+    # @return [Array<Models::Association>]
+    def build_associations(settings, from_table)
+      return [].freeze if settings.nil?
 
-        join = valid_associations[:join]
-        on = valid_associations[:on]
-        available = valid_associations[:available]
-
-        #! recursive
-        more_associations = build_associations(valid_associations[:associations], join)
-        associations.push(*more_associations.flatten.compact) unless more_associations.empty?
-
-        if available
-          associations.push(
-            {
-              join:,
-              on:
-            }
-          )
-        end
-
+      unless settings.is_a?(Array) && settings.all?(Hash)
+        raise CustomErrors::FilterSettingsError, 'Association settings must be an array of hashes'
       end
 
-      associations
+      settings.map { |association|
+        to_table = association[:join]
+        joined_table = to_table.respond_to?(:arel_table) ? to_table.arel_table : to_table
+
+        #! recursive
+        children = build_associations(association[:associations], joined_table)
+
+        Models::Association.new(
+          from_table:,
+          to_table:,
+          on: association[:on],
+          available: association[:available],
+          associations: children,
+          names: association[:names]
+        )
+      }.freeze
     end
 
     # Get only the relevant joins
     # @param [ActiveRecord::Base] model
-    # @param [Hash] associations
-    # @param [Array<Hash>] joins
-    # @return [Array<Hash>, Boolean] joins, match
-    def build_joins(model, associations, joins = [])
+    # @param [Array<Models::Association>] associations
+    # @return [Array<Models::Association>, Boolean] joins, match
+    def build_joins(model, associations)
       associations.each do |association|
-        model_join = association[:join]
-        model_on = association[:on]
+        return [[association], true] if model == association.to_table
 
-        join = { join: model_join, on: model_on }
+        assoc_joins, match = build_joins(model, association.associations)
 
-        return [[join], true] if model == model_join
-
-        next unless association.include?(:associations)
-
-        assoc = association[:associations]
-        assoc_joins, match = build_joins(model, assoc, joins + [join])
-
-        return [[join] + assoc_joins, true] if match
+        return [[association] + assoc_joins, true] if match
       end
 
       [[], false]

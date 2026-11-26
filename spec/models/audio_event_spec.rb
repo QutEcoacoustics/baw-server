@@ -27,6 +27,7 @@
 #
 #  index_audio_events_on_audio_event_import_file_id  (audio_event_import_file_id)
 #  index_audio_events_on_audio_recording_id          (audio_recording_id)
+#  index_audio_events_on_created_at                  (created_at)
 #  index_audio_events_on_creator_id                  (creator_id)
 #  index_audio_events_on_deleter_id                  (deleter_id)
 #  index_audio_events_on_provenance_id               (provenance_id)

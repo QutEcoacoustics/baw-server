@@ -24,6 +24,8 @@ Bundler.require(:test)
 require 'spec_helper'
 
 require 'test-prof'
+# provides `before_all` and `let_it_be`, for creating test data once per example group rather than once per example
+require 'test_prof/recipes/rspec/let_it_be'
 TestProf.configure do |config|
   # the directory to put artifacts (reports) in ('tmp/test_prof' by default)
   config.output_dir = 'test_prof'
@@ -366,8 +368,11 @@ RSpec.configure do |config|
     Resque.redis.close
     BawWorkers::Config.redis_communicator.redis.close
     # some of our tests make use of threads or fibers that can hold onto connections
-    # so disconnect everything after each test
-    ActiveRecord::Base.connection_pool.disconnect!
+    # so disconnect everything after each test.
+    # Except in a `before_all`/`let_it_be` group: closing the connection would throw away the transaction that holds
+    # the data shared by every example in the group.
+    shares_data = example.example_group.parent_groups.any?(&:within_before_all?)
+    ActiveRecord::Base.connection_pool.disconnect! unless shares_data
   end
 
   config.around do |example|

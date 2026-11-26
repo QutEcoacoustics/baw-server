@@ -35,6 +35,7 @@ module Api
       }
 
       query = filter.query_without_paging_sorting.except(:select, :order, :limit, :offset)
+      opts[:warning] = filter.deprecations.compile_warning
 
       query = yield(query) if block_given?
       query = query.arel if query.is_a?(ActiveRecord::Relation)
