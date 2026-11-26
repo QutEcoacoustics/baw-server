@@ -68,6 +68,30 @@ module Api
         )
       end
 
+      # Arel expression for accumulated density: the sum of every recording range divided by the coverage span.
+      # Unlike coverage density, ranges are deliberately not unioned. This preserves repeated analyses and overlapping
+      # recordings as temporal multiplicity: accumulated density can exceed 1, and accumulated_density / density is the
+      # average number of matching ranges where the span is covered. It does not distinguish legitimate recording
+      # overlaps from multiple analysis items for the same recording; both are relevant when estimating render overlap.
+      def self.accumulated_density
+        # ! TODO: When arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
+        coverage_span = Arel::Nodes::Subtraction.new(
+          ISLANDS[:recording_range].upper.maximum,
+          ISLANDS[:recording_range].lower.minimum
+        ).extract('epoch')
+
+        # ! TODO: When arel-extensions is removed. See https://github.com/QutEcoacoustics/baw-server/issues/966
+        recording_seconds = Arel::Nodes::Subtraction.new(
+          ISLANDS[:recording_range].upper,
+          ISLANDS[:recording_range].lower
+        ).extract('epoch').sum
+
+        Arel::Nodes::Division.new(
+          recording_seconds,
+          Arel::Nodes::NamedFunction.new('NULLIF', [coverage_span, Arel.sql('0')])
+        )
+      end
+
       private
 
       def ctes(query:)
